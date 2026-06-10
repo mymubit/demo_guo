@@ -1,0 +1,257 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========= 全局基础样式 ========= */
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(180deg, #030d24 0%, #051437 50%, #030d24 100%);
+  min-height: 100vh;
+}
+
+/* ========= 自定义滚动条 ========= */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #030d24;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #7b8ff5 0%, #8a5cb3 100%);
+}
+
+/* ========= 通用组件样式 ========= */
+@layer components {
+  .gradient-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #f6d365 0%, #fda085 50%, #fbc2eb 100%);
+  }
+
+  .gradient-text-primary {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .glass-card {
+    background: rgba(15, 42, 92, 0.4);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(102, 126, 234, 0.15);
+  }
+
+  .glass-card-gold {
+    background: rgba(244, 183, 25, 0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(244, 183, 25, 0.25);
+  }
+
+  .btn-primary {
+    @apply px-8 py-3 rounded-xl font-semibold text-white transition-all duration-300;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 10px 30px -10px rgba(102, 126, 234, 0.5);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 40px -10px rgba(102, 126, 234, 0.6);
+  }
+
+  .btn-gold {
+    @apply px-8 py-3 rounded-xl font-semibold text-navy-950 transition-all duration-300;
+    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+    box-shadow: 0 10px 30px -10px rgba(244, 183, 25, 0.5);
+  }
+
+  .btn-gold:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 40px -10px rgba(244, 183, 25, 0.6);
+  }
+
+  .btn-ghost {
+    @apply px-8 py-3 rounded-xl font-semibold text-white border border-navy-400/40 transition-all duration-300;
+    background: rgba(102, 126, 234, 0.1);
+  }
+
+  .btn-ghost:hover {
+    background: rgba(102, 126, 234, 0.2);
+    border-color: rgba(102, 126, 234, 0.4);
+  }
+
+  .section-title {
+    @apply text-4xl md:text-5xl font-bold mb-4 text-center;
+  }
+
+  .section-subtitle {
+    @apply text-lg text-navy-200 text-center max-w-2xl mx-auto mb-16;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium;
+    background: rgba(244, 183, 25, 0.15);
+    color: #f7cb54;
+    border: 1px solid rgba(244, 183, 25, 0.3);
+  }
+}
+
+/* ========= 动画效果 ========= */
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradientShift 4s ease infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* 粒子背景效果 */
+.particles-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.particles-bg::before,
+.particles-bg::after {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.3;
+}
+
+.particles-bg::before {
+  background: #667eea;
+  top: -200px;
+  left: -200px;
+  animation: float 8s ease-in-out infinite;
+}
+
+.particles-bg::after {
+  background: #f6d365;
+  bottom: -200px;
+  right: -200px;
+  animation: float 10s ease-in-out infinite reverse;
+}
+
+/* 剧本展示样式 */
+.sf-script-result {
+  @apply text-navy-100 leading-relaxed;
+}
+
+.sf-script-result .sf-title {
+  @apply text-3xl font-bold mb-4 gradient-text;
+}
+
+.sf-script-result .sf-meta {
+  @apply flex flex-wrap gap-2 mb-6;
+}
+
+.sf-script-result .sf-tag {
+  @apply px-3 py-1 rounded-full text-sm;
+  background: rgba(102, 126, 234, 0.2);
+  color: #b3c5e1;
+}
+
+.sf-script-result .sf-score {
+  @apply px-3 py-1 rounded-full text-sm font-semibold;
+  background: linear-gradient(135deg, rgba(246, 211, 101, 0.3) 0%, rgba(253, 160, 133, 0.3) 100%);
+  color: #f7cb54;
+}
+
+.sf-script-result .sf-idea {
+  @apply text-lg text-navy-200 mb-8 p-4 rounded-xl;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.sf-script-result .sf-section {
+  @apply text-2xl font-bold mt-10 mb-6 pb-2;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+.sf-script-result .sf-characters {
+  @apply grid grid-cols-1 md:grid-cols-3 gap-4 mb-8;
+}
+
+.sf-script-result .sf-character-card {
+  @apply p-6 rounded-2xl;
+  background: rgba(15, 42, 92, 0.4);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.sf-script-result .sf-char-name {
+  @apply text-xl font-bold text-gold-300 mb-1;
+}
+
+.sf-script-result .sf-char-role {
+  @apply text-sm text-navy-300 mb-2;
+}
+
+.sf-script-result .sf-char-desc {
+  @apply text-sm text-navy-200;
+}
+
+.sf-script-result .sf-episode {
+  @apply p-6 mb-4 rounded-2xl;
+  background: rgba(15, 42, 92, 0.3);
+  border: 1px solid rgba(102, 126, 234, 0.15);
+}
+
+.sf-script-result .sf-episode h3 {
+  @apply text-xl font-bold text-gold-400 mb-4;
+}
+
+.sf-script-result .sf-review {
+  @apply space-y-3 p-6 rounded-2xl;
+  background: rgba(15, 42, 92, 0.3);
+  border: 1px solid rgba(102, 126, 234, 0.15);
+}
+
+.sf-script-result .sf-score-bar {
+  @apply flex items-center gap-4;
+}
+
+.sf-script-result .sf-score-label {
+  @apply w-24 text-sm text-navy-200;
+}
+
+.sf-script-result .sf-score-progress {
+  @apply h-2 rounded-full;
+  background: linear-gradient(90deg, #667eea 0%, #f6d365 100%);
+}
+
+.sf-script-result .sf-overall-score {
+  @apply text-center text-lg font-bold mt-4 pt-4;
+  border-top: 1px solid rgba(102, 126, 234, 0.2);
+  color: #f7cb54;
+}
+
+/* 节点进度动画 */
+.node-active {
+  animation: nodePulse 2s ease-in-out infinite;
+}
+
+@keyframes nodePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(244, 183, 25, 0.4); }
+  50% { box-shadow: 0 0 0 10px rgba(244, 183, 25, 0); }
+}

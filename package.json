@@ -1,0 +1,19 @@
+{
+  "name": "scriptforge-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ScriptForge AI - 基于AI的专业短剧剧本创作平台",
+  "scripts": {
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && python manage.py runserver 0.0.0.0:8000",
+    "dev": "concurrently -n frontend,backend -c cyan,magenta \"npm:dev:frontend\" \"npm:dev:backend\"",
+    "build": "cd frontend && npm run build",
+    "preview": "cd frontend && npm run preview",
+    "install:all": "npm run install:frontend && npm run install:backend",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && pip install -r requirements.txt"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

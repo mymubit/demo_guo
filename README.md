@@ -1,1 +1,502 @@
-# demo4book
+# ScriptForge AI - 短剧剧本创作平台
+
+> **基于AI的专业短剧剧本创作平台，将一句话创意快速转化为完整可拍摄的A级剧本体系。**
+
+## ✨ 项目概述
+
+ScriptForge AI 是一个商业化的短剧剧本创作平台，采用"前端 React SPA + 后端 Django 6.0.5"的现代化技术架构。平台核心价值在于 **7节点智能创作流水线**，用户只需输入一句话创意，系统将自动完成：信息收集 → 结构规划 → 人设开发 → 大纲撰写 → 剧本创作 → 质量审查 → 输出交付 的完整创作流程。
+
+---
+
+## 🎯 核心特性
+
+### 平台功能
+- 🎬 **8大热门题材**：家庭复仇、豪门霸总、甜宠虐恋、穿越重生、都市逆袭、古装权谋、悬疑反转、混合题材
+- 📝 **4种剧本格式**：标准版、行业通用版、精简版、分镜版，满足不同团队需求
+- 🔍 **四维质量审查**：格式、节奏、内容、制作可行性自动评分
+- 👥 **会员系统**：体验版 / 专业版 / 旗舰版三档套餐
+- 💳 **订单与支付**：完整的订单与支付流程
+- 📦 **作品管理**：云端保存、分享、多格式导出
+
+### 后台管理
+- 📊 **数据仪表盘**：用户/订单/营收/创作核心指标实时展示
+- 👤 **用户管理**：用户列表、状态管理、密码重置
+- 👑 **会员配置**：套餐管理、卡密生成与兑换
+- ⚙️ **技能配置**：AI模型参数、题材模板、钩子库管理（加密存储）
+- 💼 **订单管理**：订单查询、退款处理
+
+---
+
+## 🏗️ 技术架构
+
+```
+┌────────────────────────────────────────────────────────────┐
+│                        前端 (React SPA)                      │
+│  React 18 + Vite + TailwindCSS + Framer Motion + Zustand    │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+                               ▼
+┌────────────────────────────────────────────────────────────┐
+│                    Django 6.0.5 REST API                    │
+│   Django REST Framework + JWT + Redis Cache + PostgreSQL     │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+    ┌──────────────────────────┼──────────────────────────┐
+    ▼                          ▼                          ▼
+┌─────────┐              ┌──────────┐              ┌─────────┐
+│ PostgreSQL │           │   Redis    │           │  MinIO / │
+│  主数据库  │            │ 缓存/会话  │            │ 对象存储 │
+└─────────┘              └──────────┘              └─────────┘
+```
+
+### 技术栈详情
+
+| 层级 | 技术 | 版本 |
+|------|------|------|
+| **前端** | React | 18.3.1 |
+| | Vite | 5.x |
+| | TailwindCSS | 3.x |
+| | React Router | 6.x |
+| | Zustand (状态) | 4.x |
+| | Framer Motion (动画) | 11.x |
+| **后端** | Django | 6.0.5 |
+| | Django REST Framework | 3.15.x |
+| | PostgreSQL | 15+ |
+| | Redis | 7.x |
+| | Celery (异步任务) | 5.x |
+| | JWT (认证) | simplejwt |
+| **开发** | Node.js | 18+ |
+| | Python | 3.11+ |
+
+---
+
+## 🔐 安全设计（核心竞争力）
+
+### 1. 技能引擎隔离
+- 7节点流水线引擎在独立进程中执行
+- 技能模板和参数加密存储，仅后台可访问
+- AI API密钥 AES-256-CBC 加密，仅在内存解密使用
+
+### 2. 零数据结构返回
+- 剧本数据不在 API 响应中返回原始 JSON 结构
+- 前端仅接收预渲染的 HTML 片段，无法解析反向工程
+- 下载接口返回二进制文件流，无 JSON 包装
+
+### 3. 请求签名机制
+- 每个请求包含 Timestamp + Nonce + HMAC-SHA256 签名
+- 防重放：Nonce 5分钟内不重复，Timestamp ±5分钟窗口
+- 签名密钥在前端 WebAssembly 模块中执行
+
+### 4. 数字水印
+- 剧本文件植入不可见的唯一识别水印
+- 可追溯到创作者个人，防止非法传播
+- 水印信息与用户ID绑定
+
+### 5. 操作审计
+- 所有写操作自动记录审计日志
+- 记录用户、IP、设备指纹、请求摘要、响应状态
+- 审计日志表不可修改，仅 INSERT 权限
+
+---
+
+## 🚀 快速开始
+
+### 环境要求
+```
+Node.js >= 18
+Python >= 3.11
+PostgreSQL >= 15
+Redis >= 7
+```
+
+### 1. 克隆项目
+
+```bash
+git clone <repository-url>
+cd demo4book
+```
+
+### 2. 安装依赖
+
+#### 方式一：根目录一键安装
+
+```bash
+npm run install:all
+```
+
+#### 方式二：分别安装
+
+```bash
+# 前端
+cd frontend
+npm install
+
+# 后端
+cd ../backend
+pip install -r requirements.txt
+```
+
+### 3. 配置环境变量
+
+#### 前端 (frontend/)
+
+无需特殊配置，开发环境默认代理到 `http://localhost:8000`
+
+#### 后端 (backend/)
+
+```bash
+cd backend
+cp .env.example .env
+# 编辑 .env 文件，填入数据库和密钥配置
+```
+
+关键配置项：
+```env
+SECRET_KEY=<Django Secret Key>
+DB_NAME=scriptforge
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_HOST=localhost
+DB_PORT=5432
+API_SIGN_SECRET=<自定义签名密钥>
+SKILL_ENCRYPT_KEY=<32字节技能加密密钥>
+```
+
+### 4. 初始化数据库
+
+```bash
+cd backend
+python manage.py makemigrations users creation membership orders security
+python manage.py migrate
+# 创建超级管理员
+python manage.py createsuperuser
+```
+
+### 5. 启动开发服务器
+
+#### 方式一：根目录并发启动（推荐）
+
+```bash
+# 在项目根目录
+npm run dev
+# 前端: http://localhost:5173
+# 后端: http://localhost:8000
+```
+
+#### 方式二：分别启动
+
+```bash
+# 终端1 - 启动前端
+cd frontend && npm run dev
+
+# 终端2 - 启动后端
+cd backend && python manage.py runserver 0.0.0.0:8000
+```
+
+---
+
+## 📂 项目结构
+
+```
+demo4book/
+├── frontend/                           # React 前端应用
+│   ├── src/
+│   │   ├── main.jsx                   # 入口文件
+│   │   ├── App.jsx                    # 根组件 + 路由配置
+│   │   ├── components/
+│   │   │   └── layout/                # 布局组件（MainLayout/AdminLayout）
+│   │   ├── pages/                      # 页面组件
+│   │   │   ├── Home/                  # 首页（Hero/功能/评价/FAQ/CTA）
+│   │   │   ├── Auth/                  # 登录/注册
+│   │   │   ├── Member/                # 会员中心
+│   │   │   ├── Creation/              # 创作页（4阶段流程）
+│   │   │   ├── Works/                 # 我的作品（列表/详情）
+│   │   │   ├── Profile/               # 个人中心
+│   │   │   ├── ShareView.jsx          # 作品分享页
+│   │   │   ├── NotFound.jsx           # 404页面
+│   │   │   └── Admin/                 # 后台管理页面
+│   │   │       ├── Login.jsx          # 后台登录
+│   │   │       ├── Dashboard.jsx      # 数据仪表盘
+│   │   │       ├── Users.jsx          # 用户管理
+│   │   │       ├── Members.jsx        # 会员配置
+│   │   │       ├── SkillConfig.jsx    # 技能引擎配置
+│   │   │       └── Orders.jsx         # 订单管理
+│   │   ├── services/                  # API 服务层
+│   │   │   └── api.js                 # Axios 封装 + 请求签名
+│   │   ├── store/                     # Zustand 状态管理
+│   │   │   ├── authStore.js           # 用户认证状态
+│   │   │   └── memberStore.js         # 会员套餐状态
+│   │   └── styles/                    # 全局样式
+│   │       └── globals.css            # 自定义工具类
+│   ├── index.html                     # HTML 模板
+│   ├── vite.config.js                 # Vite 配置
+│   ├── tailwind.config.js             # Tailwind 配置
+│   └── package.json
+│
+├── backend/                            # Django 后端应用
+│   ├── config/                        # 项目配置
+│   │   ├── settings/base.py           # 基础设置
+│   │   ├── urls.py                    # 路由配置
+│   │   └── wsgi.py                    # WSGI 入口
+│   ├── apps/                          # Django 应用模块
+│   │   ├── users/                     # 用户模块（自定义User模型）
+│   │   │   ├── models.py              # User + UserProfile (加密手机号/邮箱)
+│   │   │   ├── serializers.py         # DRF 序列化器
+│   │   │   ├── views_auth.py          # 登录/注册/刷新
+│   │   │   ├── views.py               # 用户资料
+│   │   │   ├── urls_auth.py           # /api/auth/
+│   │   │   ├── urls.py                # /api/users/
+│   │   │   └── admin.py
+│   │   ├── membership/                # 会员模块
+│   │   │   ├── models.py              # MembershipPlan/ UserMembership/ PromoCode
+│   │   │   ├── services.py            # 会员业务逻辑
+│   │   │   ├── serializers.py
+│   │   │   ├── views.py               # 套餐列表/会员状态/卡密兑换
+│   │   │   ├── urls.py                # /api/members/
+│   │   │   └── admin.py
+│   │   ├── orders/                    # 订单模块
+│   │   │   ├── models.py              # Order + Payment
+│   │   │   ├── services.py            # 订单与模拟支付
+│   │   │   ├── serializers.py
+│   │   │   ├── views.py               # 创建订单/模拟支付/订单列表
+│   │   │   ├── urls.py                # /api/orders/
+│   │   │   └── admin.py
+│   │   ├── creation/                  # 创作模块（核心）
+│   │   │   ├── models.py              # Project + CreationNode + ScriptWork
+│   │   │   ├── engine/                # 7节点流水线引擎
+│   │   │   │   ├── node1_input.py     # 1. 信息收集
+│   │   │   │   ├── node2_structure.py # 2. 结构规划
+│   │   │   │   ├── node3_character.py # 3. 人设开发
+│   │   │   │   ├── node4_outline.py   # 4. 大纲撰写
+│   │   │   │   ├── node5_script.py    # 5. 剧本创作
+│   │   │   │   ├── node6_review.py    # 6. 质量审查
+│   │   │   │   └── node7_export.py    # 7. 输出交付
+│   │   │   ├── services.py            # 创作服务（结果HTML预渲染）
+│   │   │   ├── tasks.py               # Celery 异步任务
+│   │   │   ├── serializers.py
+│   │   │   ├── views.py               # 提交创作/进度查询/下载
+│   │   │   ├── views_works.py         # 作品列表/详情
+│   │   │   ├── urls.py                # /api/creation/
+│   │   │   ├── urls_works.py          # /api/works/
+│   │   │   └── admin.py
+│   │   ├── skill/                     # 技能配置模块（加密隔离）
+│   │   │   ├── models.py              # SkillConfig + ThemeTemplate + HookLibrary
+│   │   │   ├── services.py            # 技能配置服务（AES-256加密读/写）
+│   │   │   ├── serializers.py
+│   │   │   └── admin.py               # 仅超级管理员可访问
+│   │   ├── security/                  # 安全模块
+│   │   │   ├── models.py              # AuditLog（仅INSERT审计日志）
+│   │   │   ├── services.py            # 加密/签名/水印/限流服务
+│   │   │   ├── middleware.py          # 签名校验/限流/审计中间件
+│   │   │   └── admin.py
+│   │   ├── common/                    # 公共工具
+│   │   │   ├── pagination.py          # 标准分页
+│   │   │   ├── exceptions.py          # 自定义异常与处理器
+│   │   │   ├── permissions.py         # 自定义权限类
+│   │   │   └── utils.py               # 通用工具函数
+│   │   └── admin_panel/               # 后台管理 API
+│   │       ├── views.py               # 仪表盘/用户/套餐/配置/订单
+│   │       ├── serializers.py
+│   │       └── urls.py                # /api/admin/
+│   ├── manage.py
+│   ├── requirements.txt
+│   └── .env.example
+│
+├── docs/                               # 项目文档
+│   ├── PRD.md                         # 产品需求文档
+│   └── TECH-ARCHITECTURE.md           # 技术架构文档
+│
+└── package.json                        # 根目录 NPM 脚本（并发启动）
+```
+
+---
+
+## 🎨 UI 设计规范
+
+### 色彩系统
+```
+主背景色:    #030d24 (navy-950)
+次级背景:    #0a1f44 (navy-800)
+主色调:      #667eea → #764ba2 (紫蓝渐变)
+强调色:      #f6d365 → #fda085 (金色渐变)
+文本色:      #ffffff / #e2e8f0
+辅助文本:    #a0aec0 / #718096
+```
+
+### 组件样式
+- **卡片**：`glass-card` - 毛玻璃背景 (backdrop-blur) + 半透明边框
+- **按钮**：圆角 `rounded-xl`，悬停上浮 + 发光阴影
+- **徽章**：圆角 `rounded-full`，金色边框与文字
+- **动画**：Framer Motion 实现的渐入 + 微交互
+
+### 响应式
+- 移动端优先，三断点：sm / md / lg
+- 移动端导航折叠为汉堡菜单
+- 卡片网格在窄屏单列展示
+
+---
+
+## 🔧 API 设计原则
+
+### 路由规范
+```
+POST /api/auth/login/          # 登录
+POST /api/auth/register/       # 注册
+POST /api/auth/refresh/        # 刷新 Token
+GET  /api/users/me/            # 我的资料
+GET  /api/members/plans/       # 套餐列表
+POST /api/members/redeem/      # 卡密兑换
+POST /api/orders/create/       # 创建订单
+POST /api/creation/submit/     # 提交创作
+GET  /api/creation/progress/<id>/   # 进度查询
+GET  /api/works/               # 作品列表
+GET  /api/admin/dashboard/     # 管理仪表盘
+...
+```
+
+### 请求头签名（安全机制）
+每个 API 请求必须包含：
+```
+Authorization: Bearer <jwt-token>
+X-Timestamp: <unix-seconds>
+X-Nonce: <16位随机字符串>
+X-Signature: HMAC-SHA256(secret, method + path + timestamp + nonce + body_hash)
+X-Device-Fingerprint: <设备指纹>
+```
+
+### 响应规范
+```json
+{
+  "code": 0,
+  "message": "success",
+  "data": { ... }
+}
+```
+
+---
+
+## 👥 用户角色与权限
+
+| 角色 | 权限 |
+|------|------|
+| **游客** | 浏览首页、查看示例、注册/登录 |
+| **免费用户** | 体验创作1次，查看个人作品 |
+| **付费会员** | 根据套餐等级获得 N 次/无限次创作，下载剧本，分享作品 |
+| **企业会员** | 团队协作、API接入、私有模板、独立部署 |
+| **管理员** | 管理用户/订单/套餐，查看数据仪表盘 |
+| **超级管理员** | 技能引擎配置，修改AI参数/模板（最高权限）|
+
+---
+
+## 📊 创作流水线详解
+
+### 7节点创作流程
+
+| 节点 | 名称 | 功能 | 耗时 |
+|------|------|------|------|
+| 1 | **信息收集** | 提取用户创意，生成项目简报 | 30秒 |
+| 2 | **结构规划** | 6阶段架构 + 情绪节奏曲线 + 反转点设计 | 1分钟 |
+| 3 | **人设开发** | 主角/反派/配角完整设定 + 关系图谱 | 1分钟 |
+| 4 | **大纲撰写** | 每集钩子/反转/悬念设计 + 情绪强度标注 | 2分钟 |
+| 5 | **剧本创作** | 逐集生成场景、动作、对话（最耗时节点） | 3-5分钟 |
+| 6 | **质量审查** | 格式/节奏/内容/制作四维评分 + 问题清单 | 1分钟 |
+| 7 | **输出交付** | 4格式导出 + 植入数字水印 + 生成分享链接 | 30秒 |
+
+**总耗时**：约 8-12 分钟（80集标准项目）
+
+---
+
+## 🔒 后台技能配置（超级管理员专区）
+
+路径：`/admin/skill-config`
+
+### 可配置项
+
+| 分类 | 配置项 | 说明 |
+|------|--------|------|
+| **AI模型** | `llm.api_endpoint` | 推理服务地址 |
+| | `llm.api_key` | API Key（AES-256加密存储）|
+| | `llm.temperature` | 生成温度（默认 0.7）|
+| | `llm.max_tokens` | 最大 Token 数 |
+| **质量审查** | `review.*_weight` | 四维评分权重设置 |
+| | `review.pass_threshold` | 通过阈值（默认 70分）|
+| **输出** | `export.format_B_template` | 格式模板内容 |
+| | `export.enable_watermark` | 是否启用水印 |
+| **合规** | `compliance.sensitive_words` | 敏感词列表 |
+
+---
+
+## 📖 文档
+
+- **[产品需求文档 (PRD)](docs/PRD.md)** - 完整的产品功能规格
+- **[技术架构文档](docs/TECH-ARCHITECTURE.md)** - 技术选型与架构设计详解
+
+---
+
+## 🔮 后续扩展方向
+
+- **多语言支持**：英文、日文、韩文界面与出海题材模板
+- **小说转剧本**：上传小说自动转化为短剧格式
+- **模板市场**：用户可上传/购买优秀剧本模板，分成机制
+- **API 开放平台**：企业客户接入自有系统
+- **实时协作编辑**：多人协同编辑剧本，版本管理
+- **AI续写与精修**：基于已有剧本续写新集数，或修改段落
+
+---
+
+## ⚠️ 安全合规声明
+
+1. 本平台生成内容基于用户输入创意，AI 仅辅助创作，版权归用户所有
+2. 剧本文件内置数字水印，可追溯来源，严禁非法传播
+3. 技能引擎与模板为核心商业机密，采用多层加密保护
+4. 建议对重要项目进行版权登记，平台可辅助生成登记材料
+
+---
+
+## 📝 开发说明
+
+### 常用命令
+
+```bash
+# 启动前后端开发服务器（并发）
+npm run dev
+
+# 仅前端
+cd frontend && npm run dev         # http://localhost:5173
+
+# 仅后端
+cd backend && python manage.py runserver 0.0.0.0:8000
+
+# 生产构建前端
+npm run build
+
+# 创建 Django 迁移
+cd backend && python manage.py makemigrations
+cd backend && python manage.py migrate
+```
+
+### 开发环境演示
+
+**前端页面**（无需后端也可体验，API失败自动回退Mock数据）：
+- 首页 `http://localhost:5173/`
+- 登录 `http://localhost:5173/login`
+- 会员中心 `http://localhost:5173/member`
+- **创作页 `http://localhost:5173/creation`（核心体验页）**
+- 作品列表 `http://localhost:5173/works`
+- 后台 `http://localhost:5173/admin`
+
+**后端 API**：
+- 健康检查 `http://localhost:8000/api/health/`
+- 管理后台 `http://localhost:8000/admin/`（Django Admin）
+
+---
+
+## 📞 联系方式
+
+- 商务合作：business@scriptforge.ai
+- 技术支持：support@scriptforge.ai
+- 创作者社区：community.scriptforge.ai
+
+---
+
+**© 2026 ScriptForge AI. All rights reserved.**
