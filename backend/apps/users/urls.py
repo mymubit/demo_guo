@@ -1,15 +1,9 @@
 """
-用户信息相关路由（资料查看 / 更新）
-
-对应前缀：/api/users/
+用户资料路由
 """
 from django.urls import path
-
-from . import views
-
-app_name = "users"
+from .views import ProfileView
 
 urlpatterns = [
-    path("me/", views.UserProfileView.as_view(), name="profile"),
-    path("me/update/", views.UserUpdateView.as_view(), name="profile-update"),
+    path("me/", ProfileView.as_view(), name="user-profile"),
 ]

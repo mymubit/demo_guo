@@ -1,13 +1,10 @@
-"""
-URL configuration for ScriptForge project.
-"""
 from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
 
 
 def health_check(request):
-    return JsonResponse({"status": "ok", "service": "ScriptForge API"})
+    return JsonResponse({"status": "ok", "service": "ScriptForge API", "version": "1.0.0"})
 
 
 urlpatterns = [

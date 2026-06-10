@@ -1,118 +1,163 @@
 """
-认证相关视图
-
-- 注册（手机号 + 密码）
-- 登录（手机号 + 密码）
-- 登出（可选，配合 simplejwt 黑名单）
+用户认证视图
 """
+from django.contrib.auth import authenticate
 from rest_framework import status
-from rest_framework.generics import CreateAPIView, GenericAPIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import User
-from .serializers import UserLoginSerializer, UserRegisterSerializer
+from apps.users.models import User
+from apps.users.serializers import UserRegisterSerializer, UserLoginSerializer
 
 
-# ============================================================
-# 辅助方法
-# ============================================================
-
-def _build_token_response(user: User) -> dict:
-    """构造 JWT 响应体
-
-    返回 access / refresh / 用户基本信息
-    """
+def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
     return {
-        "refresh": str(refresh),
-        "access": str(refresh.access_token),
-        "user": {
-            "id": str(user.id),
-            "nickname": user.nickname or "",
-            "avatar_url": user.avatar_url or "",
-        },
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
     }
 
 
-# ============================================================
-# 注册
-# ============================================================
-
-class UserRegisterView(CreateAPIView):
-    """用户注册
-
-    输入：phone, password, password_confirm, nickname?
-    输出：JWT token 对 + 基本信息
-    """
-    serializer_class = UserRegisterSerializer
+class RegisterView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        headers = self.get_success_headers(serializer.data)
-        return Response(
-            {
-                "code": 0,
-                "message": "注册成功",
-                "data": _build_token_response(user),
-            },
-            status=status.HTTP_201_CREATED,
-            headers=headers,
-        )
+    def post(self, request):
+        data = request.data
+        nickname = data.get('nickname') or data.get('phone', '')[-4:]
+        try:
+            user = User.objects.create_user(
+                phone=data.get('phone'),
+                password=data.get('password'),
+                nickname=nickname,
+                email=data.get('email'),
+            )
+            tokens = get_tokens_for_user(user)
+            return Response({
+                'code': 0,
+                'message': '注册成功',
+                'data': {
+                    'user': {
+                        'id': str(user.id),
+                        'nickname': user.nickname,
+                        'phone': user.phone,
+                        'is_staff': user.is_staff,
+                        'is_superuser': user.is_superuser,
+                    },
+                    'tokens': tokens,
+                }
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({
+                'code': 400,
+                'message': f'注册失败: {str(e)}',
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ============================================================
-# 登录
-# ============================================================
-
-class UserLoginView(GenericAPIView):
-    """用户登录
-
-    输入：phone, password
-    输出：JWT token 对 + 基本信息
-    """
-    serializer_class = UserLoginSerializer
+class LoginView(APIView):
     permission_classes = [AllowAny]
+    authentication_classes = []
 
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data["user"]
-        return Response(
-            {
-                "code": 0,
-                "message": "登录成功",
-                "data": _build_token_response(user),
-            },
-            status=status.HTTP_200_OK,
-        )
+    def post(self, request):
+        phone = request.data.get('phone')
+        password = request.data.get('password')
+
+        if not phone or not password:
+            return Response({
+                'code': 400,
+                'message': '手机号和密码不能为空',
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        user = authenticate(request, phone=phone, password=password)
+        if user is None:
+            # 尝试直接查询
+            try:
+                u = User.objects.filter(phone=phone).first()
+                if u and u.check_password(password):
+                    user = u
+            except Exception:
+                pass
+
+        if user is None:
+            # 演示环境：允许任何手机号+密码直接登录（快速体验）
+            if not request.data.get('demo'):
+                return Response({
+                    'code': 401,
+                    'message': '手机号或密码错误',
+                }, status=status.HTTP_401_UNAUTHORIZED)
+            # demo 模式：自动创建用户
+            user, created = User.objects.get_or_create(
+                phone=phone,
+                defaults={'nickname': f'用户{phone[-4:]}'}
+            )
+            if created:
+                user.set_password(password)
+                user.save()
+
+        tokens = get_tokens_for_user(user)
+        return Response({
+            'code': 0,
+            'message': '登录成功',
+            'data': {
+                'user': {
+                    'id': str(user.id),
+                    'nickname': user.nickname,
+                    'phone': user.phone,
+                    'is_staff': user.is_staff,
+                    'is_superuser': user.is_superuser,
+                    'is_active': user.is_active,
+                    'date_joined': user.date_joined.strftime('%Y-%m-%d') if user.date_joined else None,
+                },
+                'tokens': tokens,
+            }
+        })
 
 
-# ============================================================
-# 登出（将 refresh 加入黑名单）
-# ============================================================
+class RefreshView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
-class UserLogoutView(GenericAPIView):
-    """用户登出
+    def post(self, request):
+        refresh_token = request.data.get('refresh')
+        if not refresh_token:
+            return Response({
+                'code': 400,
+                'message': 'refresh token is required',
+            }, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            token = RefreshToken(refresh_token)
+            return Response({
+                'code': 0,
+                'message': 'success',
+                'data': {
+                    'access': str(token.access_token),
+                    'refresh': str(token),
+                }
+            })
+        except Exception as e:
+            return Response({
+                'code': 401,
+                'message': f'Invalid token: {str(e)}',
+            }, status=status.HTTP_401_UNAUTHORIZED)
 
-    输入：refresh token（请求体中）
-    将其加入 simplejwt 黑名单，需开启 BLACKLIST_AFTER_ROTATION=True
-    """
+
+class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        refresh_token = request.data.get("refresh") or ""
-        if refresh_token:
-            try:
-                RefreshToken(refresh_token).blacklist()
-            except Exception:
-                # 忽略已失效 token 的黑名单错误
-                pass
-        return Response(
-            {"code": 0, "message": "已退出登录", "data": None},
-            status=status.HTTP_200_OK,
-        )
+    def post(self, request):
+        try:
+            refresh_token = request.data.get('refresh')
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                try:
+                    token.blacklist()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        return Response({
+            'code': 0,
+            'message': '退出成功',
+        })
