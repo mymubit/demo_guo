@@ -31,28 +31,67 @@ logger = logging.getLogger(__name__)
 def _execute_node(project: Project, node_index: int) -> str:
     """执行单个节点，返回节点摘要（供前端展示）
 
-    真实实现应调用 skill.engine.node{node_index}.run(project)
-    此处提供一个最小的占位实现，确保 pipeline 可独立运行。
+    调用 skill.engine.pipeline.ScriptPipeline 执行完整流水线，
+    并从结果中提取指定节点的摘要。
     """
-    # 尝试调用 skill 引擎
-    try:
-        # 使用懒导入：skill 模块可能不存在于某些轻量部署中
-        from apps.skill.engine import run_node  # type: ignore
+    from apps.creation.engine.pipeline import get_pipeline
 
-        summary = run_node(project, node_index)
-        if summary:
-            return str(summary)
-    except Exception as exc:  # noqa: BLE001
+    # 构造用户输入（从 project 恢复）
+    user_inputs = {
+        'user_id': str(project.user_id),
+        'project_id': str(project.id),
+        'theme': project.theme,
+        'core_idea': project.core_idea,
+        'episode_count': project.episode_count,
+        'format_variant': project.format_variant,
+        'audience': project.audience,
+        'reference_work': project.reference_work,
+    }
+
+    # 尝试从缓存获取已执行的上下文（如果有）
+    try:
+        from django.core.cache import cache
+        cache_key = f'creation:ctx:{project.id}'
+        cached_context = cache.get(cache_key, {})
+    except Exception:
+        cached_context = {}
+
+    # 执行完整流水线（7个节点）
+    try:
+        pipeline = get_pipeline()
+        result = pipeline.execute(user_inputs)
+
+        # 更新 project 的 rendered_result_html
+        if result.get('export', {}).get('rendered_html'):
+            project.rendered_result_html = result['export']['rendered_html']
+            project.save(update_fields=['rendered_result_html'])
+
+        # 根据节点索引返回对应摘要
+        node_summaries = {
+            1: result.get('project_brief', {}).get('project_name', ''),
+            2: f"{result.get('structure', {}).get('total_episodes', 0)}集 × 6幕结构",
+            3: f"共{result.get('characters', {}).get('character_count', 0)}个角色",
+            4: f"{result.get('outlines', {}).get('total_episodes', 0)}集大纲，{result.get('outlines', {}).get('reversal_count', 0)}个反转点",
+            5: f"{result.get('scripts', {}).get('total_words', 0)}字，{result.get('scripts', {}).get('total_scenes', 0)}个场景",
+            6: f"综合评分{result.get('review', {}).get('overall_score', 0)}分（{result.get('review', {}).get('grade', '')}级）",
+            7: f"导出完成，{result.get('export', {}).get('total_files', 0)}个文件",
+        }
+
+        summary = node_summaries.get(node_index, '节点完成')
+        logger.info("[Creation] skill.engine 执行完成 node=%d project=%s", node_index, project.id)
+        return summary
+
+    except Exception as exc:
         logger.warning(
             "[Creation] 调用 skill.engine 节点 %d 失败: %s",
             node_index, exc,
         )
-
-    # 占位实现：模拟耗时并返回简单摘要
-    time.sleep(0.3)
-    meta = next((m for m in PIPELINE_NODES if m["index"] == node_index), None)
-    name = meta["name"] if meta else f"节点{node_index}"
-    return f"{name} 完成（占位摘要）"
+        # 占位实现：模拟耗时并返回简单摘要
+        import time
+        time.sleep(0.3)
+        meta = next((m for m in PIPELINE_NODES if m["index"] == node_index), None)
+        name = meta["name"] if meta else f"节点{node_index}"
+        return f"{name} 完成（模拟摘要）"
 
 
 # ============================================================
