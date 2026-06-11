@@ -19,7 +19,7 @@ import {
   X,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { userApi, memberApi, worksApi } from '@/services/api'
+import { users, membership, works } from '@/services/api'
 
 export default function Profile() {
   const [activeTab, setActiveTab] = useState('profile')
@@ -56,9 +56,9 @@ export default function Profile() {
   async function loadData() {
     try {
       const [profileData, memberData, worksData] = await Promise.allSettled([
-        userApi.getProfile(),
-        memberApi.getMyMembership(),
-        worksApi.list(),
+        users.getProfile(),
+        membership.getMyMembership(),
+        works.list(),
       ])
 
       if (profileData.status === 'fulfilled' && profileData.value) {
@@ -126,7 +126,7 @@ export default function Profile() {
     }
     setSaving(true)
     try {
-      await userApi.updateProfile(profile)
+      await users.updateProfile(profile)
       updateProfile(profile)
       showMessage('保存成功', 'success')
     } catch (err) {

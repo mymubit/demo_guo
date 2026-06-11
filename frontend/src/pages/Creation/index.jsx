@@ -23,7 +23,7 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { creationApi } from '@/services/api'
+import { creation } from '@/services/api'
 
 // ============ 常量配置 ============
 const THEMES = [
@@ -255,7 +255,7 @@ export default function Creation() {
 
   const handleSubmit = async () => {
     try {
-      await creationApi.submit({
+      await creation.submit({
         theme: formData.theme,
         idea: formData.idea,
         episodes: formData.episodes,

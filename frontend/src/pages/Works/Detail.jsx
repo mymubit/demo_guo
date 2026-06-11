@@ -17,7 +17,7 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { worksApi } from '@/services/api'
+import { works } from '@/services/api'
 
 const THEME_META = {
   'family-revenge': { name: '家庭伦理复仇', emoji: '⚔️', color: '#e53e3e' },
@@ -84,7 +84,7 @@ export default function WorksDetail() {
     const load = async () => {
       setLoading(true)
       try {
-        const res = await worksApi.getDetail(id)
+        const res = await works.getDetail(id)
         const data = (res && res.data) || null
         if (!data || !data.title) {
           throw new Error('no data')
@@ -143,7 +143,7 @@ export default function WorksDetail() {
     if (!work?.project_id) return
     setSharing(true)
     try {
-      const res = await worksApi.share(work.project_id, {
+      const res = await works.share(work.project_id, {
         view_limit: 100,
         valid_days: 7,
         allow_download: false,

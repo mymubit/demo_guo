@@ -21,7 +21,7 @@ import {
   Check,
   AlertTriangle,
 } from 'lucide-react'
-import { adminApi } from '@/services/api'
+import { admin } from '@/services/api'
 
 export default function UsersAdmin() {
   const [search, setSearch] = useState('')
@@ -52,7 +52,7 @@ export default function UsersAdmin() {
   useEffect(() => {
     async function loadData() {
       try {
-        const data = await adminApi.getUsers(page)
+        const data = await admin.getUsers(page)
         if (data && data.results) {
           setUsers(data.results)
         } else {
@@ -110,9 +110,9 @@ export default function UsersAdmin() {
     if (!confirmModal) return
     try {
       if (confirmModal.type === 'toggle') {
-        await adminApi.toggleUserActive(confirmModal.user.id)
+        await admin.toggleUserActive(confirmModal.user.id)
       } else if (confirmModal.type === 'reset') {
-        await adminApi.resetUserPassword(confirmModal.user.id)
+        await admin.resetUserPassword(confirmModal.user.id)
       }
       // 更新本地状态
       setUsers((prev) =>

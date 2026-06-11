@@ -21,7 +21,7 @@ import {
   Database,
   Layers,
 } from 'lucide-react'
-import { adminApi } from '@/services/api'
+import { admin } from '@/services/api'
 
 export default function SkillConfig() {
   const [activeTab, setActiveTab] = useState('configs')
@@ -104,7 +104,7 @@ function ConfigList({ onMessage }) {
 
   async function saveEdit(config) {
     try {
-      await adminApi.updateSkillConfig(config.key, editValue)
+      await admin.updateSkillConfig(config.key, editValue)
     } catch (err) {
       // fall through
     }

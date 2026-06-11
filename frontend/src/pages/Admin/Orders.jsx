@@ -19,7 +19,7 @@ import {
   TrendingUp,
   RefreshCw,
 } from 'lucide-react'
-import { adminApi } from '@/services/api'
+import { admin } from '@/services/api'
 
 export default function OrdersAdmin() {
   const [search, setSearch] = useState('')
@@ -46,14 +46,14 @@ export default function OrdersAdmin() {
   async function handleRefund(order) {
     setConfirmModal({
       type: 'refund', order, title: '确认退款',
-      message: `确认对订单 ${order.order_no} 执行退款操作？将向用户返还 ¥${order.amount.toFixed(2)}。',
+      message: `确认对订单 ${order.order_no} 执行退款操作？将向用户返还 ¥${order.amount.toFixed(2)}。`,
     })
   }
 
   async function confirmAction() {
     if (!confirmModal) return
     try {
-      await adminApi.refundOrder(confirmModal.order.id)
+      await admin.refundOrder(confirmModal.order.id)
     } catch (err) {
       // API调用失败，继续本地处理
     }
@@ -74,7 +74,7 @@ export default function OrdersAdmin() {
       o.user.includes(search) || o.phone.includes(search)
     const matchStatus = statusFilter === 'all' || o.status === statusFilter
     return matchSearch && matchStatus
-  }
+  })
 
   // 统计
   const totalRevenue = orders.filter((o) => o.status === 'paid').reduce((a, b) => a + b.amount, 0)
@@ -268,9 +268,9 @@ export default function OrdersAdmin() {
                               <RefreshCw className="w-3 h-3" /> 查看
                             </button>
                           )}
-                          {(order.status === 'refunded' || order.status === 'cancelled' ? (
+                          {(order.status === 'refunded' || order.status === 'cancelled') && (
                             <span className="text-xs text-navy-400">-</span>
-                          ) : null}
+                          )}
                         </div>
                       </td>
                     </motion.tr>
@@ -285,7 +285,7 @@ export default function OrdersAdmin() {
           <div className="text-navy-400">
             共 <span className="text-white font-medium">{filteredOrders.length}</span> 条订单 · 总金额{' '}
             <span className="text-gold-400 font-medium">
-              ¥{filteredOrders.reduce((a, b) => a + (b.status === 'paid' ? b.amount : 0, 0).toFixed(2)}
+              ¥{filteredOrders.reduce((a, b) => a + (b.status === 'paid' ? b.amount : 0), 0).toFixed(2)}
             </span>
           </div>
         </div>

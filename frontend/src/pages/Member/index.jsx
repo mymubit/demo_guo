@@ -96,7 +96,7 @@ import {
   Award,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { memberApi, orderApi } from '@/services/api'
+import { membership, orders } from '@/services/api'
 
 const PLANS = [
   {
@@ -227,9 +227,9 @@ export default function Member() {
     const load = async () => {
       try {
         const [m, p, o] = await Promise.all([
-          memberApi.getMyMembership().catch(() => null),
-          memberApi.getPlans().catch(() => null),
-          orderApi.list().catch(() => null),
+          membership.getMyMembership().catch(() => null),
+          membership.getPlans().catch(() => null),
+          orders.list().catch(() => null),
         ])
         if (m) setMembership(m)
         else {
@@ -263,7 +263,7 @@ export default function Member() {
     }
     setRedeemLoading(true)
     try {
-      await memberApi.redeemCode(code)
+      await membership.redeemCode(code)
       toast.success('卡密兑换成功！会员权益已激活')
       setMembership((m) => ({
         ...m,
@@ -293,10 +293,10 @@ export default function Member() {
   const handlePurchase = async (planId) => {
     setPayLoading((p) => ({ ...p, [planId]: true }))
     try {
-      const order = await orderApi.create(planId)
+      const order = await orders.create(planId)
       const orderNo = order?.order_no || `SF${Date.now()}`
       try {
-        await orderApi.mockPay(orderNo)
+        await orders.mockPay(orderNo)
         toast.success('演示支付成功！会员已激活')
       } catch (payErr) {
         toast.success('演示支付成功！')

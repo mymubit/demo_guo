@@ -17,7 +17,7 @@ import {
   Zap,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { authApi } from '@/services/api'
+import { auth } from '@/services/api'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -48,7 +48,7 @@ export default function Login() {
     if (!validate()) return
     setLoading(true)
     try {
-      const data = await authApi.login(form)
+      const data = await auth.login(form)
       setAuth(data.user || data, data.access, data.refresh)
       toast.success('登录成功，欢迎回来！')
       navigate('/member')

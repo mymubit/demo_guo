@@ -17,7 +17,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { authApi } from '@/services/api'
+import { auth } from '@/services/api'
 
 export default function Register() {
   const navigate = useNavigate()
@@ -72,7 +72,7 @@ export default function Register() {
     const payload = { phone: form.phone, password: form.password }
     if (form.nickname) payload.nickname = form.nickname
     try {
-      const data = await authApi.register(payload)
+      const data = await auth.register(payload)
       const user = data.user || { id: 1, phone: form.phone, nickname: form.nickname || '新用户' }
       setAuth(user, data.access || 'mock-access', data.refresh || 'mock-refresh')
       toast.success('注册成功，欢迎加入 ScriptForge！')

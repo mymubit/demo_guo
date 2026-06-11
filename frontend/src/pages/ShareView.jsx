@@ -14,7 +14,7 @@ import {
   Heart,
   Check,
 } from 'lucide-react'
-import { shareApi } from '@/services/api'
+import { share } from '@/services/api'
 
 export default function ShareView() {
   const { token } = useParams()
@@ -26,7 +26,7 @@ export default function ShareView() {
     const load = async () => {
       setLoading(true)
       try {
-        const res = await shareApi.view(token)
+        const res = await share.view(token)
         const data = (res && res.data) || null
         if (!data || !data.title) {
           throw new Error('no data')

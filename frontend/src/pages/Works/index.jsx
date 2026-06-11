@@ -18,7 +18,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { worksApi } from '@/services/api'
+import { works } from '@/services/api'
 
 const THEMES = [
   { key: 'family-revenge', name: '家庭伦理复仇', color: '#e53e3e', emoji: '⚔️' },
@@ -142,7 +142,7 @@ export default function Works() {
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await worksApi.list()
+        const data = await works.list()
         if (data && Array.isArray(data) && data.length > 0) {
           setWorks(data)
         }

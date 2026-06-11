@@ -15,7 +15,7 @@ import {
   CheckCircle2,
   Clock,
 } from 'lucide-react'
-import { adminApi } from '@/services/api'
+import { admin } from '@/services/api'
 
 export default function Dashboard() {
   const [stats, setStats] = useState({
@@ -47,7 +47,7 @@ export default function Dashboard() {
   useEffect(() => {
     async function loadData() {
       try {
-        const data = await adminApi.getDashboard()
+        const data = await admin.getDashboard()
         if (data) setStats({ ...stats, ...data })
       } catch (err) {
         // 回退到 mock 数据
