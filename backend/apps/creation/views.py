@@ -35,6 +35,7 @@ from .serializers import (
     ShareCreateResultSerializer,
     ShareViewSerializer,
 )
+from .models import Project
 from .services import CreationService
 
 logger = logging.getLogger(__name__)
@@ -80,6 +81,27 @@ class CreationSubmitView(APIView):
                 {"code": 403, "message": str(exc) or "无权限", "data": None},
                 status=status.HTTP_200_OK,
             )
+
+        # Celery fallback: 若 Celery 不可用则同步执行 pipeline
+        # 检测条件：project 还在 pending 状态（说明 .delay 没实际跑起来）
+        # 或 settings 显式配置了 SYNC_PIPELINE
+        try:
+            from django.conf import settings as django_settings
+
+            force_sync = getattr(
+                django_settings, "CREATION_FORCE_SYNC_PIPELINE", False
+            )
+            project.refresh_from_db(fields=["status"])
+            if force_sync or project.status == Project.STATUS_PENDING:
+                from .tasks import run_creation_pipeline_sync
+
+                logger.info(
+                    "[Creation] Celery 不可用, 回退到同步执行 project=%s",
+                    project.id,
+                )
+                run_creation_pipeline_sync(str(project.id))
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("[Creation] 同步 fallback 执行异常: %s", exc)
 
         result = CreationSubmitResultSerializer(
             {"task_id": str(project.id), "estimated_minutes": estimated_minutes}

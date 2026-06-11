@@ -40,6 +40,22 @@ class OrderViewSet(
     def get_object(self):
         return OrderService.get_order_detail(self.request.user, self.kwargs["pk"])
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(
+            {"code": 0, "message": "success", "data": serializer.data},
+            status=status.HTTP_200_OK,
+        )
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(
+            {"code": 0, "message": "success", "data": serializer.data},
+            status=status.HTTP_200_OK,
+        )
+
     @action(detail=False, methods=["post"])
     def create_order(self, request):
         """创建会员购买订单"""
@@ -52,14 +68,14 @@ class OrderViewSet(
         )
         if err:
             return Response(
-                {"success": False, "message": err},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"code": 400, "message": err, "data": None},
+                status=status.HTTP_200_OK,
             )
         return Response(
             {
-                "success": True,
+                "code": 0,
                 "message": "订单创建成功",
-                "order": OrderDetailSerializer(order).data,
+                "data": {"order": OrderDetailSerializer(order).data},
             },
             status=status.HTTP_201_CREATED,
         )
@@ -74,14 +90,14 @@ class OrderViewSet(
         ok, msg, order = PaymentService.process_mock_payment(order_no)
         if not ok:
             return Response(
-                {"success": False, "message": msg, "order": None},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"code": 400, "message": msg, "data": None},
+                status=status.HTTP_200_OK,
             )
         return Response(
             {
-                "success": True,
+                "code": 0,
                 "message": msg,
-                "order": OrderDetailSerializer(order).data,
+                "data": {"order": OrderDetailSerializer(order).data},
             },
             status=status.HTTP_200_OK,
         )
@@ -92,13 +108,18 @@ class OrderViewSet(
         order_no = request.data.get("order_no")
         if not order_no:
             return Response(
-                {"success": False, "message": "请提供订单号"},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"code": 400, "message": "请提供订单号", "data": None},
+                status=status.HTTP_200_OK,
             )
         ok, msg = OrderService.cancel_order(request.user, order_no)
+        if ok:
+            return Response(
+                {"code": 0, "message": msg, "data": None},
+                status=status.HTTP_200_OK,
+            )
         return Response(
-            {"success": ok, "message": msg},
-            status=status.HTTP_200_OK if ok else status.HTTP_400_BAD_REQUEST,
+            {"code": 400, "message": msg, "data": None},
+            status=status.HTTP_200_OK,
         )
 
 
@@ -112,5 +133,11 @@ class MyLatestOrderView(APIView):
             OrderService.get_user_orders(request.user).first()
         )
         if not order:
-            return Response({"detail": "暂无订单"}, status=status.HTTP_200_OK)
-        return Response(OrderDetailSerializer(order).data)
+            return Response(
+                {"code": 0, "message": "success", "data": None},
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {"code": 0, "message": "success", "data": OrderDetailSerializer(order).data},
+            status=status.HTTP_200_OK,
+        )

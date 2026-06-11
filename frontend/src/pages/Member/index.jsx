@@ -1,3 +1,74 @@
+/* =========================================================================
+ * Member（会员中心）—— API 调用说明（与 services/api.js 重构后的新模块对齐）
+ *
+ * 当前页面已经在使用 memberApi / orderApi，这些别名在 api.js 中仍被
+ * 导出为兼容命名（memberApi -> membership, orderApi -> orders），所以
+ * 现有的 import 无需修改即可工作。
+ *
+ * 建议后续逐步迁移到更语义化的命名空间：
+ *
+ *   import { membership, orders } from '@/services/api'
+ *
+ * 本页面应当调用的主要 API 方法如下：
+ *
+ *  1. 套餐列表（页面顶部"套餐选择"tab）
+ *     membership.plans()                       → GET  /api/membership/plans/
+ *       返回：{ id, name, price, validity, creation_quota, features[] }[]
+ *       位置建议：useEffect 初始化时调用，覆盖本地 PLANS 常量。
+ *
+ *  2. 当前用户的会员状态（"会员状态卡片"展示）
+ *     membership.myMembership()                → GET  /api/membership/me/
+ *       返回：{ plan, plan_name, is_active, expires_at, creation_quota_used,
+ *               creation_quota_total, redeemed_codes[] }
+ *       位置建议：与 plans 并行加载，失败时回退本地 mock 结构。
+ *
+ *  3. 会员汇总信息（可选：展示额度、到期等）
+ *     membership.summary()                     → GET  /api/membership/summary/
+ *
+ *  4. 卡密兑换历史（"卡密兑换"tab 中的兑换记录）
+ *     membership.history()                     → GET  /api/membership/history/
+ *
+ *  5. 卡密兑换（handleRedeem 中）
+ *     membership.redeem(code)                  → POST /api/membership/redeem/
+ *       body: { code }
+ *
+ *  6. 订单列表（"我的订单"tab）
+ *     orders.list(status?)                     → GET  /api/orders/?status=paid
+ *       status 可选：'paid' | 'pending' | 'cancelled'
+ *
+ *  7. 订单详情（如果后续加"查看详情"）
+ *     orders.detail(orderId)                   → GET  /api/orders/:id/
+ *
+ *  8. 下单（handlePurchase 中）
+ *     orders.createOrder({ plan_id, payment_method })
+ *                                                → POST /api/orders/create/
+ *       建议：payment_method 在演示环境传 'mock'，生产环境按实际接入传。
+ *
+ *  9. 演示支付（下单后的 mock 支付）
+ *     orders.mockPay(orderNo)                  → POST /api/orders/mock_pay/
+ *
+ * 10. 取消订单
+ *     orders.cancel(orderNo)                   → POST /api/orders/:orderNo/cancel/
+ *
+ * 11. 最近一笔订单（可选：在页面顶部展示"您最近的订单"）
+ *     orders.latest()                          → GET  /api/orders/latest/
+ *
+ * 所有请求会自动：
+ *   - 从 localStorage.getItem('scriptforge-auth') 读取 access token 并
+ *     附加 Authorization: Bearer <token>
+ *   - 解析后端响应 { code, message, data }：code===0 时 resolve(data)，
+ *     否则 reject；401 自动清登录态并跳 /login
+ *
+ * 因此页面中的调用处应改为 try/catch 包裹，并用 toast 提示错误消息：
+ *
+ *   try {
+ *     const data = await membership.plans()
+ *     setPlans(data)
+ *   } catch (err) {
+ *     toast.error(err.message || '加载失败')
+ *     // 保留本地 PLANS 作为回退
+ *   }
+ * ========================================================================= */
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'

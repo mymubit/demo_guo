@@ -28,6 +28,22 @@ class MembershipPlanViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     pagination_class = None
 
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(
+            {"code": 0, "message": "success", "data": serializer.data},
+            status=status.HTTP_200_OK,
+        )
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(
+            {"code": 0, "message": "success", "data": serializer.data},
+            status=status.HTTP_200_OK,
+        )
+
 
 class MyMembershipView(APIView):
     """我的会员：当前有效会员信息"""
@@ -37,9 +53,15 @@ class MyMembershipView(APIView):
     def get(self, request):
         membership = MembershipService.get_current_membership(request.user)
         if not membership:
-            return Response({"detail": "暂无有效会员"}, status=status.HTTP_200_OK)
+            return Response(
+                {"code": 0, "message": "success", "data": None},
+                status=status.HTTP_200_OK,
+            )
         serializer = UserMembershipSerializer(membership)
-        return Response(serializer.data)
+        return Response(
+            {"code": 0, "message": "success", "data": serializer.data},
+            status=status.HTTP_200_OK,
+        )
 
 
 class MembershipSummaryView(APIView):
@@ -50,7 +72,10 @@ class MembershipSummaryView(APIView):
     def get(self, request):
         summary = MembershipService.get_membership_summary(request.user)
         serializer = UserMembershipSummarySerializer(summary)
-        return Response(serializer.data)
+        return Response(
+            {"code": 0, "message": "success", "data": serializer.data},
+            status=status.HTTP_200_OK,
+        )
 
 
 class MyMembershipHistoryView(APIView):
@@ -65,7 +90,10 @@ class MyMembershipHistoryView(APIView):
             .order_by("-created_at")
         )
         serializer = UserMembershipSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response(
+            {"code": 0, "message": "success", "data": serializer.data},
+            status=status.HTTP_200_OK,
+        )
 
 
 class RedeemPromoCodeView(APIView):
@@ -94,5 +122,11 @@ class RedeemPromoCodeView(APIView):
         }
 
         if not success:
-            return Response(result, status=status.HTTP_400_BAD_REQUEST)
-        return Response(result, status=status.HTTP_200_OK)
+            return Response(
+                {"code": 400, "message": message, "data": None},
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {"code": 0, "message": "兑换成功", "data": result},
+            status=status.HTTP_200_OK,
+        )

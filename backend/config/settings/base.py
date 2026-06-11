@@ -252,8 +252,25 @@ SKILL_ENCRYPT_KEY = os.getenv("SKILL_ENCRYPT_KEY", "0123456789012345678901234567
 ENCRYPT_PHONE_KEY = os.getenv("ENCRYPT_PHONE_KEY", "phone-encrypt-key-change-me")
 ENCRYPT_EMAIL_KEY = os.getenv("ENCRYPT_EMAIL_KEY", "email-encrypt-key-change-me")
 
-# 签名验证时间窗口（秒）
-SIGNATURE_TIME_WINDOW = 300  # 5分钟
+
+# Security - 安全中间件开关
+# 签名验证：生产环境建议开启，开发/前端调试阶段建议关闭
+SECURITY_SIGNATURE_ENABLED = False  # 默认关闭，避免前端调试被 401 拦截
+SECURITY_SIGNATURE_SKIP_PATHS = ("/api/auth/", "/health", "/api/health/")
+
+# 限流：默认每 IP+用户每分钟 60 次；匿名用户 30 次
+SECURITY_RATE_LIMIT_ENABLED = True
+SECURITY_RATE_LIMIT_SKIP_PATHS = ("/api/auth/", "/api/health/")
+
+# 审计日志：默认开启；如 Redis 不可用可关闭
+SECURITY_AUDIT_ENABLED = True
+SECURITY_AUDIT_SKIP_PATHS = ("/api/health/",)
+
+# 签名密钥（与前端共享）
+# 注意：生产环境必须修改为安全随机值
+API_SIGN_SECRET = os.getenv("API_SIGN_SECRET", "scriptforge-demo-sign-secret-change-me")
+# 签名时间窗口（秒）
+SIGNATURE_TIME_WINDOW = 300  # 5 分钟
 
 
 # 文件存储

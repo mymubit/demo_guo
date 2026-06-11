@@ -3,6 +3,9 @@
 所有接口统一使用 permission_classes = [IsAuthenticated, IsSuperAdmin]
 - 统计数据使用 Redis 缓存 5 分钟，以避免频繁聚合
 - 操作审计日志由 apps.security.middleware.AuditLogMiddleware 自动记录
+
+技能配置/题材模板/钩子库 直接对接 apps.skill.models 中的数据库表，
+通过 SkillConfig.set_encrypted_value / get_decrypted_value 等方法加密存储。
 """
 import secrets
 import string
@@ -27,6 +30,8 @@ from apps.common.pagination import StandardPagination
 from apps.users.models import User
 from apps.membership.models import MembershipPlan, UserMembership, PromoCode
 from apps.orders.models import Order, Payment
+
+from apps.skill.models import SkillConfig, ThemeTemplate, HookLibrary
 
 from .serializers import (
     # 用户
@@ -54,8 +59,6 @@ from .serializers import (
     # 系统
     SystemSettingsSerializer,
     CacheClearResultSerializer,
-    _skill_encrypt,
-    _skill_decrypt,
 )
 
 
@@ -66,6 +69,39 @@ CACHE_KEY_DASHBOARD = "admin:dashboard:summary"
 CACHE_KEY_STATS = "admin:stats:summary"
 CACHE_KEY_SKILL_CONFIG_PREFIX = "admin:skill:config:"
 CACHE_TTL = 60 * 5  # 5 分钟
+
+
+# 敏感 key 关键词（命中则列表返回时 value 显示为 ******）
+_SENSITIVE_KEY_TOKENS = ("api_key", "secret", "password", "token")
+
+
+def _is_sensitive_key(key: str) -> bool:
+    k = (key or "").lower()
+    return any(tok in k for tok in _SENSITIVE_KEY_TOKENS)
+
+
+# 取自 skill.services.SkillConfigService.DEFAULT_CONFIGS，保持与 skill 模块的默认配置一致，
+# 避免在 admin_panel 中重复维护一份独立的默认配置列表。
+# 注意：这里显式声明一份副本以避免引入循环依赖风险；若 skill/services.py 改动，
+# 请同步更新此列表。
+_DEFAULT_CONFIG_KEYS = [
+    "llm.api_endpoint",
+    "llm.api_key",
+    "llm.temperature",
+    "llm.max_tokens",
+    "llm.model",
+    "llm.enabled",
+    "skill.version",
+    "skill.active_nodes",
+    "review.format_score_weight",
+    "review.rhythm_score_weight",
+    "review.content_score_weight",
+    "review.production_score_weight",
+    "review.pass_threshold",
+    "export.default_format",
+    "export.enable_watermark",
+    "compliance.sensitive_words",
+]
 
 
 # ============================================================
@@ -86,7 +122,8 @@ def _random_password(length: int = 12) -> str:
     return "".join(pwd)
 
 
-def _ok(data=None, message: str = "ok", code: int = 0, http_status: int = status.HTTP_200_OK):
+def _ok(data=None, message: str = "success", code: int = 0,
+        http_status: int = status.HTTP_200_OK):
     """统一响应包装"""
     return Response(
         {"code": code, "message": message, "data": data},
@@ -94,7 +131,8 @@ def _ok(data=None, message: str = "ok", code: int = 0, http_status: int = status
     )
 
 
-def _fail(message: str, code: int = 400, http_status: int = status.HTTP_200_OK, data=None):
+def _fail(message: str, code: int = 400, http_status: int = status.HTTP_200_OK,
+          data=None):
     return Response(
         {"code": code, "message": message, "data": data},
         status=http_status,
@@ -360,7 +398,7 @@ class MembershipPlanViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         cache.delete(CACHE_KEY_DASHBOARD)
-        return _ok(serializer.data, message="套餐已创建", code=0, http_status=status.HTTP_201_CREATED)
+        return _ok(serializer.data, message="套餐已创建", http_status=status.HTTP_201_CREATED)
 
     def update(self, request, *args, **kwargs):
         partial = kwargs.get("partial", False)
@@ -434,225 +472,261 @@ class PromoCodeGenerateView(APIView):
 
 
 # ============================================================
-# 技能配置管理
+# 技能配置管理（对接 apps.skill.models.SkillConfig）
 # ============================================================
 
 class SkillConfigView(APIView):
-    """技能配置管理（带加解密）
+    """技能配置管理（对接 apps.skill.models.SkillConfig 表）
 
-    - GET  /api/admin/skill/configs/                   列出全部配置（解密后返回明文）
-    - PUT  /api/admin/skill/configs/<key>/             更新/新增某条配置（前端传明文，后端加密存储）
+    - GET  /api/admin/skill/configs/           列出全部配置（含默认列表；敏感项 value 显示为 ******）
+    - GET  /api/admin/skill/configs/<key>/     查询单条配置（明文，仅超级管理员可用）
+    - PUT  /api/admin/skill/configs/<key>/     更新/新增某条配置（明文 -> set_encrypted_value 加密存储）
     """
 
     permission_classes = [IsAuthenticated, IsSuperAdmin]
 
-    # 默认内置配置项（首次访问时写入）：
-    # - 这些配置项实际存储在 Django cache 之外的简易持久化层（DB KeyValue 表）
-    # - 为保持零额外模型迁移依赖，这里使用 Redis cache + 本地 JSON 文件双重存储
-    # - 若你希望改为 DB 存储，请在本目录下新增 models.py 并替换 _load/_save 实现
-
-    STORAGE_KEY = "admin:skill:configs:storage"
-    DEFAULT_CONFIGS = {
-        "OPENAI_API_KEY": {"value": "", "description": "OpenAI API Key（加密存储）"},
-        "OPENAI_BASE_URL": {"value": "https://api.openai.com/v1", "description": "OpenAI Base URL"},
-        "DEFAULT_MODEL": {"value": "gpt-4o-mini", "description": "默认模型名称"},
-        "MAX_TOKENS_PER_REQUEST": {"value": "4096", "description": "单次请求最大 tokens"},
-        "CREATION_QUOTA_FREE": {"value": "3", "description": "免费用户每日创作次数"},
-    }
-
-    def _load_configs(self):
-        """从缓存读取全部配置；首次读取时以默认值初始化"""
-        stored = cache.get(self.STORAGE_KEY)
-        if not stored or not isinstance(stored, dict):
-            stored = {k: dict(v) for k, v in self.DEFAULT_CONFIGS.items()}
-            # 默认值以空值方式初始化（明文）；调用方 PUT 后才会真正加密保存
-            cache.set(self.STORAGE_KEY, stored, timeout=None)  # 永久
-        return stored
-
-    def _save_configs(self, configs):
-        cache.set(self.STORAGE_KEY, configs, timeout=None)
-        # 更新后清除相关缓存（让下次读取生效）
-        cache.delete_pattern(CACHE_KEY_SKILL_CONFIG_PREFIX + "*")
+    def _get_default_configs(self):
+        """返回 skill 模块默认配置的 key 集合（用于补充 DB 中尚无记录的 key）"""
+        return set(_DEFAULT_CONFIG_KEYS)
 
     def get(self, request, key=None):
+        # 单条查询
         if key:
-            configs = self._load_configs()
-            if key not in configs:
+            obj = SkillConfig.objects.filter(config_key=key).first()
+            if obj is None:
                 return _fail(f"配置项 {key} 不存在")
-            item = configs[key]
-            raw = item.get("value", "")
-            plain = _skill_decrypt(raw) if raw.startswith("ENC:") else raw
+            plain = obj.get_decrypted_value() or ""
+            # 单条查询不做脱敏，保证管理员能看到完整明文（前端可按需自行遮盖）
             data = {
-                "key": key,
+                "key": obj.config_key,
                 "value": plain,
-                "description": item.get("description", ""),
-                "updated_at": item.get("updated_at"),
+                "description": obj.description or "",
+                "updated_at": obj.updated_at,
             }
             serializer = SkillConfigSerializer(data=data)
             serializer.is_valid(raise_exception=True)
             return _ok(serializer.validated_data)
 
-        # 列表
-        configs = self._load_configs()
+        # 列表查询：DB 记录 + 默认列表中尚未落库的 key，合并后统一返回
+        db_map = {}
+        for sc in SkillConfig.objects.all():
+            plain = sc.get_decrypted_value() or ""
+            db_map[sc.config_key] = {
+                "key": sc.config_key,
+                "value": plain,
+                "description": sc.description or "",
+                "updated_at": sc.updated_at,
+            }
+
+        all_keys = set(db_map.keys()) | self._get_default_configs()
         items = []
-        for k, v in configs.items():
-            raw = v.get("value", "")
-            plain = _skill_decrypt(raw[4:]) if isinstance(raw, str) and raw.startswith("ENC:") else raw
-            items.append(
-                {
-                    "key": k,
-                    "value": plain,
-                    "description": v.get("description", ""),
-                    "updated_at": v.get("updated_at"),
-                }
-            )
+        for k in sorted(all_keys):
+            base = db_map.get(k, {
+                "key": k,
+                "value": "",
+                "description": "",
+                "updated_at": None,
+            })
+            # 敏感项：列表显示时遮盖为 ******
+            display_value = "******" if _is_sensitive_key(k) else base.get("value", "")
+            items.append({
+                "key": base["key"],
+                "value": display_value,
+                "description": base.get("description", ""),
+                "updated_at": base.get("updated_at"),
+            })
+
         serializer = SkillConfigSerializer(items, many=True)
         return _ok(serializer.data)
 
     def put(self, request, key=None):
         if not key:
             return _fail("请在 URL 中提供配置 key")
-        input_ser = SkillConfigUpdateSerializer(data=request.data)
+        input_ser = SkillConfigUpdateSerializer(data=request.data or {})
         input_ser.is_valid(raise_exception=True)
-        new_value = input_ser.validated_data["value"]
+        new_value = input_ser.validated_data.get("value", "")
         new_description = input_ser.validated_data.get("description", "")
 
-        configs = self._load_configs()
-        # 加密存储：以 ENC: 前缀标识已加密值
-        encrypted = "ENC:" + _skill_encrypt(new_value)
-        configs[key] = {
-            "value": encrypted,
-            "description": new_description,
-            "updated_at": timezone.now().isoformat(),
-        }
-        self._save_configs(configs)
+        # 通过 SkillConfig.set_encrypted_value 加密存储（与 skill 模块加密实现一致）
+        obj, created = SkillConfig.objects.update_or_create(
+            config_key=key,
+            defaults={
+                "description": new_description or key,
+            },
+        )
+        obj.set_encrypted_value(str(new_value))
+        obj.save()
 
-        # 清除 dashboard 和统计缓存，确保配置更改对下游生效
+        # 清除 skill 模块相关的缓存前缀，让下游读取生效
+        try:
+            cache.delete_pattern("skill:config:*")
+        except Exception:
+            pass
         cache.delete(CACHE_KEY_DASHBOARD)
         cache.delete(CACHE_KEY_STATS)
 
         data = {
-            "key": key,
+            "key": obj.config_key,
             "value": new_value,
-            "description": new_description,
-            "updated_at": configs[key]["updated_at"],
+            "description": obj.description,
+            "updated_at": obj.updated_at,
         }
         return _ok(data, message="配置已更新")
 
 
+# ============================================================
+# 题材模板管理（对接 apps.skill.models.ThemeTemplate）
+# ============================================================
+
 class ThemeTemplateView(APIView):
-    """题材模板列表 + 新增"""
+    """题材模板：列表 / 新增（对接 apps.skill.models.ThemeTemplate 表）"""
 
     permission_classes = [IsAuthenticated, IsSuperAdmin]
-    STORAGE_KEY = "admin:skill:themes:storage"
-
-    def _load(self):
-        stored = cache.get(self.STORAGE_KEY)
-        if not stored or not isinstance(stored, list):
-            stored = [
-                {
-                    "id": "theme-default-romance",
-                    "name": "都市甜宠",
-                    "category": "爱情",
-                    "prompt_template": "以 2024 年都市为背景，写一个甜宠短剧的开场。",
-                    "is_active": True,
-                    "sort_order": 1,
-                },
-                {
-                    "id": "theme-default-suspense",
-                    "name": "悬疑反转",
-                    "category": "悬疑",
-                    "prompt_template": "写一部 5 集悬疑短剧，前三集铺垫，第四集反转。",
-                    "is_active": True,
-                    "sort_order": 2,
-                },
-            ]
-            cache.set(self.STORAGE_KEY, stored, timeout=None)
-        return stored
-
-    def _save(self, items):
-        cache.set(self.STORAGE_KEY, items, timeout=None)
-        cache.delete(CACHE_KEY_DASHBOARD)
 
     def get(self, request):
-        items = self._load()
+        qs = ThemeTemplate.objects.all().order_by("sort_order", "-created_at")
+        items = []
+        for t in qs:
+            # 字段映射：将 ThemeTemplate 表字段映射为前端期望的字段
+            prompt = ""
+            try:
+                params = t.params or {}
+                hook_types = params.get("hook_types") if isinstance(params, dict) else []
+                if hook_types and isinstance(hook_types, list):
+                    prompt = ",".join(str(x) for x in hook_types)
+            except Exception:
+                prompt = ""
+
+            items.append({
+                "id": str(t.id),
+                "name": t.theme_name or "",
+                "category": t.theme_code or "",
+                "prompt_template": prompt,
+                "is_active": bool(t.is_active),
+                "sort_order": int(t.sort_order or 0),
+                "created_at": t.created_at,
+                "updated_at": t.updated_at,
+            })
         serializer = ThemeTemplateSerializer(items, many=True)
         return _ok(serializer.data)
 
     def post(self, request):
-        serializer = ThemeTemplateSerializer(data=request.data)
+        serializer = ThemeTemplateSerializer(data=request.data or {})
         serializer.is_valid(raise_exception=True)
-        items = self._load()
-        new_item = dict(serializer.validated_data)
-        new_item["id"] = f"theme-{secrets.token_hex(6)}"
-        new_item["created_at"] = timezone.now().isoformat()
-        new_item["updated_at"] = timezone.now().isoformat()
-        items.append(new_item)
-        self._save(items)
-        return _ok(new_item, message="题材已创建", http_status=status.HTTP_201_CREATED)
+        v = serializer.validated_data
+
+        theme_code = v.get("category") or f"custom-{secrets.token_hex(6)}"
+        theme_name = v.get("name")
+        if not theme_name:
+            return _fail("题材名称不能为空")
+
+        obj = ThemeTemplate.objects.create(
+            theme_code=theme_code,
+            theme_name=theme_name,
+            is_active=bool(v.get("is_active", True)),
+            sort_order=int(v.get("sort_order", 0) or 0),
+            description="",
+        )
+        cache.delete(CACHE_KEY_DASHBOARD)
+
+        data = {
+            "id": str(obj.id),
+            "name": obj.theme_name,
+            "category": obj.theme_code,
+            "prompt_template": "",
+            "is_active": bool(obj.is_active),
+            "sort_order": obj.sort_order,
+            "created_at": obj.created_at,
+            "updated_at": obj.updated_at,
+        }
+        return _ok(data, message="题材已创建", http_status=status.HTTP_201_CREATED)
 
 
 class ThemeTemplateDetailView(APIView):
-    """题材模板更新"""
+    """题材模板更新（对接 apps.skill.models.ThemeTemplate 表）"""
 
     permission_classes = [IsAuthenticated, IsSuperAdmin]
 
-    def put(self, request, theme_id):
-        serializer = ThemeTemplateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        items = ThemeTemplateView()._load()
-        for idx, item in enumerate(items):
-            if str(item.get("id")) == str(theme_id):
-                new_data = dict(serializer.validated_data)
-                new_data["id"] = item["id"]
-                new_data["created_at"] = item.get("created_at")
-                new_data["updated_at"] = timezone.now().isoformat()
-                items[idx] = new_data
-                ThemeTemplateView()._save(items)
-                return _ok(new_data, message="题材已更新")
-        return _fail("题材不存在")
+    def put(self, request, theme_id=None):
+        try:
+            obj = ThemeTemplate.objects.get(pk=theme_id)
+        except ThemeTemplate.DoesNotExist:
+            return _fail("题材不存在")
 
+        serializer = ThemeTemplateSerializer(data=request.data or {})
+        serializer.is_valid(raise_exception=True)
+        v = serializer.validated_data
+
+        obj.theme_name = v.get("name", obj.theme_name)
+        obj.theme_code = v.get("category", obj.theme_code)
+        obj.is_active = bool(v.get("is_active", obj.is_active))
+        obj.sort_order = int(v.get("sort_order", obj.sort_order) or 0)
+        obj.save()
+
+        data = {
+            "id": str(obj.id),
+            "name": obj.theme_name,
+            "category": obj.theme_code,
+            "prompt_template": "",
+            "is_active": bool(obj.is_active),
+            "sort_order": obj.sort_order,
+            "created_at": obj.created_at,
+            "updated_at": obj.updated_at,
+        }
+        return _ok(data, message="题材已更新")
+
+
+# ============================================================
+# 钩子库管理（对接 apps.skill.models.HookLibrary）
+# ============================================================
 
 class HookView(APIView):
-    """钩子库：列表 + 新增"""
+    """钩子库：列表 / 新增（对接 apps.skill.models.HookLibrary 表）"""
 
     permission_classes = [IsAuthenticated, IsSuperAdmin]
-    STORAGE_KEY = "admin:skill:hooks:storage"
-
-    def _load(self):
-        stored = cache.get(self.STORAGE_KEY)
-        if not stored or not isinstance(stored, list):
-            stored = [
-                {
-                    "id": "hook-default-1",
-                    "name": "五分钟定律开场",
-                    "hook_type": "opening",
-                    "content": "在开场五分钟内抛出悬念事件，引出主角。",
-                    "is_active": True,
-                },
-            ]
-            cache.set(self.STORAGE_KEY, stored, timeout=None)
-        return stored
-
-    def _save(self, items):
-        cache.set(self.STORAGE_KEY, items, timeout=None)
-        cache.delete(CACHE_KEY_DASHBOARD)
 
     def get(self, request):
-        items = self._load()
+        qs = HookLibrary.objects.all().order_by("-use_count", "-created_at")
+        items = []
+        for h in qs:
+            snippet = (h.content or "")[:20]
+            items.append({
+                "id": str(h.id),
+                "name": snippet + ("..." if len(h.content or "") > 20 else ""),
+                "hook_type": h.hook_type or "opening",
+                "content": h.content or "",
+                "is_active": bool(h.is_active),
+                "created_at": h.created_at,
+            })
         serializer = HookSerializer(items, many=True)
         return _ok(serializer.data)
 
     def post(self, request):
-        serializer = HookSerializer(data=request.data)
+        serializer = HookSerializer(data=request.data or {})
         serializer.is_valid(raise_exception=True)
-        items = self._load()
-        new_item = dict(serializer.validated_data)
-        new_item["id"] = f"hook-{secrets.token_hex(6)}"
-        new_item["created_at"] = timezone.now().isoformat()
-        items.append(new_item)
-        self._save(items)
-        return _ok(new_item, message="钩子已创建", http_status=status.HTTP_201_CREATED)
+        v = serializer.validated_data
+
+        content = v.get("content")
+        if not content:
+            return _fail("钩子内容不能为空")
+
+        obj = HookLibrary.objects.create(
+            hook_type=v.get("hook_type", "opening"),
+            content=content,
+            tags="",
+            is_active=bool(v.get("is_active", True)),
+        )
+
+        snippet = (obj.content or "")[:20]
+        data = {
+            "id": str(obj.id),
+            "name": snippet + ("..." if len(obj.content or "") > 20 else ""),
+            "hook_type": obj.hook_type,
+            "content": obj.content,
+            "is_active": bool(obj.is_active),
+            "created_at": obj.created_at,
+        }
+        return _ok(data, message="钩子已创建", http_status=status.HTTP_201_CREATED)
 
 
 # ============================================================
@@ -874,9 +948,6 @@ class CacheClearView(APIView):
         targets = [
             CACHE_KEY_DASHBOARD,
             CACHE_KEY_STATS,
-            SkillConfigView.STORAGE_KEY,
-            ThemeTemplateView.STORAGE_KEY,
-            HookView.STORAGE_KEY,
         ]
         for k in targets:
             if cache.delete(k):
@@ -886,6 +957,7 @@ class CacheClearView(APIView):
             # cache.delete_pattern 由 django-redis 提供；若后端不支持则静默跳过
             cleared += cache.delete_pattern(CACHE_KEY_SKILL_CONFIG_PREFIX + "*") or 0
             cleared += cache.delete_pattern("admin:*") or 0
+            cleared += cache.delete_pattern("skill:config:*") or 0
         except Exception:
             pass
 

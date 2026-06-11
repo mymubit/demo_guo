@@ -1,14 +1,17 @@
 """
-作品管理 API 视图
+我的作品 API 视图
 
 路由 /api/works/...
 
-  GET /              我的作品列表（分页）
-  GET /<id>/         作品详情（仅预渲染 HTML，不暴露原始剧本数据结构）
-  GET /<id>/share/ 分享信息（同 creation.share 的作品详情分享接口）
+接口：
+  GET  /api/works/                我的作品列表（支持 status 过滤 + 分页）
+  GET  /api/works/<project_id>/   作品详情（返回 rendered_result_html + 元信息）
+  POST /api/works/<project_id>/share/  生成分享链接（复用 CreationShareCreateView 逻辑）
 
-注意：
-- 所有内容以 HTML 片段形式返回，绝不包含原始剧本正文的 JSON 结构。
+安全设计：
+- 所有需要身份认证的接口使用 IsAuthenticated
+- 绝不将原始剧本数据结构返回给前端
+- 作品详情仅以预渲染 HTML 形式提供剧本内容
 """
 
 import logging
@@ -19,8 +22,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.common.pagination import StandardPagination
-from .serializers import ProjectListSerializer
+from .models import Project
+from .serializers import (
+    ProjectListSerializer,
+    ShareCreateSerializer,
+    ShareCreateResultSerializer,
+)
 from .services import CreationService
 
 logger = logging.getLogger(__name__)
@@ -29,54 +36,120 @@ logger = logging.getLogger(__name__)
 # ============================================================
 # 1. 我的作品列表
 # ============================================================
-class WorksListView(APIView):
+class WorkListView(APIView):
     """我的作品列表
 
-    GET /api/works/?status=completed&page=1&page_size=10
+    GET /api/works/?status=pending&page=1&page_size=20
 
-    仅返回列表元信息（标题、题材、集数、状态、创建时间），
-    绝不包含剧本正文。
+    Query 参数：
+      - status: 可选, pending / running / completed / failed
+      - page: 页码, 默认 1
+      - page_size: 每页数量, 默认 20, 最大 100
+
+    Response:
+      {
+        "code": 0,
+        "message": "success",
+        "data": {
+          "items": [
+            { "project_id": "...", "title": "...", "theme": "...",
+              "episode_count": 30, "format_variant": "B", "status": "completed",
+              "status_text": "已完成", "progress_percent": 100,
+              "created_at": "...", "updated_at": "..." }
+          ],
+          "total": 100,
+          "page": 1,
+          "page_size": 20,
+          "total_pages": 5
+        }
+      }
     """
 
     permission_classes = [IsAuthenticated]
-    pagination_class = StandardPagination
 
     def get(self, request):
+        # 解析查询参数
         status_filter = request.GET.get("status", "").strip()
-        qs = CreationService.list_user_projects(
-            request.user, status_filter=status_filter or None
-        )
+        try:
+            page = max(1, int(request.GET.get("page", "1")))
+        except ValueError:
+            page = 1
+        try:
+            page_size = min(100, max(1, int(request.GET.get("page_size", "20"))))
+        except ValueError:
+            page_size = 20
+
+        # 获取当前用户的作品列表
+        qs = CreationService.list_user_projects(request.user, status_filter or None)
+        total = qs.count()
 
         # 分页
-        paginator = StandardPagination()
-        page = paginator.paginate_queryset(qs, request, view=self)
+        start = (page - 1) * page_size
+        end = start + page_size
+        items_qs = list(qs[start:end])
 
-        serializer = ProjectListSerializer(page, many=True)
+        # 传入 model 实例给 Serializer（SerializerMethodField 会读取 obj.get_status_display）
+        items = ProjectListSerializer(instance=items_qs, many=True)
 
-        return paginator.get_paginated_response(serializer.data)
+        total_pages = (total + page_size - 1) // page_size if page_size > 0 else 0
+
+        return Response(
+            {
+                "code": 0,
+                "message": "success",
+                "data": {
+                    "items": items.data,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size,
+                    "total_pages": total_pages,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 # ============================================================
-# 2. 作品详情（只返回预渲染 HTML 片段）
+# 2. 作品详情
 # ============================================================
-class WorksDetailView(APIView):
+class WorkDetailView(APIView):
     """作品详情
 
     GET /api/works/<project_id>/
 
-    返回：
-      - 基本元信息（title/theme/episode_count/status）
-      - rendered_result_html：已完成作品的预渲染 HTML 片段
-      - rendered_progress_html：进度卡片 HTML 片段
+    返回元信息 + 预渲染 HTML 片段（含数字水印）。
+    绝不暴露原始剧本数据结构。
 
-    绝不返回原始剧本的 JSON 数据结构。
+    Response:
+      {
+        "code": 0,
+        "message": "success",
+        "data": {
+          "project_id": "...",
+          "title": "...",
+          "theme": "...",
+          "episode_count": 30,
+          "format_variant": "B",
+          "audience": "",
+          "reference_work": "",
+          "status": "completed",
+          "status_text": "已完成",
+          "progress_percent": 100,
+          "total_duration_minutes": 3,
+          "created_at": "...",
+          "updated_at": "...",
+          "completed_at": "...",
+          "rendered_result_html": "<div>...</div>",
+          "rendered_progress_html": "<div>...</div>"
+        }
+      }
     """
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request, project_id: str):
         try:
-            detail = CreationService.get_project_detail(project_id, request.user)
+            data = CreationService.get_project_detail(project_id, request.user)
         except PermissionDenied as exc:
             return Response(
                 {"code": 403, "message": str(exc) or "无权限", "data": None},
@@ -84,27 +157,99 @@ class WorksDetailView(APIView):
             )
 
         return Response(
-            {"code": 0, "message": "success", "data": detail},
+            {"code": 0, "message": "success", "data": data},
             status=status.HTTP_200_OK,
         )
 
 
 # ============================================================
-# 3. 作品分享信息（列表接口中分享按钮直接复用 creation.views 的分享生成）
-# 简化：在作品详情页可直接调用 /api/creation/share/<project_id>/ 生成分享，
-# 这里仅保留一个便捷接口，方便前端直接拿分享链接
+# 3. 生成分享链接（与 CreationShareCreateView 相同逻辑）
 # ============================================================
-class WorksShareView(APIView):
-    """为作品生成分享链接（与 creation.share 语义一致）
+class WorkShareCreateView(APIView):
+    """为作品生成分享链接
 
     POST /api/works/<project_id>/share/
-    Body: { "view_limit": 100, "valid_days": 7, "allow_download": false }
+    Body（可选）:
+      {
+        "view_limit": 100,
+        "valid_days": 7,
+        "allow_download": false,
+        "custom_title": ""
+      }
     """
 
     permission_classes = [IsAuthenticated]
 
     def post(self, request, project_id: str):
-        # 复用 creation 模块的分享生成
-        from .views import CreationShareCreateView
+        serializer = ShareCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        params = serializer.validated_data
 
-        return CreationShareCreateView.as_view()(request, project_id=project_id)
+        try:
+            result = CreationService.generate_share_link(
+                project_id=project_id,
+                user=request.user,
+                view_limit=params.get("view_limit", 100),
+                valid_days=params.get("valid_days", 7),
+                allow_download=params.get("allow_download", False),
+                custom_title=params.get("custom_title", ""),
+            )
+        except PermissionDenied as exc:
+            return Response(
+                {"code": 403, "message": str(exc) or "无权限", "data": None},
+                status=status.HTTP_200_OK,
+            )
+
+        result_serializer = ShareCreateResultSerializer(result)
+        return Response(
+            {"code": 0, "message": "success", "data": result_serializer.data},
+            status=status.HTTP_200_OK,
+        )
+
+
+# ============================================================
+# 4. 作品统计（可选：给前端 /works 页面顶部展示摘要）
+# ============================================================
+class WorkStatsView(APIView):
+    """我的作品统计摘要
+
+    GET /api/works/stats/
+
+    Response:
+      {
+        "code": 0,
+        "message": "success",
+        "data": {
+          "total": 42,
+          "pending": 2,
+          "running": 1,
+          "completed": 38,
+          "failed": 1
+        }
+      }
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        qs = CreationService.list_user_projects(request.user)
+        total = qs.count()
+        pending = qs.filter(status=Project.STATUS_PENDING).count()
+        running = qs.filter(status=Project.STATUS_RUNNING).count()
+        completed = qs.filter(status=Project.STATUS_COMPLETED).count()
+        failed = qs.filter(status=Project.STATUS_FAILED).count()
+
+        return Response(
+            {
+                "code": 0,
+                "message": "success",
+                "data": {
+                    "total": total,
+                    "pending": pending,
+                    "running": running,
+                    "completed": completed,
+                    "failed": failed,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
