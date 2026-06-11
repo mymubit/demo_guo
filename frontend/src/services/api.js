@@ -362,37 +362,9 @@ const skill = {
 }
 
 // ============================================================
-//                            统一导出
+//                    模块：admin（后台管理）
 // ============================================================
-export { auth, users, membership, orders, creation, works, skill }
-
-/**
- * 兼容老代码的命名导出（Member / Profile 页面仍在使用）：
- *   authApi / userApi / memberApi / orderApi / creationApi / worksApi / skillApi
- * 调用方式不变，但底层统一走新的 request 管道。
- */
-export const authApi = auth
-export const userApi = users
-export const memberApi = membership
-export const orderApi = orders
-export const creationApi = creation
-export const worksApi = works
-export const skillApi = skill
-
-/**
- * 分享页（公开接口，不需要登录）
- * 保持与老代码一致的命名
- */
-export const shareApi = {
-  view: (token) => creation.shareView(token),
-  download: (token, format) => creation.dlByToken(token, format),
-}
-
-/**
- * 后台管理 API（保留原有结构，路径不变）
- * 同样走统一 request 管道，从而自动附带鉴权与响应解析
- */
-export const adminApi = {
+const admin = {
   getDashboard: () => request('GET', '/api/admin/dashboard/'),
   getUsers: (page = 1) => request('GET', '/api/admin/users/', { params: { page } }),
   toggleUserActive: (id) => request('POST', `/api/admin/users/${id}/toggle_active/`),
@@ -411,11 +383,21 @@ export const adminApi = {
     request('POST', '/api/admin/members/codes/generate/', { data }),
 }
 
-/** 供外部直接使用 baseURL */
-export const API_BASE = API_BASE_URL
+// ============================================================
+//                    模块：share（公开分享页）
+// ============================================================
+const share = {
+  view: (token) => creation.shareView(token),
+  download: (token, format) => creation.dlByToken(token, format),
+}
 
-/** 原始请求函数（供特殊场景使用，例如调用未规范化的接口） */
+// ============================================================
+//                         统一导出
+// ============================================================
+export const API_BASE = API_BASE_URL
 export const rawRequest = request
+
+export { auth, users, membership, orders, creation, works, skill, admin, share }
 
 export default {
   auth,
@@ -425,5 +407,7 @@ export default {
   creation,
   works,
   skill,
+  admin,
+  share,
   API_BASE,
 }
