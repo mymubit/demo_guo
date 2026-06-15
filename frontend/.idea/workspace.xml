@@ -2,90 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="0e5ae3e8-a74d-44b5-8554-1a949c89ede0" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/.env.example" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/admin_panel/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/admin_panel/apps.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/admin_panel/serializers.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/admin_panel/urls.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/admin_panel/views.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/common/exceptions.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/common/exceptions.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/creation/admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/engine/node1_input.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/creation/engine/node1_input.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/engine/node2_structure.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/creation/engine/node2_structure.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/engine/node3_character.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/creation/engine/node3_character.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/engine/node4_outline.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/creation/engine/node4_outline.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/engine/node6_review.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/creation/engine/node6_review.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/creation/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/creation/serializers.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/services.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/creation/services.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/tasks.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/creation/tasks.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/urls.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/urls_works.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/views.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/views_works.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/membership/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/membership/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/membership/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/membership/serializers.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/membership/services.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/membership/services.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/membership/urls.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/membership/views.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/orders/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/orders/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/orders/services.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/orders/services.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/orders/urls.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/orders/views.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/security/middleware.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/security/middleware.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/security/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/security/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/security/services.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/security/services.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/skill/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/skill/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/skill/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/skill/admin.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/skill/engine/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/skill/management/commands/init_skill_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/skill/management/commands/init_skill_data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/skill/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/skill/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/skill/serializers.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/skill/services.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/skill/urls.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/skill/views.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/users/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/users/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/users/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/users/serializers.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/users/urls.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/users/urls_auth.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/users/views.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/apps/users/views_auth.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/config/settings/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/config/settings/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/config/settings/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/config/settings/base.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/config/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/config/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/config/wsgi.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/config/wsgi.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/manage.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/manage.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../backend/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../docker-compose.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/App.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/layout/AdminLayout.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/AdminLayout.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/layout/MainLayout.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/MainLayout.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Admin/Dashboard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Admin/Dashboard.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Admin/Login.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Admin/Login.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Admin/Members.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Admin/Members.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Admin/Orders.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Admin/Orders.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Admin/SkillConfig.jsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Admin/Users.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Admin/Users.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Auth/Login.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Auth/Login.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Auth/Register.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Auth/Register.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Creation/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Creation/index.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Home/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Home/index.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Member/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Member/index.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/pages/NotFound.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/NotFound.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Profile/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Profile/index.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/ShareView.jsx" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Works/Detail.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Works/Detail.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/pages/Works/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Works/index.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/services/api.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/services/api.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/store/authStore.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/store/authStore.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/store/memberStore.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/styles/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/styles/globals.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tailwind.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/tailwind.config.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/vite.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/vite.config.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -143,7 +62,7 @@
       <workItem from="1781171230509" duration="2062000" />
       <workItem from="1781221682450" duration="2639000" />
       <workItem from="1781306651674" duration="3137000" />
-      <workItem from="1781483165320" duration="2984000" />
+      <workItem from="1781483165320" duration="3578000" />
     </task>
     <servers />
   </component>

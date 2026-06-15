@@ -91,9 +91,9 @@ export default function NotFound() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
               { name: '首页', icon: Home, path: '/' },
-              { name: '开始创作', icon: Film, path: '/' },
-              { name: '我的作品', icon: Film, path: '/' },
-              { name: '会员中心', icon: Film, path: '/' },
+              { name: '开始创作', icon: Film, path: '/creation' },
+              { name: '我的作品', icon: Film, path: '/works' },
+              { name: '会员中心', icon: Film, path: '/member' },
             ].map((item, idx) => (
               <Link
                 key={idx}
