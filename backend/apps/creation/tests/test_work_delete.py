@@ -1,0 +1,58 @@
+# -*- coding: utf-8 -*-
+from datetime import timedelta
+
+from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
+from django.test import TestCase
+from django.utils import timezone
+
+from apps.creation.models import CreationNode, Project
+from apps.creation.services import CreationService
+
+User = get_user_model()
+
+
+class WorkDeleteTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(phone="13900002201", password="test-pass-123")
+        self.other = User.objects.create_user(phone="13900002202", password="test-pass-123")
+        self.project = Project.objects.create(
+            user=self.user,
+            title="待删作品",
+            theme="sweet-pet",
+            episode_count=80,
+            status=Project.STATUS_COMPLETED,
+        )
+
+    def test_delete_user_project(self):
+        pid = str(self.project.id)
+        result = CreationService.delete_user_project(pid, self.user)
+        self.assertTrue(result.get("deleted"))
+        self.assertFalse(Project.objects.filter(id=pid).exists())
+
+    def test_delete_running_blocked(self):
+        self.project.pipeline_mode = Project.MODE_STEP
+        self.project.status = Project.STATUS_RUNNING
+        self.project.save(update_fields=["pipeline_mode", "status"])
+        with self.assertRaises(PermissionDenied):
+            CreationService.delete_user_project(str(self.project.id), self.user)
+
+    def test_delete_stale_workspace_running_unlocks(self):
+        self.project.pipeline_mode = Project.MODE_WORKSPACE
+        self.project.status = Project.STATUS_RUNNING
+        self.project.save(update_fields=["pipeline_mode", "status"])
+        CreationNode.objects.create(
+            project=self.project,
+            node_index=2,
+            node_name="结构与世界观",
+            status=CreationNode.STATUS_RUNNING,
+            started_at=timezone.now() - timedelta(minutes=5),
+        )
+        pid = str(self.project.id)
+        result = CreationService.delete_user_project(pid, self.user)
+        self.assertTrue(result.get("deleted"))
+        self.assertFalse(Project.objects.filter(id=pid).exists())
+
+    def test_delete_other_user_forbidden(self):
+        with self.assertRaises(PermissionDenied):
+            CreationService.delete_user_project(str(self.project.id), self.other)

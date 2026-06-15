@@ -3,71 +3,58 @@ import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
-  Mail,
   Phone,
   Lock,
   Eye,
   EyeOff,
   Sparkles,
   ArrowRight,
-  Loader2,
   LogIn,
-  Film,
   Shield,
   Zap,
 } from 'lucide-react'
+import BrandLogo from '@/components/ui/BrandLogo'
+import { Button, Input } from '@/components/ui'
 import { useAuthStore } from '@/store/authStore'
 import { auth } from '@/services/api'
+import { useFormErrors } from '@/hooks/useFormErrors'
+import { useSubmitGuard } from '@/hooks/useSubmitGuard'
+import { ICON } from '@/constants/iconSizes'
 
 export default function Login() {
   const navigate = useNavigate()
   const { login: setAuth } = useAuthStore()
 
   const [form, setForm] = useState({ phone: '', password: '' })
-  const [errors, setErrors] = useState({})
+  const { errors, clearFieldError, applyErrors } = useFormErrors()
   const [showPwd, setShowPwd] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const { isSubmitting, runSubmit } = useSubmitGuard({
+    onError: (err) => toast.error(err.message || '登录失败，请检查手机号和密码'),
+  })
 
   const validate = () => {
     const next = {}
     if (!form.phone) next.phone = '请输入手机号'
     else if (!/^1[3-9]\d{9}$/.test(form.phone)) next.phone = '请输入有效的 11 位手机号'
     if (!form.password) next.password = '请输入密码'
-    else if (form.password.length < 6) next.password = '密码至少 6 位'
-    setErrors(next)
-    return Object.keys(next).length === 0
+    else if (form.password.length < 8) next.password = '密码至少 8 位'
+    return next
   }
 
   const handleChange = (k, v) => {
     setForm((f) => ({ ...f, [k]: v }))
-    if (errors[k]) setErrors((e) => ({ ...e, [k]: '' }))
+    if (errors[k]) clearFieldError(k)
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!validate()) return
-    setLoading(true)
-    try {
+    if (!applyErrors(validate())) return
+    await runSubmit(async () => {
       const data = await auth.login(form)
       setAuth(data.user || data, data.access, data.refresh)
-      toast.success('登录成功，欢迎回来！')
       navigate('/member')
-    } catch (err) {
-      const mockUser = { id: 1, phone: form.phone, nickname: '创作者', is_staff: false }
-      setAuth(mockUser, 'mock-access-token', 'mock-refresh-token')
-      toast.success('演示模式登录成功')
-      navigate('/member')
-    } finally {
-      setLoading(false)
-    }
+    })
   }
-
-  const inputClass = (hasError) =>
-    `w-full pl-12 pr-4 py-3.5 rounded-xl bg-navy-900/60 border ${
-      hasError ? 'border-red-500/60 focus:border-red-500' : 'border-navy-600/40 focus:border-gold-400'
-    } text-white placeholder-navy-400 outline-none transition-all focus:ring-2 ${
-      hasError ? 'focus:ring-red-500/20' : 'focus:ring-gold-400/20'
-    }`
 
   return (
     <div className="min-h-screen flex items-center justify-center py-20 px-6 relative overflow-hidden">
@@ -88,12 +75,7 @@ export default function Login() {
           transition={{ delay: 0.2, duration: 0.4 }}
           className="text-center mb-10"
         >
-          <Link to="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-lg shadow-gold-500/30">
-              <Film className="w-6 h-6 text-navy-950" />
-            </div>
-            <span className="text-2xl font-bold gradient-text">ScriptForge</span>
-          </Link>
+          <BrandLogo variant="consumer" size="md" to="/" className="justify-center mb-4" />
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">欢迎回来</h1>
           <p className="text-navy-300">登录账号，开启 AI 剧本创作之旅</p>
         </motion.div>
@@ -105,21 +87,17 @@ export default function Login() {
           className="glass-card rounded-[32px] p-8 md:p-10 shadow-2xl"
         >
           <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm font-medium text-navy-200 mb-2">手机号</label>
-              <div className="relative">
-                <Phone className="w-5 h-5 text-navy-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                <input
-                  type="tel"
-                  placeholder="请输入 11 位手机号"
-                  value={form.phone}
-                  onChange={(e) => handleChange('phone', e.target.value)}
-                  className={inputClass(errors.phone)}
-                  maxLength={11}
-                />
-              </div>
-              {errors.phone && <p className="text-red-400 text-sm mt-1.5">{errors.phone}</p>}
-            </div>
+            <Input
+              label="手机号"
+              type="tel"
+              placeholder="请输入 11 位手机号"
+              value={form.phone}
+              onChange={(e) => handleChange('phone', e.target.value)}
+              leftIcon={<Phone className={ICON.lg} />}
+              error={errors.phone}
+              maxLength={11}
+              inputClassName="py-3.5 pl-12"
+            />
 
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -133,55 +111,42 @@ export default function Login() {
                 </button>
               </div>
               <div className="relative">
-                <Lock className="w-5 h-5 text-navy-400 absolute left-4 top-1/2 -translate-y-1/2" />
-                <input
+                <Input
                   type={showPwd ? 'text' : 'password'}
                   placeholder="请输入密码"
                   value={form.password}
                   onChange={(e) => handleChange('password', e.target.value)}
-                  className={inputClass(errors.password) + ' pr-12'}
+                  leftIcon={<Lock className={ICON.lg} />}
+                  error={errors.password}
+                  inputClassName="py-3.5 pl-12 pr-12"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPwd(!showPwd)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-navy-400 hover:text-gold-400 transition-colors"
                 >
-                  {showPwd ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPwd ? <EyeOff className={ICON.lg} /> : <Eye className={ICON.lg} />}
                 </button>
               </div>
-              {errors.password && <p className="text-red-400 text-sm mt-1.5">{errors.password}</p>}
             </div>
 
-            <motion.button
+            <Button
               type="submit"
-              disabled={loading}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full py-4 rounded-xl font-bold text-navy-950 text-lg flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
-              style={{
-                background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
-                boxShadow: '0 10px 30px -10px rgba(244, 183, 25, 0.5)',
-              }}
+              variant="gold"
+              size="lg"
+              isLoading={isSubmitting}
+              iconLeft={<LogIn className={ICON.lg} />}
+              className="w-full py-4 text-lg"
             >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  登录中...
-                </>
-              ) : (
-                <>
-                  <LogIn className="w-5 h-5" />
-                  登录账号
-                </>
-              )}
-            </motion.button>
+              {isSubmitting ? '登录中…' : '登录账号'}
+            </Button>
           </form>
 
           <div className="mt-8 pt-6 border-t border-navy-600/30 text-center">
             <p className="text-navy-300">
               还没有账号？{' '}
               <Link to="/register" className="text-gold-400 font-semibold hover:text-gold-300 transition-colors inline-flex items-center gap-1">
-                立即注册 <ArrowRight className="w-4 h-4" />
+                立即注册 <ArrowRight className={ICON.md} />
               </Link>
             </p>
           </div>
@@ -191,7 +156,7 @@ export default function Login() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="mt-10 grid grid-cols-3 gap-4 text-center"
+          className="mt-10 grid grid-cols-1 gap-3 text-center sm:grid-cols-3 sm:gap-4"
         >
           {[
             { icon: Zap, label: '极速生成' },
@@ -199,7 +164,7 @@ export default function Login() {
             { icon: Shield, label: '安全可靠' },
           ].map((item) => (
             <div key={item.label} className="p-4 rounded-2xl glass-card">
-              <item.icon className="w-5 h-5 text-gold-400 mx-auto mb-2" />
+              <item.icon className={`${ICON.lg} text-gold-400 mx-auto mb-2`} />
               <div className="text-xs text-navy-300">{item.label}</div>
             </div>
           ))}

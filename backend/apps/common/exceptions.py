@@ -2,21 +2,38 @@
 # 自定义异常及全局异常处理器
 
 from rest_framework import status
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import APIException, ValidationError as DRFValidationError
 from rest_framework.response import Response
 from rest_framework.views import exception_handler
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import DatabaseError
 
+from apps.common.user_messages import humanize_user_message
+
 # ============================================================
-# 常用错误码常量
+# 业务错误码常量
 # ============================================================
-SUCCESS = 0              # 成功
-PARAM_ERROR = 400        # 参数错误
-UNAUTHORIZED = 401       # 未授权
-FORBIDDEN = 403          # 禁止访问
-NOT_FOUND = 404          # 资源未找到
-SERVER_ERROR = 500       # 服务器内部错误
+SUCCESS = 0               # 成功
+
+# 4xxx — 客户端错误
+VALIDATION_ERROR = 4001   # 参数校验失败（DRF ValidationError）
+PARAM_MISSING = 4002      # 必填参数缺失
+BUSINESS_CONFLICT = 4003  # 业务冲突（如重复操作）
+
+# 向后兼容别名
+PARAM_ERROR = VALIDATION_ERROR
+
+# 401x — 鉴权失败
+UNAUTHORIZED = 401        # 未登录 / Token 缺失
+TOKEN_EXPIRED = 4011      # Token 已过期
+PERMISSION_DENIED = 403   # 权限不足
+
+# 向后兼容别名
+FORBIDDEN = 403
+
+# 通用 HTTP 映射
+NOT_FOUND = 404           # 资源未找到
+SERVER_ERROR = 500        # 服务器内部错误
 
 
 # ============================================================
@@ -76,21 +93,21 @@ def custom_exception_handler(exc, context):
     if response is not None:
         # 根据异常类型映射错误码和消息
         if isinstance(exc, APIException):
-            exc_code = getattr(exc, 'status_code', SERVER_ERROR)
             # 对常见异常类型进行友好化处理
             if response.status_code == status.HTTP_400_BAD_REQUEST:
-                message = '参数校验失败'
-                # 将 DRF 返回的字段错误信息拼接到 message 中
+                # DRF ValidationError → 4001，拼接字段级错误信息
                 errors = []
-                for key, value in response.data.items():
-                    if isinstance(value, list):
-                        errors.append(f"{key}: {'; '.join([str(v) for v in value])}")
-                    else:
-                        errors.append(f"{key}: {value}")
-                if errors:
-                    message = '; '.join(errors)
+                if isinstance(response.data, dict):
+                    for key, value in response.data.items():
+                        if isinstance(value, list):
+                            errors.append(f"{key}: {'; '.join([str(v) for v in value])}")
+                        else:
+                            errors.append(f"{key}: {value}")
+                elif isinstance(response.data, list):
+                    errors = [str(v) for v in response.data]
+                message = '; '.join(errors) if errors else '参数校验失败'
                 return Response(
-                    {'code': PARAM_ERROR, 'message': message, 'data': None},
+                    {'code': VALIDATION_ERROR, 'message': message, 'data': None},
                     status=status.HTTP_200_OK,
                 )
             elif response.status_code == status.HTTP_401_UNAUTHORIZED:
@@ -100,7 +117,7 @@ def custom_exception_handler(exc, context):
                 )
             elif response.status_code == status.HTTP_403_FORBIDDEN:
                 return Response(
-                    {'code': FORBIDDEN, 'message': '禁止访问', 'data': None},
+                    {'code': PERMISSION_DENIED, 'message': '禁止访问', 'data': None},
                     status=status.HTTP_200_OK,
                 )
             elif response.status_code == status.HTTP_404_NOT_FOUND:
@@ -109,10 +126,12 @@ def custom_exception_handler(exc, context):
                     status=status.HTTP_200_OK,
                 )
             # 其它未明确分类的 APIException
+            exc_code = getattr(exc, 'status_code', SERVER_ERROR)
+            detail = str(exc.detail) if hasattr(exc, 'detail') else ''
             return Response(
                 {
                     'code': exc_code,
-                    'message': str(exc.detail) if hasattr(exc, 'detail') else '请求异常',
+                    'message': humanize_user_message(detail, default='请求异常'),
                     'data': None,
                 },
                 status=status.HTTP_200_OK,
@@ -141,6 +160,10 @@ def custom_exception_handler(exc, context):
 
     # 处理其余所有未捕获异常，作为服务器内部错误
     return Response(
-        {'code': SERVER_ERROR, 'message': f'服务器内部错误: {str(exc)}', 'data': None},
+        {
+            'code': SERVER_ERROR,
+            'message': humanize_user_message(str(exc), default='服务器繁忙，请稍后重试'),
+            'data': None,
+        },
         status=status.HTTP_200_OK,
     )

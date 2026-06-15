@@ -7,66 +7,65 @@ import {
   Palette,
   ChevronRight,
   Star,
-  Check,
-  Film,
   Users,
-  Award,
   FileText,
   Eye,
-  ArrowRight,
 } from 'lucide-react'
 
-// 题材数据
-const THEMES = [
-  { key: 'family-revenge', name: '家庭伦理复仇', color: '#e53e3e', emoji: '⚔️' },
-  { key: 'overbearing-ceo', name: '豪门霸总', color: '#d69e2e', emoji: '💎' },
-  { key: 'sweet-pet', name: '甜宠虐恋', color: '#d53f8c', emoji: '💕' },
-  { key: 'time-travel', name: '穿越重生', color: '#805ad5', emoji: '⏰' },
-  { key: 'urban-rebirth', name: '都市逆袭', color: '#3182ce', emoji: '🏙️' },
-  { key: 'ancient-costume', name: '古装权谋', color: '#2f855a', emoji: '⚜️' },
-  { key: 'suspense-reversal', name: '悬疑反转', color: '#5a67d8', emoji: '🕵️' },
-  { key: 'mixed-theme', name: '混合题材', color: '#dd6b20', emoji: '🎭' },
-]
+import { THEME_META_LIST } from '@/constants/themeMeta'
+import ThemeBadge from '@/components/ui/ThemeBadge'
+import { useConfig } from '@/services/api'
 
 // 用户评价
 const TESTIMONIALS = [
   {
-    name: '陈思远',
+    name: '陈**',
     role: '短剧制作公司 / 导演',
-    avatar: 'CS',
+    avatar: '陈',
     content: '过去我们团队开发一部短剧剧本需要2-3周，现在只需要输入创意，几个小时就能拿到完整的80集剧本，效率提升了10倍以上！而且质量非常专业，人物设定和结构都很扎实。',
     rating: 5,
   },
   {
-    name: '林小雨',
+    name: '林**',
     role: '独立编剧',
-    avatar: 'LY',
+    avatar: '林',
     content: '作为独立创作者，最困难的就是创意到大纲的转化。ScriptForge帮我解决了这个痛点，它的7节点流水线非常科学，从创意收集到剧本导出一气呵成。',
     rating: 5,
   },
   {
-    name: '王建国',
+    name: '王**',
     role: '影视学院 / 导师',
-    avatar: 'WJ',
+    avatar: '王',
     content: '我用这个平台给学生做剧本教学演示，学生们反馈非常好。它不仅是一个工具，更像一位专业的剧本导师，能够引导学生建立结构化思维。',
     rating: 5,
   },
   {
-    name: '张晓萌',
+    name: '张**',
     role: '短视频创作者',
-    avatar: 'ZX',
+    avatar: '张',
     content: '作为非专业背景的创作者，我一直担心剧本不够专业。用了ScriptForge后，我的作品质量肉眼可见地提升，最近一部剧已经被平台签约了！',
     rating: 5,
   },
 ]
 
-// 数据展示
-const STATS = [
+// 数据展示（后端 home.hero_stats 为空时回退本地默认）
+const DEFAULT_HERO_STATS = [
   { value: '50,000+', label: '创作者使用' },
   { value: '200万+', label: '剧本集数生成' },
   { value: '98.6%', label: '用户满意度' },
   { value: '8大', label: '热门题材覆盖' },
 ]
+
+function normalizeHeroStats(raw, fallback) {
+  if (!Array.isArray(raw) || raw.length === 0) return fallback
+  const items = raw
+    .map((item) => ({
+      value: String(item?.value ?? '').trim(),
+      label: String(item?.label ?? '').trim(),
+    }))
+    .filter((item) => item.value && item.label)
+  return items.length > 0 ? items : fallback
+}
 
 // 功能卡片
 const FEATURES = [
@@ -108,15 +107,13 @@ const FEATURES = [
   },
 ]
 
-// 7节点流程
+// 5 节点创作主链
 const PIPELINE = [
-  { step: 1, name: '信息收集', desc: '提炼创意核心，生成项目简报' },
-  { step: 2, name: '结构规划', desc: '6阶段架构 + 情绪节奏曲线' },
-  { step: 3, name: '人设开发', desc: '主角/反派/配角完整设定' },
-  { step: 4, name: '大纲撰写', desc: '每集钩子 + 反转 + 悬念' },
-  { step: 5, name: '剧本创作', desc: '逐集生成符合格式的剧本' },
-  { step: 6, name: '质量审查', desc: '四维评分 + 问题清单' },
-  { step: 7, name: '输出交付', desc: '4种格式 + 数字水印' },
+  { step: 1, name: '立项整理' },
+  { step: 2, name: '结构规划' },
+  { step: 3, name: '人设开发' },
+  { step: 4, name: '大纲撰写' },
+  { step: 5, name: '剧本创作' },
 ]
 
 // FAQ
@@ -139,7 +136,7 @@ const FAQS = [
   },
   {
     q: '会员套餐有什么区别？',
-    a: '体验版适合尝鲜，提供3次创作；专业版提供20次/月创作，适合定期产出的创作者；旗舰版无限创作，适合制作团队，还包含高级格式导出和专属客服。',
+    a: '采用创作币计费：注册赠送体验币，字段 AI 与主链节点分别扣费；开通会员赠送更多创作币，并解锁灵感策划、拉片等权益。余额不足可在「创作币」页充值。',
   },
   {
     q: '可以定制题材模板吗？',
@@ -148,6 +145,9 @@ const FAQS = [
 ]
 
 export default function Home() {
+  const configHeroStats = useConfig('home.hero_stats', DEFAULT_HERO_STATS)
+  const stats = normalizeHeroStats(configHeroStats, DEFAULT_HERO_STATS)
+
   return (
     <div className="relative">
       {/* ========= Hero 区 ========= */}
@@ -161,41 +161,15 @@ export default function Home() {
             transition={{ duration: 0.6 }}
             className="text-center max-w-4xl mx-auto"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 mb-8 badge"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>AI 驱动的短剧剧本创作平台</span>
-            </motion.div>
-
-            <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
+            <h1 className="text-5xl md:text-7xl font-bold mb-16 leading-tight">
               从一句话创意
               <br />
-              到 <span className="gradient-text">80集A级剧本</span>
+              到 <span className="gradient-text">80集专业剧本</span>
             </h1>
-
-            <p className="text-xl text-navy-200 mb-12 max-w-2xl mx-auto leading-relaxed">
-              只需输入您的创意核心，我们的7节点智能创作流水线将在数分钟内生成包含人物设定、分集大纲、完整剧本和质量审查的可拍摄剧本体系。
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-              <Link to="/creation" className="btn-gold text-lg inline-flex items-center justify-center gap-2">
-                <Sparkles className="w-5 h-5" />
-                立即开始创作
-                <ArrowRight className="w-5 h-5" />
-              </Link>
-              <Link to="#features" className="btn-ghost text-lg inline-flex items-center justify-center gap-2">
-                了解更多
-                <ChevronRight className="w-5 h-5" />
-              </Link>
-            </div>
 
             {/* 数据展示 */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-3xl mx-auto">
-              {STATS.map((stat, idx) => (
+              {stats.map((stat, idx) => (
                 <motion.div
                   key={stat.label}
                   initial={{ opacity: 0, y: 20 }}
@@ -269,19 +243,16 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
+            className="text-center"
           >
-            <div className="inline-flex items-center gap-2 mb-4">
-              <Film className="w-5 h-5 text-gold-400" />
-              <span className="text-gold-400 text-sm font-semibold uppercase tracking-wider">热门题材</span>
-            </div>
-            <h2 className="section-title !text-left mb-4">8大热门题材，总有一款适合你</h2>
-            <p className="text-lg text-navy-200 max-w-2xl mb-16">
+            <h2 className="section-title">8大热门题材，总有一款适合你</h2>
+            <p className="section-subtitle">
               每种题材都经过专业优化的结构模板、反转密度和情绪曲线，从创意到剧本的转化率显著提升
             </p>
           </motion.div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {THEMES.map((theme, idx) => (
+            {THEME_META_LIST.map((theme, idx) => (
               <motion.div
                 key={theme.key}
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -291,16 +262,15 @@ export default function Home() {
                 whileHover={{ y: -3, scale: 1.02 }}
                 className="p-6 rounded-2xl glass-card cursor-pointer text-center group"
               >
-                <div className="text-4xl mb-3">{theme.emoji}</div>
-                <div className="font-semibold text-white mb-2">{theme.name}</div>
-                <div className="text-xs text-navy-300">专业优化模板</div>
+                <ThemeBadge theme={theme} size="xl" />
+                <div className="text-xs text-navy-300 mt-2">专业优化模板</div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ========= 7节点流水线 ========= */}
+      {/* ========= 5 节点流水线 ========= */}
       <section className="py-24 relative">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
@@ -310,7 +280,7 @@ export default function Home() {
             className="text-center"
           >
             <h2 className="section-title">
-              <span className="gradient-text">7节点</span> 智能创作流水线
+              <span className="gradient-text">5 节点</span> 专业创作流水线
             </h2>
             <p className="section-subtitle">
               从创意收集到剧本交付，每一步都经过专业设计和质量把控
@@ -319,7 +289,7 @@ export default function Home() {
 
           <div className="relative">
             {/* 连接线 */}
-            <div className="hidden lg:block absolute top-20 left-8 right-8 h-1 bg-gradient-to-r from-navy-600 via-gold-400 to-navy-600 opacity-40" />
+            <div className="hidden lg:block absolute top-[3.25rem] left-10 right-10 h-px bg-navy-600/40" />
 
             <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4">
               {PIPELINE.map((node, idx) => (
@@ -332,37 +302,15 @@ export default function Home() {
                   className="relative"
                 >
                   <div className="glass-card rounded-2xl p-6 text-center h-full">
-                    <div
-                      className={`w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center text-xl font-bold ${
-                        idx === 4 ? 'gradient-text' : 'text-white'
-                      }`}
-                      style={{
-                        background:
-                          idx === 4
-                            ? 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)'
-                            : 'rgba(102, 126, 234, 0.2)',
-                      }}
-                    >
+                    <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center text-xl font-bold text-gold-400 bg-navy-800/60 border border-gold-400/20">
                       {node.step}
                     </div>
-                    <div className="font-bold text-white mb-2">{node.name}</div>
-                    <div className="text-xs text-navy-300 leading-relaxed">{node.desc}</div>
+                    <div className="font-bold text-white">{node.name}</div>
                   </div>
                 </motion.div>
               ))}
             </div>
           </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mt-12"
-          >
-            <Link to="/creation" className="btn-primary text-lg inline-flex items-center gap-2">
-              体验创作流程 <ArrowRight className="w-5 h-5" />
-            </Link>
-          </motion.div>
         </div>
       </section>
 
@@ -377,10 +325,6 @@ export default function Home() {
             viewport={{ once: true }}
             className="text-center"
           >
-            <div className="inline-flex items-center gap-2 mb-4">
-              <Award className="w-5 h-5 text-gold-400" />
-              <span className="text-gold-400 text-sm font-semibold uppercase tracking-wider">用户评价</span>
-            </div>
             <h2 className="section-title">
               来自 <span className="gradient-text">50,000+</span> 创作者的信赖
             </h2>
@@ -401,7 +345,7 @@ export default function Home() {
                     <Star key={i} className="w-5 h-5 text-gold-400 fill-gold-400" />
                   ))}
                 </div>
-                <p className="text-navy-100 leading-relaxed mb-6 text-lg">"{t.content}"</p>
+                <p className="text-navy-100 leading-relaxed mb-6 text-lg">{t.content}</p>
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-navy-950 font-bold">
                     {t.avatar}
@@ -411,135 +355,6 @@ export default function Home() {
                     <div className="text-sm text-navy-300">{t.role}</div>
                   </div>
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ========= 会员套餐 ========= */}
-      <section className="py-24 relative">
-        <div className="max-w-7xl mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center"
-          >
-            <h2 className="section-title">选择最适合你的 <span className="gradient-text">创作套餐</span></h2>
-            <p className="section-subtitle">
-              从体验版到旗舰版，满足不同创作需求
-            </p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {[
-              {
-                name: '体验版',
-                price: 99,
-                originalPrice: 199,
-                unit: '月',
-                desc: '体验AI创作的魅力',
-                badge: '入门',
-                features: [
-                  '3次完整剧本创作',
-                  '8大题材模板',
-                  'Markdown格式导出',
-                  '基础质量审查',
-                  '7天作品保存',
-                ],
-                recommended: false,
-                color: 'navy',
-              },
-              {
-                name: '专业版',
-                price: 299,
-                originalPrice: 599,
-                unit: '月',
-                desc: '最受欢迎，高性价比',
-                badge: '热门',
-                features: [
-                  '20次完整剧本创作',
-                  '所有题材模板',
-                  '4种格式变体',
-                  '高级质量审查评分',
-                  '30天作品保存',
-                  '优先创作队列',
-                  '作品分享链接',
-                ],
-                recommended: true,
-                color: 'gold',
-              },
-              {
-                name: '旗舰版',
-                price: 999,
-                originalPrice: 1999,
-                unit: '年',
-                desc: '专业团队的首选',
-                badge: '专业',
-                features: [
-                  '无限次剧本创作',
-                  '所有题材 + 定制模板',
-                  '完整格式 + PDF + DOCX',
-                  'S级质量审查与优化',
-                  '永久作品保存',
-                  '最高优先级队列',
-                  '高级分享与水印',
-                  '专属客服支持',
-                ],
-                recommended: false,
-                color: 'purple',
-              },
-            ].map((plan, idx) => (
-              <motion.div
-                key={plan.name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                className={`relative p-8 rounded-3xl ${
-                  plan.recommended ? 'glass-card-gold shadow-[0_20px_60px_-15px_rgba(244,183,25,0.4)]' : 'glass-card'
-                } ${plan.recommended ? 'scale-105 md:scale-110' : ''}`}
-              >
-                {plan.recommended && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <span className="px-4 py-1 rounded-full text-sm font-bold bg-gradient-to-r from-gold-400 to-gold-600 text-navy-950">
-                      🔥 最受欢迎
-                    </span>
-                  </div>
-                )}
-
-                <div className="text-center mb-8">
-                  <div className="text-lg font-bold text-white mb-2">{plan.name}</div>
-                  <div className="text-sm text-navy-300 mb-6">{plan.desc}</div>
-                  <div className="flex items-baseline justify-center gap-1 mb-2">
-                    <span className="text-5xl font-bold gradient-text">¥{plan.price}</span>
-                    <span className="text-navy-300">/{plan.unit}</span>
-                  </div>
-                  {plan.originalPrice && (
-                    <div className="text-sm text-navy-400 line-through">原价 ¥{plan.originalPrice}</div>
-                  )}
-                </div>
-
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-3 text-navy-100">
-                      <Check className="w-5 h-5 text-gold-400 flex-shrink-0 mt-0.5" />
-                      <span className="text-sm">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  to="/member"
-                  className={`block w-full py-3 rounded-xl text-center font-semibold transition-all ${
-                    plan.recommended
-                      ? 'bg-gradient-to-r from-gold-400 to-gold-600 text-navy-950 hover:shadow-lg hover:shadow-gold-500/30'
-                      : 'bg-navy-700/50 text-white hover:bg-navy-700'
-                  }`}
-                >
-                  立即选择
-                </Link>
               </motion.div>
             ))}
           </div>

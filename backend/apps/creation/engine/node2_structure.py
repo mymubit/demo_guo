@@ -38,6 +38,7 @@ class Node2Structure:
         'urban-rebirth': [0.10, 0.20, 0.25, 0.20, 0.15, 0.10],
         'ancient-costume': [0.10, 0.15, 0.25, 0.20, 0.20, 0.10],
         'suspense-reversal': [0.10, 0.20, 0.20, 0.25, 0.15, 0.10],
+        'healing': [0.12, 0.22, 0.20, 0.18, 0.14, 0.14],
         'mixed-theme': [0.10, 0.20, 0.20, 0.20, 0.15, 0.15],
     }
 
@@ -77,6 +78,11 @@ class Node2Structure:
             'start': 5, 'peak': 10,
             'curve': [5, 6, 5, 7, 6, 8, 9, 10],
             'description': '迷雾→真相层层揭露'
+        },
+        'healing': {
+            'start': 4, 'peak': 8,
+            'curve': [4, 3, 4, 5, 5, 6, 7, 8],
+            'description': '痛点共鸣→缓慢修复→温暖出口（禁大起大落）'
         },
         'mixed-theme': {
             'start': 4, 'peak': 10,

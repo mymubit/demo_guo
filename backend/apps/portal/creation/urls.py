@@ -1,0 +1,111 @@
+"""
+创作模块路由
+
+前缀 /api/creation/
+"""
+
+from django.urls import path
+
+from .views import (
+    AiFieldGenerateView,
+    CreationSubmitView,
+    CreationProgressView,
+    CreationDownloadView,
+    CreationDownloadByTokenView,
+    CreationShareCreateView,
+    ShareView,
+    CreationNodeConfirmView,
+    CreationNodeRegenerateView,
+    CreationWorkspaceView,
+    CreationAgentGenerateView,
+    CreationAgentContentView,
+)
+from .fusion_views import (
+    AgentCatalogView,
+    CreationNodePreviewView,
+    FusionArtifactView,
+    FusionCatalogView,
+    FusionNodesView,
+    FusionSnapshotView,
+)
+
+app_name = "creation"
+
+urlpatterns = [
+    path("agents/catalog/", AgentCatalogView.as_view(), name="creation-agent-catalog"),
+    path("fusion/catalog/", FusionCatalogView.as_view(), name="creation-fusion-catalog"),
+    path("fusion/nodes/", FusionNodesView.as_view(), name="creation-fusion-nodes"),
+    path(
+        "fusion/<str:project_id>/",
+        FusionSnapshotView.as_view(),
+        name="creation-fusion-snapshot",
+    ),
+    path(
+        "fusion/<str:project_id>/artifacts/<str:artifact_key>/",
+        FusionArtifactView.as_view(),
+        name="creation-fusion-artifact",
+    ),
+    path(
+        "projects/<str:project_id>/workspace/",
+        CreationWorkspaceView.as_view(),
+        name="creation-workspace",
+    ),
+    path(
+        "projects/<str:project_id>/agents/<int:node_index>/content/",
+        CreationAgentContentView.as_view(),
+        name="creation-agent-content",
+    ),
+    path(
+        "projects/<str:project_id>/agents/<int:node_index>/generate/",
+        CreationAgentGenerateView.as_view(),
+        name="creation-agent-generate",
+    ),
+    path(
+        "projects/<str:project_id>/nodes/<int:node_index>/preview/",
+        CreationNodePreviewView.as_view(),
+        name="creation-node-preview",
+    ),
+    # 提交创作
+    path("submit/", CreationSubmitView.as_view(), name="creation-submit"),
+    path("ai/generate/", AiFieldGenerateView.as_view(), name="creation-ai-generate"),
+    # 查询进度
+    path(
+        "progress/<str:project_id>/",
+        CreationProgressView.as_view(),
+        name="creation-progress",
+    ),
+    path(
+        "projects/<str:project_id>/confirm/",
+        CreationNodeConfirmView.as_view(),
+        name="creation-node-confirm",
+    ),
+    path(
+        "projects/<str:project_id>/regenerate/",
+        CreationNodeRegenerateView.as_view(),
+        name="creation-node-regenerate",
+    ),
+    # 按作品下载（登录用户）
+    path(
+        "download/<str:project_id>/",
+        CreationDownloadView.as_view(),
+        name="creation-download",
+    ),
+    # 一次性 token 下载（匿名 / 分享场景）
+    path(
+        "dl/<str:token>/",
+        CreationDownloadByTokenView.as_view(),
+        name="creation-download-by-token",
+    ),
+    # 生成分享链接
+    path(
+        "share/<str:project_id>/",
+        CreationShareCreateView.as_view(),
+        name="creation-share-create",
+    ),
+    # 查看分享页（公开）
+    path(
+        "share/view/<str:token>/",
+        ShareView.as_view(),
+        name="creation-share-view",
+    ),
+]

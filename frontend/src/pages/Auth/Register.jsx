@@ -11,11 +11,11 @@ import {
   ArrowRight,
   Loader2,
   UserPlus,
-  Film,
   Sparkles,
   Check,
   AlertCircle,
 } from 'lucide-react'
+import BrandLogo from '@/components/ui/BrandLogo'
 import { useAuthStore } from '@/store/authStore'
 import { auth } from '@/services/api'
 
@@ -52,7 +52,7 @@ export default function Register() {
     if (!form.phone) next.phone = '请输入手机号'
     else if (!/^1[3-9]\d{9}$/.test(form.phone)) next.phone = '请输入有效的 11 位手机号'
     if (!form.password) next.password = '请输入密码'
-    else if (form.password.length < 6) next.password = '密码至少 6 位'
+    else if (form.password.length < 8) next.password = '密码至少 8 位'
     if (!form.confirmPassword) next.confirmPassword = '请确认密码'
     else if (form.confirmPassword !== form.password) next.confirmPassword = '两次输入的密码不一致'
     if (form.nickname && form.nickname.length > 20) next.nickname = '昵称最多 20 个字符'
@@ -69,19 +69,19 @@ export default function Register() {
     e.preventDefault()
     if (!validate()) return
     setLoading(true)
-    const payload = { phone: form.phone, password: form.password }
+    const payload = {
+      phone: form.phone,
+      password: form.password,
+      password_confirm: form.confirmPassword,
+    }
     if (form.nickname) payload.nickname = form.nickname
     try {
       const data = await auth.register(payload)
-      const user = data.user || { id: 1, phone: form.phone, nickname: form.nickname || '新用户' }
-      setAuth(user, data.access || 'mock-access', data.refresh || 'mock-refresh')
+      setAuth(data.user, data.access, data.refresh)
       toast.success('注册成功，欢迎加入 ScriptForge！')
       navigate('/member')
     } catch (err) {
-      const mockUser = { id: 1, phone: form.phone, nickname: form.nickname || '新用户', is_staff: false }
-      setAuth(mockUser, 'mock-access-token', 'mock-refresh-token')
-      toast.success('演示模式注册成功')
-      navigate('/member')
+      toast.error(err.message || '注册失败，请稍后重试')
     } finally {
       setLoading(false)
     }
@@ -113,12 +113,7 @@ export default function Register() {
           transition={{ delay: 0.2, duration: 0.4 }}
           className="text-center mb-10"
         >
-          <Link to="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center shadow-lg shadow-gold-500/30">
-              <Film className="w-6 h-6 text-navy-950" />
-            </div>
-            <span className="text-2xl font-bold gradient-text">ScriptForge</span>
-          </Link>
+          <BrandLogo variant="consumer" size="md" to="/" className="justify-center mb-4" />
           <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">创建新账号</h1>
           <p className="text-navy-300">只需几步，立即体验 AI 剧本创作</p>
         </motion.div>

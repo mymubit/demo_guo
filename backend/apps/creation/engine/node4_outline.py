@@ -112,7 +112,7 @@ class Node4Outline:
         while len(names) < 3:
             names.append('神秘人')
 
-        summary = template.format(*names[:template.count('{}'))]
+        summary = template.format(*names[: template.count("{}")])
 
         # 添加反转集特别说明
         if is_reversal:

@@ -1,0 +1,18 @@
+---
+description: ScriptForge 前端接口、状态和契约适配规范
+globs: frontend/src/**/*.{js,jsx,ts,tsx},docs/frontend-*.md
+alwaysApply: false
+---
+
+# 前端接口与契约规范
+
+- 页面、组件、hook 禁止直接调用 `axios` 或 `fetch`，统一通过 `frontend/src/services` 的业务模块访问后端。
+- `services/http.js` 只负责请求发送、Token 注入、响应解包、错误归一化和刷新重试。
+- 常规接口按 `{ code, message, data }` 处理；分页接口在 service 层统一转换为 `{ items, pagination }`。
+- 页面不要依赖后端原始分页嵌套结构，也不要新增旧结构兼容分支。
+- 字段转换、枚举映射、展示兜底只能放在 service adapter 或 constants 单点维护。
+- 业务主键以新版契约为准；禁止在页面中混用 `task_id/taskId/id` 等旧字段兜底。
+- 错误码维护在 `src/services/constants/errorCodes.js`，业务枚举维护在 `src/services/constants/businessEnums.js`。
+- access token 使用 `Authorization: Bearer <token>`；`401/4011` 走刷新失败后清理登录态并跳转登录。
+- 新增或修改接口时，同步说明 URL、method、入参、响应、分页、错误码、权限和枚举。
+- 高风险接口变更需要更新 `docs/frontend-backend-contract-audit.md` 并完成联调状态记录。

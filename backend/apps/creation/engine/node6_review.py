@@ -261,7 +261,11 @@ class Node6Review:
         weights: Dict[str, int] = None
     ) -> Dict[str, Any]:
         """计算综合评分"""
-        weights = weights or self.DEFAULT_WEIGHTS
+        from apps.skill.config.portal.review_scoring import ReviewScoringService
+
+        cfg = ReviewScoringService.resolve()
+        weights = weights or cfg.get("weights") or self.DEFAULT_WEIGHTS
+        grade_thresholds = cfg.get("grade_thresholds") or self.GRADE_THRESHOLDS
         total_weight = sum(weights.values())
 
         # 加权平均
@@ -273,13 +277,13 @@ class Node6Review:
 
         # 确定等级
         grade = 'D'
-        for g, threshold in sorted(self.GRADE_THRESHOLDS.items(), key=lambda x: x[1], reverse=True):
+        for g, threshold in sorted(grade_thresholds.items(), key=lambda x: x[1], reverse=True):
             if overall >= threshold:
                 grade = g
                 break
 
         # 判定是否通过
-        pass_threshold = 70
+        pass_threshold = int(cfg.get("pass_threshold") or 70)
         passed = overall >= pass_threshold
 
         return {
@@ -402,6 +406,7 @@ class Node6Review:
         }
 
         overall_result = self.calculate_overall_score(scores)
+        weights_used = overall_result.get("weights_used") or self.DEFAULT_WEIGHTS
 
         # 生成审查报告
         review_data = {
@@ -412,7 +417,7 @@ class Node6Review:
             'format_variant': format_variant,
             'format_name': scripts_data.get('format_name', ''),
             'dimension_scores': scores,
-            'weights_used': self.DEFAULT_WEIGHTS,
+            'weights_used': weights_used,
             'overall_score': overall_result['overall_score'],
             'grade': overall_result['grade'],
             'passed': overall_result['passed'],

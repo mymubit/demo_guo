@@ -163,6 +163,29 @@ class UserProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at", "updated_at"]
 
 
+class ChangePasswordSerializer(serializers.Serializer):
+    """修改密码"""
+
+    old_password = serializers.CharField(write_only=True, required=True, max_length=128)
+    new_password = serializers.CharField(write_only=True, required=True, min_length=8, max_length=128)
+    new_password_confirm = serializers.CharField(write_only=True, required=True, max_length=128)
+
+    def validate_new_password(self, value):
+        try:
+            validate_password(value)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(list(e.messages)) from e
+        return value
+
+    def validate(self, attrs):
+        if attrs["new_password"] != attrs["new_password_confirm"]:
+            raise serializers.ValidationError({"new_password_confirm": "两次输入的密码不一致"})
+        user = self.context["request"].user
+        if not user.check_password(attrs["old_password"]):
+            raise serializers.ValidationError({"old_password": "当前密码不正确"})
+        return attrs
+
+
 class UserUpdateSerializer(serializers.Serializer):
     """用户资料更新序列化器（PATCH）"""
     nickname = serializers.CharField(max_length=64, required=False, allow_blank=True)

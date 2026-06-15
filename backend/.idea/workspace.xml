@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="433975c9-3cd8-4893-870b-559e7229355b" name="更改" comment="">
+      <change beforePath="$PROJECT_DIR$/../README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/.env.example" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/admin_panel/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/admin_panel/apps.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/admin_panel/serializers.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/admin_panel/urls.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/admin_panel/views.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/common/exceptions.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/common/exceptions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/engine/node1_input.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/engine/node1_input.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/engine/node2_structure.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/engine/node2_structure.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/engine/node3_character.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/engine/node3_character.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/engine/node4_outline.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/engine/node4_outline.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/engine/node6_review.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/engine/node6_review.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/serializers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/services.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/tasks.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/tasks.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/urls.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/urls_works.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/views.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/views_works.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/membership/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/membership/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/membership/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/membership/serializers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/membership/services.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/membership/services.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/membership/urls.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/membership/views.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/orders/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/orders/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/orders/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/orders/serializers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/orders/services.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/orders/services.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/orders/urls.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/orders/views.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/security/middleware.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/security/middleware.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/security/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/security/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/security/services.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/security/services.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/skill/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/skill/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/skill/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/skill/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/skill/engine/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/skill/management/commands/init_skill_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/skill/management/commands/init_skill_data.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/skill/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/skill/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/skill/serializers.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/skill/services.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/skill/urls.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/skill/views.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/users/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/users/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/users/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/users/serializers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/users/urls.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/users/urls_auth.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/users/views.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/users/views_auth.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/settings/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/config/settings/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/settings/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/config/settings/base.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/config/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/wsgi.py" beforeDir="false" afterPath="$PROJECT_DIR$/config/wsgi.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manage.py" beforeDir="false" afterPath="$PROJECT_DIR$/manage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/../docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/App.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/components/layout/AdminLayout.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/layout/AdminLayout.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/components/layout/MainLayout.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/layout/MainLayout.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/main.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/main.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/Dashboard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/Dashboard.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/Login.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/Login.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/Members.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/Members.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/Orders.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/Orders.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/SkillConfig.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/Users.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/Users.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Auth/Login.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Auth/Login.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Auth/Register.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Auth/Register.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Creation/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Creation/index.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Home/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Home/index.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Member/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Member/index.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Profile/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Profile/index.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/ShareView.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Works/Detail.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Works/Detail.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Works/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Works/index.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/services/api.js" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/services/api.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/store/authStore.js" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/store/authStore.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/store/memberStore.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/styles/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/styles/globals.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../package.json" beforeDir="false" afterPath="$PROJECT_DIR$/../package.json" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="DjangoConsoleOptions" custom-start-script="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)">
+    <option name="myCustomStartScript" value="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 2,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3Ez0oeoRHhTRDUvAAdnIKeNYDnl" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;Django 服务器.backend.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.OpenDjangoStructureViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;ScriptForge&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  },
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;postgresql&quot;
+    ]
+  }
+}</component>
+  <component name="RunManager">
+    <configuration name="backend" type="Python.DjangoServer" factoryName="Django server">
+      <module name="backend" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+        <env name="DJANGO_SETTINGS_MODULE" value="config.settings.base" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="DEBUG_JUST_MY_CODE" value="false" />
+      <option name="RUN_TOOL" value="" />
+      <option name="launchJavascriptDebuger" value="false" />
+      <option name="port" value="8000" />
+      <option name="host" value="" />
+      <option name="additionalOptions" value="" />
+      <option name="browserUrl" value="" />
+      <option name="runTestServer" value="false" />
+      <option name="runNoReload" value="false" />
+      <option name="useCustomRunCommand" value="false" />
+      <option name="customRunCommand" value="" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-c59985aa861c-c2ffad84badb-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-261.24374.152" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="433975c9-3cd8-4893-870b-559e7229355b" name="更改" comment="" />
+      <created>1781166268427</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1781166268427</updated>
+      <workItem from="1781166269964" duration="677000" />
+      <workItem from="1781171020604" duration="3356000" />
+      <workItem from="1781221675894" duration="14234000" />
+      <workItem from="1781306610310" duration="16406000" />
+      <workItem from="1781415653387" duration="1217000" />
+      <workItem from="1781483139272" duration="5700000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

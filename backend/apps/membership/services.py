@@ -7,6 +7,7 @@ from datetime import timedelta
 
 from django.utils import timezone
 from django.db import transaction
+from django.db.models import F
 from django.core.exceptions import ObjectDoesNotExist
 
 from .models import MembershipPlan, UserMembership, PromoCode
@@ -47,6 +48,13 @@ class MembershipService:
         """获取会员状态摘要"""
         membership = MembershipService.get_current_membership(user)
         if not membership:
+            wallet = {}
+            try:
+                from apps.billing.services import BillingService
+
+                wallet = BillingService.get_wallet_summary(user)
+            except Exception:  # noqa: BLE001
+                pass
             return {
                 "is_active": False,
                 "plan_name": None,
@@ -54,8 +62,16 @@ class MembershipService:
                 "remaining_creations": 0,
                 "has_unlimited_creations": False,
                 "end_at": None,
+                "wallet": wallet,
             }
         remaining_days = max((membership.end_at - timezone.now()).days, 0)
+        wallet = {}
+        try:
+            from apps.billing.services import BillingService
+
+            wallet = BillingService.get_wallet_summary(user)
+        except Exception:  # noqa: BLE001
+            pass
         return {
             "is_active": membership.is_active and not membership.is_expired,
             "plan_name": membership.plan.name,
@@ -63,6 +79,7 @@ class MembershipService:
             "remaining_creations": membership.remaining_creations,
             "has_unlimited_creations": membership.has_unlimited_creations,
             "end_at": membership.end_at,
+            "wallet": wallet,
         }
 
     @staticmethod
@@ -84,7 +101,7 @@ class MembershipService:
 
     @staticmethod
     @transaction.atomic
-    def activate_membership(user, plan, order=None):
+    def activate_membership(user, plan, order=None, grant_reference: str = ""):
         """激活/开通会员
 
         - 如果用户已有同类未过期会员：延长 end_at，叠加创作次数
@@ -103,13 +120,42 @@ class MembershipService:
         )
 
         if existing:
+            grant_ref = (
+                order.order_no
+                if order
+                else grant_reference or f"membership:{existing.id}:{now.isoformat()}"
+            )
             existing.end_at = existing.end_at + timedelta(days=plan.validity_days)
-            if plan.creation_quota != -1:
+            if plan.creation_quota > 0:
                 existing.remaining_creations += plan.creation_quota
-            else:
-                existing.remaining_creations = -1
             existing.save()
-            logger.info("用户 %s 续费套餐 %s，新到期时间 %s", user, plan, existing.end_at)
+            if plan.grant_coins > 0:
+                from apps.billing.services import BillingService
+
+                BillingService.credit(
+                    user,
+                    plan.grant_coins,
+                    action_key="membership.grant",
+                    reference_id=grant_ref,
+                    remark=f"续费 {plan.name}",
+                )
+            if order:
+                from apps.orders.models import MembershipGrant
+
+                MembershipGrant.objects.get_or_create(
+                    order=order,
+                    defaults={
+                        "user_membership": existing,
+                        "grant_days": plan.validity_days,
+                        "grant_coins": plan.grant_coins,
+                    },
+                )
+            logger.info(
+                "user=%s renew membership plan=%s end_at=%s",
+                user.id,
+                plan.id,
+                existing.end_at,
+            )
             return existing
 
         new_membership = UserMembership(
@@ -121,7 +167,33 @@ class MembershipService:
             is_active=True,
         )
         new_membership.save()
-        logger.info("用户 %s 开通新会员套餐 %s", user, plan)
+        if plan.grant_coins > 0:
+            from apps.billing.services import BillingService
+
+            grant_ref = (
+                order.order_no
+                if order
+                else grant_reference or f"membership:{new_membership.id}"
+            )
+            BillingService.credit(
+                user,
+                plan.grant_coins,
+                action_key="membership.grant",
+                reference_id=grant_ref,
+                remark=f"开通 {plan.name}",
+            )
+        if order:
+            from apps.orders.models import MembershipGrant
+
+            MembershipGrant.objects.get_or_create(
+                order=order,
+                defaults={
+                    "user_membership": new_membership,
+                    "grant_days": plan.validity_days,
+                    "grant_coins": plan.grant_coins,
+                },
+            )
+        logger.info("user=%s activate membership plan=%s", user.id, plan.id)
         return new_membership
 
     @staticmethod
@@ -149,14 +221,15 @@ class MembershipService:
     @staticmethod
     def check_membership_status(user):
         """检查用户会员状态，返回 (是否有效, 信息)"""
+        from apps.billing.services import BillingService
+
+        settings_obj = BillingService.site_settings()
+        if not settings_obj.require_membership_for_creation:
+            return True, "开放创作"
         membership = MembershipService.get_current_membership(user)
         if not membership:
             return False, "无有效会员"
-        if membership.has_unlimited_creations:
-            return True, "无限创作次数"
-        if membership.remaining_creations <= 0:
-            return False, "创作次数已用完"
-        return True, f"剩余 {membership.remaining_creations} 次"
+        return True, membership.plan.name
 
     @staticmethod
     @transaction.atomic
@@ -178,9 +251,24 @@ class MembershipService:
         if promo.used_count >= promo.max_uses:
             return False, "卡密已被使用", None, None
 
-        promo.used_count += 1
-        promo.save()
+        redemption_index = promo.used_count + 1
+        updated = PromoCode.objects.filter(
+            pk=promo.pk,
+            is_active=True,
+            used_count__lt=F("max_uses"),
+        ).update(used_count=F("used_count") + 1)
+        if not updated:
+            return False, "卡密已被使用", None, None
 
-        user_membership = MembershipService.activate_membership(user, promo.plan)
-        logger.info("用户 %s 使用卡密 %s 兑换套餐 %s", user, code, promo.plan)
+        user_membership = MembershipService.activate_membership(
+            user,
+            promo.plan,
+            grant_reference=f"promo:{promo.code}:{redemption_index}",
+        )
+        logger.info(
+            "user=%s redeem promo=%s plan=%s",
+            user.id,
+            promo.code,
+            promo.plan_id,
+        )
         return True, "兑换成功", user_membership, promo.plan

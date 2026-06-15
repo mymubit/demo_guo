@@ -222,8 +222,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone = EncryptedCharField(
         setting_name="ENCRYPT_PHONE_KEY",
         max_length=255,
+        unique=True,
         verbose_name="手机号（加密）",
-        help_text="使用 AES-256-CBC 加密存储",
+        help_text="使用 AES-256-CBC 加密存储；唯一性由 phone_hash 在业务层保证",
     )
     email = EncryptedCharField(
         setting_name="ENCRYPT_EMAIL_KEY",

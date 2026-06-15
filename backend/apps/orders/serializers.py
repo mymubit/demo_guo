@@ -13,7 +13,7 @@ class CreateOrderSerializer(serializers.Serializer):
 
     plan_id = serializers.UUIDField(help_text="会员套餐 ID")
     payment_method = serializers.ChoiceField(
-        choices=["wechat", "alipay", "mock"],
+        choices=["mock"],
         default="mock",
     )
 
@@ -107,6 +107,16 @@ class MockPaySerializer(serializers.Serializer):
     """模拟支付输入"""
 
     order_no = serializers.CharField(max_length=64)
+
+
+class CancelOrderSerializer(serializers.Serializer):
+    """取消订单输入"""
+
+    order_no = serializers.RegexField(
+        regex=r"^SF[0-9A-F]{14,32}$",
+        max_length=64,
+        error_messages={"invalid": "订单号格式不正确"},
+    )
 
 
 class PayResultSerializer(serializers.Serializer):

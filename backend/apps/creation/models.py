@@ -34,14 +34,43 @@ class Project(models.Model):
     # 项目状态枚举
     STATUS_PENDING = "pending"      # 排队中
     STATUS_RUNNING = "running"      # 创作中
+    STATUS_AWAITING = "awaiting"    # 分步模式：等待用户确认
     STATUS_COMPLETED = "completed"  # 完成
     STATUS_FAILED = "failed"        # 失败
 
     STATUS_CHOICES = [
         (STATUS_PENDING, "排队中"),
         (STATUS_RUNNING, "创作中"),
+        (STATUS_AWAITING, "待确认"),
         (STATUS_COMPLETED, "已完成"),
         (STATUS_FAILED, "失败"),
+    ]
+
+    MODE_AUTO = "auto"
+    MODE_STEP = "step"
+    MODE_WORKSPACE = "workspace"
+    PIPELINE_MODE_CHOICES = [
+        (MODE_AUTO, "一键生成"),
+        (MODE_STEP, "分步掌控"),
+        (MODE_WORKSPACE, "技能工作台"),
+    ]
+
+    FUSION_DRAFT = "draft"
+    FUSION_PLANNING = "planning"
+    FUSION_WRITING = "writing"
+    FUSION_REVIEWING = "reviewing"
+    FUSION_SCORING = "scoring"
+    FUSION_READY = "ready"
+    FUSION_BLOCKED = "blocked"
+
+    FUSION_STATUS_CHOICES = [
+        (FUSION_DRAFT, "立项中"),
+        (FUSION_PLANNING, "策划中"),
+        (FUSION_WRITING, "创作中"),
+        (FUSION_REVIEWING, "质检中"),
+        (FUSION_SCORING, "评分中"),
+        (FUSION_READY, "可发布"),
+        (FUSION_BLOCKED, "需修改"),
     ]
 
     # 输出格式变体（默认 B）
@@ -88,7 +117,26 @@ class Project(models.Model):
         "目标受众", max_length=200, blank=True, default=""
     )
     reference_work = models.CharField(
-        "参考作品", max_length=200, blank=True, default=""
+        "参考作品", max_length=2000, blank=True, default=""
+    )
+    # project-brief.schema 对齐字段
+    target_platform = models.CharField(
+        "目标平台", max_length=32, blank=True, default="douyin",
+        help_text="douyin / kuaishou / wechat / multi",
+    )
+    episode_duration_minutes = models.FloatField(
+        "单集时长(分钟)", default=2.0,
+    )
+    creation_entry = models.CharField(
+        "创作入口", max_length=32, blank=True, default="from-scratch",
+        help_text="from-scratch / from-outline / from-reference / ip-sequel / novel-adaptation",
+    )
+    budget_level = models.CharField(
+        "预算档位", max_length=16, blank=True, default="medium",
+        help_text="low / medium / high",
+    )
+    global_market = models.CharField(
+        "市场范围", max_length=16, blank=True, default="domestic",
     )
 
     # 会员消费记录（用于后续统计）
@@ -105,6 +153,13 @@ class Project(models.Model):
     status = models.CharField(
         "状态", max_length=16, choices=STATUS_CHOICES, default=STATUS_PENDING
     )
+    pipeline_mode = models.CharField(
+        "流水线模式",
+        max_length=16,
+        choices=PIPELINE_MODE_CHOICES,
+        default=MODE_WORKSPACE,
+        help_text="workspace=按技能模块；auto=一键跑完；step=每节点暂停待确认",
+    )
     current_node_index = models.IntegerField(
         "当前节点索引", default=0, help_text="0 表示未开始，1-7 表示正在/已完成该节点"
     )
@@ -112,6 +167,38 @@ class Project(models.Model):
     progress_percent = models.IntegerField("进度百分比", default=0)
     error_message = models.TextField(
         "错误信息", blank=True, default="", help_text="status=failed 时填充"
+    )
+
+    # 融合技能状态（SSOT：fusion-plan §5；与 legacy status 并存）
+    fusion_status = models.CharField(
+        "融合流程状态",
+        max_length=16,
+        choices=FUSION_STATUS_CHOICES,
+        blank=True,
+        default="",
+    )
+    overall_score = models.FloatField("8维综合分", null=True, blank=True)
+    grade = models.CharField("报告等级", max_length=16, blank=True, default="")
+    ready_at = models.DateTimeField("可发布时间", null=True, blank=True)
+    skill_version = models.CharField(
+        "技能版本", max_length=32, blank=True, default="",
+        help_text="来自 demo4book project-config projectMeta.version",
+    )
+    compliance_tier = models.CharField(
+        "合规分层", max_length=32, blank=True, default="domestic",
+        help_text="domestic | ai-comic | global-*",
+    )
+
+    # 跨集连续性档案（来自 drama-continuity-recorder Skill）
+    character_continuity_state = models.JSONField(
+        "连续性档案",
+        default=dict,
+        blank=True,
+        help_text=(
+            "由 drama-continuity-recorder 维护的人设/事件连续性档案。"
+            "结构见 drama-continuity-recorder/SKILL.md#character-states.json。"
+            "前端工作台用于展示跨集一致性概览，不直接用于创作逻辑。"
+        ),
     )
 
     # 安全/展示用缓存字段（不直接返回给前端，由服务层按需使用）
@@ -193,9 +280,47 @@ class CreationNode(models.Model):
         verbose_name="所属项目",
     )
     node_index = models.IntegerField("节点编号", help_text="1-7")
+    fusion_node_id = models.CharField(
+        "融合节点ID",
+        max_length=64,
+        blank=True,
+        default="",
+        help_text="如 node-6-review / node-8-score，来自 project-config",
+    )
     node_name = models.CharField("节点名称", max_length=100)
     node_description = models.CharField(
         "节点描述", max_length=300, blank=True, default=""
+    )
+
+    # 节点角色（来自 StoryForge 生成/评估隔离模型）
+    # review/score 节点的上下文必须与 create 节点严格隔离，避免自评偏差
+    ROLE_CREATE = "create"      # 内容生成：世界观/人设/大纲/剧本
+    ROLE_REVIEW = "review"      # 质量审核：只读已落盘产物，不读实时中间产物
+    ROLE_FIX = "fix"            # 内容修复：消费 review 报告，不读 create 中间产物
+    ROLE_SCORE = "score"        # 剧本评分：独立上下文，最终量化
+    ROLE_DELIVER = "deliver"    # 交付导出：打包/导出
+    ROLE_UNSET = ""             # 未设定（旧节点兼容）
+
+    NODE_ROLE_CHOICES = [
+        (ROLE_CREATE, "内容生成"),
+        (ROLE_REVIEW, "质量审核"),
+        (ROLE_FIX, "内容修复"),
+        (ROLE_SCORE, "剧本评分"),
+        (ROLE_DELIVER, "交付导出"),
+        (ROLE_UNSET, "未设定"),
+    ]
+
+    node_role = models.CharField(
+        "节点角色",
+        max_length=16,
+        choices=NODE_ROLE_CHOICES,
+        default=ROLE_UNSET,
+        blank=True,
+        db_index=True,
+        help_text=(
+            "review/score 节点必须通过 get_reviewable_artifact() 接口读取产物，"
+            "禁止直接读取同项目 create 节点的实时中间产物，避免自评偏差。"
+        ),
     )
 
     status = models.CharField(
@@ -213,6 +338,55 @@ class CreationNode(models.Model):
 
     error_message = models.TextField("错误信息", blank=True, default="")
 
+    # ── 收敛停机字段（来自 StoryForge 四态控制模型） ──────────────────────
+    # 用于 review/fix 类节点的自动修复回路控制
+    CONVERGENCE_PENDING = "pending"     # 初始：数据不足，尚未判定
+    CONVERGENCE_CONVERGE = "converge"   # 收敛：当轮分 > 上轮分，可继续
+    CONVERGENCE_STAGNATE = "stagnate"   # 停滞：差值 ≤ delta，停机
+    CONVERGENCE_DIVERGE = "diverge"     # 发散：当轮分 < 上轮分，停机
+    CONVERGENCE_OSCILLATE = "oscillate" # 振荡：窗口内有涨有跌，停机
+    CONVERGENCE_BLOCKED = "blocked"     # 已停机（含硬上限触发）
+
+    CONVERGENCE_CHOICES = [
+        (CONVERGENCE_PENDING, "初始"),
+        (CONVERGENCE_CONVERGE, "收敛中"),
+        (CONVERGENCE_STAGNATE, "停滞"),
+        (CONVERGENCE_DIVERGE, "发散"),
+        (CONVERGENCE_OSCILLATE, "振荡"),
+        (CONVERGENCE_BLOCKED, "已停机"),
+    ]
+
+    fix_round = models.IntegerField(
+        "修复轮次", default=0,
+        help_text="当前已执行的修复轮数，每次 fix-episode 完成后 +1",
+    )
+    max_fix_rounds = models.IntegerField(
+        "最大修复轮次", default=5,
+        help_text="硬上限，由 skill-thresholds.json#maxFixRounds 按节点类型覆盖",
+    )
+    score_history = models.JSONField(
+        "分数历史", default=list, blank=True,
+        help_text="每轮修复后的 total_score 列表 [s1, s2, ...]，由 ConvergenceService 追加",
+    )
+    convergence_state = models.CharField(
+        "收敛状态", max_length=16,
+        choices=CONVERGENCE_CHOICES,
+        default=CONVERGENCE_PENDING,
+    )
+    fix_blocked_reason = models.CharField(
+        "停机原因", max_length=500, blank=True, default="",
+        help_text="convergence_state=blocked 时填充，供 Agent/前端展示",
+    )
+    last_failed_dimensions = models.JSONField(
+        "上轮失败维度", default=list, blank=True,
+        help_text=(
+            "上一轮 review 中未通过的维度 key 列表（G-Eval 模式）。"
+            "下轮 review 时只复查这些维度，防止维度漂移。"
+            "示例：['pacing', 'plot_structure', 'compliance']"
+        ),
+    )
+    # ────────────────────────────────────────────────────────────────────
+
     created_at = models.DateTimeField("创建时间", default=timezone.now)
 
     class Meta:
@@ -222,6 +396,7 @@ class CreationNode(models.Model):
         indexes = [
             models.Index(fields=["project_id", "node_index"]),
             models.Index(fields=["status"]),
+            models.Index(fields=["convergence_state"]),
         ]
         unique_together = [["project", "node_index"]]
 
@@ -441,3 +616,222 @@ class DownloadToken(models.Model):
     @classmethod
     def generate_token(cls) -> str:
         return secrets.token_urlsafe(24)
+
+
+# ============================================================
+# ProjectFusionArtifact - 融合 Schema 产物（JSONB）
+# ============================================================
+class ProjectFusionArtifact(models.Model):
+    """按 fusion-plan §6.6 存储节点产物，网站为唯一持久化层。"""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="fusion_artifacts",
+    )
+    artifact_key = models.CharField(
+        "产物键",
+        max_length=64,
+        help_text="project_brief / gate_full / script_score_report 等",
+    )
+    payload = models.JSONField("JSON 载荷", default=dict)
+    version = models.IntegerField("版本", default=1)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "融合产物"
+        verbose_name_plural = verbose_name
+        unique_together = [["project", "artifact_key"]]
+        indexes = [
+            models.Index(fields=["project", "artifact_key"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.project_id} · {self.artifact_key}"
+
+
+# ============================================================
+# AgentExecutionRun / SubSkillExecutionLog - 技能链执行追踪
+# ============================================================
+class AgentExecutionRun(models.Model):
+    """单次 Agent（主链节点）执行记录。"""
+
+    STATUS_RUNNING = "running"
+    STATUS_COMPLETED = "completed"
+    STATUS_FAILED = "failed"
+    STATUS_PARTIAL = "partial"
+
+    STATUS_CHOICES = [
+        (STATUS_RUNNING, "执行中"),
+        (STATUS_COMPLETED, "成功"),
+        (STATUS_FAILED, "失败"),
+        (STATUS_PARTIAL, "部分成功"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="agent_execution_runs",
+        verbose_name="项目",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="agent_execution_runs",
+        verbose_name="用户",
+    )
+    agent_id = models.CharField("Agent ID", max_length=64, db_index=True)
+    node_index = models.PositiveSmallIntegerField("节点序号", null=True, blank=True, db_index=True)
+    status = models.CharField(
+        "状态",
+        max_length=16,
+        choices=STATUS_CHOICES,
+        default=STATUS_RUNNING,
+        db_index=True,
+    )
+    batch_from = models.PositiveIntegerField("批次起始", null=True, blank=True)
+    batch_to = models.PositiveIntegerField("批次结束", null=True, blank=True)
+    outline_mode = models.CharField("大纲模式", max_length=32, blank=True, default="")
+    input_summary = models.JSONField("输入摘要", default=dict, blank=True)
+    output_summary = models.JSONField("输出摘要", default=dict, blank=True)
+    output_artifact_key = models.CharField("产出键", max_length=64, blank=True, default="")
+    error_message = models.TextField("错误信息", blank=True, default="")
+    started_at = models.DateTimeField("开始时间", default=timezone.now, db_index=True)
+    finished_at = models.DateTimeField("结束时间", null=True, blank=True)
+
+    class Meta:
+        db_table = "creation_agent_execution_run"
+        verbose_name = "Agent 执行记录"
+        verbose_name_plural = verbose_name
+        ordering = ["-started_at"]
+        indexes = [
+            models.Index(fields=["project", "-started_at"]),
+            models.Index(fields=["agent_id", "-started_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.agent_id} node={self.node_index} {self.status}"
+
+
+class SubSkillExecutionLog(models.Model):
+    """Agent 内单个子技能步骤记录。"""
+
+    STATUS_EXECUTED = "executed"
+    STATUS_FAILED = "failed"
+    STATUS_SKIPPED = "skipped"
+
+    STATUS_CHOICES = [
+        (STATUS_EXECUTED, "已执行"),
+        (STATUS_FAILED, "失败"),
+        (STATUS_SKIPPED, "跳过"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    run = models.ForeignKey(
+        AgentExecutionRun,
+        on_delete=models.CASCADE,
+        related_name="sub_skill_logs",
+        verbose_name="执行记录",
+    )
+    skill_id = models.CharField("子技能 ID", max_length=128, db_index=True)
+    skill_type = models.CharField("类型", max_length=32, blank=True, default="")
+    cli = models.CharField("CLI", max_length=64, blank=True, default="")
+    script = models.CharField("脚本", max_length=128, blank=True, default="")
+    status = models.CharField("状态", max_length=16, choices=STATUS_CHOICES, db_index=True)
+    attempt = models.PositiveSmallIntegerField("尝试次数", default=1)
+    order_index = models.PositiveSmallIntegerField("顺序", default=0)
+    input_summary = models.JSONField("输入摘要", default=dict, blank=True)
+    output_summary = models.JSONField("输出摘要", default=dict, blank=True)
+    error_message = models.TextField("错误信息", blank=True, default="")
+    duration_ms = models.PositiveIntegerField("耗时(ms)", null=True, blank=True)
+    started_at = models.DateTimeField("开始时间", default=timezone.now)
+    finished_at = models.DateTimeField("结束时间", null=True, blank=True)
+
+    class Meta:
+        db_table = "creation_sub_skill_execution_log"
+        verbose_name = "子技能执行记录"
+        verbose_name_plural = verbose_name
+        ordering = ["order_index", "started_at"]
+        indexes = [
+            models.Index(fields=["run", "order_index"]),
+            models.Index(fields=["skill_id", "-started_at"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(fields=["run", "skill_id"], name="uniq_sub_skill_per_run"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.skill_id} {self.status}"
+
+
+# ============================================================
+# ScriptQualityDefect：剧本质量缺陷记录
+# ============================================================
+class ScriptQualityDefect(models.Model):
+    """剧本质量缺陷
+
+    由质检 Agent 自动写入，或人工标注。
+    与 Project 关联，记录哪集哪个维度存在何种问题。
+
+    dimension 维度：
+    - hook       : 钩子/开场
+    - emotion    : 情绪设计（QDN）
+    - reversal   : 反转
+    - structure  : 结构节奏
+    - compliance : 合规
+    """
+
+    SOURCE_AUTO   = "auto"
+    SOURCE_MANUAL = "manual"
+
+    SOURCE_CHOICES = [
+        (SOURCE_AUTO,   "自动检测"),
+        (SOURCE_MANUAL, "人工标注"),
+    ]
+
+    STATUS_OPEN     = "open"
+    STATUS_RESOLVED = "resolved"
+
+    STATUS_CHOICES = [
+        (STATUS_OPEN,     "待处理"),
+        (STATUS_RESOLVED, "已处理"),
+    ]
+
+    project     = models.ForeignKey(
+        Project, on_delete=models.CASCADE,
+        related_name="quality_defects", verbose_name="所属项目",
+    )
+    episode     = models.IntegerField("集数", null=True, blank=True,
+                                      help_text="具体集数；null 表示整体性问题")
+    dimension   = models.CharField("质量维度", max_length=50, db_index=True,
+                                   help_text="hook/emotion/reversal/structure/compliance")
+    defect_type = models.CharField("缺陷类型", max_length=100,
+                                   help_text="如 hook_too_weak / qdn_mismatch / paywall_missing")
+    score       = models.FloatField("得分", null=True, blank=True,
+                                    help_text="该维度得分（0-100），null 表示未评分")
+    details     = models.JSONField("详细信息", default=dict, blank=True,
+                                   help_text="自由结构，如 { threshold: 75, actual: 62, suggestion: '...' }")
+    source      = models.CharField("来源", max_length=20,
+                                   choices=SOURCE_CHOICES, default=SOURCE_AUTO, db_index=True)
+    status      = models.CharField("状态", max_length=20,
+                                   choices=STATUS_CHOICES, default=STATUS_OPEN, db_index=True)
+    created_at  = models.DateTimeField("创建时间", auto_now_add=True)
+
+    class Meta:
+        db_table = "creation_script_quality_defect"
+        verbose_name = "剧本质量缺陷"
+        verbose_name_plural = verbose_name
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["project", "status"], name="sqd_project_status_idx"),
+            models.Index(fields=["dimension", "defect_type"], name="sqd_dimension_idx"),
+        ]
+
+    def __str__(self) -> str:
+        ep = f" E{self.episode:02d}" if self.episode else ""
+        return f"{self.project_id.hex[:8]}{ep} [{self.dimension}] {self.defect_type}"

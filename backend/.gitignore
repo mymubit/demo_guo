@@ -1,0 +1,13 @@
+# 运行时产物（勿提交）
+tmp/
+logs/
+media/
+*.log
+
+# Python / Django
+__pycache__/
+*.py[cod]
+*.sqlite3
+.env
+.venv/
+venv/

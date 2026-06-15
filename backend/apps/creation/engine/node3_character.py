@@ -311,7 +311,7 @@ class Node3Character:
                     'from': protagonist['name'],
                     'to': s['name'],
                     'type': '信任/盟友',
-                    'description': f'{protagonist["name"]与{s["name"]}的铁杆友情',
+                    'description': f'{protagonist["name"]}与{s["name"]}的铁杆友情',
                 })
 
         if antagonist and supporting:
@@ -320,7 +320,7 @@ class Node3Character:
                     'from': antagonist['name'],
                     'to': s['name'],
                     'type': '利用/拉拢',
-                    'description': f'{antagonist["name"]试图拉拢{s["name"]}',
+                    'description': f'{antagonist["name"]}试图拉拢{s["name"]}',
                 })
 
         return relationships

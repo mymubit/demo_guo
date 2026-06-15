@@ -256,7 +256,7 @@ class RateLimitMiddleware(MiddlewareMixin):
             response = JsonResponse(
                 {
                     "code": 42901,
-                    "message": "请求过于频繁，请稍后再试",
+                    "message": f"请求已被限流，预计 {max(1, result.reset_after)} 秒后可用",
                     "detail": {
                         "limit": result.limit,
                         "window": result.window,

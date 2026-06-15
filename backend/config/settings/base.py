@@ -4,6 +4,7 @@ Django settings for ScriptForge project.
 基础配置 - 所有环境共享的基础设置
 """
 import os
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -18,11 +19,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-me-in-production")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "false").lower() in ("1", "true", "yes")
 
-ALLOWED_HOSTS = ["*"]
-
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+    if host.strip()
+]
 
 # Application definition
 
@@ -36,16 +39,25 @@ INSTALLED_APPS = [
     # Third-party
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "django_filters",
+    "drf_spectacular",
+    "dj_queue",
     # Project apps
     "apps.users",
     "apps.membership",
+    "apps.billing",
     "apps.orders",
     "apps.creation",
     "apps.skill",
+    "apps.agent",
+    "apps.workflow",
     "apps.security",
-    "apps.admin_panel",
+    "apps.monitoring",
+    "apps.system_config",
+    "apps.portal",
+    "apps.console",
 ]
 
 MIDDLEWARE = [
@@ -61,14 +73,17 @@ MIDDLEWARE = [
     "apps.security.middleware.RequestSignatureMiddleware",
     "apps.security.middleware.RateLimitMiddleware",
     "apps.security.middleware.AuditLogMiddleware",
+    "apps.monitoring.middleware.MonitoringRequestMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
 
+TEMPLATE_DIR = BASE_DIR / "templates"
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [TEMPLATE_DIR] if TEMPLATE_DIR.exists() else [],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -98,7 +113,7 @@ DATABASES = {
         },
     }
 }
-
+#python manage.py dj_queue --mode async
 
 # Cache
 CACHES = {
@@ -117,14 +132,51 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 
 
-# Celery
-CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/2")
-CELERY_RESULT_BACKEND = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/3")
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = "Asia/Shanghai"
-CELERY_TASK_ALWAYS_EAGER = False
+# Django 6 Tasks + dj_queue（Postgres 队列，无需 Celery/Redis broker）
+DATABASE_ROUTERS = ["dj_queue.routers.DjQueueRouter"]
+
+
+def _csv_env(name: str, default: str) -> list[str]:
+    return [item.strip() for item in os.getenv(name, default).split(",") if item.strip()]
+
+
+DJ_QUEUE_QUEUES = _csv_env("DJ_QUEUE_QUEUES", "creation,default,evolve")
+
+TASKS = {
+    "default": {
+        "BACKEND": "dj_queue.backend.DjQueueBackend",
+        "QUEUES": DJ_QUEUE_QUEUES,
+        "OPTIONS": {
+            # Windows 本地开发用 async；Linux 生产可设 DJ_QUEUE_MODE=fork
+            "mode": os.getenv("DJ_QUEUE_MODE", "async"),
+            "workers": [
+                {
+                    "queues": DJ_QUEUE_QUEUES,
+                    "threads": int(os.getenv("DJ_QUEUE_WORKER_THREADS", "2")),
+                    "processes": 1,
+                    "polling_interval": 0.2,
+                }
+            ],
+            # Windows 上 psycopg2 的 LISTEN/NOTIFY 不可用，改轮询
+            "listen_notify": (
+                os.getenv("DJ_QUEUE_LISTEN_NOTIFY", "false" if sys.platform == "win32" else "true").lower()
+                in ("1", "true", "yes")
+            ),
+        },
+    },
+}
+
+# 仅调试：True 时提交接口同步跑完整流水线（会阻塞 HTTP）
+CREATION_FORCE_SYNC_PIPELINE = os.getenv(
+    "CREATION_FORCE_SYNC_PIPELINE", "false"
+).lower() in ("1", "true", "yes")
+
+# 模拟支付仅允许开发/测试显式开启，生产环境必须关闭。
+ALLOW_MOCK_PAYMENT = os.getenv("ALLOW_MOCK_PAYMENT", "false").lower() in (
+    "1",
+    "true",
+    "yes",
+)
 
 
 # Password validation
@@ -174,6 +226,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.OrderingFilter",
     ],
     "EXCEPTION_HANDLER": "apps.common.exceptions.custom_exception_handler",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.UserRateThrottle",
         "rest_framework.throttling.AnonRateThrottle",
@@ -181,6 +234,8 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "user": "1000/hour",
         "anon": "100/hour",
+        "monitoring_anon": os.getenv("MONITORING_ANON_RATE", "300/min"),
+        "monitoring_user": os.getenv("MONITORING_USER_RATE", "600/min"),
     },
 }
 
@@ -190,7 +245,7 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(seconds=int(os.getenv("JWT_ACCESS_TTL", 3600))),
     "REFRESH_TOKEN_LIFETIME": timedelta(seconds=int(os.getenv("JWT_REFRESH_TTL", 86400))),
     "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,
+    "BLACKLIST_AFTER_ROTATION": "rest_framework_simplejwt.token_blacklist" in INSTALLED_APPS,
     "UPDATE_LAST_LOGIN": True,
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
@@ -214,8 +269,7 @@ SIMPLE_JWT = {
 }
 
 
-# CORS
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS - 基础公共配置，CORS_ALLOW_ALL_ORIGINS 由 development.py/production.py 覆盖
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https?://localhost:\d+$",
@@ -233,9 +287,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
+STATIC_DIR = BASE_DIR / "static"
+STATICFILES_DIRS = [STATIC_DIR] if STATIC_DIR.exists() else []
 
 # Media files
 MEDIA_URL = "media/"
@@ -246,31 +299,136 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-# Security settings - 加密密钥
-API_SIGN_SECRET = os.getenv("API_SIGN_SECRET", "default-sign-secret-change-me")
+# Security settings - 安全开关由各环境配置文件覆盖（development.py / production.py）
 SKILL_ENCRYPT_KEY = os.getenv("SKILL_ENCRYPT_KEY", "01234567890123456789012345678901")
+
+# 融合技能 SSOT 根目录，指向 demo4book/short-drama-script-creator（与 resolve_skill_root() 约定一致）
+# 示例：C:\Users\99193\Desktop\flickplay\demo4book\short-drama-script-creator
+FUSION_SKILL_ROOT = os.getenv(
+    "FUSION_SKILL_ROOT",
+    str(BASE_DIR.parent.parent / "demo4book" / "short-drama-script-creator"),
+)
+FUSION_SKILL_ENABLED = os.getenv("FUSION_SKILL_ENABLED", "true").lower() in ("1", "true", "yes")
+CREATION_FUSION_WORK_DIR = os.getenv(
+    "CREATION_FUSION_WORK_DIR",
+    str(BASE_DIR / "tmp" / "fusion_work"),
+)
+# 主链 1–5：SSOT 编排器（逐节点 LLM + Schema 落库）
+FUSION_ORCHESTRATOR_ENABLED = os.getenv(
+    "FUSION_ORCHESTRATOR_ENABLED", "true"
+).lower() in ("1", "true", "yes")
+FUSION_LLM_ENABLED = os.getenv("FUSION_LLM_ENABLED", "true").lower() in ("1", "true", "yes")
+FUSION_LLM_EPISODE_BATCH = int(os.getenv("FUSION_LLM_EPISODE_BATCH", "5"))
+FUSION_LLM_OUTLINE_BATCH = int(os.getenv("FUSION_LLM_OUTLINE_BATCH", "1"))
+FUSION_LLM_MAX_EPISODES = int(os.getenv("FUSION_LLM_MAX_EPISODES", "0"))  # 0=全部集数
+FUSION_LLM_MAX_TOKENS = int(os.getenv("FUSION_LLM_MAX_TOKENS", "6000"))
+FUSION_SCHEMA_STRICT = os.getenv("FUSION_SCHEMA_STRICT", "false").lower() in (
+    "1",
+    "true",
+    "yes",
+)
+FUSION_EPISODE_GATE_ENABLED = os.getenv(
+    "FUSION_EPISODE_GATE_ENABLED", "true"
+).lower() in ("1", "true", "yes")
+# Phase C：主链 + Schema 运行时只读 DB；磁盘仅用于 import/sync 引导
+FUSION_DB_CONFIG = os.getenv("FUSION_DB_CONFIG", "true").lower() in ("1", "true", "yes")
+FUSION_CONFIG_DISK_FALLBACK = os.getenv("FUSION_CONFIG_DISK_FALLBACK", "false").lower() in (
+    "1",
+    "true",
+    "yes",
+)
 ENCRYPT_PHONE_KEY = os.getenv("ENCRYPT_PHONE_KEY", "phone-encrypt-key-change-me")
 ENCRYPT_EMAIL_KEY = os.getenv("ENCRYPT_EMAIL_KEY", "email-encrypt-key-change-me")
 
+# LLM（init_skill_data 会灌入 SkillConfig 数据库；endpoint 可为完整 /chat/completions URL）
+LLM_API_ENDPOINT = os.getenv("LLM_API_ENDPOINT", "")
+LLM_API_KEY = os.getenv("LLM_API_KEY", "")
+LLM_CONNECT_TIMEOUT = int(os.getenv("LLM_CONNECT_TIMEOUT", "30"))
+LLM_READ_TIMEOUT_JSON = int(os.getenv("LLM_READ_TIMEOUT_JSON", "600"))
+LLM_READ_TIMEOUT_TEXT = int(os.getenv("LLM_READ_TIMEOUT_TEXT", "120"))
+LLM_REQUEST_RETRIES = int(os.getenv("LLM_REQUEST_RETRIES", "2"))
 
-# Security - 安全中间件开关
-# 签名验证：生产环境建议开启，开发/前端调试阶段建议关闭
-SECURITY_SIGNATURE_ENABLED = False  # 默认关闭，避免前端调试被 401 拦截
-SECURITY_SIGNATURE_SKIP_PATHS = ("/api/auth/", "/health", "/api/health/")
+# 火山方舟统一接入（setup_volcano_agent_llm 管理命令读取）
+VOLCANO_ARK_API_KEY = os.getenv("VOLCANO_ARK_API_KEY", "")
+VOLCANO_ARK_BASE_URL = os.getenv(
+    "VOLCANO_ARK_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3"
+)
+# Coding Plan / Agent Plan 专用（OpenAI 兼容）
+VOLCANO_ARK_CODING_BASE_URL = os.getenv(
+    "VOLCANO_ARK_CODING_BASE_URL", "https://ark.cn-beijing.volces.com/api/coding/v3"
+)
+# coding_plan | payg — setup / env-setup 创建火山 Provider 时使用
+VOLCANO_ARK_KEY_TYPE = os.getenv("VOLCANO_ARK_KEY_TYPE", "")
+VOLCANO_EP_DEEPSEEK_V4_FLASH = os.getenv("VOLCANO_EP_DEEPSEEK_V4_FLASH", "")
+VOLCANO_EP_DEEPSEEK_V4_PRO = os.getenv("VOLCANO_EP_DEEPSEEK_V4_PRO", "")
+VOLCANO_EP_DOUBAO_LITE = os.getenv("VOLCANO_EP_DOUBAO_LITE", "")
+VOLCANO_EP_DOUBAO_PRO = os.getenv("VOLCANO_EP_DOUBAO_PRO", "")
+VOLCANO_EP_MINIMAX_M27 = os.getenv("VOLCANO_EP_MINIMAX_M27", "")
+# 按量付费 Chat API：model 填 ep-xxx；若 DB 存 Model ID，可通过以上 VOLCANO_EP_* 自动映射到接入点
 
-# 限流：默认每 IP+用户每分钟 60 次；匿名用户 30 次
-SECURITY_RATE_LIMIT_ENABLED = True
-SECURITY_RATE_LIMIT_SKIP_PATHS = ("/api/auth/", "/api/health/")
+# 智谱 GLM-5 原生 API（Script 节点；不走火山 ep-xxx）
+ZHIPU_API_KEY = os.getenv("ZHIPU_API_KEY", "")
+ZHIPU_GLM5_MODEL = os.getenv("ZHIPU_GLM5_MODEL", "glm-5")
+ZHIPU_GLM5_TURBO_MODEL = os.getenv("ZHIPU_GLM5_TURBO_MODEL", "glm-5-turbo")
+
+
+# Security - 安全中间件基础配置
+# 直接加载 base.py 时也需要安全默认值；development/production 会按环境覆盖。
+SECURITY_SIGNATURE_ENABLED = os.getenv("SECURITY_SIGNATURE_ENABLED", "false").lower() in (
+    "1",
+    "true",
+    "yes",
+)
+SECURITY_RATE_LIMIT_ENABLED = os.getenv("SECURITY_RATE_LIMIT_ENABLED", "false").lower() in (
+    "1",
+    "true",
+    "yes",
+)
+SECURITY_SIGNATURE_SKIP_PATHS = ("/api/auth/", "/api/monitoring/", "/health", "/api/health/")
+
+# 限流：默认每 IP+用户每分钟 120 次；匿名用户按 DRF throttle 配置
+SECURITY_RATE_LIMIT_DEFAULT = int(os.getenv("SECURITY_RATE_LIMIT_DEFAULT", "120") or 120)
+SECURITY_RATE_LIMIT_SKIP_PATHS = (
+    "/api/auth/",
+    "/api/health/",
+    "/api/admin/",
+    # 只读 SSOT 目录（创作页首屏单次加载，不应计入创作接口限频）
+    "/api/creation/fusion/catalog/",
+    "/api/creation/agents/catalog/",
+    "/api/creation/fusion/nodes/",
+    "/api/skill/themes/",
+)
 
 # 审计日志：默认开启；如 Redis 不可用可关闭
 SECURITY_AUDIT_ENABLED = True
-SECURITY_AUDIT_SKIP_PATHS = ("/api/health/",)
+SECURITY_AUDIT_SKIP_PATHS = ("/api/health/", "/api/monitoring/")
 
 # 签名密钥（与前端共享）
 # 注意：生产环境必须修改为安全随机值
 API_SIGN_SECRET = os.getenv("API_SIGN_SECRET", "scriptforge-demo-sign-secret-change-me")
 # 签名时间窗口（秒）
 SIGNATURE_TIME_WINDOW = 300  # 5 分钟
+
+
+# Monitoring - 项目内自研业务监控
+MONITORING_ENABLED = os.getenv("MONITORING_ENABLED", "true").lower() in ("1", "true", "yes")
+MONITORING_SAMPLE_RATE = float(os.getenv("MONITORING_SAMPLE_RATE", "1") or 1)
+MONITORING_SLOW_API_MS = int(os.getenv("MONITORING_SLOW_API_MS", "1000") or 1000)
+MONITORING_SLOW_SQL_MS = int(os.getenv("MONITORING_SLOW_SQL_MS", "500") or 500)
+MONITORING_RETENTION_DAYS = int(os.getenv("MONITORING_RETENTION_DAYS", "30") or 30)
+MONITORING_MAX_BATCH_SIZE = int(os.getenv("MONITORING_MAX_BATCH_SIZE", "50") or 50)
+MONITORING_MAX_PAYLOAD_SIZE = int(os.getenv("MONITORING_MAX_PAYLOAD_SIZE", str(16 * 1024)) or 16 * 1024)
+MONITORING_CAPTURE_RESPONSE = os.getenv("MONITORING_CAPTURE_RESPONSE", "false").lower() in (
+    "1",
+    "true",
+    "yes",
+)
+MONITORING_SKIP_PATHS = (
+    "/api/health/",
+    "/api/monitoring/",
+    "/static/",
+    "/media/",
+)
 
 
 # 文件存储
@@ -296,16 +454,18 @@ LOGGING = {
         },
     },
     "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "simple",
-        },
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": BASE_DIR / "logs" / "app.log",
             "maxBytes": 1024 * 1024 * 10,  # 10MB
             "backupCount": 10,
             "formatter": "verbose",
+            "encoding": "utf-8",
+        },
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+            "stream": "ext://sys.stdout",
         },
     },
     "root": {
@@ -328,5 +488,20 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
+        "apps.monitoring": {
+            "handlers": ["console", "file"],
+            "level": os.getenv("MONITORING_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
     },
+}
+
+# OpenAPI（drf-spectacular）
+SPECTACULAR_SETTINGS = {
+    "TITLE": "ScriptForge API",
+    "DESCRIPTION": "ScriptForge 前台 / 后台 REST API 契约",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SCHEMA_PATH_PREFIX": r"/api/",
 }

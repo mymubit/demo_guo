@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ArrowLeft,
@@ -17,103 +17,58 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { works } from '@/services/api'
+import { toast } from 'sonner'
+import { works as worksApi, creation } from '@/services/api'
+import { formatDateTime } from '@/utils/date'
+import { sanitizeHtml } from '@/utils/sanitizeHtml'
+import ScoreReport from '@/components/creation/ScoreReport'
+import GateReport from '@/components/creation/GateReport'
+import WorkVisualizationSection from '@/components/works/WorkVisualizationSection'
+import { ExecutionDurationLabel } from '@/components/shared/ExecutionRunPanel'
 
-const THEME_META = {
-  'family-revenge': { name: '家庭伦理复仇', emoji: '⚔️', color: '#e53e3e' },
-  'overbearing-ceo': { name: '豪门霸总', emoji: '💎', color: '#d69e2e' },
-  'sweet-pet': { name: '甜宠虐恋', emoji: '💕', color: '#d53f8c' },
-  'time-travel': { name: '穿越重生', emoji: '⏰', color: '#805ad5' },
-  'urban-rebirth': { name: '都市逆袭', emoji: '🏙️', color: '#3182ce' },
-  'ancient-costume': { name: '古装权谋', emoji: '⚜️', color: '#2f855a' },
-  'suspense-reversal': { name: '悬疑反转', emoji: '🕵️', color: '#5a67d8' },
-  'mixed-theme': { name: '混合题材', emoji: '🎭', color: '#dd6b20' },
-}
+import { getThemeMeta } from '@/constants/themeMeta'
+import ThemeBadge from '@/components/ui/ThemeBadge'
 
-function formatDate(val) {
-  if (!val) return '—'
-  try {
-    const d = new Date(val)
-    if (isNaN(d.getTime())) return String(val).slice(0, 16)
-    const pad = (n) => String(n).padStart(2, '0')
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
-  } catch (e) {
-    return String(val).slice(0, 16)
-  }
-}
+import { getWorkStatusMeta } from '@/utils/workStatus'
+import { useWorkDetail } from '@/hooks/queries/useWorkDetail'
 
-function getThemeMeta(theme) {
-  return (
-    THEME_META[theme] ||
-    THEME_META['mixed-theme'] || {
-      name: theme || '未分类',
-      emoji: '🎬',
-      color: '#888',
-    }
-  )
-}
-
-function statusBadge(status) {
-  switch (status) {
-    case 'completed':
-      return { text: '已完成', cls: 'bg-green-500/15 text-green-400' }
-    case 'running':
-      return { text: '创作中', cls: 'bg-gold-500/15 text-gold-400' }
-    case 'pending':
-      return { text: '待开始', cls: 'bg-navy-400/15 text-navy-200' }
-    case 'failed':
-      return { text: '创作失败', cls: 'bg-red-500/15 text-red-400' }
-    default:
-      return { text: status || '未知', cls: 'bg-navy-400/15 text-navy-200' }
-  }
+function statusBadge(status, work = {}) {
+  const meta = getWorkStatusMeta(status, work)
+  const tone =
+    meta.key === 'completed'
+      ? 'bg-green-500/15 text-green-400'
+      : meta.key === 'generating'
+        ? 'bg-gold-500/15 text-gold-400'
+        : meta.key === 'failed'
+          ? 'bg-red-500/15 text-red-400'
+          : meta.key === 'awaiting'
+            ? 'bg-blue-500/15 text-blue-300'
+            : 'bg-navy-400/15 text-navy-200'
+  return { text: meta.label, cls: tone, hint: meta.hint }
 }
 
 export default function WorksDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [work, setWork] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [useMock, setUseMock] = useState(false)
+  const { data: work, isLoading: loading, error, refetch } = useWorkDetail(id)
+  const loadError = error?.message ?? ''
   const [copied, setCopied] = useState(false)
   const [shareOpen, setShareOpen] = useState(false)
   const [shareLink, setShareLink] = useState('')
   const [sharing, setSharing] = useState(false)
   const [downloading, setDownloading] = useState(null)
+  const [agentRunning, setAgentRunning] = useState(null)
+  const [polishApplying, setPolishApplying] = useState(false)
+  const [selectedPolish, setSelectedPolish] = useState(() => new Set())
 
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true)
-      try {
-        const res = await works.getDetail(id)
-        const data = (res && res.data) || null
-        if (!data || !data.title) {
-          throw new Error('no data')
-        }
-        setWork(data)
-      } catch (err) {
-        // fallback 到 mock 数据，保证页面可预览
-        const mock = {
-          project_id: id,
-          title: `剧本创作作品 · ${id?.slice(0, 6) || 'demo'}`,
-          theme: 'overbearing-ceo',
-          episode_count: 30,
-          format_variant: 'B',
-          status: 'completed',
-          status_text: '已完成',
-          progress_percent: 100,
-          created_at: new Date().toISOString(),
-          completed_at: new Date().toISOString(),
-          rendered_result_html: `<div class="sf-preview"><h2 class="sf-title">✨ ${'剧本示例内容'}</h2><p>本页面内容由后端预渲染后注入。正在加载示例内容……</p></div>`,
-          rendered_progress_html: '',
-        }
-        setWork(mock)
-        setUseMock(true)
-      } finally {
-        setLoading(false)
-      }
+  const reloadWork = async () => {
+    try {
+      const result = await refetch()
+      if (result.error) throw result.error
+    } catch (err) {
+      toast.error(err.message || '刷新失败')
     }
-    load()
-  }, [id])
+  }
 
   const handleCopy = () => {
     if (!work) return
@@ -126,16 +81,77 @@ export default function WorksDetail() {
     if (!work?.project_id) return
     setDownloading(type)
     try {
-      // 直接打开后端下载链接（由后端返回 FileResponse）
-      const url = `/api/creation/download/${work.project_id}/?format=${type}`
+      if (type === 'md' || type === 'markdown') {
+        const data = await worksApi.exportMarkdown(work.project_id)
+        const blob = new Blob([data.content], { type: 'text/markdown;charset=utf-8' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = data.filename || `${work.title || 'script'}.md`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+        return
+      }
+      const format = type === 'html' ? 'html' : type
+      const blob = await creation.download(work.project_id, format)
+      const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${work.title || 'script'}.${type}`
+      a.download = `${work.title || 'script'}.${format}`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      toast.error(err.message || '下载失败')
     } finally {
       setTimeout(() => setDownloading(null), 800)
+    }
+  }
+
+  const togglePolishIndex = (index) => {
+    setSelectedPolish((prev) => {
+      const next = new Set(prev)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
+  }
+
+  const handleApplyPolish = async (applyAll = false) => {
+    if (!work?.project_id) return
+    setPolishApplying(true)
+    try {
+      await worksApi.applyPolish(work.project_id, {
+        apply_all: applyAll,
+        indices: applyAll ? undefined : Array.from(selectedPolish),
+      })
+      toast.success('润色建议已写入剧本备注')
+      await reloadWork()
+      setSelectedPolish(new Set())
+    } catch (err) {
+      toast.error(err.message || '应用失败')
+    } finally {
+      setPolishApplying(false)
+    }
+  }
+
+  const handleRunAgent = async (agentId) => {
+    if (!work?.project_id) return
+    setAgentRunning(agentId)
+    try {
+      const res = await worksApi.runAgent(work.project_id, agentId)
+      if (res?.status === 'error') {
+        throw new Error((res.errors || []).join('；') || 'Agent 执行失败')
+      }
+      toast.success(agentId === 'insight' ? '拉片分析完成' : '宣发物料已生成')
+      await reloadWork()
+    } catch (err) {
+      toast.error(err.message || '执行失败')
+    } finally {
+      setAgentRunning(null)
     }
   }
 
@@ -143,19 +159,20 @@ export default function WorksDetail() {
     if (!work?.project_id) return
     setSharing(true)
     try {
-      const res = await works.share(work.project_id, {
+      const res = await worksApi.share(work.project_id, {
         view_limit: 100,
         valid_days: 7,
         allow_download: false,
       })
-      const link = (res && res.data && res.data.share_url) || `${window.location.origin}/share/${res?.data?.share_token || ''}`
+      const link =
+        res?.share_url ||
+        `${window.location.origin}/share/${res?.share_token || ''}`
       setShareLink(link)
+      setShareOpen(true)
     } catch (err) {
-      // 用当前页面地址作为 fallback
-      setShareLink(window.location.href.replace(/\/works\//, '/share/'))
+      toast.error(err.message || '生成分享链接失败')
     } finally {
       setSharing(false)
-      setShareOpen(true)
     }
   }
 
@@ -176,7 +193,7 @@ export default function WorksDetail() {
       <div className="min-h-screen py-20 px-6">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-2xl font-bold text-white mb-4">作品不存在</h2>
-          <p className="text-navy-300 mb-6">找不到该作品或您无权限访问</p>
+          <p className="text-navy-300 mb-6">{loadError || '找不到该作品或您无权限访问'}</p>
           <button
             onClick={() => navigate('/works')}
             className="btn-gold inline-flex items-center gap-2"
@@ -190,7 +207,7 @@ export default function WorksDetail() {
   }
 
   const theme = getThemeMeta(work.theme)
-  const statusInfo = statusBadge(work.status)
+  const statusInfo = statusBadge(work.status, work)
 
   return (
     <div className="relative min-h-screen py-12">
@@ -226,27 +243,28 @@ export default function WorksDetail() {
           <div className="relative">
             {/* 徽章 */}
             <div className="flex flex-wrap items-center gap-3 mb-5">
-              <div
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl"
-                style={{ background: theme.color + '20', color: theme.color }}
-              >
-                <span className="text-xl">{theme.emoji}</span>
-                <span className="text-sm font-semibold">{theme.name}</span>
-              </div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold-400/15 text-gold-400">
-                <Star className="w-4 h-4 fill-gold-400" />
-                <span className="text-sm font-bold">
-                  {work.progress_percent || 0}%
-                </span>
-              </div>
+              <ThemeBadge theme={theme} size="md" className="!px-4 !py-2" />
+              {work.overall_score != null ? (
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold-400/15 text-gold-400">
+                  <Star className="w-4 h-4 fill-gold-400" />
+                  <span className="text-sm font-bold">
+                    {work.overall_score} 分 · {work.grade || '—'}
+                  </span>
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold-400/15 text-gold-400">
+                  <Star className="w-4 h-4 fill-gold-400" />
+                  <span className="text-sm font-bold">{work.progress_percent || 0}%</span>
+                </div>
+              )}
+              {work.fusion_status === 'ready' && (
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500/15 text-green-400">
+                  <span className="text-sm font-semibold">可发布</span>
+                </div>
+              )}
               <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl ${statusInfo.cls}`}>
                 <span className="text-sm font-semibold">{statusInfo.text}</span>
               </div>
-              {useMock && (
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-navy-700/40 text-navy-300">
-                  <span className="text-xs">演示数据</span>
-                </div>
-              )}
             </div>
 
             {/* 标题 */}
@@ -258,16 +276,25 @@ export default function WorksDetail() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <MetaItem icon={Film} label="集数" value={`${work.episode_count || 0} 集`} />
               <MetaItem icon={FileText} label="格式" value={work.format_variant || '通用'} />
-              <MetaItem icon={Calendar} label="创建时间" value={formatDate(work.created_at)} />
+              <MetaItem icon={Calendar} label="创建时间" value={formatDateTime(work.created_at)} />
               <MetaItem
                 icon={Sparkles}
                 label="项目ID"
-                value={(work.project_id || id || '').toString().slice(0, 12)}
+                value={work.project_id.toString().slice(0, 12)}
               />
             </div>
 
             {/* 操作按钮组 */}
             <div className="flex flex-wrap gap-3">
+              {work.status !== 'completed' && work.project_id && (
+                <button
+                  onClick={() => navigate(`/creation?project=${work.project_id}`)}
+                  className="px-5 py-3 rounded-xl font-semibold flex items-center gap-2 btn-gold"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  继续编辑
+                </button>
+              )}
               <button
                 onClick={() => handleDownload('md')}
                 disabled={work.status !== 'completed'}
@@ -312,6 +339,241 @@ export default function WorksDetail() {
           </div>
         </motion.div>
 
+        {(work.status === 'completed' || work.fusionSnapshot?.agentArtifacts) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.11 }}
+            className="glass-card rounded-3xl p-8 mb-8"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                <Users className="w-5 h-5 text-gold-400" />
+                智能分析
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={agentRunning != null}
+                  onClick={() => handleRunAgent('insight')}
+                  className="px-4 py-2 rounded-xl text-sm font-medium bg-navy-700/50 hover:bg-navy-700 text-white border border-navy-600/30 disabled:opacity-50"
+                >
+                  {agentRunning === 'insight' ? '分析中…' : '拉片分析'}
+                </button>
+                <button
+                  type="button"
+                  disabled={agentRunning != null}
+                  onClick={() => handleRunAgent('marketing')}
+                  className="px-4 py-2 rounded-xl text-sm font-medium btn-gold disabled:opacity-50"
+                >
+                  {agentRunning === 'marketing' ? '生成中…' : '宣发物料'}
+                </button>
+                <button
+                  type="button"
+                  disabled={agentRunning != null}
+                  onClick={() => handleRunAgent('review')}
+                  className="px-4 py-2 rounded-xl text-sm font-medium bg-navy-700/50 hover:bg-navy-700 text-white border border-navy-600/30 disabled:opacity-50"
+                >
+                  {agentRunning === 'review' ? '质检中…' : '重新质检'}
+                </button>
+                <button
+                  type="button"
+                  disabled={agentRunning != null}
+                  onClick={() => handleRunAgent('polish')}
+                  className="px-4 py-2 rounded-xl text-sm font-medium bg-navy-700/50 hover:bg-navy-700 text-white border border-navy-600/30 disabled:opacity-50"
+                >
+                  {agentRunning === 'polish' ? '分析中…' : '润色建议'}
+                </button>
+              </div>
+            </div>
+
+            {work.fusionSnapshot?.agentArtifacts?.score?.overallScore != null && (
+              <div className="mb-6 rounded-2xl bg-navy-800/30 border border-navy-700/30 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <h3 className="text-sm font-semibold text-gold-400">深度评分</h3>
+                  <ExecutionDurationLabel
+                    durationMs={work.fusionSnapshot.agentArtifacts.score.durationMs}
+                    className="text-[10px]"
+                  />
+                </div>
+                <p className="text-sm text-navy-200 mb-2">
+                  综合 {work.fusionSnapshot.agentArtifacts.score.overallScore ?? '—'} 分
+                  {work.fusionSnapshot.agentArtifacts.score.grade
+                    ? ` · ${work.fusionSnapshot.agentArtifacts.score.grade} 级`
+                    : ''}
+                </p>
+              </div>
+            )}
+
+            {work.fusionSnapshot?.agentArtifacts?.review && (
+              <div className="mb-6 rounded-2xl bg-navy-800/30 border border-navy-700/30 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <h3 className="text-sm font-semibold text-gold-400">质检报告</h3>
+                  <ExecutionDurationLabel
+                    durationMs={work.fusionSnapshot.agentArtifacts.review.durationMs}
+                    className="text-[10px]"
+                  />
+                </div>
+                <p className="text-sm text-navy-200 mb-2">
+                  状态：{work.fusionSnapshot.agentArtifacts.review.passed ? '通过' : '待优化'}
+                  {work.fusionSnapshot.agentArtifacts.review.pacingPassed === false && ' · 节奏需调整'}
+                </p>
+                {(work.fusionSnapshot.agentArtifacts.review.issues || []).length > 0 && (
+                  <ul className="space-y-1 text-sm text-navy-300 mb-3">
+                    {work.fusionSnapshot.agentArtifacts.review.issues.map((issue, i) => (
+                      <li key={i}>· {issue}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {(work.fusionSnapshot?.agentArtifacts?.polish?.suggestions || []).length > 0 && (
+              <div className="mb-6 rounded-2xl bg-navy-800/30 border border-navy-700/30 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                  <h3 className="text-sm font-semibold text-gold-400">润色建议</h3>
+                  <div className="flex items-center gap-3">
+                    <ExecutionDurationLabel
+                      durationMs={work.fusionSnapshot.agentArtifacts.polish.durationMs}
+                      className="text-[10px]"
+                    />
+                    {work.fusionSnapshot.agentArtifacts.polish.applied && (
+                      <span className="text-xs text-green-400">已应用部分建议</span>
+                    )}
+                  </div>
+                </div>
+                <ul className="space-y-2 mb-4">
+                  {work.fusionSnapshot.agentArtifacts.polish.suggestions.map((s) => (
+                    <li
+                      key={s.index}
+                      className="flex gap-3 items-start text-sm text-navy-200 rounded-lg bg-navy-900/40 p-3"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedPolish.has(s.index)}
+                        onChange={() => togglePolishIndex(s.index)}
+                        className="mt-1 rounded border-navy-600"
+                      />
+                      <div className="min-w-0 flex-1">
+                        {s.episodeNumber != null && (
+                          <span className="text-xs text-gold-400/90 mr-2">第{s.episodeNumber}集</span>
+                        )}
+                        {s.field && <span className="text-xs text-navy-500 mr-2">{s.field}</span>}
+                        <p className="whitespace-pre-wrap">{s.advice}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={polishApplying || selectedPolish.size === 0}
+                    onClick={() => handleApplyPolish(false)}
+                    className="px-4 py-2 rounded-xl text-sm font-medium btn-gold disabled:opacity-50"
+                  >
+                    {polishApplying ? '写入中…' : `应用选中（${selectedPolish.size}）`}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={polishApplying}
+                    onClick={() => handleApplyPolish(true)}
+                    className="px-4 py-2 rounded-xl text-sm font-medium bg-navy-700/50 text-white border border-navy-600/30 disabled:opacity-50"
+                  >
+                    全部应用
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {work.fusionSnapshot?.agentArtifacts?.insight?.lineCount > 0 && (
+              <div className="mb-6 rounded-2xl bg-navy-800/30 border border-navy-700/30 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <h3 className="text-sm font-semibold text-gold-400">拉片报告</h3>
+                  <ExecutionDurationLabel
+                    durationMs={work.fusionSnapshot.agentArtifacts.insight.durationMs}
+                    className="text-[10px]"
+                  />
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                  <AgentStat label="剧本行数" value={work.fusionSnapshot.agentArtifacts.insight.lineCount} />
+                  <AgentStat
+                    label="集标题数"
+                    value={work.fusionSnapshot.agentArtifacts.insight.episodeHeadings}
+                  />
+                </div>
+                {work.fusionSnapshot.agentArtifacts.insight.rhythmNotes && (
+                  <p className="text-sm text-navy-200 leading-relaxed">
+                    {work.fusionSnapshot.agentArtifacts.insight.rhythmNotes}
+                  </p>
+                )}
+                {(work.fusionSnapshot.agentArtifacts.insight.hookPoints || []).length > 0 && (
+                  <ul className="mt-3 space-y-1 text-sm text-navy-300">
+                    {work.fusionSnapshot.agentArtifacts.insight.hookPoints.map((h, i) => (
+                      <li key={i}>· {typeof h === 'string' ? h : JSON.stringify(h)}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {(work.fusionSnapshot?.agentArtifacts?.marketing?.titles || []).length > 0 && (
+              <div className="rounded-2xl bg-navy-800/30 border border-navy-700/30 p-5">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <h3 className="text-sm font-semibold text-gold-400">宣发物料</h3>
+                  <ExecutionDurationLabel
+                    durationMs={work.fusionSnapshot.agentArtifacts.marketing.durationMs}
+                    className="text-[10px]"
+                  />
+                </div>
+                <div className="space-y-3">
+                  <AgentList label="推荐标题" items={work.fusionSnapshot.agentArtifacts.marketing.titles} />
+                  <AgentList label="切片钩子" items={work.fusionSnapshot.agentArtifacts.marketing.clipHooks} />
+                  <AgentList label="海报 Slogan" items={work.fusionSnapshot.agentArtifacts.marketing.posterSlogans} />
+                </div>
+              </div>
+            )}
+
+            {!work.fusionSnapshot?.agentArtifacts?.insight?.lineCount &&
+              !(work.fusionSnapshot?.agentArtifacts?.marketing?.titles || []).length && (
+                <p className="text-sm text-navy-400">
+                  剧本完成后可运行拉片分析或生成宣发物料（宣发通常在剧本后处理链自动生成）。
+                </p>
+              )}
+          </motion.div>
+        )}
+
+        {work.gateSummary && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.12 }}
+            className="glass-card rounded-3xl p-8 mb-8"
+          >
+            <h2 className="text-2xl font-bold text-white mb-4">逐集质检</h2>
+            <GateReport summary={work.gateSummary} />
+          </motion.div>
+        )}
+
+        {work.scoreReport && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="glass-card rounded-3xl p-8 mb-8"
+          >
+            <h2 className="text-2xl font-bold text-white mb-4">8 维评分</h2>
+            <ScoreReport report={work.scoreReport} />
+          </motion.div>
+        )}
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18 }}
+        >
+          <WorkVisualizationSection projectId={work.project_id} />
+        </motion.div>
+
         {/* 剧本正文（直接插入后端返回的预渲染 HTML） */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -325,12 +587,14 @@ export default function WorksDetail() {
           </div>
           <div
             className="sf-script-rendered prose prose-invert max-w-none prose-headings:text-white prose-p:text-navy-100 prose-strong:text-gold-300"
-            dangerouslySetInnerHTML={{ __html: work.rendered_result_html || '<p class="text-navy-300">暂无内容</p>' }}
+            dangerouslySetInnerHTML={{
+              __html: sanitizeHtml(work.resultHtml || '<p class="text-navy-300">暂无内容</p>'),
+            }}
           />
         </motion.div>
 
         {/* 进度时间线（如后端返回 progress HTML 则直接展示） */}
-        {work.rendered_progress_html && (
+        {work.progressHtml && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -343,7 +607,7 @@ export default function WorksDetail() {
             </div>
             <div
               className="sf-progress-rendered"
-              dangerouslySetInnerHTML={{ __html: work.rendered_progress_html }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(work.progressHtml) }}
             />
           </motion.div>
         )}
@@ -427,6 +691,31 @@ export default function WorksDetail() {
           )}
         </AnimatePresence>
       </div>
+    </div>
+  )
+}
+
+function AgentStat({ label, value }) {
+  return (
+    <div className="bg-navy-900/40 rounded-xl p-3 border border-navy-700/20">
+      <p className="text-[10px] text-navy-500 uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-white font-semibold text-sm">{value ?? '—'}</p>
+    </div>
+  )
+}
+
+function AgentList({ label, items }) {
+  if (!items?.length) return null
+  return (
+    <div>
+      <p className="text-xs text-navy-500 mb-2">{label}</p>
+      <ul className="space-y-1">
+        {items.map((item, i) => (
+          <li key={i} className="text-sm text-navy-100">
+            · {item}
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }

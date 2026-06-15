@@ -62,11 +62,72 @@ class CreationSubmitSerializer(serializers.Serializer):
         help_text="目标受众描述（可选）",
     )
     reference_work = serializers.CharField(
-        max_length=200,
+        max_length=2000,
         required=False,
         allow_blank=True,
         default="",
         help_text="参考作品（可选）",
+    )
+    outline_text = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default="",
+        help_text="已有分集大纲（from-outline）",
+    )
+    novel_text = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default="",
+        help_text="小说原文（novel-adaptation）",
+    )
+    ip_sequel_mode = serializers.ChoiceField(
+        choices=[("sequel", "续作"), ("prequel", "前传"), ("spin-off", "衍生")],
+        required=False,
+        allow_blank=True,
+        default="sequel",
+    )
+    ip_keep_rules = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        default="",
+        help_text="IP 须保持的规则说明",
+    )
+    target_platform = serializers.CharField(
+        max_length=32,
+        default="douyin",
+        required=False,
+        help_text="平台代码，合法值见 GET /api/creation/fusion/catalog/",
+    )
+    episode_duration_minutes = serializers.FloatField(
+        min_value=0.5,
+        max_value=30,
+        default=2.0,
+        required=False,
+    )
+    creation_entry = serializers.CharField(
+        max_length=32,
+        default="from-scratch",
+        required=False,
+    )
+    budget_level = serializers.ChoiceField(
+        choices=[("low", "低预算"), ("medium", "中预算"), ("high", "高预算")],
+        default="medium",
+        required=False,
+    )
+    global_market = serializers.ChoiceField(
+        choices=[("domestic", "国内"), ("global", "出海")],
+        default="domestic",
+        required=False,
+    )
+    pipeline_mode = serializers.ChoiceField(
+        choices=[
+            ("workspace", "技能工作台"),
+            ("auto", "一键生成"),
+            ("step", "分步掌控"),
+        ],
+        default="workspace",
+        required=False,
+        help_text="workspace=按技能模块；auto=后台连续执行；step=每节点暂停待确认",
     )
 
     def validate_theme(self, value):
@@ -81,6 +142,40 @@ class CreationSubmitSerializer(serializers.Serializer):
             raise serializers.ValidationError("核心创意描述过短")
         return value
 
+    def validate_creation_entry(self, value):
+        value = (value or "from-scratch").strip()
+        from apps.skill.config.portal.creation_form import CreationFormOverrideService
+
+        allowed = set(CreationFormOverrideService.allowed_creation_entries())
+        if value not in allowed:
+            raise serializers.ValidationError("创作入口不在后台配置范围内")
+        return value
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        entry = attrs.get("creation_entry") or "from-scratch"
+        from apps.skill.config.portal.creation_form import CreationFormOverrideService
+
+        validation = CreationFormOverrideService.creation_entry_validation(entry)
+        required_fields = validation.get("requiredFields") if isinstance(validation, dict) else {}
+        errors = {}
+        field_labels = {
+            "reference_work": "参考作品说明",
+            "outline_text": "分集大纲",
+            "novel_text": "小说原文",
+            "ip_keep_rules": "IP 约束",
+        }
+        for field, rule in (required_fields or {}).items():
+            if not isinstance(rule, dict):
+                continue
+            min_length = int(rule.get("minLength") or 1)
+            label = rule.get("label") or field_labels.get(field) or field
+            if len((attrs.get(field) or "").strip()) < min_length:
+                errors[field] = f"{label}至少 {min_length} 字"
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs
+
 
 # ============================================================
 # 提交创作的返回结果
@@ -88,10 +183,10 @@ class CreationSubmitSerializer(serializers.Serializer):
 class CreationSubmitResultSerializer(serializers.Serializer):
     """提交创作成功返回
 
-    只返回 taskId 与预计时长，不暴露任何原始数据结构。
+    只返回 project_id 与预计时长，不暴露任何原始数据结构。
     """
 
-    task_id = serializers.CharField(help_text="任务追踪ID（即项目ID）")
+    project_id = serializers.CharField(help_text="项目ID")
     estimated_minutes = serializers.IntegerField(
         help_text="预计完成时长（分钟）"
     )
@@ -109,7 +204,7 @@ class ProjectProgressSerializer(serializers.Serializer):
     - 完成时额外返回一次性下载 token（15 分钟有效）
     """
 
-    status = serializers.CharField(help_text="pending / running / completed / failed")
+    status = serializers.CharField(help_text="pending / running / awaiting / completed / failed")
     status_text = serializers.CharField(help_text="状态中文描述")
     current_node = serializers.IntegerField(help_text="当前节点 1-7，未开始为 0")
     total_nodes = serializers.IntegerField(help_text="总节点数，默认 7")
@@ -138,6 +233,24 @@ class ProjectProgressSerializer(serializers.Serializer):
         default="",
         help_text="失败时的错误信息（用户可读）",
     )
+    fusion_status = serializers.CharField(
+        required=False, allow_blank=True, default="",
+    )
+    fusion_status_text = serializers.CharField(
+        required=False, allow_blank=True, default="",
+    )
+    overall_score = serializers.FloatField(required=False, allow_null=True)
+    grade = serializers.CharField(required=False, allow_blank=True, default="")
+    ready_at = serializers.DateTimeField(required=False, allow_null=True)
+    skill_version = serializers.CharField(required=False, allow_blank=True, default="")
+    score_summary = serializers.DictField(required=False, allow_null=True)
+    gate_summary = serializers.DictField(required=False, allow_null=True)
+    pipeline_mode = serializers.CharField(required=False, default="auto")
+    awaiting_confirm = serializers.BooleanField(required=False, default=False)
+    node_preview = serializers.DictField(required=False, allow_null=True)
+    nodes = serializers.ListField(
+        child=serializers.DictField(), required=False, default=list,
+    )
     created_at = serializers.DateTimeField(help_text="任务提交时间")
     updated_at = serializers.DateTimeField(help_text="最近更新时间")
 
@@ -160,11 +273,29 @@ class ProjectListSerializer(serializers.Serializer):
     status = serializers.CharField(help_text="项目状态")
     status_text = serializers.SerializerMethodField(help_text="状态中文描述")
     progress_percent = serializers.IntegerField(help_text="进度百分比")
+    fusion_status = serializers.CharField(
+        required=False, allow_blank=True, default="",
+    )
+    overall_score = serializers.FloatField(required=False, allow_null=True)
+    grade = serializers.CharField(required=False, allow_blank=True, default="")
+    ready_at = serializers.DateTimeField(required=False, allow_null=True)
     created_at = serializers.DateTimeField(help_text="创建时间")
     updated_at = serializers.DateTimeField(help_text="更新时间")
 
+    core_idea = serializers.SerializerMethodField(help_text="核心创意摘要")
+    pipeline_mode = serializers.CharField(help_text="创作模式")
+    creation_entry = serializers.CharField(
+        required=False, allow_blank=True, default="", help_text="创作入口"
+    )
+
     def get_status_text(self, obj) -> str:
         return obj.get_status_display()
+
+    def get_core_idea(self, obj) -> str:
+        text = (obj.core_idea or "").strip()
+        if len(text) <= 320:
+            return text
+        return text[:320] + "…"
 
 
 # ============================================================

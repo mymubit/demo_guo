@@ -7,6 +7,8 @@ import re
 from typing import Dict, Any, List
 from dataclasses import dataclass, field
 
+from .base import BaseNode
+
 
 @dataclass
 class Node1Input(BaseNode):

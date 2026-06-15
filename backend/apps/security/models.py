@@ -77,7 +77,7 @@ class AuditLog(models.Model):
         help_text=_("全局唯一的日志记录ID"),
     )
 
-    user_id = models.BigIntegerField(
+    user_id = models.UUIDField(
         null=True,
         blank=True,
         db_index=True,

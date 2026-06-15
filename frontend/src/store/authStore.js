@@ -34,6 +34,16 @@ export const useAuthStore = create(
       },
 
       setToken: (token) => set({ token }),
+      setTokens: ({ token, refreshToken }) =>
+        set((state) => ({
+          token: token ?? state.token,
+          refreshToken: refreshToken ?? state.refreshToken,
+          isAuthenticated: Boolean(token ?? state.token),
+        })),
+      hasAdminAccess: () => {
+        const user = get().user || {}
+        return Boolean(user.is_staff || user.is_superuser)
+      },
     }),
     {
       name: 'scriptforge-auth',
@@ -41,7 +51,13 @@ export const useAuthStore = create(
         user: state.user,
         token: state.token,
         refreshToken: state.refreshToken,
+        isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state?.token && !state.isAuthenticated) {
+          state.isAuthenticated = true
+        }
+      },
     }
   )
 )

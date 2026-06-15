@@ -71,6 +71,31 @@ class Order(models.Model):
         related_name="orders",
         verbose_name="会员套餐",
     )
+    TYPE_MEMBERSHIP = "membership"
+    TYPE_RECHARGE = "recharge"
+    TYPE_CHOICES = [
+        (TYPE_MEMBERSHIP, "会员购买"),
+        (TYPE_RECHARGE, "充值创作币"),
+    ]
+    order_type = models.CharField(
+        "订单类型",
+        max_length=16,
+        choices=TYPE_CHOICES,
+        default=TYPE_MEMBERSHIP,
+    )
+    recharge_package = models.ForeignKey(
+        "billing.RechargePackage",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="orders",
+        verbose_name="充值档位",
+    )
+    coins_granted = models.PositiveIntegerField(
+        "到账币数",
+        default=0,
+        help_text="充值订单支付成功后发放的创作币",
+    )
     amount = models.DecimalField("订单金额", max_digits=10, decimal_places=2, default=Decimal("0"))
     status = models.CharField(
         "订单状态",
@@ -153,3 +178,35 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"{self.transaction_id} - ¥{self.amount}"
+
+
+class MembershipGrant(models.Model):
+    """会员订单权益发放记录，用于退款时精确回滚。"""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    order = models.OneToOneField(
+        Order,
+        on_delete=models.PROTECT,
+        related_name="membership_grant",
+        verbose_name="订单",
+    )
+    user_membership = models.ForeignKey(
+        "membership.UserMembership",
+        on_delete=models.PROTECT,
+        related_name="order_grants",
+        verbose_name="会员记录",
+    )
+    grant_days = models.PositiveIntegerField("发放天数", default=0)
+    grant_coins = models.PositiveIntegerField("赠送币数", default=0)
+    created_at = models.DateTimeField("创建时间", default=timezone.now)
+
+    class Meta:
+        verbose_name = "会员权益发放记录"
+        verbose_name_plural = verbose_name
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user_membership"]),
+        ]
+
+    def __str__(self):
+        return f"{self.order.order_no} -> {self.user_membership_id}"

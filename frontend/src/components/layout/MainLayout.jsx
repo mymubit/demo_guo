@@ -2,17 +2,22 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import {
-  Film,
   Menu,
   X,
-  User,
   Sparkles,
   Crown,
+  Coins,
   FolderKanban,
   UserCircle2,
   LogOut,
+  BarChart3,
+  Eye,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import WalletBadge from '@/components/billing/WalletBadge'
+import BrandLogo from '@/components/ui/BrandLogo'
+import UserAvatar from '@/components/ui/UserAvatar'
+import { ICON } from '@/constants/iconSizes'
 
 export default function MainLayout() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -41,7 +46,10 @@ export default function MainLayout() {
   const navItems = [
     { path: '/', label: '首页', icon: null },
     { path: '/creation', label: '开始创作', icon: Sparkles },
+    { path: '/evaluate', label: '剧本评估', icon: BarChart3 },
+    { path: '/pull-sheet', label: '拉片分析', icon: Eye },
     { path: '/works', label: '我的作品', icon: FolderKanban },
+    { path: '/wallet', label: '创作币', icon: Coins },
     { path: '/member', label: '会员中心', icon: Crown },
   ]
 
@@ -59,23 +67,7 @@ export default function MainLayout() {
       >
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 group">
-              <motion.div
-                whileHover={{ rotate: 10, scale: 1.1 }}
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  boxShadow: '0 8px 24px -8px rgba(102, 126, 234, 0.6)',
-                }}
-              >
-                <Film className="w-5 h-5 text-white" />
-              </motion.div>
-              <span className="text-xl font-bold">
-                <span className="gradient-text">ScriptForge</span>
-                <span className="text-white/80 ml-1 text-sm font-normal">AI</span>
-              </span>
-            </Link>
+            <BrandLogo variant="consumer" size="sm" to="/" />
 
             {/* 桌面导航 */}
             <nav className="hidden md:flex items-center gap-2">
@@ -98,18 +90,15 @@ export default function MainLayout() {
             </nav>
 
             {/* 用户区 */}
-            <div className="hidden md:flex items-center gap-4">
+            <div className="hidden md:flex items-center gap-3">
+              {isAuthenticated && <WalletBadge compact />}
               {isAuthenticated ? (
                 <div className="relative">
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-navy-800/50 transition-all"
                   >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center">
-                      <span className="text-navy-950 text-sm font-bold">
-                        {user?.nickname?.charAt(0) || user?.phone?.slice(-2) || 'U'}
-                      </span>
-                    </div>
+                    <UserAvatar src={user?.avatar} name={user?.nickname} phone={user?.phone} size="sm" />
                     <span className="text-sm text-navy-100">
                       {user?.nickname || `用户${user?.phone?.slice(-4) || ''}`}
                     </span>
@@ -127,7 +116,7 @@ export default function MainLayout() {
                           to="/profile"
                           className="flex items-center gap-3 px-4 py-3 text-navy-100 hover:bg-navy-700/30 transition-all"
                         >
-                          <UserCircle2 className="w-4 h-4" />
+                          <UserCircle2 className={ICON.md} />
                           <span>个人中心</span>
                         </Link>
                         <Link
@@ -136,6 +125,13 @@ export default function MainLayout() {
                         >
                           <FolderKanban className="w-4 h-4" />
                           <span>我的作品</span>
+                        </Link>
+                        <Link
+                          to="/wallet"
+                          className="flex items-center gap-3 px-4 py-3 text-navy-100 hover:bg-navy-700/30 transition-all"
+                        >
+                          <Coins className="w-4 h-4 text-gold-400" />
+                          <span>充值创作币</span>
                         </Link>
                         <Link
                           to="/member"
@@ -196,16 +192,18 @@ export default function MainLayout() {
               <div className="px-6 py-4 space-y-2">
                 {navItems.map((item) => {
                   const isActive = location.pathname === item.path
+                  const Icon = item.icon
                   return (
                     <Link
                       key={item.path}
                       to={item.path}
-                      className={`block px-4 py-3 rounded-xl text-sm font-medium ${
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium ${
                         isActive
                           ? 'bg-navy-700/50 text-white'
                           : 'text-navy-200 hover:text-white hover:bg-navy-800/50'
                       }`}
                     >
+                      {Icon ? <Icon className={ICON.md} /> : null}
                       {item.label}
                     </Link>
                   )
@@ -266,24 +264,7 @@ export default function MainLayout() {
       {/* 页脚 */}
       <footer className="border-t border-navy-700/40 bg-navy-950/80">
         <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
-            <div className="col-span-2 md:col-span-1">
-              <div className="flex items-center gap-2 mb-4">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  }}
-                >
-                  <Film className="w-4 h-4 text-white" />
-                </div>
-                <span className="font-bold gradient-text">ScriptForge AI</span>
-              </div>
-              <p className="text-sm text-navy-300 leading-relaxed">
-                基于AI的专业短剧剧本创作平台，将一句话创意转化为完整可拍摄的A级剧本。
-              </p>
-            </div>
-
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-8 mb-8">
             <div>
               <h4 className="font-semibold text-white mb-4">产品</h4>
               <ul className="space-y-2 text-sm text-navy-300">

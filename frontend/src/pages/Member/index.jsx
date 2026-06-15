@@ -18,7 +18,7 @@
  *
  *  2. 当前用户的会员状态（"会员状态卡片"展示）
  *     membership.myMembership()                → GET  /api/membership/me/
- *       返回：{ plan, plan_name, is_active, expires_at, creation_quota_used,
+ *       返回：{ plan, plan_name, is_active, end_at, creation_quota_used,
  *               creation_quota_total, redeemed_codes[] }
  *       位置建议：与 plans 并行加载，失败时回退本地 mock 结构。
  *
@@ -69,7 +69,9 @@
  *     // 保留本地 PLANS 作为回退
  *   }
  * ========================================================================= */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import {
@@ -94,168 +96,112 @@ import {
   FileText,
   Users,
   Award,
+  Wallet,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { membership, orders } from '@/services/api'
+import { useWalletStore } from '@/store/walletStore'
+import { membership as membershipApi, orders as ordersApi } from '@/services/api'
+import {
+  formatDate,
+  resolveRemainingDays,
+  mergeMembershipState,
+} from '@/utils/date'
+import PriceWithDiscount from '@/components/commerce/PriceWithDiscount'
+import { Badge, Button, EmptyState, PageLoading } from '@/components/ui'
+import { useMyMembership } from '@/hooks/queries/useMyMembership'
 
-const PLANS = [
-  {
-    id: 'basic',
-    name: '体验版',
-    price: 29,
-    originalPrice: 59,
-    period: '月',
-    creation_quota: 3,
-    validity: 30,
-    features: [
-      '3 次完整剧本创作',
-      '8 大题材模板',
-      'Markdown 格式导出',
-      '基础质量审查',
-      '7 天作品云端保存',
-    ],
-    highlight: false,
-    badge: '入门',
-  },
-  {
-    id: 'pro',
-    name: '专业版',
-    price: 99,
-    originalPrice: 299,
-    period: '月',
-    creation_quota: 20,
-    validity: 30,
-    features: [
-      '20 次完整剧本创作',
-      '所有题材模板 + 定制',
-      '4 种格式变体导出',
-      '高级质量审查评分',
-      '30 天作品云端保存',
-      '优先创作队列',
-      '作品分享链接',
-    ],
-    highlight: true,
-    badge: '🔥 最受欢迎',
-  },
-  {
-    id: 'ultimate',
-    name: '旗舰版',
-    price: 999,
-    originalPrice: 1999,
-    period: '年',
-    creation_quota: -1,
-    validity: 365,
-    features: [
-      '无限次剧本创作',
-      '所有题材 + 定制模板',
-      '完整格式 + PDF + DOCX',
-      'S 级质量审查与优化建议',
-      '永久作品云端保存',
-      '最高优先级队列',
-      '高级分享与水印',
-      '专属客服支持',
-      '团队协作功能',
-    ],
-    highlight: false,
-    badge: '专业团队',
-  },
-]
-
-const MOCK_ORDERS = [
-  {
-    id: 'ORD-20250610-001',
-    plan_name: '专业版',
-    amount: 99,
-    status: 'paid',
-    created_at: '2025-06-10 14:23:11',
-    paid_at: '2025-06-10 14:23:45',
-    order_no: 'SF202506100001',
-  },
-  {
-    id: 'ORD-20250528-002',
-    plan_name: '体验版',
-    amount: 29,
-    status: 'paid',
-    created_at: '2025-05-28 09:15:32',
-    paid_at: '2025-05-28 09:16:01',
-    order_no: 'SF202505280002',
-  },
-  {
-    id: 'ORD-20250515-003',
-    plan_name: '旗舰版',
-    amount: 999,
-    status: 'paid',
-    created_at: '2025-05-15 20:45:08',
-    paid_at: '2025-05-15 20:45:49',
-    order_no: 'SF202505150003',
-  },
-  {
-    id: 'ORD-20250501-004',
-    plan_name: '专业版',
-    amount: 99,
-    status: 'pending',
-    created_at: '2025-05-01 11:22:33',
-    paid_at: null,
-    order_no: 'SF202505010004',
-  },
-]
-
-function formatDate(dateStr) {
-  if (!dateStr) return '-'
-  return dateStr.replace('T', ' ').substring(0, 16)
+const DEFAULT_MEMBERSHIP = {
+  plan: 'free',
+  plan_name: '免费用户',
+  is_active: false,
+  end_at: null,
+  creation_quota_used: 0,
+  creation_quota_total: 0,
 }
 
-function daysUntil(dateStr) {
-  if (!dateStr) return 0
-  const target = new Date(dateStr.replace(/-/g, '/')).getTime()
-  const now = Date.now()
-  return Math.max(0, Math.ceil((target - now) / (1000 * 60 * 60 * 24)))
+function OrderStatusBadge({ status }) {
+  if (status === 'paid') {
+    return (
+      <Badge tone="success" icon={<CheckCircle2 className="w-3.5 h-3.5" />}>
+        已支付
+      </Badge>
+    )
+  }
+  if (status === 'cancelled') {
+    return (
+      <Badge tone="default" icon={<XCircle className="w-3.5 h-3.5" />}>
+        已取消
+      </Badge>
+    )
+  }
+  if (status === 'refunded') {
+    return <Badge tone="info">已退款</Badge>
+  }
+  return (
+    <Badge tone="warning" icon={<Clock className="w-3.5 h-3.5" />}>
+      待支付
+    </Badge>
+  )
 }
 
 export default function Member() {
+  const queryClient = useQueryClient()
   const { user } = useAuthStore()
-  const [membership, setMembership] = useState(null)
-  const [plans, setPlans] = useState(PLANS)
-  const [orders, setOrders] = useState(MOCK_ORDERS)
+  const { wallet, fetchWallet } = useWalletStore()
+  const { data, isLoading, refetch } = useMyMembership()
   const [redeemCode, setRedeemCode] = useState('')
   const [redeemLoading, setRedeemLoading] = useState(false)
   const [payLoading, setPayLoading] = useState({})
+  const [orderActionLoading, setOrderActionLoading] = useState(null)
   const [tab, setTab] = useState('plans')
-  const [loading, setLoading] = useState(true)
+  const loading = isLoading
+
+  const featureMatrix = data?.featureMatrix ?? null
+  const membershipInfo = useMemo(
+    () => mergeMembershipState(data?.membership, data?.summary, DEFAULT_MEMBERSHIP),
+    [data?.membership, data?.summary],
+  )
+  const plans = useMemo(() => {
+    const p = data?.plans
+    if (!Array.isArray(p) || !p.length) return []
+    return p.map((plan) => ({
+      ...plan,
+      period: plan.validity_days >= 365 ? '年' : '月',
+      validity: plan.validity_days,
+      features: plan.features,
+      highlight: plan.is_recommended,
+      badge: plan.is_recommended ? '🔥 最受欢迎' : undefined,
+    }))
+  }, [data?.plans])
+  const orderList = useMemo(() => (Array.isArray(data?.orders) ? data.orders : []), [data?.orders])
+  const redeemHistory = useMemo(
+    () =>
+      Array.isArray(data?.history)
+        ? data.history.map((item) => ({
+            id: item.id,
+            plan_name: item.plan?.name || '会员套餐',
+            redeemed_at: item.created_at || item.start_at,
+            end_at: item.end_at,
+          }))
+        : [],
+    [data?.history],
+  )
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [m, p, o] = await Promise.all([
-          membership.getMyMembership().catch(() => null),
-          membership.getPlans().catch(() => null),
-          orders.list().catch(() => null),
-        ])
-        if (m) setMembership(m)
-        else {
-          setMembership({
-            plan: 'free',
-            plan_name: '免费用户',
-            is_active: false,
-            expires_at: null,
-            creation_quota_used: 0,
-            creation_quota_total: 0,
-            redeemed_codes: [],
-          })
-        }
-        if (p && Array.isArray(p) && p.length) setPlans(p)
-        if (o && Array.isArray(o) && o.length) setOrders(o)
-      } catch (e) {
-        // ignore
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
-  }, [])
+    if (data) fetchWallet().catch(() => {})
+  }, [data, fetchWallet])
+
+  const reloadMembershipData = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['myMembershipBundle'] }),
+      refetch(),
+      fetchWallet(),
+    ])
+  }
 
   const handleRedeem = async (e) => {
     e.preventDefault()
+    if (redeemLoading) return
     const code = redeemCode.trim().toUpperCase()
     if (!code) {
       toast.error('请输入卡密')
@@ -263,90 +209,29 @@ export default function Member() {
     }
     setRedeemLoading(true)
     try {
-      await membership.redeemCode(code)
+      await membershipApi.redeem(code)
       toast.success('卡密兑换成功！会员权益已激活')
-      setMembership((m) => ({
-        ...m,
-        plan: 'pro',
-        plan_name: '专业版（卡密激活）',
-        is_active: true,
-        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19),
-        creation_quota_total: (m?.creation_quota_total || 0) + 20,
-      }))
       setRedeemCode('')
+      await reloadMembershipData()
     } catch (err) {
-      toast.success('演示模式：卡密兑换成功！')
-      setMembership((m) => ({
-        ...m,
-        plan: 'pro',
-        plan_name: '专业版（卡密激活）',
-        is_active: true,
-        expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19),
-        creation_quota_total: (m?.creation_quota_total || 0) + 20,
-      }))
-      setRedeemCode('')
+      toast.error(err.message || '卡密兑换失败')
     } finally {
       setRedeemLoading(false)
     }
   }
 
   const handlePurchase = async (planId) => {
+    if (payLoading[planId]) return
     setPayLoading((p) => ({ ...p, [planId]: true }))
     try {
-      const order = await orders.create(planId)
-      const orderNo = order?.order_no || `SF${Date.now()}`
-      try {
-        await orders.mockPay(orderNo)
-        toast.success('演示支付成功！会员已激活')
-      } catch (payErr) {
-        toast.success('演示支付成功！')
-      }
-      const plan = plans.find((p) => p.id === planId) || PLANS.find((p) => p.id === planId)
-      const now = new Date()
-      setMembership((m) => ({
-        ...m,
-        plan: planId,
-        plan_name: plan?.name || '会员',
-        is_active: true,
-        expires_at: new Date(now.getTime() + (plan?.validity || 30) * 24 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19),
-        creation_quota_total: (m?.creation_quota_total || 0) + (plan?.creation_quota === -1 ? 9999 : plan?.creation_quota || 0),
-      }))
-      setOrders((prev) => [
-        {
-          id: `ORD-${Date.now()}`,
-          plan_name: plan?.name || '会员',
-          amount: plan?.price || 0,
-          status: 'paid',
-          created_at: now.toISOString().replace('T', ' ').substring(0, 19),
-          paid_at: now.toISOString().replace('T', ' ').substring(0, 19),
-          order_no: orderNo,
-        },
-        ...prev,
-      ])
+      const order = await ordersApi.createOrder({ plan_id: planId, payment_method: 'mock' })
+      const orderNo = order?.order_no
+      if (!orderNo) throw new Error('订单创建失败')
+      await ordersApi.mockPay(orderNo)
+      toast.success('支付成功！会员已激活')
+      await reloadMembershipData()
     } catch (err) {
-      const plan = plans.find((p) => p.id === planId) || PLANS.find((p) => p.id === planId)
-      const now = new Date()
-      toast.success('演示模式：订单创建成功！')
-      setMembership((m) => ({
-        ...m,
-        plan: planId,
-        plan_name: plan?.name || '会员',
-        is_active: true,
-        expires_at: new Date(now.getTime() + (plan?.validity || 30) * 24 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19),
-        creation_quota_total: (m?.creation_quota_total || 0) + (plan?.creation_quota === -1 ? 9999 : plan?.creation_quota || 0),
-      }))
-      setOrders((prev) => [
-        {
-          id: `ORD-${Date.now()}`,
-          plan_name: plan?.name || '会员',
-          amount: plan?.price || 0,
-          status: 'paid',
-          created_at: now.toISOString().replace('T', ' ').substring(0, 19),
-          paid_at: now.toISOString().replace('T', ' ').substring(0, 19),
-          order_no: `SF${Date.now()}`,
-        },
-        ...prev,
-      ])
+      toast.error(err.message || '购买失败，请稍后重试')
     } finally {
       setPayLoading((p) => ({ ...p, [planId]: false }))
     }
@@ -361,13 +246,45 @@ export default function Member() {
     }
   }
 
-  const remainingDays = membership?.expires_at ? daysUntil(membership.expires_at) : 0
-  const quotaPercent = membership && membership.creation_quota_total > 0
-    ? Math.min(100, ((membership.creation_quota_total - membership.creation_quota_used) / membership.creation_quota_total) * 100)
-    : 0
-  const remainingQuota = membership
-    ? Math.max(0, membership.creation_quota_total - membership.creation_quota_used)
-    : 0
+  const handlePayOrder = async (orderNo) => {
+    if (orderActionLoading) return
+    setOrderActionLoading(orderNo)
+    try {
+      await ordersApi.mockPay(orderNo)
+      toast.success('支付成功')
+      await reloadMembershipData()
+    } catch (err) {
+      toast.error(err.message || '支付失败')
+    } finally {
+      setOrderActionLoading(null)
+    }
+  }
+
+  const handleCancelOrder = async (orderNo) => {
+    if (orderActionLoading) return
+    setOrderActionLoading(orderNo)
+    try {
+      await ordersApi.cancel(orderNo)
+      toast.success('订单已取消')
+      await reloadMembershipData()
+    } catch (err) {
+      toast.error(err.message || '取消失败')
+    } finally {
+      setOrderActionLoading(null)
+    }
+  }
+
+  const remainingDays = resolveRemainingDays(membershipInfo)
+  const walletBalance = wallet?.balance ?? membershipInfo?.wallet?.balance ?? 0
+  const walletCurrency = wallet?.currency_name || membershipInfo?.wallet?.currency_name || '创作币'
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-24">
+        <PageLoading label="加载会员数据…" />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen pt-16 pb-20 px-6 relative">
@@ -386,9 +303,18 @@ export default function Member() {
             <span className="gradient-text">会员中心</span>
             <Crown className="w-10 h-10 text-gold-400" />
           </h1>
-          <p className="text-navy-300 text-lg">
-            你好，<span className="text-white font-semibold">{user?.nickname || user?.phone?.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') || '创作者'}</span>
-            ，解锁专业能力，让创意腾飞
+          <p className="text-navy-300 text-lg flex flex-wrap items-center gap-3">
+            <span>
+              你好，<span className="text-white font-semibold">{user?.nickname || user?.phone?.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') || '创作者'}</span>
+              ，解锁专业能力，让创意腾飞
+            </span>
+            <Link
+              to="/wallet"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm text-gold-300 border border-gold-500/30 hover:bg-gold-500/10 transition-colors"
+            >
+              <Wallet className="w-4 h-4" />
+              创作币钱包
+            </Link>
           </p>
         </motion.div>
 
@@ -400,33 +326,33 @@ export default function Member() {
           className="mb-10"
         >
           <div className="relative overflow-hidden rounded-[32px] p-8 md:p-10" style={{
-            background: membership?.is_active
+            background: membershipInfo?.is_active
               ? 'linear-gradient(135deg, rgba(244, 183, 25, 0.15) 0%, rgba(253, 160, 133, 0.1) 50%, rgba(102, 126, 234, 0.1) 100%)'
               : 'linear-gradient(135deg, rgba(15, 42, 92, 0.6) 0%, rgba(15, 42, 92, 0.3) 100%)',
-            border: membership?.is_active ? '1px solid rgba(244, 183, 25, 0.35)' : '1px solid rgba(102, 126, 234, 0.2)',
+            border: membershipInfo?.is_active ? '1px solid rgba(244, 183, 25, 0.35)' : '1px solid rgba(102, 126, 234, 0.2)',
             backdropFilter: 'blur(20px)',
-            boxShadow: membership?.is_active ? '0 20px 60px -20px rgba(244, 183, 25, 0.3)' : 'none',
+            boxShadow: membershipInfo?.is_active ? '0 20px 60px -20px rgba(244, 183, 25, 0.3)' : 'none',
           }}>
             {/* 装饰 */}
             <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-30 blur-3xl pointer-events-none"
-              style={{ background: membership?.is_active ? 'radial-gradient(circle, #f4b719 0%, transparent 70%)' : 'radial-gradient(circle, #667eea 0%, transparent 70%)' }} />
+              style={{ background: membershipInfo?.is_active ? 'radial-gradient(circle, #f4b719 0%, transparent 70%)' : 'radial-gradient(circle, #667eea 0%, transparent 70%)' }} />
 
             <div className="relative z-10 flex flex-col md:flex-row gap-8 md:gap-12 items-start md:items-center">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-4">
-                  {membership?.is_active ? (
+                  {membershipInfo?.is_active ? (
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-navy-950"
                       style={{ background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)' }}>
                       <Crown className="w-4 h-4" />
-                      {membership.plan_name || '会员'}
+                      {membershipInfo?.plan_name || '会员'}
                     </div>
                   ) : (
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-navy-200 bg-navy-700/50 border border-navy-600/40">
                       <Gift className="w-4 h-4" />
-                      {membership?.plan_name || '免费用户'}
+                      {membershipInfo?.plan_name || '免费用户'}
                     </div>
                   )}
-                  {membership?.is_active && (
+                  {membershipInfo?.is_active && remainingDays > 0 && (
                     <span className="inline-flex items-center gap-1.5 text-sm text-gold-300">
                       <Flame className="w-4 h-4" /> 剩余 {remainingDays} 天
                     </span>
@@ -434,7 +360,7 @@ export default function Member() {
                 </div>
 
                 <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-                  {membership?.is_active ? (
+                  {membershipInfo?.is_active ? (
                     <>享受完整的专业创作能力</>
                   ) : (
                     <>升级会员，解锁全部创作能力</>
@@ -446,25 +372,17 @@ export default function Member() {
                   <div className="p-5 rounded-2xl bg-navy-900/40 border border-navy-600/30">
                     <div className="flex items-center justify-between mb-3">
                       <div className="text-sm text-navy-300 flex items-center gap-1.5">
-                        <FileText className="w-4 h-4" /> 剩余创作次数
+                        <Wallet className="w-4 h-4" /> 创作币余额
                       </div>
+                      <Link to="/wallet" className="text-xs text-gold-400 hover:underline">
+                        去充值
+                      </Link>
                     </div>
-                    <div className="text-3xl font-bold text-white mb-3">
-                      {membership?.creation_quota_total === 9999 || membership?.creation_quota === -1 ? (
-                        <span className="gradient-text">∞</span>
-                      ) : (
-                        <>
-                          <span className="gradient-text">{remainingQuota}</span>
-                          <span className="text-navy-400 text-lg font-normal"> / {membership?.creation_quota_total || 0}</span>
-                        </>
-                      )}
+                    <div className="text-3xl font-bold text-white mb-1">
+                      <span className="gradient-text">{walletBalance}</span>
+                      <span className="text-navy-400 text-lg font-normal ml-2">{walletCurrency}</span>
                     </div>
-                    {(membership?.creation_quota_total && membership.creation_quota_total < 9999) && (
-                      <div className="h-1.5 rounded-full bg-navy-800 overflow-hidden">
-                        <div className="h-full rounded-full transition-all duration-500"
-                          style={{ width: `${quotaPercent}%`, background: 'linear-gradient(90deg, #f6d365 0%, #fda085 100%)' }} />
-                      </div>
-                    )}
+                    <div className="text-xs text-navy-400">创作按节点/动作扣费，开通会员赠送创作币</div>
                   </div>
 
                   {/* 到期时间 */}
@@ -473,9 +391,9 @@ export default function Member() {
                       <Calendar className="w-4 h-4" /> 会员到期时间
                     </div>
                     <div className="text-xl font-bold text-white mb-1">
-                      {membership?.is_active ? formatDate(membership.expires_at) : '未开通'}
+                      {membershipInfo?.is_active ? formatDate(membershipInfo.end_at) : '未开通'}
                     </div>
-                    {membership?.is_active && (
+                    {membershipInfo?.is_active && remainingDays > 0 && (
                       <div className="text-xs text-gold-400">
                         还有 {remainingDays} 天到期
                       </div>
@@ -488,10 +406,10 @@ export default function Member() {
                       <Shield className="w-4 h-4" /> 专属权益
                     </div>
                     <div className="text-xl font-bold text-white mb-1">
-                      {membership?.is_active ? '全部解锁' : '基础功能'}
+                      {membershipInfo?.is_active ? '全部解锁' : '基础功能'}
                     </div>
                     <div className="text-xs text-navy-300">
-                      {membership?.is_active ? '所有模板和格式可用' : '仅使用免费模板'}
+                      {membershipInfo?.is_active ? '所有模板和格式可用' : '仅使用免费模板'}
                     </div>
                   </div>
                 </div>
@@ -501,14 +419,14 @@ export default function Member() {
               <div className="hidden md:flex flex-col items-center">
                 <div className="relative w-32 h-32 rounded-3xl flex items-center justify-center"
                   style={{
-                    background: membership?.is_active
+                    background: membershipInfo?.is_active
                       ? 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)'
                       : 'linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%)',
-                    boxShadow: membership?.is_active ? '0 20px 40px -10px rgba(244, 183, 25, 0.4)' : 'none',
+                    boxShadow: membershipInfo?.is_active ? '0 20px 40px -10px rgba(244, 183, 25, 0.4)' : 'none',
                   }}>
-                  <Crown className={`w-16 h-16 ${membership?.is_active ? 'text-navy-950' : 'text-gold-400'}`} />
+                  <Crown className={`w-16 h-16 ${membershipInfo?.is_active ? 'text-navy-950' : 'text-gold-400'}`} />
                 </div>
-                {!membership?.is_active && (
+                {!membershipInfo?.is_active && (
                   <button
                     onClick={() => setTab('plans')}
                     className="mt-5 px-6 py-2.5 rounded-xl font-semibold text-navy-950 text-sm inline-flex items-center gap-2"
@@ -521,6 +439,80 @@ export default function Member() {
             </div>
           </div>
         </motion.div>
+
+        {featureMatrix && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-10"
+          >
+            <h2 className="text-lg font-semibold text-white mb-4">会员与非会员权益对比</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="glass-card rounded-2xl p-6 border border-navy-700/40">
+              <h3 className="text-lg font-bold text-white mb-1">
+                {featureMatrix.free_tier?.name || '普通用户'}
+              </h3>
+              <p className="text-xs text-navy-500 mb-4">充值仅到账基础创作币，无额外赠送</p>
+              <ul className="space-y-2">
+                {(featureMatrix.free_tier?.matrix || []).map((row) => (
+                  <li
+                    key={row.key}
+                    className={`flex items-center justify-between text-sm gap-2 rounded-lg px-2 py-1.5 ${
+                      row.free !== row.member ? 'bg-navy-800/40' : ''
+                    }`}
+                  >
+                    <span className="text-navy-200">{row.label}</span>
+                    {row.free ? (
+                      <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
+                    ) : (
+                      <XCircle className="w-4 h-4 text-navy-600 flex-shrink-0" />
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="glass-card rounded-2xl p-6 border border-gold-500/30">
+              <h3 className="text-lg font-bold text-gold-400 mb-1">
+                {featureMatrix.member_tier?.name || '会员用户'}
+              </h3>
+              <p className="text-xs text-navy-400 mb-4">开通赠币 + 充值额外赠送创作币</p>
+              <ul className="space-y-2">
+                {(featureMatrix.member_tier?.matrix || featureMatrix.free_tier?.matrix || []).map((row) => (
+                  <li
+                    key={row.key}
+                    className={`flex items-center justify-between text-sm gap-2 rounded-lg px-2 py-1.5 ${
+                      row.free !== row.member ? 'bg-gold-500/5 border border-gold-500/10' : ''
+                    }`}
+                  >
+                    <span className="text-navy-100 flex items-center gap-2">
+                      {row.label}
+                      {row.coming_soon && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300">
+                          即将上线
+                        </span>
+                      )}
+                    </span>
+                    {row.member ? (
+                      <Check className="w-4 h-4 text-gold-400 flex-shrink-0" />
+                    ) : (
+                      <XCircle className="w-4 h-4 text-navy-600 flex-shrink-0" />
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {!featureMatrix.is_member && (
+                <button
+                  type="button"
+                  onClick={() => setTab('plans')}
+                  className="mt-5 w-full py-2.5 rounded-xl btn-gold text-sm font-semibold"
+                >
+                  开通会员
+                </button>
+              )}
+            </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Tabs */}
         <div className="flex flex-wrap gap-2 mb-8">
@@ -589,21 +581,26 @@ export default function Member() {
                     )}
 
                     <div className="mb-5">
-                      <h3 className={`text-2xl font-bold mb-2 ${plan.highlight ? 'gradient-text' : 'text-white'}`}>
+                      <h3 className={`text-2xl font-bold ${plan.highlight ? 'gradient-text' : 'text-white'}`}>
                         {plan.name}
                       </h3>
-                      <p className="text-sm text-navy-300">
-                        {plan.creation_quota === -1 ? '无限剧本创作' : `${plan.creation_quota} 次剧本创作`}
-                      </p>
                     </div>
 
-                    <div className="flex items-baseline gap-1 mb-6">
-                      <span className="text-5xl font-bold text-white">¥{plan.price}</span>
-                      <span className="text-navy-400">/{plan.period}</span>
-                      {plan.originalPrice && (
-                        <span className="ml-2 text-sm text-navy-500 line-through">¥{plan.originalPrice}</span>
-                      )}
-                    </div>
+                    <PriceWithDiscount
+                      price={plan.price}
+                      displayPrice={plan.display_price}
+                      originalPrice={plan.original_price}
+                      displayOriginalPrice={plan.display_original_price}
+                      discountLabel={plan.discount_label}
+                      discountPercent={plan.discount_percent}
+                      validityDays={plan.validity_days ?? plan.validity}
+                      size="lg"
+                      layout="stack"
+                      framed
+                      chargeTone="white"
+                      suffix={`/${plan.period}`}
+                      className="mb-6"
+                    />
 
                     <ul className="space-y-2.5 mb-8 min-h-[200px]">
                       {plan.features.map((feat) => (
@@ -725,7 +722,7 @@ export default function Member() {
                     <p>• 卡密格式：字母和数字组成，区分大小写</p>
                     <p>• 每张卡密仅可使用一次，兑换后立即生效</p>
                     <p>• 如有问题请联系客服</p>
-                    <p>• <span className="text-gold-400">演示提示：任意输入即可模拟成功兑换</span></p>
+                    <p>• 卡密由管理员批量生成，请向渠道方获取</p>
                   </div>
                 </div>
               </div>
@@ -742,15 +739,18 @@ export default function Member() {
                   </div>
                 </div>
 
-                {membership?.redeemed_codes && membership.redeemed_codes.length > 0 ? (
+                {redeemHistory.length > 0 ? (
                   <div className="space-y-3">
-                    {membership.redeemed_codes.map((code, idx) => (
-                      <div key={idx} className="p-4 rounded-xl bg-navy-900/40 border border-navy-600/30 flex items-center justify-between">
+                    {redeemHistory.map((record) => (
+                      <div key={record.id} className="p-4 rounded-xl bg-navy-900/40 border border-navy-600/30 flex items-center justify-between">
                         <div>
-                          <div className="font-mono text-sm text-white">{code.code}</div>
-                          <div className="text-xs text-navy-400 mt-1">{formatDate(code.redeemed_at)}</div>
+                          <div className="text-sm text-white font-semibold">{record.plan_name}</div>
+                          <div className="text-xs text-navy-400 mt-1">开通于 {formatDate(record.redeemed_at)}</div>
+                          {record.end_at && (
+                            <div className="text-xs text-navy-500 mt-0.5">到期 {formatDate(record.end_at)}</div>
+                          )}
                         </div>
-                        <div className="text-xs text-gold-400 font-semibold">{code.plan_name}</div>
+                        <div className="text-xs text-gold-400 font-semibold">已激活</div>
                       </div>
                     ))}
                   </div>
@@ -781,18 +781,83 @@ export default function Member() {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-white">我的订单</h3>
-                    <p className="text-sm text-navy-300">共 {orders.length} 条订单记录</p>
+                    <p className="text-sm text-navy-300">共 {orderList.length} 条订单记录</p>
                   </div>
                 </div>
                 <button
-                  onClick={() => toast.info('已刷新订单列表')}
+                  onClick={async () => {
+                    try {
+                      await reloadMembershipData()
+                      toast.success('订单列表已刷新')
+                    } catch {
+                      toast.error('刷新失败')
+                    }
+                  }}
                   className="p-2.5 rounded-xl bg-navy-800/50 border border-navy-600/30 text-navy-300 hover:text-white hover:border-navy-500/40 transition-all">
                   <RefreshCw className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[600px]">
+              <div className="space-y-3 md:hidden">
+                {orderList.map((order) => (
+                  <div
+                    key={order.id || order.order_no}
+                    className="rounded-2xl border border-navy-700/35 bg-navy-900/45 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <button
+                          type="button"
+                          onClick={() => copyOrderNo(order.order_no)}
+                          className="flex max-w-full items-center gap-1.5 truncate font-mono text-sm text-white hover:text-gold-400"
+                        >
+                          <span className="truncate">{order.order_no}</span>
+                          <Copy className="w-3.5 h-3.5 shrink-0 text-navy-400" />
+                        </button>
+                        <p className="mt-1 text-xs text-navy-500">创建于 {formatDate(order.created_at)}</p>
+                      </div>
+                      <OrderStatusBadge status={order.status} />
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs text-navy-500">套餐</p>
+                        <p className="mt-1 font-semibold text-white">{order.plan_name}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-navy-500">金额</p>
+                        <p className="mt-1 text-lg font-bold gradient-text">¥{order.amount}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-xs text-navy-500">支付时间</p>
+                        <p className="mt-1 text-navy-300">{order.paid_at ? formatDate(order.paid_at) : '-'}</p>
+                      </div>
+                    </div>
+                    {order.status === 'pending' && (
+                      <div className="mt-4 grid grid-cols-2 gap-2">
+                        <Button
+                          size="sm"
+                          variant="gold"
+                          isLoading={orderActionLoading === order.order_no}
+                          onClick={() => handlePayOrder(order.order_no)}
+                        >
+                          去支付
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={orderActionLoading === order.order_no}
+                          onClick={() => handleCancelOrder(order.order_no)}
+                        >
+                          取消
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="hidden overflow-x-auto overscroll-x-contain md:block">
+                <table className="w-full min-w-[700px]">
                   <thead>
                     <tr className="border-b border-navy-600/30">
                       <th className="text-left py-3 px-4 text-xs font-semibold text-navy-400 uppercase tracking-wider">订单信息</th>
@@ -800,10 +865,11 @@ export default function Member() {
                       <th className="text-left py-3 px-4 text-xs font-semibold text-navy-400 uppercase tracking-wider">金额</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-navy-400 uppercase tracking-wider">状态</th>
                       <th className="text-left py-3 px-4 text-xs font-semibold text-navy-400 uppercase tracking-wider">时间</th>
+                      <th className="text-left py-3 px-4 text-xs font-semibold text-navy-400 uppercase tracking-wider">操作</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {orders.map((order, idx) => (
+                    {orderList.map((order) => (
                       <tr key={order.id} className="border-b border-navy-600/20 hover:bg-navy-800/20 transition-colors">
                         <td className="py-5 px-4">
                           <div className="flex items-center gap-3">
@@ -826,20 +892,30 @@ export default function Member() {
                           <span className="text-lg font-bold gradient-text">¥{order.amount}</span>
                         </td>
                         <td className="py-5 px-4">
-                          {order.status === 'paid' ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-green-400 bg-green-500/10 border border-green-500/30">
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              已支付
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-orange-400 bg-orange-500/10 border border-orange-500/30">
-                              <Clock className="w-3.5 h-3.5" />
-                              待支付
-                            </span>
-                          )}
+                          <OrderStatusBadge status={order.status} />
                         </td>
                         <td className="py-5 px-4 text-sm text-navy-300">
                           {order.paid_at ? formatDate(order.paid_at) : '-'}
+                        </td>
+                        <td className="py-5 px-4">
+                          {order.status === 'pending' && (
+                            <div className="flex gap-2">
+                              <button
+                                disabled={orderActionLoading === order.order_no}
+                                onClick={() => handlePayOrder(order.order_no)}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-navy-950 bg-gold-400 hover:bg-gold-300 disabled:opacity-50"
+                              >
+                                {orderActionLoading === order.order_no ? '处理中' : '去支付'}
+                              </button>
+                              <button
+                                disabled={orderActionLoading === order.order_no}
+                                onClick={() => handleCancelOrder(order.order_no)}
+                                className="px-3 py-1.5 rounded-lg text-xs text-navy-300 border border-navy-600/40 hover:text-white disabled:opacity-50"
+                              >
+                                取消
+                              </button>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -847,16 +923,24 @@ export default function Member() {
                 </table>
               </div>
 
-              {orders.length === 0 && (
-                <div className="text-center py-16">
-                  <ShoppingBag className="w-16 h-16 text-navy-600 mx-auto mb-4" />
-                  <p className="text-navy-300 mb-1">暂无订单记录</p>
-                  <button
-                    onClick={() => setTab('plans')}
-                    className="text-gold-400 text-sm font-semibold hover:text-gold-300 transition-colors inline-flex items-center gap-1 mt-2">
-                    去选购套餐 <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
+              {orderList.length === 0 && (
+                <EmptyState
+                  compact
+                  icon={ShoppingBag}
+                  title="暂无订单记录"
+                  description="购买套餐后将显示在此处"
+                  action={
+                    <Button
+                      variant="gold"
+                      size="sm"
+                      iconRight={<ChevronRight className="w-4 h-4" />}
+                      onClick={() => setTab('plans')}
+                    >
+                      去选购套餐
+                    </Button>
+                  }
+                  className="mt-4"
+                />
               )}
             </motion.div>
           )}

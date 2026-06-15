@@ -1,0 +1,168 @@
+# -*- coding: utf-8 -*-
+"""融合元数据与 Schema 产物 API（网站适配技能 SSOT）。"""
+from __future__ import annotations
+
+import logging
+
+from django.core.exceptions import PermissionDenied
+from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from apps.billing.services import BillingService
+from apps.workflow.services.pipeline_service import WorkflowPipelineService
+from apps.common.user_messages import safe_api_message
+from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
+
+from apps.creation.node_preview import build_node_preview
+from apps.creation.services import CreationService
+
+logger = logging.getLogger(__name__)
+
+
+def _portal_response(request, data: dict, *, legacy_marker: str, canonical_path: str):
+    from apps.common.agent_term import attach_deprecated_paths
+
+    payload = {"code": 0, "message": "success", "data": data}
+    if legacy_marker in (request.path or ""):
+        payload = attach_deprecated_paths(payload, [canonical_path])
+    return Response(payload, status=status.HTTP_200_OK)
+
+
+def _portal_catalog() -> dict:
+    from apps.agent.catalog import enrich_portal_main_chain, portal_agent_catalog
+
+    catalog = get_ssot_catalog().public_catalog()
+    catalog["mainChain"] = enrich_portal_main_chain(
+        WorkflowPipelineService.portal_main_chain()
+    )
+    catalog["agentCatalog"] = portal_agent_catalog()
+    catalog.pop("artifactKeys", None)
+    catalog["currencyName"] = BillingService.currency_name()
+    catalog["estimatedAutoCost"] = BillingService.estimate_auto_pipeline_cost()
+    return catalog
+
+
+class FusionCatalogView(APIView):
+    """GET /api/creation/fusion/catalog/ — 题材/平台/格式等枚举（SSOT，前端禁止硬编码）。"""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return _portal_response(
+            request,
+            _portal_catalog(),
+            legacy_marker="/workflow/catalog",
+            canonical_path="/api/creation/fusion/catalog/",
+        )
+
+
+class FusionNodesView(APIView):
+    """GET /api/creation/fusion/nodes/ — 主链节点（Agent 元数据 + 币价）。"""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        from apps.agent.catalog import enrich_portal_main_chain
+
+        return _portal_response(
+            request,
+            {
+                "mainChain": enrich_portal_main_chain(
+                    WorkflowPipelineService.portal_main_chain()
+                ),
+                "currencyName": BillingService.currency_name(),
+            },
+            legacy_marker="/workflow/nodes",
+            canonical_path="/api/creation/fusion/nodes/",
+        )
+
+
+class AgentCatalogView(APIView):
+    """GET /api/creation/agents/catalog/ — Agent 体系 SSOT（registry v2）。"""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        from apps.agent.catalog import portal_agent_catalog
+
+        return _portal_response(
+            request,
+            portal_agent_catalog(),
+            legacy_marker="/agent/catalog",
+            canonical_path="/api/creation/agents/catalog/",
+        )
+
+
+class FusionSnapshotView(APIView):
+    """GET /api/creation/fusion/<project_id>/ — C 端脱敏快照。"""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id: str):
+        try:
+            project = CreationService._get_user_project(project_id, request.user)
+        except PermissionDenied as exc:
+            return Response(
+                {"code": 403, "message": safe_api_message(exc, "无权限"), "data": None},
+                status=status.HTTP_200_OK,
+            )
+        from apps.creation.node_preview import build_portal_fusion_snapshot
+
+        return Response(
+            {
+                "code": 0,
+                "message": "success",
+                "data": build_portal_fusion_snapshot(project),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class FusionArtifactView(APIView):
+    """产物 JSON 不对 C 端开放。"""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id: str, artifact_key: str):
+        return Response(
+            {
+                "code": 403,
+                "message": "请使用节点预览接口 /api/creation/projects/<id>/nodes/<index>/preview/",
+                "data": None,
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class CreationNodePreviewView(APIView):
+    """GET /api/creation/projects/<project_id>/nodes/<node_index>/preview/"""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id: str, node_index: int):
+        try:
+            project = CreationService._get_user_project(project_id, request.user)
+        except PermissionDenied as exc:
+            return Response(
+                {"code": 403, "message": safe_api_message(exc, "无权限"), "data": None},
+                status=status.HTTP_200_OK,
+            )
+        try:
+            idx = int(node_index)
+        except (TypeError, ValueError):
+            return Response(
+                {"code": 4001, "message": "无效节点", "data": None},
+                status=status.HTTP_200_OK,
+            )
+        if idx < 1 or idx > WorkflowPipelineService.creation_max_node_index():
+            return Response(
+                {"code": 4001, "message": "节点索引须在 1–7", "data": None},
+                status=status.HTTP_200_OK,
+            )
+        preview = build_node_preview(project, idx)
+        return Response(
+            {"code": 0, "message": "success", "data": preview},
+            status=status.HTTP_200_OK,
+        )

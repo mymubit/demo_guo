@@ -1,8 +1,11 @@
 """
 会员模块序列化器
 """
+from decimal import Decimal
+
 from rest_framework import serializers
 
+from apps.billing.commerce_pricing import discount_display_label
 from .models import MembershipPlan, UserMembership, PromoCode
 
 
@@ -10,8 +13,11 @@ class MembershipPlanSerializer(serializers.ModelSerializer):
     """会员套餐序列化器 - 列表/详情展示"""
 
     display_price = serializers.SerializerMethodField()
+    display_original_price = serializers.SerializerMethodField()
+    discount_label = serializers.SerializerMethodField()
     validity_text = serializers.SerializerMethodField()
-    creation_quota_text = serializers.SerializerMethodField()
+    grant_coins_text = serializers.SerializerMethodField()
+    features = serializers.SerializerMethodField()
 
     class Meta:
         model = MembershipPlan
@@ -19,25 +25,57 @@ class MembershipPlanSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "price",
+            "original_price",
+            "discount_percent",
             "display_price",
+            "display_original_price",
+            "discount_label",
             "validity_days",
             "validity_text",
-            "creation_quota",
-            "creation_quota_text",
+            "grant_coins",
+            "grant_coins_text",
             "features",
             "is_recommended",
         ]
 
     def get_display_price(self, obj) -> str:
-        return f"¥{obj.price:.2f}"
+        return f"¥{obj.charge_price:.2f}"
+
+    def get_display_original_price(self, obj) -> str | None:
+        charge = obj.charge_price
+        if obj.original_price and obj.original_price > charge:
+            return f"¥{obj.original_price:.2f}"
+        from apps.billing.commerce_pricing import normalize_discount_percent, quantize_yuan
+
+        discount = normalize_discount_percent(obj.discount_percent)
+        if discount < Decimal("100") and charge > 0:
+            derived = quantize_yuan(charge * Decimal("100") / discount)
+            if derived > charge:
+                return f"¥{derived:.2f}"
+        return None
+
+    def get_discount_label(self, obj) -> str | None:
+        return discount_display_label(obj.discount_percent)
 
     def get_validity_text(self, obj) -> str:
         return f"{obj.validity_days} 天"
 
-    def get_creation_quota_text(self, obj) -> str:
-        if obj.creation_quota == -1:
-            return "无限"
-        return f"{obj.creation_quota} 次"
+    def get_grant_coins_text(self, obj) -> str:
+        return f"{obj.grant_coins} 创作币" if obj.grant_coins else ""
+
+    def get_features(self, obj) -> list:
+        """C 端套餐卡片：开通赠币 + 全局会员权益（各档位功能相同）。"""
+        from .feature_matrix_service import FeatureMatrixService
+
+        items = []
+        if obj.grant_coins:
+            items.append(f"开通赠送 {obj.grant_coins} 创作币")
+        for row in FeatureMatrixService.resolve_matrix():
+            if row.get("member"):
+                label = str(row.get("label") or "").strip()
+                if label and label not in items:
+                    items.append(label)
+        return items
 
 
 class UserMembershipSerializer(serializers.ModelSerializer):
@@ -80,6 +118,7 @@ class UserMembershipSummarySerializer(serializers.Serializer):
     remaining_creations = serializers.IntegerField()
     has_unlimited_creations = serializers.BooleanField()
     end_at = serializers.DateTimeField(allow_null=True)
+    wallet = serializers.DictField(required=False, allow_null=True)
 
 
 class RedeemPromoCodeSerializer(serializers.Serializer):

@@ -731,5 +731,10 @@ def get_rate_limit() -> RateLimitService:
     """获取默认限流服务实例。"""
     global _default_rate_limit
     if _default_rate_limit is None:
-        _default_rate_limit = RateLimitService()
+        from django.conf import settings
+
+        policy = RateLimitPolicy(
+            default_limit=int(getattr(settings, "SECURITY_RATE_LIMIT_DEFAULT", 60) or 60),
+        )
+        _default_rate_limit = RateLimitService(policy=policy)
     return _default_rate_limit

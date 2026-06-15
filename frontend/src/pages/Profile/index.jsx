@@ -1,53 +1,51 @@
-import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { toast } from 'sonner'
+import UserAvatar from '@/components/ui/UserAvatar'
 import {
   UserCircle2,
   Shield,
   BarChart3,
-  Camera,
   Pencil,
   Save,
   Lock,
-  Smartphone,
-  Monitor,
-  Trash2,
   Film,
-  Heart,
   Star,
   ChevronRight,
   Check,
-  X,
+  Loader2,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { users, membership, works } from '@/services/api'
+import { useWalletStore } from '@/store/walletStore'
+import { users, membership as membershipApi, works as worksApi } from '@/services/api'
+import { formatDate, mergeMembershipState } from '@/utils/date'
 
 export default function Profile() {
   const [activeTab, setActiveTab] = useState('profile')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [securitySaving, setSecuritySaving] = useState(false)
   const [profile, setProfile] = useState({
     nickname: '',
     avatar: '',
     bio: '',
     phone: '',
   })
-  const [membership, setMembership] = useState(null)
+  const [membershipInfo, setMembershipInfo] = useState(null)
   const [stats, setStats] = useState({
-    creations: 0,
-    favorites: 0,
-    ratingTrend: [4.2, 4.5, 4.3, 4.7, 4.6, 4.8, 4.9],
+    total: 0,
+    completed: 0,
+    running: 0,
+    failed: 0,
   })
   const [security, setSecurity] = useState({
+    oldPassword: '',
     password: '',
     confirmPassword: '',
-    devices: [
-      { id: 1, name: 'MacBook Pro', location: '北京', lastActive: '刚刚', current: true },
-      { id: 2, name: 'iPhone 15', location: '北京', lastActive: '2小时前', current: false },
-      { id: 3, name: 'Windows PC', location: '上海', lastActive: '3天前', current: false },
-    ],
   })
-  const [message, setMessage] = useState(null)
   const { user, updateProfile } = useAuthStore()
+  const { wallet, fetchWallet } = useWalletStore()
 
   useEffect(() => {
     loadData()
@@ -55,17 +53,19 @@ export default function Profile() {
 
   async function loadData() {
     try {
-      const [profileData, memberData, worksData] = await Promise.allSettled([
-        users.getProfile(),
-        membership.getMyMembership(),
-        works.list(),
+      const [profileData, memberData, summaryData, statsData] = await Promise.allSettled([
+        users.me(),
+        membershipApi.myMembership(),
+        membershipApi.summary(),
+        worksApi.stats(),
+        fetchWallet(),
       ])
 
       if (profileData.status === 'fulfilled' && profileData.value) {
         const p = profileData.value
         setProfile({
           nickname: p.nickname || user?.nickname || '创作者',
-          avatar: p.avatar || user?.avatar || '',
+          avatar: p.avatar_url || user?.avatar || '',
           bio: p.bio || '热爱创作，用剧本讲述精彩故事',
           phone: p.phone || user?.phone || '',
         })
@@ -78,22 +78,25 @@ export default function Profile() {
         })
       }
 
-      if (memberData.status === 'fulfilled' && memberData.value) {
-        setMembership(memberData.value)
-      } else {
-        setMembership({
-          plan_name: '专业版',
-          expiry_date: '2026-12-31',
-          remaining_creations: 15,
-          is_active: true,
+      const memberRaw = memberData.status === 'fulfilled' ? memberData.value : null
+      const summaryRaw = summaryData.status === 'fulfilled' ? summaryData.value : null
+      setMembershipInfo(
+        mergeMembershipState(memberRaw, summaryRaw, {
+          plan_name: '免费用户',
+          end_at: null,
+          remaining_creations: 0,
+          is_active: false,
+          wallet: { balance: 0, currency_name: '创作币' },
         })
-      }
+      )
 
-      if (worksData.status === 'fulfilled' && worksData.value) {
+      if (statsData.status === 'fulfilled' && statsData.value) {
+        const s = statsData.value
         setStats({
-          creations: worksData.value.count || 8,
-          favorites: worksData.value.favorites || 124,
-          ratingTrend: worksData.value.rating_trend || [4.2, 4.5, 4.3, 4.7, 4.6, 4.8, 4.9],
+          total: s.total || 0,
+          completed: s.completed || 0,
+          running: s.running || 0,
+          failed: s.failed || 0,
         })
       }
     } catch (err) {
@@ -101,48 +104,65 @@ export default function Profile() {
         nickname: user?.nickname || '创作者',
         avatar: user?.avatar || '',
         bio: '热爱创作，用剧本讲述精彩故事',
-        phone: user?.phone || '138****8888',
+        phone: user?.phone || '',
       })
-      setMembership({
-        plan_name: '专业版',
-        expiry_date: '2026-12-31',
-        remaining_creations: 15,
-        is_active: true,
+      setMembershipInfo({
+        plan_name: '免费用户',
+        end_at: null,
+        remaining_creations: 0,
+        is_active: false,
       })
     } finally {
       setLoading(false)
     }
   }
 
-  function showMessage(text, type = 'success') {
-    setMessage({ text, type })
-    setTimeout(() => setMessage(null), 3000)
-  }
-
   async function handleSaveProfile() {
-    if (profile.password && profile.password !== profile.confirmPassword) {
-      showMessage('两次输入的密码不一致', 'error')
-      return
-    }
+    if (saving) return
     setSaving(true)
     try {
       await users.updateProfile(profile)
       updateProfile(profile)
-      showMessage('保存成功', 'success')
+      toast.success('保存成功')
     } catch (err) {
-      updateProfile(profile)
-      showMessage('保存成功', 'success')
+      toast.error(err.message || '保存失败')
     } finally {
       setSaving(false)
     }
   }
 
-  function handleRemoveDevice(id) {
-    setSecurity((prev) => ({
-      ...prev,
-      devices: prev.devices.filter((d) => d.id !== id),
-    }))
-    showMessage('设备已下线', 'success')
+  async function handleChangePassword() {
+    if (securitySaving) return
+    if (!security.oldPassword) {
+      toast.error('请输入当前密码')
+      return
+    }
+    if (!security.password) {
+      toast.error('请输入新密码')
+      return
+    }
+    if (security.password.length < 8) {
+      toast.error('新密码至少 8 位')
+      return
+    }
+    if (security.password !== security.confirmPassword) {
+      toast.error('两次输入的密码不一致')
+      return
+    }
+    setSecuritySaving(true)
+    try {
+      await users.changePassword({
+        old_password: security.oldPassword,
+        new_password: security.password,
+        new_password_confirm: security.confirmPassword,
+      })
+      setSecurity({ oldPassword: '', password: '', confirmPassword: '' })
+      toast.success('密码修改成功')
+    } catch (err) {
+      toast.error(err.message || '密码修改失败')
+    } finally {
+      setSecuritySaving(false)
+    }
   }
 
   const tabs = [
@@ -164,25 +184,6 @@ export default function Profile() {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12">
-      {/* 消息提示 */}
-      <AnimatePresence>
-        {message && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className={`fixed top-24 right-6 z-50 px-6 py-4 rounded-2xl ${
-              message.type === 'success' ? 'bg-green-500/20 border border-green-500/40 text-green-400' : 'bg-red-500/20 border border-red-500/40 text-red-400'
-            } backdrop-blur-xl`}
-          >
-            <div className="flex items-center gap-3">
-              {message.type === 'success' ? <Check className="w-5 h-5" /> : <X className="w-5 h-5" />}
-              {message.text}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* 左侧 - 用户信息卡片 */}
         <motion.div
@@ -193,17 +194,8 @@ export default function Profile() {
           <div className="glass-card rounded-3xl p-8 sticky top-24">
             {/* 头像 */}
             <div className="text-center mb-8">
-              <div className="relative inline-block">
-                <div className="w-28 h-28 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-4xl font-bold text-navy-950 shadow-lg shadow-gold-500/30">
-                  {profile.avatar ? (
-                    <img src={profile.avatar} alt="avatar" className="w-full h-full rounded-full object-cover" />
-                  ) : (
-                    profile.nickname?.charAt(0) || 'U'
-                  )}
-                </div>
-                <div className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-green-500 border-4 border-navy-900 flex items-center justify-center">
-                  <Check className="w-3 h-3 text-white" />
-                </div>
+              <div className="inline-block">
+                <UserAvatar src={profile.avatar} name={profile.nickname} size="lg" />
               </div>
               <h2 className="text-2xl font-bold text-white mt-4">{profile.nickname}</h2>
               <p className="text-navy-300 text-sm mt-1">{profile.phone}</p>
@@ -216,21 +208,35 @@ export default function Profile() {
                   <Star className="w-5 h-5 text-gold-400 fill-gold-400" />
                 </div>
                 <div>
-                  <div className="font-bold text-gold-400">{membership?.plan_name || '专业版'}</div>
-                  <div className="text-xs text-navy-300">有效期至 {membership?.expiry_date || '2026-12-31'}</div>
+                  <div className="font-bold text-gold-400">
+                    {membershipInfo?.is_active
+                      ? membershipInfo?.plan_name || '会员'
+                      : membershipInfo?.plan_name || '免费用户'}
+                  </div>
+                  <div className="text-xs text-navy-300">
+                    有效期至{' '}
+                    {membershipInfo?.is_active && membershipInfo?.end_at
+                      ? formatDate(membershipInfo.end_at)
+                      : '未开通'}
+                  </div>
                 </div>
               </div>
               <div className="text-sm text-navy-200">
                 <div className="flex justify-between mb-2">
-                  <span>剩余创作次数</span>
-                  <span className="font-semibold text-gold-400">{membership?.remaining_creations ?? 15} 次</span>
+                  <span>{wallet?.currency_name || membershipInfo?.wallet?.currency_name || '创作币'}余额</span>
+                  <span className="font-semibold text-gold-400">
+                    {wallet?.balance ?? membershipInfo?.wallet?.balance ?? 0}
+                  </span>
                 </div>
-                <div className="h-2 bg-navy-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-gold-400 to-gold-600"
-                    style={{ width: `${Math.min((membership?.remaining_creations || 15) / 20 * 100, 100)}%` }}
-                  />
+                <div className="text-xs text-navy-400 mb-3">
+                  创作按节点扣费，开通会员赠送创作币
                 </div>
+                <Link
+                  to="/wallet"
+                  className="inline-flex items-center gap-1 text-sm text-gold-400 hover:underline"
+                >
+                  去充值 →
+                </Link>
               </div>
             </div>
 
@@ -238,18 +244,18 @@ export default function Profile() {
             <div className="grid grid-cols-3 gap-3">
               <div className="text-center p-4 rounded-xl bg-navy-800/40">
                 <Film className="w-5 h-5 mx-auto mb-2 text-purple-400" />
-                <div className="text-xl font-bold text-white">{stats.creations}</div>
+                <div className="text-xl font-bold text-white">{stats.total}</div>
                 <div className="text-xs text-navy-300">作品</div>
               </div>
               <div className="text-center p-4 rounded-xl bg-navy-800/40">
-                <Heart className="w-5 h-5 mx-auto mb-2 text-red-400" />
-                <div className="text-xl font-bold text-white">{stats.favorites}</div>
-                <div className="text-xs text-navy-300">收藏</div>
+                <Check className="w-5 h-5 mx-auto mb-2 text-green-400" />
+                <div className="text-xl font-bold text-white">{stats.completed}</div>
+                <div className="text-xs text-navy-300">已完成</div>
               </div>
               <div className="text-center p-4 rounded-xl bg-navy-800/40">
-                <Star className="w-5 h-5 mx-auto mb-2 text-gold-400" />
-                <div className="text-xl font-bold text-white">{stats.ratingTrend[stats.ratingTrend.length - 1]?.toFixed(1) || '4.9'}</div>
-                <div className="text-xs text-navy-300">评分</div>
+                <Loader2 className="w-5 h-5 mx-auto mb-2 text-gold-400" />
+                <div className="text-xl font-bold text-white">{stats.running}</div>
+                <div className="text-xs text-navy-300">进行中</div>
               </div>
             </div>
           </div>
@@ -295,17 +301,18 @@ export default function Profile() {
                 </h3>
 
                 <div className="space-y-6">
-                  {/* 头像上传 */}
+                  {/* 头像 */}
                   <div>
-                    <label className="block text-sm font-medium text-navy-200 mb-3">头像</label>
+                    <label className="block text-sm font-medium text-navy-200 mb-3">头像 URL</label>
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-xl font-bold text-navy-950">
-                        {profile.nickname?.charAt(0) || 'U'}
-                      </div>
-                      <button className="px-4 py-2 rounded-xl bg-navy-800/60 text-navy-100 text-sm hover:bg-navy-700/60 transition-colors flex items-center gap-2">
-                        <Camera className="w-4 h-4" />
-                        更换头像
-                      </button>
+                      <UserAvatar src={profile.avatar} name={profile.nickname} size="md" />
+                      <input
+                        type="url"
+                        value={profile.avatar}
+                        onChange={(e) => setProfile({ ...profile, avatar: e.target.value })}
+                        className="flex-1 px-4 py-3 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white focus:outline-none focus:border-gold-500/60 transition-colors"
+                        placeholder="https://example.com/avatar.png"
+                      />
                     </div>
                   </div>
 
@@ -385,6 +392,8 @@ export default function Profile() {
                       <label className="block text-sm font-medium text-navy-200 mb-3">当前密码</label>
                       <input
                         type="password"
+                        value={security.oldPassword}
+                        onChange={(e) => setSecurity({ ...security, oldPassword: e.target.value })}
                         className="w-full px-4 py-3 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white focus:outline-none focus:border-gold-500/60 transition-colors"
                         placeholder="请输入当前密码"
                       />
@@ -410,69 +419,22 @@ export default function Profile() {
                       />
                     </div>
                     <button
-                      onClick={() => {
-                        if (!security.password) {
-                          showMessage('请输入新密码', 'error')
-                          return
-                        }
-                        if (security.password !== security.confirmPassword) {
-                          showMessage('两次输入的密码不一致', 'error')
-                          return
-                        }
-                        setSecurity({ ...security, password: '', confirmPassword: '' })
-                        showMessage('密码修改成功', 'success')
-                      }}
-                      className="btn-gold !py-3 inline-flex items-center gap-2"
+                      onClick={handleChangePassword}
+                      disabled={securitySaving}
+                      className="btn-gold !py-3 inline-flex items-center gap-2 disabled:opacity-60"
                     >
-                      <Shield className="w-4 h-4" />
-                      更新密码
+                      {securitySaving ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          更新中…
+                        </>
+                      ) : (
+                        <>
+                          <Shield className="w-4 h-4" />
+                          更新密码
+                        </>
+                      )}
                     </button>
-                  </div>
-                </div>
-
-                {/* 设备管理 */}
-                <div className="glass-card rounded-3xl p-8">
-                  <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-                    <Monitor className="w-6 h-6 text-gold-400" />
-                    登录设备管理
-                  </h3>
-
-                  <div className="space-y-3">
-                    {security.devices.map((device) => (
-                      <motion.div
-                        key={device.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="flex items-center justify-between p-4 rounded-2xl bg-navy-800/40 border border-navy-700/30"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-11 h-11 rounded-xl bg-navy-700/60 flex items-center justify-center">
-                            <Smartphone className="w-5 h-5 text-navy-200" />
-                          </div>
-                          <div>
-                            <div className="font-semibold text-white flex items-center gap-2">
-                              {device.name}
-                              {device.current && (
-                                <span className="px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
-                                  当前设备
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-sm text-navy-300">
-                              {device.location} · {device.lastActive}
-                            </div>
-                          </div>
-                        </div>
-                        {!device.current && (
-                          <button
-                            onClick={() => handleRemoveDevice(device.id)}
-                            className="p-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        )}
-                      </motion.div>
-                    ))}
                   </div>
                 </div>
               </motion.div>
@@ -492,61 +454,29 @@ export default function Profile() {
                   作品统计
                 </h3>
 
-                <div className="grid grid-cols-3 gap-4 mb-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                   <div className="p-6 rounded-2xl bg-navy-800/40">
-                    <div className="text-sm text-navy-300 mb-2">创作数</div>
-                    <div className="text-3xl font-bold text-white">{stats.creations}</div>
-                    <div className="text-sm text-green-400 mt-1">+3 本月</div>
+                    <div className="text-sm text-navy-300 mb-2">作品总数</div>
+                    <div className="text-3xl font-bold text-white">{stats.total}</div>
                   </div>
                   <div className="p-6 rounded-2xl bg-navy-800/40">
-                    <div className="text-sm text-navy-300 mb-2">收藏数</div>
-                    <div className="text-3xl font-bold text-white">{stats.favorites}</div>
-                    <div className="text-sm text-green-400 mt-1">+24 本周</div>
+                    <div className="text-sm text-navy-300 mb-2">已完成</div>
+                    <div className="text-3xl font-bold text-green-400">{stats.completed}</div>
                   </div>
                   <div className="p-6 rounded-2xl bg-navy-800/40">
-                    <div className="text-sm text-navy-300 mb-2">平均评分</div>
-                    <div className="text-3xl font-bold text-gold-400">
-                      {stats.ratingTrend[stats.ratingTrend.length - 1]?.toFixed(1) || '4.9'}
-                    </div>
-                    <div className="text-sm text-green-400 mt-1">↑ 稳步提升</div>
+                    <div className="text-sm text-navy-300 mb-2">进行中</div>
+                    <div className="text-3xl font-bold text-gold-400">{stats.running}</div>
+                  </div>
+                  <div className="p-6 rounded-2xl bg-navy-800/40">
+                    <div className="text-sm text-navy-300 mb-2">失败</div>
+                    <div className="text-3xl font-bold text-red-400">{stats.failed}</div>
                   </div>
                 </div>
 
-                {/* 评分趋势图 */}
-                <div>
-                  <h4 className="text-lg font-semibold text-white mb-4">近7次作品评分趋势</h4>
-                  <div className="h-64 rounded-2xl bg-navy-900/40 p-6">
-                    <div className="h-full flex items-end justify-between gap-2">
-                      {stats.ratingTrend.map((rating, idx) => {
-                        const heightPct = ((rating - 4) / 1.5) * 100 + 40
-                        return (
-                          <motion.div
-                            key={idx}
-                            initial={{ height: 0 }}
-                            animate={{ height: `${heightPct}%` }}
-                            transition={{ delay: idx * 0.1, duration: 0.5 }}
-                            className="flex-1 flex flex-col items-center gap-2"
-                          >
-                            <div className="text-sm font-semibold text-gold-400">{rating.toFixed(1)}</div>
-                            <div
-                              className="w-full rounded-t-xl bg-gradient-to-t from-gold-600/30 to-gold-400/80 relative overflow-hidden group"
-                              style={{ minHeight: '40px' }}
-                            >
-                              <div className="absolute inset-0 bg-gradient-to-t from-transparent to-white/20" />
-                            </div>
-                            <div className="text-xs text-navy-400">第{idx + 1}次</div>
-                          </motion.div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* 提示 */}
-                <div className="mt-6 p-4 rounded-2xl bg-gold-500/10 border border-gold-500/20 flex items-start gap-3">
+                <div className="p-4 rounded-2xl bg-gold-500/10 border border-gold-500/20 flex items-start gap-3">
                   <ChevronRight className="w-5 h-5 text-gold-400 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-navy-200">
-                    持续创作可以获得更高的评分和更多曝光。你的作品质量正在稳步提升，继续保持！
+                    数据来自你的创作项目。可在「我的作品」查看详情与下载剧本。
                   </div>
                 </div>
               </motion.div>
@@ -557,5 +487,3 @@ export default function Profile() {
     </div>
   )
 }
-
-import { AnimatePresence } from 'framer-motion'

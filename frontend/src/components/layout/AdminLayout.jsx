@@ -1,161 +1,204 @@
-import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useLocation, useNavigate, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { LogOut, Menu, ChevronRight, ChevronDown } from 'lucide-react'
+import { useAuthStore } from '@/store/authStore'
 import {
-  LayoutDashboard,
-  Users,
-  Crown,
-  Settings,
-  ShoppingCart,
-  LogOut,
-  Film,
-  ChevronRight,
-  Menu,
-  X,
-  Bell,
-  UserCircle2,
-  Sparkles,
-} from 'lucide-react'
+  ADMIN_NAV_GROUPS,
+  flattenAdminNav,
+  getAdminBreadcrumb,
+  isAdminNavItemActive,
+} from '@/config/adminNav'
+import BrandLogo from '@/components/ui/BrandLogo'
+import AdminErrorBoundary from '@/components/admin/AdminErrorBoundary'
 
-const menuItems = [
-  { path: '/admin/dashboard', label: '仪表盘', icon: LayoutDashboard, badge: null },
-  { path: '/admin/users', label: '用户管理', icon: Users, badge: '1.2k' },
-  { path: '/admin/members', label: '会员管理', icon: Crown, badge: null },
-  { path: '/admin/skill-config', label: '技能配置', icon: Settings, badge: null },
-  { path: '/admin/orders', label: '订单管理', icon: ShoppingCart, badge: '32' },
-]
+const COLLAPSE_STORAGE_KEY = 'admin-nav-collapsed-v2'
+
+function readCollapsedState() {
+  try {
+    const raw = localStorage.getItem(COLLAPSE_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+function writeCollapsedState(state) {
+  try {
+    localStorage.setItem(COLLAPSE_STORAGE_KEY, JSON.stringify(state))
+  } catch {
+    /* ignore */
+  }
+}
+
+function NavItem({ item, active, onNavigate }) {
+  return (
+    <NavLink
+      to={item.path}
+      onClick={onNavigate}
+      title={item.description || item.label}
+      className={`group relative flex items-center gap-3.5 rounded-xl px-3.5 py-3 text-base leading-snug transition-all ${
+        active
+          ? 'bg-gold-500/16 text-gold-50 font-semibold shadow-sm shadow-gold-500/10'
+          : 'text-navy-200 hover:bg-navy-800/55 hover:text-white font-medium'
+      }`}
+    >
+      {active ? (
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 rounded-full bg-gradient-to-b from-gold-300 to-gold-500" />
+      ) : null}
+      <item.icon
+        className={`w-[22px] h-[22px] shrink-0 transition-colors ${
+          active ? 'text-gold-400' : 'text-navy-400 group-hover:text-navy-100'
+        }`}
+      />
+      <span className="truncate tracking-wide">{item.label}</span>
+    </NavLink>
+  )
+}
 
 export default function AdminLayout() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { user, logout } = useAuthStore()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => readCollapsedState())
 
-  const currentItem = menuItems.find((item) => location.pathname.startsWith(item.path))
+  const breadcrumb = useMemo(() => getAdminBreadcrumb(location.pathname), [location.pathname])
 
-  const breadcrumb = (() => {
-    if (location.pathname === '/admin' || location.pathname.startsWith('/admin/dashboard')) {
-      return ['后台管理', '仪表盘']
+  const activeGroupId = useMemo(() => {
+    const flat = flattenAdminNav()
+    const sorted = [...flat].sort((a, b) => b.path.length - a.path.length)
+    const hit = sorted.find(
+      (item) =>
+        location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
+    )
+    return hit?.groupId || ''
+  }, [location.pathname])
+
+  useEffect(() => {
+    if (!activeGroupId) return
+    const group = ADMIN_NAV_GROUPS.find((g) => g.id === activeGroupId)
+    if (group?.collapsible && collapsed[group.id]) {
+      setCollapsed((prev) => {
+        const next = { ...prev, [group.id]: false }
+        writeCollapsedState(next)
+        return next
+      })
     }
-    if (location.pathname.startsWith('/admin/users')) return ['后台管理', '用户管理']
-    if (location.pathname.startsWith('/admin/members')) return ['后台管理', '会员管理']
-    if (location.pathname.startsWith('/admin/skill-config')) return ['后台管理', '技能配置']
-    if (location.pathname.startsWith('/admin/orders')) return ['后台管理', '订单管理']
-    return ['后台管理']
-  })()
+  }, [activeGroupId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  function toggleGroup(groupId) {
+    setCollapsed((prev) => {
+      const next = { ...prev, [groupId]: !prev[groupId] }
+      writeCollapsedState(next)
+      return next
+    })
+  }
 
   function handleLogout() {
-    localStorage.removeItem('scriptforge-auth')
+    logout()
     navigate('/admin/login')
   }
 
+  const adminName = user?.nickname || '管理员'
+  const adminInitials = adminName.slice(0, 2).toUpperCase()
+  const closeSidebar = () => setSidebarOpen(false)
+
   return (
     <div className="min-h-screen bg-navy-950 flex">
-      {/* 移动端遮罩 */}
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setSidebarOpen(false)}
+            onClick={closeSidebar}
             className="fixed inset-0 bg-navy-950/80 backdrop-blur-sm z-40 lg:hidden"
           />
         )}
       </AnimatePresence>
 
-      {/* 左侧垂直导航 */}
       <aside
-        className={`fixed top-0 left-0 h-full w-64 z-50 transform transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed top-0 left-0 h-full w-72 z-50 transform transition-transform duration-300 lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-full bg-gradient-to-b from-navy-900 via-navy-950 to-navy-900 border-r border-navy-700/40 flex flex-col">
-          {/* Logo 区 */}
-          <div className="p-6 border-b border-navy-700/40">
-            <div className="flex items-center gap-3">
-              <div
-                className="w-10 h-10 rounded-xl flex items-center justify-center"
-                style={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  boxShadow: '0 8px 24px -8px rgba(102, 126, 234, 0.6)',
-                }}
-              >
-                <Film className="w-5 h-5 text-white" />
+        <div className="h-full bg-gradient-to-b from-navy-900 via-navy-950 to-navy-950 border-r border-navy-700/50 flex flex-col shadow-xl shadow-black/20">
+          <div className="px-5 pt-6 pb-5 border-b border-navy-800/50">
+            <Link to="/admin" className="flex items-center gap-4 group">
+              <BrandLogo variant="admin" size="lg" showText={false} to={null} interactive={false} />
+              <div className="min-w-0">
+                <div className="text-xl font-bold gradient-text leading-tight tracking-tight">
+                  ScriptForge
+                </div>
+                <div className="text-[15px] text-navy-400 mt-1 tracking-wide">运营控制台</div>
               </div>
-              <div>
-                <div className="font-bold text-white">ScriptForge</div>
-                <div className="text-xs text-navy-400">管理后台</div>
+            </Link>
+            <div className="mt-5 flex items-center gap-3.5 min-w-0 rounded-2xl bg-navy-800/35 px-4 py-3 border border-navy-700/35">
+              <div className="w-11 h-11 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-navy-950 font-bold text-sm shrink-0 shadow-md shadow-gold-500/20">
+                {adminInitials}
+              </div>
+              <div className="min-w-0">
+                <div className="text-base font-semibold text-white truncate">{adminName}</div>
+                <div className="text-[15px] text-navy-500 truncate">运营账号</div>
               </div>
             </div>
           </div>
 
-          {/* 管理员信息 */}
-          <div className="p-4 mx-4 mt-4 rounded-2xl bg-navy-800/40 border border-navy-700/30">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-navy-950 font-bold text-sm">
-                AD
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-white truncate">管理员</div>
-                <div className="text-xs text-navy-400">admin@scriptforge.ai</div>
-              </div>
-              <div className="w-2 h-2 rounded-full bg-green-500" title="在线" />
-            </div>
-          </div>
+          <nav className="flex-1 px-4 py-5 overflow-y-auto space-y-6">
+            {ADMIN_NAV_GROUPS.map((group) => {
+              const isCollapsible = Boolean(group.collapsible)
+              const isExpanded = isCollapsible ? !collapsed[group.id] : true
+              const groupHasActive = group.items.some((item) =>
+                isAdminNavItemActive(location.pathname, item)
+              )
 
-          {/* 菜单 */}
-          <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-            <div className="text-xs text-navy-500 uppercase font-semibold px-3 mb-3 tracking-wider">
-              主菜单
-            </div>
-            {menuItems.map((item) => {
-              const isActive = location.pathname.startsWith(item.path) ||
-                (item.path === '/admin/dashboard' && location.pathname === '/admin')
               return (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                    isActive
-                      ? 'bg-gradient-to-r from-gold-500/20 to-gold-600/10 text-gold-400 border border-gold-500/30 shadow-lg shadow-gold-500/10'
-                      : 'text-navy-300 hover:bg-navy-800/50 hover:text-white'
-                  }`}
-                >
-                  <item.icon className={`w-5 h-5 ${isActive ? 'text-gold-400' : ''}`} />
-                  <span className="flex-1">{item.label}</span>
-                  {item.badge && (
-                    <span
-                      className={`px-2 py-0.5 text-xs rounded-full ${
-                        isActive
-                          ? 'bg-gold-500/30 text-gold-400'
-                          : 'bg-navy-700/60 text-navy-300'
+                <div key={group.id}>
+                  {isCollapsible ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(group.id)}
+                      className={`w-full flex items-center justify-between px-2.5 py-2 mb-2 text-[15px] font-semibold tracking-wide transition-colors ${
+                        groupHasActive ? 'text-gold-400' : 'text-navy-400 hover:text-navy-200'
                       }`}
                     >
-                      {item.badge}
-                    </span>
+                      <span>{group.label}</span>
+                      <ChevronDown
+                        className={`w-4 h-4 opacity-70 transition-transform ${isExpanded ? '' : '-rotate-90'}`}
+                      />
+                    </button>
+                  ) : (
+                    <div
+                      className={`px-2.5 py-2 mb-2 text-[15px] font-semibold tracking-wide ${
+                        groupHasActive ? 'text-navy-300' : 'text-navy-400'
+                      }`}
+                    >
+                      {group.label}
+                    </div>
                   )}
-                  {isActive && <ChevronRight className="w-4 h-4 text-gold-400" />}
-                </NavLink>
+                  {isExpanded ? (
+                    <div className="space-y-1.5">
+                      {group.items.map((item) => (
+                        <NavItem
+                          key={item.id}
+                          item={item}
+                          active={isAdminNavItemActive(location.pathname, item)}
+                          onNavigate={closeSidebar}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
               )
             })}
           </nav>
 
-          {/* 底部快捷操作 */}
-          <div className="p-4 border-t border-navy-700/40">
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-600/10 to-gold-500/10 border border-navy-700/30 mb-3">
-              <div className="flex items-center gap-2 mb-2">
-                <Sparkles className="w-4 h-4 text-gold-400" />
-                <span className="text-sm font-semibold text-white">小提示</span>
-              </div>
-              <p className="text-xs text-navy-300 leading-relaxed">
-                所有操作都会被记录，请谨慎进行管理操作。
-              </p>
-            </div>
-
+          <div className="p-4 border-t border-navy-800/50">
             <button
+              type="button"
               onClick={handleLogout}
-              className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"
+              className="flex items-center gap-3 w-full px-3.5 py-3 rounded-xl text-base text-navy-400 hover:text-red-400 hover:bg-red-500/5 transition-colors"
             >
               <LogOut className="w-5 h-5" />
               退出登录
@@ -164,30 +207,26 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* 右侧内容区 */}
-      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
-        {/* 顶部面包屑 */}
-        <header className="sticky top-0 z-30 bg-navy-950/90 backdrop-blur-xl border-b border-navy-700/40">
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center gap-4">
-              {/* 移动端菜单按钮 */}
+      <div className="flex-1 lg:ml-72 flex flex-col min-h-screen">
+        <header className="sticky top-0 z-30 bg-navy-950/95 backdrop-blur-xl border-b border-navy-800/50">
+          <div className="flex items-center justify-between px-8 py-4">
+            <div className="flex items-center gap-3 min-w-0">
               <button
+                type="button"
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-xl text-navy-300 hover:bg-navy-800/50 transition-colors"
+                className="lg:hidden p-2 rounded-lg text-navy-300 hover:bg-navy-800/50"
               >
-                <Menu className="w-6 h-6" />
+                <Menu className="w-5 h-5" />
               </button>
-
-              {/* 面包屑 */}
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center gap-2.5 text-base min-w-0 flex-wrap">
                 {breadcrumb.map((crumb, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    {idx > 0 && <ChevronRight className="w-4 h-4 text-navy-500" />}
+                  <div key={`${crumb}-${idx}`} className="flex items-center gap-2.5 min-w-0">
+                    {idx > 0 && <ChevronRight className="w-4 h-4 text-navy-600 shrink-0" />}
                     <span
                       className={
                         idx === breadcrumb.length - 1
-                          ? 'text-white font-medium'
-                          : 'text-navy-400'
+                          ? 'text-white font-semibold text-[17px] truncate'
+                          : 'text-navy-500 truncate'
                       }
                     >
                       {crumb}
@@ -196,42 +235,35 @@ export default function AdminLayout() {
                 ))}
               </div>
             </div>
-
-            {/* 右侧操作 */}
-            <div className="flex items-center gap-2">
-              <button className="relative p-2 rounded-xl text-navy-300 hover:bg-navy-800/50 transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
-              </button>
-              <button
-                onClick={handleLogout}
-                className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-navy-300 hover:bg-navy-800/50 transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>退出</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="hidden sm:inline-flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-base text-navy-400 hover:bg-navy-800/50"
+            >
+              <LogOut className="w-4 h-4" />
+              退出
+            </button>
           </div>
         </header>
 
-        {/* 页面内容 */}
-        <main className="flex-1 p-6 lg:p-8">
+        <main className="flex-1 min-w-0 w-full p-6 lg:p-9">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.18 }}
             >
-              <Outlet />
+              <AdminErrorBoundary>
+                <Outlet />
+              </AdminErrorBoundary>
             </motion.div>
           </AnimatePresence>
         </main>
 
-        {/* 页脚 */}
-        <footer className="px-6 py-4 border-t border-navy-700/40 text-center text-xs text-navy-500">
-          © 2026 ScriptForge AI · 管理控制台 · v1.0.0
+        <footer className="px-8 py-3 border-t border-navy-800/40 text-center text-sm text-navy-600">
+          ScriptForge 管理后台
         </footer>
       </div>
     </div>

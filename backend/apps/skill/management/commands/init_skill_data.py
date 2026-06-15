@@ -13,7 +13,7 @@
 """
 from django.core.management.base import BaseCommand
 
-from apps.skill.services import init_skill_data
+from apps.skill.config.portal.skill_settings import init_skill_data
 
 
 class Command(BaseCommand):
@@ -24,8 +24,9 @@ class Command(BaseCommand):
 
         try:
             init_skill_data()
-            self.stdout.write(self.style.SUCCESS('✅ 技能数据初始化完成！'))
+            self.stdout.write(self.style.SUCCESS('技能数据初始化完成！'))
             self.stdout.write(self.style.SUCCESS('  - 技能配置：已初始化'))
+            self.stdout.write(self.style.SUCCESS('  - 大模型：已迁移/初始化'))
             self.stdout.write(self.style.SUCCESS('  - 题材模板：8大题材已就绪'))
             self.stdout.write(self.style.SUCCESS('  - 钩子库：20+条钩子已入库'))
         except Exception as e:

@@ -1,439 +1,823 @@
-import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { Copy, Check, Plus, Trash2, Crown, Ticket } from 'lucide-react'
+import { admin } from '@/services/api'
 import {
-  Crown,
-  Sparkles,
-  Pencil,
-  Save,
-  Plus,
-  X,
-  Copy,
-  Check,
-  Ticket,
-  Calendar,
-  DollarSign,
-  Clock,
-  Settings2,
-  KeyRound,
-  Package,
-  ChevronRight,
-  CheckCircle2,
-  AlertTriangle,
-  Copy as CopyIcon,
-} from 'lucide-react'
+  AdminMessage,
+  AdminLoading,
+  AdminTable,
+  AdminBadge,
+  AdminTabBar,
+  formatDateTime,
+} from '@/components/admin/AdminUI'
+import AdminMasterDetail, {
+  AdminMasterDetailListButton,
+  useAdminSelection,
+} from '@/components/admin/AdminMasterDetail'
+import {
+  formatPricePreview,
+  isAutoChargePrice,
+  syncChargeFromDiscount,
+} from '@/utils/adminEconomics'
 
-export default function MembersAdmin() {
-  const [activeTab, setActiveTab] = useState('plans')
+const PLAN_FIELD_ROWS = [
+  ['name', '套餐名称'],
+  ['original_price', '划线原价(元)'],
+  ['discount_percent', '折扣(%)'],
+  ['price', '实付(元)'],
+  ['validity_days', '有效期(天)'],
+  ['grant_coins', '开通赠送创作币'],
+  ['sort_order', '排序'],
+]
+
+const MEMBER_ROUTE_TABS = [
+  { key: 'plans', label: '会员套餐', icon: Crown },
+  { key: 'codes', label: '兑换卡密', icon: Ticket },
+]
+
+const PLAN_SECTIONS = [
+  { key: 'packages', label: '套餐定价' },
+  { key: 'benefits', label: '权益目录' },
+  { key: 'compare', label: '权益对比' },
+]
+
+function resolvePlanSection(searchParams) {
+  const section = searchParams.get('section')
+  if (section === 'benefits') return 'benefits'
+  if (section === 'compare') return 'compare'
+  return 'packages'
+}
+
+function slugFeatureKey(label) {
+  const base = String(label || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/[^\w\u4e00-\u9fff-]/g, '')
+  return `benefit_${base || 'item'}_${Date.now().toString(36)}`
+}
+
+function promoCodeStatus(row) {
+  const expired =
+    row.is_expired ??
+    (row.expires_at ? new Date(row.expires_at).getTime() < Date.now() : false)
+  if (row.is_active === false) return { label: '已停用', tone: 'default' }
+  if (expired) return { label: '已过期', tone: 'danger' }
+  if (row.used_count >= row.max_uses) {
+    return { label: row.max_uses === 1 ? '已兑换' : '已用完', tone: 'default' }
+  }
+  if (row.used_count === 0) return { label: '未使用', tone: 'success' }
+  const left = row.max_uses - row.used_count
+  return { label: `剩余 ${left} 次`, tone: 'warning' }
+}
+
+export default function MembersAdmin({ forcedTab: forcedTabProp }) {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const routeTab = searchParams.get('tab') === 'codes' ? 'codes' : 'plans'
+  const forcedTab = forcedTabProp || routeTab
+  const planSection = resolvePlanSection(searchParams)
+  const [tab, setTab] = useState(forcedTab)
   const [message, setMessage] = useState(null)
-
-  // ========== 套餐列表 ==========
-  const [plans, setPlans] = useState([
-    { id: 1, name: '体验版', price_month: 99, price_year: 999, credits_month: 3, credits_year: 36, features: '3次创作/月 · 8大题材 · Markdown导出', description: '体验AI剧本创作的魅力，适合个人尝鲜用户', color: '#667eea', sort_order: 1 },
-    { id: 2, name: '专业版', price_month: 299, price_year: 2999, credits_month: 20, credits_year: 240, features: '20次创作/月 · 所有题材 · 4种格式变体', description: '最受欢迎套餐，适合定期产出的创作者和小型团队', color: '#f6ad55', sort_order: 2 },
-    { id: 3, name: '旗舰版', price_month: 999, price_year: 9999, credits_month: -1, credits_year: -1, features: '无限次创作 · 定制模板 · 专属客服', description: '专业团队首选，适合制作团队和内容工作室', color: '#9f7aea', sort_order: 3 },
-    { id: 4, name: '企业版', price_month: 2999, price_year: 29999, credits_month: -1, credits_year: -1, features: '独立部署 · 定制题材库 · API接入', description: '为大型企业和机构定制的企业级解决方案', color: '#48bb78', sort_order: 4 },
-  ])
-
-  const [editingPlan, setEditingPlan] = useState(null)
-  const [planForm, setPlanForm] = useState({})
-
-  function startEdit(plan) {
-    setEditingPlan(plan.id)
-    setPlanForm({ ...plan })
+  const [loading, setLoading] = useState(true)
+  const [plans, setPlans] = useState([])
+  const [codes, setCodes] = useState([])
+  const [editingId, setEditingId] = useState(null)
+  const [creating, setCreating] = useState(false)
+  const [planSaving, setPlanSaving] = useState(false)
+  const [form, setForm] = useState({})
+  const [selectedPlanId, setSelectedPlanId] = useAdminSelection(plans, (plan) => plan.id)
+  const emptyPlan = {
+    name: '',
+    price: 99,
+    original_price: '',
+    discount_percent: 100,
+    validity_days: 30,
+    grant_coins: 500,
+    sort_order: 0,
+    is_active: true,
+    is_recommended: false,
   }
 
-  function cancelEdit() {
-    setEditingPlan(null)
-    setPlanForm({})
-  }
-
-  function savePlan() {
-    setPlans((prev) =>
-      prev.map((p) => (p.id === planForm.id ? { ...p, ...planForm } : p))
-    )
-    setEditingPlan(null)
-    setPlanForm({})
-    showMessage('套餐配置已保存')
-  }
-
-  // ========== 卡密管理 ==========
-  const [generateForm, setGenerateForm] = useState({
-    plan_id: 2,
-    count: 5,
-    duration_days: 30,
-    prefix: 'SF',
-  })
-  const [codes, setCodes] = useState([
-    { id: 1, code: 'SF-2026-0610-A1B2', plan: '专业版', duration: '30天', created_at: '2026-06-10 10:30:00', used: false, used_by: null },
-    { id: 2, code: 'SF-2026-0610-C3D4', plan: '专业版', duration: '30天', created_at: '2026-06-10 10:30:00', used: true, used_by: '陈思远' },
-    { id: 3, code: 'SF-2026-0610-E5F6', plan: '旗舰版', duration: '90天', created_at: '2026-06-09 15:20:00', used: false, used_by: null },
-    { id: 4, code: 'SF-2026-0609-G7H8', plan: '体验版', duration: '7天', created_at: '2026-06-09 08:10:00', used: true, used_by: '林小雨' },
-    { id: 5, code: 'SF-2026-0609-I9J0', plan: '专业版', duration: '30天', created_at: '2026-06-08 14:45:00', used: false, used_by: null },
-    { id: 6, code: 'SF-2026-0608-K1L2', plan: '企业版', duration: '365天', created_at: '2026-06-08 09:00:00', used: false, used_by: null },
-  ])
-  const [copiedId, setCopiedId] = useState(null)
-
-  function handleGenerate() {
-    const newCodes = []
-    for (let i = 0; i < generateForm.count; i++) {
-      const rand = Math.random().toString(36).substring(2, 6).toUpperCase()
-      newCodes.push({
-        id: codes.length + i + 1,
-        code: `${generateForm.prefix}-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${rand}`,
-        plan: plans.find((p) => p.id === generateForm.plan_id)?.name || '专业版',
-        duration: `${generateForm.duration_days}天`,
-        created_at: new Date().toLocaleString('zh-CN'),
-        used: false,
-        used_by: null,
-      })
+  function planPayload(formData) {
+    return {
+      name: formData.name,
+      price: formData.price,
+      original_price: formData.original_price === '' || formData.original_price == null
+        ? null
+        : formData.original_price,
+      discount_percent: formData.discount_percent ?? 100,
+      validity_days: formData.validity_days,
+      creation_quota: 0,
+      grant_coins: formData.grant_coins,
+      is_active: formData.is_active,
+      is_recommended: formData.is_recommended,
+      sort_order: formData.sort_order,
+      features: {},
     }
-    setCodes((prev) => [...newCodes, ...prev])
-    showMessage(`成功生成 ${generateForm.count} 个兑换码`)
+  }
+  const [genForm, setGenForm] = useState({ plan_id: '', count: 5, valid_days: 30, max_uses_per_code: 1 })
+  const [generating, setGenerating] = useState(false)
+  const [copied, setCopied] = useState(null)
+  const [matrixRows, setMatrixRows] = useState([])
+  const [matrixSavingId, setMatrixSavingId] = useState(null)
+
+  async function loadPlans() {
+    const data = await admin.listPlans()
+    setPlans(Array.isArray(data) ? data : [])
+    if (data?.length && !genForm.plan_id) {
+      setGenForm((f) => ({ ...f, plan_id: data[0].id }))
+    }
   }
 
-  function copyCode(code, id) {
-    navigator.clipboard?.writeText(code)
-    setCopiedId(id)
-    setTimeout(() => setCopiedId(null), 2000)
+  async function loadCodes() {
+    const data = await admin.listPromoCodes(50)
+    setCodes(Array.isArray(data) ? data : [])
   }
 
-  function showMessage(text, type = 'success') {
-    setMessage({ text, type })
+  async function loadMatrix() {
+    const data = await admin.listFeatureMatrix()
+    setMatrixRows(Array.isArray(data) ? data : [])
+  }
+
+  useEffect(() => {
+    ;(async () => {
+      setLoading(true)
+      try {
+        await Promise.all([loadPlans(), loadCodes()])
+      } catch (err) {
+        setMessage({ type: 'error', text: err.message || '加载失败' })
+      } finally {
+        setLoading(false)
+      }
+    })()
+  }, [])
+
+  useEffect(() => {
+    setTab(forcedTab)
+  }, [forcedTab])
+
+  useEffect(() => {
+    if ((tab === 'plans' || forcedTab === 'plans') && planSection !== 'packages') {
+      loadMatrix().catch((err) => setMessage({ type: 'error', text: err.message || '加载权益失败' }))
+    }
+  }, [tab, forcedTab, planSection])
+
+  function switchMemberTab(key) {
+    if (key === 'codes') {
+      setSearchParams({ tab: 'codes' }, { replace: true })
+      return
+    }
+    const next = new URLSearchParams(searchParams)
+    next.delete('tab')
+    setSearchParams(next, { replace: true })
+  }
+
+  function switchPlanSection(key) {
+    if (key === 'packages') {
+      setSearchParams({}, { replace: true })
+    } else {
+      setSearchParams({ section: key }, { replace: true })
+    }
+  }
+
+  useEffect(() => {
+    if (creating) return
+    const plan = plans.find((item) => item.id === selectedPlanId)
+    if (plan) {
+      setEditingId(plan.id)
+      const next = { ...plan }
+      next.price = Number(
+        syncChargeFromDiscount({
+          original: next.original_price,
+          discountPercent: next.discount_percent,
+          manualPrice: next.price,
+        })
+      )
+      setForm(next)
+    }
+  }, [selectedPlanId, plans, creating])
+
+  function patchPlanForm(key, rawValue) {
+    setForm((prev) => {
+      const numericKeys = ['price', 'original_price', 'validity_days', 'grant_coins', 'sort_order', 'discount_percent']
+      let value = rawValue
+      if (numericKeys.includes(key)) {
+        value = key === 'original_price' && rawValue === '' ? '' : Number(rawValue)
+      }
+      const next = { ...prev, [key]: value }
+      if (key === 'original_price' || key === 'discount_percent') {
+        next.price = Number(
+          syncChargeFromDiscount({
+            original: next.original_price,
+            discountPercent: next.discount_percent,
+            manualPrice: next.price,
+          })
+        )
+      }
+      return next
+    })
+  }
+
+  function renderPlanFormFields() {
+    const autoCharge = isAutoChargePrice(form.discount_percent, form.original_price)
+    const pricePreview = formatPricePreview({
+      original: form.original_price,
+      discountPercent: form.discount_percent,
+      manualPrice: form.price,
+    })
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {PLAN_FIELD_ROWS.map(([key, label]) => {
+          const readOnlyPrice = key === 'price' && autoCharge
+          return (
+          <label key={key} className="block">
+            <span className="text-xs text-navy-400">
+              {label}
+              {readOnlyPrice ? '（自动计算）' : ''}
+            </span>
+            <input
+              value={form[key] ?? ''}
+              readOnly={readOnlyPrice}
+              onChange={(e) => patchPlanForm(key, e.target.value)}
+              className={`mt-1 w-full px-3 py-2 rounded-xl border border-navy-700/40 text-white ${
+                readOnlyPrice ? 'bg-navy-900/80 cursor-not-allowed text-gold-300' : 'bg-navy-800/60'
+              }`}
+            />
+          </label>
+          )
+        })}
+        <label className="flex items-center gap-2 text-sm text-navy-200">
+          <input
+            type="checkbox"
+            checked={!!form.is_active}
+            onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
+          />
+          启用
+        </label>
+        <label className="flex items-center gap-2 text-sm text-navy-200">
+          <input
+            type="checkbox"
+            checked={!!form.is_recommended}
+            onChange={(e) => setForm({ ...form, is_recommended: e.target.checked })}
+          />
+          推荐
+        </label>
+        <p className="md:col-span-2 text-[11px] text-navy-500 leading-relaxed">
+          填写划线原价与折扣(%)后，实付由系统自动计算（原价×折扣%）；折扣 100 时可手动填写实付价。开通赠送创作币与人民币打折可叠加。
+        </p>
+        <p className="md:col-span-2 text-xs text-gold-400/90">{pricePreview}</p>
+      </div>
+    )
+  }
+
+  async function addBenefitRow() {
+    const label = window.prompt('权益名称', '')
+    if (!label?.trim()) return
+    try {
+      await admin.saveFeatureMatrixItem({
+        feature_key: slugFeatureKey(label),
+        label: label.trim(),
+        member: true,
+        free: false,
+        is_active: true,
+      })
+      showOk('权益已添加')
+      await loadMatrix()
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || '添加失败' })
+    }
+  }
+
+  async function deleteBenefitRow(row) {
+    if (!row?.id) {
+      setMessage({ type: 'error', text: '内置默认项不可删除，可先保存为自定义后再删' })
+      return
+    }
+    if (!window.confirm(`确定删除权益「${row.label || row.feature_key}」？`)) return
+    try {
+      await admin.deleteFeatureMatrixItem(row.id)
+      showOk('权益已删除')
+      await loadMatrix()
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || '删除失败' })
+    }
+  }
+
+  function renderBenefitsPanel() {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <p className="text-sm text-navy-400">
+            维护会员可享功能清单；所有付费会员权益一致，套餐卡片会自动引用此处 + 各档开通赠币。
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={seedMatrix}
+              className="px-4 py-2 rounded-xl text-sm text-navy-200 border border-navy-600/40 hover:bg-navy-800/50"
+            >
+              写入默认项
+            </button>
+            <button
+              type="button"
+              onClick={addBenefitRow}
+              className="inline-flex items-center gap-1 px-4 py-2 rounded-xl text-sm btn-gold"
+            >
+              <Plus className="w-4 h-4" />
+              添加权益
+            </button>
+          </div>
+        </div>
+        <AdminTable
+          rowKey="feature_key"
+          rows={matrixRows}
+          emptyText="暂无权益，请添加或写入默认项"
+          columns={[
+            {
+              key: 'label',
+              title: '权益名称',
+              render: (r) => (
+                <input
+                  className="w-full min-w-[180px] px-2 py-1.5 rounded-lg bg-navy-900 border border-navy-700 text-white text-sm"
+                  value={r.label || ''}
+                  onChange={(e) =>
+                    setMatrixRows((list) =>
+                      list.map((item) =>
+                        item.feature_key === r.feature_key ? { ...item, label: e.target.value } : item
+                      )
+                    )
+                  }
+                />
+              ),
+            },
+            {
+              key: 'source',
+              title: '来源',
+              render: (r) => (
+                <AdminBadge tone={r.source === 'db' ? 'gold' : 'default'}>
+                  {r.source === 'db' ? '已入库' : '默认'}
+                </AdminBadge>
+              ),
+            },
+            {
+              key: 'actions',
+              title: '操作',
+              render: (r) => (
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    className="text-gold-400 text-sm hover:underline disabled:opacity-50"
+                    disabled={matrixSavingId === r.feature_key}
+                    onClick={() => saveMatrixRow(matrixRows.find((i) => i.feature_key === r.feature_key))}
+                  >
+                    {matrixSavingId === r.feature_key ? '保存中…' : '保存'}
+                  </button>
+                  <button
+                    type="button"
+                    className="text-red-400 text-sm hover:underline disabled:opacity-40"
+                    disabled={!r.id}
+                    onClick={() => deleteBenefitRow(r)}
+                  >
+                    删除
+                  </button>
+                </div>
+              ),
+            },
+          ]}
+        />
+      </div>
+    )
+  }
+
+  function renderComparePanel() {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <p className="text-sm text-navy-400">
+            C 端会员页「普通用户 vs 会员」对比表；勾选决定两侧是否展示该功能。
+          </p>
+          <button
+            type="button"
+            onClick={() => switchPlanSection('benefits')}
+            className="px-4 py-2 rounded-xl text-sm text-gold-400 border border-gold-500/30"
+          >
+            管理权益目录
+          </button>
+        </div>
+        <AdminTable
+          rowKey="feature_key"
+          rows={matrixRows}
+          emptyText="暂无权益项"
+          columns={[
+            { key: 'label', title: '权益名称', render: (r) => r.label || r.feature_key },
+            {
+              key: 'free',
+              title: '普通用户',
+              render: (r) => (
+                <input
+                  type="checkbox"
+                  checked={!!r.free}
+                  onChange={(e) =>
+                    setMatrixRows((list) =>
+                      list.map((item) =>
+                        item.feature_key === r.feature_key ? { ...item, free: e.target.checked } : item
+                      )
+                    )
+                  }
+                />
+              ),
+            },
+            {
+              key: 'member',
+              title: '会员',
+              render: (r) => (
+                <input
+                  type="checkbox"
+                  checked={!!r.member}
+                  onChange={(e) =>
+                    setMatrixRows((list) =>
+                      list.map((item) =>
+                        item.feature_key === r.feature_key ? { ...item, member: e.target.checked } : item
+                      )
+                    )
+                  }
+                />
+              ),
+            },
+            {
+              key: 'member_only',
+              title: '仅会员',
+              render: (r) => (
+                <input
+                  type="checkbox"
+                  checked={!!r.member_only}
+                  onChange={(e) =>
+                    setMatrixRows((list) =>
+                      list.map((item) =>
+                        item.feature_key === r.feature_key
+                          ? { ...item, member_only: e.target.checked }
+                          : item
+                      )
+                    )
+                  }
+                />
+              ),
+            },
+            {
+              key: 'coming_soon',
+              title: '即将上线',
+              render: (r) => (
+                <input
+                  type="checkbox"
+                  checked={!!r.coming_soon}
+                  onChange={(e) =>
+                    setMatrixRows((list) =>
+                      list.map((item) =>
+                        item.feature_key === r.feature_key
+                          ? { ...item, coming_soon: e.target.checked }
+                          : item
+                      )
+                    )
+                  }
+                />
+              ),
+            },
+            {
+              key: 'actions',
+              title: '操作',
+              render: (r) => (
+                <button
+                  type="button"
+                  className="text-gold-400 text-sm hover:underline disabled:opacity-50"
+                  disabled={matrixSavingId === r.feature_key}
+                  onClick={() => saveMatrixRow(matrixRows.find((i) => i.feature_key === r.feature_key))}
+                >
+                  {matrixSavingId === r.feature_key ? '保存中…' : '保存对比'}
+                </button>
+              ),
+            },
+          ]}
+        />
+      </div>
+    )
+  }
+
+  async function saveMatrixRow(row) {
+    setMatrixSavingId(row.feature_key)
+    try {
+      if (row.id) {
+        await admin.updateFeatureMatrixItem(row.id, row)
+      } else {
+        await admin.saveFeatureMatrixItem({
+          feature_key: row.feature_key,
+          label: row.label,
+          free: !!row.free,
+          member: !!row.member,
+          coming_soon: !!row.coming_soon,
+          member_only: !!row.member_only,
+          is_active: row.is_active !== false,
+          sort_order: row.sort_order,
+        })
+      }
+      showOk('权益项已保存')
+      await loadMatrix()
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || '保存失败' })
+    } finally {
+      setMatrixSavingId(null)
+    }
+  }
+
+  async function seedMatrix() {
+    try {
+      await admin.seedFeatureMatrix()
+      showOk('已写入默认权益矩阵')
+      await loadMatrix()
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || '同步失败' })
+    }
+  }
+
+  function showOk(text) {
+    setMessage({ type: 'success', text })
     setTimeout(() => setMessage(null), 3000)
   }
 
+  async function savePlan() {
+    if (planSaving) return
+    if (!String(form.name || '').trim()) {
+      setMessage({ type: 'error', text: '请填写套餐名称' })
+      return
+    }
+    setPlanSaving(true)
+    try {
+      const payload = planPayload(form)
+      if (creating) {
+        await admin.createPlan(payload)
+        setCreating(false)
+        showOk('套餐已创建')
+      } else {
+        await admin.updatePlan(editingId, payload)
+        setEditingId(null)
+        showOk('套餐已保存')
+      }
+      loadPlans()
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || '保存失败' })
+    } finally {
+      setPlanSaving(false)
+    }
+  }
+
+  async function handleDeletePlan(id) {
+    if (!window.confirm('确定删除此套餐？若已有会员使用将无法删除。')) return
+    try {
+      await admin.deletePlan(id)
+      showOk('套餐已删除')
+      loadPlans()
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || '删除失败' })
+    }
+  }
+
+  async function handleGenerate() {
+    if (!genForm.plan_id) {
+      setMessage({ type: 'error', text: '请选择套餐' })
+      return
+    }
+    setGenerating(true)
+    try {
+      const res = await admin.generatePromo(genForm)
+      showOk(`已生成 ${res?.generated_count ?? genForm.count} 个卡密`)
+      await loadCodes()
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || '生成失败' })
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  if (loading) return <AdminLoading />
+
   return (
     <div className="space-y-6">
-      {/* 消息提示 */}
-      {message && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`px-5 py-4 rounded-2xl flex items-center gap-3 ${
-            message.type === 'success' ? 'bg-green-500/10 border border-green-500/30 text-green-400' : 'bg-red-500/10 border border-red-500/30 text-red-400'
-          }`}
-        >
-          <Check className="w-5 h-5" />
-          {message.text}
-        </motion.div>
-      )}
+      <AdminMessage message={message} onClose={() => setMessage(null)} />
 
-      {/* 页面标题 */}
-      <div>
-        <h1 className="text-2xl font-bold text-white mb-1">会员配置</h1>
-        <p className="text-navy-300 text-sm">管理会员套餐与兑换卡密系统</p>
-      </div>
+      <p className="text-sm text-navy-400 rounded-xl border border-navy-700/40 bg-navy-900/40 px-4 py-3">
+        套餐可同时配置「人民币打折」（划线原价 + 折扣%）与「开通赠送创作币」；二者独立，可叠加。
+      </p>
 
-      {/* Tab 切换 */}
-      <div className="flex gap-2 p-1 glass-card rounded-2xl w-fit">
-        {[
-          { key: 'plans', label: '套餐列表', icon: Package },
-          { key: 'codes', label: '卡密管理', icon: KeyRound },
-        ].map((tab) => (
+      <div className="flex flex-wrap gap-2 p-1 glass-card rounded-2xl w-fit">
+        {MEMBER_ROUTE_TABS.map((t) => (
           <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-medium transition-all ${
-              activeTab === tab.key
-                ? 'bg-gradient-to-r from-gold-400 to-gold-600 text-navy-950 shadow-lg shadow-gold-500/30'
+            key={t.key}
+            type="button"
+            onClick={() => switchMemberTab(t.key)}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              forcedTab === t.key
+                ? 'bg-gradient-to-r from-gold-400 to-gold-600 text-navy-950 shadow-lg shadow-gold-500/20'
                 : 'text-navy-200 hover:bg-navy-800/50'
             }`}
           >
-            <tab.icon className="w-4 h-4" />
-            {tab.label}
+            <t.icon className="w-4 h-4" />
+            {t.label}
           </button>
         ))}
       </div>
 
-      {/* 套餐列表 Tab */}
-      {activeTab === 'plans' && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-4"
-        >
-          {plans
-            .sort((a, b) => a.sort_order - b.sort_order)
-            .map((plan) => (
-              <div
-                key={plan.id}
-                className="glass-card rounded-2xl p-6 relative overflow-hidden"
+      {(tab === 'plans' || forcedTab === 'plans') && (
+        <div className="space-y-4">
+          <AdminTabBar tabs={PLAN_SECTIONS} active={planSection} onChange={switchPlanSection} />
+
+          {planSection === 'packages' ? (
+        <AdminMasterDetail
+          listTitle="会员套餐"
+          showDetail={creating || selectedPlanId != null}
+          listHeader={
+            <div className="px-2 pb-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setCreating(true)
+                  setEditingId(null)
+                  setForm({ ...emptyPlan })
+                }}
+                className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl btn-gold text-sm"
               >
-                <div
-                  className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10"
-                  style={{ background: plan.color, transform: 'translate(50%, -50%)' }}
-                />
-
-                {editingPlan === plan.id ? (
-                  <div className="relative z-10 space-y-4">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${plan.color}30` }}>
-                        <Crown className="w-5 h-5" style={{ color: plan.color }} />
-                      </div>
-                      <input
-                        type="text"
-                        value={planForm.name}
-                        onChange={(e) => setPlanForm({ ...planForm, name: e.target.value })}
-                        className="flex-1 px-3 py-2 rounded-lg bg-navy-800/60 border border-navy-700/40 text-white text-lg font-bold focus:outline-none focus:border-gold-500/60"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs text-navy-400 mb-1">月付价格 (¥)</label>
-                        <input
-                          type="number"
-                          value={planForm.price_month}
-                          onChange={(e) => setPlanForm({ ...planForm, price_month: Number(e.target.value) })}
-                          className="w-full px-3 py-2 rounded-lg bg-navy-800/60 border border-navy-700/40 text-white focus:outline-none focus:border-gold-500/60"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-navy-400 mb-1">年付价格 (¥)</label>
-                        <input
-                          type="number"
-                          value={planForm.price_year}
-                          onChange={(e) => setPlanForm({ ...planForm, price_year: Number(e.target.value) })}
-                          className="w-full px-3 py-2 rounded-lg bg-navy-800/60 border border-navy-700/40 text-white focus:outline-none focus:border-gold-500/60"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-navy-400 mb-1">每月创作次数 (-1=无限)</label>
-                        <input
-                          type="number"
-                          value={planForm.credits_month}
-                          onChange={(e) => setPlanForm({ ...planForm, credits_month: Number(e.target.value) })}
-                          className="w-full px-3 py-2 rounded-lg bg-navy-800/60 border border-navy-700/40 text-white focus:outline-none focus:border-gold-500/60"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-navy-400 mb-1">每年创作次数</label>
-                        <input
-                          type="number"
-                          value={planForm.credits_year}
-                          onChange={(e) => setPlanForm({ ...planForm, credits_year: Number(e.target.value) })}
-                          className="w-full px-3 py-2 rounded-lg bg-navy-800/60 border border-navy-700/40 text-white focus:outline-none focus:border-gold-500/60"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-navy-400 mb-1">套餐描述</label>
-                      <input
-                        type="text"
-                        value={planForm.description}
-                        onChange={(e) => setPlanForm({ ...planForm, description: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg bg-navy-800/60 border border-navy-700/40 text-white focus:outline-none focus:border-gold-500/60 text-sm"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-xs text-navy-400 mb-1">功能亮点</label>
-                      <input
-                        type="text"
-                        value={planForm.features}
-                        onChange={(e) => setPlanForm({ ...planForm, features: e.target.value })}
-                        className="w-full px-3 py-2 rounded-lg bg-navy-800/60 border border-navy-700/40 text-white focus:outline-none focus:border-gold-500/60 text-sm"
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-2 pt-2">
-                      <button
-                        onClick={savePlan}
-                        className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-gold-400 to-gold-600 text-navy-950 font-semibold text-sm flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-gold-500/30 transition-all"
-                      >
-                        <Save className="w-4 h-4" /> 保存
-                      </button>
-                      <button
-                        onClick={cancelEdit}
-                        className="px-4 py-2.5 rounded-xl bg-navy-800/60 text-navy-200 text-sm hover:bg-navy-700/60"
-                      >
-                        取消
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="relative z-10">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${plan.color}30` }}>
-                          <Crown className="w-5 h-5" style={{ color: plan.color }} />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-bold text-white">{plan.name}</h3>
-                          <p className="text-xs text-navy-400">{plan.description}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => startEdit(plan)}
-                        className="p-2 rounded-lg text-gold-400 hover:bg-gold-500/10 transition-colors"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="p-3 rounded-xl bg-navy-800/40 border border-navy-700/30">
-                        <div className="text-xs text-navy-400 mb-1">月付</div>
-                        <div className="text-xl font-bold text-white">¥{plan.price_month}</div>
-                      </div>
-                      <div className="p-3 rounded-xl bg-navy-800/40 border border-navy-700/30">
-                        <div className="text-xs text-navy-400 mb-1">年付</div>
-                        <div className="text-xl font-bold text-gold-400">¥{plan.price_year}</div>
-                      </div>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-navy-800/40 border border-navy-700/30 mb-3">
-                      <div className="text-xs text-navy-400 mb-1 flex items-center gap-1.5">
-                        <Sparkles className="w-3 h-3" /> 功能包含
-                      </div>
-                      <div className="text-sm text-navy-200">{plan.features}</div>
-                    </div>
-
-                    <div className="text-xs text-navy-400 flex items-center gap-1.5">
-                      <DollarSign className="w-3 h-3" />
-                      每月创作: {plan.credits_month === -1 ? '无限次' : `${plan.credits_month} 次`}
-                    </div>
-                  </div>
-                )}
+                <Plus className="w-4 h-4" />
+                新建套餐
+              </button>
+            </div>
+          }
+          items={plans}
+          selectedId={creating ? null : selectedPlanId}
+          onSelect={(id) => {
+            setCreating(false)
+            setSelectedPlanId(id)
+          }}
+          getId={(plan) => plan.id}
+          emptyList={<p className="px-2 py-4 text-sm text-navy-500">暂无套餐，点击上方新建</p>}
+          renderListItem={(plan, { active, onSelect }) => (
+            <AdminMasterDetailListButton
+              key={plan.id}
+              active={active && !creating}
+              onClick={onSelect}
+              title={plan.name}
+              subtitle={
+                plan.discount_label
+                  ? `¥${plan.price}（${plan.discount_label}） / ${plan.validity_days}天`
+                  : `¥${plan.price} / ${plan.validity_days}天`
+              }
+              meta={`${plan.grant_coins ?? 0} 币`}
+              badges={plan.is_recommended ? ['推荐'] : []}
+            />
+          )}
+          renderDetail={() =>
+            creating ? (
+              <div className="space-y-4">
+                <h3 className="text-white font-semibold">新建套餐</h3>
+                {renderPlanFormFields()}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={savePlan}
+                    disabled={planSaving}
+                    className="px-5 py-2.5 rounded-xl btn-gold disabled:opacity-60"
+                  >
+                    {planSaving ? '创建中…' : '创建'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCreating(false)}
+                    className="px-4 py-2.5 rounded-xl bg-navy-800/60 text-navy-200"
+                  >
+                    取消
+                  </button>
+                </div>
               </div>
-            ))}
-        </motion.div>
+            ) : editingId ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-lg font-semibold text-white">{form.name || '编辑套餐'}</h3>
+                  <button
+                    type="button"
+                    onClick={() => handleDeletePlan(editingId)}
+                    className="px-3 py-2 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 inline-flex items-center gap-1 text-sm"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    删除
+                  </button>
+                </div>
+                {renderPlanFormFields()}
+                <button
+                  type="button"
+                  onClick={savePlan}
+                  disabled={planSaving}
+                  className="px-5 py-2.5 rounded-xl btn-gold disabled:opacity-60"
+                >
+                  {planSaving ? '保存中…' : '保存当前套餐'}
+                </button>
+              </div>
+            ) : (
+              <div className="text-sm text-navy-500">请从左侧选择套餐，或点击「新建套餐」</div>
+            )
+          }
+        />
+          ) : planSection === 'benefits' ? (
+            renderBenefitsPanel()
+          ) : (
+            renderComparePanel()
+          )}
+        </div>
       )}
 
-      {/* 卡密管理 Tab */}
-      {activeTab === 'codes' && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-          {/* 生成卡密 */}
-          <div className="glass-card rounded-2xl p-6">
-            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-3">
-              <Plus className="w-5 h-5 text-gold-400" /> 生成新兑换码
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-5">
-              <div>
-                <label className="block text-sm text-navy-300 mb-2">套餐类型</label>
-                <select
-                  value={generateForm.plan_id}
-                  onChange={(e) => setGenerateForm({ ...generateForm, plan_id: Number(e.target.value) })}
-                  className="w-full px-4 py-3 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white focus:outline-none focus:border-gold-500/60"
-                >
-                  {plans.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm text-navy-300 mb-2">生成数量</label>
-                <input
-                  type="number"
-                  value={generateForm.count}
-                  onChange={(e) => setGenerateForm({ ...generateForm, count: Number(e.target.value) })}
-                  min={1}
-                  max={100}
-                  className="w-full px-4 py-3 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white focus:outline-none focus:border-gold-500/60"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-navy-300 mb-2">有效期 (天)</label>
-                <input
-                  type="number"
-                  value={generateForm.duration_days}
-                  onChange={(e) => setGenerateForm({ ...generateForm, duration_days: Number(e.target.value) })}
-                  className="w-full px-4 py-3 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white focus:outline-none focus:border-gold-500/60"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-navy-300 mb-2">前缀</label>
-                <input
-                  type="text"
-                  value={generateForm.prefix}
-                  onChange={(e) => setGenerateForm({ ...generateForm, prefix: e.target.value.toUpperCase() })}
-                  className="w-full px-4 py-3 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white focus:outline-none focus:border-gold-500/60"
-                />
-              </div>
-            </div>
-
+      {(tab === 'codes' || forcedTab === 'codes') && (
+        <div className="space-y-6">
+          <div className="glass-card rounded-2xl p-5 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <label className="block md:col-span-2">
+              <span className="text-xs text-navy-400">关联套餐</span>
+              <select
+                value={genForm.plan_id}
+                onChange={(e) => setGenForm({ ...genForm, plan_id: e.target.value })}
+                className="mt-1 w-full px-3 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white"
+              >
+                {plans.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-xs text-navy-400">生成数量</span>
+              <input
+                type="number"
+                min={1}
+                max={500}
+                value={genForm.count}
+                onChange={(e) => setGenForm({ ...genForm, count: Number(e.target.value) })}
+                className="mt-1 w-full px-3 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs text-navy-400">有效天数</span>
+              <input
+                type="number"
+                min={1}
+                value={genForm.valid_days}
+                onChange={(e) => setGenForm({ ...genForm, valid_days: Number(e.target.value) })}
+                className="mt-1 w-full px-3 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white"
+              />
+            </label>
             <button
+              type="button"
+              disabled={generating}
               onClick={handleGenerate}
-              className="py-3 px-8 rounded-xl bg-gradient-to-r from-gold-400 to-gold-600 text-navy-950 font-semibold flex items-center gap-2 hover:shadow-lg hover:shadow-gold-500/30 transition-all"
+              className="md:col-span-4 py-3 rounded-xl btn-gold font-medium disabled:opacity-60"
             >
-              <Ticket className="w-5 h-5" />
-              生成 {generateForm.count} 个兑换码
+              {generating ? '生成中…' : '批量生成卡密'}
             </button>
           </div>
 
-          {/* 已生成卡密列表 */}
-          <div className="glass-card rounded-2xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-navy-700/40 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white flex items-center gap-3">
-                <KeyRound className="w-5 h-5 text-gold-400" />
-                已生成兑换码
-              </h3>
-              <div className="text-sm text-navy-400">共 {codes.length} 个 · 未使用 {codes.filter((c) => !c.used).length} 个</div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-navy-700/40 bg-navy-800/30">
-                    <th className="text-left text-navy-300 font-medium py-4 px-6">兑换码</th>
-                    <th className="text-left text-navy-300 font-medium py-4 px-6">套餐</th>
-                    <th className="text-left text-navy-300 font-medium py-4 px-6">有效期</th>
-                    <th className="text-left text-navy-300 font-medium py-4 px-6">生成时间</th>
-                    <th className="text-left text-navy-300 font-medium py-4 px-6">使用状态</th>
-                    <th className="text-left text-navy-300 font-medium py-4 px-6">使用者</th>
-                    <th className="text-left text-navy-300 font-medium py-4 px-6">操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {codes.map((c, idx) => (
-                    <motion.tr
-                      key={c.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: idx * 0.02 }}
-                      className="border-b border-navy-700/30 hover:bg-navy-800/20 transition-colors"
+          <AdminTable
+            rowKey="id"
+            rows={codes}
+            emptyText="暂无卡密，请先生成"
+            columns={[
+              {
+                key: 'code',
+                title: '卡密',
+                render: (r) => (
+                  <div className="flex items-center gap-2 font-mono text-gold-400">
+                    {r.code}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard?.writeText(r.code)
+                        setCopied(r.id)
+                        setTimeout(() => setCopied(null), 1500)
+                      }}
+                      className="text-navy-400 hover:text-white"
                     >
-                      <td className="py-4 px-6">
-                        <code className="text-gold-400 font-mono text-sm">{c.code}</code>
-                      </td>
-                      <td className="py-4 px-6 text-navy-200">{c.plan}</td>
-                      <td className="py-4 px-6 text-navy-200">{c.duration}</td>
-                      <td className="py-4 px-6 text-navy-300">{c.created_at}</td>
-                      <td className="py-4 px-6">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${
-                          c.used
-                            ? 'bg-navy-700/60 text-navy-300 border border-navy-700/40'
-                            : 'bg-green-500/20 text-green-400 border border-green-500/30'
-                        }`}>
-                          {c.used ? <CheckCircle2 className="w-3 h-3 text-navy-400" /> : <Clock className="w-3 h-3" />}
-                          {c.used ? '已使用' : '未使用'}
-                        </span>
-                      </td>
-                      <td className="py-4 px-6 text-navy-200">{c.used_by || '-'}</td>
-                      <td className="py-4 px-6">
-                        {!c.used && (
-                          <button
-                            onClick={() => copyCode(c.code, c.id)}
-                            className="p-2 rounded-lg text-navy-300 hover:bg-navy-700/50 hover:text-gold-400 transition-colors"
-                            title="复制"
-                          >
-                            {copiedId === c.id ? (
-                              <Check className="w-4 h-4 text-green-400" />
-                            ) : (
-                              <CopyIcon className="w-4 h-4" />
-                            )}
-                          </button>
-                        )}
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </motion.div>
+                      {copied === r.id ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  </div>
+                ),
+              },
+              { key: 'plan_name', title: '套餐', render: (r) => r.plan?.name || r.plan_name || '—' },
+              {
+                key: 'used',
+                title: '状态',
+                render: (r) => {
+                  const status = promoCodeStatus(r)
+                  return <AdminBadge tone={status.tone}>{status.label}</AdminBadge>
+                },
+              },
+              { key: 'expires_at', title: '过期时间', render: (r) => formatDateTime(r.expires_at) },
+              { key: 'created_at', title: '创建时间', render: (r) => formatDateTime(r.created_at) },
+            ]}
+          />
+        </div>
       )}
     </div>
   )

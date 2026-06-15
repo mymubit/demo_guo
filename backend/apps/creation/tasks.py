@@ -1,84 +1,109 @@
 """
-创作异步任务（Celery）
+创作后台任务（Django 6 @task + dj_queue / Postgres）
 
 核心：run_creation_pipeline(project_id)
-  - 串行执行 run_full_pipeline 完成创作
-  - 根据 pipeline 返回结果更新每个节点状态与摘要
-  - 失败时记录错误信息并标记 status=failed
-  - 成功完成后生成预渲染 HTML 与 ScriptWork 下载文件
+  - 串行执行融合编排器节点 1–5 + fusion 后处理
+  - 更新节点状态、进度 HTML、ScriptWork 下载文件
 
-同步 fallback：
-  - 当 Celery 不可用时（如本地开发），可直接调用 run_creation_pipeline_sync()
-    在当前进程内同步执行，不依赖消息队列。
+启动 worker：
+  python manage.py dj_queue --mode async   # Windows 推荐
+  python manage.py dj_queue                # Linux 可用 fork
 """
+from __future__ import annotations
 
 import logging
+import os
 import time
-from datetime import timedelta
 
-from celery import shared_task  # 若项目使用不同的装饰器请在此调整
+from django.db import transaction
+from django.tasks import task
 from django.utils import timezone
 
-from .models import Project, CreationNode, ScriptWork
+from apps.common.user_messages import humanize_pipeline_error, humanize_user_message
+from .pipeline_debug_log import log_skill_task_begin, log_skill_task_done
+from .models import CreationNode, Project
 from .services import PIPELINE_NODES, _render_progress_html, _render_result_html
 
 logger = logging.getLogger(__name__)
 
 
-# ============================================================
-# 主流水线任务（异步 / 同步通用执行体）
-# ============================================================
-def _execute_pipeline_for_project(project: Project) -> dict:
-    """调用 skill.engine.run_full_pipeline 完成创作并返回结果
+def _refund_creation_submit_if_needed(project: Project, reason: str) -> None:
+    """创作主任务失败时退还提交费用，reference_id 保证重复失败不重复退。"""
+    from apps.billing.models import CoinLedger
+    from apps.billing.services import BillingService
 
-    :return: pipeline 返回的 result dict（含 status / project_brief /
-             structure / characters / outlines / scripts / review / export 等）
-    """
-    from apps.creation.engine.pipeline import run_full_pipeline
-
-    user_inputs = {
-        "user_id": str(project.user_id),
-        "project_id": str(project.id),
-        "theme": project.theme,
-        "core_idea": project.core_idea,
-        "episode_count": project.episode_count,
-        "format_variant": project.format_variant,
-        "audience": project.audience,
-        "reference_work": project.reference_work,
-    }
-
-    logger.info("[Creation] 开始执行 pipeline project=%s user=%s", project.id, project.user_id)
-    result = run_full_pipeline(user_inputs)
-    logger.info(
-        "[Creation] pipeline 执行完成 project=%s status=%s total_time=%ss",
-        project.id,
-        result.get("status"),
-        result.get("total_time_seconds", 0),
+    cost = BillingService.get_price("creation.submit")
+    if cost <= 0:
+        return
+    BillingService.credit(
+        project.user,
+        cost,
+        action_key="creation.submit.refund",
+        reference_id=str(project.id),
+        remark=reason[:200],
+        entry_type=CoinLedger.TYPE_REFUND,
     )
-    return result
+
+
+def _finalize_skill_node_failure(
+    project_id: str,
+    node_index: int,
+    error_msg: str,
+    *,
+    log_status: str = "exception",
+    log_detail: dict | None = None,
+) -> dict:
+    """事务污染后仍可靠地将工作台节点标记为失败（避免项目永久卡在 running）。"""
+    from django.db import connection
+
+    connection.close()
+    with transaction.atomic():
+        try:
+            project = Project.objects.select_for_update().get(id=project_id)
+        except Project.DoesNotExist:
+            return {"status": "error", "message": "project not found"}
+
+        project.status = Project.STATUS_FAILED
+        project.error_message = error_msg[:500]
+        project.rendered_progress_html = _render_progress_html(project)
+        project.save(
+            update_fields=[
+                "status",
+                "error_message",
+                "rendered_progress_html",
+                "updated_at",
+            ]
+        )
+        CreationNode.objects.filter(project=project, node_index=node_index).update(
+            status=CreationNode.STATUS_FAILED,
+            error_message=error_msg[:500],
+        )
+
+    log_skill_task_done(
+        project_id=project_id,
+        node_index=node_index,
+        status=log_status,
+        detail=log_detail or {"error": error_msg},
+    )
+    return {"status": "failed", "node_index": node_index, "error": error_msg}
+
+
+def _execute_pipeline_for_project(project: Project) -> dict:
+    """主链节点 1–5：SSOT 编排器（逐节点 LLM/CLI + Schema 落库）。"""
+    from .fusion.fusion_orchestrator import run_fusion_nodes_for_project
+
+    logger.info("[Creation] 融合编排器 project=%s", project.id)
+    return run_fusion_nodes_for_project(project)
 
 
 def _update_nodes_from_result(project: Project, result: dict) -> None:
-    """根据 pipeline 返回的 result 更新 7 个 CreationNode 的摘要与状态
-
-    result 结构：
-      - project_brief: { project_name, theme, episode_count, ... }
-      - structure:     { acts, reversal_points, theme_code, ... }
-      - characters:    { protagonist, antagonist, character_count, ... }
-      - outlines:      { total_episodes, reversal_count, ... }
-      - scripts:       { total_episodes, total_words, total_scenes, format_variant, ... }
-      - review:        { overall_score, grade, ... }
-      - export:        { total_files, rendered_html, rendered_progress_html, preview_html, ... }
-    """
     brief = result.get("project_brief") or {}
     structure = result.get("structure") or {}
     characters = result.get("characters") or {}
     outlines = result.get("outlines") or {}
     scripts = result.get("scripts") or {}
     review = result.get("review") or {}
-    export = result.get("export") or {}
 
-    # 每个节点对应的摘要生成函数
     node_summaries = {
         1: (
             brief.get("project_name")
@@ -107,8 +132,8 @@ def _update_nodes_from_result(project: Project, result: dict) -> None:
             f"({review.get('grade', '')}级)"
         ),
         7: (
-            f"导出完成, {export.get('total_files', 0)}个文件, "
-            f"含数字水印"
+            f"8维评分 {review.get('overall_score', 0)}分 "
+            f"({review.get('grade', '')}级)"
         ),
     }
 
@@ -124,11 +149,30 @@ def _update_nodes_from_result(project: Project, result: dict) -> None:
         node.save(update_fields=["status", "completed_at", "summary_text"])
 
 
-def _update_project_after_pipeline(project: Project, result: dict, started_at) -> None:
-    """根据 pipeline result 更新 Project 状态、进度、预渲染 HTML"""
+def _update_project_after_pipeline(
+    project: Project, result: dict, started_at, *, fusion_out: dict | None = None
+) -> None:
     export = result.get("export") or {}
 
-    project.status = Project.STATUS_COMPLETED
+    fusion_blocked = (
+        fusion_out is not None
+        and (
+            fusion_out.get("fusion_status") == Project.FUSION_BLOCKED
+            or fusion_out.get("ok") is False
+        )
+    )
+
+    if fusion_out and fusion_out.get("fusion_status") == Project.FUSION_READY:
+        project.status = Project.STATUS_COMPLETED
+        project.fusion_status = Project.FUSION_READY
+    elif fusion_blocked:
+        project.status = Project.STATUS_FAILED
+        project.fusion_status = Project.FUSION_BLOCKED
+        if not project.error_message:
+            project.error_message = fusion_out.get("error") or "融合质检/评分未达放行线"
+    else:
+        project.status = Project.STATUS_COMPLETED
+
     project.current_node_index = len(PIPELINE_NODES)
     project.progress_percent = 100
     project.completed_at = timezone.now()
@@ -136,7 +180,6 @@ def _update_project_after_pipeline(project: Project, result: dict, started_at) -
         (project.completed_at - started_at).total_seconds() // 60
     )
 
-    # 优先使用 skill 层生成的 rendered_html
     project.rendered_result_html = (
         export.get("rendered_html")
         or export.get("rendered_progress_html")
@@ -149,6 +192,11 @@ def _update_project_after_pipeline(project: Project, result: dict, started_at) -
     project.save(
         update_fields=[
             "status",
+            "fusion_status",
+            "overall_score",
+            "grade",
+            "ready_at",
+            "error_message",
             "current_node_index",
             "progress_percent",
             "completed_at",
@@ -161,45 +209,55 @@ def _update_project_after_pipeline(project: Project, result: dict, started_at) -
 
 
 def _run_creation_pipeline_core(project_id: str) -> dict:
-    """pipeline 实际执行体（可被异步任务或同步函数调用）
+    with transaction.atomic():
+        try:
+            project = Project.objects.select_for_update().get(id=project_id)
+        except Project.DoesNotExist:
+            logger.error("[Creation] project 不存在: %s", project_id)
+            return {"status": "error", "project_id": project_id, "message": "project not found"}
 
-    :return: { "status": ..., "project_id": ..., ... }
-    """
-    # 1) 查找并锁定 project
-    try:
-        project = Project.objects.select_for_update().get(id=project_id)
-    except Project.DoesNotExist:
-        logger.error("[Creation] project 不存在: %s", project_id)
-        return {"status": "error", "project_id": project_id, "message": "project not found"}
+        if project.status not in {Project.STATUS_PENDING, Project.STATUS_FAILED}:
+            logger.info("[Creation] project 已在运行或已完成: %s", project_id)
+            return {"status": "skip", "project_id": project_id}
 
-    if project.status not in {Project.STATUS_PENDING, Project.STATUS_FAILED}:
-        logger.info("[Creation] project 已在运行或已完成: %s", project_id)
-        return {"status": "skip", "project_id": project_id}
-
-    # 2) 切换为 running
-    project.status = Project.STATUS_RUNNING
-    project.current_node_index = 0
-    project.progress_percent = 0
-    project.error_message = ""
-    project.save(
-        update_fields=[
-            "status",
-            "current_node_index",
-            "progress_percent",
-            "error_message",
-            "updated_at",
-        ]
-    )
+        project.status = Project.STATUS_RUNNING
+        project.current_node_index = 0
+        project.progress_percent = 0
+        project.error_message = ""
+        project.save(
+            update_fields=[
+                "status",
+                "current_node_index",
+                "progress_percent",
+                "error_message",
+                "updated_at",
+            ]
+        )
 
     started_at = timezone.now()
 
+    from apps.workflow.services.pipeline_service import WorkflowPipelineService
+
+    disabled = [
+        n["index"]
+        for n in WorkflowPipelineService.pipeline_nodes_for_creation()
+        if not WorkflowPipelineService.is_node_enabled(n["index"])
+    ]
+    if disabled:
+        msg = f"节点 {disabled} 已关闭，无法执行创作"
+        project.status = Project.STATUS_FAILED
+        project.error_message = msg
+        project.save(update_fields=["status", "error_message", "updated_at"])
+        _refund_creation_submit_if_needed(project, msg)
+        return {"status": "failed", "project_id": str(project.id), "error": msg}
+
     try:
-        # 3) 执行完整 pipeline 并更新所有节点
         result = _execute_pipeline_for_project(project)
 
         if result.get("status") == "error":
-            # pipeline 明确返回错误
-            error_msg = "; ".join(result.get("errors") or ["pipeline error"])
+            error_msg = humanize_pipeline_error(
+                "; ".join(result.get("errors") or ["pipeline error"])
+            )
             logger.error("[Creation] pipeline 返回错误 project=%s: %s", project.id, error_msg)
             project.status = Project.STATUS_FAILED
             project.error_message = error_msg[:500]
@@ -212,24 +270,65 @@ def _run_creation_pipeline_core(project_id: str) -> dict:
                     "updated_at",
                 ]
             )
+            _refund_creation_submit_if_needed(project, error_msg)
             return {"status": "failed", "project_id": str(project.id), "error": error_msg}
 
-        # 4) 更新节点摘要 + 项目状态 + 预渲染 HTML
-        _update_nodes_from_result(project, result)
-        _update_project_after_pipeline(project, result, started_at)
+        if not result.get("artifacts"):
+            _update_nodes_from_result(project, result)
 
-        # 5) 创建 ScriptWork 下载文件
-        _ensure_script_works(project)
+        fusion_out = None
+        try:
+            from django.conf import settings as dj_settings
+
+            if getattr(dj_settings, "FUSION_SKILL_ENABLED", True):
+                from .fusion.fusion_pipeline import run_fusion_for_project
+
+                fusion_out = run_fusion_for_project(project, result)
+                logger.info(
+                    "[Creation] fusion 后处理 project=%s status=%s score=%s",
+                    project.id,
+                    fusion_out.get("fusion_status"),
+                    fusion_out.get("overall_score"),
+                )
+        except Exception as fusion_exc:  # noqa: BLE001
+            logger.exception("[Creation] fusion 后处理失败 project=%s: %s", project.id, fusion_exc)
+            project.fusion_status = Project.FUSION_BLOCKED
+            project.error_message = humanize_user_message(
+                str(fusion_exc), default="融合质检失败，请稍后重试"
+            )[:500]
+            project.save(update_fields=["fusion_status", "error_message", "updated_at"])
+
+        _update_project_after_pipeline(project, result, started_at, fusion_out=fusion_out)
+        from .script_delivery import persist_script_works
+
+        persist_script_works(project, result)
+
+        final = "completed"
+        if fusion_out and fusion_out.get("ok") is False:
+            final = "failed"
+        elif fusion_out and fusion_out.get("fusion_status") == Project.FUSION_BLOCKED:
+            final = "failed"
+        if final == "failed":
+            _refund_creation_submit_if_needed(
+                project,
+                project.error_message or "融合质检/评分未达放行线",
+            )
 
         logger.info(
-            "[Creation] project=%s 创作完成, 耗时 %d 分钟",
+            "[Creation] project=%s 创作完成, 耗时 %d 分钟 fusion=%s",
             project.id,
             project.total_duration_minutes,
+            project.fusion_status,
         )
-        return {"status": "completed", "project_id": str(project.id)}
+        return {
+            "status": final,
+            "project_id": str(project.id),
+            "fusion_status": project.fusion_status,
+            "overall_score": project.overall_score,
+        }
 
     except Exception as exc:  # noqa: BLE001
-        error_msg = str(exc)[:500]
+        error_msg = humanize_user_message(str(exc), default="创作失败，请稍后重试")[:500]
         logger.exception("[Creation] project=%s 创作失败: %s", project.id, exc)
         project.status = Project.STATUS_FAILED
         project.error_message = error_msg
@@ -242,7 +341,6 @@ def _run_creation_pipeline_core(project_id: str) -> dict:
                 "updated_at",
             ]
         )
-        # 同时标记当前节点为失败
         try:
             cur_node = CreationNode.objects.filter(
                 project=project, node_index=project.current_node_index
@@ -254,102 +352,532 @@ def _run_creation_pipeline_core(project_id: str) -> dict:
         except Exception:  # noqa: BLE001
             pass
 
+        _refund_creation_submit_if_needed(project, error_msg)
         return {"status": "failed", "project_id": str(project.id), "error": error_msg}
 
 
-# ============================================================
-# Celery 异步任务入口
-# ============================================================
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=3, retry_jitter=True)
-def run_creation_pipeline(self, project_id: str):
-    """启动 7 节点创作流水线（异步）
-
-    :param project_id: Project 的 UUID 字符串
-    """
+@task(queue_name="creation")
+def run_creation_pipeline(project_id: str) -> dict:
+    """7 节点创作流水线（dj_queue worker 异步执行）。"""
     return _run_creation_pipeline_core(project_id)
 
 
-# ============================================================
-# 同步 fallback（Celery 不可用时直接调用）
-# ============================================================
 def run_creation_pipeline_sync(project_id: str) -> dict:
-    """同步执行创作流水线（不依赖 Celery / 消息队列）
-
-    典型场景：
-      - 本地开发环境，Celery broker 未配置
-      - 小体量部署，无需异步队列
-      - views.py 中检测到 Celery 不可用时的 fallback 路径
-
-    :return: 与 run_creation_pipeline 相同的 dict 结构
-    """
+    """同步执行（仅 CREATION_FORCE_SYNC_PIPELINE 或管理命令调试）。"""
     logger.info("[Creation] 同步执行 pipeline project=%s", project_id)
     return _run_creation_pipeline_core(project_id)
 
 
-# ============================================================
-# 生成 ScriptWork 下载文件（真实部署应使用 MinIO/OSS SDK）
-# ============================================================
-def _ensure_script_works(project: Project):
-    """为已完成的 project 创建下载文件记录
+def _finalize_step_project(project: Project, pipeline_result: dict, fusion_out: dict | None) -> None:
+    """分步模式最后一步：标记完成并写入 ScriptWork。"""
+    started_at = project.created_at
+    _update_project_after_pipeline(project, pipeline_result, started_at, fusion_out=fusion_out)
+    from .script_delivery import persist_script_works
 
-    简化实现：将文本写到本地目录。
-    真实部署：
-      - 使用 django-storages 配置 MinIO/OSS
-      - 由 skill.engine 在第 7 节点完成时直接上传
-    """
-    from django.conf import settings as django_settings
+    persist_script_works(project, pipeline_result)
 
-    base_dir = getattr(django_settings, "CREATION_SCRIPT_DIR", "/tmp/creation_scripts")
-    import os
 
-    os.makedirs(base_dir, exist_ok=True)
+def _run_creation_step_core(project_id: str, node_index: int) -> dict:
+    with transaction.atomic():
+        try:
+            project = Project.objects.select_for_update().get(id=project_id)
+        except Project.DoesNotExist:
+            return {"status": "error", "message": "project not found"}
 
-    watermark_token = f"u{project.user_id}-p{project.id.hex[:8]}-t{int(time.time())}"
+        if project.pipeline_mode != Project.MODE_STEP:
+            return {"status": "error", "message": "非分步模式"}
 
-    base_title = (project.title or "script").replace("/", "_")
+        if project.status not in {Project.STATUS_PENDING, Project.STATUS_FAILED}:
+            if project.status == Project.STATUS_AWAITING:
+                return {"status": "skip", "message": "等待用户确认"}
+            return {"status": "skip", "message": f"状态 {project.status} 不可执行"}
 
-    for fmt in [ScriptWork.FORMAT_MARKDOWN, ScriptWork.FORMAT_HTML]:
-        file_name = f"{base_title}_{project.id.hex[:8]}.{fmt}"
-        full_path = os.path.join(base_dir, file_name)
+    from .step_mode import build_pipeline_result_from_project, execute_step
+    from apps.workflow.services.pipeline_service import WorkflowPipelineService
 
-        if fmt == ScriptWork.FORMAT_MARKDOWN:
-            body = (
-                f"# {base_title}\n\n"
-                f"- 题材: {project.theme}\n"
-                f"- 集数: {project.episode_count}\n"
-                f"- 格式变体: {project.format_variant}\n"
-                f"- 作者ID: {project.user_id}\n"
-                f"- 生成时间: {project.completed_at or timezone.now()}\n"
-                f"\n> [数字水印] {watermark_token}\n"
+    try:
+        result = execute_step(project, node_index)
+        project.refresh_from_db()
+
+        if result.get("status") == "error":
+            error_msg = humanize_pipeline_error(
+                "; ".join(result.get("errors") or ["节点执行失败"])
+            )[:500]
+            project.status = Project.STATUS_FAILED
+            project.error_message = error_msg
+            project.rendered_progress_html = _render_progress_html(project)
+            project.save(
+                update_fields=[
+                    "status",
+                    "error_message",
+                    "rendered_progress_html",
+                    "updated_at",
+                ]
+            )
+            _refund_creation_submit_if_needed(project, error_msg)
+            return {"status": "failed", "node_index": node_index, "error": error_msg}
+
+        if result.get("status") == "awaiting":
+            return {
+                "status": "awaiting",
+                "node_index": node_index,
+                "project_id": str(project.id),
+            }
+
+        if node_index == WorkflowPipelineService.creation_max_node_index():
+            pipeline_result = build_pipeline_result_from_project(project)
+            fusion_out = result if isinstance(result, dict) else {}
+            _finalize_step_project(project, pipeline_result, fusion_out)
+            return {
+                "status": "completed",
+                "project_id": str(project.id),
+                "overall_score": project.overall_score,
+            }
+
+        return {"status": "step_done", "node_index": node_index}
+
+    except Exception as exc:  # noqa: BLE001
+        error_msg = humanize_user_message(str(exc), default="创作失败，请稍后重试")[:500]
+        logger.exception("[Creation] 分步节点失败 project=%s node=%s", project_id, node_index)
+        project.status = Project.STATUS_FAILED
+        project.error_message = error_msg
+        project.rendered_progress_html = _render_progress_html(project)
+        project.save(
+            update_fields=[
+                "status",
+                "error_message",
+                "rendered_progress_html",
+                "updated_at",
+            ]
+        )
+        _refund_creation_submit_if_needed(project, error_msg)
+        return {"status": "failed", "error": error_msg}
+
+
+@task(queue_name="creation")
+def run_creation_step(
+    project_id: str,
+    node_index: int,
+    script_from: int | None = None,
+    script_to: int | None = None,
+    outline_mode: str | None = None,
+    outline_stage_key: str | None = None,
+) -> dict:
+    """分步 / 工作台：执行单个主链节点（workspace 走 _run_skill_node_core）。"""
+    try:
+        mode = (
+            Project.objects.filter(id=project_id)
+            .values_list("pipeline_mode", flat=True)
+            .first()
+        )
+    except Exception:  # noqa: BLE001
+        mode = None
+    if mode == Project.MODE_WORKSPACE:
+        return _run_skill_node_core(
+            project_id,
+            int(node_index),
+            int(script_from) if script_from is not None else None,
+            int(script_to) if script_to is not None else None,
+            outline_mode=str(outline_mode) if outline_mode else None,
+            outline_stage_key=str(outline_stage_key) if outline_stage_key else None,
+        )
+    if script_from is not None or script_to is not None:
+        return {"status": "error", "message": "分步模式不支持剧本批次参数"}
+    return _run_creation_step_core(project_id, int(node_index))
+
+
+def run_creation_step_sync(project_id: str, node_index: int) -> dict:
+    return _run_creation_step_core(project_id, int(node_index))
+
+
+def _run_skill_node_core(
+    project_id: str,
+    node_index: int,
+    script_from: int | None = None,
+    script_to: int | None = None,
+    outline_mode: str | None = None,
+    outline_stage_key: str | None = None,
+) -> dict:
+    """技能工作台：仅执行单个主链节点。"""
+    node_index = int(node_index)
+    from apps.billing.services import BillingService
+    from apps.workflow.services.pipeline_service import WorkflowPipelineService
+    from .step_mode import clear_artifacts_from_node
+
+    max_idx = WorkflowPipelineService.creation_max_node_index()
+    if node_index < 2 or node_index > max_idx:
+        return {"status": "error", "message": "invalid skill index"}
+
+    from apps.agent.runtime import agent_for_pipeline_node_index, should_defer_to_post_script_chain
+
+    with transaction.atomic():
+        try:
+            project = Project.objects.select_for_update().get(id=project_id)
+        except Project.DoesNotExist:
+            return {"status": "error", "message": "project not found"}
+
+        if project.status == Project.STATUS_RUNNING:
+            logger.info("[Workspace] project=%s 已有技能运行，跳过 node=%s", project_id, node_index)
+            return {"status": "skip", "node_index": node_index, "message": "有技能正在执行"}
+
+        if project.nodes.filter(status=CreationNode.STATUS_RUNNING).exists():
+            logger.info("[Workspace] project=%s 已有运行中节点，跳过 node=%s", project_id, node_index)
+            return {"status": "skip", "node_index": node_index, "message": "有技能正在执行"}
+
+        if should_defer_to_post_script_chain(project, node_index):
+            return {
+                "status": "skipped",
+                "node_index": node_index,
+                "reason": "workspace_post_script_chain",
+                "agent_id": agent_for_pipeline_node_index(node_index) or "",
+                "message": "工作台模式下质检/评分由剧本完成后的后处理链统一执行，请勿单独触发该节点。",
+            }
+
+        if node_index == 4:
+            if outline_mode not in ("episodes", "framework"):
+                clear_artifacts_from_node(project, node_index)
+        elif node_index < 5:
+            clear_artifacts_from_node(project, node_index)
+
+        project.status = Project.STATUS_RUNNING
+        project.current_node_index = node_index
+        project.error_message = ""
+        project.save(
+            update_fields=[
+                "status",
+                "current_node_index",
+                "error_message",
+                "updated_at",
+            ]
+        )
+
+        CreationNode.objects.filter(project=project, node_index=node_index).update(
+            status=CreationNode.STATUS_RUNNING,
+            started_at=timezone.now(),
+            summary_text=f"正在生成 · 节点 {node_index}",
+        )
+        project.rendered_progress_html = _render_progress_html(project)
+        project.save(update_fields=["rendered_progress_html", "updated_at"])
+
+    from .orchestration.orchestrator import AgentOrchestrator, run_workspace_node_by_index
+    from apps.agent.runtime import agent_for_workspace_index
+    from .monitoring.execution_run_service import AgentExecutionRunService
+    from .models import AgentExecutionRun
+    from .workspace.workspace_editor import compute_script_batch_range
+    from .artifact_service import list_artifact_keys
+
+    agent_id = agent_for_workspace_index(node_index) or ""
+    run_input_summary = {
+        "loaded_artifacts": list_artifact_keys(project),
+        "script_from": script_from,
+        "script_to": script_to,
+        "outline_mode": outline_mode or "",
+    }
+
+    log_skill_task_begin(
+        project_id=project_id,
+        node_index=node_index,
+        script_from=script_from,
+        script_to=script_to,
+        upstream_keys=run_input_summary["loaded_artifacts"],
+    )
+
+    try:
+        with AgentExecutionRunService.run_scope(
+            project,
+            agent_id=agent_id,
+            node_index=node_index,
+            script_from=script_from,
+            script_to=script_to,
+            outline_mode=outline_mode,
+            input_summary=run_input_summary,
+        ) as execution_run:
+            node_charge_cost = BillingService.get_node_coin_cost(node_index)
+            charge_applied = False
+            try:
+                BillingService.charge_node(
+                    project.user,
+                    node_index,
+                    reference_id=f"{project.id}:skill{node_index}",
+                )
+                charge_applied = node_charge_cost > 0
+            except Exception as exc:  # noqa: BLE001
+                error_msg = humanize_user_message(str(exc), default="扣费失败")[:500]
+                AgentExecutionRunService.finish_run(
+                    execution_run,
+                    AgentExecutionRun.STATUS_FAILED,
+                    error_message=error_msg,
+                )
+                project.status = Project.STATUS_FAILED
+                project.error_message = error_msg
+                project.rendered_progress_html = _render_progress_html(project)
+                project.save(
+                    update_fields=[
+                        "status",
+                        "error_message",
+                        "rendered_progress_html",
+                        "updated_at",
+                    ]
+                )
+                return {"status": "failed", "node_index": node_index, "error": error_msg}
+
+            kwargs: dict = {}
+            if node_index == 5:
+                if script_from is None or script_to is None:
+                    script_from, script_to, _ = compute_script_batch_range(project)
+                kwargs = {"script_from": script_from, "script_to": script_to}
+            elif node_index == 4 and outline_mode == "framework":
+                kwargs = {"outline_mode": "framework"}
+            elif node_index == 4 and outline_mode == "stage_framework":
+                kwargs = {
+                    "outline_mode": "stage_framework",
+                    "outline_stage_key": outline_stage_key,
+                }
+            elif node_index == 4 and outline_mode == "episodes":
+                if script_from is None or script_to is None:
+                    from .workspace.workspace_editor import compute_outline_batch_range
+
+                    script_from, script_to, _ = compute_outline_batch_range(project, batch_size=1)
+                kwargs = {
+                    "outline_mode": "episodes",
+                    "outline_from": script_from,
+                    "outline_to": script_to,
+                }
+            agent_result = run_workspace_node_by_index(
+                project,
+                node_index,
+                script_from=kwargs.get("script_from") or script_from,
+                script_to=kwargs.get("script_to") or script_to,
+                outline_mode=kwargs.get("outline_mode") or outline_mode,
+                outline_stage_key=kwargs.get("outline_stage_key") or outline_stage_key,
+            )
+            out = agent_result.meta.get("fusion") or {
+                "status": "error" if agent_result.status == "error" else "completed",
+                "errors": agent_result.errors,
+                "artifact_key": (agent_result.outputs or {}).get("artifact_key"),
+            }
+            project.refresh_from_db()
+
+            if agent_result.status == "error" or out.get("status") == "error":
+                error_msg = humanize_pipeline_error(
+                    "; ".join(agent_result.errors or out.get("errors") or ["技能执行失败"])
+                )[:500]
+                AgentExecutionRunService.finish_run(
+                    execution_run,
+                    AgentExecutionRun.STATUS_FAILED,
+                    agent_result=agent_result,
+                    error_message=error_msg,
+                )
+                log_skill_task_done(
+                    project_id=project_id,
+                    node_index=node_index,
+                    status="failed",
+                    detail={"error": error_msg, "execution_run_id": str(execution_run.id)},
+                )
+                if charge_applied and node_charge_cost > 0:
+                    try:
+                        from apps.billing.models import CoinLedger
+
+                        BillingService.credit(
+                            project.user,
+                            node_charge_cost,
+                            action_key="ai.generate.refund",
+                            reference_id=f"{project.id}:skill{node_index}",
+                            remark=f"生成失败退还：{BillingService.node_action_key(node_index)}",
+                            entry_type=CoinLedger.TYPE_REFUND,
+                        )
+                    except Exception as refund_exc:  # noqa: BLE001
+                        logger.exception(
+                            "[Creation] 节点失败退款异常 project=%s node=%s: %s",
+                            project_id,
+                            node_index,
+                            refund_exc,
+                        )
+                project.status = Project.STATUS_FAILED
+                project.error_message = error_msg
+                project.rendered_progress_html = _render_progress_html(project)
+                project.save(
+                    update_fields=[
+                        "status",
+                        "error_message",
+                        "rendered_progress_html",
+                        "updated_at",
+                    ]
+                )
+                return {"status": "failed", "node_index": node_index, "error": error_msg}
+
+            completed = project.nodes.filter(status=CreationNode.STATUS_COMPLETED).count()
+            total = max(1, project.total_nodes)
+            project.status = Project.STATUS_PENDING
+            project.progress_percent = min(100, int(completed / total * 100))
+            project.rendered_progress_html = _render_progress_html(project)
+            project.save(
+                update_fields=[
+                    "status",
+                    "progress_percent",
+                    "rendered_progress_html",
+                    "updated_at",
+                ]
+            )
+
+            if node_index == 5:
+                from .step_mode import build_pipeline_result_from_project
+                from .script_delivery import persist_script_works
+
+                try:
+                    persist_script_works(project, build_pipeline_result_from_project(project))
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("[Workspace] persist scripts failed project=%s: %s", project.id, exc)
+
+                orch = AgentOrchestrator(project)
+                if orch.scripts_fully_generated():
+                    from dj_queue.api import enqueue_on_commit
+
+                    enqueue_on_commit(run_agent_post_chain, str(project.id))
+
+            trace_detail: dict = {}
+            executed = agent_result.meta.get("executed_sub_skills") or []
+            if executed and agent_result.agent_id:
+                from .orchestration.sub_skill_runner import persist_execution_trace
+
+                trace_detail = persist_execution_trace(
+                    project,
+                    node_index,
+                    agent_result.agent_id,
+                    executed,
+                    trace_entries=agent_result.meta.get("execution_trace"),
+                )
+
+            artifact_key = str(out.get("artifact_key") or "")
+            AgentExecutionRunService.finish_run(
+                execution_run,
+                AgentExecutionRun.STATUS_COMPLETED,
+                agent_result=agent_result,
+                output_artifact_key=artifact_key,
+                output_summary=AgentExecutionRunService.build_output_summary(project, artifact_key),
+            )
+            log_skill_task_done(
+                project_id=project_id,
+                node_index=node_index,
+                status="done",
+                artifact_key=artifact_key or None,
+                detail={
+                    "execution_trace": trace_detail.get("execution_trace")
+                    or agent_result.meta.get("execution_trace"),
+                    "execution_run_id": str(execution_run.id),
+                },
+            )
+            return {"status": "done", "node_index": node_index, "project_id": str(project.id)}
+
+    except Exception as exc:  # noqa: BLE001
+        error_msg = humanize_user_message(str(exc), default="技能执行失败")[:500]
+        logger.exception("[Workspace] skill failed project=%s node=%s", project_id, node_index)
+        return _finalize_skill_node_failure(
+            project_id,
+            node_index,
+            error_msg,
+            log_status="exception",
+            log_detail={"error": error_msg},
+        )
+
+
+@task(queue_name="creation")
+def run_agent_post_chain(project_id: str) -> dict:
+    """剧本全量生成后：review → polish → review → score → marketing。"""
+    try:
+        project = Project.objects.get(id=project_id)
+    except Project.DoesNotExist:
+        return {"status": "error", "message": "project not found"}
+
+    from .orchestration.orchestrator import AgentOrchestrator
+
+    orch = AgentOrchestrator(project)
+    if not orch.scripts_fully_generated():
+        return {"status": "skipped", "reason": "scripts_incomplete"}
+
+    project.status = Project.STATUS_RUNNING
+    project.save(update_fields=["status", "updated_at"])
+    try:
+        out = orch.run_post_script_chain()
+        project.refresh_from_db()
+        if out.get("status") == "completed" and project.pipeline_mode == Project.MODE_WORKSPACE:
+            project.status = Project.STATUS_COMPLETED
+            if not project.completed_at:
+                project.completed_at = timezone.now()
+            project.fusion_status = project.fusion_status or Project.FUSION_READY
+            project.save(
+                update_fields=["status", "completed_at", "fusion_status", "updated_at"]
             )
         else:
-            body = (
-                f"<!DOCTYPE html><html><head><meta charset='utf-8'>"
-                f"<title>{base_title}</title></head><body>"
-                f"<h1>{base_title}</h1>"
-                f"<ul>"
-                f"<li>题材: {project.theme}</li>"
-                f"<li>集数: {project.episode_count}</li>"
-                f"<li>格式变体: {project.format_variant}</li>"
-                f"</ul>"
-                f"<p style='opacity:.6'>数字水印: {watermark_token}</p>"
-                f"</body></html>"
-            )
+            project.status = Project.STATUS_PENDING
+            project.save(update_fields=["status", "updated_at"])
+        project.rendered_progress_html = _render_progress_html(project)
+        project.save(update_fields=["rendered_progress_html", "updated_at"])
 
-        try:
-            with open(full_path, "wb") as f:
-                f.write(body.encode("utf-8"))
-        except OSError as exc:
-            logger.warning("[Creation] 写入 script work 文件失败: %s", exc)
-            continue
+        # 进化审计挂钩：score完成后异步触发（不阻塞主流程）
+        if out.get("status") == "completed" and project.overall_score is not None:
+            try:
+                from apps.skill.config.portal.runtime_config import RuntimeConfigService
 
-        ScriptWork.objects.update_or_create(
-            project=project,
-            file_format=fmt,
-            defaults={
-                "storage_path": full_path,
-                "file_name": file_name,
-                "size_bytes": len(body.encode("utf-8")),
-                "watermark_token": watermark_token,
-            },
-        )
+                if "evolve" in RuntimeConfigService.dj_queue_queues():
+                    from dj_queue.api import enqueue_on_commit
+
+                    enqueue_on_commit(run_evolve_audit_task, project_id)
+            except Exception as _e:  # noqa: BLE001
+                logger.warning("[PostChain] 进化审计入队失败 project=%s: %s", project_id, _e)
+
+        return {"status": "done", "chain": out}
+    except Exception as exc:  # noqa: BLE001
+        logger.exception("[Agent] post chain failed project=%s", project_id)
+        project.status = Project.STATUS_FAILED
+        project.error_message = humanize_user_message(str(exc), default="后处理失败")[:500]
+        project.save(update_fields=["status", "error_message", "updated_at"])
+        return {"status": "failed", "error": str(exc)}
+
+
+@task(queue_name="creation")
+def run_skill_node(
+    project_id: str,
+    node_index: int,
+    script_from: int | None = None,
+    script_to: int | None = None,
+) -> dict:
+    """技能工作台：异步执行单个技能。"""
+    return _run_skill_node_core(
+        project_id,
+        int(node_index),
+        int(script_from) if script_from is not None else None,
+        int(script_to) if script_to is not None else None,
+    )
+
+
+def run_skill_node_sync(
+    project_id: str,
+    node_index: int,
+    script_from: int | None = None,
+    script_to: int | None = None,
+) -> dict:
+    return _run_skill_node_core(project_id, int(node_index), script_from, script_to)
+
+
+def _ensure_script_works(project: Project, pipeline_result: dict | None = None) -> None:
+    """兼容旧调用：委托 script_delivery.persist_script_works。"""
+    from .script_delivery import persist_script_works
+
+    persist_script_works(project, pipeline_result)
+
+
+@task(queue_name="evolve")
+def run_evolve_audit_task(project_id: str) -> dict:
+    """
+    进化审计异步任务（dj_queue queue=evolve）。
+    ScoreAgent 完成后自动触发，也可在 management command 中手动入队。
+    不影响主线程性能，失败时仅记录日志不影响用户侧。
+    """
+    try:
+        from .evolve_audit import trigger_audit_after_score
+        trigger_audit_after_score(project_id)
+        return {"status": "done", "project_id": project_id}
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[EvolveAuditTask] 失败 project=%s: %s", project_id, exc)
+        return {"status": "error", "project_id": project_id, "error": str(exc)}

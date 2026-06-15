@@ -63,7 +63,7 @@ ScriptForge AI 是一个商业化的短剧剧本创作平台，采用"前端 Rea
 | | Django REST Framework | 3.15.x |
 | | PostgreSQL | 15+ |
 | | Redis | 7.x |
-| | Celery (异步任务) | 5.x |
+| | dj_queue (Django 6 @task) | 0.13.x |
 | | JWT (认证) | simplejwt |
 | **开发** | Node.js | 18+ |
 | | Python | 3.11+ |
@@ -150,26 +150,30 @@ cp .env.example .env
 # 编辑 .env 文件，填入数据库和密钥配置
 ```
 
-关键配置项：
+关键配置项（**本机连 Docker 里的 Postgres/Redis**，见 `backend/.env.example`）：
 ```env
-SECRET_KEY=<Django Secret Key>
-DB_NAME=scriptforge
-DB_USER=postgres
-DB_PASSWORD=postgres
 DB_HOST=localhost
 DB_PORT=5432
-API_SIGN_SECRET=<自定义签名密钥>
-SKILL_ENCRYPT_KEY=<32字节技能加密密钥>
+REDIS_URL=redis://:redis_password_2024@127.0.0.1:6379/1
+CACHE_URL=redis://:redis_password_2024@127.0.0.1:6379/2
+FUSION_SKILL_ROOT=<demo4book/short-drama-script-creator 绝对路径>
+```
+
+### 3.5 启动基础设施（Windows 推荐）
+
+仅 Docker 跑数据库与缓存，应用在本机 Python/Node 跑：
+
+```bash
+# 项目根目录
+npm run docker:infra
 ```
 
 ### 4. 初始化数据库
 
 ```bash
-cd backend
-python manage.py makemigrations users creation membership orders security
-python manage.py migrate
-# 创建超级管理员
-python manage.py createsuperuser
+# 项目根目录（需先 npm run docker:infra）
+npm run dev:setup
+cd backend && python manage.py createsuperuser
 ```
 
 ### 5. 启动开发服务器
@@ -177,20 +181,33 @@ python manage.py createsuperuser
 #### 方式一：根目录并发启动（推荐）
 
 ```bash
-# 在项目根目录
+# 在项目根目录（前端 + 后端 + dj_queue worker）
 npm run dev
 # 前端: http://localhost:5173
 # 后端: http://localhost:8000
+# worker: python manage.py dj_queue --mode async（创作任务异步执行）
 ```
 
 #### 方式二：分别启动
 
 ```bash
-# 终端1 - 启动前端
+npm run docker:infra
+
+# 终端1 - 前端
 cd frontend && npm run dev
 
-# 终端2 - 启动后端
+# 终端2 - 后端
 cd backend && python manage.py runserver 0.0.0.0:8000
+
+# 终端3 - 任务 worker（Windows 必须，否则创作只入队不执行）
+cd backend && python manage.py dj_queue --mode async
+```
+
+#### 全容器部署（生产）
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# 或：npm run docker:prod
 ```
 
 ---
@@ -272,10 +289,10 @@ demo4book/
 │   │   │   │   ├── node6_review.py    # 6. 质量审查
 │   │   │   │   └── node7_export.py    # 7. 输出交付
 │   │   │   ├── services.py            # 创作服务（结果HTML预渲染）
-│   │   │   ├── tasks.py               # Celery 异步任务
+│   │   │   ├── tasks.py               # Django 6 @task + dj_queue
 │   │   │   ├── serializers.py
 │   │   │   ├── views.py               # 提交创作/进度查询/下载
-│   │   │   ├── views_works.py         # 作品列表/详情
+│   │   │   ├── works_views.py         # 作品列表/详情
 │   │   │   ├── urls.py                # /api/creation/
 │   │   │   ├── urls_works.py          # /api/works/
 │   │   │   └── admin.py

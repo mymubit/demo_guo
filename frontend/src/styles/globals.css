@@ -5,6 +5,15 @@
 /* ========= 全局基础样式 ========= */
 :root {
   color-scheme: dark;
+  --sf-bg: #030d24;
+  --sf-surface: #051437;
+  --sf-surface-raised: #0a1f44;
+  --sf-border: rgba(141, 167, 211, 0.18);
+  --sf-border-strong: rgba(141, 167, 211, 0.32);
+  --sf-text: #f1f5f9;
+  --sf-text-muted: #94a3b8;
+  --sf-gold: #f4b719;
+  --sf-focus-ring: rgba(244, 183, 25, 0.26);
 }
 
 html {
@@ -15,6 +24,31 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background: linear-gradient(180deg, #030d24 0%, #051437 50%, #030d24 100%);
   min-height: 100vh;
+  color: var(--sf-text);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+::selection {
+  background: rgba(244, 183, 25, 0.28);
+  color: #f8fafc;
 }
 
 /* ========= 自定义滚动条 ========= */
@@ -28,12 +62,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(180deg, #4d6db5 0%, #b37c06 100%);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #7b8ff5 0%, #8a5cb3 100%);
+  background: linear-gradient(180deg, #8da7d3 0%, #f4b719 100%);
 }
 
 /* ========= 通用组件样式 ========= */
@@ -49,10 +83,10 @@ body {
   }
 
   .glass-card {
-    background: rgba(15, 42, 92, 0.4);
+    background: rgba(10, 31, 68, 0.62);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(102, 126, 234, 0.15);
+    border: 1px solid var(--sf-border);
   }
 
   .glass-card-gold {
@@ -62,8 +96,48 @@ body {
     border: 1px solid rgba(244, 183, 25, 0.25);
   }
 
+  .sf-page-shell {
+    @apply relative z-10 mx-auto w-full px-4 sm:px-6 lg:px-8;
+  }
+
+  .sf-section-stack {
+    @apply space-y-6 lg:space-y-8;
+  }
+
+  .sf-panel {
+    @apply rounded-2xl border border-navy-700/30 bg-navy-900/55 shadow-card backdrop-blur-xl;
+  }
+
+  .sf-panel-subtle {
+    @apply rounded-2xl border border-navy-700/25 bg-navy-900/35;
+  }
+
+  .sf-focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400/30 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-950;
+  }
+
+  .sf-control {
+    @apply w-full rounded-xl border border-navy-700/40 bg-navy-900/65 px-4 py-3 text-sm text-navy-100 placeholder:text-navy-500 transition-colors sf-focus-ring;
+  }
+
+  .sf-control:hover {
+    @apply border-navy-600/60 bg-navy-900/80;
+  }
+
+  .sf-control:focus {
+    @apply border-gold-400/60;
+  }
+
+  .sf-label {
+    @apply mb-2 block text-sm font-medium text-navy-200;
+  }
+
+  .sf-help-text {
+    @apply mt-1.5 text-xs leading-relaxed text-navy-400;
+  }
+
   .btn-primary {
-    @apply px-8 py-3 rounded-xl font-semibold text-white transition-all duration-300;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-300 sf-focus-ring;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     box-shadow: 0 10px 30px -10px rgba(102, 126, 234, 0.5);
   }
@@ -74,7 +148,7 @@ body {
   }
 
   .btn-gold {
-    @apply px-8 py-3 rounded-xl font-semibold text-navy-950 transition-all duration-300;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-navy-950 transition-all duration-300 sf-focus-ring;
     background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
     box-shadow: 0 10px 30px -10px rgba(244, 183, 25, 0.5);
   }
@@ -85,7 +159,7 @@ body {
   }
 
   .btn-ghost {
-    @apply px-8 py-3 rounded-xl font-semibold text-white border border-navy-400/40 transition-all duration-300;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white border border-navy-400/40 transition-all duration-300 sf-focus-ring;
     background: rgba(102, 126, 234, 0.1);
   }
 
@@ -95,18 +169,23 @@ body {
   }
 
   .section-title {
-    @apply text-4xl md:text-5xl font-bold mb-4 text-center;
+    @apply text-3xl md:text-4xl font-bold mb-4 text-center tracking-tight text-white;
   }
 
   .section-subtitle {
-    @apply text-lg text-navy-200 text-center max-w-2xl mx-auto mb-16;
+    @apply text-base md:text-lg text-navy-300 text-center max-w-2xl mx-auto mb-12 leading-relaxed;
   }
 
   .badge {
-    @apply inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium;
+    @apply inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium;
     background: rgba(244, 183, 25, 0.15);
     color: #f7cb54;
     border: 1px solid rgba(244, 183, 25, 0.3);
+  }
+
+  .sf-toast {
+    @apply rounded-2xl border border-navy-700/50 bg-navy-900/95 text-navy-100 backdrop-blur-xl;
+    box-shadow: 0 24px 80px -32px rgba(0, 0, 0, 0.72);
   }
 }
 
@@ -244,6 +323,69 @@ body {
   @apply text-center text-lg font-bold mt-4 pt-4;
   border-top: 1px solid rgba(102, 126, 234, 0.2);
   color: #f7cb54;
+}
+
+/* 分享页 / 工作台：后端注入的可读 HTML（workspace_html） */
+.sf-script-rendered .workspace-readable,
+.sf-script-rendered .creation-script-result {
+  @apply text-navy-100;
+}
+
+.sf-script-rendered .ws-title,
+.sf-script-rendered .script-result-title {
+  @apply text-2xl font-bold text-white mb-2;
+}
+
+.sf-script-rendered .ws-meta,
+.sf-script-rendered .script-result-meta {
+  @apply text-sm text-navy-400 mb-4;
+}
+
+.sf-script-rendered .ws-section {
+  @apply mb-8 pb-6 border-b border-navy-700/40;
+}
+
+.sf-script-rendered .ws-section-title,
+.sf-script-rendered .script-episode-title {
+  @apply text-lg font-semibold text-gold-300/90 mb-3;
+}
+
+.sf-script-rendered .ws-section-body h2 {
+  @apply text-xl font-bold text-white mt-4 mb-2;
+}
+
+.sf-script-rendered .ws-section-body h3 {
+  @apply text-base font-semibold text-navy-100 mt-3 mb-2;
+}
+
+.sf-script-rendered .ws-section-body h4 {
+  @apply text-sm font-medium text-gold-400/80 mt-2 mb-1;
+}
+
+.sf-script-rendered .ws-section-body p {
+  @apply text-sm text-navy-200 leading-relaxed my-2;
+}
+
+.sf-script-rendered .ws-section-body ul {
+  @apply text-sm text-navy-200 list-disc pl-5 space-y-1 my-2;
+}
+
+.sf-script-rendered .ws-section-body strong {
+  @apply text-gold-300/90 font-semibold;
+}
+
+.sf-script-rendered .script-episode {
+  @apply mb-6 p-4 rounded-xl bg-navy-900/30 border border-navy-700/25;
+}
+
+.sf-script-rendered .script-episode-body,
+.sf-script-rendered .script-block {
+  @apply text-sm text-navy-100 leading-relaxed;
+}
+
+.sf-script-rendered .ws-watermark,
+.sf-script-rendered .script-watermark {
+  @apply text-xs text-navy-500 mt-6;
 }
 
 /* 节点进度动画 */

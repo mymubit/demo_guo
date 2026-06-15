@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   FolderKanban,
@@ -16,160 +17,80 @@ import {
   ChevronDown,
   RefreshCw,
   ArrowRight,
+  Trash2,
+  XCircle,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { works } from '@/services/api'
+import { toast } from 'sonner'
+import { works as worksApi } from '@/services/api'
+import { getThemeMeta } from '@/constants/themeMeta'
+import ThemeBadge from '@/components/ui/ThemeBadge'
+import EmptyState from '@/components/ui/EmptyState'
+import { getWorkStatusMeta, WORK_FILTER_OPTIONS } from '@/utils/workStatus'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+import { useWorksList } from '@/hooks/queries/useWorksList'
 
-const THEMES = [
-  { key: 'family-revenge', name: '家庭伦理复仇', color: '#e53e3e', emoji: '⚔️' },
-  { key: 'overbearing-ceo', name: '豪门霸总', color: '#d69e2e', emoji: '💎' },
-  { key: 'sweet-pet', name: '甜宠虐恋', color: '#d53f8c', emoji: '💕' },
-  { key: 'time-travel', name: '穿越重生', color: '#805ad5', emoji: '⏰' },
-  { key: 'urban-rebirth', name: '都市逆袭', color: '#3182ce', emoji: '🏙️' },
-  { key: 'ancient-costume', name: '古装权谋', color: '#2f855a', emoji: '⚜️' },
-  { key: 'suspense-reversal', name: '悬疑反转', color: '#5a67d8', emoji: '🕵️' },
-  { key: 'mixed-theme', name: '混合题材', color: '#dd6b20', emoji: '🎭' },
-]
-
-const STATUS_LIST = [
-  { key: 'all', name: '全部作品', color: '#f6d365' },
-  { key: 'completed', name: '已完成', color: '#68d391' },
-  { key: 'generating', name: '创作中', color: '#f6ad55' },
-  { key: 'draft', name: '草稿', color: '#a0aec0' },
-]
-
-// Mock 作品数据
-const MOCK_WORKS = [
-  {
-    id: 'PRJ20260610',
-    title: '豪门霸总的重生娇妻',
-    theme: 'overbearing-ceo',
-    episodes: 80,
-    status: 'completed',
-    score: 92.5,
-    createdAt: '2026-06-10 14:32',
-    idea: '一位惨遭背叛被害的豪门少奶奶重生回到悲剧发生前三年，决心改写命运并与真爱相遇。',
-    format: '行业通用版',
-  },
-  {
-    id: 'PRJ20260608',
-    title: '都市逆袭之王牌归来',
-    theme: 'urban-rebirth',
-    episodes: 100,
-    status: 'completed',
-    score: 88.3,
-    createdAt: '2026-06-08 09:15',
-    idea: '曾经的王牌特工隐退都市，却意外卷入一场商业阴谋，被迫重出江湖守护家人。',
-    format: '标准版',
-  },
-  {
-    id: 'PRJ20260605',
-    title: '古装权谋之凰权天下',
-    theme: 'ancient-costume',
-    episodes: 120,
-    status: 'completed',
-    score: 95.1,
-    createdAt: '2026-06-05 20:48',
-    idea: '亡国公主化名潜入敌朝，在权谋漩涡中步步为营，最终颠覆王朝复仇成功。',
-    format: '行业通用版',
-  },
-  {
-    id: 'PRJ20260602',
-    title: '甜宠虐恋之总裁追妻',
-    theme: 'sweet-pet',
-    episodes: 60,
-    status: 'completed',
-    score: 85.7,
-    createdAt: '2026-06-02 11:20',
-    idea: '霸道总裁因误会伤害挚爱，五年后重逢展开猛烈追妻攻势，历经波折最终破镜重圆。',
-    format: '精简版',
-  },
-  {
-    id: 'PRJ20260530',
-    title: '悬疑反转之夜半钟声',
-    theme: 'suspense-reversal',
-    episodes: 80,
-    status: 'completed',
-    score: 91.2,
-    createdAt: '2026-05-30 16:05',
-    idea: '一座古宅每到午夜便响起诡异钟声，女侦探调查发现隐藏二十年的家族秘密。',
-    format: '标准版',
-  },
-  {
-    id: 'PRJ20260528',
-    title: '穿越重生之庶女翻身',
-    theme: 'time-travel',
-    episodes: 90,
-    status: 'completed',
-    score: 87.8,
-    createdAt: '2026-05-28 22:30',
-    idea: '现代女医生意外穿越成古代侯府庶女，凭借现代医术和智慧改变命运并收获爱情。',
-    format: '分镜版',
-  },
-  {
-    id: 'PRJ20260525',
-    title: '家庭伦理复仇之觉醒',
-    theme: 'family-revenge',
-    episodes: 70,
-    status: 'generating',
-    score: null,
-    createdAt: '2026-05-25 15:12',
-    idea: '女儿发现父亲的意外死亡并非偶然，一步步揭开继母和舅舅的惊天阴谋。',
-    format: '行业通用版',
-  },
-  {
-    id: 'PRJ20260522',
-    title: '混合题材之末日重生',
-    theme: 'mixed-theme',
-    episodes: 100,
-    status: 'draft',
-    score: null,
-    createdAt: '2026-05-22 10:00',
-    idea: '末日废土背景下的重生逆袭故事，融合科幻、权谋、感情多条线索。',
-    format: '标准版',
-  },
-]
+const STATUS_LIST = WORK_FILTER_OPTIONS
 
 export default function Works() {
   const navigate = useNavigate()
-  const [works, setWorks] = useState(MOCK_WORKS)
-  const [loading, setLoading] = useState(true)
+  const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
   const [showStatusMenu, setShowStatusMenu] = useState(false)
+  const [page, setPage] = useState(1)
+  const [deletingId, setDeletingId] = useState(null)
+  const debouncedSearch = useDebouncedValue(search, 400)
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await works.list()
-        if (data && Array.isArray(data) && data.length > 0) {
-          setWorks(data)
-        }
-      } catch (e) {
-        console.log('作品列表加载失败，使用 Mock 数据')
-      } finally {
-        setTimeout(() => setLoading(false), 500)
-      }
-    }
-    load()
-  }, [])
+  const { data, isLoading, error, refetch, isFetching } = useWorksList({
+    page,
+    status: statusFilter,
+    keyword: debouncedSearch,
+    ordering: sortBy,
+  })
+  const works = data?.items ?? []
+  const pagination = data?.pagination ?? { total: 0, total_pages: 1, page_size: 12, page: 1 }
+  const loading = isLoading || isFetching
+  const loadError = error?.message ?? ''
+
+  const deleteMutation = useMutation({
+    mutationFn: (projectId) => worksApi.remove(projectId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['works'] })
+      toast.success('作品已删除')
+    },
+    onError: (e) => toast.error(e.message || '删除失败'),
+    onSettled: () => setDeletingId(null),
+  })
 
   const filtered = works
-    .filter((w) => {
-      if (statusFilter !== 'all' && w.status !== statusFilter) return false
-      if (search && !w.title.includes(search) && !w.idea.includes(search)) return false
-      return true
-    })
-    .sort((a, b) => {
-      if (sortBy === 'newest') return b.createdAt.localeCompare(a.createdAt)
-      if (sortBy === 'score') return (b.score || 0) - (a.score || 0)
-      if (sortBy === 'episodes') return b.episodes - a.episodes
-      return 0
-    })
+  const clearFilters = () => {
+    setSearch('')
+    setStatusFilter('all')
+    setSortBy('newest')
+    setPage(1)
+  }
 
-  const getTheme = (key) => THEMES.find((t) => t.key === key) || THEMES[7]
+  const getTheme = (key) => getThemeMeta(key)
   const getStatus = (key) => STATUS_LIST.find((s) => s.key === key) || STATUS_LIST[0]
+
+  const handleDelete = async (work) => {
+    const pid = work.project_id
+    if (!pid || deletingId) return
+    const title = work.title || '该作品'
+    const running = work.raw_status === 'running'
+    const msg = running
+      ? `「${title}」正在创作中，无法删除。请等待完成或失败后再试。`
+      : `确定永久删除「${title}」？\n\n将同时删除剧本、大纲、分享链接等全部数据，且无法恢复。`
+    if (running) {
+      toast.error(msg)
+      return
+    }
+    if (!window.confirm(msg)) return
+    setDeletingId(pid)
+    deleteMutation.mutate(pid)
+  }
 
   return (
     <div className="relative min-h-screen py-12">
@@ -193,7 +114,7 @@ export default function Works() {
             我的<span className="gradient-text">作品</span>
           </h1>
           <p className="text-lg text-navy-300">
-            共 <span className="text-gold-400 font-semibold">{works.length}</span> 个项目 · 已完成{' '}
+            共 <span className="text-gold-400 font-semibold">{pagination.total}</span> 个项目 · 当前页已完成{' '}
             <span className="text-green-400 font-semibold">
               {works.filter((w) => w.status === 'completed').length}
             </span>{' '}
@@ -214,7 +135,10 @@ export default function Works() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-navy-400" />
               <input
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setPage(1)
+                }}
                 placeholder="搜索作品标题或创意描述..."
                 className="w-full pl-11 pr-4 py-3 rounded-xl bg-navy-800/50 border border-navy-600/30 text-white placeholder-navy-500 focus:border-gold-400/50 focus:ring-2 focus:ring-gold-400/20 outline-none transition-all"
               />
@@ -243,6 +167,7 @@ export default function Works() {
                         key={s.key}
                         onClick={() => {
                           setStatusFilter(s.key)
+                          setPage(1)
                           setShowStatusMenu(false)
                         }}
                         className={`w-full px-4 py-2.5 flex items-center gap-3 text-left transition-all ${
@@ -271,13 +196,26 @@ export default function Works() {
             {/* 排序 */}
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
+              onChange={(e) => {
+                setSortBy(e.target.value)
+                setPage(1)
+              }}
               className="px-5 py-3 rounded-xl bg-navy-800/50 hover:bg-navy-700/50 border border-navy-600/30 text-white outline-none transition-all cursor-pointer text-sm"
             >
               <option value="newest">最新创建</option>
               <option value="score">评分最高</option>
               <option value="episodes">集数最多</option>
             </select>
+
+            {/* 刷新 */}
+            <button
+              onClick={() => refetch()}
+              disabled={loading}
+              className="px-5 py-3 rounded-xl bg-navy-800/50 hover:bg-navy-700/50 border border-navy-600/30 text-white flex items-center gap-2 transition-all disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              刷新
+            </button>
 
             {/* 新建按钮 */}
             <button
@@ -290,11 +228,21 @@ export default function Works() {
           </div>
         </motion.div>
 
+        {loadError && (
+          <div className="mb-6 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
+            {loadError}
+          </div>
+        )}
+
         {/* 作品列表 / 空状态 */}
         {loading ? (
           <LoadingSkeleton />
         ) : filtered.length === 0 ? (
-          <EmptyState onNew={() => navigate('/creation')} hasFilter={!!search || statusFilter !== 'all'} />
+          <WorksEmptyState
+            onNew={() => navigate('/creation')}
+            onClear={clearFilters}
+            hasFilter={!!search || statusFilter !== 'all'}
+          />
         ) : (
           <motion.div
             initial={{ opacity: 0 }}
@@ -302,9 +250,39 @@ export default function Works() {
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
           >
             {filtered.map((work, idx) => (
-              <WorkCard key={work.id} work={work} index={idx} theme={getTheme(work.theme)} navigate={navigate} />
+              <WorkCard
+                key={work.project_id}
+                work={work}
+                index={idx}
+                theme={getTheme(work.theme)}
+                navigate={navigate}
+                onDelete={handleDelete}
+                deleting={deletingId === work.project_id}
+              />
             ))}
           </motion.div>
+        )}
+
+        {!loading && pagination.total_pages > 1 && (
+          <div className="mt-10 flex items-center justify-center gap-3">
+            <button
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="px-4 py-2 rounded-xl bg-navy-800/50 border border-navy-600/30 text-navy-200 disabled:opacity-40"
+            >
+              上一页
+            </button>
+            <span className="text-sm text-navy-300">
+              第 {page} / {pagination.total_pages} 页 · 共 {pagination.total} 个作品
+            </span>
+            <button
+              disabled={page >= pagination.total_pages}
+              onClick={() => setPage((p) => p + 1)}
+              className="px-4 py-2 rounded-xl bg-navy-800/50 border border-navy-600/30 text-navy-200 disabled:opacity-40"
+            >
+              下一页
+            </button>
+          </div>
         )}
       </div>
     </div>
@@ -312,14 +290,27 @@ export default function Works() {
 }
 
 // ============ 作品卡片 ============
-function WorkCard({ work, index, theme, navigate }) {
-  const statusMap = {
-    completed: { label: '已完成', color: '#68d391', bg: 'rgba(104, 211, 145, 0.15)', icon: CheckCircle2 },
-    generating: { label: '创作中', color: '#f6ad55', bg: 'rgba(246, 173, 85, 0.15)', icon: Loader2 },
-    draft: { label: '草稿', color: '#a0aec0', bg: 'rgba(160, 174, 192, 0.15)', icon: FileText },
+function WorkCard({ work, index, theme, navigate, onDelete, deleting }) {
+  const meta = getWorkStatusMeta(work.status, work)
+  const StatusIcon =
+    meta.key === 'completed'
+      ? CheckCircle2
+      : meta.key === 'generating'
+        ? Loader2
+        : meta.key === 'failed'
+          ? XCircle
+          : meta.key === 'awaiting'
+            ? Clock
+            : FileText
+
+  const goToWork = () => {
+    const pid = work.project_id
+    if (work.status === 'completed') {
+      navigate(`/works/${pid}`)
+    } else if (pid) {
+      navigate(`/creation?project=${pid}`)
+    }
   }
-  const status = statusMap[work.status] || statusMap.completed
-  const StatusIcon = status.icon
 
   return (
     <motion.div
@@ -327,7 +318,7 @@ function WorkCard({ work, index, theme, navigate }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
       whileHover={{ y: -6, scale: 1.01 }}
-      onClick={() => navigate('/works/' + work.id)}
+      onClick={goToWork}
       className="glass-card rounded-3xl p-6 cursor-pointer group relative overflow-hidden transition-all hover:shadow-lg hover:shadow-gold-500/10 border border-navy-600/20"
     >
       {/* 装饰渐变 */}
@@ -339,22 +330,40 @@ function WorkCard({ work, index, theme, navigate }) {
       <div className="relative">
         {/* 顶部：题材 + 状态 */}
         <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ background: theme.color + '20' }}>
-            <span className="text-lg">{theme.emoji}</span>
-            <span className="text-xs font-medium" style={{ color: theme.color }}>
-              {theme.name}
-            </span>
-          </div>
-          <div
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
-            style={{ background: status.bg, color: status.color }}
-          >
-            {work.status === 'generating' ? (
-              <StatusIcon className="w-3.5 h-3.5 animate-spin" />
-            ) : (
-              <StatusIcon className="w-3.5 h-3.5" />
-            )}
-            <span className="text-xs font-medium">{status.label}</span>
+          <ThemeBadge theme={theme} size="sm" />
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center gap-1.5">
+              <div
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
+                style={{ background: meta.bg, color: meta.color }}
+              >
+                {meta.spin ? (
+                  <StatusIcon className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <StatusIcon className="w-3.5 h-3.5" />
+                )}
+                <span className="text-xs font-medium">{meta.label}</span>
+              </div>
+              <button
+                type="button"
+                title={work.raw_status === 'running' ? '创作中不可删除' : '删除作品'}
+                disabled={deleting}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onDelete?.(work)
+                }}
+                className="p-2 rounded-xl text-navy-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all disabled:opacity-50"
+              >
+                {deleting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Trash2 className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+            {meta.hint ? (
+              <p className="text-[10px] text-navy-500 text-right max-w-[140px] leading-snug">{meta.hint}</p>
+            ) : null}
           </div>
         </div>
 
@@ -364,9 +373,30 @@ function WorkCard({ work, index, theme, navigate }) {
         </h3>
 
         {/* 创意摘要 */}
-        <p className="text-sm text-navy-300 leading-relaxed mb-5 line-clamp-3 min-h-[4.5rem]">
-          {work.idea}
+        <p className="text-sm text-navy-300 leading-relaxed mb-4 line-clamp-3 min-h-[3.75rem]">
+          {work.idea ? (
+            work.idea
+          ) : (
+            <span className="text-navy-500 italic">
+              {meta.key === 'draft' ? '尚未填写创意描述，点击进入工作台补充' : '暂无创意摘要'}
+            </span>
+          )}
         </p>
+
+        {meta.progress > 0 && meta.progress < 100 && meta.key === 'generating' ? (
+          <div className="mb-4">
+            <div className="flex justify-between text-[10px] text-navy-500 mb-1">
+              <span>创作进度</span>
+              <span>{meta.progress}%</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-navy-800/80 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-gold-500 to-amber-400 transition-all"
+                style={{ width: `${meta.progress}%` }}
+              />
+            </div>
+          </div>
+        ) : null}
 
         {/* 元信息 */}
         <div className="flex flex-wrap gap-3 mb-5 text-xs text-navy-400">
@@ -393,7 +423,7 @@ function WorkCard({ work, index, theme, navigate }) {
             <span>{work.createdAt}</span>
           </div>
           <div className="flex items-center gap-1 text-sm text-gold-400 group-hover:gap-2 transition-all">
-            <span>查看详情</span>
+            <span>{meta.cta}</span>
             <ArrowRight className="w-4 h-4" />
           </div>
         </div>
@@ -438,36 +468,27 @@ function LoadingSkeleton() {
 }
 
 // ============ 空状态 ============
-function EmptyState({ onNew, hasFilter }) {
+function WorksEmptyState({ onNew, onClear, hasFilter }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="glass-card rounded-3xl p-16 text-center border border-navy-600/20"
-    >
-      <motion.div
-        animate={{ rotate: [0, -10, 10, -10, 0], y: [0, -10, 0] }}
-        transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
-        className="text-7xl mb-6"
-      >
-        📂
-      </motion.div>
-      <h3 className="text-2xl font-bold text-white mb-3">
-        {hasFilter ? '没有找到匹配的作品' : '暂无作品'}
-      </h3>
-      <p className="text-navy-300 mb-8 max-w-md mx-auto">
-        {hasFilter
+    <EmptyState
+      icon={FolderKanban}
+      title={hasFilter ? '没有找到匹配的作品' : '暂无作品'}
+      description={
+        hasFilter
           ? '试试调整搜索关键词或筛选条件，看看其他作品吧'
-          : '从一句话创意开始，让 AI 帮你生成完整的短剧剧本'}
-      </p>
-      <button
-        onClick={onNew}
-        className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-semibold btn-gold hover:shadow-lg hover:shadow-gold-500/30 transition-all"
-      >
-        <Sparkles className="w-5 h-5" />
-        {hasFilter ? '清除筛选' : '开始第一次创作'}
-        <ArrowRight className="w-5 h-5" />
-      </button>
-    </motion.div>
+          : '从一句话创意开始，让 AI 帮你生成完整的短剧剧本'
+      }
+      action={
+        <button
+          type="button"
+          onClick={hasFilter ? onClear : onNew}
+          className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-semibold btn-gold hover:shadow-lg hover:shadow-gold-500/30 transition-all"
+        >
+          <Sparkles className="w-5 h-5" />
+          {hasFilter ? '清除筛选' : '开始第一次创作'}
+          <ArrowRight className="w-5 h-5" />
+        </button>
+      }
+    />
   )
 }
