@@ -91,3 +91,67 @@ export function SideSectionTitle({ children, className }) {
     </h4>
   )
 }
+
+/**
+ * ConsumerShell — 用户端页面标准外层壳
+ *
+ * 【角色定位】类似 AdminShell 的用户端版本。它统一了：
+ *   1) 页面标题 + 描述 + 主 CTA
+ *   2) 响应式内边距与最大宽度
+ *   3) 动画进入效果
+ *
+ * 【使用示例】
+ *   <ConsumerShell title="剧本创作" eyebrow="创作中心" subtitle="输入创意，几小时生成完整短剧">
+ *     <YourContent />
+ *   </ConsumerShell>
+ *
+ * 【设计令牌对齐】
+ *   - 背景: inherit (由外层 consumer 布局负责)
+ *   - 最大宽度: max-w-7xl
+ *   - 内边距: py-10 sm:py-14
+ *   - 动画: pageEnter from @/constants/motion
+ */
+export function ConsumerShell({
+  eyebrow,
+  title,
+  subtitle,
+  action,
+  children,
+  className,
+  containerClassName,
+  align = 'left',
+  fullWidth = false,
+}) {
+  const centered = align === 'center'
+
+  return (
+    <div className={cn('relative', containerClassName)}>
+      {/* 标题区 */}
+      <div
+        className={cn(
+          'mx-auto w-full',
+          fullWidth ? 'max-w-none' : 'max-w-7xl',
+          'px-5 sm:px-8 pt-10 sm:pt-14',
+        )}
+      >
+        <div className={cn(centered ? 'mx-auto max-w-3xl text-center' : 'max-w-3xl', 'mb-10 sm:mb-12 animate-fade-in')}>
+          {eyebrow && <SectionEyebrow>{eyebrow}</SectionEyebrow>}
+          {title && (
+            <h1 className="mt-3 text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.1] tracking-tight text-white">
+              {title}
+            </h1>
+          )}
+          {subtitle && (
+            <p className={cn('mt-4 text-base sm:text-lg text-navy-200', centered ? 'mx-auto max-w-2xl' : 'max-w-3xl')}>
+              {subtitle}
+            </p>
+          )}
+          {action && <div className={cn('mt-6 flex flex-wrap gap-3', centered && 'justify-center')}>{action}</div>}
+        </div>
+
+        {/* 内容区 */}
+        {children && <div className={cn('animate-fade-in', className)}>{children}</div>}
+      </div>
+    </div>
+  )
+}

@@ -1,67 +1,180 @@
-// 短剧创作·设计体系 — 路由配置文件
+/**
+ * 短剧创作·设计体系 — 路由配置文件
+ *
+ * 【路由守卫策略】
+ *   - Public：公开页面（Home / Login / 作品列表等）
+ *   - Private：需登录（Creation / User Center / Orders / Wallet）
+ *   - Admin：需登录 + 管理员权限
+ *
+ * 【路径命名约定】
+ *   - /            → 首页
+ *   - /creation    → 剧本创作中心（需登录）
+ *   - /works       → 作品列表（替代 ScriptList）
+ *   - /works/:id   → 作品详情
+ *   - /profile     → 个人中心（需登录）
+ *   - /member      → 会员中心（需登录）
+ *   - /orders      → 我的订单（需登录）
+ *   - /wallet      → 我的钱包（需登录）
+ *   - /login       → 登录页
+ *   - /register    → 注册页
+ *   - /admin       → 管理后台（需管理员权限）
+ *   - /*           → 404 兜底
+ *
+ * 【性能优化】
+ *   - 全部页面采用 React.lazy + Suspense 进行懒加载
+ *   - 由外层 SuspenseBoundary 统一处理加载态
+ */
 
-import { lazy } from 'react'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import { PrivateRoute, AdminRoute } from './guards.jsx'
 
-// 页面懒加载 — 按需加载
+// ── 布局组件 ────────────────────────────────────────────────
+const MainLayout = lazy(() => import('@/components/layout/MainLayout.jsx'))
+const AdminLayout = lazy(() => import('@/components/layout/AdminLayout.jsx'))
 
-// 基础页面
-const Home = lazy(() => import('@/pages/Home.jsx'))
-const CreationCenter = lazy(() => import('@/pages/CreationCenter.jsx'))
-const WorkflowOrchestration = lazy(() => import('@/pages/WorkflowOrchestration.jsx'))
-const ScriptList = lazy(() => import('@/pages/ScriptList.jsx'))
-const ScriptDetail = lazy(() => import('@/pages/ScriptDetail.jsx'))
-const ProjectDetail = lazy(() => import('@/pages/ProjectDetail.jsx'))
-const UserCenter = lazy(() => import('@/pages/UserCenter.jsx'))
+// ── 公开页面 ─────────────────────────────────────────────────
+const Home = lazy(() => import('@/pages/Home/index.jsx'))
+const WorkList = lazy(() => import('@/pages/Works/index.jsx'))
+const WorkDetail = lazy(() => import('@/pages/Works/Detail.jsx'))
+const Login = lazy(() => import('@/pages/Auth/Login.jsx'))
+const Register = lazy(() => import('@/pages/Auth/Register.jsx'))
+
+// ── 需登录页面 ───────────────────────────────────────────────
+const CreationCenter = lazy(() => import('@/pages/Creation/index.jsx'))
+const Profile = lazy(() => import('@/pages/Profile/index.jsx'))
+const Member = lazy(() => import('@/pages/Member/index.jsx'))
+const Orders = lazy(() => import('@/pages/Orders/index.jsx'))
+const Wallet = lazy(() => import('@/pages/Wallet/index.jsx'))
+
+// ── 管理后台 ─────────────────────────────────────────────────
+const AdminDashboard = lazy(() => import('@/pages/Admin/Dashboard.jsx'))
+const AdminProjects = lazy(() => import('@/pages/Admin/CreationProjects.jsx'))
+const AdminSkills = lazy(() => import('@/pages/Admin/AdminSkills.jsx'))
+const AdminUsers = lazy(() => import('@/pages/Admin/Users.jsx'))
+const AdminOrders = lazy(() => import('@/pages/Admin/Orders.jsx'))
+const AdminMembers = lazy(() => import('@/pages/Admin/Members.jsx'))
+const AdminBilling = lazy(() => import('@/pages/Admin/Billing.jsx'))
+const AdminSettings = lazy(() => import('@/pages/Admin/Settings.jsx'))
+const AdminSystem = lazy(() => import('@/pages/Admin/AdminSystemConfig.jsx'))
+const AdminLogin = lazy(() => import('@/pages/Admin/Login.jsx'))
+
+// ── 404 兜底 ─────────────────────────────────────────────────
 const NotFound = lazy(() => import('@/pages/NotFound.jsx'))
 
-// 后台管理页面 — 设计规范: 所有 admin 页面必须使用统一的 AdminShell
-const AdminLayout = lazy(() => import('@/pages/Admin/AdminLayout.jsx'))
-const AdminOverview = lazy(() => import('@/pages/Admin/AdminOverview.jsx'))
-const AdminSkills = lazy(() => import('@/pages/Admin/AdminSkills.jsx'))
-const AdminProjects = lazy(() => import('@/pages/Admin/AdminProjects.jsx'))
+/* ============================================================
+ * Suspense 统一加载态 —— 避免每个 lazy 页面都重复写 loading
+ * ============================================================ */
+function PageLoading({ children }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 rounded-full border-2 border-accent-400/30 border-t-accent-400 animate-spin" />
+            <span className="text-sm text-navy-400">加载中...</span>
+          </div>
+        </div>
+      }
+    >
+      {children}
+    </Suspense>
+  )
+}
 
+/* ============================================================
+ * 路由表
+ * ============================================================ */
 const router = createBrowserRouter([
+  // ── C 端主路由（带 MainLayout） ─────────────
   {
-    path: '/',
-    element: <Home />,
-  },
-  {
-    path: '/creation',
-    element: <CreationCenter />,
-  },
-  {
-    path: '/scripts',
-    element: <ScriptList />,
-  },
-  {
-    path: '/scripts/:id',
-    element: <ScriptDetail />,
-  },
-  {
-    path: '/projects/:id',
-    element: <ProjectDetail />,
-  },
-  {
-    path: '/workflow',
-    element: <WorkflowOrchestration />,
-  },
-  {
-    path: '/user',
-    element: <UserCenter />,
-  },
-  // ============ 管理后台 ============
-  {
-    path: '/admin',
-    element: <AdminLayout />,
+    element: (
+      <PageLoading>
+        <MainLayout />
+      </PageLoading>
+    ),
     children: [
-      { index: true, element: <AdminOverview /> },
-      { path: 'skills', element: <AdminSkills /> },
-      { path: 'projects', element: <AdminProjects /> },
+      { path: '/', element: <Home /> },
+      { path: '/works', element: <WorkList /> },
+      { path: '/works/:id', element: <WorkDetail /> },
+
+      // 需登录的页面
+      {
+        path: '/creation',
+        element: (
+          <PrivateRoute>
+            <CreationCenter />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: '/profile',
+        element: (
+          <PrivateRoute>
+            <Profile />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: '/member',
+        element: (
+          <PrivateRoute>
+            <Member />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: '/orders',
+        element: (
+          <PrivateRoute>
+            <Orders />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: '/wallet',
+        element: (
+          <PrivateRoute>
+            <Wallet />
+          </PrivateRoute>
+        ),
+      },
     ],
   },
-  // 404
-  { path: '*', element: <NotFound /> },
+
+  // ── Auth 路由（不带 MainLayout，避免重复嵌套） ──
+  { path: '/login', element: <PageLoading><Login /></PageLoading> },
+  { path: '/register', element: <PageLoading><Register /></PageLoading> },
+
+  // ── 管理后台登录页（独立，避免重定向循环） ───
+  { path: '/admin/login', element: <PageLoading><AdminLogin /></PageLoading> },
+
+  // ── 管理后台（带 AdminLayout + AdminRoute） ──
+  {
+    path: '/admin',
+    element: (
+      <AdminRoute>
+        <PageLoading>
+          <AdminLayout />
+        </PageLoading>
+      </AdminRoute>
+    ),
+    children: [
+      { index: true, element: <AdminDashboard /> },
+      { path: 'dashboard', element: <AdminDashboard /> },
+      { path: 'projects', element: <AdminProjects /> },
+      { path: 'skills', element: <AdminSkills /> },
+      { path: 'users', element: <AdminUsers /> },
+      { path: 'orders', element: <AdminOrders /> },
+      { path: 'members', element: <AdminMembers /> },
+      { path: 'billing', element: <AdminBilling /> },
+      { path: 'settings', element: <AdminSettings /> },
+      { path: 'system', element: <AdminSystem /> },
+    ],
+  },
+
+  // ── 404 兜底 ─────────────────────────────────
+  { path: '*', element: <PageLoading><NotFound /></PageLoading> },
 ])
 
 export default function Router() {
