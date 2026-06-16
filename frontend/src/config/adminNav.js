@@ -41,6 +41,13 @@ export const ADMIN_NAV_GROUPS = [
         description: '今日速览；商业 / 创作 / 成本分区',
       },
       {
+        id: 'admin.stats',
+        path: '/admin/stats',
+        label: '数据统计',
+        icon: BarChart3,
+        description: '调用量 / 成功率 / 耗时 / 排行',
+      },
+      {
         id: 'monitoring.business',
         path: '/admin/monitoring',
         label: '业务监控',
@@ -165,10 +172,17 @@ export const ADMIN_NAV_GROUPS = [
     collapsible: true,
     items: [
       {
-        id: 'system.maintenance',
+        id: 'admin.system',
         path: '/admin/system',
-        label: '系统维护',
+        label: '系统配置',
         icon: Settings2,
+        description: '全局开关 / 阈值 / 配额 / 敏感词',
+      },
+      {
+        id: 'system.maintenance',
+        path: '/admin/system/maintenance',
+        label: '系统维护',
+        icon: Wrench,
         description: '部署环境只读快照',
       },
       {

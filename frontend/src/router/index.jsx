@@ -35,6 +35,8 @@ const AdminUsers = lazy(() => import('@/pages/Admin/Users'))
 const AdminOrders = lazy(() => import('@/pages/Admin/Orders'))
 const AdminSettings = lazy(() => import('@/pages/Admin/Settings'))
 const SystemConfigCenterPage = lazy(() => import('@/pages/Admin/system/SystemConfigCenterPage'))
+const AdminStatsPage = lazy(() => import('@/pages/Admin/AdminStats'))
+const AdminSystemConfigPage = lazy(() => import('@/pages/Admin/AdminSystemConfig'))
 const MainChainStudioPage = lazy(() => import('@/pages/Admin/mainChain/MainChainStudioPage'))
 const AgentHubPage = lazy(() => import('@/pages/Admin/agent/AgentHubPage'))
 const OrchestrationHubPage = lazy(() => import('@/pages/Admin/orchestration/OrchestrationHubPage'))
@@ -123,6 +125,26 @@ function SystemSettingsPage() {
     <AdminShell>
       <Suspense fallback={null}>
         <AdminSettings />
+      </Suspense>
+    </AdminShell>
+  )
+}
+
+function SystemConfigPage() {
+  return (
+    <AdminShell>
+      <Suspense fallback={null}>
+        <AdminSystemConfigPage />
+      </Suspense>
+    </AdminShell>
+  )
+}
+
+function StatsPage() {
+  return (
+    <AdminShell>
+      <Suspense fallback={null}>
+        <AdminStatsPage />
       </Suspense>
     </AdminShell>
   )
@@ -223,6 +245,7 @@ export default function AppRoutes() {
         >
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="stats" element={<StatsPage />} />
           <Route path="monitoring" element={<MonitoringDashboardPage />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="orders" element={<AdminOrders />} />
@@ -247,7 +270,8 @@ export default function AppRoutes() {
 
           <Route path="skills" element={<SkillCenterPage />} />
 
-          <Route path="system" element={<SystemSettingsPage />} />
+          <Route path="system" element={<SystemConfigPage />} />
+          <Route path="system/maintenance" element={<SystemSettingsPage />} />
           <Route path="system/configs" element={<SystemConfigCenterPage />} />
           <Route path="system/advanced" element={<SystemAdvancedPage />} />
         </Route>

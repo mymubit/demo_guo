@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, List, Optional
 
 from ..artifact_service import get_artifact
@@ -501,8 +503,8 @@ class PipelineOrchestrator:
         """
         完整工作流执行主入口。
         按 pack.nodes.filter(enabled=True).order_by('chain_order') 依次执行。
-        支持 CONDITION 节点（evaluate_condition 方法）和 HUMAN 节点（step 模式暂停）。
-        返回 {"status": "completed"|"failed"|"partial", "results": [...]}
+        支持 SERIAL / PARALLEL / ITERATE / HUMAN 节点类型。
+        返回 {"status": "completed"|"failed"|"partial"|"awaiting_user", "results": [...]}
         """
         from apps.workflow.models import FusionPipelineNode
 
@@ -511,17 +513,13 @@ class PipelineOrchestrator:
         all_ok = True
 
         total = nodes.count()
+        last_stable_chain_order = 0  # 上一个稳定节点的 chain_order（用于失败回滚）
         for idx, node in enumerate(nodes):
             # 进度上报
             self.broadcast_progress(node, "running", {})
 
-            # CONDITION 节点：先计算条件再决定是否执行
-            if node.runner_type == FusionPipelineNode.RUNNER_FUSION_NODE:
-                # TODO: 扩展 SERIAL/CONDITION/HUMAN 节点类型判断
-                # 临时通过 runner_path 或其他字段判断是否为条件节点
-                pass
-
-            node_result = self.run_node(node)
+            # P1 阶段：按 node.runner_type 分发到对应执行器
+            node_result = self._run_node(node, results)
             node_result["node_index"] = node.website_index
             node_result["fusion_node_id"] = node.fusion_node_id
             node_result["node_name"] = node.name
@@ -530,37 +528,89 @@ class PipelineOrchestrator:
             # 更新项目进度
             self._update_project_progress(idx + 1, total)
 
-            # 失败处理
-            if node_result.get("status") == "error":
+            # 失败处理：PARALLEL/ITERATE 节点支持部分成功继续
+            status = node_result.get("status")
+            if status == "error":
                 all_ok = False
-                # TODO: PARALLEL/ITERATE 节点类型需支持部分成功继续执行
-                # break  # 暂时立即失败
-
-            # HUMAN 节点：step 模式下暂停，等待用户确认
-            # TODO: 实现 HUMAN 节点暂停逻辑（类似 STATUS_AWAITING）
-            # if node.requires_confirm and self.project.pipeline_mode == Project.MODE_STEP:
-            #     self.project.status = Project.STATUS_AWAITING
-            #     self.project.save(update_fields=["status", "updated_at"])
-            #     return {"status": "partial", "results": results}
+                # 失败回滚到上一个稳定节点
+                self._rollback_to_stable_node(last_stable_chain_order)
+                break
+            elif status == "awaiting_user":
+                # HUMAN 节点暂停：直接返回，等待用户确认
+                logger.info(
+                    "[PipelineOrchestrator] HUMAN 节点暂停 node=%s project=%s",
+                    node.fusion_node_id, self.project.id,
+                )
+                return {"status": "awaiting_user", "results": results}
+            elif status in ("completed", "auto_skipped", "partial"):
+                # PARALLEL/ITERATE 部分成功也记为稳定节点，不中断
+                last_stable_chain_order = node.chain_order
+            else:
+                last_stable_chain_order = node.chain_order
 
         return {
             "status": "completed" if all_ok else "partial",
             "results": results,
         }
 
-    def run_node(self, node: "FusionPipelinePack") -> Dict[str, Any]:
+    # -------------------------------------------------------------------------
+    # P1 阶段：节点分发器（按 runner_type 分支）
+    # -------------------------------------------------------------------------
+
+    def _run_node(self, node: "FusionPipelinePack", results: list) -> Dict[str, Any]:
         """
-        执行单个节点（复用现有 invoke_pipeline_step 逻辑）。
-        完成后写入 execution_run + artifact + LlmUsageLog。
+        单节点执行器（按 runner_type 分支）。
+
+        支持的 runner_type：
+        - "fusion_node" / "fusion_review" / "fusion_score" / "agent_chain"  → SERIAL
+        - "parallel_group"  → PARALLEL：同级多节点并发执行
+        - "iterate_loop"    → ITERATE：循环迭代直到达成条件
+        - "human_gate"      → HUMAN：step 模式暂停等待用户确认
         """
         from apps.workflow.models import FusionPipelineNode
 
+        rt = node.runner_type or FusionPipelineNode.RUNNER_FUSION_NODE
+        start = time.monotonic()
+
+        try:
+            if rt == FusionPipelineNode.RUNNER_PARALLEL_GROUP:
+                result = self._run_parallel_node(node, results)
+            elif rt == FusionPipelineNode.RUNNER_ITERATE_LOOP:
+                result = self._run_iterate_node(node, results)
+            elif rt == FusionPipelineNode.RUNNER_HUMAN_GATE:
+                result = self._run_human_gate_node(node, results)
+            else:
+                # SERIAL 分支：保持原 run_node 行为完全不变（向后兼容）
+                result = self._run_serial_node(node)
+        except Exception as exc:  # noqa: BLE001
+            logger.exception(
+                "[PipelineOrchestrator] _run_node 异常 node=%s runner_type=%s: %s",
+                node.fusion_node_id, rt, exc,
+            )
+            result = {
+                "status": "error",
+                "errors": [f"节点执行异常: {exc}"],
+            }
+
+        # 记录执行耗时到 meta.duration_ms（便于监控与对账）
+        duration_ms = int((time.monotonic() - start) * 1000)
+        meta = dict(result.get("meta") or {})
+        meta["duration_ms"] = duration_ms
+        meta["runner_type"] = rt
+        result["meta"] = meta
+        return result
+
+    def _run_serial_node(self, node: "FusionPipelinePack") -> Dict[str, Any]:
+        """
+        SERIAL 节点执行器：复用原 run_node 逻辑。
+        支持 fusion_node / fusion_review / fusion_score / agent_chain。
+        """
         idx = int(node.website_index)
         runner_type = _runner_type_for_pipeline_index(idx)
         agent_id = agent_for_pipeline_node_index(idx)
 
         logger.info(
-            "[PipelineOrchestrator] run_node node=%s runner_type=%s agent=%s project=%s",
+            "[PipelineOrchestrator] _run_serial_node node=%s runner_type=%s agent=%s project=%s",
             node.fusion_node_id,
             runner_type,
             agent_id,
@@ -588,11 +638,322 @@ class PipelineOrchestrator:
                 save_artifact(self.project, artifact_key, artifact_payload)
             return step_result
 
-        # TODO: 支持 PARALLEL（并行执行子节点）和 ITERATE（遍历执行）节点类型
         return {
             "status": "error",
             "errors": [f"节点类型 {runner_type!r} 暂不支持由 PipelineOrchestrator 执行"],
         }
+
+    def _run_parallel_node(self, parent_node: "FusionPipelinePack", results: list) -> Dict[str, Any]:
+        """
+        PARALLEL 节点：执行同 group_key 的所有 SERIAL 节点。
+
+        并发执行：使用 concurrent.futures.ThreadPoolExecutor 最多 4 并发。
+        合并结果：将所有子节点输出聚合到 parent_node 的 artifact_key。
+        失败处理：单节点异常被 try/except 捕获，不中断整体流程，最终 status=partial。
+        """
+        from apps.workflow.models import FusionPipelineNode
+
+        group_key = (parent_node.extra_config or {}).get(
+            "parallel_group_key", parent_node.fusion_node_id,
+        )
+        # 找到同 pack 下 extra_config.parallel_group_key == group_key 的所有 enabled 节点
+        siblings_qs = FusionPipelineNode.objects.filter(
+            pack_id=parent_node.pack_id,
+            enabled=True,
+            extra_config__parallel_group_key=group_key,
+        ).exclude(id=parent_node.id).order_by("chain_order")
+
+        siblings = list(siblings_qs)
+        if not siblings:
+            logger.warning(
+                "[PipelineOrchestrator] PARALLEL 节点未找到同 group_key=%s 的兄弟节点 parent=%s",
+                group_key, parent_node.fusion_node_id,
+            )
+            return {
+                "status": "completed",
+                "parallel_results": [],
+                "group_key": group_key,
+                "message": "未配置同组兄弟节点，PARALLEL 节点直接通过",
+            }
+
+        # 并发执行：单节点异常不中断整体流程
+        parallel_results: List[Dict[str, Any]] = []
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = {
+                executor.submit(self._run_serial_node, sib): sib
+                for sib in siblings
+            }
+            for future in as_completed(futures):
+                sib = futures[future]
+                try:
+                    sub_result = future.result()
+                except Exception as exc:  # noqa: BLE001
+                    logger.exception(
+                        "[PipelineOrchestrator] parallel 子节点失败 fusion_node_id=%s: %s",
+                        sib.fusion_node_id, exc,
+                    )
+                    sub_result = {
+                        "status": "failed",
+                        "errors": [str(exc)],
+                        "fusion_node_id": sib.fusion_node_id,
+                    }
+                sub_result.setdefault("fusion_node_id", sib.fusion_node_id)
+                sub_result.setdefault("node_name", sib.name)
+                parallel_results.append(sub_result)
+
+        all_ok = all(r.get("status") in ("completed", "auto_skipped") for r in parallel_results)
+        merged_status = "completed" if all_ok else "partial"
+        result: Dict[str, Any] = {
+            "status": merged_status,
+            "parallel_results": parallel_results,
+            "group_key": group_key,
+            "sibling_count": len(parallel_results),
+        }
+        # 合并子节点产物到 parent_node.artifact_key
+        artifact_key = parent_node.artifact_key or f"parallel_{group_key}"
+        if artifact_key:
+            from ..artifact_service import save_artifact
+            try:
+                merged_payload = {
+                    "group_key": group_key,
+                    "siblings": parallel_results,
+                }
+                save_artifact(self.project, artifact_key, merged_payload)
+                result["artifact_key"] = artifact_key
+            except Exception as exc:  # noqa: BLE001
+                logger.warning(
+                    "[PipelineOrchestrator] PARALLEL 合并 artifact 失败 artifact_key=%s: %s",
+                    artifact_key, exc,
+                )
+        return result
+
+    def _run_iterate_node(self, node: "FusionPipelinePack", results: list) -> Dict[str, Any]:
+        """
+        ITERATE 节点：循环执行某节点 N 次或直到评分达标。
+
+        条件来源（优先级）：
+        1. node.extra_config.iterate_max_attempts  (默认 3)
+        2. node.extra_config.iterate_until_condition
+           (e.g. {"field": "overall_score", "operator": ">=", "value": 70})
+        3. 评分提升：上次 vs 这次评分差 < 1 分 也算达标（防止无意义循环）
+        """
+        from apps.workflow.models import FusionPipelineNode
+
+        extra = node.extra_config or {}
+        try:
+            max_attempts = int(extra.get("iterate_max_attempts", 3))
+        except (TypeError, ValueError):
+            max_attempts = 3
+        until_condition = extra.get("iterate_until_condition")
+        target_node_id = extra.get("iterate_target_node_id")
+
+        if not target_node_id:
+            logger.warning(
+                "[PipelineOrchestrator] ITERATE 节点未配置 iterate_target_node_id node=%s",
+                node.fusion_node_id,
+            )
+            return {
+                "status": "error",
+                "errors": ["ITERATE 节点缺少 iterate_target_node_id 配置"],
+            }
+
+        # 找到目标 SERIAL 节点（必须在同 pack 下）
+        try:
+            target_node = FusionPipelineNode.objects.get(
+                pack_id=node.pack_id,
+                fusion_node_id=target_node_id,
+            )
+        except FusionPipelineNode.DoesNotExist:
+            logger.warning(
+                "[PipelineOrchestrator] ITERATE 目标节点未找到 target=%s pack=%s",
+                target_node_id, node.pack_id,
+            )
+            return {
+                "status": "error",
+                "errors": [f"ITERATE 目标节点 {target_node_id} 不存在"],
+            }
+
+        iteration_results: List[Dict[str, Any]] = []
+        prev_score: Optional[float] = None
+        final_result: Optional[Dict[str, Any]] = None
+        score_field = (until_condition or {}).get("field", "")
+
+        for attempt in range(1, max_attempts + 1):
+            try:
+                result = self._run_serial_node(target_node)
+            except Exception as exc:  # noqa: BLE001
+                logger.exception(
+                    "[PipelineOrchestrator] ITERATE 第 %s 轮异常 target=%s: %s",
+                    attempt, target_node_id, exc,
+                )
+                result = {"status": "failed", "errors": [str(exc)]}
+
+            # 提取评分，用于评分提升收敛判定
+            current_score: Optional[float] = None
+            data = result.get("data") or result.get("outputs") or {}
+            if isinstance(data, dict) and score_field:
+                raw_score = data.get(score_field)
+                if raw_score is not None:
+                    try:
+                        current_score = float(raw_score)
+                    except (TypeError, ValueError):
+                        current_score = None
+
+            iteration_results.append({
+                "attempt": attempt,
+                "result": result,
+                "score": current_score,
+            })
+            final_result = result
+
+            # 收敛条件检查：满足用户配置条件立即终止
+            if self._check_iterate_condition(target_node, result, until_condition):
+                logger.info(
+                    "[PipelineOrchestrator] ITERATE 满足终止条件 target=%s attempt=%s",
+                    target_node_id, attempt,
+                )
+                break
+            # 评分提升收敛：上次 vs 这次评分差 < 1 分也算达标
+            if (
+                prev_score is not None
+                and current_score is not None
+                and abs(current_score - prev_score) < 1.0
+            ):
+                logger.info(
+                    "[PipelineOrchestrator] ITERATE 评分提升 <1 触发终止 target=%s attempt=%s",
+                    target_node_id, attempt,
+                )
+                break
+
+            prev_score = current_score
+
+        final_status = (final_result or {}).get("status", "error")
+        return {
+            "status": "completed" if final_status == "completed" else "failed",
+            "iterations": iteration_results,
+            "max_attempts": max_attempts,
+            "actual_attempts": len(iteration_results),
+            "target_node_id": target_node_id,
+        }
+
+    def _check_iterate_condition(
+        self,
+        target_node: "FusionPipelinePack",
+        result: Dict[str, Any],
+        condition: Optional[Dict[str, Any]],
+    ) -> bool:
+        """
+        检查 ITERATE 循环是否可终止。
+        条件格式：{"field": "overall_score", "operator": ">=", "value": 70}
+        """
+        if not condition:
+            return False  # 无条件时仅按 max_attempts 兜底
+
+        field = condition.get("field", "")
+        operator = condition.get("operator", ">=")
+        value = condition.get("value")
+        if not field or value is None:
+            return False
+
+        # 从 result.data 或 result.outputs 中读取字段值
+        data = result.get("data") or result.get("outputs") or {}
+        if not isinstance(data, dict):
+            return False
+        actual = data.get(field)
+        if actual is None:
+            return False
+
+        try:
+            actual_num = float(actual)
+            value_num = float(value)
+        except (TypeError, ValueError):
+            return False
+
+        if operator == ">=" and actual_num >= value_num:
+            return True
+        if operator == ">" and actual_num > value_num:
+            return True
+        if operator == "==" and actual_num == value_num:
+            return True
+        if operator == "<=" and actual_num <= value_num:
+            return True
+        if operator == "<" and actual_num < value_num:
+            return True
+        return False
+
+    def _run_human_gate_node(self, node: "FusionPipelinePack", results: list) -> Dict[str, Any]:
+        """
+        HUMAN 节点：step 模式下暂停等待用户确认。
+
+        仅在 project.pipeline_mode == "step" 时暂停；auto/workspace 模式自动通过。
+        暂停时：标记 project.status=awaiting、广播 SSE awaiting_user 事件。
+        """
+        # auto / workspace 模式直接通过，避免阻塞流水线
+        if self.project.pipeline_mode != Project.MODE_STEP:
+            return {
+                "status": "auto_skipped",
+                "human_gate": node.fusion_node_id,
+                "message": "非 step 模式，自动跳过人工门控",
+            }
+
+        # step 模式：标记项目为 awaiting
+        try:
+            self.project.status = Project.STATUS_AWAITING
+            self.project.current_node_index = node.chain_order
+            self.project.save(update_fields=["status", "current_node_index", "updated_at"])
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "[PipelineOrchestrator] HUMAN 节点更新 project.status 失败: %s", exc,
+            )
+
+        # 广播 SSE 进度事件
+        try:
+            from apps.creation.services.sse_progress import broadcast_progress
+
+            broadcast_progress(str(self.project.id), {
+                "event": "awaiting_user",
+                "project_id": str(self.project.id),
+                "node_index": node.chain_order,
+                "node_name": node.name,
+                "message": "等待用户确认",
+            })
+        except ImportError:
+            logger.debug("[PipelineOrchestrator] SSE broadcast 模块未找到，跳过")
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("[PipelineOrchestrator] HUMAN 节点 SSE 广播失败: %s", exc)
+
+        return {
+            "status": "awaiting_user",
+            "human_gate": node.fusion_node_id,
+            "message": (node.extra_config or {}).get(
+                "human_gate_message", "请确认当前节点产物后继续",
+            ),
+        }
+
+    def _rollback_to_stable_node(self, last_stable_chain_order: int) -> None:
+        """
+        失败回滚：把 project.current_node_index 回退到上一个稳定节点。
+        注意：仅回退索引，不删除已落库的 artifact（产物保留以供诊断）。
+        """
+        try:
+            self.project.current_node_index = max(0, int(last_stable_chain_order))
+            self.project.save(update_fields=["current_node_index", "updated_at"])
+            logger.info(
+                "[PipelineOrchestrator] 回滚到稳定节点 chain_order=%s project=%s",
+                last_stable_chain_order, self.project.id,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "[PipelineOrchestrator] 失败回滚失败 project=%s: %s",
+                self.project.id, exc,
+            )
+
+    def run_node(self, node: "FusionPipelinePack") -> Dict[str, Any]:
+        """
+        执行单个节点（公开入口，保持向后兼容）。
+        内部委托给 _run_node 分发到对应 runner_type。
+        """
+        return self._run_node(node, results=[])
 
     def _invoke_agent(self, agent_id: str, node: "FusionPipelinePack") -> AgentResult:
         """调用 Agent 并写入执行记录。"""

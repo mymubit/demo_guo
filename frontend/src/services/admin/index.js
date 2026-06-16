@@ -13,11 +13,14 @@ import { adminOrchestration } from './orchestration'
 import { adminModel } from './model'
 import { adminMonitoring } from './monitoring'
 import { adminSkill } from './skill'
+import { adminStats } from './stats'
+import { adminSystemConfig } from './systemConfig'
 import { adminTask } from './task'
 
 export {
   adminMainChain, adminWorkflow, adminAgent, adminOrchestration,
   adminModel, adminMonitoring, adminSkill, adminTask,
+  adminStats, adminSystemConfig,
 }
 
 export const admin = {

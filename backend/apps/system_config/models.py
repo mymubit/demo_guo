@@ -111,6 +111,58 @@ class SystemConfigItem(models.Model):
         self.save(update_fields=["deleted_at", "is_active", "updated_by", "updated_at"])
 
 
+class SensitiveWord(models.Model):
+    """敏感词表（append-only）。
+
+    仅支持新增，不提供修改/删除入口；如需下线由人工 SQL 软删。
+    用于在 C 端创作链路中（项目名/角色名/正文）做内容拦截。
+    """
+
+    SEVERITY_HIGH = "high"
+    SEVERITY_MEDIUM = "medium"
+    SEVERITY_LOW = "low"
+
+    SEVERITY_CHOICES = [
+        (SEVERITY_HIGH, "高"),
+        (SEVERITY_MEDIUM, "中"),
+        (SEVERITY_LOW, "低"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    word = models.CharField("敏感词", max_length=128, db_index=True)
+    category = models.CharField("分类", max_length=64, blank=True, default="")
+    severity = models.CharField(
+        "严重程度",
+        max_length=16,
+        choices=SEVERITY_CHOICES,
+        default=SEVERITY_MEDIUM,
+        db_index=True,
+    )
+    note = models.CharField("备注", max_length=255, blank=True, default="")
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_sensitive_words",
+        verbose_name="创建人",
+    )
+    created_at = models.DateTimeField("创建时间", auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = "system_config_sensitive_word"
+        verbose_name = "敏感词"
+        verbose_name_plural = verbose_name
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["word", "severity"]),
+            models.Index(fields=["severity", "-created_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"[{self.get_severity_display()}] {self.word}"
+
+
 class SystemConfigAuditLog(models.Model):
     """配置变更审计日志。"""
 

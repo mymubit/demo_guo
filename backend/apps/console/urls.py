@@ -135,6 +135,20 @@ from apps.console.monitor.stats_views import (
     StatsSummaryView,
     SystemSettingsView,
 )
+from apps.console.stats.extended_views import (
+    FailureRankingView,
+    LlmProviderUsageView,
+    NodeDurationDistributionView,
+    SkillRankingView,
+    StatsKpiView,
+    StatsTrendView,
+)
+from apps.console.system_config.extended_views import (
+    GlobalSwitchView,
+    QuotaRulesView,
+    SensitiveWordsView,
+    ThresholdConfigView,
+)
 from apps.console.main_chain.blueprint_views import (
     MainChainBlueprintView,
     MainChainRegistryMetaView,
@@ -331,4 +345,27 @@ urlpatterns = [
     *_model_routes,
     *_portal_routes,
     *_skills_routes,
+]
+
+# 数据统计中心扩展
+_stats_routes = [
+    path("stats/trend/", StatsTrendView.as_view(), name="admin-stats-trend"),
+    path("stats/skill-ranking/", SkillRankingView.as_view(), name="admin-stats-skill-ranking"),
+    path("stats/failure-ranking/", FailureRankingView.as_view(), name="admin-stats-failure-ranking"),
+    path("stats/llm-provider-usage/", LlmProviderUsageView.as_view(), name="admin-stats-llm-provider-usage"),
+    path("stats/node-duration/", NodeDurationDistributionView.as_view(), name="admin-stats-node-duration"),
+    path("stats/kpi/", StatsKpiView.as_view(), name="admin-stats-kpi"),
+]
+
+# 系统配置中心扩展
+_system_routes = [
+    path("system/global-switch/", GlobalSwitchView.as_view(), name="admin-system-global-switch"),
+    path("system/thresholds/", ThresholdConfigView.as_view(), name="admin-system-thresholds"),
+    path("system/quota-rules/", QuotaRulesView.as_view(), name="admin-system-quota-rules"),
+    path("system/sensitive-words/", SensitiveWordsView.as_view(), name="admin-system-sensitive-words"),
+]
+
+urlpatterns += [
+    *_stats_routes,
+    *_system_routes,
 ]

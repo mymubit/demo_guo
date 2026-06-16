@@ -171,11 +171,18 @@ class FusionPipelineNode(models.Model):
     RUNNER_FUSION_REVIEW = "fusion_review"
     RUNNER_FUSION_SCORE = "fusion_score"
     RUNNER_AGENT_CHAIN = "agent_chain"
+    # P1 阶段扩展：支持并行/迭代/人工门控三类编排节点
+    RUNNER_PARALLEL_GROUP = "parallel_group"
+    RUNNER_ITERATE_LOOP = "iterate_loop"
+    RUNNER_HUMAN_GATE = "human_gate"
     RUNNER_TYPE_CHOICES = [
         (RUNNER_FUSION_NODE, "融合主链节点"),
         (RUNNER_FUSION_REVIEW, "融合质检"),
         (RUNNER_FUSION_SCORE, "融合评分"),
         (RUNNER_AGENT_CHAIN, "Agent 后处理链"),
+        (RUNNER_PARALLEL_GROUP, "并行节点组（同级并发）"),
+        (RUNNER_ITERATE_LOOP, "迭代循环节点"),
+        (RUNNER_HUMAN_GATE, "人工门控节点（分步确认）"),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -202,6 +209,16 @@ class FusionPipelineNode(models.Model):
     artifact_key = models.CharField("存储 artifact_key", max_length=64, blank=True, default="")
     pipeline_result_key = models.CharField("pipeline_result 键", max_length=64, blank=True, default="")
     extra_artifact_keys = models.JSONField("额外 artifact_key 列表", default=list, blank=True)
+    # P1 阶段新增：节点扩展配置（用于 PARALLEL/ITERATE/HUMAN 等高级节点的配置）
+    # - parallel_group: {"parallel_group_key": "ep_outline_batch"}
+    # - iterate_loop:   {"iterate_max_attempts": 3,
+    #                    "iterate_until_condition": {"field": "overall_score", "operator": ">=", "value": 70},
+    #                    "iterate_target_node_id": "node-3-outline"}
+    # - human_gate:     {"human_gate_message": "请确认大纲后再继续"}
+    extra_config = models.JSONField(
+        "节点扩展配置", default=dict, blank=True,
+        help_text="用于 PARALLEL/ITERATE/HUMAN 节点的差异化配置，结构见字段说明",
+    )
     schema = models.ForeignKey(
         FusionJsonSchema,
         on_delete=models.SET_NULL,
