@@ -243,6 +243,25 @@ class Project(models.Model):
             models.Index(fields=["status"]),
         ]
 
+    def save(self, *args, **kwargs):
+        """保存时自动将 fusion_status 同步到 status 字段（统一状态机过渡方案）"""
+        if self.fusion_status:
+            self.status = self._derive_status_from_fusion()
+        super().save(*args, **kwargs)
+
+    def _derive_status_from_fusion(self) -> str:
+        """根据 fusion_status 派生 legacy status 字段值"""
+        mapping = {
+            self.FUSION_DRAFT:     self.STATUS_PENDING,
+            self.FUSION_PLANNING:  self.STATUS_RUNNING,
+            self.FUSION_WRITING:   self.STATUS_RUNNING,
+            self.FUSION_REVIEWING: self.STATUS_RUNNING,
+            self.FUSION_SCORING:   self.STATUS_RUNNING,
+            self.FUSION_READY:     self.STATUS_COMPLETED,
+            self.FUSION_BLOCKED:   self.STATUS_FAILED,
+        }
+        return mapping.get(self.fusion_status, self.status)
+
     def __str__(self) -> str:
         return f"[{self.get_status_display()}] {self.id.hex[:8]} - {self.theme}"
 
@@ -843,3 +862,114 @@ class ScriptQualityDefect(models.Model):
     def __str__(self) -> str:
         ep = f" E{self.episode:02d}" if self.episode else ""
         return f"{self.project_id.hex[:8]}{ep} [{self.dimension}] {self.defect_type}"
+
+
+# ============================================================
+# CreationTask - 统一任务记录（新增，对应统一调度引擎）
+# ============================================================
+class CreationTask(models.Model):
+    """统一创作任务记录
+
+    统一收口 auto/step/workspace 三种模式的任务执行记录，
+    与 Project.fusion_status 互为 SSOT：
+    - CreationTask 记录一次「技能调用/工作流执行」的完整生命周期
+    - Project.fusion_status 记录项目整体创作阶段
+
+    状态机：
+      pending → running → completed
+                       ↘ failed → retrying → running
+                       ↘ cancelled
+      running → paused (step 模式等待用户确认 / human_node)
+      paused  → running (用户确认)
+    """
+
+    STATE_PENDING   = "pending"
+    STATE_RUNNING   = "running"
+    STATE_PAUSED    = "paused"
+    STATE_COMPLETED = "completed"
+    STATE_FAILED    = "failed"
+    STATE_RETRYING  = "retrying"
+    STATE_CANCELLED = "cancelled"
+
+    STATE_CHOICES = [
+        (STATE_PENDING,   "待执行"),
+        (STATE_RUNNING,   "执行中"),
+        (STATE_PAUSED,    "已暂停"),
+        (STATE_COMPLETED, "已完成"),
+        (STATE_FAILED,    "已失败"),
+        (STATE_RETRYING,  "重试中"),
+        (STATE_CANCELLED, "已取消"),
+    ]
+
+    TRIGGER_AUTO      = "auto"
+    TRIGGER_STEP      = "step"
+    TRIGGER_WORKSPACE = "workspace"
+    TRIGGER_RETRY     = "retry"
+
+    TRIGGER_CHOICES = [
+        (TRIGGER_AUTO,      "一键生成"),
+        (TRIGGER_STEP,      "分步掌控"),
+        (TRIGGER_WORKSPACE, "技能工作台"),
+        (TRIGGER_RETRY,     "人工重试"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE,
+        related_name="tasks", verbose_name="所属项目",
+    )
+    workflow = models.ForeignKey(
+        "workflow.FusionPipelinePack",
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="tasks", verbose_name="工作流版本",
+    )
+    trigger_mode = models.CharField(
+        "触发模式", max_length=16, choices=TRIGGER_CHOICES, default=TRIGGER_WORKSPACE,
+    )
+    state = models.CharField(
+        "执行状态", max_length=16, choices=STATE_CHOICES, default=STATE_PENDING, db_index=True,
+    )
+    current_node_index = models.IntegerField("当前节点", default=0)
+    progress_percent   = models.PositiveSmallIntegerField("进度（%）", default=0)
+    celery_task_id     = models.CharField("Celery Task ID", max_length=255, blank=True, default="")
+    error_code         = models.CharField("错误码", max_length=64, blank=True, default="")
+    error_message      = models.TextField("错误信息", blank=True, default="")
+    retry_count        = models.PositiveSmallIntegerField("重试次数", default=0)
+    extra              = models.JSONField(
+        "扩展参数", default=dict, blank=True,
+        help_text="存储 node_index、options 等调用参数快照，便于重试恢复",
+    )
+    started_at   = models.DateTimeField("开始时间", null=True, blank=True)
+    completed_at = models.DateTimeField("完成时间", null=True, blank=True)
+    created_at   = models.DateTimeField("创建时间", auto_now_add=True)
+    updated_at   = models.DateTimeField("更新时间", auto_now=True)
+
+    class Meta:
+        db_table = "creation_task"
+        verbose_name = "创作任务"
+        verbose_name_plural = verbose_name
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["project", "state"], name="task_project_state_idx"),
+            models.Index(fields=["state", "-created_at"], name="task_state_time_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"Task[{self.trigger_mode}] {self.id.hex[:8]} - {self.get_state_display()}"
+
+    def transition(self, new_state: str, *, error_code: str = "", error_message: str = "") -> None:
+        """状态机流转，统一入口"""
+        fields = ["state", "updated_at"]
+        self.state = new_state
+        if new_state == self.STATE_RUNNING and not self.started_at:
+            self.started_at = timezone.now()
+            fields.append("started_at")
+        if new_state in (self.STATE_COMPLETED, self.STATE_FAILED, self.STATE_CANCELLED):
+            self.completed_at = timezone.now()
+            fields.append("completed_at")
+        if error_code:
+            self.error_code = error_code
+            self.error_message = error_message
+            fields += ["error_code", "error_message"]
+        self.save(update_fields=fields)

@@ -42,6 +42,8 @@ const ModelHubPage = lazy(() => import('@/pages/Admin/model/ModelHubPage'))
 const PortalContentPage = lazy(() => import('@/pages/Admin/portal/PortalContentPage'))
 const CreationProjectsPage = lazy(() => import('@/pages/Admin/CreationProjects'))
 const CreationProjectTracePage = lazy(() => import('@/pages/Admin/CreationProjectTrace'))
+const SkillCenterPage = lazy(() => import('@/pages/Admin/skills/SkillCenterPage'))
+const TaskCenterPage = lazy(() => import('@/pages/Admin/creation/TaskCenterPage'))
 
 // ---- 设计稿预览 (/preview) ----
 const DesignIndex = lazy(() => import('@/pages/_design'))
@@ -231,6 +233,7 @@ export default function AppRoutes() {
           <Route path="creation/content" element={<PortalLegacyRedirect />} />
           <Route path="creation/projects" element={<CreationProjectsPage />} />
           <Route path="creation/projects/:projectId/trace" element={<CreationProjectTracePage />} />
+          <Route path="creation/tasks" element={<TaskCenterPage />} />
           <Route path="creation/agents" element={<OrchestrationLegacyRedirect />} />
 
           <Route path="main-chain" element={<MainChainStudioPage />} />
@@ -241,6 +244,8 @@ export default function AppRoutes() {
           <Route path="portal" element={<PortalContentPage />} />
 
           <Route path="commerce/settings" element={<CommerceSettingsPage />} />
+
+          <Route path="skills" element={<SkillCenterPage />} />
 
           <Route path="system" element={<SystemSettingsPage />} />
           <Route path="system/configs" element={<SystemConfigCenterPage />} />

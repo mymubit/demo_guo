@@ -69,10 +69,19 @@ from apps.console.skills.rule_views import (
 from apps.console.skills.definition_views import (
     SkillDefinitionDetailView,
     SkillDefinitionListView,
+    SkillDefinitionPublishView,
+    SkillDefinitionDeprecateView,
+    SkillDefinitionRollbackView,
     SkillConfigEntryDetailView,
     SkillConfigEntryListView,
     SkillDefectDetailView,
     SkillDefectListView,
+)
+from apps.console.creation.task_views import (
+    CreationTaskListView,
+    CreationTaskDetailView,
+    CreationTaskRetryView,
+    CreationTaskCancelView,
 )
 from apps.console.creation.quality_defect_views import (
     ScriptQualityDefectDetailView,
@@ -254,9 +263,12 @@ _skills_routes = [
     path("skills/rules/<uuid:rule_id>/", SkillRuleDetailView.as_view(), name="admin-skills-rules-detail"),
     path("skills/rules/<uuid:rule_id>/approve/", SkillRuleApproveView.as_view(), name="admin-skills-rules-approve"),
     path("skills/rules/<uuid:rule_id>/archive/", SkillRuleArchiveView.as_view(), name="admin-skills-rules-archive"),
-    # 技能定义（SKILL.md → DB）
+    # 技能定义（SKILL.md → DB）+ 生命周期操作
     path("skills/definitions/", SkillDefinitionListView.as_view(), name="admin-skills-definitions-list"),
     path("skills/definitions/<int:pk>/", SkillDefinitionDetailView.as_view(), name="admin-skills-definitions-detail"),
+    path("skills/definitions/<int:pk>/publish/", SkillDefinitionPublishView.as_view(), name="admin-skills-definitions-publish"),
+    path("skills/definitions/<int:pk>/deprecate/", SkillDefinitionDeprecateView.as_view(), name="admin-skills-definitions-deprecate"),
+    path("skills/definitions/<int:pk>/rollback/", SkillDefinitionRollbackView.as_view(), name="admin-skills-definitions-rollback"),
     # 技能配置项
     path("skills/configs/", SkillConfigEntryListView.as_view(), name="admin-skills-configs-list"),
     path("skills/configs/<str:config_key>/", SkillConfigEntryDetailView.as_view(), name="admin-skills-configs-detail"),
@@ -276,6 +288,11 @@ urlpatterns = [
     path("members/codes/generate/", PromoCodeGenerateView.as_view(), name="admin-promo-code-generate"),
     path("creation/projects/", AdminCreationProjectListView.as_view(), name="admin-creation-projects"),
     path("creation/projects/<str:project_id>/", AdminCreationProjectDetailView.as_view(), name="admin-creation-project-detail"),
+    # 任务管理中心
+    path("creation/tasks/", CreationTaskListView.as_view(), name="admin-creation-tasks"),
+    path("creation/tasks/<str:task_id>/", CreationTaskDetailView.as_view(), name="admin-creation-task-detail"),
+    path("creation/tasks/<str:task_id>/retry/", CreationTaskRetryView.as_view(), name="admin-creation-task-retry"),
+    path("creation/tasks/<str:task_id>/cancel/", CreationTaskCancelView.as_view(), name="admin-creation-task-cancel"),
     path("members/feature-matrix/", MembershipFeatureMatrixListView.as_view(), name="admin-members-feature-matrix"),
     path("members/feature-matrix/seed/", MembershipFeatureMatrixSeedView.as_view(), name="admin-members-feature-matrix-seed"),
     path("members/feature-matrix/<uuid:item_id>/", MembershipFeatureMatrixDetailView.as_view(), name="admin-members-feature-matrix-detail"),

@@ -12,8 +12,13 @@ import { adminAgent } from './agent'
 import { adminOrchestration } from './orchestration'
 import { adminModel } from './model'
 import { adminMonitoring } from './monitoring'
+import { adminSkill } from './skill'
+import { adminTask } from './task'
 
-export { adminMainChain, adminWorkflow, adminAgent, adminOrchestration, adminModel, adminMonitoring }
+export {
+  adminMainChain, adminWorkflow, adminAgent, adminOrchestration,
+  adminModel, adminMonitoring, adminSkill, adminTask,
+}
 
 export const admin = {
   // 仪表盘

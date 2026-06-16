@@ -689,13 +689,25 @@ class AgentSkillDefinition(models.Model):
     实现统一管理入口；Cursor Agent 通过 /api/skills/<skill_id>/definition/
     获取最新版本，不再依赖本地文件。
 
-    category 分类：
+    category 分类（原有，保持兼容）：
     - creator     : 创作类技能
     - quality     : 质检类技能
     - compliance  : 合规类技能
     - shared      : 通用共享技能
+
+    skill_layer 分层（新增，三层架构）：
+    - foundation  : 基础能力层（文本生成/润色/审核等）
+    - business    : 业务技能层（人设/大纲/剧本等）
+    - tool        : 工具能力层（格式转换/查重/敏感词等）
+
+    lifecycle_status 生命周期：
+    - draft       : 草稿（未发布）
+    - active      : 上线（全量生效）
+    - gray        : 灰度（按 gray_weight 分流）
+    - deprecated  : 废弃（不再使用）
     """
 
+    # 原有分类（保持兼容）
     CATEGORY_CREATOR    = "creator"
     CATEGORY_QUALITY    = "quality"
     CATEGORY_COMPLIANCE = "compliance"
@@ -708,28 +720,135 @@ class AgentSkillDefinition(models.Model):
         (CATEGORY_SHARED,     "通用共享"),
     ]
 
+    # 新三层分类
+    LAYER_FOUNDATION = "foundation"
+    LAYER_BUSINESS   = "business"
+    LAYER_TOOL       = "tool"
+
+    LAYER_CHOICES = [
+        (LAYER_FOUNDATION, "基础能力层"),
+        (LAYER_BUSINESS,   "业务技能层"),
+        (LAYER_TOOL,       "工具能力层"),
+    ]
+
+    # 生命周期状态
+    LIFECYCLE_DRAFT      = "draft"
+    LIFECYCLE_ACTIVE     = "active"
+    LIFECYCLE_GRAY       = "gray"
+    LIFECYCLE_DEPRECATED = "deprecated"
+
+    LIFECYCLE_CHOICES = [
+        (LIFECYCLE_DRAFT,      "草稿"),
+        (LIFECYCLE_ACTIVE,     "上线"),
+        (LIFECYCLE_GRAY,       "灰度"),
+        (LIFECYCLE_DEPRECATED, "废弃"),
+    ]
+
+    # 原有字段
     skill_id    = models.CharField("技能 ID", max_length=100, unique=True, db_index=True,
-                                   help_text='如 drama-master-suite / drama-creator-core')
+                                   help_text='如 drama-master-suite / brief.character_extract')
     name        = models.CharField("技能名称", max_length=200)
     version     = models.CharField("版本号", max_length=20, default="1.0.0")
-    category    = models.CharField("分类", max_length=50, choices=CATEGORY_CHOICES,
+    category    = models.CharField("分类（兼容）", max_length=50, choices=CATEGORY_CHOICES,
                                    default=CATEGORY_CREATOR, db_index=True)
     content     = models.TextField("技能内容（Markdown）",
                                    help_text="原始 SKILL.md 的完整 Markdown 内容")
-    is_active   = models.BooleanField("是否启用", default=True, db_index=True)
+    is_active   = models.BooleanField("是否启用（兼容）", default=True, db_index=True)
     source_file = models.CharField("来源文件路径", max_length=300, blank=True,
                                    help_text="迁移前的本地相对路径，如 ai-drama-skills-v2/drama-creator-core/SKILL.md")
-    created_at  = models.DateTimeField("创建时间", auto_now_add=True)
-    updated_at  = models.DateTimeField("更新时间", auto_now=True)
+
+    # 新增：三层分类与子分类
+    skill_layer  = models.CharField(
+        "技能层级", max_length=20, choices=LAYER_CHOICES, blank=True, default="", db_index=True,
+        help_text="foundation=基础能力层；business=业务技能层；tool=工具能力层",
+    )
+    sub_category = models.CharField(
+        "子分类", max_length=64, blank=True, default="",
+        help_text="如 人设/大纲/剧本/审核 等，用于技能库细粒度筛选",
+    )
+
+    # 新增：生命周期管理
+    lifecycle_status = models.CharField(
+        "生命周期状态", max_length=16, choices=LIFECYCLE_CHOICES,
+        default=LIFECYCLE_DRAFT, db_index=True,
+    )
+    gray_weight = models.PositiveSmallIntegerField(
+        "灰度权重", default=100,
+        help_text="0-100，灰度模式下按此比例分流；100=全量，0=不分流",
+    )
+    published_at  = models.DateTimeField("发布时间", null=True, blank=True)
+    deprecated_at = models.DateTimeField("废弃时间", null=True, blank=True)
+
+    # 新增：调用协议规范
+    input_schema  = models.JSONField(
+        "入参 Schema（JSONSchema）", default=dict, blank=True,
+        help_text="描述技能入参结构，用于参数校验与 Admin 编辑界面",
+    )
+    output_schema = models.JSONField(
+        "出参 Schema（JSONSchema）", default=dict, blank=True,
+        help_text="描述技能出参结构，用于下游消费校验",
+    )
+    system_hint = models.TextField(
+        "System Hint（Prompt）", blank=True, default="",
+        help_text="取代 _SUB_SKILL_SYSTEM_HINTS 硬编码，由 Admin 可编辑的 LLM 系统提示词",
+    )
+
+    # 新增：执行策略
+    timeout_seconds = models.PositiveSmallIntegerField(
+        "超时时间（秒）", default=60,
+        help_text="单次技能调用最大等待时间，超时触发 retry_policy",
+    )
+    quota_cost = models.DecimalField(
+        "配额消耗", max_digits=10, decimal_places=4, default=0,
+        help_text="每次调用消耗的配额单位，0 表示免费",
+    )
+    retry_policy = models.JSONField(
+        "重试策略", default=dict, blank=True,
+        help_text='如 {"max_attempts": 2, "backoff_seconds": 5}',
+    )
+    fallback_skill_id = models.CharField(
+        "降级技能 ID", max_length=100, blank=True, default="",
+        help_text="主技能失败时的降级技能 skill_id，为空表示不降级",
+    )
+
+    created_at = models.DateTimeField("创建时间", auto_now_add=True)
+    updated_at = models.DateTimeField("更新时间", auto_now=True)
 
     class Meta:
         db_table = "skill_agent_definition"
         verbose_name = "Agent 技能定义"
         verbose_name_plural = verbose_name
-        ordering = ["category", "skill_id"]
+        ordering = ["skill_layer", "category", "skill_id"]
+        indexes = [
+            models.Index(fields=["lifecycle_status", "skill_layer"], name="skill_def_status_layer_idx"),
+            models.Index(fields=["skill_layer", "sub_category"], name="skill_def_layer_subcat_idx"),
+        ]
 
     def __str__(self) -> str:
-        return f"[{self.get_category_display()}] {self.skill_id} v{self.version}"
+        layer = self.skill_layer or self.get_category_display()
+        return f"[{layer}] {self.skill_id} v{self.version} ({self.get_lifecycle_status_display()})"
+
+    # ── 生命周期操作 ──────────────────────────────────────
+
+    def publish(self, *, gray_weight: int = 100) -> None:
+        """发布技能：draft/gray → active（全量）或 gray（灰度）"""
+        from django.db import transaction
+        target_status = self.LIFECYCLE_GRAY if gray_weight < 100 else self.LIFECYCLE_ACTIVE
+        with transaction.atomic():
+            self.lifecycle_status = target_status
+            self.gray_weight = gray_weight
+            self.published_at = timezone.now()
+            self.is_active = True
+            self.save(update_fields=[
+                "lifecycle_status", "gray_weight", "published_at", "is_active", "updated_at",
+            ])
+
+    def deprecate(self) -> None:
+        """废弃技能"""
+        self.lifecycle_status = self.LIFECYCLE_DEPRECATED
+        self.deprecated_at = timezone.now()
+        self.is_active = False
+        self.save(update_fields=["lifecycle_status", "deprecated_at", "is_active", "updated_at"])
 
 
 # ============================================================

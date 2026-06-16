@@ -7,6 +7,45 @@ import uuid
 from django.db import models
 
 
+class WorkflowTemplate(models.Model):
+    """工作流模板库
+
+    预置短剧创作标准模板，支持运营/管理员克隆自定义。
+    与 FusionPipelinePack 的关系：
+    - WorkflowTemplate：模板定义（静态，供克隆）
+    - FusionPipelinePack：运行时工作流包（动态，带版本管理）
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    template_id = models.CharField(
+        "模板 ID", max_length=64, unique=True, db_index=True,
+        help_text="如 tpl_standard_24ep / tpl_quick_1min",
+    )
+    name        = models.CharField("模板名称", max_length=128)
+    description = models.TextField("模板说明", blank=True, default="")
+    nodes       = models.JSONField(
+        "节点配置", default=list,
+        help_text="数组，每项描述一个工作流节点（agent_id/node_type/config 等）",
+    )
+    is_system   = models.BooleanField(
+        "系统预置", default=False,
+        help_text="True=系统预置模板（不可删除）；False=用户/运营自定义",
+    )
+    created_by  = models.CharField("创建人", max_length=128, blank=True, default="system")
+    created_at  = models.DateTimeField(auto_now_add=True)
+    updated_at  = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "workflow_template"
+        verbose_name = "工作流模板"
+        verbose_name_plural = verbose_name
+        ordering = ["-is_system", "name"]
+
+    def __str__(self):
+        tag = "系统" if self.is_system else "自定义"
+        return f"[{tag}] {self.name}（{self.template_id}）"
+
+
 class FusionJsonSchema(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     schema_key = models.CharField("Schema 键", max_length=128, unique=True, db_index=True)
@@ -33,6 +72,19 @@ class FusionJsonSchema(models.Model):
 
 
 class FusionPipelinePack(models.Model):
+    # 工作流版本发布状态
+    PACK_DRAFT    = "draft"
+    PACK_ACTIVE   = "active"
+    PACK_GRAY     = "gray"
+    PACK_ARCHIVED = "archived"
+
+    PACK_STATUS_CHOICES = [
+        (PACK_DRAFT,    "草稿"),
+        (PACK_ACTIVE,   "全量发布"),
+        (PACK_GRAY,     "灰度"),
+        (PACK_ARCHIVED, "已归档"),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     version = models.CharField("技能版本", max_length=64, unique=True, db_index=True)
     display_name = models.CharField("展示名称", max_length=128, blank=True, default="")
@@ -47,6 +99,29 @@ class FusionPipelinePack(models.Model):
     project_meta = models.JSONField("projectMeta 快照", default=dict, blank=True)
     imported_from_root = models.CharField("导入来源路径", max_length=512, blank=True, default="")
     notes = models.CharField("备注", max_length=255, blank=True, default="")
+
+    # 版本管理扩展字段
+    pack_status = models.CharField(
+        "发布状态", max_length=16, choices=PACK_STATUS_CHOICES,
+        default=PACK_DRAFT, db_index=True,
+        help_text="draft=草稿；active=全量发布；gray=灰度；archived=已归档",
+    )
+    gray_weight = models.PositiveSmallIntegerField(
+        "灰度权重", default=100,
+        help_text="0-100，pack_status=gray 时按此比例分流新创作项目",
+    )
+    change_notes = models.TextField("变更说明", blank=True, default="")
+    published_by = models.CharField(
+        "发布人", max_length=128, blank=True, default="",
+        help_text="记录发布操作人用户名",
+    )
+    published_at = models.DateTimeField("发布时间", null=True, blank=True)
+    rollback_to = models.ForeignKey(
+        "self", on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="rollback_targets", verbose_name="回滚目标包",
+        help_text="标记此包为某次回滚操作的目标版本",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -59,14 +134,22 @@ class FusionPipelinePack(models.Model):
     def __str__(self):
         label = self.display_name or self.version
         flags = []
-        if self.is_active:
-            flags.append("编辑中")
-        if self.is_published_to_portal:
-            flags.append("已发布")
+        if self.pack_status != self.PACK_DRAFT:
+            flags.append(self.get_pack_status_display())
         if self.is_default_for_creation:
             flags.append("默认")
         suffix = f" [{', '.join(flags)}]" if flags else ""
         return f"{label}{suffix}"
+
+    def publish(self, *, gray_weight: int = 100, published_by: str = "") -> None:
+        """发布工作流包：设置状态为 active 或 gray"""
+        from django.utils import timezone
+        target = self.PACK_GRAY if gray_weight < 100 else self.PACK_ACTIVE
+        self.pack_status = target
+        self.gray_weight = gray_weight
+        self.published_by = published_by
+        self.published_at = timezone.now()
+        self.save(update_fields=["pack_status", "gray_weight", "published_by", "published_at", "updated_at"])
 
 
 class FusionPipelineNode(models.Model):

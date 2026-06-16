@@ -288,6 +288,9 @@ export default function OrchestrationMonitorPanel() {
 
   useEffect(() => {
     load()
+    // 自动轮询：每 10 秒刷新监察数据
+    const timer = setInterval(() => { load() }, 10_000)
+    return () => clearInterval(timer)
   }, [load])
 
   const skillStats = stats?.skills || []

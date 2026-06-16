@@ -143,6 +143,9 @@ export default function CreationProjectsPage() {
 
   useEffect(() => {
     load()
+    // 自动轮询：每 10 秒刷新项目列表，便于感知进行中项目的状态变化
+    const timer = setInterval(() => { load() }, 10_000)
+    return () => clearInterval(timer)
   }, [load])
 
   const quickActive = useMemo(

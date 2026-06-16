@@ -29,6 +29,7 @@ from .fusion_views import (
     FusionNodesView,
     FusionSnapshotView,
 )
+from .sse_views import CreationProgressStreamView
 
 app_name = "creation"
 
@@ -74,11 +75,17 @@ urlpatterns = [
     # 提交创作
     path("submit/", CreationSubmitView.as_view(), name="creation-submit"),
     path("ai/generate/", AiFieldGenerateView.as_view(), name="creation-ai-generate"),
-    # 查询进度
+    # 查询进度（轮询方式，保持兼容）
     path(
         "progress/<str:project_id>/",
         CreationProgressView.as_view(),
         name="creation-progress",
+    ),
+    # SSE 实时进度推送（P2，替代自适应轮询）
+    path(
+        "projects/<str:project_id>/progress/stream/",
+        CreationProgressStreamView.as_view(),
+        name="creation-progress-stream",
     ),
     path(
         "projects/<str:project_id>/confirm/",
