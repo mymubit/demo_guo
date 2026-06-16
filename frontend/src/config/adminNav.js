@@ -103,6 +103,13 @@ export const ADMIN_NAV_GROUPS = [
         icon: BarChart3,
         description: '子技能执行健康度与失败分布',
       },
+      {
+        id: 'engine.skills',
+        path: '/admin/skills',
+        label: '技能管理',
+        icon: Wrench,
+        description: 'Agent 技能定义 / 版本管理 / 调用统计',
+      },
     ],
   },
   {

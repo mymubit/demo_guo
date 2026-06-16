@@ -46,11 +46,16 @@ from apps.console.orchestration.execution_views import (
     AgentProjectTraceView,
     AgentSubSkillStatsView,
     OrchestrationRecentRunsView,
+    TaskInterventionView,
+    TaskNodeJumpView,
 )
 from apps.console.orchestration.flow_views import (
     OrchestrationFlowBlueprintView,
+    OrchestrationFlowGraySwitchView,
+    OrchestrationFlowListView,
     OrchestrationFlowPublishView,
     OrchestrationFlowRegistryMetaView,
+    OrchestrationFlowRollbackView,
     OrchestrationFlowStepPatchView,
     OrchestrationFlowStepsReorderView,
 )
@@ -72,6 +77,8 @@ from apps.console.skills.definition_views import (
     SkillDefinitionPublishView,
     SkillDefinitionDeprecateView,
     SkillDefinitionRollbackView,
+    SkillDefinitionStatsView,
+    SkillDefinitionGrayPreviewView,
     SkillConfigEntryDetailView,
     SkillConfigEntryListView,
     SkillDefectDetailView,
@@ -225,6 +232,13 @@ _orchestration_routes = [
         AgentExecutionRunDetailView.as_view(),
         name="admin-orchestration-execution-run-detail",
     ),
+    # 灰度切流
+    path("orchestration/flow/gray-switch/", OrchestrationFlowGraySwitchView.as_view(), name="admin-orchestration-flow-gray-switch"),
+    path("orchestration/flow/rollback/", OrchestrationFlowRollbackView.as_view(), name="admin-orchestration-flow-rollback"),
+    path("orchestration/flow/list/", OrchestrationFlowListView.as_view(), name="admin-orchestration-flow-list"),
+    # 任务干预
+    path("orchestration/tasks/<str:task_id>/intervene/", TaskInterventionView.as_view(), name="admin-orchestration-task-intervene"),
+    path("orchestration/tasks/<str:task_id>/jump/", TaskNodeJumpView.as_view(), name="admin-orchestration-task-jump"),
 ]
 
 # 模型中心
@@ -269,6 +283,8 @@ _skills_routes = [
     path("skills/definitions/<int:pk>/publish/", SkillDefinitionPublishView.as_view(), name="admin-skills-definitions-publish"),
     path("skills/definitions/<int:pk>/deprecate/", SkillDefinitionDeprecateView.as_view(), name="admin-skills-definitions-deprecate"),
     path("skills/definitions/<int:pk>/rollback/", SkillDefinitionRollbackView.as_view(), name="admin-skills-definitions-rollback"),
+    path("skills/definitions/stats/", SkillDefinitionStatsView.as_view(), name="admin-skills-definitions-stats"),
+    path("skills/definitions/gray-preview/", SkillDefinitionGrayPreviewView.as_view(), name="admin-skills-definitions-gray-preview"),
     # 技能配置项
     path("skills/configs/", SkillConfigEntryListView.as_view(), name="admin-skills-configs-list"),
     path("skills/configs/<str:config_key>/", SkillConfigEntryDetailView.as_view(), name="admin-skills-configs-detail"),

@@ -187,6 +187,10 @@ export const admin = {
   agentSubSkillStats: (limit = 300) => adminOrchestration.stats(limit),
   agentProjectTraces: (projectId) => adminOrchestration.projectTraces(projectId),
   agentExecutionRun: (runId) => adminOrchestration.executionRun(runId),
+  workflowGraySwitch: (data) => adminOrchestration.graySwitch(data),
+  workflowRollback: (data) => adminOrchestration.rollback(data),
+  taskIntervene: (taskId, data) => adminOrchestration.taskIntervene(taskId, data),
+  taskJump: (taskId, data) => adminOrchestration.taskJump(taskId, data),
 
   // 创作中心
   listCreationProjects: (params = {}) =>

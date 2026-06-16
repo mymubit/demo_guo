@@ -18,6 +18,7 @@ import OrchestrationFlowGraphCanvas from '@/components/admin/OrchestrationFlowGr
 import { useAdminSelection } from '@/components/admin/AdminMasterDetail'
 import { useOrchestrationHubContext } from './OrchestrationHubContext'
 import OrchestrationPipelineBar from './OrchestrationPipelineBar'
+import GrayScaleControlPanel from './GrayScaleControlPanel'
 import { resolveFlowSelectionNodeId } from '@/utils/orchestrationFlowSteps'
 
 function pickSavePayload(step) {
@@ -139,6 +140,7 @@ export default function OrchestrationFlowPage() {
   const [fusionPacks, setFusionPacks] = useState([])
   const [packsLoading, setPacksLoading] = useState(true)
   const [packBusy, setPackBusy] = useState(false)
+  const [grayScaleMessage, setGrayScaleMessage] = useState(null)
   const reorderHistoryRef = useRef([])
 
   const steps = blueprint?.steps || []
@@ -440,6 +442,52 @@ export default function OrchestrationFlowPage() {
     }
   }
 
+  // 获取当前活跃的 pack 用于灰度控制
+  const activePack = fusionPacks.find((p) => p.is_active)
+
+  async function handleGraySwitch({ gray_weight }) {
+    if (!activePack) return
+    setPackBusy(true)
+    setGrayScaleMessage(null)
+    try {
+      await admin.workflowGraySwitch({
+        pack_id: activePack.id,
+        gray_weight,
+      })
+      setGrayScaleMessage({ type: 'success', text: `灰度权重已更新为 ${gray_weight}%` })
+      await loadPacks()
+    } catch (err) {
+      setGrayScaleMessage({ type: 'error', text: err.message || '灰度切换失败' })
+    } finally {
+      setPackBusy(false)
+    }
+  }
+
+  async function handleRollback() {
+    if (!activePack) return
+    setPackBusy(true)
+    setGrayScaleMessage(null)
+    try {
+      await admin.workflowRollback({ pack_id: activePack.id })
+      setGrayScaleMessage({ type: 'success', text: '已回滚到上一版本' })
+      await loadPacks()
+    } catch (err) {
+      setGrayScaleMessage({ type: 'error', text: err.message || '回滚失败' })
+    } finally {
+      setPackBusy(false)
+    }
+  }
+
+  function handleShowHistory() {
+    // TODO: 显示历史版本弹窗
+    showMessage('历史版本功能开发中', 'info')
+  }
+
+  function handlePreview() {
+    // TODO: 灰度预览功能
+    showMessage('灰度预览功能开发中', 'info')
+  }
+
   if (loading && !blueprint) {
     return <AdminLoading label="加载流程蓝图…" />
   }
@@ -486,6 +534,17 @@ export default function OrchestrationFlowPage() {
           onTogglePublish={handleTogglePublish}
         />
       </AdminPanel>
+
+      <GrayScaleControlPanel
+        pack={activePack}
+        loading={packsLoading}
+        onGraySwitch={handleGraySwitch}
+        onRollback={handleRollback}
+        onShowHistory={handleShowHistory}
+        onPreview={handlePreview}
+        message={grayScaleMessage}
+      />
+
       <OrchestrationStepSearch
         steps={sortedSteps}
         open={searchOpen}

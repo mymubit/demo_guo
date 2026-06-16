@@ -192,6 +192,11 @@ class Project(models.Model):
         "技能版本", max_length=32, blank=True, default="",
         help_text="来自 demo4book project-config projectMeta.version",
     )
+    # 新增：记录创作命中了哪个工作流版本（用于灰度追踪）
+    gray_flow_version = models.CharField(
+        "命中工作流版本", max_length=64, blank=True, default="",
+        help_text="记录创作请求命中的工作流 pack version，用于灰度流量分析",
+    )
     compliance_tier = models.CharField(
         "合规分层", max_length=32, blank=True, default="domestic",
         help_text="domestic | ai-comic | global-*",

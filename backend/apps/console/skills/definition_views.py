@@ -417,3 +417,129 @@ class SkillDefectDetailView(APIView):
         if fields:
             obj.save(update_fields=fields + ["updated_at"])
         return api_ok(_serialize_defect(obj), message="技能缺陷已更新")
+
+
+# ────────────────────────────────────────────────
+# 技能统计与灰度预览
+# ────────────────────────────────────────────────
+
+class SkillDefinitionStatsView(APIView):
+    """GET：技能调用统计（成功率 / 平均耗时 / 调用量）"""
+
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        """查询 SkillDefect 按 skill 聚合数量，查询 LlmUsageLog 按 source_key=skill_id 聚合。"""
+        from django.db.models import Count, Avg, Q
+        from django.utils import timezone
+        from datetime import timedelta
+
+        # 统计 open 状态的缺陷数量（按 skill_id 聚合）
+        open_defects_map = {}
+        for row in (
+            SkillDefect.objects.filter(status=SkillDefect.STATUS_OPEN)
+            .values("skill__skill_id")
+            .annotate(count=Count("id"))
+        ):
+            open_defects_map[row["skill__skill_id"]] = row["count"]
+
+        # 解析时间范围过滤（默认 7 天）
+        days = int(request.query_params.get("days", 7))
+        days = max(1, min(days, 90))
+        since = timezone.now() - timedelta(days=days)
+
+        # 按 source_key（即 skill_id）聚合 LlmUsageLog
+        from apps.skill.models import LlmUsageLog
+
+        stats_map = {}
+        for row in (
+            LlmUsageLog.objects.filter(created_at__gte=since)
+            .values("source_key")
+            .annotate(
+                total_calls=Count("id"),
+                success_count=Count("id", filter=Q(success=True)),
+            )
+        ):
+            key = row["source_key"] or ""
+            if key:
+                stats_map[key] = {
+                    "total_calls": row["total_calls"],
+                    "success_count": row["success_count"],
+                    "success_rate": round(row["success_count"] / row["total_calls"], 4) if row["total_calls"] else 0.0,
+                    "open_defects": open_defects_map.get(key, 0),
+                }
+
+        # 合并所有技能的统计数据
+        items = []
+        for skill in AgentSkillDefinition.objects.filter(is_active=True).order_by("skill_id"):
+            key = skill.skill_id
+            stats = stats_map.get(key, {"total_calls": 0, "success_count": 0, "success_rate": 0.0, "open_defects": 0})
+            items.append({
+                "skill_id": key,
+                "name": skill.name,
+                "total_calls": stats["total_calls"],
+                "success_rate": stats["success_rate"],
+                "open_defects": stats["open_defects"],
+            })
+
+        return api_ok({
+            "items": items,
+            "total": len(items),
+            "days": days,
+            "since": since.isoformat(),
+        })
+
+
+class SkillDefinitionGrayPreviewView(APIView):
+    """GET：预览灰度分流效果（给定 user_id 列表，返回每个命中哪个版本）"""
+
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        """根据 gray_traffic_salt + user_id % 100 < gray_weight 计算每个 user_id 命中灰度还是正式版本。"""
+        skill_id = request.query_params.get("skill_id", "").strip()
+        if not skill_id:
+            return api_fail("skill_id 不能为空")
+
+        try:
+            skill = AgentSkillDefinition.objects.get(skill_id=skill_id)
+        except AgentSkillDefinition.DoesNotExist:
+            return api_fail(f"技能 {skill_id} 不存在", code=404)
+
+        # 获取 user_id 列表（逗号分隔或 JSON 数组）
+        raw_user_ids = request.query_params.get("user_ids", "").strip()
+        if not raw_user_ids:
+            return api_fail("user_ids 不能为空")
+
+        import json
+        try:
+            user_ids = json.loads(raw_user_ids)
+        except (json.JSONDecodeError, TypeError):
+            user_ids = [uid.strip() for uid in raw_user_ids.split(",") if uid.strip()]
+
+        if not user_ids:
+            return api_fail("user_ids 解析为空")
+
+        gray_weight = skill.gray_weight
+        salt = skill.gray_traffic_salt or ""
+
+        previews = []
+        for uid in user_ids[:1000]:  # 限制最多 1000 个
+            # 稳定的灰度分流计算：hash(salt + str(uid)) % 100 < gray_weight
+            import hashlib
+            hash_input = f"{salt}{uid}".encode("utf-8")
+            hash_val = int(hashlib.md5(hash_input).hexdigest(), 16) % 100
+            will_hit_gray = hash_val < gray_weight
+            previews.append({
+                "user_id": str(uid),
+                "will_hit_gray": will_hit_gray,
+                "gray_weight": gray_weight,
+            })
+
+        return api_ok({
+            "skill_id": skill_id,
+            "gray_weight": gray_weight,
+            "gray_traffic_salt": salt,
+            "previews": previews,
+            "total": len(previews),
+        })

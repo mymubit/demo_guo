@@ -122,6 +122,17 @@ class FusionPipelinePack(models.Model):
         help_text="标记此包为某次回滚操作的目标版本",
     )
 
+    # 新增：灰度分流稳定哈希种子
+    gray_traffic_salt = models.CharField(
+        "灰度分流种子", max_length=32, blank=True, default="",
+        help_text="用于 gray_traffic_salt + user_id % 100 < gray_weight 稳定分流",
+    )
+    # 新增：声明该流水线依赖的最低 LLM 配置版本
+    min_llm_provider_version = models.CharField(
+        "最低 LLM Provider 版本", max_length=64, blank=True, default="",
+        help_text="用于兼容性校验，低于此版本拒绝使用此流水线",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -130,6 +141,9 @@ class FusionPipelinePack(models.Model):
         verbose_name = "融合流水线配置包"
         verbose_name_plural = verbose_name
         ordering = ["-updated_at"]
+        indexes = [
+            models.Index(fields=["pack_status", "gray_weight"], name="pack_status_gray_idx"),
+        ]
 
     def __str__(self):
         label = self.display_name or self.version
