@@ -2,30 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ========= 全局基础样式 ========= */
+/* ============================================================
+   设计令牌 (Design Tokens) — 通过 CSS 变量驱动
+   目标: 与 tailwind.config.js 中的品牌/语义色板 1:1 对齐
+   新增组件/页面优先使用 Tailwind utility class,
+   不写自定义 CSS (除非特殊效果)
+   ============================================================ */
+
 :root {
-  color-scheme: dark;
+  /* 品牌色 */
+  --sf-brand-500: #6366f1;
+  --sf-brand-600: #4f46e5;
+  --sf-accent-400: #f4b719;
+
+  /* 深色层级 */
   --sf-bg: #030d24;
   --sf-surface: #051437;
-  --sf-surface-raised: #0a1f44;
-  --sf-border: rgba(141, 167, 211, 0.18);
-  --sf-border-strong: rgba(141, 167, 211, 0.32);
+  --sf-surface-raised: #0f172a;
+
+  /* 语义色 */
+  --sf-success: #22c55e;
+  --sf-warning: #f59e0b;
+  --sf-danger: #ef4444;
+  --sf-info: #06b6d4;
+
+  /* 文本色 */
   --sf-text: #f1f5f9;
   --sf-text-muted: #94a3b8;
-  --sf-gold: #f4b719;
+  --sf-text-dim: #64748b;
+
+  /* 边框/交互 */
+  --sf-border: rgba(255, 255, 255, 0.08);
+  --sf-border-strong: rgba(255, 255, 255, 0.16);
   --sf-focus-ring: rgba(244, 183, 25, 0.26);
+
+  /* 字体 */
+  --sf-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
+
+/* 基础样式 — 注意: 所有页面组件使用 Tailwind utility */
 
 html {
   scroll-behavior: smooth;
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--sf-font-sans);
   background: linear-gradient(180deg, #030d24 0%, #051437 50%, #030d24 100%);
   min-height: 100vh;
   color: var(--sf-text);
-  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -34,361 +59,160 @@ button,
 input,
 textarea,
 select {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-button:disabled,
-[aria-disabled='true'] {
-  cursor: not-allowed;
+  font-family: inherit;
 }
 
 ::selection {
-  background: rgba(244, 183, 25, 0.28);
-  color: #f8fafc;
+  background: var(--sf-focus-ring);
+  color: var(--sf-text);
 }
 
-/* ========= 自定义滚动条 ========= */
+/* ========== 自定义滚动条 ========== */
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #030d24;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #4d6db5 0%, #b37c06 100%);
+  background: rgba(99, 102, 241, 0.2);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #8da7d3 0%, #f4b719 100%);
+  background: rgba(99, 102, 241, 0.4);
 }
 
-/* ========= 通用组件样式 ========= */
-@layer components {
-  .gradient-text {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #f6d365 0%, #fda085 50%, #fbc2eb 100%);
-  }
+/* ========== 自定义动画 ========== */
 
-  .gradient-text-primary {
-    @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
   }
-
-  /* 遗留类名 — 对齐 slate 面板，无 blur */
-  .glass-card {
-    @apply rounded-2xl border border-white/5 bg-slate-900/60;
-  }
-
-  .glass-card-gold {
-    @apply rounded-2xl border border-gold-400/30 bg-gold-400/5;
-  }
-
-  .sf-page-shell {
-    @apply relative z-10 mx-auto w-full px-4 sm:px-6 lg:px-8;
-  }
-
-  .sf-section-stack {
-    @apply space-y-6 lg:space-y-8;
-  }
-
-  /* Console 后台 — 对齐 DESIGN_PROTOTYPE slate 面板 */
-  .sf-console-panel {
-    @apply rounded-2xl border border-white/5 bg-slate-900/60;
-  }
-
-  .sf-console-panel-subtle {
-    @apply rounded-2xl border border-white/5 bg-slate-900/40;
-  }
-
-  /* 遗留别名 — 与 sf-console-panel 等价 */
-  .sf-panel {
-    @apply sf-console-panel shadow-card;
-  }
-
-  .sf-panel-subtle {
-    @apply sf-console-panel-subtle;
-  }
-
-  .sf-console-page {
-    @apply space-y-5;
-  }
-
-  .sf-focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400/30 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-950;
-  }
-
-  .sf-control {
-    @apply w-full rounded-xl border border-white/10 bg-slate-900/65 px-4 py-3 text-sm text-navy-100 placeholder:text-navy-400 transition-colors sf-focus-ring;
-  }
-
-  .sf-control:hover {
-    @apply border-white/20 bg-slate-900/80;
-  }
-
-  .sf-control:focus {
-    @apply border-gold-400/60;
-  }
-
-  .sf-label {
-    @apply mb-2 block text-sm font-medium text-navy-200;
-  }
-
-  .sf-help-text {
-    @apply mt-1.5 text-xs leading-relaxed text-navy-400;
-  }
-
-  .sf-text-muted {
-    @apply text-navy-400;
-  }
-
-  .sf-text-mono-id {
-    @apply font-mono text-navy-300;
-  }
-
-  .sf-caption {
-    @apply text-[11px] leading-snug text-navy-400;
-  }
-
-  .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-300 sf-focus-ring;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    box-shadow: 0 10px 30px -10px rgba(102, 126, 234, 0.5);
-  }
-
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 15px 40px -10px rgba(102, 126, 234, 0.6);
-  }
-
-  .btn-gold {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-navy-950 transition-all duration-300 sf-focus-ring;
-    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-    box-shadow: 0 10px 30px -10px rgba(244, 183, 25, 0.5);
-  }
-
-  .btn-gold:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 15px 40px -10px rgba(244, 183, 25, 0.6);
-  }
-
-  .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white border border-white/20 transition-all duration-300 sf-focus-ring;
-    background: rgba(102, 126, 234, 0.1);
-  }
-
-  .btn-ghost:hover {
-    background: rgba(102, 126, 234, 0.2);
-    border-color: rgba(102, 126, 234, 0.4);
-  }
-
-  .section-title {
-    @apply text-3xl md:text-4xl font-bold mb-4 text-center tracking-tight text-white;
-  }
-
-  .section-subtitle {
-    @apply text-base md:text-lg text-navy-300 text-center max-w-2xl mx-auto mb-12 leading-relaxed;
-  }
-
-  .badge {
-    @apply inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-medium;
-    background: rgba(244, 183, 25, 0.15);
-    color: #f7cb54;
-    border: 1px solid rgba(244, 183, 25, 0.3);
-  }
-
-  .sf-toast {
-    @apply rounded-2xl border border-white/10 bg-slate-900/95 text-navy-100 backdrop-blur-xl;
-    box-shadow: 0 24px 80px -32px rgba(0, 0, 0, 0.72);
+  100% {
+    background-position: 1000px 0;
   }
 }
 
-/* ========= 动画效果 ========= */
-.animate-gradient {
-  background-size: 200% 200%;
-  animation: gradientShift 4s ease infinite;
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(244, 183, 25, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(244, 183, 25, 0.5);
+  }
 }
 
-@keyframes gradientShift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
+/* ============================================================
+   业务专用组件样式 (无通用样式)
+   ============================================================ */
 
-/* 遗留占位 — 装饰已移除，保留类名避免旧引用报错 */
-.particles-bg {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-/* 剧本展示样式 */
+/* 剧本展示 — 与其他文本样式区分 */
 .sf-script-result {
-  @apply text-navy-100 leading-relaxed;
+  color: var(--sf-text);
+  line-height: 1.7;
+  font-size: 0.875rem;
 }
 
-.sf-script-result .sf-title {
-  @apply text-3xl font-bold mb-4 gradient-text;
+.sf-script-result .ws-section {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--sf-border);
 }
 
-.sf-script-result .sf-meta {
-  @apply flex flex-wrap gap-2 mb-6;
+.sf-script-result .ws-section:last-child {
+  border-bottom: none;
 }
 
-.sf-script-result .sf-tag {
-  @apply px-3 py-1 rounded-full text-sm;
-  background: rgba(102, 126, 234, 0.2);
-  color: #b3c5e1;
+.sf-script-result .ws-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.5rem;
 }
 
-.sf-script-result .sf-score {
-  @apply px-3 py-1 rounded-full text-sm font-semibold;
-  background: linear-gradient(135deg, rgba(246, 211, 101, 0.3) 0%, rgba(253, 160, 133, 0.3) 100%);
-  color: #f7cb54;
+.sf-script-result .ws-meta,
+.sf-script-result .script-result-meta {
+  font-size: 0.75rem;
+  color: var(--sf-text-muted);
+  margin-bottom: 0.75rem;
 }
 
-.sf-script-result .sf-idea {
-  @apply text-lg text-navy-200 mb-8 p-4 rounded-xl;
-  background: rgba(102, 126, 234, 0.1);
+.sf-script-result .ws-section-body p {
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.7;
 }
 
-.sf-script-result .sf-section {
-  @apply text-2xl font-bold mt-10 mb-6 pb-2;
-  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+.sf-script-result .ws-section-body strong {
+  color: rgba(244, 183, 25, 0.9);
+  font-weight: 600;
 }
 
-.sf-script-result .sf-characters {
-  @apply grid grid-cols-1 md:grid-cols-3 gap-4 mb-8;
-}
-
-.sf-script-result .sf-character-card {
-  @apply p-6 rounded-2xl;
-  background: rgba(15, 42, 92, 0.4);
-  border: 1px solid rgba(102, 126, 234, 0.2);
-}
-
-.sf-script-result .sf-char-name {
-  @apply text-xl font-bold text-gold-300 mb-1;
-}
-
-.sf-script-result .sf-char-role {
-  @apply text-sm text-navy-300 mb-2;
-}
-
-.sf-script-result .sf-char-desc {
-  @apply text-sm text-navy-200;
-}
-
-.sf-script-result .sf-episode {
-  @apply p-6 mb-4 rounded-2xl;
-  background: rgba(15, 42, 92, 0.3);
-  border: 1px solid rgba(102, 126, 234, 0.15);
-}
-
-.sf-script-result .sf-episode h3 {
-  @apply text-xl font-bold text-gold-400 mb-4;
-}
-
-.sf-script-result .sf-review {
-  @apply space-y-3 p-6 rounded-2xl;
-  background: rgba(15, 42, 92, 0.3);
-  border: 1px solid rgba(102, 126, 234, 0.15);
-}
-
-.sf-script-result .sf-score-bar {
-  @apply flex items-center gap-4;
-}
-
-.sf-script-result .sf-score-label {
-  @apply w-24 text-sm text-navy-200;
-}
-
-.sf-script-result .sf-score-progress {
-  @apply h-2 rounded-full;
-  background: linear-gradient(90deg, #667eea 0%, #f6d365 100%);
-}
-
-.sf-script-result .sf-overall-score {
-  @apply text-center text-lg font-bold mt-4 pt-4;
-  border-top: 1px solid rgba(102, 126, 234, 0.2);
-  color: #f7cb54;
-}
-
-/* 分享页 / 工作台：后端注入的可读 HTML（workspace_html） */
-.sf-script-rendered .workspace-readable,
-.sf-script-rendered .creation-script-result {
-  @apply text-navy-100;
-}
-
-.sf-script-rendered .ws-title,
-.sf-script-rendered .script-result-title {
-  @apply text-2xl font-bold text-white mb-2;
-}
-
-.sf-script-rendered .ws-meta,
-.sf-script-rendered .script-result-meta {
-  @apply text-sm text-navy-400 mb-4;
-}
-
-.sf-script-rendered .ws-section {
-  @apply mb-8 pb-6 border-b border-white/10;
-}
-
-.sf-script-rendered .ws-section-title,
-.sf-script-rendered .script-episode-title {
-  @apply text-lg font-semibold text-gold-300/90 mb-3;
-}
-
-.sf-script-rendered .ws-section-body h2 {
-  @apply text-xl font-bold text-white mt-4 mb-2;
-}
-
-.sf-script-rendered .ws-section-body h3 {
-  @apply text-base font-semibold text-navy-100 mt-3 mb-2;
-}
-
-.sf-script-rendered .ws-section-body h4 {
-  @apply text-sm font-medium text-gold-400/80 mt-2 mb-1;
-}
-
-.sf-script-rendered .ws-section-body p {
-  @apply text-sm text-navy-200 leading-relaxed my-2;
-}
-
-.sf-script-rendered .ws-section-body ul {
-  @apply text-sm text-navy-200 list-disc pl-5 space-y-1 my-2;
-}
-
-.sf-script-rendered .ws-section-body strong {
-  @apply text-gold-300/90 font-semibold;
-}
-
+/* 剧本剧集块 */
+.sf-script-result .script-episode,
 .sf-script-rendered .script-episode {
-  @apply mb-6 p-4 rounded-xl bg-slate-900/40 border border-white/10;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px solid var(--sf-border);
 }
 
-.sf-script-rendered .script-episode-body,
-.sf-script-rendered .script-block {
-  @apply text-sm text-navy-100 leading-relaxed;
+.sf-script-rendered {
+  color: var(--sf-text);
+  font-size: 0.875rem;
+  line-height: 1.7;
 }
 
 .sf-script-rendered .ws-watermark,
 .sf-script-rendered .script-watermark {
-  @apply text-xs text-navy-400 mt-6;
+  font-size: 0.75rem;
+  color: var(--sf-text-dim);
+  margin-top: 1rem;
 }
 
-/* 节点进度动画 */
+/* 当前执行节点脉冲 — 与 Tailwind animate-pulse-glow 对齐 */
 .node-active {
-  animation: nodePulse 2s ease-in-out infinite;
+  animation: pulseGlow 2s ease-in-out infinite;
 }
 
-@keyframes nodePulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(244, 183, 25, 0.4); }
-  50% { box-shadow: 0 0 0 10px rgba(244, 183, 25, 0); }
+/* ============================================================
+   遗留兼容 — 老代码可能引用以下类,保留为 Tailwind 别名
+   新代码请直接使用 Tailwind utility class, 不要新增下面的类
+   ============================================================ */
+
+@layer components {
+  /* 渐变文字 (复用背景+透明文字) — 新代码请用 bg-gradient-to-r + text-transparent */
+  .gradient-text {
+    background-image: linear-gradient(135deg, #f6d365 0%, #fda085 50%, #fbc2eb 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .gradient-text-primary {
+    background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* 管理后台面板样式 — 新代码请使用 AdminPanel 组件 */
+  .sf-console-panel {
+    border-radius: 18px;
+    border: 1px solid var(--sf-border);
+    background-color: rgba(15, 23, 42, 0.6);
+  }
+
+  .sf-console-panel-subtle {
+    border-radius: 18px;
+    border: 1px solid var(--sf-border);
+    background-color: rgba(15, 23, 42, 0.4);
+  }
 }

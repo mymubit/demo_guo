@@ -1,48 +1,94 @@
-import { motion } from 'framer-motion'
-import { FolderOpen } from 'lucide-react'
-import { ICON } from '@/constants/iconSizes'
+import { FileX, Search, Lock, WifiOff, PlusCircle } from 'lucide-react'
+import Button from '@/components/ui/Button'
 import { cn } from '@/utils/cn'
-import { cardEnter } from '@/constants/motion'
+
+const presets = {
+  'no-data': {
+    icon: FileX,
+    title: '暂无数据',
+    description: '当前筛选条件下没有数据，请尝试调整筛选条件',
+  },
+  'no-result': {
+    icon: Search,
+    title: '未找到结果',
+    description: '尝试调整搜索关键词或清空筛选条件',
+  },
+  'no-permission': {
+    icon: Lock,
+    title: '暂无权限',
+    description: '请联系管理员开通访问权限',
+  },
+  'network-error': {
+    icon: WifiOff,
+    title: '网络异常',
+    description: '请检查网络连接后重试',
+  },
+  'empty-create': {
+    icon: PlusCircle,
+    title: '还没有内容',
+    description: '点击下方按钮创建第一项',
+  },
+}
 
 export default function EmptyState({
-  icon: Icon = FolderOpen,
+  type = 'no-data',
   title,
   description,
   action,
-  size = 'md',
+  icon,
+  className,
   compact = false,
-  className = '',
 }) {
-  const isCompact = compact || size === 'sm'
+  const preset = presets[type] || presets['no-data']
+  const Icon = icon || preset.icon
 
   return (
-    <motion.div
-      {...cardEnter}
+    <div
       className={cn(
-        'rounded-2xl border border-white/5 bg-slate-900/60 text-center shadow-card',
-        isCompact ? 'p-8' : 'p-10 md:p-14',
+        'flex flex-col items-center justify-center text-center',
+        compact ? 'py-8' : 'py-16',
         className,
       )}
     >
       <div
         className={cn(
-          'mx-auto rounded-2xl border border-white/10 bg-slate-800/50 flex items-center justify-center',
-          isCompact ? 'mb-4 h-14 w-14' : 'mb-6 h-20 w-20',
+          'rounded-2xl bg-slate-800/60 flex items-center justify-center mb-4',
+          compact ? 'w-12 h-12' : 'w-16 h-16',
         )}
       >
-        <Icon className={cn(isCompact ? ICON.xl : ICON.empty, 'text-gold-400/80')} />
+        <Icon className={cn(compact ? 'w-6 h-6' : 'w-8 h-8', 'text-slate-500')} />
       </div>
-      {title && (
-        <h3 className={cn('font-bold text-white', isCompact ? 'text-lg mb-2' : 'text-2xl mb-3')}>
-          {title}
-        </h3>
-      )}
-      {description && (
-        <p className={cn('mx-auto max-w-md text-navy-300', action ? 'mb-8' : '', isCompact && 'text-sm')}>
-          {description}
-        </p>
-      )}
-      {action}
-    </motion.div>
+      <h3 className={cn('font-semibold text-white mb-1', compact ? 'text-sm' : 'text-base')}>
+        {title || preset.title}
+      </h3>
+      <p className={cn('text-slate-400 mb-4', compact ? 'text-xs' : 'text-sm')}>
+        {description || preset.description}
+      </p>
+      {action && <div className="mt-2">{action}</div>}
+    </div>
+  )
+}
+
+// 便捷子组件 — 直接在页面调用
+export function EmptyStateWithButton({
+  type = 'no-data',
+  title,
+  description,
+  buttonText = '新建',
+  onClick,
+  className,
+}) {
+  return (
+    <EmptyState
+      type={type}
+      title={title}
+      description={description}
+      className={className}
+      action={
+        <Button variant="brand" size="sm" onClick={onClick}>
+          {buttonText}
+        </Button>
+      }
+    />
   )
 }
