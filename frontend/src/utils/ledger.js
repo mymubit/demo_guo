@@ -23,7 +23,7 @@ export function ledgerRowCategory(row) {
 }
 
 export function ledgerCategoryClass(category) {
-  return CATEGORY_STYLES[category] || 'bg-navy-800/60 text-navy-300 border-navy-600/30'
+  return CATEGORY_STYLES[category] || 'bg-slate-800/60 text-navy-300 border-white/10'
 }
 
 export function formatLedgerDelta(delta) {

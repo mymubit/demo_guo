@@ -18,16 +18,16 @@ const STATUS_STYLES = {
     bg: 'bg-red-500/10 border-red-500/25',
   },
   skipped: {
-    dot: 'bg-navy-500 ring-navy-500/30',
-    line: 'bg-navy-600/40',
+    dot: 'bg-slate-500 ring-slate-500/30',
+    line: 'bg-white/10',
     text: 'text-navy-400',
-    bg: 'bg-navy-800/40 border-navy-600/30',
+    bg: 'bg-white/[0.04] border-white/10',
   },
   pending: {
-    dot: 'bg-navy-700 ring-navy-600/30 border border-dashed border-navy-500',
-    line: 'bg-navy-700/30',
-    text: 'text-navy-500',
-    bg: 'bg-navy-900/30 border-navy-700/25 border-dashed',
+    dot: 'bg-slate-700 ring-white/10 border border-dashed border-white/20',
+    line: 'bg-white/[0.05]',
+    text: 'text-navy-400',
+    bg: 'bg-slate-900/40 border-white/5 border-dashed',
   },
   running: {
     dot: 'bg-amber-400 ring-amber-400/30 animate-pulse',
@@ -59,9 +59,9 @@ export function SubSkillLegend({ className = '' }) {
   )
 }
 
-export default function SubSkillStepBar({ steps = [], compact = false, showLegend = false }) {
+export default function SubSkillStepBar({ steps = [], compact = false, showLegend = false, activeIndex = -1 }) {
   if (!steps.length) {
-    return <p className="text-xs text-navy-500">暂无子技能记录</p>
+    return <p className="text-xs text-navy-400">暂无子技能记录</p>
   }
 
   return (
@@ -76,7 +76,9 @@ export default function SubSkillStepBar({ steps = [], compact = false, showLegen
             <div
               key={step.id || index}
               title={[step.id, typeLabel, statusLabel, step.message].filter(Boolean).join(' · ')}
-              className={`relative min-w-[120px] max-w-[220px] flex-1 rounded-xl border px-3 py-2 ${style.bg}`}
+              className={`relative min-w-[120px] max-w-[220px] flex-1 rounded-xl border px-3 py-2 ${style.bg} ${
+                index === activeIndex ? 'ring-2 ring-gold-400/45 border-gold-500/35' : ''
+              }`}
             >
               {!compact && index < steps.length - 1 ? (
                 <span
@@ -90,11 +92,11 @@ export default function SubSkillStepBar({ steps = [], compact = false, showLegen
                   <p className={`text-xs font-medium leading-snug ${style.text}`}>
                     {step.label || step.id}
                   </p>
-                  <p className="text-[10px] text-navy-500 mt-0.5 truncate">
+                  <p className="text-[10px] text-navy-400 mt-0.5 truncate">
                     {typeLabel}
                     {step.cli ? ` · ${step.cli}` : ''}
                   </p>
-                  <p className="text-[10px] text-navy-500 mt-0.5 flex items-center gap-1">
+                  <p className="text-[10px] text-navy-400 mt-0.5 flex items-center gap-1">
                     {statusLabel}
                     {step.status === 'failed' || step.status === 'skipped' ? (
                       <StepStatusMark status={step.status} className="w-3 h-3" />

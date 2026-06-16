@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 from ..artifact_service import get_artifact, save_artifact
 from ..models import CreationNode, Project
 from ..schema_mappers import enrich_brief_from_form_seed
+from ..trend_formula import trend_formula_has_internal_refs
 from ..step_mode import artifact_key_for_node
 
 CONTENT_EMPTY = "empty"
@@ -18,16 +19,45 @@ CONTENT_DRAFT = "draft"
 _AGENT_READY_KINDS = frozenset({CONTENT_AGENT_GENERATED})
 
 
+def _trend_formula_needs_story_refresh(brief: dict, trend: Optional[dict]) -> bool:
+    if not isinstance(trend, dict):
+        return True
+    if trend_formula_has_internal_refs(trend):
+        return True
+    highlights = trend.get("highlights") or []
+    if any("参考钩子" in str(item) for item in highlights):
+        return True
+    from .workspace_editor import _story_brief_from_payload
+
+    story = _story_brief_from_payload(brief)
+    has_user_story = any(
+        (story.get(key) or "").strip()
+        for key in ("idea", "openingHooks", "coreConflict")
+    )
+    if has_user_story and not (trend.get("projectHook") or trend.get("projectIdea")):
+        return True
+    return False
+
+
 def ensure_brief_seed_enriched(project: Project) -> Optional[dict]:
     """旧项目回填：将用户已填故事策划映射为 trendFormula / writingBrief。"""
+    from ..artifact_readiness import project_brief_ready
+    from ..schema_mappers import build_project_brief
+
     brief = get_artifact(project, "project_brief")
     if not isinstance(brief, dict) or not brief:
-        return None
-    if brief.get("seedEnriched") and brief.get("trendFormula") and brief.get("writingBrief"):
-        from ..trend_formula import trend_formula_has_internal_refs
-
-        if not trend_formula_has_internal_refs(brief.get("trendFormula")):
-            return brief
+        if not project_brief_ready(project):
+            return None
+        brief = build_project_brief(project)
+        save_artifact(project, "project_brief", brief)
+    trend = brief.get("trendFormula")
+    if (
+        brief.get("seedEnriched")
+        and trend
+        and brief.get("writingBrief")
+        and not _trend_formula_needs_story_refresh(brief, trend)
+    ):
+        return brief
     enriched = enrich_brief_from_form_seed(brief, project, submit_data={})
     if enriched != brief:
         save_artifact(project, "project_brief", enriched)
@@ -129,3 +159,23 @@ def get_node_payload(project: Project, node_index: int) -> dict:
         return {}
     payload = get_artifact(project, key)
     return payload if isinstance(payload, dict) else {}
+
+
+def _same_gate_issues(left: Any, right: Any) -> bool:
+    return [str(item) for item in (left or [])] == [str(item) for item in (right or [])]
+
+
+def resolve_character_gate_log(payload: Optional[dict]) -> dict:
+    """实时人设 gate 与 artifact 中人工确认状态合并。"""
+    from ..orchestration.agent_detection import run_character_gate
+
+    data = payload if isinstance(payload, dict) else {}
+    fresh = run_character_gate(data)
+    stored = data.get("characterGateLog") or {}
+    if (
+        not fresh.get("passed")
+        and stored.get("userAcknowledgedAt")
+        and _same_gate_issues(stored.get("issues"), fresh.get("issues"))
+    ):
+        return {**fresh, "userAcknowledgedAt": stored["userAcknowledgedAt"]}
+    return fresh

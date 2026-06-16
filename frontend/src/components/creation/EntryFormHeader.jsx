@@ -12,7 +12,7 @@ export default function EntryFormHeader({ entryMeta, currentStepIndex = 0 }) {
   return (
     <nav
       aria-label="填写进度"
-      className="flex flex-wrap items-center gap-y-2 gap-x-1 py-3 px-4 rounded-xl bg-navy-900/40 border border-navy-700/30"
+      className="flex flex-wrap items-center gap-y-2 gap-x-1 py-3 px-4 rounded-xl border border-white/5 bg-slate-900/40"
     >
       {steps.map((step, idx) => {
         const isPipeline = idx === steps.length - 1
@@ -27,8 +27,8 @@ export default function EntryFormHeader({ entryMeta, currentStepIndex = 0 }) {
                 isCurrent
                   ? 'bg-gold-500/15 text-gold-300 border-gold-500/35 font-medium'
                   : isPast
-                  ? 'bg-navy-800/50 text-navy-200 border-navy-700/40'
-                  : 'bg-navy-950/30 text-navy-500 border-navy-800/40'
+                  ? 'bg-slate-800/50 text-navy-200 border-white/10'
+                  : 'bg-slate-950/30 text-navy-400 border-white/5'
               }`}
             >
               <span
@@ -37,7 +37,7 @@ export default function EntryFormHeader({ entryMeta, currentStepIndex = 0 }) {
                     ? 'bg-gold-500/25 text-gold-200'
                     : isPast
                     ? 'bg-gold-500/15 text-gold-400'
-                    : 'bg-navy-800/60 text-navy-500'
+                    : 'border border-white/10 bg-white/[0.03] text-slate-400'
                 }`}
               >
                 {isPast ? <Check className="w-2.5 h-2.5" /> : idx + 1}
@@ -46,7 +46,7 @@ export default function EntryFormHeader({ entryMeta, currentStepIndex = 0 }) {
             </span>
             {idx < steps.length - 1 ? (
               <ChevronRight
-                className={`w-3.5 h-3.5 mx-0.5 shrink-0 ${isFuture ? 'text-navy-700' : 'text-navy-600'}`}
+                className={`w-3.5 h-3.5 mx-0.5 shrink-0 ${isFuture ? 'text-navy-700' : 'text-navy-500'}`}
               />
             ) : null}
           </div>

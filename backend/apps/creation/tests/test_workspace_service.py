@@ -12,7 +12,9 @@ from apps.creation.workspace.workspace_service import (
     _has_artifact_content,
     _project_can_share,
     build_workspace_payload,
+    finalize_workspace_brief,
     generate_skill,
+    reconcile_workspace_brief_status,
     recover_stale_workspace_running_state,
 )
 from apps.creation.tasks import _run_skill_node_core
@@ -71,6 +73,13 @@ class WorkspaceServiceTests(TestCase):
         self.assertIn("readable_markdown", brief_agent)
         self.assertEqual(payload.get("completed_agent_count"), 0)
         self.assertEqual(payload.get("confirmed_skill_count"), 1)
+        self.assertIn("execution_plan", payload)
+        self.assertIn("stages", payload["execution_plan"])
+
+    def test_build_workspace_payload_skill_orchestration_hints(self):
+        payload = build_workspace_payload(self.project)
+        first_skill = payload["skills"][0]
+        self.assertIn("orchestration_stage_type", first_skill)
 
     def test_can_share_when_completed(self):
         self.project.status = Project.STATUS_COMPLETED
@@ -93,6 +102,33 @@ class WorkspaceServiceTests(TestCase):
     def test_generate_skill_node1_not_allowed(self):
         with self.assertRaises(PermissionDenied):
             generate_skill(self.project, 1)
+
+    def test_finalize_workspace_brief_marks_node1_completed(self):
+        self.project.nodes.filter(node_index=1).update(
+            status=CreationNode.STATUS_PENDING,
+            summary_text="",
+            completed_at=None,
+        )
+
+        finalize_workspace_brief(self.project)
+
+        node = self.project.nodes.get(node_index=1)
+        self.assertEqual(node.status, CreationNode.STATUS_COMPLETED)
+        self.assertEqual(node.summary_text, "立项参数已确认")
+        self.assertIsNotNone(node.completed_at)
+
+    def test_reconcile_workspace_brief_status_repairs_existing_pending(self):
+        node = self.project.nodes.get(node_index=1)
+        node.status = CreationNode.STATUS_PENDING
+        node.summary_text = "立项参数已确认"
+        node.completed_at = None
+        node.save(update_fields=["status", "summary_text", "completed_at"])
+
+        self.assertTrue(reconcile_workspace_brief_status(self.project))
+
+        node.refresh_from_db()
+        self.assertEqual(node.status, CreationNode.STATUS_COMPLETED)
+        self.assertIsNotNone(node.completed_at)
 
     def test_recover_stale_running_node_with_content(self):
         save_artifact(

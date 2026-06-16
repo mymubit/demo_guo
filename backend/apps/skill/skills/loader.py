@@ -34,7 +34,7 @@ def _get_rules_root() -> Path:
     raw = getattr(settings, "FUSION_SKILL_ROOT", "") or ""
     if not raw.strip():
         # 兜底：上溯到 flickplay/demo4book/short-drama-script-creator
-        raw = str(Path(__file__).resolve().parents[4] / "demo4book" / "short-drama-script-creator")
+        raw = str(Path(__file__).resolve().parents[5] / "demo4book" / "short-drama-script-creator")
     return Path(raw) / "config" / "skill-rules"
 
 
@@ -358,20 +358,34 @@ class SkillRuleLoader:
     """
 
     def get_tier1(self) -> Optional[Dict[str, Any]]:
-        db_content, _ = self._db_active_content(1, "global", "", "tier_full")
-        return db_content
+        db_full, _ = self._db_active_content(1, "global", "", "tier_full")
+        if db_full:
+            return db_full
+        merged = self._merge_global_sections(1)
+        if merged:
+            return merged
+        return _get_permanent("tier1-iron-rules.json")
 
     def get_tier2(self) -> Optional[Dict[str, Any]]:
         db_content, _ = self._db_active_content(2, "global", "", "tier_full")
-        return db_content
+        if db_content:
+            return db_content
+        return _get_hot_reload("tier2-genre-rules.json")
 
     def get_tier3(self) -> Optional[Dict[str, Any]]:
         db_content, _ = self._db_active_content(3, "global", "", "tier_full")
-        return db_content
+        if db_content:
+            return db_content
+        return _get_hot_reload("tier3-workflow-rules.json")
 
     def get_tier4(self) -> Optional[Dict[str, Any]]:
-        db_content, _ = self._db_active_content(4, "global", "", "tier_full")
-        return db_content
+        db_full, _ = self._db_active_content(4, "global", "", "tier_full")
+        if db_full:
+            return db_full
+        merged = self._merge_global_sections(4)
+        if merged:
+            return merged
+        return _get_permanent("tier4-compliance-rules.json")
 
     # ── Tier1 节点级片段 ───────────────────────────────────────────────────────
     def build_tier1_node_snippet(self, node_id: str) -> str:
@@ -423,6 +437,33 @@ class SkillRuleLoader:
         except Exception as exc:
             logger.warning("[SkillRuleLoader] DB 查询失败 tier=%s section=%s: %s", tier, section, exc)
         return None, None
+
+    @staticmethod
+    def _merge_global_sections(tier: int) -> Optional[Dict[str, Any]]:
+        """将 DB 中按 section 拆分的全局规则合并为 tier JSON 结构。"""
+        try:
+            from apps.skill.models import SkillRuleConfig
+
+            rows = (
+                SkillRuleConfig.objects.filter(
+                    tier=tier,
+                    scope_type=SkillRuleConfig.SCOPE_GLOBAL,
+                    scope_key="",
+                    status=SkillRuleConfig.STATUS_ACTIVE,
+                )
+                .exclude(section__in=("tier_full", "genre_full", "pipeline_node_full"))
+                .order_by("section")
+            )
+            merged: Dict[str, Any] = {}
+            for row in rows:
+                if row.section == "_meta":
+                    merged["_meta"] = row.content
+                else:
+                    merged[row.section] = row.content
+            return merged if merged else None
+        except Exception as exc:
+            logger.warning("[SkillRuleLoader] 合并 tier=%s section 失败: %s", tier, exc)
+            return None
 
     # ── Tier2 品类规则（DB优先 → JSON兜底）────────────────────────────────────
     def get_genre_rules(self, genre: str) -> Optional[Dict[str, Any]]:

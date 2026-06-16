@@ -7,11 +7,11 @@ export default function CommerceSettingsPanel() {
   const { settings, setSettings, savingId, saveSettings } = useBilling()
   return (
 <div className="space-y-6">
-              <p className="text-sm text-navy-400 rounded-xl border border-navy-700/40 bg-navy-900/40 px-4 py-3">
+              <p className="text-sm text-navy-400 rounded-xl border border-white/5 bg-slate-900/60 px-4 py-3">
                 {COMMERCE_PAGE_NOTE}
               </p>
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              <div className="glass-card rounded-2xl p-6 space-y-4">
+              <div className="sf-console-panel p-6 space-y-4">
                 <h3 className="text-lg font-bold text-white flex items-center gap-2">
                   <Settings2 className="w-5 h-5 text-gold-400" />
                   站点币种
@@ -19,7 +19,7 @@ export default function CommerceSettingsPanel() {
                 <label className="block text-sm text-navy-300">
                   币种名称
                   <input
-                    className="mt-1 w-full rounded-xl bg-navy-900 border border-navy-700 px-4 py-2 text-white"
+                    className="sf-control mt-1 px-4 py-2 text-white"
                     value={settings.currency_name || ''}
                     onChange={(e) => setSettings((s) => ({ ...s, currency_name: e.target.value }))}
                   />
@@ -28,20 +28,20 @@ export default function CommerceSettingsPanel() {
                   注册赠送
                   <input
                     type="number"
-                    className="mt-1 w-full rounded-xl bg-navy-900 border border-navy-700 px-4 py-2 text-white"
+                    className="sf-control mt-1 px-4 py-2 text-white"
                     value={settings.signup_bonus ?? 0}
                     onChange={(e) =>
                       setSettings((s) => ({ ...s, signup_bonus: Number(e.target.value) }))
                     }
                   />
-                  <span className="text-xs text-navy-500 mt-1 block">
+                  <span className="text-xs text-navy-400 mt-1 block">
                     所有新用户注册即得；会员开通额外赠币在「会员与卡密」单独配置，可叠加。
                   </span>
                 </label>
                 <label className="block text-sm text-navy-300">
                   默认创作模式
                   <select
-                    className="mt-1 w-full rounded-xl bg-navy-900 border border-navy-700 px-4 py-2 text-white"
+                    className="sf-control mt-1 px-4 py-2 text-white"
                     value={settings.default_pipeline_mode || 'step'}
                     onChange={(e) =>
                       setSettings((s) => ({ ...s, default_pipeline_mode: e.target.value }))

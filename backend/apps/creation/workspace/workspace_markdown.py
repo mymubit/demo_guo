@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from ..artifact_renderer import episode_to_gate_markdown, episode_scripts_to_markdown
+from ..artifact_renderer import episode_to_markdown, episode_scripts_to_markdown
 from ..artifact_service import get_artifact
 from ..display.character_display import build_character_bible_view
 from ..models import Project
@@ -290,7 +290,7 @@ def _script_markdown(payload: dict) -> str:
         parts.append(body)
     else:
         for ep in payload.get("episodes") or []:
-            md = ep.get("scriptMarkdown") or episode_to_gate_markdown(ep)
+            md = ep.get("scriptMarkdown") or episode_to_markdown(ep)
             gate = portal_gate_log(ep.get("gateLog") or {})
             header = f"## 第{ep.get('episodeNumber')}集"
             if gate and not gate.get("skipped") and gate.get("passed") is False:

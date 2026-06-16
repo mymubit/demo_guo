@@ -45,6 +45,27 @@ def _refund_creation_submit_if_needed(project: Project, reason: str) -> None:
     )
 
 
+def _mark_skill_node_failed_state(project: Project, node_index: int, error_msg: str) -> None:
+    """将项目与节点同步标记为失败，避免节点卡在 running。"""
+    project.status = Project.STATUS_FAILED
+    project.error_message = error_msg[:500]
+    project.rendered_progress_html = _render_progress_html(project)
+    project.save(
+        update_fields=[
+            "status",
+            "error_message",
+            "rendered_progress_html",
+            "updated_at",
+        ]
+    )
+    CreationNode.objects.filter(project=project, node_index=node_index).update(
+        status=CreationNode.STATUS_FAILED,
+        error_message=error_msg[:500],
+        summary_text="生成失败",
+        completed_at=None,
+    )
+
+
 def _finalize_skill_node_failure(
     project_id: str,
     node_index: int,
@@ -63,21 +84,7 @@ def _finalize_skill_node_failure(
         except Project.DoesNotExist:
             return {"status": "error", "message": "project not found"}
 
-        project.status = Project.STATUS_FAILED
-        project.error_message = error_msg[:500]
-        project.rendered_progress_html = _render_progress_html(project)
-        project.save(
-            update_fields=[
-                "status",
-                "error_message",
-                "rendered_progress_html",
-                "updated_at",
-            ]
-        )
-        CreationNode.objects.filter(project=project, node_index=node_index).update(
-            status=CreationNode.STATUS_FAILED,
-            error_message=error_msg[:500],
-        )
+        _mark_skill_node_failed_state(project, node_index, error_msg)
 
     log_skill_task_done(
         project_id=project_id,
@@ -86,6 +93,37 @@ def _finalize_skill_node_failure(
         detail=log_detail or {"error": error_msg},
     )
     return {"status": "failed", "node_index": node_index, "error": error_msg}
+
+
+def _record_task_result_if_failed(
+    *,
+    task_name: str,
+    result: dict,
+    project_id: str,
+    node_index: int | None = None,
+) -> dict:
+    if not isinstance(result, dict):
+        return result
+    status = str(result.get("status") or "")
+    if status not in {"failed", "error"}:
+        return result
+    try:
+        from apps.monitoring.services.task_error import record_background_task_failure
+
+        record_background_task_failure(
+            task_name=task_name,
+            project_id=project_id,
+            node_index=node_index if node_index is not None else result.get("node_index"),
+            status=status,
+            detail={
+                "error": result.get("error") or result.get("message") or "后台任务执行失败",
+                "result": result,
+            },
+            exception_type="BackgroundTaskResultFailed",
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[TaskMonitor] write skipped task=%s project=%s: %s", task_name, project_id, exc)
+    return result
 
 
 def _execute_pipeline_for_project(project: Project) -> dict:
@@ -359,13 +397,23 @@ def _run_creation_pipeline_core(project_id: str) -> dict:
 @task(queue_name="creation")
 def run_creation_pipeline(project_id: str) -> dict:
     """7 节点创作流水线（dj_queue worker 异步执行）。"""
-    return _run_creation_pipeline_core(project_id)
+    result = _run_creation_pipeline_core(project_id)
+    return _record_task_result_if_failed(
+        task_name="creation.pipeline",
+        result=result,
+        project_id=project_id,
+    )
 
 
 def run_creation_pipeline_sync(project_id: str) -> dict:
     """同步执行（仅 CREATION_FORCE_SYNC_PIPELINE 或管理命令调试）。"""
     logger.info("[Creation] 同步执行 pipeline project=%s", project_id)
-    return _run_creation_pipeline_core(project_id)
+    result = _run_creation_pipeline_core(project_id)
+    return _record_task_result_if_failed(
+        task_name="creation.pipeline_sync",
+        result=result,
+        project_id=project_id,
+    )
 
 
 def _finalize_step_project(project: Project, pipeline_result: dict, fusion_out: dict | None) -> None:
@@ -482,12 +530,30 @@ def run_creation_step(
             outline_stage_key=str(outline_stage_key) if outline_stage_key else None,
         )
     if script_from is not None or script_to is not None:
-        return {"status": "error", "message": "分步模式不支持剧本批次参数"}
-    return _run_creation_step_core(project_id, int(node_index))
+        result = {"status": "error", "message": "分步模式不支持剧本批次参数"}
+        return _record_task_result_if_failed(
+            task_name="creation.step",
+            result=result,
+            project_id=project_id,
+            node_index=int(node_index),
+        )
+    result = _run_creation_step_core(project_id, int(node_index))
+    return _record_task_result_if_failed(
+        task_name="creation.step",
+        result=result,
+        project_id=project_id,
+        node_index=int(node_index),
+    )
 
 
 def run_creation_step_sync(project_id: str, node_index: int) -> dict:
-    return _run_creation_step_core(project_id, int(node_index))
+    result = _run_creation_step_core(project_id, int(node_index))
+    return _record_task_result_if_failed(
+        task_name="creation.step_sync",
+        result=result,
+        project_id=project_id,
+        node_index=int(node_index),
+    )
 
 
 def _run_skill_node_core(
@@ -506,7 +572,13 @@ def _run_skill_node_core(
 
     max_idx = WorkflowPipelineService.creation_max_node_index()
     if node_index < 2 or node_index > max_idx:
-        return {"status": "error", "message": "invalid skill index"}
+        result = {"status": "error", "message": "invalid skill index", "node_index": node_index}
+        return _record_task_result_if_failed(
+            task_name="creation.skill_node",
+            result=result,
+            project_id=project_id,
+            node_index=node_index,
+        )
 
     from apps.agent.runtime import agent_for_pipeline_node_index, should_defer_to_post_script_chain
 
@@ -514,7 +586,13 @@ def _run_skill_node_core(
         try:
             project = Project.objects.select_for_update().get(id=project_id)
         except Project.DoesNotExist:
-            return {"status": "error", "message": "project not found"}
+            result = {"status": "error", "message": "project not found", "node_index": node_index}
+            return _record_task_result_if_failed(
+                task_name="creation.skill_node",
+                result=result,
+                project_id=project_id,
+                node_index=node_index,
+            )
 
         if project.status == Project.STATUS_RUNNING:
             logger.info("[Workspace] project=%s 已有技能运行，跳过 node=%s", project_id, node_index)
@@ -582,6 +660,10 @@ def _run_skill_node_core(
         upstream_keys=run_input_summary["loaded_artifacts"],
     )
 
+    from .workspace.workspace_content import ensure_brief_seed_enriched
+
+    ensure_brief_seed_enriched(project)
+
     try:
         with AgentExecutionRunService.run_scope(
             project,
@@ -608,16 +690,12 @@ def _run_skill_node_core(
                     AgentExecutionRun.STATUS_FAILED,
                     error_message=error_msg,
                 )
-                project.status = Project.STATUS_FAILED
-                project.error_message = error_msg
-                project.rendered_progress_html = _render_progress_html(project)
-                project.save(
-                    update_fields=[
-                        "status",
-                        "error_message",
-                        "rendered_progress_html",
-                        "updated_at",
-                    ]
+                _mark_skill_node_failed_state(project, node_index, error_msg)
+                log_skill_task_done(
+                    project_id=project_id,
+                    node_index=node_index,
+                    status="failed",
+                    detail={"error": error_msg, "execution_run_id": str(execution_run.id)},
                 )
                 return {"status": "failed", "node_index": node_index, "error": error_msg}
 
@@ -693,17 +771,7 @@ def _run_skill_node_core(
                             node_index,
                             refund_exc,
                         )
-                project.status = Project.STATUS_FAILED
-                project.error_message = error_msg
-                project.rendered_progress_html = _render_progress_html(project)
-                project.save(
-                    update_fields=[
-                        "status",
-                        "error_message",
-                        "rendered_progress_html",
-                        "updated_at",
-                    ]
-                )
+                _mark_skill_node_failed_state(project, node_index, error_msg)
                 return {"status": "failed", "node_index": node_index, "error": error_msg}
 
             completed = project.nodes.filter(status=CreationNode.STATUS_COMPLETED).count()
@@ -787,7 +855,12 @@ def run_agent_post_chain(project_id: str) -> dict:
     try:
         project = Project.objects.get(id=project_id)
     except Project.DoesNotExist:
-        return {"status": "error", "message": "project not found"}
+        result = {"status": "error", "message": "project not found"}
+        return _record_task_result_if_failed(
+            task_name="creation.post_chain",
+            result=result,
+            project_id=project_id,
+        )
 
     from .orchestration.orchestrator import AgentOrchestrator
 
@@ -826,13 +899,25 @@ def run_agent_post_chain(project_id: str) -> dict:
             except Exception as _e:  # noqa: BLE001
                 logger.warning("[PostChain] 进化审计入队失败 project=%s: %s", project_id, _e)
 
-        return {"status": "done", "chain": out}
+        result = {"status": "done", "chain": out}
+        if out.get("status") == "error":
+            result = {"status": "failed", "chain": out, "error": "; ".join(out.get("errors") or [])}
+        return _record_task_result_if_failed(
+            task_name="creation.post_chain",
+            result=result,
+            project_id=project_id,
+        )
     except Exception as exc:  # noqa: BLE001
         logger.exception("[Agent] post chain failed project=%s", project_id)
         project.status = Project.STATUS_FAILED
         project.error_message = humanize_user_message(str(exc), default="后处理失败")[:500]
         project.save(update_fields=["status", "error_message", "updated_at"])
-        return {"status": "failed", "error": str(exc)}
+        result = {"status": "failed", "error": str(exc)}
+        return _record_task_result_if_failed(
+            task_name="creation.post_chain",
+            result=result,
+            project_id=project_id,
+        )
 
 
 @task(queue_name="creation")
@@ -880,4 +965,9 @@ def run_evolve_audit_task(project_id: str) -> dict:
         return {"status": "done", "project_id": project_id}
     except Exception as exc:  # noqa: BLE001
         logger.warning("[EvolveAuditTask] 失败 project=%s: %s", project_id, exc)
-        return {"status": "error", "project_id": project_id, "error": str(exc)}
+        result = {"status": "error", "project_id": project_id, "error": str(exc)}
+        return _record_task_result_if_failed(
+            task_name="creation.evolve_audit",
+            result=result,
+            project_id=project_id,
+        )

@@ -10,9 +10,9 @@ from apps.workflow.fusion.schema_validator import validate_against_schema
 from ..character_enrichment import normalize_character_bible_payload
 from ..ip_lock import merge_character_ip_lock
 from .agent_detection import run_character_gate
-from .agent_payload import coerce_character_chunk, unwrap_llm_payload
+from .agent_payload import coerce_character_chunk
 from .knowledge import retrieve_references
-from .sub_skill_orchestrator import SubSkillOrchestrator, _deep_merge
+from .sub_skill_orchestrator import SubSkillOrchestrator
 from .verify_creation_support import run_reference_verify_if_needed
 
 if TYPE_CHECKING:
@@ -23,6 +23,14 @@ logger = logging.getLogger(__name__)
 NODE_ID = "node-3-character"
 AGENT_ID = "character"
 SCHEMA_FILE = "character-bible.schema.json"
+
+
+def _ip_lock_trace_message(ip_log: dict) -> str:
+    locked_count = ip_log.get("lockedCount", 0)
+    issues = ip_log.get("issues") or []
+    if issues:
+        return f"锁定 {locked_count} 角色；{str(issues[0])[:80]}"
+    return f"锁定 {locked_count} 角色"
 
 
 class CharacterAgentEngine:
@@ -91,28 +99,12 @@ class CharacterAgentEngine:
             token_key=AGENT_ID,
         )
         payload = coerce_character_chunk(raw_char)
-
-        rel_upstream = {
-            **upstream,
-            "characterBible": payload,
-        }
-        try:
-            rel_patch = orch.run_llm_sub_skill(
-                "relationship-weaver",
-                NODE_ID,
-                rel_upstream,
-                token_key=AGENT_ID,
-            )
-            rel_patch = unwrap_llm_payload("relationship-weaver", rel_patch)
-            payload = _deep_merge(payload, rel_patch)
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("[CharacterAgent] relationship-weaver skipped: %s", exc)
-            orch.state.record(
-                "relationship-weaver",
-                "failed",
-                skill_type="llm",
-                message=str(exc)[:200],
-            )
+        orch.state.record(
+            "relationship-weaver",
+            "skipped",
+            skill_type="llm",
+            message="关系图由 character-generator 一次生成，避免二次 LLM 回灌人物设定",
+        )
 
         payload = normalize_character_bible_payload(
             payload,
@@ -127,7 +119,7 @@ class CharacterAgentEngine:
                 "ip-character-lock",
                 "executed" if ip_log.get("passed") else "failed",
                 skill_type="rule",
-                message=f"锁定 {ip_log.get('lockedCount', 0)} 角色",
+                message=_ip_lock_trace_message(ip_log),
             )
         orch.state.record("character-consistency", "executed", skill_type="rule", message="schema 归一化")
 

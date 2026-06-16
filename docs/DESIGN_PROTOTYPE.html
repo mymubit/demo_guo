@@ -1,0 +1,1558 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ScriptForge AI · 设计总览 / Design Spec</title>
+<style>
+  /* ============================================================
+     基础令牌 — 与项目 Tailwind 主题保持一致
+     C 端：navy + gold  /  后台：admin-navy + violet
+     ============================================================ */
+  :root {
+    --navy-950: #030d24;
+    --navy-900: #061734;
+    --navy-800: #0a1f44;
+    --navy-700: #142a55;
+    --navy-600: #1d3a73;
+    --navy-500: #2c4d8f;
+    --navy-400: #4567a8;
+    --navy-300: #7d92c4;
+    --navy-200: #b3c1de;
+    --navy-100: #d8e0f2;
+
+    --gold-300: #fbe28a;
+    --gold-400: #f6d365;
+    --gold-500: #f0bf4d;
+    --gold-600: #c89a37;
+
+    --violet-300: #a5b1f5;
+    --violet-400: #8a98ee;
+    --violet-500: #667eea;
+    --violet-600: #5566d4;
+    --violet-700: #4453b8;
+    --violet-800: #37459a;
+    --violet-900: #232a5a;
+
+    --slate-950: #0b0f1a;
+    --slate-900: #111827;
+    --slate-800: #1f2937;
+    --slate-700: #374151;
+    --slate-600: #4b5563;
+    --slate-500: #6b7280;
+    --slate-400: #9ca3af;
+    --slate-300: #d1d5db;
+    --slate-200: #e5e7eb;
+    --slate-100: #f3f4f6;
+    --slate-50:  #f9fafb;
+
+    --ok:    #34d399;
+    --warn:  #fbbf24;
+    --danger:#f87171;
+    --info:  #60a5fa;
+
+    --grad-gold:  linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+    --grad-violet:linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --grad-deep:  linear-gradient(180deg, #030d24 0%, #050f2c 60%, #07153a 100%);
+
+    --shadow-glass: 0 8px 32px -12px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.04);
+    --shadow-gold:  0 8px 28px -10px rgba(246,211,101,.45);
+    --shadow-violet:0 8px 28px -10px rgba(102,126,234,.6);
+    --ring: 0 0 0 1px rgba(255,255,255,.06);
+
+    --radius-sm: 8px;
+    --radius:    12px;
+    --radius-lg: 18px;
+    --radius-xl: 24px;
+
+    --t-fast: 180ms cubic-bezier(.2,.7,.3,1);
+    --t-base: 280ms cubic-bezier(.2,.7,.3,1);
+    --t-slow: 480ms cubic-bezier(.2,.7,.3,1);
+
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Source Han Sans CN", Inter, "Helvetica Neue", Arial, sans-serif;
+    --font-display: "Source Han Serif SC", "Noto Serif SC", "Songti SC", "STSong", serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    color: #fff;
+    background: var(--navy-950);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
+  }
+  a { color: inherit; text-decoration: none; }
+  img { max-width: 100%; display: block; }
+  button { font-family: inherit; cursor: pointer; }
+
+  /* ============================================================
+     顶部设计稿切换器
+     ============================================================ */
+  .frame {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 18px;
+    background: rgba(3,13,36,.85);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    font-size: 12px;
+  }
+  .frame .brand { display: flex; align-items: center; gap: 8px; margin-right: 18px; }
+  .frame .brand b { font-weight: 700; letter-spacing: .5px; }
+  .frame .brand .dot { width: 14px; height: 14px; border-radius: 4px; background: var(--grad-gold); }
+  .frame .seg { display: flex; gap: 4px; padding: 3px; background: rgba(255,255,255,.04); border-radius: 999px; }
+  .frame .seg button {
+    border: 0; background: transparent; color: rgba(255,255,255,.7);
+    padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 500;
+    transition: var(--t-fast);
+  }
+  .frame .seg button.active { background: rgba(255,255,255,.1); color: #fff; }
+  .frame .right { margin-left: auto; display: flex; align-items: center; gap: 16px; color: rgba(255,255,255,.55); }
+  .frame .right code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; padding: 2px 8px; border-radius: 6px; background: rgba(255,255,255,.05); }
+
+  main { padding-top: 52px; }
+
+  /* ============================================================
+     通用：区块 / 章节标题
+     ============================================================ */
+  .stage { display: none; }
+  .stage.active { display: block; }
+  .surface { background: var(--grad-deep); }
+  .surface-admin { background: linear-gradient(180deg, #0a0e1a 0%, #0e1424 100%); }
+
+  .section { padding: 96px 0; }
+  .section.tight { padding: 72px 0; }
+  .container { max-width: 1240px; margin: 0 auto; padding: 0 32px; }
+
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; letter-spacing: 1.4px; text-transform: uppercase;
+    color: var(--gold-400);
+  }
+  .eyebrow::before { content: ""; width: 24px; height: 1px; background: var(--gold-400); }
+
+  .h-display {
+    font-family: var(--font-display);
+    font-size: clamp(40px, 5.2vw, 72px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 18px 0 18px;
+  }
+  .h-section {
+    font-size: clamp(28px, 3.4vw, 44px);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 14px 0 12px;
+    font-weight: 700;
+  }
+  .lede { color: var(--navy-200); font-size: 16px; max-width: 56ch; }
+
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 600; border: 0; transition: var(--t-fast); }
+  .btn-gold   { background: var(--grad-gold);   color: #1a0e00; box-shadow: var(--shadow-gold); }
+  .btn-gold:hover   { transform: translateY(-1px); filter: brightness(1.05); }
+  .btn-violet { background: var(--grad-violet); color: #fff; box-shadow: var(--shadow-violet); }
+  .btn-violet:hover { transform: translateY(-1px); filter: brightness(1.05); }
+  .btn-ghost  { background: rgba(255,255,255,.04); color: #fff; border: 1px solid rgba(255,255,255,.12); }
+  .btn-ghost:hover { background: rgba(255,255,255,.08); }
+
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; }
+  .pill-gold   { background: rgba(246,211,101,.12); color: var(--gold-300); border: 1px solid rgba(246,211,101,.28); }
+  .pill-violet { background: rgba(102,126,234,.14); color: var(--violet-300); border: 1px solid rgba(102,126,234,.32); }
+  .pill-ok     { background: rgba(52,211,153,.10); color: #6ee7b7; border: 1px solid rgba(52,211,153,.28); }
+  .pill-warn   { background: rgba(251,191,36,.10); color: #fcd34d; border: 1px solid rgba(251,191,36,.28); }
+  .pill-danger { background: rgba(248,113,113,.10); color: #fca5a5; border: 1px solid rgba(248,113,113,.28); }
+  .pill-info   { background: rgba(96,165,250,.10); color: #93c5fd; border: 1px solid rgba(96,165,250,.28); }
+
+  /* ============================================================
+     导航（共用）
+     ============================================================ */
+  .nav {
+    position: sticky; top: 52px; z-index: 50;
+    backdrop-filter: blur(14px);
+    background: rgba(3,13,36,.7);
+    border-bottom: 1px solid rgba(255,255,255,.05);
+  }
+  .nav .row { max-width: 1240px; margin: 0 auto; padding: 14px 32px; display: flex; align-items: center; gap: 28px; }
+  .nav .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; }
+  .nav .logo .mark { width: 28px; height: 28px; border-radius: 8px; background: var(--grad-gold); }
+  .nav .links { display: flex; gap: 4px; margin-left: 12px; }
+  .nav .links a { padding: 8px 14px; border-radius: 10px; color: var(--navy-200); font-size: 14px; font-weight: 500; }
+  .nav .links a:hover { color: #fff; background: rgba(255,255,255,.04); }
+  .nav .links a.active { color: #fff; background: rgba(255,255,255,.08); }
+  .nav .spacer { flex: 1; }
+  .nav .actions { display: flex; align-items: center; gap: 10px; }
+
+  .nav-admin .mark { background: var(--grad-violet); }
+  .nav-admin { background: rgba(11,15,26,.7); }
+
+  /* ============================================================
+     通用：图表占位 / 视觉块
+     ============================================================ */
+  .visual {
+    position: relative; border-radius: var(--radius-lg);
+    overflow: hidden; background: linear-gradient(160deg, #0e1c40, #0a1530);
+    border: 1px solid rgba(255,255,255,.06);
+    box-shadow: var(--shadow-glass);
+  }
+  .visual .label { position: absolute; top: 14px; left: 14px; font-size: 11px; letter-spacing: 1px; color: var(--navy-300); }
+
+  /* ============================================================
+     HERO — 前台
+     ============================================================ */
+  .hero {
+    position: relative;
+    min-height: calc(100vh - 52px);
+    overflow: hidden;
+  }
+  .hero::before {
+    content: ""; position: absolute; inset: 0;
+    background: url("https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cinematic%20wide%20shot%20of%20a%20film%20director%20sitting%20in%20a%20dark%20luxurious%20editing%20room%20with%20glowing%20scripts%20and%20amber%20spotlights%2C%20anamorphic%20lens%2C%20deep%20navy%20and%20gold%20tones%2C%20moody%20atmosphere%2C%20photorealistic%2C%208k&image_size=landscape_16_9") center/cover no-repeat;
+    filter: brightness(.55) saturate(1.05);
+  }
+  .hero::after {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(60% 50% at 70% 30%, rgba(253,160,133,.18), transparent 70%),
+      radial-gradient(40% 30% at 20% 80%, rgba(102,126,234,.12), transparent 70%),
+      linear-gradient(180deg, rgba(3,13,36,.3) 0%, rgba(3,13,36,.85) 75%, var(--navy-950) 100%);
+  }
+  .hero .inner {
+    position: relative; z-index: 2;
+    max-width: 1240px; margin: 0 auto; padding: 0 32px;
+    height: calc(100vh - 52px);
+    display: grid; grid-template-columns: 1.1fr 0.9fr; align-items: center; gap: 48px;
+  }
+  .hero .copy { max-width: 620px; }
+  .hero .meta-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hero .h-display b { background: var(--grad-gold); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 700; }
+  .hero .lede { color: var(--navy-100); font-size: 17px; }
+  .hero .ctas { display: flex; gap: 12px; margin-top: 32px; }
+
+  .hero .poster {
+    position: relative;
+    aspect-ratio: 4/5;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.08);
+    box-shadow: 0 30px 80px -20px rgba(0,0,0,.7);
+    transform: rotate(1.5deg);
+  }
+  .hero .poster img { width: 100%; height: 100%; object-fit: cover; }
+  .hero .poster .badge {
+    position: absolute; left: 18px; bottom: 18px;
+    padding: 8px 12px; border-radius: 10px;
+    background: rgba(3,13,36,.7); backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,.08);
+    font-size: 12px; color: var(--navy-100);
+  }
+  .hero .poster .badge b { color: #fff; }
+  .hero .poster .price {
+    position: absolute; right: 18px; top: 18px;
+    padding: 8px 12px; border-radius: 999px;
+    background: var(--grad-gold); color: #1a0e00; font-weight: 700; font-size: 12px;
+  }
+
+  .scroll-hint {
+    position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+    z-index: 2; color: var(--navy-300); font-size: 11px; letter-spacing: 2px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .scroll-hint::after {
+    content: ""; width: 1px; height: 36px; background: linear-gradient(to bottom, var(--navy-300), transparent);
+  }
+
+  /* ============================================================
+     叙事章节 — 创作流水线（前台）
+     ============================================================ */
+  .flow {
+    display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 64px; align-items: center;
+  }
+  .pipeline {
+    position: relative;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(160deg, #0c1a3b 0%, #07102b 100%);
+    border: 1px solid rgba(255,255,255,.06);
+    padding: 28px;
+  }
+  .pipeline .track {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; align-items: stretch;
+    position: relative;
+  }
+  .pipeline .track::before {
+    content: ""; position: absolute; left: 6%; right: 6%; top: 28px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(246,211,101,.4), transparent);
+  }
+  .node {
+    display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 4px;
+  }
+  .node .dot {
+    width: 56px; height: 56px; border-radius: 16px;
+    display: grid; place-items: center;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.08);
+    color: var(--navy-200); font-weight: 700; font-size: 14px;
+  }
+  .node .name { font-size: 12px; color: var(--navy-200); }
+  .node .time { font-size: 10px; color: var(--navy-400); }
+  .node.active .dot { background: var(--grad-gold); color: #1a0e00; border-color: transparent; box-shadow: var(--shadow-gold); }
+  .node.active .name { color: #fff; }
+  .node.done .dot { background: rgba(246,211,101,.18); color: var(--gold-300); border-color: rgba(246,211,101,.4); }
+
+  .pipeline .progress {
+    margin-top: 22px; height: 6px; border-radius: 3px;
+    background: rgba(255,255,255,.04); overflow: hidden;
+  }
+  .pipeline .progress > span {
+    display: block; height: 100%;
+    background: var(--grad-gold);
+    width: 42%;
+    box-shadow: var(--shadow-gold);
+  }
+  .pipeline .footer { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; font-size: 13px; color: var(--navy-200); }
+  .pipeline .footer b { color: #fff; }
+
+  /* ============================================================
+     评价 — 横向滚动条形式
+     ============================================================ */
+  .testimonial {
+    display: grid; grid-template-columns: 1.4fr 0.6fr; gap: 48px; align-items: center;
+  }
+  .quote {
+    font-family: var(--font-display);
+    font-size: clamp(22px, 2.4vw, 32px);
+    line-height: 1.4;
+    color: #fff;
+  }
+  .quote .attr { display: flex; align-items: center; gap: 12px; margin-top: 18px; font-family: var(--font-sans); font-size: 14px; color: var(--navy-200); }
+  .quote .attr .av { width: 40px; height: 40px; border-radius: 50%; background: var(--grad-gold); }
+  .quote .attr b { color: #fff; }
+
+  .strip {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  }
+  .strip .cell { padding: 18px; border-radius: 14px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.05); }
+  .strip .num { font-size: 28px; font-weight: 700; color: #fff; }
+  .strip .lbl { font-size: 12px; color: var(--navy-300); margin-top: 4px; }
+
+  /* ============================================================
+     创作页 — 7 节点工作台
+     ============================================================ */
+  .ws-shell { display: grid; grid-template-columns: 320px 1fr 360px; min-height: calc(100vh - 52px); }
+  .ws-side {
+    background: rgba(8,15,40,.8); border-right: 1px solid rgba(255,255,255,.05);
+    padding: 24px 18px;
+  }
+  .ws-side h4 { font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--navy-300); margin: 18px 8px 10px; }
+  .ws-side .item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px;
+    color: var(--navy-200); font-size: 14px; cursor: pointer;
+  }
+  .ws-side .item:hover { background: rgba(255,255,255,.04); color: #fff; }
+  .ws-side .item.active { background: rgba(246,211,101,.10); color: #fff; }
+  .ws-side .item.active .num { background: var(--grad-gold); color: #1a0e00; border-color: transparent; }
+  .ws-side .item .num {
+    width: 22px; height: 22px; border-radius: 7px; background: rgba(255,255,255,.04);
+    display: grid; place-items: center; font-size: 11px; color: var(--navy-300);
+    border: 1px solid rgba(255,255,255,.06);
+  }
+  .ws-side .item .meta { margin-left: auto; font-size: 11px; color: var(--navy-400); }
+
+  .ws-main { padding: 28px 36px; overflow: auto; }
+  .ws-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+  .ws-head h2 { margin: 0; font-size: 22px; }
+  .ws-head .crumbs { color: var(--navy-300); font-size: 13px; }
+  .ws-head .crumbs b { color: #fff; }
+
+  .editor {
+    border-radius: var(--radius-lg);
+    background: linear-gradient(160deg, rgba(12,26,59,.7), rgba(7,16,43,.7));
+    border: 1px solid rgba(255,255,255,.06);
+    padding: 24px;
+  }
+  .editor h3 { margin: 0 0 4px; font-size: 16px; }
+  .editor .sub { color: var(--navy-300); font-size: 13px; margin-bottom: 18px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .form-row.full { grid-template-columns: 1fr; }
+  .field label { display: block; font-size: 12px; color: var(--navy-300); margin-bottom: 6px; }
+  .input, .textarea, .select {
+    width: 100%; padding: 12px 14px; border-radius: 10px;
+    background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06);
+    color: #fff; font-size: 14px; font-family: inherit;
+    transition: var(--t-fast);
+  }
+  .input:focus, .textarea:focus, .select:focus { outline: none; border-color: var(--gold-400); box-shadow: 0 0 0 3px rgba(246,211,101,.18); }
+  .textarea { min-height: 110px; resize: vertical; line-height: 1.6; }
+
+  .themes { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  .theme {
+    padding: 12px 10px; border-radius: 10px; text-align: center; font-size: 12px;
+    background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06);
+    color: var(--navy-200); cursor: pointer;
+  }
+  .theme.active { background: rgba(246,211,101,.10); color: #fff; border-color: rgba(246,211,101,.4); }
+
+  .slider { display: flex; align-items: center; gap: 14px; }
+  .slider input { flex: 1; accent-color: var(--gold-400); }
+  .slider .val { font-weight: 700; min-width: 50px; text-align: right; }
+
+  .ai-bar {
+    display: flex; align-items: center; gap: 12px; padding: 14px 18px;
+    border-radius: 14px; background: linear-gradient(135deg, rgba(102,126,234,.18), rgba(118,75,162,.18));
+    border: 1px solid rgba(102,126,234,.32); margin-top: 18px;
+  }
+  .ai-bar .lock {
+    width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center;
+    background: rgba(255,255,255,.06); color: #fff;
+  }
+  .ai-bar .copy { flex: 1; font-size: 13px; }
+  .ai-bar .copy b { display: block; font-size: 14px; }
+  .ai-bar .copy span { color: var(--navy-200); }
+
+  .ws-aside {
+    background: rgba(8,15,40,.8); border-left: 1px solid rgba(255,255,255,.05);
+    padding: 24px 20px;
+  }
+  .ws-aside h4 { font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--navy-300); margin: 18px 0 10px; }
+  .ws-aside h4:first-child { margin-top: 0; }
+  .kv { display: flex; justify-content: space-between; padding: 8px 0; font-size: 13px; color: var(--navy-200); border-bottom: 1px dashed rgba(255,255,255,.06); }
+  .kv b { color: #fff; }
+  .tokens { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .token-bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,.05); overflow: hidden; }
+  .token-bar > span { display: block; height: 100%; background: var(--grad-gold); }
+  .token-bar.cool > span { background: var(--grad-violet); }
+  .token-bar .row { display: flex; justify-content: space-between; font-size: 11px; color: var(--navy-300); margin-bottom: 4px; }
+
+  /* ============================================================
+     作品库 — 前台
+     ============================================================ */
+  .works-head { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+  .filter-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip { padding: 6px 12px; border-radius: 999px; font-size: 12px; color: var(--navy-200); background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); }
+  .chip.active { background: rgba(246,211,101,.10); color: #fff; border-color: rgba(246,211,101,.4); }
+
+  .work-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .work {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: linear-gradient(160deg, rgba(12,26,59,.7), rgba(7,16,43,.7));
+    border: 1px solid rgba(255,255,255,.06);
+    transition: var(--t-base);
+  }
+  .work:hover { transform: translateY(-2px); border-color: rgba(246,211,101,.32); box-shadow: var(--shadow-gold); }
+  .work .cover { aspect-ratio: 16/9; background-size: cover; background-position: center; }
+  .work .meta { padding: 16px 18px 18px; }
+  .work .meta h3 { margin: 0 0 4px; font-size: 16px; }
+  .work .meta .sub { font-size: 12px; color: var(--navy-300); }
+  .work .meta .row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+  .work .meta .row .pill { font-size: 10px; padding: 3px 8px; }
+
+  /* ============================================================
+     会员中心 — 前台
+     ============================================================ */
+  .member-hero {
+    text-align: center; padding: 80px 24px 40px;
+  }
+  .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .plan {
+    border-radius: var(--radius-xl);
+    background: linear-gradient(160deg, rgba(12,26,59,.7), rgba(7,16,43,.7));
+    border: 1px solid rgba(255,255,255,.06);
+    padding: 32px 28px;
+    display: flex; flex-direction: column;
+    transition: var(--t-base);
+  }
+  .plan.featured { border-color: rgba(246,211,101,.5); box-shadow: var(--shadow-gold); transform: translateY(-6px); }
+  .plan .badge { align-self: flex-start; margin-bottom: 14px; }
+  .plan h3 { margin: 0 0 4px; font-size: 22px; }
+  .plan .desc { color: var(--navy-300); font-size: 13px; }
+  .plan .price { display: flex; align-items: baseline; gap: 6px; margin: 22px 0 6px; }
+  .plan .price .num { font-size: 44px; font-weight: 700; }
+  .plan .price .unit { color: var(--navy-300); }
+  .plan ul { list-style: none; padding: 0; margin: 18px 0 24px; display: flex; flex-direction: column; gap: 10px; }
+  .plan li { display: flex; gap: 10px; font-size: 14px; color: var(--navy-100); }
+  .plan li::before { content: "✓"; color: var(--gold-400); font-weight: 700; }
+  .plan .actions { margin-top: auto; }
+
+  /* ============================================================
+     后台 — 顶栏
+     ============================================================ */
+  .admin-shell { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 52px); }
+  .admin-side {
+    background: rgba(11,15,26,.8); border-right: 1px solid rgba(255,255,255,.05);
+    padding: 20px 14px;
+  }
+  .admin-side h5 {
+    font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--slate-500);
+    margin: 18px 12px 6px;
+  }
+  .admin-side h5:first-child { margin-top: 0; }
+  .admin-side a {
+    display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px;
+    color: var(--slate-300); font-size: 13px; margin-bottom: 2px;
+  }
+  .admin-side a:hover { background: rgba(255,255,255,.04); color: #fff; }
+  .admin-side a.active { background: rgba(102,126,234,.12); color: #fff; }
+  .admin-side a.active::before {
+    content: ""; position: absolute; width: 3px; height: 18px; background: var(--grad-violet); border-radius: 2px; margin-left: -16px;
+  }
+  .admin-side a .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--slate-500); }
+  .admin-side a.active .dot { background: var(--violet-400); }
+  .admin-side a .cnt { margin-left: auto; font-size: 10px; color: var(--slate-500); padding: 2px 6px; background: rgba(255,255,255,.04); border-radius: 999px; }
+
+  .admin-main { padding: 24px 32px 64px; }
+
+  .adm-head { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+  .adm-head h1 { font-size: 20px; margin: 0; }
+  .adm-head .crumbs { color: var(--slate-500); font-size: 12px; }
+  .adm-head .spacer { flex: 1; }
+  .adm-head .toolbar { display: flex; gap: 8px; }
+  .adm-head .toolbar .input { padding: 8px 12px; }
+
+  /* ============================================================
+     后台 — KPI 卡片（克制版）
+     ============================================================ */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .kpi {
+    background: rgba(17,24,39,.6);
+    border: 1px solid rgba(255,255,255,.05);
+    border-radius: 14px; padding: 16px 18px;
+  }
+  .kpi .label { font-size: 12px; color: var(--slate-400); }
+  .kpi .val { font-size: 28px; font-weight: 700; margin-top: 4px; }
+  .kpi .delta { font-size: 12px; margin-top: 4px; }
+  .kpi .delta.up { color: #6ee7b7; }
+  .kpi .delta.down { color: #fca5a5; }
+  .kpi .spark { height: 36px; margin-top: 8px; }
+
+  /* ============================================================
+     后台 — 图表 / 表格
+     ============================================================ */
+  .row-2 { display: grid; grid-template-columns: 1.6fr 1fr; gap: 14px; }
+  .row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .panel {
+    background: rgba(17,24,39,.6);
+    border: 1px solid rgba(255,255,255,.05);
+    border-radius: 14px; padding: 18px;
+  }
+  .panel h3 { margin: 0 0 4px; font-size: 14px; font-weight: 600; }
+  .panel .sub { font-size: 12px; color: var(--slate-500); margin-bottom: 12px; }
+
+  .chart {
+    height: 220px; border-radius: 10px;
+    background:
+      linear-gradient(180deg, rgba(102,126,234,.10), transparent 60%),
+      linear-gradient(0deg, rgba(102,126,234,.10), transparent 60%);
+    position: relative; overflow: hidden;
+  }
+  .chart .axis { position: absolute; bottom: 8px; left: 14px; right: 14px; display: flex; justify-content: space-between; font-size: 10px; color: var(--slate-500); }
+  .chart .grid { position: absolute; inset: 14px 14px 28px; background-image: linear-gradient(transparent calc(100% - 1px), rgba(255,255,255,.05) 1px); background-size: 100% 25%; }
+  .chart .bars { position: absolute; inset: 14px 14px 28px; display: flex; align-items: end; gap: 8px; }
+  .chart .bar { flex: 1; background: var(--grad-violet); border-radius: 4px 4px 0 0; opacity: .9; }
+  .chart .bar.alt { background: var(--grad-gold); opacity: .85; }
+
+  .donut {
+    height: 220px; display: grid; place-items: center; position: relative;
+  }
+  .donut svg { transform: rotate(-90deg); }
+  .donut .legend { position: absolute; bottom: 6px; left: 14px; right: 14px; display: flex; justify-content: center; gap: 14px; font-size: 11px; color: var(--slate-400); }
+  .donut .legend .sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+
+  .table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .table th, .table td { text-align: left; padding: 12px 14px; }
+  .table thead th { color: var(--slate-500); font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,.06); }
+  .table tbody tr { border-bottom: 1px solid rgba(255,255,255,.04); }
+  .table tbody tr:hover { background: rgba(102,126,234,.06); }
+  .table td b { color: #fff; font-weight: 500; }
+  .table .num { font-variant-numeric: tabular-nums; }
+  .table .right { text-align: right; }
+  .table .avatar { display: inline-flex; align-items: center; gap: 10px; }
+  .table .avatar .av { width: 28px; height: 28px; border-radius: 50%; background: var(--grad-violet); }
+
+  /* ============================================================
+     创作项目 — 监控
+     ============================================================ */
+  .project-row { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 14px; margin-bottom: 14px; }
+  .project-card { padding: 18px; }
+  .project-card .head { display: flex; align-items: center; gap: 12px; }
+  .project-card .head .cover { width: 56px; height: 56px; border-radius: 12px; background-size: cover; background-position: center; flex: 0 0 auto; }
+  .project-card .head h3 { margin: 0; font-size: 15px; }
+  .project-card .head .sub { font-size: 12px; color: var(--slate-500); }
+  .project-card .stages { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 14px; }
+  .stage-cell {
+    padding: 8px 6px; border-radius: 8px; text-align: center; font-size: 10px;
+    background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); color: var(--slate-500);
+  }
+  .stage-cell.done { background: rgba(52,211,153,.10); color: #6ee7b7; border-color: rgba(52,211,153,.32); }
+  .stage-cell.run  { background: rgba(102,126,234,.14); color: #c7d2fe; border-color: rgba(102,126,234,.4); }
+  .stage-cell.fail { background: rgba(248,113,113,.10); color: #fca5a5; border-color: rgba(248,113,113,.32); }
+  .project-card .footer { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; color: var(--slate-500); }
+  .project-card .footer .spacer { flex: 1; }
+
+  /* ============================================================
+     LLM 配置
+     ============================================================ */
+  .llm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .provider {
+    background: rgba(17,24,39,.6);
+    border: 1px solid rgba(255,255,255,.05);
+    border-radius: 14px; padding: 16px 18px;
+  }
+  .provider .head { display: flex; align-items: center; gap: 10px; }
+  .provider .head .mark { width: 36px; height: 36px; border-radius: 10px; background: var(--grad-violet); display: grid; place-items: center; font-weight: 700; }
+  .provider h3 { margin: 0; font-size: 14px; }
+  .provider .model { font-size: 11px; color: var(--slate-500); }
+  .provider .meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+  .provider .meta .cell { padding: 8px 10px; border-radius: 8px; background: rgba(255,255,255,.03); }
+  .provider .meta .cell .k { font-size: 10px; color: var(--slate-500); }
+  .provider .meta .cell .v { font-size: 14px; font-weight: 600; margin-top: 2px; }
+  .provider .footer { display: flex; gap: 8px; margin-top: 12px; }
+
+  /* ============================================================
+     注释
+     ============================================================ */
+  .annotation {
+    position: relative; padding: 12px 14px; border-radius: 10px;
+    background: rgba(102,126,234,.10); border: 1px dashed rgba(102,126,234,.4);
+    font-size: 12px; color: var(--slate-300); margin-top: 16px;
+  }
+  .annotation b { color: #c7d2fe; }
+
+  /* ============================================================
+     响应式 — 简化展示
+     ============================================================ */
+  @media (max-width: 1100px) {
+    .hero .inner { grid-template-columns: 1fr; }
+    .hero .poster { display: none; }
+    .flow, .testimonial { grid-template-columns: 1fr; }
+    .ws-shell { grid-template-columns: 1fr; }
+    .ws-side, .ws-aside { display: none; }
+    .admin-shell { grid-template-columns: 1fr; }
+    .admin-side { display: none; }
+    .kpi-row, .row-2, .row-3, .work-grid, .plans, .llm-grid, .project-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     顶栏 — 设计稿切换
+     ============================================================ -->
+<div class="frame">
+  <div class="brand"><span class="dot"></span><b>ScriptForge Design Spec</b></div>
+  <div class="seg" id="seg">
+    <button data-stage="consumer" class="active">前台 · C 端</button>
+    <button data-stage="admin">后台 · Console</button>
+  </div>
+  <div class="right">
+    <span>后端领域：</span>
+    <code>portal/  console/  十大中心</code>
+  </div>
+</div>
+
+<main>
+
+<!-- ============================================================
+     STAGE 1 — 前台
+     ============================================================ -->
+<section class="stage active" id="stage-consumer">
+  <div class="surface">
+
+    <!-- 顶部导航 -->
+    <header class="nav">
+      <div class="row">
+        <a class="logo" href="#"><span class="mark"></span><span>ScriptForge</span></a>
+        <nav class="links">
+          <a class="active" href="#hero">首页</a>
+          <a href="#creation">开始创作</a>
+          <a href="#works">我的作品</a>
+          <a href="#member">会员</a>
+        </nav>
+        <div class="spacer"></div>
+        <div class="actions">
+          <span class="pill pill-gold">余额 1,280 币</span>
+          <button class="btn btn-ghost">登录</button>
+          <button class="btn btn-gold">免费注册</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero" id="hero">
+      <div class="inner">
+        <div class="copy">
+          <div class="meta-row">
+            <span class="pill pill-gold">v1.6 · 主链 7 节点</span>
+            <span class="pill pill-info">4 题材格式 · 8 题材模板</span>
+          </div>
+          <h1 class="h-display">
+            一句话创意，<br/>
+            <b>80 集可拍摄</b>的 A 级剧本。
+          </h1>
+          <p class="lede">
+            ScriptForge 用 7 节点主链把创意拆成结构、人设、大纲、剧本、质量与交付。
+            全流程 8–12 分钟，生成即带数字水印，剧作 / 团队 / 平台三方可溯源。
+          </p>
+          <div class="ctas">
+            <button class="btn btn-gold">立即开始创作 →</button>
+            <button class="btn btn-ghost">观看 60 秒演示</button>
+          </div>
+        </div>
+        <div class="poster">
+          <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cinematic%20poster%20of%20a%20chinese%20short%20drama%20script%20manuscript%20on%20a%20dark%20mahogany%20desk%2C%20golden%20spotlight%2C%20shallow%20depth%20of%20field%2C%20film%20noir%20mood%2C%20gold%20and%20navy%20color%20grade%2C%20photorealistic%2C%208k&image_size=portrait_4_3" alt="poster">
+          <span class="price">第 17 集 · 钩子</span>
+          <div class="badge"><b>《逆光》</b> · 都市逆袭 · 80 集</div>
+        </div>
+      </div>
+      <div class="scroll-hint">SCROLL</div>
+    </section>
+
+    <!-- 流水线叙事 -->
+    <section class="section" id="creation">
+      <div class="container flow">
+        <div>
+          <span class="eyebrow">主链 7 节点</span>
+          <h2 class="h-section">从一句话到可拍摄剧本，<br/>每一步都可被复盘。</h2>
+          <p class="lede">创作不是黑箱。每完成一个节点，都能回看输入、决策、产出与评分。
+            想要推到哪一步，由你说了算。</p>
+        </div>
+        <div class="pipeline">
+          <div class="track">
+            <div class="node done"><div class="dot">1</div><div class="name">信息收集</div><div class="time">30s</div></div>
+            <div class="node done"><div class="dot">2</div><div class="name">结构规划</div><div class="time">60s</div></div>
+            <div class="node done"><div class="dot">3</div><div class="name">人设开发</div><div class="time">60s</div></div>
+            <div class="node active"><div class="dot">4</div><div class="name">大纲撰写</div><div class="time">120s</div></div>
+            <div class="node"><div class="dot">5</div><div class="name">剧本创作</div><div class="time">3-5m</div></div>
+            <div class="node"><div class="dot">6</div><div class="name">质量审查</div><div class="time">60s</div></div>
+            <div class="node"><div class="dot">7</div><div class="name">输出交付</div><div class="time">30s</div></div>
+          </div>
+          <div class="progress"><span></span></div>
+          <div class="footer">
+            <span>当前：<b>第 4 节点 · 大纲撰写</b></span>
+            <span>已耗时 03:12 · 预计剩余 04:48</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 评价 -->
+    <section class="section tight">
+      <div class="container testimonial">
+        <div>
+          <span class="eyebrow">来自团队的评价</span>
+          <p class="quote">"过去我们开发一部 80 集短剧需要 2–3 周。
+            现在只需输入一句话，团队拿到的是结构、人设、节奏、镜头建议一条龙。"<br/>
+            <span class="attr"><span class="av"></span><b>陈导</b> · 短剧制作公司</span>
+          </p>
+        </div>
+        <div class="strip">
+          <div class="cell"><div class="num">50,000+</div><div class="lbl">创作者</div></div>
+          <div class="cell"><div class="num">200万+</div><div class="lbl">生成集数</div></div>
+          <div class="cell"><div class="num">98.6%</div><div class="lbl">满意度</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 创作工作台 -->
+    <section class="section" style="padding-top:0;">
+      <div class="ws-shell">
+        <aside class="ws-side">
+          <h4>主链节点</h4>
+          <div class="item"><span class="num">1</span>信息收集<span class="meta">✓</span></div>
+          <div class="item"><span class="num">2</span>结构规划<span class="meta">✓</span></div>
+          <div class="item"><span class="num">3</span>人设开发<span class="meta">✓</span></div>
+          <div class="item active"><span class="num">4</span>大纲撰写<span class="meta">运行中</span></div>
+          <div class="item"><span class="num">5</span>剧本创作<span class="meta">—</span></div>
+          <div class="item"><span class="num">6</span>质量审查<span class="meta">—</span></div>
+          <div class="item"><span class="num">7</span>输出交付<span class="meta">—</span></div>
+          <h4>题材格式</h4>
+          <div class="item"><span class="num">A</span>标准版</div>
+          <div class="item active"><span class="num">B</span>行业通用版</div>
+          <div class="item"><span class="num">C</span>精简版</div>
+          <div class="item"><span class="num">D</span>分镜版</div>
+        </aside>
+
+        <section class="ws-main">
+          <div class="ws-head">
+            <div>
+              <div class="crumbs">创作 / <b>《逆光》</b> / 信息收集</div>
+              <h2>把一句话创意，变成可被拍摄的故事</h2>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-ghost">保存草稿</button>
+              <button class="btn btn-gold">确认项目简报 →</button>
+            </div>
+          </div>
+
+          <div class="editor">
+            <h3>基本信息</h3>
+            <div class="sub">题材、集数、节奏与一句话创意，决定后续 6 个节点的方向。</div>
+            <div class="form-row">
+              <div class="field">
+                <label>题材</label>
+                <div class="themes">
+                  <div class="theme active">都市逆袭</div>
+                  <div class="theme">家庭复仇</div>
+                  <div class="theme">豪门霸总</div>
+                  <div class="theme">穿越重生</div>
+                  <div class="theme">甜宠虐恋</div>
+                  <div class="theme">古装权谋</div>
+                  <div class="theme">悬疑反转</div>
+                  <div class="theme">混合题材</div>
+                </div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="field">
+                <label>集数</label>
+                <div class="slider">
+                  <input type="range" min="20" max="120" value="80" />
+                  <div class="val">80 集</div>
+                </div>
+              </div>
+              <div class="field">
+                <label>节奏偏好</label>
+                <select class="select"><option>前慢后快（推荐）</option><option>全程快节奏</option><option>前快后慢</option></select>
+              </div>
+            </div>
+            <div class="form-row full">
+              <div class="field">
+                <label>一句话创意</label>
+                <textarea class="textarea" placeholder="例：被前夫扫地出门的全职妈妈，靠 5 年前埋下的证据链反杀豪门……">被前夫扫地出门的全职妈妈，靠 5 年前埋下的证据链反杀豪门，并意外发现女儿身上藏着的惊天秘密。</textarea>
+              </div>
+            </div>
+
+            <div class="ai-bar">
+              <div class="lock">🔒</div>
+              <div class="copy">
+                <b>AI 字段提示已锁定</b>
+                <span>后续节点将以本简报为唯一输入，<b>不可中途替换主题</b>，确保剧本一致性。</span>
+              </div>
+              <button class="btn btn-ghost">查看提示词</button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="ws-aside">
+          <h4>本节点预估</h4>
+          <div class="kv"><span>模型</span><b>doubao-pro-32k</b></div>
+          <div class="kv"><span>预计 Token</span><b>~18,200</b></div>
+          <div class="kv"><span>预计耗时</span><b>2 分钟</b></div>
+          <div class="kv"><span>消耗创作币</span><b>120</b></div>
+
+          <h4>Token 配额（本月）</h4>
+          <div class="tokens">
+            <div>
+              <div class="row"><span>结构规划</span><span>62%</span></div>
+              <div class="token-bar"><span style="width:62%"></span></div>
+            </div>
+            <div>
+              <div class="row"><span>大纲撰写</span><span>38%</span></div>
+              <div class="token-bar cool"><span style="width:38%"></span></div>
+            </div>
+            <div>
+              <div class="row"><span>剧本创作</span><span>14%</span></div>
+              <div class="token-bar"><span style="width:14%"></span></div>
+            </div>
+          </div>
+
+          <h4>质量门槛</h4>
+          <div class="kv"><span>四维评分</span><b>≥ 70 通过</b></div>
+          <div class="kv"><span>格式审查</span><b>正则 28 条</b></div>
+          <div class="kv"><span>敏感词</span><b>合规清单 v2.3</b></div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- 作品库 -->
+    <section class="section" id="works">
+      <div class="container">
+        <div class="works-head">
+          <div>
+            <span class="eyebrow">我的作品</span>
+            <h2 class="h-section">12 部剧本 · 5 部正在生成</h2>
+            <p class="lede">所有作品自动加密存档，可随时回看、对比、续写。</p>
+          </div>
+          <div class="filter-row">
+            <span class="chip active">全部</span>
+            <span class="chip">已完成</span>
+            <span class="chip">生成中</span>
+            <span class="chip">已分享</span>
+          </div>
+        </div>
+        <div class="work-grid">
+          <article class="work">
+            <div class="cover" style="background-image:url('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cinematic%20city%20rooftop%20at%20dusk%2C%20a%20woman%20in%20a%20red%20coat%20looking%20at%20the%20skyline%2C%20dark%20mood%2C%20anamorphic%2C%20photorealistic&image_size=landscape_16_9')"></div>
+            <div class="meta">
+              <h3>《逆光》</h3>
+              <div class="sub">都市逆袭 · 80 集 · 4.6 MB</div>
+              <div class="row">
+                <span class="pill pill-ok">已完成</span>
+                <span class="pill pill-gold">评分 86</span>
+              </div>
+            </div>
+          </article>
+          <article class="work">
+            <div class="cover" style="background-image:url('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=ancient%20chinese%20imperial%20palace%20corridor%2C%20lanterns%2C%20silk%20robes%2C%20fog%2C%20golden%20cinematic%20light%2C%20photorealistic&image_size=landscape_16_9')"></div>
+            <div class="meta">
+              <h3>《权倾长乐》</h3>
+              <div class="sub">古装权谋 · 60 集 · 3.8 MB</div>
+              <div class="row">
+                <span class="pill pill-info">生成中 64%</span>
+              </div>
+            </div>
+          </article>
+          <article class="work">
+            <div class="cover" style="background-image:url('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=rainy%20night%20in%20shanghai%2C%20a%20man%20and%20woman%20standing%20under%20a%20neon%20sign%2C%20film%20noir%2C%20photorealistic%2C%20anamorphic&image_size=landscape_16_9')"></div>
+            <div class="meta">
+              <h3>《错位》</h3>
+              <div class="sub">悬疑反转 · 50 集 · 3.1 MB</div>
+              <div class="row">
+                <span class="pill pill-ok">已完成</span>
+                <span class="pill pill-gold">评分 91</span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- 会员 -->
+    <section class="section" id="member">
+      <div class="container">
+        <div class="member-hero">
+          <span class="eyebrow">会员中心</span>
+          <h2 class="h-section">选择适合你团队的版本</h2>
+          <p class="lede" style="margin: 8px auto 0;">体验版 / 专业版 / 旗舰版 — 与后端 <code>MembershipPlan</code> 同源。</p>
+        </div>
+        <div class="plans">
+          <article class="plan">
+            <span class="pill pill-gold badge">体验版</span>
+            <h3>Free</h3>
+            <div class="desc">首次体验主链全流程</div>
+            <div class="price"><span class="num">¥0</span><span class="unit">/ 永久</span></div>
+            <ul>
+              <li>1 次创作（最多 20 集大纲）</li>
+              <li>3 种题材模板</li>
+              <li>不支持下载 / 分享</li>
+            </ul>
+            <div class="actions"><button class="btn btn-ghost" style="width:100%;justify-content:center;">立即体验</button></div>
+          </article>
+          <article class="plan featured">
+            <span class="pill pill-gold badge">推荐 · 专业版</span>
+            <h3>Pro</h3>
+            <div class="desc">独立编剧 / 小团队首选</div>
+            <div class="price"><span class="num">¥299</span><span class="unit">/ 月</span></div>
+            <ul>
+              <li>月 30 次创作 · 单次最多 120 集</li>
+              <li>8 题材模板 · 4 输出格式</li>
+              <li>质量审查 + 数字水印 + 分享链接</li>
+            </ul>
+            <div class="actions"><button class="btn btn-gold" style="width:100%;justify-content:center;">立即购买</button></div>
+          </article>
+          <article class="plan">
+            <span class="pill pill-violet badge">企业 · 旗舰版</span>
+            <h3>Enterprise</h3>
+            <div class="desc">MCN / 制作公司</div>
+            <div class="price"><span class="num">¥2,880</span><span class="unit">/ 月</span></div>
+            <ul>
+              <li>无限创作 · 优先队列</li>
+              <li>团队协作 + 私有模板 + 独立部署</li>
+              <li>API 接入 + 专属客服</li>
+            </ul>
+            <div class="actions"><button class="btn btn-violet" style="width:100%;justify-content:center;">联系商务</button></div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- ============================================================
+     STAGE 2 — 后台
+     ============================================================ -->
+<section class="stage" id="stage-admin">
+  <div class="surface-admin">
+
+    <!-- 后台顶栏 -->
+    <header class="nav nav-admin">
+      <div class="row">
+        <a class="logo" href="#"><span class="mark"></span><span>ScriptForge Console</span></a>
+        <nav class="links">
+          <a class="active" href="#adm-dashboard">仪表盘</a>
+          <a href="#adm-projects">创作</a>
+          <a href="#adm-users">用户</a>
+          <a href="#adm-billing">商业</a>
+          <a href="#adm-llm">模型</a>
+          <a href="#adm-skill">技能</a>
+        </nav>
+        <div class="spacer"></div>
+        <div class="actions">
+          <span class="pill pill-violet">● 集群健康</span>
+          <span class="pill pill-ok">LLM 7 路在线</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="admin-shell">
+      <!-- 后台侧边栏（十大中心） -->
+      <aside class="admin-side">
+        <h5>运营总览</h5>
+        <a class="active" href="#"><span class="dot"></span>仪表盘<span class="cnt">12</span></a>
+        <a href="#"><span class="dot"></span>调度监控<span class="cnt">3</span></a>
+        <a href="#"><span class="dot"></span>系统设置</a>
+
+        <h5>身份 / 商业</h5>
+        <a href="#"><span class="dot"></span>用户管理<span class="cnt">9.2k</span></a>
+        <a href="#"><span class="dot"></span>会员 / 套餐</a>
+        <a href="#"><span class="dot"></span>订单 / 退款</a>
+        <a href="#"><span class="dot"></span>充值 / 创作币<span class="cnt">4</span></a>
+        <a href="#"><span class="dot"></span>AI 字段提示词</a>
+
+        <h5>创作 / 技能</h5>
+        <a href="#"><span class="dot"></span>创作项目<span class="cnt">128</span></a>
+        <a href="#"><span class="dot"></span>剧本质量缺陷</a>
+        <a href="#"><span class="dot"></span>技能定义 / 配置</a>
+        <a href="#"><span class="dot"></span>写作规则 / 审批</a>
+
+        <h5>主链 / Agent</h5>
+        <a href="#"><span class="dot"></span>主链蓝图</a>
+        <a href="#"><span class="dot"></span>主链步骤 / 同步</a>
+        <a href="#"><span class="dot"></span>Fusion 节点包</a>
+        <a href="#"><span class="dot"></span>Agent 注册表</a>
+        <a href="#"><span class="dot"></span>Agent LLM 路由</a>
+        <a href="#"><span class="dot"></span>Agent 评审评分</a>
+
+        <h5>模型 / 门户</h5>
+        <a href="#"><span class="dot"></span>LLM 提供商 / 凭证</a>
+        <a href="#"><span class="dot"></span>LLM 模型目录</a>
+        <a href="#"><span class="dot"></span>LLM 路由 / 限流</a>
+        <a href="#"><span class="dot"></span>门户题材 / 钩子</a>
+        <a href="#"><span class="dot"></span>门户创作表单</a>
+      </aside>
+
+      <!-- 后台主区 -->
+      <div class="admin-main">
+
+        <!-- DASHBOARD -->
+        <div id="adm-dashboard">
+          <div class="adm-head">
+            <div>
+              <div class="crumbs">Console / <b>今日总览</b></div>
+              <h1>运营仪表盘 · 2026-06-16</h1>
+            </div>
+            <div class="spacer"></div>
+            <div class="toolbar">
+              <input class="input" placeholder="搜索项目 / 用户 / 订单" style="width:240px;">
+              <button class="btn btn-violet">导出报表</button>
+            </div>
+          </div>
+
+          <!-- KPI 行 -->
+          <div class="kpi-row">
+            <div class="kpi">
+              <div class="label">活跃用户</div>
+              <div class="val">12,486</div>
+              <div class="delta up">▲ 8.2% · 较昨日</div>
+              <svg class="spark" viewBox="0 0 120 36" preserveAspectRatio="none">
+                <polyline points="0,28 12,22 24,26 36,18 48,20 60,12 72,16 84,8 96,12 108,4 120,6" fill="none" stroke="#667eea" stroke-width="1.5"/>
+              </svg>
+            </div>
+            <div class="kpi">
+              <div class="label">日营收 (元)</div>
+              <div class="val">¥ 38,920</div>
+              <div class="delta up">▲ 12.4%</div>
+              <svg class="spark" viewBox="0 0 120 36" preserveAspectRatio="none">
+                <polyline points="0,24 12,20 24,22 36,14 48,16 60,10 72,12 84,6 96,8 108,2 120,4" fill="none" stroke="#f6d365" stroke-width="1.5"/>
+              </svg>
+            </div>
+            <div class="kpi">
+              <div class="label">创作中项目</div>
+              <div class="val">128</div>
+              <div class="delta down">▼ 3.1%</div>
+              <svg class="spark" viewBox="0 0 120 36" preserveAspectRatio="none">
+                <polyline points="0,12 12,14 24,10 36,16 48,12 60,18 72,14 84,20 96,16 108,22 120,18" fill="none" stroke="#a5b1f5" stroke-width="1.5"/>
+              </svg>
+            </div>
+            <div class="kpi">
+              <div class="label">LLM 成本 (元)</div>
+              <div class="val">¥ 1,284</div>
+              <div class="delta up">▲ 5.6%</div>
+              <svg class="spark" viewBox="0 0 120 36" preserveAspectRatio="none">
+                <polyline points="0,22 12,18 24,20 36,12 48,16 60,10 72,14 84,8 96,12 108,4 120,8" fill="none" stroke="#f87171" stroke-width="1.5"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- 图表行 -->
+          <div class="row-2">
+            <div class="panel">
+              <h3>近 7 日 · 创作 & 营收</h3>
+              <div class="sub">左轴：新增项目 · 右轴：充值金额（元）</div>
+              <div class="chart">
+                <div class="grid"></div>
+                <div class="bars">
+                  <div class="bar" style="height:48%"></div>
+                  <div class="bar" style="height:62%"></div>
+                  <div class="bar alt" style="height:38%"></div>
+                  <div class="bar" style="height:74%"></div>
+                  <div class="bar" style="height:58%"></div>
+                  <div class="bar alt" style="height:82%"></div>
+                  <div class="bar" style="height:90%"></div>
+                </div>
+                <div class="axis"><span>06-10</span><span>06-12</span><span>06-14</span><span>06-16</span></div>
+              </div>
+            </div>
+            <div class="panel">
+              <h3>会员构成</h3>
+              <div class="sub">基于 MembershipPlan 用户分布</div>
+              <div class="donut">
+                <svg width="160" height="160" viewBox="0 0 160 160">
+                  <circle cx="80" cy="80" r="60" fill="none" stroke="rgba(255,255,255,.05)" stroke-width="18"/>
+                  <circle cx="80" cy="80" r="60" fill="none" stroke="#667eea" stroke-width="18" stroke-dasharray="188 377" stroke-dashoffset="0"/>
+                  <circle cx="80" cy="80" r="60" fill="none" stroke="#f6d365" stroke-width="18" stroke-dasharray="113 377" stroke-dashoffset="-188"/>
+                  <circle cx="80" cy="80" r="60" fill="none" stroke="#34d399" stroke-width="18" stroke-dasharray="76 377" stroke-dashoffset="-301"/>
+                </svg>
+                <div class="legend">
+                  <span><i class="sw" style="background:#667eea"></i>专业 50%</span>
+                  <span><i class="sw" style="background:#f6d365"></i>旗舰 30%</span>
+                  <span><i class="sw" style="background:#34d399"></i>体验 20%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row-3" style="margin-top:14px;">
+            <div class="panel">
+              <h3>技能调用 Top 5</h3>
+              <div class="sub">近 7 日 · 按调用次数</div>
+              <table class="table">
+                <thead><tr><th>技能</th><th class="right">调用</th></tr></thead>
+                <tbody>
+                  <tr><td><b>brief.collect</b></td><td class="right num">3,201</td></tr>
+                  <tr><td><b>structure.beat</b></td><td class="right num">2,884</td></tr>
+                  <tr><td><b>outline.episode</b></td><td class="right num">2,610</td></tr>
+                  <tr><td><b>character.profile</b></td><td class="right num">2,322</td></tr>
+                  <tr><td><b>script.scene</b></td><td class="right num">1,902</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="panel">
+              <h3>LLM 用量 Top</h3>
+              <div class="sub">按 ¥ 消耗</div>
+              <table class="table">
+                <thead><tr><th>模型</th><th class="right">成本</th></tr></thead>
+                <tbody>
+                  <tr><td><b>doubao-pro-32k</b></td><td class="right num">¥ 642</td></tr>
+                  <tr><td><b>deepseek-v3</b></td><td class="right num">¥ 312</td></tr>
+                  <tr><td><b>gpt-4o-mini</b></td><td class="right num">¥ 188</td></tr>
+                  <tr><td><b>qwen-long</b></td><td class="right num">¥ 96</td></tr>
+                  <tr><td><b>glm-4-plus</b></td><td class="right num">¥ 46</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="panel">
+              <h3>系统告警</h3>
+              <div class="sub">监控中心 推送</div>
+              <table class="table">
+                <thead><tr><th>等级</th><th>事件</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="pill pill-warn">P2</span></td><td>volcengine 限流阈值达 80%</td></tr>
+                  <tr><td><span class="pill pill-info">P3</span></td><td>script.scene 失败率 +1.2%</td></tr>
+                  <tr><td><span class="pill pill-ok">OK</span></td><td>dj_queue 队列恢复</td></tr>
+                  <tr><td><span class="pill pill-danger">P1</span></td><td>doubao-pro 凭证过期</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 创作项目监控 -->
+        <div id="adm-projects" style="margin-top:48px;">
+          <div class="adm-head">
+            <div>
+              <div class="crumbs">Console / <b>创作项目</b></div>
+              <h1>创作项目监控 · 128 在跑</h1>
+            </div>
+            <div class="spacer"></div>
+            <div class="toolbar">
+              <input class="input" placeholder="按项目 / 用户筛选" style="width:240px;">
+              <button class="btn btn-ghost">全部</button>
+              <button class="btn btn-violet">筛选异常</button>
+            </div>
+          </div>
+
+          <div class="project-row">
+            <div class="panel project-card">
+              <div class="head">
+                <div class="cover" style="background-image:url('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cinematic%20shanghai%20rooftop%20at%20night%2C%20a%20woman%20in%20a%20red%20coat%2C%20neon%20reflections%2C%20anamorphic%2C%20photorealistic&image_size=square');"></div>
+                <div style="flex:1">
+                  <h3>《逆光》· P-10248</h3>
+                  <div class="sub">用户 138****8821 · 都市逆袭 · 80 集 · 第 4 节点</div>
+                </div>
+                <span class="pill pill-info">运行中</span>
+              </div>
+              <div class="stages">
+                <div class="stage-cell done">信息</div>
+                <div class="stage-cell done">结构</div>
+                <div class="stage-cell done">人设</div>
+                <div class="stage-cell run">大纲</div>
+                <div class="stage-cell">剧本</div>
+                <div class="stage-cell">审查</div>
+                <div class="stage-cell">交付</div>
+              </div>
+              <div class="footer">
+                <span>耗时 03:12 · 剩余 04:48</span>
+                <span class="spacer"></span>
+                <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">查看 Trace</button>
+                <button class="btn btn-violet" style="padding:6px 10px;font-size:12px;">手动介入</button>
+              </div>
+            </div>
+            <div class="panel project-card">
+              <div class="head">
+                <div class="cover" style="background-image:url('https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=ancient%20chinese%20palace%20inner%20court%2C%20lanterns%2C%20silk%20robes%2C%20fog%2C%20cinematic%20golden%20light&image_size=square');"></div>
+                <div style="flex:1">
+                  <h3>《权倾长乐》· P-10241</h3>
+                  <div class="sub">用户 139****0032 · 古装权谋 · 60 集 · 第 5 节点</div>
+                </div>
+                <span class="pill pill-ok">已完成</span>
+              </div>
+              <div class="stages">
+                <div class="stage-cell done">信息</div>
+                <div class="stage-cell done">结构</div>
+                <div class="stage-cell done">人设</div>
+                <div class="stage-cell done">大纲</div>
+                <div class="stage-cell done">剧本</div>
+                <div class="stage-cell done">审查</div>
+                <div class="stage-cell done">交付</div>
+              </div>
+              <div class="footer">
+                <span>评分 <b style="color:#fff;">86</b> · 8m 02s</span>
+                <span class="spacer"></span>
+                <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">下载剧本</button>
+                <button class="btn btn-violet" style="padding:6px 10px;font-size:12px;">回看 Trace</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <h3>全部项目</h3>
+            <div class="sub">按开始时间倒序 · 共 128</div>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>项目</th><th>用户</th><th>题材</th><th>节点</th>
+                  <th class="right">耗时</th><th class="right">Token</th><th>状态</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>《逆光》</b></td>
+                  <td><span class="avatar"><span class="av"></span>138****8821</span></td>
+                  <td>都市逆袭</td>
+                  <td>4 / 7</td>
+                  <td class="right num">03:12</td>
+                  <td class="right num">21,440</td>
+                  <td><span class="pill pill-info">运行中</span></td>
+                </tr>
+                <tr>
+                  <td><b>《错位》</b></td>
+                  <td><span class="avatar"><span class="av" style="background:linear-gradient(135deg,#f6d365,#fda085)"></span>139****0032</span></td>
+                  <td>悬疑反转</td>
+                  <td>7 / 7</td>
+                  <td class="right num">08:02</td>
+                  <td class="right num">182,310</td>
+                  <td><span class="pill pill-ok">已完成</span></td>
+                </tr>
+                <tr>
+                  <td><b>《长夜未央》</b></td>
+                  <td><span class="avatar"><span class="av" style="background:linear-gradient(135deg,#34d399,#10b981)"></span>186****7741</span></td>
+                  <td>家庭复仇</td>
+                  <td>5 / 7</td>
+                  <td class="right num">05:48</td>
+                  <td class="right num">96,210</td>
+                  <td><span class="pill pill-warn">人工复核</span></td>
+                </tr>
+                <tr>
+                  <td><b>《被校花倒追》</b></td>
+                  <td><span class="avatar"><span class="av" style="background:linear-gradient(135deg,#f87171,#ef4444)"></span>177****2098</span></td>
+                  <td>甜宠虐恋</td>
+                  <td>2 / 7</td>
+                  <td class="right num">00:42</td>
+                  <td class="right num">8,920</td>
+                  <td><span class="pill pill-danger">失败 · 限流</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 用户 / 订单 / 商业 -->
+        <div id="adm-users" style="margin-top:48px;">
+          <div class="adm-head">
+            <div>
+              <div class="crumbs">Console / <b>用户管理</b></div>
+              <h1>用户 · 9,238</h1>
+            </div>
+            <div class="spacer"></div>
+            <div class="toolbar">
+              <input class="input" placeholder="手机号 / 昵称 / ID" style="width:240px;">
+              <button class="btn btn-ghost">导出</button>
+              <button class="btn btn-violet">+ 新建用户</button>
+            </div>
+          </div>
+          <div class="panel">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>用户</th><th>角色</th><th>会员</th>
+                  <th class="right">余额</th><th class="right">创作数</th><th>最近活跃</th><th class="right">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="avatar"><span class="av"></span><b>陈导</b><span style="color:var(--slate-500)"> · 138****8821</span></span></td>
+                  <td><span class="pill pill-violet">企业</span></td>
+                  <td>旗舰版 · 至 2027-03</td>
+                  <td class="right num">1,280 币</td>
+                  <td class="right num">42</td>
+                  <td>10 分钟前</td>
+                  <td class="right"><a style="color:#a5b1f5">详情</a> · <a style="color:#fca5a5">冻结</a></td>
+                </tr>
+                <tr>
+                  <td><span class="avatar"><span class="av" style="background:linear-gradient(135deg,#f6d365,#fda085)"></span><b>林编剧</b><span style="color:var(--slate-500)"> · 139****0032</span></span></td>
+                  <td><span class="pill pill-gold">付费</span></td>
+                  <td>专业版 · 至 2026-08</td>
+                  <td class="right num">420 币</td>
+                  <td class="right num">18</td>
+                  <td>1 小时前</td>
+                  <td class="right"><a style="color:#a5b1f5">详情</a> · <a style="color:#fca5a5">冻结</a></td>
+                </tr>
+                <tr>
+                  <td><span class="avatar"><span class="av" style="background:linear-gradient(135deg,#34d399,#10b981)"></span><b>王老师</b><span style="color:var(--slate-500)"> · 186****7741</span></span></td>
+                  <td><span class="pill pill-info">体验</span></td>
+                  <td>—</td>
+                  <td class="right num">0 币</td>
+                  <td class="right num">1</td>
+                  <td>昨天</td>
+                  <td class="right"><a style="color:#a5b1f5">详情</a> · <a style="color:#fca5a5">冻结</a></td>
+                </tr>
+                <tr>
+                  <td><span class="avatar"><span class="av" style="background:linear-gradient(135deg,#f87171,#ef4444)"></span><b>张同学</b><span style="color:var(--slate-500)"> · 177****2098</span></span></td>
+                  <td><span class="pill pill-gold">付费</span></td>
+                  <td>专业版 · 至 2026-07</td>
+                  <td class="right num">86 币</td>
+                  <td class="right num">6</td>
+                  <td>3 天前</td>
+                  <td class="right"><a style="color:#a5b1f5">详情</a> · <a style="color:#fca5a5">冻结</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 商业 / 计费 / 充值 -->
+        <div id="adm-billing" style="margin-top:48px;">
+          <div class="adm-head">
+            <div>
+              <div class="crumbs">Console / <b>商业中心</b></div>
+              <h1>订单 / 充值 / 创作币 / AI 字段提示</h1>
+            </div>
+            <div class="spacer"></div>
+            <div class="toolbar">
+              <button class="btn btn-ghost">导出订单</button>
+              <button class="btn btn-violet">+ 新建充值包</button>
+            </div>
+          </div>
+
+          <div class="row-3">
+            <div class="kpi">
+              <div class="label">今日订单</div>
+              <div class="val">284</div>
+              <div class="delta up">▲ 14.2%</div>
+            </div>
+            <div class="kpi">
+              <div class="label">退款</div>
+              <div class="val">3</div>
+              <div class="delta down">▼ 1.1%</div>
+            </div>
+            <div class="kpi">
+              <div class="label">待结算</div>
+              <div class="val">¥ 8,420</div>
+              <div class="delta">—</div>
+            </div>
+          </div>
+
+          <div class="panel" style="margin-top:14px;">
+            <h3>订单</h3>
+            <div class="sub">支持状态过滤、批量退款、发票申请</div>
+            <table class="table">
+              <thead>
+                <tr><th>订单号</th><th>用户</th><th>套餐</th><th class="right">金额</th><th>状态</th><th>时间</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><b>SF-2026-0616-001</b></td><td>陈导</td><td>旗舰版续费</td><td class="right num">¥ 2,880</td><td><span class="pill pill-ok">已支付</span></td><td>10:24</td></tr>
+                <tr><td><b>SF-2026-0616-002</b></td><td>林编剧</td><td>1000 币 充值包</td><td class="right num">¥ 198</td><td><span class="pill pill-ok">已支付</span></td><td>09:58</td></tr>
+                <tr><td><b>SF-2026-0616-003</b></td><td>匿名</td><td>专业版 月卡</td><td class="right num">¥ 299</td><td><span class="pill pill-warn">待支付</span></td><td>09:12</td></tr>
+                <tr><td><b>SF-2026-0616-004</b></td><td>王老师</td><td>体验版 → 专业版 升级</td><td class="right num">¥ 299</td><td><span class="pill pill-danger">已退款</span></td><td>08:46</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- LLM 模型中心 -->
+        <div id="adm-llm" style="margin-top:48px;">
+          <div class="adm-head">
+            <div>
+              <div class="crumbs">Console / <b>模型中心</b></div>
+              <h1>LLM 提供商 · 模型目录 · 路由</h1>
+            </div>
+            <div class="spacer"></div>
+            <div class="toolbar">
+              <button class="btn btn-ghost">同步官方价目</button>
+              <button class="btn btn-violet">+ 新建 Provider</button>
+            </div>
+          </div>
+          <div class="llm-grid">
+            <div class="provider">
+              <div class="head">
+                <div class="mark">D</div>
+                <div style="flex:1"><h3>火山引擎 · doubao-pro-32k</h3><div class="model">volcengine · 7 模型 · 1 路凭证</div></div>
+                <span class="pill pill-ok">在线</span>
+              </div>
+              <div class="meta">
+                <div class="cell"><div class="k">24h 调用</div><div class="v">12,840</div></div>
+                <div class="cell"><div class="k">24h 成本</div><div class="v">¥ 642</div></div>
+                <div class="cell"><div class="k">失败率</div><div class="v">0.4%</div></div>
+              </div>
+              <div class="footer">
+                <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">连接测试</button>
+                <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">查看路由</button>
+                <button class="btn btn-violet" style="padding:6px 10px;font-size:12px;">编辑凭证</button>
+              </div>
+            </div>
+            <div class="provider">
+              <div class="head">
+                <div class="mark" style="background:linear-gradient(135deg,#34d399,#10b981)">D</div>
+                <div style="flex:1"><h3>DeepSeek · v3</h3><div class="model">openai 兼容 · 2 模型 · 1 路凭证</div></div>
+                <span class="pill pill-ok">在线</span>
+              </div>
+              <div class="meta">
+                <div class="cell"><div class="k">24h 调用</div><div class="v">4,210</div></div>
+                <div class="cell"><div class="k">24h 成本</div><div class="v">¥ 312</div></div>
+                <div class="cell"><div class="k">失败率</div><div class="v">0.7%</div></div>
+              </div>
+              <div class="footer">
+                <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">连接测试</button>
+                <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">查看路由</button>
+                <button class="btn btn-violet" style="padding:6px 10px;font-size:12px;">编辑凭证</button>
+              </div>
+            </div>
+            <div class="provider">
+              <div class="head">
+                <div class="mark" style="background:linear-gradient(135deg,#f6d365,#fda085)">G</div>
+                <div style="flex:1"><h3>OpenAI · gpt-4o-mini</h3><div class="model">openai · 1 模型 · 1 路凭证</div></div>
+                <span class="pill pill-warn">限流</span>
+              </div>
+              <div class="meta">
+                <div class="cell"><div class="k">24h 调用</div><div class="v">1,884</div></div>
+                <div class="cell"><div class="k">24h 成本</div><div class="v">¥ 188</div></div>
+                <div class="cell"><div class="k">失败率</div><div class="v">2.1%</div></div>
+              </div>
+              <div class="footer">
+                <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">连接测试</button>
+                <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">查看路由</button>
+                <button class="btn btn-violet" style="padding:6px 10px;font-size:12px;">编辑凭证</button>
+              </div>
+            </div>
+            <div class="provider">
+              <div class="head">
+                <div class="mark" style="background:linear-gradient(135deg,#f87171,#ef4444)">Z</div>
+                <div style="flex:1"><h3>智谱 · glm-4-plus</h3><div class="model">zhipu · 2 模型 · 未激活</div></div>
+                <span class="pill pill-danger">凭证过期</span>
+              </div>
+              <div class="meta">
+                <div class="cell"><div class="k">24h 调用</div><div class="v">0</div></div>
+                <div class="cell"><div class="k">24h 成本</div><div class="v">¥ 0</div></div>
+                <div class="cell"><div class="k">失败率</div><div class="v">—</div></div>
+              </div>
+              <div class="footer">
+                <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">连接测试</button>
+                <button class="btn btn-ghost" style="padding:6px 10px;font-size:12px;">查看路由</button>
+                <button class="btn btn-violet" style="padding:6px 10px;font-size:12px;">更新凭证</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 技能中心 -->
+        <div id="adm-skill" style="margin-top:48px;">
+          <div class="adm-head">
+            <div>
+              <div class="crumbs">Console / <b>技能中心</b></div>
+              <h1>技能定义 · 配置项 · 写作规则 · 质量缺陷</h1>
+            </div>
+            <div class="spacer"></div>
+            <div class="toolbar">
+              <button class="btn btn-ghost">导出 SSoT</button>
+              <button class="btn btn-violet">同步到生产</button>
+            </div>
+          </div>
+          <div class="row-2">
+            <div class="panel">
+              <h3>技能定义（来自 SKILL.md → DB）</h3>
+              <div class="sub">12 个技能 · 4 个有缺陷待修</div>
+              <table class="table">
+                <thead><tr><th>技能</th><th>版本</th><th>调用方</th><th>状态</th></tr></thead>
+                <tbody>
+                  <tr><td><b>brief.collect</b></td><td>v3</td><td>node 1</td><td><span class="pill pill-ok">就绪</span></td></tr>
+                  <tr><td><b>structure.beat</b></td><td>v2</td><td>node 2</td><td><span class="pill pill-ok">就绪</span></td></tr>
+                  <tr><td><b>character.profile</b></td><td>v2</td><td>node 3</td><td><span class="pill pill-warn">草稿</span></td></tr>
+                  <tr><td><b>outline.episode</b></td><td>v4</td><td>node 4</td><td><span class="pill pill-ok">就绪</span></td></tr>
+                  <tr><td><b>script.scene</b></td><td>v5</td><td>node 5</td><td><span class="pill pill-ok">就绪</span></td></tr>
+                  <tr><td><b>review.gate</b></td><td>v2</td><td>node 6</td><td><span class="pill pill-danger">缺陷</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="panel">
+              <h3>质量缺陷（最近 7 天）</h3>
+              <div class="sub">来自 Agent 评审与剧本质量审查</div>
+              <table class="table">
+                <thead><tr><th>等级</th><th>缺陷</th><th>数量</th></tr></thead>
+                <tbody>
+                  <tr><td><span class="pill pill-danger">P1</span></td><td>script.scene 情绪曲线塌陷</td><td class="num">3</td></tr>
+                  <tr><td><span class="pill pill-warn">P2</span></td><td>outline.episode 反转密度不足</td><td class="num">12</td></tr>
+                  <tr><td><span class="pill pill-warn">P2</span></td><td>brief.collect 受众画像缺失</td><td class="num">9</td></tr>
+                  <tr><td><span class="pill pill-info">P3</span></td><td>review.gate 台词模板过期</td><td class="num">22</td></tr>
+                </tbody>
+              </table>
+              <div class="annotation">
+                <b>推荐操作：</b>把 <code>review.gate</code> 升级到 v3 并回灌到 Fusion Pipeline Pack 01。
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+  // 顶栏切换
+  const seg = document.getElementById('seg');
+  const stages = document.querySelectorAll('.stage');
+  seg.addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    seg.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const key = btn.dataset.stage;
+    stages.forEach(s => s.classList.toggle('active', s.id === `stage-${key}`));
+  });
+</script>
+
+</body>
+</html>

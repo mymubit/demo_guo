@@ -123,9 +123,9 @@ export default function WorkVisualizationSection({ projectId }) {
 
   if (loading) {
     return (
-      <div className="glass-card rounded-3xl p-8 mb-8 animate-pulse">
-        <div className="h-6 w-40 bg-navy-700/50 rounded mb-4" />
-        <div className="h-64 bg-navy-800/40 rounded-xl" />
+      <div className="mb-8 animate-pulse rounded-2xl border border-white/5 bg-slate-900/60 p-8">
+        <div className="h-6 w-40 bg-slate-700/50 rounded mb-4" />
+        <div className="h-64 rounded-xl bg-white/10" />
       </div>
     )
   }
@@ -152,7 +152,7 @@ export default function WorkVisualizationSection({ projectId }) {
   }
 
   return (
-    <div className="glass-card rounded-3xl p-8 mb-8">
+    <div className="mb-8 rounded-2xl border border-white/5 bg-slate-900/60 p-8">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
         <button
           type="button"
@@ -176,7 +176,7 @@ export default function WorkVisualizationSection({ projectId }) {
                   className={`px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 transition-colors border ${
                     active
                       ? 'bg-gold-400/15 text-gold-400 border-gold-400/30'
-                      : 'bg-navy-700/40 text-navy-300 border-navy-600/30 hover:text-white'
+                      : 'border border-white/10 bg-white/[0.03] text-navy-300 hover:text-white'
                   }`}
                 >
                   <Icon className={ICON.md} />
@@ -208,8 +208,8 @@ export default function WorkVisualizationSection({ projectId }) {
           {activeTab === 'structure' && payload.hasStructure ? (
             <div className="space-y-4">
               {structureSankey.option ? (
-                <div className="rounded-xl bg-navy-950/40 border border-navy-700/30 p-3">
-                  <div className="text-xs text-navy-500 mb-2">结构流向 · 阶段 → 节奏段 → 反转点</div>
+                <div className="rounded-xl border border-white/5 bg-slate-900/40 p-3">
+                  <div className="text-xs text-navy-400 mb-2">结构流向 · 阶段 → 节奏段 → 反转点</div>
                   <EChart option={structureSankey.option} height={structureSankey.height} />
                 </div>
               ) : null}
@@ -223,7 +223,7 @@ export default function WorkVisualizationSection({ projectId }) {
           ) : null}
         </>
       ) : (
-        <p className="text-sm text-navy-500">点击标题展开人物关系、剧情脉络与结构节奏图表</p>
+        <p className="text-sm text-navy-400">点击标题展开人物关系、剧情脉络与结构节奏图表</p>
       )}
     </div>
   )

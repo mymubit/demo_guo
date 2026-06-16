@@ -33,9 +33,9 @@ export default function Modal({
             {...modalPanel}
             role="dialog"
             aria-modal="true"
-            className={cn('sf-panel w-full shadow-modal', widths[width] || widths.md, className)}
+            className={cn('sf-console-panel w-full shadow-modal', widths[width] || widths.md, className)}
           >
-            <div className="flex items-start justify-between gap-4 border-b border-navy-700/30 px-6 py-5">
+            <div className="flex items-start justify-between gap-4 border-b border-white/5 px-6 py-5">
               <div>
                 {title ? <h3 className="text-lg font-semibold text-white">{title}</h3> : null}
                 {description ? <p className="mt-1 text-sm leading-relaxed text-navy-400">{description}</p> : null}
@@ -54,7 +54,7 @@ export default function Modal({
               ) : null}
             </div>
             <div className="px-6 py-5">{children}</div>
-            {footer ? <div className="border-t border-navy-700/30 px-6 py-4">{footer}</div> : null}
+            {footer ? <div className="border-t border-white/5 px-6 py-4">{footer}</div> : null}
           </motion.div>
         </motion.div>
       ) : null}

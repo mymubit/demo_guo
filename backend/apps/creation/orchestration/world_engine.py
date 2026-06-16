@@ -32,7 +32,7 @@ _WORLD_P1_RULES: Tuple[Tuple[str, str, str], ...] = (
         "须有科学/现实解释或正义收束；禁止宣扬封建迷信为客观事实",
     ),
     (
-        r"真实历史人物|历史名人|[皇帝|太后|慈禧|秦始皇|武则天|雍正|乾隆]",
+        r"真实历史人物|历史名人|皇帝|太后|慈禧|秦始皇|武则天|雍正|乾隆",
         "真实历史人物",
         "须架空处理，禁止直接使用真实历史人物姓名及事件",
     ),
@@ -59,6 +59,14 @@ _WORLD_P1_RULES: Tuple[Tuple[str, str, str], ...] = (
 )
 
 
+def _match_context(text: str, match: re.Match, *, radius: int = 32) -> str:
+    start = max(0, match.start() - radius)
+    end = min(len(text), match.end() + radius)
+    prefix = "…" if start > 0 else ""
+    suffix = "…" if end < len(text) else ""
+    return f"{prefix}{text[start:end].strip()}{suffix}"
+
+
 def _scan_world_compliance(payload: dict) -> List[Dict[str, Any]]:
     """
     扫描生成的世界观文本，返回 P1 合规警告列表。
@@ -74,14 +82,36 @@ def _scan_world_compliance(payload: dict) -> List[Dict[str, Any]]:
 
     warnings = []
     for pattern, label, constraint in _WORLD_P1_RULES:
-        if re.search(pattern, scan_text, flags=re.IGNORECASE):
+        match = re.search(pattern, scan_text, flags=re.IGNORECASE)
+        if match:
             warnings.append({
                 "level": "P1",
                 "category": label,
+                "matchedText": match.group(0),
+                "excerpt": _match_context(scan_text, match),
                 "constraint": constraint,
+                "suggestion": "保留创作方向时，请补充现实解释、负面后果或依法处置结局；无法补足则删除该设定。",
                 "source": "world-compliance-scan",
             })
     return warnings
+
+
+def _worldbuilder_patch_only(patch: dict) -> dict:
+    """world-builder 只负责补 worldview，不得覆盖 structure-generator 的结构字段。
+
+    prompt 允许其对 workingTitle 做微调，故 workingTitle 也在白名单内；
+    其余结构字段（sixStagePlan/keyReversalPoints/rhythmCurve 等）一律忽略，
+    避免二次生成时把已定稿的结构改写成互斥版本。
+    """
+    if not isinstance(patch, dict):
+        return {}
+    allowed: Dict[str, Any] = {}
+    if isinstance(patch.get("worldview"), dict):
+        allowed["worldview"] = patch["worldview"]
+    working_title = patch.get("workingTitle")
+    if isinstance(working_title, str) and working_title.strip():
+        allowed["workingTitle"] = working_title.strip()
+    return allowed
 
 
 class WorldAgentEngine:
@@ -150,7 +180,7 @@ class WorldAgentEngine:
             token_key=AGENT_ID,
         )
 
-        payload = _deep_merge(structure_part, world_part)
+        payload = _deep_merge(structure_part, _worldbuilder_patch_only(world_part))
         payload = orch.run_dream_indicators_normalize(payload)
         payload = orch.run_rhythm_calibrator(payload)
         self._validate_schema(payload)

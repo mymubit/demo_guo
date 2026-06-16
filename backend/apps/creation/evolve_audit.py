@@ -247,6 +247,27 @@ def _record_token_cost(tokens_used: int) -> None:
 
 
 # ── LLM 调用工具 ─────────────────────────────────────────────────────────────
+def _record_evolve_llm_usage(*, usage: Any = None, success: bool = True) -> None:
+    """记录直连 Anthropic 的进化审计用量，避免绕过统一 LLM 监控。"""
+    try:
+        from apps.skill.llm.usage_log import LlmUsageService
+        from apps.skill.models import LlmUsageLog
+
+        raw_usage = usage or {}
+        LlmUsageService.record(
+            cfg={"provider_name": "Anthropic", "model": "claude-sonnet-4-5"},
+            usage={
+                "input_tokens": getattr(raw_usage, "input_tokens", 0),
+                "output_tokens": getattr(raw_usage, "output_tokens", 0),
+            },
+            success=success,
+            source_type=LlmUsageLog.SOURCE_AGENT,
+            source_key="evolve_audit",
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[EvolveAudit] 记录 LLM 用量失败: %s", exc)
+
+
 def _call_sonnet4_audit(system_prompt: str, user_content: str) -> Optional[Dict[str, Any]]:
     """
     调用 Sonnet-4 进行审计分析。
@@ -276,6 +297,7 @@ def _call_sonnet4_audit(system_prompt: str, user_content: str) -> Optional[Dict[
         )
         raw_text = message.content[0].text if message.content else ""
         _record_token_cost(message.usage.input_tokens + message.usage.output_tokens)
+        _record_evolve_llm_usage(usage=message.usage, success=True)
 
         # 提取 JSON（允许 markdown 代码块包裹）
         text = raw_text.strip()
@@ -287,6 +309,7 @@ def _call_sonnet4_audit(system_prompt: str, user_content: str) -> Optional[Dict[
         logger.warning("[EvolveAudit] Sonnet-4 输出无法解析为JSON，原始文本=%s...", raw_text[:200])
         return None
     except Exception as exc:  # noqa: BLE001
+        _record_evolve_llm_usage(success=False)
         logger.error("[EvolveAudit] Sonnet-4 调用失败: %s", exc)
         return None
 
@@ -305,6 +328,21 @@ def _load_iterable_rules_summary() -> str:
             except Exception:  # noqa: BLE001
                 pass
     return "\n".join(summaries)
+
+
+def _record_evolve_audit_failure(project_id: str, message: str, *, stage: str) -> None:
+    try:
+        from apps.monitoring.services.task_error import record_background_task_failure
+
+        record_background_task_failure(
+            task_name="creation.evolve_audit",
+            project_id=project_id,
+            status="error",
+            detail={"error": message, "stage": stage},
+            exception_type="EvolveAuditFailed",
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[EvolveAudit] monitoring write skipped project=%s: %s", project_id, exc)
 
 
 # ── 低分追溯 ─────────────────────────────────────────────────────────────────
@@ -368,6 +406,7 @@ def _audit_low_score_project(project_id: str, score: float, score_report: Dict[s
 
     result = _call_sonnet4_audit(_LOW_SCORE_AUDIT_SYSTEM, user_content)
     if not result:
+        _record_evolve_audit_failure(project_id, "Sonnet-4 低分追溯未返回有效结果", stage="low_score")
         return
 
     proposal = {
@@ -441,6 +480,7 @@ def _extract_high_score_patterns(project_id: str, score: float, score_report: Di
 
     result = _call_sonnet4_audit(_HIGH_SCORE_EXTRACT_SYSTEM, user_content)
     if not result:
+        _record_evolve_audit_failure(project_id, "Sonnet-4 高分提炼未返回有效结果", stage="high_score")
         return
 
     proposal = {
@@ -497,6 +537,7 @@ def run_daily_evolve_audit() -> Dict[str, Any]:
             low_count += 1
         except Exception as exc:  # noqa: BLE001
             logger.error("[EvolveAudit] 低分追溯失败 project=%s: %s", project.id, exc)
+            _record_evolve_audit_failure(str(project.id), str(exc), stage="low_score")
             errors.append(str(project.id))
 
     for project in high_score_projects:
@@ -508,6 +549,7 @@ def run_daily_evolve_audit() -> Dict[str, Any]:
             high_count += 1
         except Exception as exc:  # noqa: BLE001
             logger.error("[EvolveAudit] 高分提炼失败 project=%s: %s", project.id, exc)
+            _record_evolve_audit_failure(str(project.id), str(exc), stage="high_score")
             errors.append(str(project.id))
 
     summary = {

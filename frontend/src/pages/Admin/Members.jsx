@@ -239,8 +239,8 @@ export default function MembersAdmin({ forcedTab: forcedTabProp }) {
               value={form[key] ?? ''}
               readOnly={readOnlyPrice}
               onChange={(e) => patchPlanForm(key, e.target.value)}
-              className={`mt-1 w-full px-3 py-2 rounded-xl border border-navy-700/40 text-white ${
-                readOnlyPrice ? 'bg-navy-900/80 cursor-not-allowed text-gold-300' : 'bg-navy-800/60'
+              className={`mt-1 sf-control text-white ${
+                readOnlyPrice ? 'bg-slate-900/80 cursor-not-allowed text-gold-300' : ''
               }`}
             />
           </label>
@@ -262,7 +262,7 @@ export default function MembersAdmin({ forcedTab: forcedTabProp }) {
           />
           推荐
         </label>
-        <p className="md:col-span-2 text-[11px] text-navy-500 leading-relaxed">
+        <p className="md:col-span-2 text-[11px] text-navy-400 leading-relaxed">
           填写划线原价与折扣(%)后，实付由系统自动计算（原价×折扣%）；折扣 100 时可手动填写实付价。开通赠送创作币与人民币打折可叠加。
         </p>
         <p className="md:col-span-2 text-xs text-gold-400/90">{pricePreview}</p>
@@ -314,7 +314,7 @@ export default function MembersAdmin({ forcedTab: forcedTabProp }) {
             <button
               type="button"
               onClick={seedMatrix}
-              className="px-4 py-2 rounded-xl text-sm text-navy-200 border border-navy-600/40 hover:bg-navy-800/50"
+              className="px-4 py-2 rounded-xl text-sm text-navy-200 border border-white/10 hover:bg-white/[0.06]"
             >
               写入默认项
             </button>
@@ -338,7 +338,7 @@ export default function MembersAdmin({ forcedTab: forcedTabProp }) {
               title: '权益名称',
               render: (r) => (
                 <input
-                  className="w-full min-w-[180px] px-2 py-1.5 rounded-lg bg-navy-900 border border-navy-700 text-white text-sm"
+                  className="sf-control min-w-[180px] px-2 py-1.5 text-sm"
                   value={r.label || ''}
                   onChange={(e) =>
                     setMatrixRows((list) =>
@@ -603,11 +603,11 @@ export default function MembersAdmin({ forcedTab: forcedTabProp }) {
     <div className="space-y-6">
       <AdminMessage message={message} onClose={() => setMessage(null)} />
 
-      <p className="text-sm text-navy-400 rounded-xl border border-navy-700/40 bg-navy-900/40 px-4 py-3">
+      <p className="text-sm text-navy-400 rounded-xl border border-white/5 bg-slate-900/60 px-4 py-3">
         套餐可同时配置「人民币打折」（划线原价 + 折扣%）与「开通赠送创作币」；二者独立，可叠加。
       </p>
 
-      <div className="flex flex-wrap gap-2 p-1 glass-card rounded-2xl w-fit">
+      <div className="flex flex-wrap gap-2 p-1 sf-console-panel w-fit">
         {MEMBER_ROUTE_TABS.map((t) => (
           <button
             key={t.key}
@@ -616,7 +616,7 @@ export default function MembersAdmin({ forcedTab: forcedTabProp }) {
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
               forcedTab === t.key
                 ? 'bg-gradient-to-r from-gold-400 to-gold-600 text-navy-950 shadow-lg shadow-gold-500/20'
-                : 'text-navy-200 hover:bg-navy-800/50'
+                : 'text-navy-200 hover:bg-white/[0.06]'
             }`}
           >
             <t.icon className="w-4 h-4" />
@@ -656,7 +656,7 @@ export default function MembersAdmin({ forcedTab: forcedTabProp }) {
             setSelectedPlanId(id)
           }}
           getId={(plan) => plan.id}
-          emptyList={<p className="px-2 py-4 text-sm text-navy-500">暂无套餐，点击上方新建</p>}
+          emptyList={<p className="px-2 py-4 text-sm text-navy-400">暂无套餐，点击上方新建</p>}
           renderListItem={(plan, { active, onSelect }) => (
             <AdminMasterDetailListButton
               key={plan.id}
@@ -689,7 +689,7 @@ export default function MembersAdmin({ forcedTab: forcedTabProp }) {
                   <button
                     type="button"
                     onClick={() => setCreating(false)}
-                    className="px-4 py-2.5 rounded-xl bg-navy-800/60 text-navy-200"
+                    className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-navy-200 hover:bg-white/[0.06]"
                   >
                     取消
                   </button>
@@ -719,7 +719,7 @@ export default function MembersAdmin({ forcedTab: forcedTabProp }) {
                 </button>
               </div>
             ) : (
-              <div className="text-sm text-navy-500">请从左侧选择套餐，或点击「新建套餐」</div>
+              <div className="text-sm text-navy-400">请从左侧选择套餐，或点击「新建套餐」</div>
             )
           }
         />
@@ -733,13 +733,13 @@ export default function MembersAdmin({ forcedTab: forcedTabProp }) {
 
       {(tab === 'codes' || forcedTab === 'codes') && (
         <div className="space-y-6">
-          <div className="glass-card rounded-2xl p-5 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="sf-console-panel p-5 grid grid-cols-1 md:grid-cols-4 gap-4">
             <label className="block md:col-span-2">
               <span className="text-xs text-navy-400">关联套餐</span>
               <select
                 value={genForm.plan_id}
                 onChange={(e) => setGenForm({ ...genForm, plan_id: e.target.value })}
-                className="mt-1 w-full px-3 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white"
+                className="mt-1 sf-control"
               >
                 {plans.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -756,7 +756,7 @@ export default function MembersAdmin({ forcedTab: forcedTabProp }) {
                 max={500}
                 value={genForm.count}
                 onChange={(e) => setGenForm({ ...genForm, count: Number(e.target.value) })}
-                className="mt-1 w-full px-3 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white"
+                className="mt-1 sf-control"
               />
             </label>
             <label className="block">
@@ -766,7 +766,7 @@ export default function MembersAdmin({ forcedTab: forcedTabProp }) {
                 min={1}
                 value={genForm.valid_days}
                 onChange={(e) => setGenForm({ ...genForm, valid_days: Number(e.target.value) })}
-                className="mt-1 w-full px-3 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white"
+                className="mt-1 sf-control"
               />
             </label>
             <button

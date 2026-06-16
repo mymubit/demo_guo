@@ -13,25 +13,25 @@ const ARC_LABELS = {
 function PanelBlock({ title, icon: Icon, children, className = '' }) {
   if (!children) return null
   return (
-    <div className={`rounded-2xl border border-navy-700/30 bg-navy-950/30 overflow-hidden ${className}`}>
+    <div className={`rounded-2xl border border-white/5 bg-slate-900/40 overflow-hidden ${className}`}>
       {title ? (
-        <div className="px-4 py-2.5 border-b border-navy-700/25 bg-navy-900/35 flex items-center gap-2">
+        <div className="border-b border-white/5 bg-slate-900/60 px-5 py-3 flex items-center gap-2">
           {Icon ? <Icon className="w-3.5 h-3.5 text-gold-400/70" /> : null}
           <span className="text-xs font-medium text-gold-400/85">{title}</span>
         </div>
       ) : null}
-      <div className="p-4">{children}</div>
+      <div className="p-5">{children}</div>
     </div>
   )
 }
 
 function IntensityBar({ level }) {
   const value = Number(level)
-  if (!Number.isFinite(value)) return <span className="text-xs text-navy-500">—</span>
+  if (!Number.isFinite(value)) return <span className="text-xs text-navy-400">—</span>
   const pct = Math.min(100, Math.max(0, value * 10))
   return (
     <div className="flex items-center gap-2 mt-1.5">
-      <div className="h-1.5 w-20 rounded-full bg-navy-700/50 overflow-hidden">
+      <div className="h-1.5 w-20 rounded-full bg-slate-700/50 overflow-hidden">
         <div
           className="h-full rounded-full bg-gradient-to-r from-amber-600/70 via-gold-400/90 to-gold-200"
           style={{ width: `${pct}%` }}
@@ -42,11 +42,27 @@ function IntensityBar({ level }) {
   )
 }
 
+function parseEventLabel(event, index) {
+  const text = String(event || '').trim()
+  const matched = text.match(/^(Ep\d+|第\s*\d+\s*集)[:：\s-]+(.+)$/i)
+  if (!matched) {
+    return {
+      label: String(index + 1).padStart(2, '0'),
+      content: text,
+    }
+  }
+
+  return {
+    label: matched[1].replace(/\s+/g, ''),
+    content: matched[2].trim(),
+  }
+}
+
 export function RhythmBeatList({ blocks = [], editMode, inputClass, onUpdateBlock, onUpdateEvents }) {
   if (!blocks.length) return null
 
   return (
-    <div className="rounded-2xl border border-navy-700/30 bg-navy-950/30 overflow-hidden divide-y divide-navy-700/20">
+    <div className="rounded-2xl border border-white/5 bg-slate-900/40 overflow-hidden divide-y divide-white/5">
       {blocks.map((block, index) => {
         const rangeKey = block.episodeRange || block.episodeGroup || block.episodeStart || index
         const events = block.keyEvents || []
@@ -54,7 +70,7 @@ export function RhythmBeatList({ blocks = [], editMode, inputClass, onUpdateBloc
         return (
           <div
             key={rangeKey}
-            className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-5 px-4 py-4 hover:bg-navy-900/25 transition-colors"
+            className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-5 px-4 py-4 transition-colors hover:bg-white/[0.03]"
           >
             <div className="sm:w-28 shrink-0">
               <div className="text-sm font-semibold text-white">
@@ -67,7 +83,7 @@ export function RhythmBeatList({ blocks = [], editMode, inputClass, onUpdateBloc
               {editMode ? (
                 <>
                   <div>
-                    <div className="text-xs text-navy-500 mb-1">关键事件（每行一条）</div>
+                    <div className="text-xs text-navy-400 mb-1">关键事件（每行一条）</div>
                     <textarea
                       value={events.join('\n')}
                       onChange={(e) => onUpdateEvents?.(block.episodeRange, e.target.value)}
@@ -86,20 +102,28 @@ export function RhythmBeatList({ blocks = [], editMode, inputClass, onUpdateBloc
               ) : (
                 <>
                   {events.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {events.map((ev, i) => (
-                        <span
-                          key={i}
-                          className="inline-flex max-w-full text-[11px] leading-snug px-2 py-1 rounded-lg bg-navy-800/60 border border-navy-600/25 text-navy-100"
-                        >
-                          {ev}
-                        </span>
-                      ))}
-                    </div>
+                    <ol className="space-y-2">
+                      {events.map((event, i) => {
+                        const item = parseEventLabel(event, i)
+                        return (
+                          <li
+                            key={i}
+                            className="flex gap-2.5 rounded-xl border border-white/5 bg-white/[0.025] px-3 py-2.5"
+                          >
+                            <span className="mt-0.5 inline-flex h-5 min-w-8 shrink-0 items-center justify-center rounded-md border border-gold-400/20 bg-gold-400/10 px-1.5 text-[10px] font-semibold text-gold-300">
+                              {item.label}
+                            </span>
+                            <span className="min-w-0 text-xs leading-relaxed text-navy-100">
+                              {item.content}
+                            </span>
+                          </li>
+                        )
+                      })}
+                    </ol>
                   )}
                   {(block.linkedReversals || []).length > 0 && (
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-[10px] text-navy-500 shrink-0">段内反转</span>
+                      <span className="text-[10px] text-navy-400 shrink-0">段内反转</span>
                       {block.linkedReversals.map((rev) => (
                         <MetaChip key={rev.episodeNumber} className="text-cyan-300/90">
                           第 {rev.episodeNumber} 集
@@ -130,7 +154,7 @@ const REVERSAL_TONE = {
 }
 
 function reversalToneClass(label) {
-  return REVERSAL_TONE[label] || 'border-navy-500/30 bg-navy-800/50 text-navy-200'
+  return REVERSAL_TONE[label] || 'border-white/10 bg-white/[0.03] text-navy-200'
 }
 
 export function ReversalTimeline({ points = [], editMode, inputClass, onUpdateReversal }) {
@@ -141,7 +165,7 @@ export function ReversalTimeline({ points = [], editMode, inputClass, onUpdateRe
   )
 
   return (
-    <div className="rounded-2xl border border-navy-700/30 bg-navy-950/30 px-4 py-5">
+    <div className="rounded-2xl border border-white/5 bg-slate-900/40 px-4 py-5">
       <div className="relative space-y-0">
         {sorted.map((rev, index) => {
           const isLast = index === sorted.length - 1
@@ -151,11 +175,11 @@ export function ReversalTimeline({ points = [], editMode, inputClass, onUpdateRe
             <div key={`${rev.episodeNumber}-${index}`} className="relative flex gap-4 pb-6 last:pb-0">
               {!isLast && (
                 <span
-                  className="absolute left-[11px] top-6 bottom-0 w-px bg-gradient-to-b from-gold-400/40 to-navy-700/20"
+                  className="absolute left-[11px] top-6 bottom-0 w-px bg-gradient-to-b from-gold-400/40 to-white/10"
                   aria-hidden
                 />
               )}
-              <div className="relative z-10 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-gold-400/50 bg-navy-900 text-[10px] font-bold text-gold-300">
+              <div className="relative z-10 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 border-gold-400/50 bg-slate-950 text-[10px] font-bold text-gold-300">
                 {rev.episodeNumber}
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
@@ -197,7 +221,7 @@ export function StructureMetaStrip({ items = [] }) {
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-navy-400">
       {visible.map((text, i) => (
         <span key={text} className="inline-flex items-center gap-2">
-          {i > 0 && <span className="text-navy-600 select-none">·</span>}
+          {i > 0 && <span className="text-navy-500 select-none">·</span>}
           <span>{text}</span>
         </span>
       ))}
@@ -238,7 +262,7 @@ export function WorldviewPanel({
     return (
       <div className="py-12 text-center text-sm text-navy-400 space-y-2">
         <p>暂无世界观生成内容</p>
-        <p className="text-xs text-navy-500">请使用「重新生成」，或切换「编辑」手动填写</p>
+        <p className="text-xs text-navy-400">请使用「重新生成」，或切换「编辑」手动填写</p>
       </div>
     )
   }
@@ -254,16 +278,16 @@ export function WorldviewPanel({
       ) : null}
 
       {(wv.timePeriod || wv.locationTypeLabel) && !editMode && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-3">
           {wv.timePeriod ? (
-            <div className="rounded-xl border border-navy-700/30 bg-navy-900/40 px-4 py-3">
-              <div className="text-[10px] text-navy-500 mb-1">时代背景</div>
+            <div className="rounded-xl border border-white/5 bg-slate-900/40 px-4 py-3">
+              <div className="text-[10px] text-navy-400 mb-1">时代背景</div>
               <div className="text-sm text-white leading-snug">{wv.timePeriod}</div>
             </div>
           ) : null}
           {wv.locationTypeLabel ? (
-            <div className="rounded-xl border border-navy-700/30 bg-navy-900/40 px-4 py-3">
-              <div className="text-[10px] text-navy-500 mb-1">主要场景</div>
+            <div className="rounded-xl border border-white/5 bg-slate-900/40 px-4 py-3">
+              <div className="text-[10px] text-navy-400 mb-1">主要场景</div>
               <div className="text-sm text-white leading-snug">{wv.locationTypeLabel}</div>
             </div>
           ) : null}
@@ -271,9 +295,9 @@ export function WorldviewPanel({
       )}
 
       {editMode ? (
-        <div className="space-y-3 rounded-2xl border border-navy-700/30 bg-navy-950/30 p-4">
+        <div className="space-y-3 rounded-2xl border border-white/5 bg-slate-900/40 p-4">
           <div>
-            <div className="text-xs text-navy-500 mb-1">时代背景</div>
+            <div className="text-xs text-navy-400 mb-1">时代背景</div>
             <input
               type="text"
               value={wv.timePeriod || ''}
@@ -282,7 +306,7 @@ export function WorldviewPanel({
             />
           </div>
           <div>
-            <div className="text-xs text-navy-500 mb-1">世界观概述</div>
+            <div className="text-xs text-navy-400 mb-1">世界观概述</div>
             <textarea
               value={wv.settingSummary || ''}
               onChange={(e) => onUpdateField?.('settingSummary', e.target.value)}
@@ -291,7 +315,7 @@ export function WorldviewPanel({
             />
           </div>
           <div>
-            <div className="text-xs text-navy-500 mb-1">根法则（每行一条）</div>
+            <div className="text-xs text-navy-400 mb-1">根法则（每行一条）</div>
             <textarea
               value={rules.join('\n')}
               onChange={(e) => onUpdateRootRules?.(e.target.value)}
@@ -303,7 +327,7 @@ export function WorldviewPanel({
       ) : (
         <>
           {wv.settingSummary ? (
-            <div className="rounded-2xl border border-gold-400/15 bg-gradient-to-br from-gold-400/8 via-navy-950/20 to-transparent border-l-4 border-l-gold-400/45 px-4 py-4">
+            <div className="rounded-2xl border border-gold-400/15 bg-gradient-to-br from-gold-400/8 via-navy-950/20 to-transparent border-l-4 border-l-gold-400/45 px-5 py-5">
               <div className="text-xs font-medium text-gold-400/90 mb-2">造梦师全景地图</div>
               <p className="text-sm text-navy-100 leading-relaxed whitespace-pre-wrap">
                 {wv.settingSummary}
@@ -320,7 +344,7 @@ export function WorldviewPanel({
                       className={`shrink-0 mt-0.5 text-[10px] px-2 py-0.5 rounded-full border ${
                         i === 0
                           ? 'border-gold-400/35 bg-gold-400/12 text-gold-300'
-                          : 'border-navy-600/40 bg-navy-800/50 text-navy-400'
+                          : 'border-white/10 bg-white/[0.03] text-slate-400'
                       }`}
                     >
                       {i === 0 ? '第一铁律' : `法则 ${i + 1}`}
@@ -336,16 +360,16 @@ export function WorldviewPanel({
 
       {nouns.length > 0 ? (
         <PanelBlock title="核心名词表">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-3">
             {nouns.map((n, i) => (
               <div
                 key={i}
-                className="rounded-xl border border-navy-700/25 bg-navy-900/35 px-3 py-3 hover:border-navy-600/35 transition-colors"
+                className="rounded-xl border border-white/5 bg-slate-900/40 px-4 py-4 hover:border-white/20 transition-colors"
               >
                 <div className="flex flex-wrap items-center gap-2 mb-1">
                   <div className="text-sm font-medium text-gold-400/90">{n.term}</div>
                   {n.tierLabel ? (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full border border-navy-600/35 text-navy-400">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full border border-white/10 text-slate-400">
                       {n.tierLabel}
                     </span>
                   ) : null}
@@ -363,7 +387,7 @@ export function WorldviewPanel({
             {subWorld.map((item) => (
               <div
                 key={item.key}
-                className="rounded-xl border border-navy-700/25 bg-navy-900/30 px-3 py-3"
+                className="rounded-xl border border-white/5 bg-slate-900/40 px-3 py-3"
               >
                 <div className="text-xs font-medium text-gold-400/80">{item.label}</div>
                 <p className="text-sm text-navy-200 leading-relaxed mt-1.5">{item.text}</p>
@@ -392,7 +416,7 @@ function StoryArcFlow({ arc = {}, editMode, inputClass, onUpdateArc }) {
                 aria-hidden
               />
             ) : null}
-            <div className="h-full rounded-xl border border-navy-700/30 bg-navy-900/40 px-3 py-3">
+            <div className="h-full rounded-xl border border-white/5 bg-slate-900/40 px-3 py-3">
               <div className="text-[10px] font-medium text-gold-400/85 mb-2">{label}</div>
               {editMode ? (
                 <textarea
@@ -430,14 +454,14 @@ function StageTimeline({ stages = [], editMode, inputClass, onUpdateStage }) {
             <div key={stage.stageIndex || stage.stageName} className="relative flex gap-4 pb-5 last:pb-0">
               {!isLast ? (
                 <span
-                  className="absolute left-[15px] top-8 bottom-0 w-px bg-gradient-to-b from-gold-400/35 to-navy-700/15"
+                  className="absolute left-[15px] top-8 bottom-0 w-px bg-gradient-to-b from-gold-400/35 to-white/10"
                   aria-hidden
                 />
               ) : null}
-              <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-gold-400/45 bg-navy-900 text-xs font-bold text-gold-300">
+              <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-gold-400/45 bg-slate-950 text-xs font-bold text-gold-300">
                 {stage.stageIndex}
               </div>
-              <div className="flex-1 min-w-0 rounded-xl border border-navy-700/25 bg-navy-900/35 px-4 py-3">
+              <div className="flex-1 min-w-0 rounded-xl border border-white/5 bg-slate-900/40 px-4 py-3">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                   <div>
                     <span className="text-sm font-semibold text-white">{stage.stageName}</span>
@@ -447,7 +471,7 @@ function StageTimeline({ stages = [], editMode, inputClass, onUpdateStage }) {
                   </div>
                   <div className="flex flex-wrap gap-1.5 text-[10px]">
                     {episodeLabel ? (
-                      <span className="px-2 py-0.5 rounded-full border border-navy-600/30 text-navy-300">
+                      <span className="px-2 py-0.5 rounded-full border border-white/10 text-navy-300">
                         {episodeLabel}
                       </span>
                     ) : null}
@@ -498,14 +522,15 @@ function StageTimeline({ stages = [], editMode, inputClass, onUpdateStage }) {
   )
 }
 
-function ActStructurePanel({ actStructure = {} }) {
+export function ActStructureSummary({ actStructure = {} }) {
   const actCount = actStructure.actCount
   const themeLabel = resolveThemeCodeLabel(actStructure.themeCode, actStructure.themeCodeLabel)
   const points = actStructure.reversalPoints || []
   if (!actCount && !themeLabel && !points.length) return null
 
   return (
-    <PanelBlock title="幕结构">
+    <div>
+      <div className="text-xs font-medium text-gold-300 mb-2">幕结构</div>
       <div className="flex flex-wrap gap-2 mb-3">
         {actCount != null && <MetaChip>{actCount} 幕</MetaChip>}
         {themeLabel ? <MetaChip>主题 {themeLabel}</MetaChip> : null}
@@ -515,12 +540,12 @@ function ActStructurePanel({ actStructure = {} }) {
           {points.map((point, i) => (
             <div
               key={`${point.label}-${i}`}
-              className="rounded-xl border border-navy-700/25 bg-navy-900/35 px-3 py-2.5"
+              className="rounded-xl border border-white/5 bg-slate-900/40 px-3 py-2.5"
             >
               <div className="flex flex-wrap items-center gap-2 mb-1">
                 <span className="text-sm font-medium text-white">{point.label || `反转 ${i + 1}`}</span>
                 {point.episode != null ? (
-                  <span className="text-[10px] px-2 py-0.5 rounded-full border border-navy-600/30 text-navy-400">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full border border-white/10 text-slate-400">
                     第 {point.episode} 集
                   </span>
                 ) : null}
@@ -532,14 +557,13 @@ function ActStructurePanel({ actStructure = {} }) {
           ))}
         </div>
       ) : null}
-    </PanelBlock>
+    </div>
   )
 }
 
 export function StoryStructurePanel({
   arc = {},
   stages = [],
-  actStructure = {},
   sankeyOption,
   sankeyHeight = 320,
   editMode,
@@ -549,12 +573,11 @@ export function StoryStructurePanel({
 }) {
   return (
     <div className="space-y-4">
-      <ActStructurePanel actStructure={actStructure} />
       {sankeyOption ? (
-        <div className="rounded-2xl border border-navy-700/30 bg-navy-950/30 p-3">
+        <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-3">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-2 px-1">
-            <div className="text-xs text-navy-500">结构流向 · 阶段 → 节奏 → 反转</div>
-            <div className="flex flex-wrap gap-3 text-[10px] text-navy-500">
+            <div className="text-xs text-navy-400">结构流向 · 阶段 → 节奏 → 反转</div>
+            <div className="flex flex-wrap gap-3 text-[10px] text-navy-400">
               <span className="inline-flex items-center gap-1">
                 <span className="w-2 h-2 rounded-full bg-[#d4a853]" />
                 阶段

@@ -2,7 +2,7 @@
  * admin/http.js —— 后台管理专用请求层 + 响应规范化工具
  */
 import { getAxios } from '../http'
-import { normalizeArrayResult, normalizeListResult } from '../adapters/listAdapter'
+import { coerceUnwrappedArray, normalizeListResult } from '../adapters/listAdapter'
 
 /** 后台请求：直接使用 axios（不走 fetch fallback，确保拦截器生效） */
 export async function adminRequest(method, path, { params, data } = {}) {
@@ -16,9 +16,9 @@ export function unwrapAdminList(result) {
   return normalizeListResult(result)
 }
 
-/** 解包数组列表 */
+/** 解包数组列表（兼容 axios 已解包为裸数组的响应） */
 export function unwrapAdminListData(result) {
-  return normalizeArrayResult(result)
+  return coerceUnwrappedArray(result)
 }
 
 export function normalizeTier1Catalog(data) {
@@ -53,5 +53,5 @@ export function normalizeFusionPacks(data) {
 }
 
 export function normalizeAgentLlmRoutes(data) {
-  return Array.isArray(data) ? data : []
+  return coerceUnwrappedArray(data)
 }

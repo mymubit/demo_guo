@@ -24,6 +24,36 @@ class AgentRegistryConfigServiceTests(TestCase):
         self.assertEqual(payload["source"], "db")
         self.assertEqual(payload["registry"]["_meta"]["post_script_chain"], ["review", "score"])
 
+    def test_save_registry_normalizes_legacy_runner_path(self):
+        registry = {
+            "agents": [
+                {
+                    "id": "world",
+                    "name": "World",
+                    "runner": "apps.creation.agents.world.run_world_agent",
+                }
+            ]
+        }
+        row = AgentRegistryConfigService.save_registry(registry)
+        self.assertEqual(
+            row.registry["agents"][0]["runner"],
+            "apps.creation.orchestration.world.run_world_agent",
+        )
+
+    def test_patch_agent_normalizes_legacy_runner_path(self):
+        AgentRegistryConfigService.save_registry(
+            {"agents": [{"id": "world", "name": "World"}]},
+        )
+        AgentRegistryConfigService.patch_agent(
+            "world",
+            {"runner": "apps.creation.agents.world.run_world_agent"},
+        )
+        row = AgentRegistryConfigService.get_active_row()
+        self.assertEqual(
+            row.registry["agents"][0]["runner"],
+            "apps.creation.orchestration.world.run_world_agent",
+        )
+
     def test_ensure_defaults_imports_from_disk(self):
         from apps.agent.runtime import get_agent_registry
 

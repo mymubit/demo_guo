@@ -32,7 +32,7 @@ export default function GateReport({ summary, className = '' }) {
           {failedEpisodes.map((ep) => (
             <div
               key={ep.episodeNumber}
-              className="text-sm p-3 rounded-xl bg-navy-800/40 border border-navy-600/30"
+              className="text-sm p-3 rounded-xl bg-white/[0.04] border border-white/10"
             >
               <div className="flex items-center gap-2 text-red-300 mb-1">
                 <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0" />

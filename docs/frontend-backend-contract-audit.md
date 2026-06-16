@@ -30,9 +30,9 @@
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | auth | 登录页 | `/api/auth/login/` | POST | `phone/password` | 统一 JSON | `data.user/access/refresh` | `4001/401` | AllowAny | 正常、密码错误、非法手机号 | 自动化覆盖（`apps/portal/tests/test_auth_api.py`） |
 | auth | 自动刷新 | `/api/auth/refresh/` | POST | `refresh` | SimpleJWT raw | `access` 不在 `data` 内 | `401` | refresh token | access 过期后自动重试 | 自动化覆盖（`apps/portal/tests/test_auth_api.py`） |
-| creation | 创作提交 | `/api/creation/submit/` | POST | 表单 payload | 统一 JSON | `project_id` | `4001/403` | 登录 | 正常、余额不足、非法参数 | 待复测 |
-| works | 作品列表 | `/api/works/` | GET | `page/page_size/status` | 分页 JSON | `data + pagination` | `401` | 登录 | 空列表、分页、状态筛选 | 待复测 |
-| admin | 用户列表 | `/api/admin/users/` | GET | `page/page_size` | 分页 JSON | `data + pagination` | `401/403` | 管理员 | 无权限、分页、搜索 | 待复测 |
+| creation | 创作提交 | `/api/creation/submit/` | POST | 表单 payload | 统一 JSON | `project_id` | `4001/403` | 登录 | 正常、余额不足、非法参数 | 自动化覆盖（`apps/portal/tests/test_creation_submit_api.py`） |
+| works | 作品列表 | `/api/works/` | GET | `page/page_size/status` | 分页 JSON | `data + pagination` | `401` | 登录 | 空列表、分页、状态筛选 | 自动化覆盖（`apps/portal/tests/test_works_api.py`） |
+| admin | 用户列表 | `/api/admin/users/` | GET | `page/page_size` | 分页 JSON | `data + pagination` | `401/403` | 管理员 | 无权限、分页、搜索 | 自动化覆盖（`apps/console/tests/test_admin_users_api.py`） |
 
 ## 故意保留的 410 路由（AUD-013）
 

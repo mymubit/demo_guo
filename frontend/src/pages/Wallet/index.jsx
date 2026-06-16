@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
-import { Coins, Loader2, Sparkles, TrendingUp, Wallet as WalletIcon } from 'lucide-react'
+import { Coins, Check, Loader2, TrendingUp } from 'lucide-react'
 import { billing, useConfig } from '@/services/api'
 import { useWalletStore } from '@/store/walletStore'
 import { useInvalidateWalletQueries, useWalletData } from '@/hooks/queries/useWalletData'
@@ -14,12 +14,15 @@ import {
   ledgerRowDescription,
 } from '@/utils/ledger'
 import PriceWithDiscount from '@/components/commerce/PriceWithDiscount'
+import { SectionHeader, PillFilterGroup } from '@/components/shared/ConsumerSection'
+import { cn } from '@/utils/cn'
 
 export default function WalletPage() {
   const { wallet, fetchWallet, setWallet } = useWalletStore()
   const [ledgerTab, setLedgerTab] = useState('income')
   const [ledgerPage, setLedgerPage] = useState(1)
   const [paying, setPaying] = useState(null)
+  const [selectedPkgId, setSelectedPkgId] = useState(null)
   const [walletLoading, setWalletLoading] = useState(true)
   const configPaymentMethod = useConfig('payment.default_method', 'mock')
   const [paymentMethod, setPaymentMethod] = useState(configPaymentMethod)
@@ -81,28 +84,30 @@ export default function WalletPage() {
   const totalPages = ledger.pagination?.total_pages || 0
 
   return (
-    <div className="min-h-screen pt-16 pb-20 px-6 relative">
-      <div className="particles-bg" />
-      <div className="absolute top-32 left-10 w-96 h-96 rounded-full bg-gold-500/10 blur-3xl pointer-events-none" />
-      <div className="absolute top-64 right-10 w-[420px] h-[420px] rounded-full bg-purple-600/10 blur-3xl pointer-events-none" />
-
-      <div className="max-w-5xl mx-auto relative z-10 space-y-8">
+    <div className="min-h-screen pt-16 pb-20 px-6">
+      <div className="mx-auto max-w-5xl space-y-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex items-center justify-between gap-4 flex-wrap mb-2">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-white flex items-center gap-3">
-                <WalletIcon className="w-8 h-8 text-gold-400" />
-                <span className="gradient-text">我的{currency}</span>
-              </h1>
-              <p className="text-navy-300 text-sm mt-2">创作按节点/动作扣费，充值后即时到账</p>
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <SectionHeader
+              eyebrow="创作币钱包"
+              title={`我的${currency}`}
+              subtitle="创作按节点/动作扣费，充值后即时到账"
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                to="/orders"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 px-4 py-2 text-sm text-navy-200 transition-colors hover:bg-white/5"
+              >
+                我的订单
+              </Link>
+              <Link
+                to="/member"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-gold-500/30 px-4 py-2 text-sm text-gold-300 transition-colors hover:bg-gold-500/10"
+              >
+                会员中心
+                <TrendingUp className="h-4 w-4" />
+              </Link>
             </div>
-            <Link
-              to="/member"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm text-gold-300 border border-gold-500/30 hover:bg-gold-500/10 transition-colors"
-            >
-              会员中心
-              <TrendingUp className="w-4 h-4" />
-            </Link>
           </div>
         </motion.div>
 
@@ -110,11 +115,11 @@ export default function WalletPage() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
-          className="glass-card rounded-[28px] p-8 border border-gold-500/20"
+          className="relative overflow-hidden rounded-3xl border border-white/5 bg-gradient-to-br from-navy-900 to-navy-950 p-8"
         >
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
             <div>
-              <div className="text-navy-400 text-sm mb-2">当前余额</div>
+              <div className="text-xs uppercase tracking-wider text-gold-400">当前余额</div>
               <div className="text-5xl font-bold text-white flex items-baseline gap-2">
                 {wallet?.balance ?? 0}
                 <span className="text-lg text-gold-400 font-medium">{currency}</span>
@@ -126,7 +131,7 @@ export default function WalletPage() {
                 </span>{' '}
                 篇完整剧本
                 {wallet?.estimated_auto_cost ? (
-                  <span className="text-navy-500">
+                  <span className="text-navy-400">
                     （按一键生成约 {wallet.estimated_auto_cost} 币/篇）
                   </span>
                 ) : null}
@@ -147,18 +152,41 @@ export default function WalletPage() {
         </motion.div>
 
         <section>
-          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-gold-400" />
-            充值{currency}
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {packages.map((pkg) => (
-              <motion.div
+          <SectionHeader
+            eyebrow="充值"
+            title={`充值${currency}`}
+            className="mb-4"
+          />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            {packages.map((pkg) => {
+              const isSelected = selectedPkgId === pkg.id
+              const isFeatured = Boolean(pkg.discount_label)
+              return (
+              <motion.button
                 key={pkg.id}
-                whileHover={{ scale: 1.02 }}
-                className="glass-card rounded-2xl p-6 border border-navy-700/40 flex flex-col"
+                type="button"
+                whileHover={{ y: -2 }}
+                onClick={() => setSelectedPkgId(pkg.id)}
+                className={cn(
+                  'group relative flex flex-col rounded-2xl border p-6 text-left transition-all',
+                  isSelected || isFeatured
+                    ? 'border-gold-400/60 bg-gold-400/10 shadow-gold'
+                    : 'border-white/10 bg-white/[0.03] hover:border-gold-400/40 hover:bg-gold-400/5',
+                )}
               >
-                <div className="font-semibold text-white mb-3">{pkg.name}</div>
+                {pkg.discount_label ? (
+                  <span className="absolute right-3 top-3 rounded-full bg-gradient-to-r from-gold-300 to-gold-500 px-2 py-0.5 text-[10px] font-bold text-navy-950">
+                    {pkg.discount_label}
+                  </span>
+                ) : null}
+                {isSelected ? (
+                  <span className="absolute left-3 top-3 grid h-5 w-5 place-items-center rounded-full bg-gradient-to-br from-gold-300 to-gold-500">
+                    <Check className="h-3 w-3 text-navy-950" />
+                  </span>
+                ) : null}
+                <div className={cn('font-semibold text-white mb-3', (isSelected || pkg.discount_label) && 'mt-5')}>
+                  {pkg.name}
+                </div>
                 <PriceWithDiscount
                   price={pkg.price_yuan}
                   originalPrice={pkg.original_price_yuan}
@@ -180,14 +208,27 @@ export default function WalletPage() {
                 {pkg.member_bonus_hint ? (
                   <p className="text-xs text-purple-300 mb-2">{pkg.member_bonus_hint}</p>
                 ) : null}
-                <div className="text-xs text-navy-500 mb-4">
+                <div className="text-xs text-navy-400 mb-4">
                   约 ¥{pkg.unit_price?.toFixed?.(4) ?? pkg.unit_price}/{currency}
                 </div>
-                <button
-                  type="button"
-                  disabled={Boolean(paying)}
-                  onClick={() => handleRecharge(pkg)}
-                  className="mt-auto w-full py-3 rounded-xl btn-gold font-medium disabled:opacity-60 flex items-center justify-center gap-2"
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    handleRecharge(pkg)
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      event.stopPropagation()
+                      handleRecharge(pkg)
+                    }
+                  }}
+                  className={cn(
+                    'mt-auto w-full py-3 rounded-xl btn-gold font-medium flex items-center justify-center gap-2',
+                    paying === pkg.id && 'opacity-60 pointer-events-none',
+                  )}
                 >
                   {paying === pkg.id ? (
                     <>
@@ -200,50 +241,39 @@ export default function WalletPage() {
                       立即充值
                     </>
                   )}
-                </button>
-              </motion.div>
-            ))}
+                </span>
+              </motion.button>
+            )})}
             {packages.length === 0 && (
-              <div className="md:col-span-3 rounded-2xl border border-dashed border-navy-700/60 p-8 text-center text-navy-400">
+              <div className="md:col-span-3 rounded-2xl border border-dashed border-white/10 p-8 text-center text-navy-400">
                 {packagesError || '暂无可用充值档位，请稍后再试'}
               </div>
             )}
           </div>
           {paymentMethod === 'mock' && (
-            <p className="text-xs text-navy-500 mt-3">演示环境将使用模拟支付，到账后可在下方查看流水。</p>
+            <p className="mt-3 text-xs text-navy-400">演示环境将使用模拟支付，到账后可在下方查看流水。</p>
           )}
         </section>
 
         <section>
-          <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
-            <h2 className="text-lg font-semibold text-white">账户流水</h2>
-            <div className="flex gap-2">
-              {[
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
+            <SectionHeader eyebrow="流水" title="账户流水" className="mb-0" />
+            <PillFilterGroup
+              options={[
                 { key: 'income', label: '收入' },
                 { key: 'spend', label: '消耗' },
-              ].map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => {
-                    setLedgerTab(t.key)
-                    setLedgerPage(1)
-                  }}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                    ledgerTab === t.key
-                      ? 'bg-gold-500/20 text-gold-400 border border-gold-500/30'
-                      : 'bg-navy-800/50 text-navy-300 border border-navy-700/40 hover:text-white'
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
+              ]}
+              value={ledgerTab}
+              onChange={(key) => {
+                setLedgerTab(key)
+                setLedgerPage(1)
+              }}
+            />
           </div>
 
-          <div className="glass-card rounded-2xl overflow-hidden">
+          <div className="overflow-hidden rounded-2xl border border-white/5 bg-slate-900/60">
             {ledgerLoading && (
-              <div className="px-5 py-3 text-sm text-navy-300 border-b border-navy-800/60 flex items-center gap-2">
+              <div className="px-5 py-3 text-sm text-navy-300 border-b border-white/5 flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-gold-400" />
                 正在加载流水…
               </div>
@@ -251,7 +281,7 @@ export default function WalletPage() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[640px] text-sm">
                 <thead>
-                  <tr className="border-b border-navy-700/40 text-navy-400">
+                  <tr className="border-b border-white/5 text-navy-400">
                     <th className="px-5 py-3 text-left font-medium">说明</th>
                     <th className="px-5 py-3 text-left font-medium">类型</th>
                     <th className="px-5 py-3 text-right font-medium">变动</th>
@@ -262,7 +292,7 @@ export default function WalletPage() {
                 <tbody>
                   {(ledger.items || []).length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-5 py-10 text-center text-navy-500">
+                      <td colSpan={5} className="px-5 py-10 text-center text-navy-400">
                         暂无流水
                       </td>
                     </tr>
@@ -270,7 +300,7 @@ export default function WalletPage() {
                     ledger.items.map((row) => {
                       const category = ledgerRowCategory(row)
                       return (
-                        <tr key={row.id} className="border-b border-navy-800/60 hover:bg-navy-800/20">
+                        <tr key={row.id} className="border-b border-white/5 hover:bg-white/[0.03]">
                           <td className="px-5 py-3 text-navy-200">{ledgerRowDescription(row)}</td>
                           <td className="px-5 py-3">
                             <span
@@ -289,7 +319,7 @@ export default function WalletPage() {
                           <td className="px-5 py-3 text-right text-navy-300 tabular-nums">
                             {row.balance_after}
                           </td>
-                          <td className="px-5 py-3 text-right text-navy-500 whitespace-nowrap">
+                          <td className="px-5 py-3 text-right text-navy-400 whitespace-nowrap">
                             {formatDateTime(row.created_at)}
                           </td>
                         </tr>
@@ -307,7 +337,7 @@ export default function WalletPage() {
                 type="button"
                 disabled={ledgerPage <= 1 || ledgerLoading}
                 onClick={() => setLedgerPage((p) => Math.max(1, p - 1))}
-                className="px-4 py-2 rounded-xl text-sm bg-navy-800/50 text-navy-200 border border-navy-700/40 disabled:opacity-40 hover:text-white transition-colors"
+                className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-navy-200 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-40"
               >
                 上一页
               </button>
@@ -318,7 +348,7 @@ export default function WalletPage() {
                 type="button"
                 disabled={ledgerPage >= totalPages || ledgerLoading}
                 onClick={() => setLedgerPage((p) => p + 1)}
-                className="px-4 py-2 rounded-xl text-sm bg-navy-800/50 text-navy-200 border border-navy-700/40 disabled:opacity-40 hover:text-white transition-colors"
+                className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-navy-200 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-40"
               >
                 下一页
               </button>

@@ -14,11 +14,11 @@ import { useAuthStore } from '@/store/authStore'
 import { installAxiosMonitor } from '@/utils/monitor'
 import {
   API_ERROR_CODES,
-  API_SUCCESS_CODE,
   AUTH_ERROR_CODES,
   PERMISSION_ERROR_CODES,
   RATE_LIMIT_ERROR_CODES,
 } from './constants/errorCodes'
+import { unwrapApiEnvelope } from './responseParser'
 
 export const API_BASE_URL =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
@@ -238,25 +238,17 @@ async function retryWithRefresh(config, retry) {
 /** 解析后端 {code, message, data} 响应体，特殊接口可通过 rawResponse 跳过 */
 async function parseResponse(raw, config) {
   if (config?.rawResponse) return raw
-  if (!raw || typeof raw !== 'object') return raw
-  if (typeof raw.code === 'number') {
-    if (raw.code === API_SUCCESS_CODE) {
-      if (raw.pagination != null) {
-        return { data: raw.data, pagination: raw.pagination }
-      }
-      return raw.data
-    }
+  const parsed = unwrapApiEnvelope(raw)
+  if (parsed.ok) return parsed.value
 
-    if (AUTH_ERROR_CODES.has(raw.code)) {
-      const retryResult = await retryWithRefresh(config, (nextConfig) =>
-        _axiosInstance.request(nextConfig)
-      )
-      if (retryResult) return retryResult
-      clearAuthAndRedirect()
-    }
-    throw createApiError({ message: raw.message, code: raw.code, data: raw.data })
+  if (AUTH_ERROR_CODES.has(parsed.code)) {
+    const retryResult = await retryWithRefresh(config, (nextConfig) =>
+      _axiosInstance.request(nextConfig)
+    )
+    if (retryResult) return retryResult
+    clearAuthAndRedirect()
   }
-  return raw
+  throw createApiError({ message: parsed.message, code: parsed.code, data: parsed.data })
 }
 
 /** 获取 axios 单例（懒加载，不可用时返回 null） */

@@ -22,4 +22,6 @@ export const adminMonitoring = {
   updateAlertRule: (id, data) => adminRequest('PATCH', `/api/admin/monitoring/alert-rules/${id}/`, { data }),
   alertEvents: (params = {}) =>
     adminRequest('GET', '/api/admin/monitoring/alert-events/', { params }).then(withListFallback),
+  maintenance: () => adminRequest('GET', '/api/admin/monitoring/maintenance/'),
+  maintainData: (data) => adminRequest('POST', '/api/admin/monitoring/maintenance/', { data }),
 }

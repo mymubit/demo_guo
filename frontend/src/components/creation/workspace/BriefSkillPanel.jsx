@@ -15,7 +15,7 @@ export default function BriefSkillPanel({ draft, editMode, onDraftChange, saving
   const sb = draft.storyBrief || {}
 
   const inputClass =
-    'w-full rounded-xl bg-navy-950/50 border border-navy-600/30 text-white text-sm px-4 py-3 focus:border-gold-400/50 outline-none resize-y'
+    'sf-control resize-y'
 
   function fieldValue(key) {
     return (draft.fields || []).find((f) => f.key === key)?.value || ''
@@ -51,7 +51,10 @@ export default function BriefSkillPanel({ draft, editMode, onDraftChange, saving
       (draft.trendFormula.highlights || []).length ||
       draft.trendFormula.structuralNotes ||
       draft.trendFormula.themeDisplayName ||
-      draft.trendFormula.theme)
+      draft.trendFormula.theme ||
+      draft.trendFormula.projectHook ||
+      draft.trendFormula.projectIdea ||
+      draft.trendFormula.sampleHook)
   const hasThemeRecs = (draft.themeRecommendations || []).length > 0
 
   const hasSupplement =

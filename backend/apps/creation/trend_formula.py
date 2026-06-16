@@ -48,6 +48,64 @@ def _as_text_list(value: Any, *, limit: int = 6) -> List[str]:
     return []
 
 
+_LEGACY_SAMPLE_HOOK_PREFIXES = ("参考钩子：", "题材示例开篇：")
+
+
+def _strip_legacy_sample_hook_from_highlights(highlights: List[str]) -> List[str]:
+    return [
+        line
+        for line in highlights
+        if line and not any(str(line).startswith(prefix) for prefix in _LEGACY_SAMPLE_HOOK_PREFIXES)
+    ]
+
+
+def _extract_legacy_sample_hook(highlights: List[str]) -> Optional[str]:
+    for line in highlights:
+        text = str(line).strip()
+        for prefix in _LEGACY_SAMPLE_HOOK_PREFIXES:
+            if text.startswith(prefix):
+                sample = text[len(prefix):].strip()
+                if sample:
+                    return sample[:120]
+    return None
+
+
+def apply_project_story_to_trend_formula(
+    formula: Dict[str, Any],
+    *,
+    idea: str = "",
+    opening_hooks: str = "",
+    core_conflict: str = "",
+) -> Dict[str, Any]:
+    """将用户故事策划写入 trendFormula，并与题材库示例钩子分离展示。"""
+    out = dict(formula)
+    idea_text = (idea or "").strip()
+    hooks_text = (opening_hooks or "").strip()
+    conflict_text = (core_conflict or "").strip()
+
+    highlights = list(out.get("highlights") or [])
+    legacy_sample = _extract_legacy_sample_hook(highlights)
+    if legacy_sample and not out.get("sampleHook"):
+        out["sampleHook"] = legacy_sample
+    highlights = _strip_legacy_sample_hook_from_highlights(highlights)
+
+    if idea_text:
+        out["projectIdea"] = idea_text[:800]
+    if conflict_text:
+        out["projectConflict"] = conflict_text[:800]
+    if hooks_text:
+        out["projectHook"] = hooks_text[:800]
+    elif idea_text and not out.get("projectHook"):
+        out["projectHook"] = idea_text[:400]
+
+    if out.get("projectHook") or out.get("projectIdea"):
+        out["highlights"] = highlights[:6]
+    else:
+        out["highlights"] = highlights[:6]
+
+    return out
+
+
 def trend_formula_has_internal_refs(trend: Optional[dict]) -> bool:
     if not isinstance(trend, dict):
         return False
@@ -88,7 +146,7 @@ def build_trend_formula(theme: str, *, theme_display_name: str = "") -> Dict[str
         highlights.append(f"情绪高点：{'；'.join(peaks)}")
     hooks = _as_text_list(entry.get("sampleCoreHooks"), limit=1)
     if hooks:
-        highlights.append(f"参考钩子：{hooks[0][:120]}")
+        formula["sampleHook"] = hooks[0][:120]
     formula["highlights"] = highlights[:6]
 
     if entry.get("displayName") and entry["displayName"] != display:
@@ -114,6 +172,11 @@ def normalize_trend_formula(trend: Optional[dict], *, theme: str = "", theme_dis
             return merged
 
     cleaned = dict(trend)
+    highlights = list(cleaned.get("highlights") or [])
+    legacy_sample = _extract_legacy_sample_hook(highlights)
+    if legacy_sample and not cleaned.get("sampleHook"):
+        cleaned["sampleHook"] = legacy_sample
+    cleaned["highlights"] = _strip_legacy_sample_hook_from_highlights(highlights)
     cleaned["matchedTemplates"] = [
         item
         for item in (cleaned.get("matchedTemplates") or [])

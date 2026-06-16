@@ -9,9 +9,9 @@ const variants = {
   gold:
     'bg-gradient-to-r from-gold-300 to-gold-500 text-navy-950 shadow-gold hover:from-gold-200 hover:to-gold-400',
   secondary:
-    'border border-navy-700/45 bg-navy-800/70 text-navy-100 hover:border-navy-600/70 hover:bg-navy-700/70',
+    'border border-white/10 bg-slate-800/70 text-navy-100 hover:border-white/20 hover:bg-slate-700/70',
   ghost:
-    'border border-navy-700/35 bg-navy-900/25 text-navy-200 hover:border-navy-600/60 hover:bg-navy-800/55 hover:text-white',
+    'border border-white/5 bg-slate-900/40 text-navy-200 hover:border-white/20 hover:bg-white/[0.06] hover:text-white',
   danger:
     'border border-danger-500/35 bg-danger-500/12 text-danger-300 hover:bg-danger-500/20 hover:text-danger-100',
 }

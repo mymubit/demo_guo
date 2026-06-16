@@ -77,6 +77,9 @@ def custom_exception_handler(exc, context):
     """
     # 首先调用 DRF 默认的 exception_handler 获取标准响应
     response = exception_handler(exc, context)
+    request = context.get("request")
+    if request is not None:
+        request._monitoring_exception = exc
 
     # 处理业务异常 BusinessException
     if isinstance(exc, BusinessException):
@@ -147,7 +150,11 @@ def custom_exception_handler(exc, context):
     # 处理 Django 内置的 PermissionDenied 异常
     if isinstance(exc, PermissionDenied):
         return Response(
-            {'code': FORBIDDEN, 'message': '无权限执行此操作', 'data': None},
+            {
+                'code': FORBIDDEN,
+                'message': humanize_user_message(str(exc), default='无权限执行此操作'),
+                'data': None,
+            },
             status=status.HTTP_200_OK,
         )
 

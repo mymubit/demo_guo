@@ -33,10 +33,40 @@ DEFAULT_CREATION_ENTRIES = [
 
 DEFAULT_FORMAT_VARIANTS = [
     {
+        "key": "A",
+        "schemaKey": "variant-a",
+        "name": "标准版（文档阅读友好）",
+        "description": "场景与台词结构清晰，适合内部评审与文档阅读",
+        "sceneHeading": "1-1 日 内 地点",
+        "dialogueMarker": "**角色**(动作)：台词",
+        "actionMarker": "**(描述)**",
+    },
+    {
         "key": "B",
         "schemaKey": "variant-b",
-        "name": "行业通用版",
-        "description": "",
+        "name": "行业通用版（拍摄组默认）",
+        "description": "拍摄组最常用格式，平衡可读性与落地执行",
+        "sceneHeading": "1-1 日 内 地点",
+        "dialogueMarker": "角色：台词",
+        "actionMarker": "△ 描述",
+    },
+    {
+        "key": "C",
+        "schemaKey": "variant-c",
+        "name": "精简版（AI生成高速模式）",
+        "description": "字段更少、生成更快，适合快速试稿",
+        "sceneHeading": "场景一 地点 日",
+        "dialogueMarker": "角色(动作)：台词",
+        "actionMarker": "散文描述",
+    },
+    {
+        "key": "D",
+        "schemaKey": "variant-d",
+        "name": "详细分镜版（S级精品剧拍摄）",
+        "description": "含景别与运镜提示，适合精品短剧与 S 级拍摄",
+        "sceneHeading": "1-1 日 内 地点 色温+声音",
+        "dialogueMarker": "**角色**(动作)：台词",
+        "actionMarker": "△ 详细描述+景别+运镜",
     },
 ]
 

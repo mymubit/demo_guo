@@ -45,9 +45,9 @@ export default function CharacterRelationshipGraph({ characters = [], relationsh
   }
 
   return (
-    <div className="rounded-xl bg-navy-950/40 border border-navy-700/30 p-3 mb-4">
+    <div className="rounded-xl border border-white/5 bg-slate-900/40 p-3 mb-4">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-        <div className="text-xs text-navy-500">关系图谱 · 悬停连线查看详情 · 可拖拽缩放</div>
+        <div className="text-xs text-navy-400">关系图谱 · 悬停连线查看详情 · 可拖拽缩放</div>
         {hasBidirectional ? (
           <span className="text-[10px] text-cyan-400/80">双箭头 = 双方视角</span>
         ) : null}

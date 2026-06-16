@@ -3,11 +3,11 @@ import { cn } from '@/utils/cn'
 import { hoverLift } from '@/constants/motion'
 
 const variants = {
-  default: 'border border-navy-700/30 bg-navy-900/55 shadow-card backdrop-blur-xl',
-  glass: 'glass-card shadow-card',
-  gold: 'glass-card-gold shadow-gold',
-  subtle: 'border border-navy-700/25 bg-navy-900/35',
-  flat: 'border border-navy-800/70 bg-navy-950/30',
+  default: 'border border-white/5 bg-slate-900/60 shadow-card',
+  glass: 'sf-console-panel shadow-card',
+  gold: 'rounded-2xl border border-gold-400/30 bg-gold-400/5 shadow-gold',
+  subtle: 'border border-white/5 bg-slate-900/40',
+  flat: 'border border-white/5 bg-slate-950/50',
 }
 
 const paddings = {
@@ -29,10 +29,11 @@ export default function Card({
 }) {
   const isMotion = interactive || Component === motion.div
   const Element = isMotion ? motion.div : Component
+  const motionProps = interactive ? { whileHover: hoverLift } : {}
 
   return (
     <Element
-      whileHover={interactive ? hoverLift : undefined}
+      {...motionProps}
       className={cn(
         'rounded-2xl',
         variants[variant] || variants.default,

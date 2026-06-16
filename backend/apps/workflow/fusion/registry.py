@@ -24,12 +24,15 @@ from apps.common.agent_term import alias_agent_id
 class FusionNodeRegistry:
     """主链节点查询 facade — 委托 FusionPipelineDbService。"""
 
-    def __init__(self, config: Optional[FusionSkillConfig] = None):
+    def __init__(self, config: Optional[FusionSkillConfig] = None, *, pack_id: Optional[str] = None):
         self.config = config or get_fusion_config()
+        self.pack_id = str(pack_id).strip() if pack_id else None
 
     def main_chain_nodes(self) -> List[Dict[str, Any]]:
         from apps.workflow.pipeline_store import FusionPipelineDbService
 
+        if self.pack_id:
+            return FusionPipelineDbService.main_chain_nodes(pack_id=self.pack_id)
         return FusionPipelineDbService.main_chain_nodes()
 
     def total_main_nodes(self) -> int:

@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Eye, BookOpen, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 import AiGenerateButton from '@/components/creation/AiGenerateButton'
+import ToolsShell from '@/components/tools/ToolsShell'
 import { billing } from '@/services/api'
 
 export default function PullSheetAnalyze() {
@@ -22,24 +23,15 @@ export default function PullSheetAnalyze() {
   }, [])
 
   return (
-    <div className="relative min-h-screen py-12">
-      <div className="particles-bg" />
-      <div className="max-w-3xl mx-auto px-6 relative z-10">
-        <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 mb-4 badge">
-            <Eye className="w-4 h-4" />
-            <span>会员工具</span>
-          </div>
-          <h1 className="text-4xl font-bold text-white mb-3">拉片分析</h1>
-          <p className="text-navy-300 max-w-xl mx-auto leading-relaxed">
-            对标参考作品拆解节奏、钩子与镜头语言，独立于剧本创作表单。与「参考作品」字段填写的用途不同。
-          </p>
-        </motion.div>
-
+    <ToolsShell
+        active="pullsheet"
+        title="拉片分析"
+        subtitle="对标参考作品拆解节奏、钩子与镜头语言，独立于剧本创作表单。"
+      >
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="glass-card rounded-2xl p-6 space-y-6"
+          className="rounded-2xl border border-white/5 bg-slate-900/60 p-6 space-y-6"
         >
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-white mb-2">
@@ -50,7 +42,7 @@ export default function PullSheetAnalyze() {
               value={referenceWork}
               onChange={(e) => setReferenceWork(e.target.value.slice(0, 500))}
               placeholder="例：《回家的诱惑》— 家庭伦理、反转节奏、情绪钩子…"
-              className="w-full h-28 p-4 rounded-xl bg-navy-900/50 border border-navy-600/30 text-white placeholder-navy-500 focus:border-gold-400/40 outline-none resize-none text-sm"
+              className="sf-control h-28 resize-none"
             />
           </div>
 
@@ -60,7 +52,7 @@ export default function PullSheetAnalyze() {
               value={theme}
               onChange={(e) => setTheme(e.target.value.slice(0, 50))}
               placeholder="例：甜宠虐恋"
-              className="w-full px-4 py-3 rounded-xl bg-navy-900/50 border border-navy-600/30 text-white placeholder-navy-500 focus:border-gold-400/40 outline-none text-sm"
+              className="sf-control"
             />
           </div>
 
@@ -70,7 +62,7 @@ export default function PullSheetAnalyze() {
               value={coreIdea}
               onChange={(e) => setCoreIdea(e.target.value.slice(0, 300))}
               placeholder="简要描述你想对标学习的叙事方向…"
-              className="w-full h-24 p-4 rounded-xl bg-navy-900/50 border border-navy-600/30 text-white placeholder-navy-500 focus:border-gold-400/40 outline-none resize-none text-sm"
+              className="sf-control h-24 resize-none"
             />
           </div>
 
@@ -96,7 +88,7 @@ export default function PullSheetAnalyze() {
           </div>
 
           {analysis && (
-            <div className="rounded-xl bg-navy-900/60 border border-navy-700/40 p-5">
+            <div className="rounded-xl border border-white/5 bg-slate-900/60 p-5">
               <h3 className="text-sm font-semibold text-gold-400 mb-3 flex items-center gap-2">
                 <Sparkles className="w-4 h-4" />
                 分析结果
@@ -105,7 +97,6 @@ export default function PullSheetAnalyze() {
             </div>
           )}
         </motion.div>
-      </div>
-    </div>
+      </ToolsShell>
   )
 }

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from django.conf import settings
@@ -13,6 +14,7 @@ from apps.skill.llm.chat import LlmServiceError
 
 from ..artifact_service import get_artifact
 from ..dialogue_shaper import apply_dialogue_shaper
+from ..script_normalizer import apply_script_normalizer
 from ..episode_gate import apply_episode_gates
 from ..ip_lock import run_script_ip_lock
 from ..script_psychology import build_episode_psychology_hints
@@ -28,7 +30,11 @@ logger = logging.getLogger(__name__)
 
 NODE_ID = "node-5-script"
 AGENT_ID = "script"
-DEFAULT_BATCH_SIZE = 2
+
+# 全自动流水线：每批次生成集数，可通过 FUSION_LLM_EPISODE_BATCH 覆盖
+DEFAULT_BATCH_SIZE = 5
+# 工作台指定集重新生成：固定逐集执行，保证单集质量
+SINGLE_EPISODE_BATCH_SIZE = 1
 
 
 class ScriptAgentEngine:
@@ -42,8 +48,9 @@ class ScriptAgentEngine:
         self.executed_skills = self.orchestrator.state.executed_ids()
 
     def _batch_size(self) -> int:
+        """全自动模式批次大小，可由 FUSION_LLM_EPISODE_BATCH 环境变量覆盖（1-10）。"""
         raw = int(getattr(settings, "FUSION_LLM_EPISODE_BATCH", DEFAULT_BATCH_SIZE) or DEFAULT_BATCH_SIZE)
-        return max(1, min(raw, 5))
+        return max(1, min(raw, 10))
 
     def _character_id_map(self, characters: dict) -> dict:
         mapping: Dict[str, str] = {}
@@ -58,6 +65,30 @@ class ScriptAgentEngine:
 
     def _coerce_episode_chunk(self, chunk: Any) -> dict:
         return coerce_script_chunk(chunk)
+
+    @staticmethod
+    def _cjk_len(text: str) -> int:
+        return len(re.findall(r"[\u4e00-\u9fff]", text or ""))
+
+    @staticmethod
+    def _episode_markdown(ep: dict) -> str:
+        from ..artifact_renderer import episode_to_markdown
+        return episode_to_markdown(ep)
+
+    def _min_word_count(self, ep_num: int) -> int:
+        return 900 if ep_num == 1 else 700
+
+    def _short_episodes(self, episodes: List[dict]) -> List[int]:
+        """返回字数不足的集号列表。"""
+        short: List[int] = []
+        for ep in episodes:
+            num = ep.get("episodeNumber")
+            if num is None:
+                continue
+            md = self._episode_markdown(ep)
+            if self._cjk_len(md) < self._min_word_count(int(num)):
+                short.append(int(num))
+        return short
 
     def _llm_script_batch_with_retry(
         self,
@@ -86,6 +117,37 @@ class ScriptAgentEngine:
                     end=end,
                 )
             )
+            return chunk
+
+        # 字数不足时触发一次重写
+        short_nums = self._short_episodes(chunk.get("episodes") or [])
+        if short_nums:
+            logger.info(
+                "[ScriptAgent] 第%s-%s集中字数不足集: %s，触发重写",
+                start, end, short_nums,
+            )
+            retry_chunk = self._coerce_episode_chunk(
+                self._llm_script_batch(
+                    brief=brief,
+                    outline=outline,
+                    characters=characters,
+                    start=start,
+                    end=end,
+                )
+            )
+            retry_episodes = {e.get("episodeNumber"): e for e in (retry_chunk.get("episodes") or [])}
+            merged_eps: List[dict] = []
+            for ep in (chunk.get("episodes") or []):
+                num = ep.get("episodeNumber")
+                if num in short_nums and num in retry_episodes:
+                    candidate = retry_episodes[num]
+                    md = self._episode_markdown(candidate)
+                    if self._cjk_len(md) >= self._cjk_len(self._episode_markdown(ep)):
+                        merged_eps.append(candidate)
+                        continue
+                merged_eps.append(ep)
+            chunk["episodes"] = merged_eps
+
         return chunk
 
     def _merge_episode_scripts(
@@ -110,6 +172,42 @@ class ScriptAgentEngine:
             "episodes": sorted(by_num.values(), key=lambda x: x["episodeNumber"]),
         }
 
+    @staticmethod
+    def _slim_outline(outline: dict, start: int, end: int, *, context_window: int = 2) -> dict:
+        """剧情大纲切片：只保留当前批次 ±context_window 集，避免全量传入。"""
+        all_eps = outline.get("episodes") or []
+        if not all_eps:
+            return outline
+        lo = max(1, start - context_window)
+        hi = end + context_window
+        sliced = [e for e in all_eps if isinstance(e, dict) and lo <= (e.get("episodeNumber") or 0) <= hi]
+        slim = {k: v for k, v in outline.items() if k != "episodes"}
+        slim["episodes"] = sliced
+        slim["_totalEpisodes"] = outline.get("totalEpisodes") or len(all_eps)
+        return slim
+
+    @staticmethod
+    def _slim_characters(characters: dict) -> dict:
+        """人物圣经精简：只保留剧本生成所需的核心字段，去掉大量冗余细节。"""
+        _CORE_FIELDS = {
+            "id", "name", "roleType", "age", "gender", "archetypeCode",
+            "coreMotivation", "shortTermGoal", "secret", "weakness",
+            "signatureLines", "speechPatterns",
+            "characterArc",
+        }
+
+        def _slim_role(role: dict) -> dict:
+            if not isinstance(role, dict):
+                return role
+            return {k: v for k, v in role.items() if k in _CORE_FIELDS}
+
+        slim: dict = {}
+        for key in ("protagonists", "antagonists", "supportingRoles"):
+            roles = characters.get(key) or []
+            slim[key] = [_slim_role(r) for r in roles]
+        slim["relationshipMap"] = characters.get("relationshipMap") or []
+        return slim
+
     def _llm_script_batch(
         self,
         *,
@@ -120,20 +218,20 @@ class ScriptAgentEngine:
         end: int,
     ) -> dict:
         orch = self.orchestrator
-        upstream = orch.run_reference_injector(
-            {
-                "projectBrief": brief,
-                "characterBible": characters,
-                "seriesOutline": outline,
-                "generateFromEpisode": start,
-                "generateToEpisode": end,
-                "psychologyHints": build_episode_psychology_hints(
-                    outline,
-                    from_episode=start,
-                    to_episode=end,
-                ),
-            }
-        )
+        slim_outline = self._slim_outline(outline, start, end)
+        slim_chars = self._slim_characters(characters)
+        upstream = {
+            "projectBrief": brief,
+            "characterBible": slim_chars,
+            "seriesOutline": slim_outline,
+            "generateFromEpisode": start,
+            "generateToEpisode": end,
+            "psychologyHints": build_episode_psychology_hints(
+                outline,
+                from_episode=start,
+                to_episode=end,
+            ),
+        }
         orch.state.record(
             "psychology-advisor",
             "executed",
@@ -193,6 +291,14 @@ class ScriptAgentEngine:
         for ep in gated:
             by_num[ep["episodeNumber"]] = ep
         return sorted(by_num.values(), key=lambda x: x["episodeNumber"])
+
+    def _apply_script_normalizer(self, merged: dict, brief: dict, characters: dict) -> dict:
+        normalized, log = apply_script_normalizer(merged, brief, characters=characters)
+        status = "executed" if not log.get("skipped") else "skipped"
+        msg = "; ".join(str(i) for i in (log.get("issues") or [])[:2])[:200]
+        self.orchestrator.state.record("script-normalizer", status, skill_type="rule", message=msg)
+        normalized["scriptNormalizerLog"] = log
+        return normalized
 
     def _apply_dialogue_shaper(self, merged: dict, characters: dict) -> dict:
         shaped, log = apply_dialogue_shaper(merged, characters)
@@ -277,6 +383,7 @@ class ScriptAgentEngine:
                 end=end,
             )
             existing = self._merge_episode_scripts(existing, chunk, brief, characters)
+            existing = self._apply_script_normalizer(existing, brief, characters)
             existing = self._apply_dialogue_shaper(existing, characters)
             new_nums = set(range(start, end + 1))
             episodes = self._apply_gates(
@@ -313,6 +420,7 @@ class ScriptAgentEngine:
         *,
         existing: Optional[dict] = None,
     ) -> dict:
+        """工作台指定集重新生成：逐集生成（每次 LLM 调用 1 集），保证单集质量。"""
         self.orch._require_llm(NODE_ID)
         self.orch._mark_node_running(NODE_ID)
 
@@ -321,39 +429,43 @@ class ScriptAgentEngine:
         characters = artifacts["character_bible"]
         start = max(1, int(from_episode))
         end = max(start, int(to_episode))
+        total = end - start + 1
 
         if existing is None:
             existing = get_artifact(self.project, "episode_scripts") or {"episodes": []}
         if not isinstance(existing, dict):
             existing = {"episodes": []}
 
-        self.orch._flush_progress(
-            node_id=NODE_ID,
-            summary=f"ScriptAgent · 第{start}-{end}集",
-            sub_pct=10,
-        )
-        chunk = self._llm_script_batch_with_retry(
-            brief=brief,
-            outline=outline,
-            characters=characters,
-            start=start,
-            end=end,
-        )
-        merged = self._merge_episode_scripts(existing, chunk, brief, characters)
-        merged = self._apply_dialogue_shaper(merged, characters)
-        new_nums = set(range(start, end + 1))
-        episodes = self._apply_gates(
-            list(merged.get("episodes") or []),
-            outline,
-            filter_nums=new_nums,
-            on_progress=lambda done, ep_num: self.orch._flush_progress(
+        for ep_num in range(start, end + 1):
+            done_count = ep_num - start
+            self.orch._flush_progress(
                 node_id=NODE_ID,
-                summary=f"逐集质检 {done}/{len(new_nums)}（第{ep_num}集）",
-                sub_pct=int(done / max(len(new_nums), 1) * 100),
-            ),
-        )
-        merged["episodes"] = episodes
-        return self._finalize_payload(merged, brief, characters)
+                summary=f"ScriptAgent · 第{ep_num}集（{done_count + 1}/{total}）",
+                sub_pct=int(done_count / max(total, 1) * 90),
+            )
+            chunk = self._llm_script_batch_with_retry(
+                brief=brief,
+                outline=outline,
+                characters=characters,
+                start=ep_num,
+                end=ep_num,
+            )
+            existing = self._merge_episode_scripts(existing, chunk, brief, characters)
+            existing = self._apply_script_normalizer(existing, brief, characters)
+            existing = self._apply_dialogue_shaper(existing, characters)
+            episodes = self._apply_gates(
+                list(existing.get("episodes") or []),
+                outline,
+                filter_nums={ep_num},
+                on_progress=lambda done, n: self.orch._flush_progress(
+                    node_id=NODE_ID,
+                    summary=f"质检第{n}集",
+                    sub_pct=int((done_count + 1) / max(total, 1) * 90),
+                ),
+            )
+            existing["episodes"] = episodes
+
+        return self._finalize_payload(existing, brief, characters)
 
     def run_workspace(
         self,

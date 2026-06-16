@@ -95,7 +95,7 @@ function ConfigForm({ categories, form, setForm, saving, onSubmit, onCancel }) {
   const controlClass = 'sf-control w-full'
 
   return (
-    <div className="glass-card rounded-2xl p-5 space-y-4 border border-gold-500/20">
+    <div className="sf-console-panel p-5 space-y-4 border border-gold-500/20">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <label className="space-y-1">
           <span className="text-xs text-navy-400">分类</span>
@@ -176,7 +176,7 @@ function ConfigForm({ categories, form, setForm, saving, onSubmit, onCancel }) {
           ['is_sensitive', '敏感配置'],
           ['requires_restart', '需要重启'],
         ].map(([key, label]) => (
-          <label key={key} className="flex items-center gap-2 rounded-xl bg-navy-900/55 border border-navy-700/40 px-3 py-2">
+          <label key={key} className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
             <input type="checkbox" checked={Boolean(form[key])} onChange={(e) => setForm({ ...form, [key]: e.target.checked })} />
             {label}
           </label>
@@ -189,7 +189,7 @@ function ConfigForm({ categories, form, setForm, saving, onSubmit, onCancel }) {
       </label>
 
       <div className="flex gap-2 justify-end">
-        <button type="button" onClick={onCancel} className="px-4 py-2.5 rounded-xl bg-navy-800/70 text-navy-200 text-sm">取消</button>
+        <button type="button" onClick={onCancel} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-navy-200 hover:bg-white/[0.06]">取消</button>
         <button type="button" onClick={onSubmit} disabled={saving} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-gold-400 to-gold-600 text-navy-950 text-sm font-semibold disabled:opacity-60">
           <Save className={ICON.md} />
           {saving ? '保存中…' : '保存配置'}
@@ -340,7 +340,7 @@ export default function SystemConfigCenterPage() {
       render: (row) => (
         <div>
           <div className="font-semibold text-white">{row.config_name}</div>
-          <code className="text-xs text-navy-500">{row.config_key}</code>
+          <code className="text-xs text-navy-300">{row.config_key}</code>
           <p className="text-xs text-navy-400 mt-1 line-clamp-2">{row.description || '—'}</p>
         </div>
       ),
@@ -380,10 +380,9 @@ export default function SystemConfigCenterPage() {
   return (
     <AdminShell
       title="动态配置"
-      description="数据库驱动的业务配置中心，支持在线调整、缓存刷新与灰度迁移"
       actions={
         <>
-          <button type="button" onClick={refreshCache} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-navy-800/70 text-navy-200 text-sm">
+          <button type="button" onClick={refreshCache} className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-navy-200 hover:bg-white/[0.06]">
             <RefreshCw className={ICON.md} />
             刷新缓存
           </button>

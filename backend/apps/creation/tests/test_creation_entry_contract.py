@@ -125,6 +125,15 @@ class CreationEntryCatalogContractTests(TestCase):
         self.assertEqual(hints.get("prefilledSteps"), [1])
         self.assertTrue(hints.get("caption"))
 
+    def test_portal_catalog_includes_execution_plan(self):
+        from apps.portal.creation.fusion_views import _portal_catalog
+
+        catalog = _portal_catalog()
+        self.assertIn("executionPlan", catalog)
+        plan = catalog["executionPlan"]
+        self.assertIn("stages", plan)
+        self.assertIn("edges", plan)
+
 
 class CreationEntrySubmitContractTests(TestCase):
     def setUp(self):

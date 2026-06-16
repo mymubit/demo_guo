@@ -127,10 +127,10 @@ export function CharacterSummaryBanner({ summary, editMode, onChange, inputClass
   if (!summary && !editMode) return null
   const textareaClass =
     inputClass ||
-    'w-full rounded-xl bg-navy-950/50 border border-navy-600/30 text-white text-sm px-4 py-3 focus:border-gold-400/50 outline-none resize-y'
+    'sf-control resize-y'
 
   return (
-    <div className="rounded-xl border border-navy-700/35 bg-navy-900/45 px-4 py-3.5">
+    <div className="rounded-xl border border-white/5 bg-slate-900/40 px-4 py-3.5">
       <div className="text-[10px] text-gold-400/70 font-medium mb-1.5 tracking-wide">总述</div>
       {editMode ? (
         <textarea
@@ -166,7 +166,7 @@ function PersonalityBlock({ label, text, colorOffset = 0 }) {
     let colorIdx = colorOffset
     return (
       <div>
-        <div className="text-[10px] text-navy-500 mb-1.5">{label}</div>
+        <div className="text-[10px] text-navy-400 mb-1.5">{label}</div>
         <div className="flex flex-wrap gap-1.5">
           {splitPersonalityTags(value).map((tag) => {
             const cls = TAG_COLORS[colorIdx % TAG_COLORS.length]
@@ -184,7 +184,7 @@ function PersonalityBlock({ label, text, colorOffset = 0 }) {
 
   return (
     <div>
-      <div className="text-[10px] text-navy-500 mb-1.5">{label}</div>
+      <div className="text-[10px] text-navy-400 mb-1.5">{label}</div>
       <p className="text-sm text-navy-100 leading-relaxed whitespace-pre-wrap">{value}</p>
     </div>
   )
@@ -208,7 +208,7 @@ function PersonalityTagRow({ surface, real }) {
 }
 
 function TagList({ items, emptyLabel }) {
-  if (!items?.length) return emptyLabel ? <p className="text-sm text-navy-500">{emptyLabel}</p> : null
+  if (!items?.length) return emptyLabel ? <p className="text-sm text-navy-400">{emptyLabel}</p> : null
   return (
     <div className="flex flex-wrap gap-1.5">
       {items.map((item) => (
@@ -229,13 +229,13 @@ function BehaviorSection({ behavior = {} }) {
     ['厌恶', behavior.dislikes],
   ].filter(([, val]) => (Array.isArray(val) ? val.length : val))
 
-  if (!rows.length) return <p className="text-sm text-navy-500">暂无行为模式描述</p>
+  if (!rows.length) return <p className="text-sm text-navy-400">暂无行为模式描述</p>
 
   return (
     <div className="space-y-4">
       {rows.map(([label, val]) => (
         <div key={label}>
-          <div className="text-xs text-navy-500 mb-2">{label}</div>
+          <div className="text-xs text-navy-400 mb-2">{label}</div>
           {Array.isArray(val) ? (
             <TagList items={val} />
           ) : (
@@ -256,14 +256,14 @@ function VisualAnchorSection({ anchor = {} }) {
   if (!has) return null
 
   return (
-    <div className="space-y-3 rounded-xl border border-navy-700/25 bg-navy-950/30 px-4 py-3">
+    <div className="space-y-3 rounded-xl border border-white/5 bg-slate-900/40 px-4 py-3">
       <div className="text-xs text-gold-400/80 font-medium">视觉锚定</div>
       <InfoCell label="显著特征" value={anchor.distinctiveFeatures} />
       <InfoCell label="服装风格" value={anchor.clothingStyle} />
       <InfoCell label="习惯动作" value={anchor.habitGestures} />
       {(anchor.consistencyRules || []).length > 0 && (
         <div>
-          <div className="text-xs text-navy-500 mb-2">一致性保障</div>
+          <div className="text-xs text-navy-400 mb-2">一致性保障</div>
           <ul className="text-sm text-navy-200 space-y-1 list-disc list-inside">
             {anchor.consistencyRules.map((rule) => (
               <li key={rule}>{rule}</li>
@@ -278,8 +278,8 @@ function VisualAnchorSection({ anchor = {} }) {
 function InfoCell({ label, value }) {
   if (!value) return null
   return (
-    <div className="rounded-xl bg-navy-950/35 border border-navy-700/25 px-3 py-2.5">
-      <div className="text-[10px] text-navy-500 mb-1">{label}</div>
+    <div className="rounded-xl border border-white/5 bg-slate-900/40 px-3 py-2.5">
+      <div className="text-[10px] text-navy-400 mb-1">{label}</div>
       <p className="text-sm text-navy-100 leading-relaxed whitespace-pre-wrap">{value}</p>
     </div>
   )
@@ -287,10 +287,10 @@ function InfoCell({ label, value }) {
 
 function FieldEditor({ label, value, onChange, rows = 2 }) {
   const inputClass =
-    'w-full rounded-xl bg-navy-950/50 border border-navy-600/30 text-white text-sm px-4 py-3 focus:border-gold-400/50 outline-none resize-y'
+    'sf-control resize-y'
   return (
     <div>
-      <div className="text-xs text-navy-500 mb-1.5">{label}</div>
+      <div className="text-xs text-navy-400 mb-1.5">{label}</div>
       <textarea value={value || ''} onChange={(e) => onChange?.(e.target.value)} rows={rows} className={inputClass} />
     </div>
   )
@@ -298,7 +298,7 @@ function FieldEditor({ label, value, onChange, rows = 2 }) {
 
 function ArcTimeline({ arc }) {
   if (!arc?.startingState && !arc?.finalState && !(arc?.keyTurningPoints || []).length) {
-    return <p className="text-sm text-navy-500">暂无弧线描述</p>
+    return <p className="text-sm text-navy-400">暂无弧线描述</p>
   }
   const steps = [
     arc.startingState ? { label: '起点', text: arc.startingState } : null,
@@ -310,7 +310,7 @@ function ArcTimeline({ arc }) {
     <div className="relative pl-4 border-l border-gold-400/25 space-y-4">
       {steps.map((step, i) => (
         <div key={`${step.label}-${i}`} className="relative">
-          <span className="absolute -left-[21px] top-1.5 w-2.5 h-2.5 rounded-full bg-gold-400/80 ring-4 ring-navy-900/80" />
+          <span className="absolute -left-[21px] top-1.5 w-2.5 h-2.5 rounded-full bg-gold-400/80 ring-4 ring-slate-900/80" />
           <div className="text-[10px] text-gold-400/70 font-medium mb-0.5">{step.label}</div>
           <p className="text-sm text-navy-100 leading-relaxed">{step.text}</p>
         </div>
@@ -333,13 +333,13 @@ export function CharacterOverviewPanel({ bible, onSelectCharacter }) {
             key={charId}
             type="button"
             onClick={() => onSelectCharacter?.(`char-${charId}`)}
-            className="text-left rounded-xl border border-navy-700/35 bg-navy-900/40 px-4 py-3 hover:border-gold-400/35 hover:bg-navy-800/45 transition-colors"
+            className="text-left rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 transition-colors hover:border-gold-400/35 hover:bg-gold-400/5"
           >
             <div className="flex items-center gap-2 mb-1">
               <User className="w-3.5 h-3.5 text-gold-400/70 shrink-0" />
               <span className="text-sm font-medium text-white truncate">{char.name}</span>
               {resolveRoleTypeLabel(char) && (
-                <span className="text-[10px] text-navy-500 shrink-0">{resolveRoleTypeLabel(char)}</span>
+                <span className="text-[10px] text-navy-400 shrink-0">{resolveRoleTypeLabel(char)}</span>
               )}
             </div>
             {oneLiner && (
@@ -356,19 +356,19 @@ export function CharacterProfilePanel({ char, bible, editMode, onChange }) {
   const [tab, setTab] = useState('profile')
   const arc = char?.characterArc || {}
   const inputClass =
-    'w-full rounded-xl bg-navy-950/50 border border-navy-600/30 text-white text-sm px-4 py-3 focus:border-gold-400/50 outline-none'
+    'sf-control'
 
   if (editMode) {
     return (
       <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <div className="text-xs text-navy-500 mb-1.5">姓名</div>
-            <div className={`${inputClass} bg-navy-900/30 text-navy-100 opacity-80`}>{char.name}</div>
+            <div className="text-xs text-navy-400 mb-1.5">姓名</div>
+            <div className={`${inputClass} bg-slate-900/40 text-navy-100 opacity-80`}>{char.name}</div>
           </div>
           <div>
-            <div className="text-xs text-navy-500 mb-1.5">定位</div>
-            <div className={`${inputClass} bg-navy-900/30 text-navy-100`}>
+            <div className="text-xs text-navy-400 mb-1.5">定位</div>
+            <div className={`${inputClass} bg-slate-900/40 text-navy-100`}>
               {resolveRoleTypeLabel(char) || '—'}
             </div>
           </div>
@@ -383,7 +383,7 @@ export function CharacterProfilePanel({ char, bible, editMode, onChange }) {
         <FieldEditor label="软肋" value={char.weakness} onChange={(v) => onChange?.('weakness', v)} />
         <FieldEditor label="外貌" value={char.appearance} onChange={(v) => onChange?.('appearance', v)} rows={3} />
         <div>
-          <div className="text-xs text-navy-500 mb-1.5">代表台词（每行一条）</div>
+          <div className="text-xs text-navy-400 mb-1.5">代表台词（每行一条）</div>
           <textarea
             value={(char.signatureLines || []).join('\n')}
             onChange={(e) =>
@@ -402,7 +402,7 @@ export function CharacterProfilePanel({ char, bible, editMode, onChange }) {
           onChange={(v) => onChange?.('signatureDialogueStyle', v)}
         />
         <div>
-          <div className="text-xs text-navy-500 mb-1.5">说话模式（每行一条）</div>
+          <div className="text-xs text-navy-400 mb-1.5">说话模式（每行一条）</div>
           <textarea
             value={(char.speechPatterns || []).join('\n')}
             onChange={(e) =>
@@ -416,7 +416,7 @@ export function CharacterProfilePanel({ char, bible, editMode, onChange }) {
           />
         </div>
         <div>
-          <div className="text-xs text-navy-500 mb-1.5">标志性道具（每行一条）</div>
+          <div className="text-xs text-navy-400 mb-1.5">标志性道具（每行一条）</div>
           <textarea
             value={(char.iconicProps || []).join('\n')}
             onChange={(e) =>
@@ -429,7 +429,7 @@ export function CharacterProfilePanel({ char, bible, editMode, onChange }) {
             className={`${inputClass} resize-y`}
           />
         </div>
-        <div className="rounded-xl border border-navy-700/25 p-4 space-y-3">
+        <div className="space-y-3 rounded-xl border border-white/5 p-4">
           <div className="text-xs text-gold-400/80">角色弧线</div>
           <FieldEditor
             label="起点"
@@ -437,7 +437,7 @@ export function CharacterProfilePanel({ char, bible, editMode, onChange }) {
             onChange={(v) => onChange?.('characterArc', { ...arc, startingState: v })}
           />
           <div>
-            <div className="text-xs text-navy-500 mb-1.5">转折点（每行一条）</div>
+            <div className="text-xs text-navy-400 mb-1.5">转折点（每行一条）</div>
             <textarea
               value={(arc.keyTurningPoints || []).join('\n')}
               onChange={(e) =>
@@ -496,7 +496,7 @@ export function CharacterProfilePanel({ char, bible, editMode, onChange }) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-gold-400/20 bg-gradient-to-br from-navy-900/80 to-navy-950/60 px-4 py-4">
+      <div className="rounded-xl border border-gold-400/20 bg-gradient-to-br from-slate-900/80 to-slate-950/60 px-4 py-4">
         <div className="flex flex-wrap items-center gap-2 mb-2">
           {roleLabel ? <MetaChip className="text-gold-300/90">{roleLabel}</MetaChip> : null}
           {archetypeLabel ? <MetaChip>{archetypeLabel}</MetaChip> : null}
@@ -507,7 +507,7 @@ export function CharacterProfilePanel({ char, bible, editMode, onChange }) {
       </div>
 
       {visibleTabs.length > 1 && (
-        <div className="flex gap-1 p-1 rounded-xl bg-navy-900/50 border border-navy-700/30 w-fit">
+        <div className="flex w-fit gap-1 rounded-xl border border-white/10 bg-white/[0.03] p-1">
           {visibleTabs.map((t) => (
             <button
               key={t.id}
@@ -528,7 +528,7 @@ export function CharacterProfilePanel({ char, bible, editMode, onChange }) {
       {activeTab === 'profile' && (
         <div className="space-y-4">
           <div>
-            <div className="text-xs text-navy-500 mb-2">性格</div>
+            <div className="text-xs text-navy-400 mb-2">性格</div>
             <PersonalityTagRow surface={char.surfacePersonality} real={char.realPersonality} />
             {!char.surfacePersonality && !char.realPersonality && char.personality ? (
               <p className="text-sm text-navy-100 leading-relaxed whitespace-pre-wrap mt-2">
@@ -575,7 +575,7 @@ export function CharacterProfilePanel({ char, bible, editMode, onChange }) {
           <VisualAnchorSection anchor={char.visualAnchor} />
           {(char.signatureLines || []).length > 0 && (
             <div>
-              <div className="flex items-center gap-1.5 text-xs text-navy-500 mb-2">
+              <div className="flex items-center gap-1.5 text-xs text-navy-400 mb-2">
                 <Quote className="w-3.5 h-3.5" />
                 代表台词
               </div>
@@ -591,7 +591,7 @@ export function CharacterProfilePanel({ char, bible, editMode, onChange }) {
           <InfoCell label="台词风格" value={char.signatureDialogueStyle} />
           {(char.speechPatterns || []).length > 0 && (
             <div>
-              <div className="text-xs text-navy-500 mb-2">说话模式</div>
+              <div className="text-xs text-navy-400 mb-2">说话模式</div>
               <div className="flex flex-wrap gap-1.5">
                 {char.speechPatterns.map((pattern) => (
                   <MetaChip key={pattern}>{pattern}</MetaChip>
@@ -601,7 +601,7 @@ export function CharacterProfilePanel({ char, bible, editMode, onChange }) {
           )}
           {(char.iconicProps || []).length > 0 && (
             <div>
-              <div className="text-xs text-navy-500 mb-2">标志性道具</div>
+              <div className="text-xs text-navy-400 mb-2">标志性道具</div>
               <div className="flex flex-wrap gap-1.5">
                 {char.iconicProps.map((prop) => (
                   <MetaChip key={prop}>{prop}</MetaChip>
@@ -643,7 +643,7 @@ export function CharacterArchetypePanel({ bible }) {
           {entries.map(([code, label]) => (
             <div
               key={code}
-              className="rounded-xl border border-navy-700/25 bg-navy-900/35 px-3 py-3"
+              className="rounded-xl border border-white/5 bg-slate-900/40 px-3 py-3"
             >
               <div className="text-sm text-navy-100 leading-relaxed">{label}</div>
             </div>
@@ -685,13 +685,13 @@ export function CharacterCreativeDnaPanel({ bible }) {
   return (
     <div className="space-y-4">
       {anti.length > 0 && (
-        <div className="rounded-2xl border border-navy-700/30 bg-navy-950/30 overflow-hidden">
-          <div className="px-4 py-2.5 border-b border-navy-700/25 bg-navy-900/35 text-xs font-medium text-gold-400/85">
+        <div className="rounded-2xl border border-white/5 bg-slate-900/40 overflow-hidden">
+          <div className="border-b border-white/5 bg-slate-900/60 px-4 py-2.5 text-xs font-medium text-gold-400/85">
             反套路元素
           </div>
           <div className="p-4 space-y-3">
             {anti.map((item, i) => (
-              <div key={`${item.code}-${i}`} className="rounded-xl border border-navy-700/25 bg-navy-900/35 px-3 py-3">
+              <div key={`${item.code}-${i}`} className="rounded-xl border border-white/5 bg-slate-900/40 px-3 py-3">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
                   {item.code && !isEnglishSlug(item.code) ? <MetaChip>{item.code}</MetaChip> : null}
                   <span className="text-sm font-medium text-white">{item.label}</span>
@@ -703,13 +703,13 @@ export function CharacterCreativeDnaPanel({ bible }) {
         </div>
       )}
       {unique.length > 0 && (
-        <div className="rounded-2xl border border-navy-700/30 bg-navy-950/30 overflow-hidden">
-          <div className="px-4 py-2.5 border-b border-navy-700/25 bg-navy-900/35 text-xs font-medium text-gold-400/85">
+        <div className="rounded-2xl border border-white/5 bg-slate-900/40 overflow-hidden">
+          <div className="border-b border-white/5 bg-slate-900/60 px-4 py-2.5 text-xs font-medium text-gold-400/85">
             独特设定
           </div>
           <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
             {unique.map((item, i) => (
-              <div key={`${item.code}-${i}`} className="rounded-xl border border-navy-700/25 bg-navy-900/35 px-3 py-3">
+              <div key={`${item.code}-${i}`} className="rounded-xl border border-white/5 bg-slate-900/40 px-3 py-3">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
                   {item.code && !isEnglishSlug(item.code) ? <MetaChip>{item.code}</MetaChip> : null}
                   <span className="text-sm text-gold-300/90">{item.label}</span>
@@ -721,7 +721,7 @@ export function CharacterCreativeDnaPanel({ bible }) {
         </div>
       )}
       {notes.length > 0 && (
-        <div className="rounded-xl border border-navy-700/30 bg-navy-900/40 px-4 py-3">
+        <div className="rounded-xl border border-white/5 bg-slate-900/40 px-4 py-3">
           <div className="text-xs text-gold-400/80 font-medium mb-2">AI 痕迹预防</div>
           <ul className="text-sm text-navy-200 space-y-1.5 list-disc list-inside">
             {notes.map((note) => (
@@ -739,7 +739,7 @@ function RelationshipMatrixRow({ rel, onSelectCharacter }) {
   const hasMatrix = rel.perspectiveA || rel.perspectiveB || rel.coreConflict || rel.hiddenTension
 
   return (
-    <li className="rounded-lg bg-navy-950/30 border border-navy-700/20 px-3 py-2.5 text-sm">
+    <li className="rounded-lg border border-white/5 bg-slate-900/40 px-3 py-2.5 text-sm">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
         <button
           type="button"
@@ -748,7 +748,7 @@ function RelationshipMatrixRow({ rel, onSelectCharacter }) {
         >
           {displayA}
         </button>
-        <span className="text-navy-600">↔</span>
+        <span className="text-navy-500">↔</span>
         <button
           type="button"
           onClick={() => charBId && onSelectCharacter?.(`char-${charBId}`)}
@@ -760,29 +760,29 @@ function RelationshipMatrixRow({ rel, onSelectCharacter }) {
       </div>
       <p className="text-xs text-navy-300 leading-relaxed">{rel.description}</p>
       {hasMatrix ? (
-        <div className="mt-2.5 rounded-lg border border-navy-700/20 bg-navy-900/30 overflow-hidden text-[11px]">
-          <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-navy-700/20">
+        <div className="mt-2.5 overflow-hidden rounded-lg border border-white/5 bg-slate-900/40 text-[11px]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-white/10">
             {rel.perspectiveA ? (
               <div className="px-3 py-2">
-                <span className="text-navy-500">{displayA} → {displayB}：</span>
+                <span className="text-navy-400">{displayA} → {displayB}：</span>
                 <span className="text-navy-200">{rel.perspectiveA}</span>
               </div>
             ) : null}
             {rel.perspectiveB ? (
               <div className="px-3 py-2">
-                <span className="text-navy-500">{displayB} → {displayA}：</span>
+                <span className="text-navy-400">{displayB} → {displayA}：</span>
                 <span className="text-navy-200">{rel.perspectiveB}</span>
               </div>
             ) : null}
           </div>
           {rel.coreConflict ? (
-            <div className="px-3 py-2 border-t border-navy-700/20">
+            <div className="px-3 py-2 border-t border-white/5">
               <span className="text-amber-400/80">核心冲突：</span>
               <span className="text-navy-200">{rel.coreConflict}</span>
             </div>
           ) : null}
           {rel.hiddenTension ? (
-            <div className="px-3 py-2 border-t border-navy-700/20">
+            <div className="px-3 py-2 border-t border-white/5">
               <span className="text-violet-300/80">潜在矛盾：</span>
               <span className="text-navy-200">{rel.hiddenTension}</span>
             </div>
@@ -790,8 +790,8 @@ function RelationshipMatrixRow({ rel, onSelectCharacter }) {
         </div>
       ) : null}
       {rel.evolutionPath ? (
-        <p className="text-[11px] text-navy-500 mt-1.5 leading-relaxed">
-          <span className="text-navy-600">演化：</span>
+        <p className="text-[11px] text-navy-400 mt-1.5 leading-relaxed">
+          <span className="text-navy-500">演化：</span>
           {rel.evolutionPath}
         </p>
       ) : null}
@@ -809,7 +809,7 @@ export function CharacterRelationsPanel({ bible, onSelectCharacter }) {
   return (
     <div className="space-y-4">
       {bible?.relationshipSummary ? (
-        <div className="rounded-xl border border-navy-700/30 bg-navy-900/40 px-4 py-3">
+        <div className="rounded-xl border border-white/5 bg-slate-900/40 px-4 py-3">
           <div className="text-[10px] text-gold-400/70 font-medium mb-1.5">关系总述</div>
           <p className="text-sm text-navy-100 whitespace-pre-wrap leading-relaxed">
             {bible.relationshipSummary}
@@ -822,7 +822,7 @@ export function CharacterRelationsPanel({ bible, onSelectCharacter }) {
         onSelectCharacter={(id) => onSelectCharacter?.(`char-${id}`)}
       />
       {relationships.length > 0 ? (
-        <ul className="space-y-2 border-t border-navy-700/30 pt-4">
+        <ul className="space-y-2 border-t border-white/5 pt-4">
           {relationships.map((rel, i) => (
             <RelationshipMatrixRow
               key={`${rel.characterAName}-${rel.characterBName}-${i}`}

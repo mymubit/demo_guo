@@ -59,7 +59,10 @@ def humanize_upstream_artifact_message(raw: Any) -> str:
     match = _UPSTREAM_ARTIFACT_RE.search(text)
     if not match:
         return text
-    label = _UPSTREAM_ARTIFACT_LABELS.get(match.group(1), match.group(1))
+    key = match.group(1)
+    if key == "project_brief":
+        return "请先完成立项整理（故事策划与题材确认）"
+    label = _UPSTREAM_ARTIFACT_LABELS.get(key, key)
     return f"请先生成「{label}」"
 
 
@@ -169,6 +172,12 @@ def humanize_llm_request_error(
 
     if "connection refused" in text:
         return f"连接被拒绝{'（' + host + '）' if host else ''}，请确认服务地址与端口。"
+
+    if "proxyerror" in text or "unable to connect to proxy" in text:
+        return (
+            f"无法通过当前代理连接模型服务{'「' + host + '」' if host else ''}，"
+            "请检查系统代理/VPN 是否可用，或调整 HTTP_PROXY、HTTPS_PROXY、NO_PROXY 环境变量。"
+        )
 
     if "timed out" in text or "timeout" in text:
         return "连接超时，请检查网络或稍后重试。"

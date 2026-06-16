@@ -28,11 +28,36 @@ ARTIFACT_NODE_INDEX = {
 
 
 def missing_upstream_error(artifact_key: str) -> str:
+    if artifact_key == "project_brief":
+        return "请先完成立项整理（故事策划与题材确认）"
     label = UPSTREAM_ARTIFACT_LABELS.get(artifact_key, artifact_key)
     return f"请先生成「{label}」"
 
 
+def project_brief_ready(project: Project) -> bool:
+    """立项策划就绪：优先读 project_brief 产物，兼容仅写在 Project 字段上的旧数据。"""
+    payload = get_artifact(project, "project_brief")
+    if isinstance(payload, dict) and payload:
+        if (payload.get("coreHook") or payload.get("coreIdea") or "").strip():
+            return True
+        if payload.get("seedEnriched") or payload.get("agentEnriched"):
+            return True
+        if (payload.get("theme") or "").strip():
+            return True
+        from .workspace.workspace_editor import _story_brief_from_payload
+
+        story = _story_brief_from_payload(payload)
+        if any((story.get(k) or "").strip() for k in ("idea", "openingHooks", "coreConflict")):
+            return True
+    core_idea = (getattr(project, "core_idea", None) or "").strip()
+    theme = (getattr(project, "theme", None) or "").strip()
+    return bool(core_idea and theme)
+
+
 def node_has_meaningful_content(project: Project, node_index: int) -> bool:
+    if node_index == 1:
+        return project_brief_ready(project)
+
     key = artifact_key_for_node(node_index)
     if not key:
         return False
@@ -61,6 +86,10 @@ def require_upstream_artifacts(
     keys: Tuple[str, ...],
 ) -> Optional[str]:
     for key in keys:
+        if key == "project_brief":
+            if not project_brief_ready(project):
+                return missing_upstream_error(key)
+            continue
         node_index = ARTIFACT_NODE_INDEX.get(key)
         if node_index is not None:
             if not node_has_meaningful_content(project, node_index):

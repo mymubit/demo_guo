@@ -3,7 +3,7 @@ import { cn } from '@/utils/cn'
 import { ICON } from '@/constants/iconSizes'
 
 const tones = {
-  default: 'text-navy-300 bg-navy-800/60 border-navy-700/40',
+  default: 'text-navy-300 bg-slate-800/60 border-white/10',
   gold: 'text-gold-300 bg-gold-400/12 border-gold-400/25',
   success: 'text-success-300 bg-success-500/12 border-success-500/25',
   warning: 'text-warning-300 bg-warning-500/12 border-warning-500/25',

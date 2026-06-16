@@ -166,10 +166,10 @@ export function OutlineSummaryBanner({ summary, editMode, onChange, inputClass }
   if (!summary && !editMode) return null
   const textareaClass =
     inputClass ||
-    'w-full rounded-xl bg-navy-950/50 border border-navy-600/30 text-white text-sm px-4 py-3 focus:border-gold-400/50 outline-none resize-y'
+    'sf-control resize-y'
 
   return (
-    <div className="rounded-xl border border-navy-700/35 bg-navy-900/45 px-4 py-3.5">
+    <div className="rounded-xl border border-white/5 bg-slate-900/40 px-4 py-3.5">
       <div className="text-[10px] text-gold-400/70 font-medium mb-1.5 tracking-wide">整体结构总结</div>
       {editMode ? (
         <textarea
@@ -298,10 +298,10 @@ export function OutlineOverviewPanel({ draft, onJumpToEpisode }) {
                   key={epNum}
                   type="button"
                   onClick={() => onJumpToEpisode?.(epNum)}
-                  className="inline-flex items-center gap-1 rounded-lg border border-navy-600/40 bg-navy-900/50 px-2.5 py-1 text-xs text-navy-200 hover:border-gold-400/40 hover:bg-gold-400/10 transition-colors"
+                  className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1 text-xs text-navy-200 transition-colors hover:border-gold-400/40 hover:bg-gold-400/10"
                 >
                   第 {epNum} 集
-                  {typeLabel ? <span className="text-navy-500">· {typeLabel}</span> : null}
+                  {typeLabel ? <span className="text-navy-400">· {typeLabel}</span> : null}
                   {ep?.title ? <span className="text-navy-400 truncate max-w-[120px]">· {ep.title}</span> : null}
                 </button>
               )
@@ -325,8 +325,8 @@ export function OutlineOverviewPanel({ draft, onJumpToEpisode }) {
 function FieldLabel({ children, hint }) {
   return (
     <div className="flex items-center justify-between gap-2 mb-1">
-      <span className="text-xs text-navy-500">{children}</span>
-      {hint && <span className="text-[10px] text-navy-600">{hint}</span>}
+      <span className="text-xs text-navy-400">{children}</span>
+      {hint && <span className="text-[10px] text-navy-400">{hint}</span>}
     </div>
   )
 }
@@ -353,7 +353,7 @@ export function OutlineEpisodeCard({ ep, compact = false }) {
 
   return (
     <div
-      className={`rounded-xl bg-navy-900/40 border border-navy-700/30 ${
+      className={`rounded-xl border border-white/5 bg-slate-900/40 ${
         compact ? 'p-3 space-y-2' : 'p-4 space-y-3'
       }`}
     >
@@ -510,8 +510,8 @@ export function OutlineEpisodeDetail({
             className={inputClass}
           />
         </div>
-        <details className="rounded-xl border border-navy-700/30 bg-navy-950/30 px-3 py-2">
-          <summary className="text-xs text-navy-500 cursor-pointer select-none">高级字段</summary>
+        <details className="rounded-xl border border-white/5 bg-slate-900/40 px-3 py-2">
+          <summary className="text-xs text-navy-400 cursor-pointer select-none">高级字段</summary>
           <div className="mt-3 space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -543,7 +543,7 @@ export function OutlineEpisodeDetail({
               type="checkbox"
               checked={!!ep.isKeyEpisode}
               onChange={(e) => onUpdateEpisode(ep.episodeNumber, 'isKeyEpisode', e.target.checked)}
-              className="rounded border-navy-600"
+              className="rounded border-white/20"
             />
             关键集
           </label>
@@ -672,17 +672,17 @@ export function OutlineStagePanel({
             </button>
           )}
           {stageState.pendingCount === 0 && stageState.roughReady && (
-            <span className="text-xs text-navy-500">本阶段集纲已全部生成</span>
+            <span className="text-xs text-navy-400">本阶段集纲已全部生成</span>
           )}
         </div>
       )}
 
       {!editMode && stageDirection && (
-        <div className="rounded-xl border border-navy-700/30 bg-navy-900/35 px-4 py-3">
-          <div className="text-[10px] text-navy-500 mb-1">阶段方向（策划摘要，非分集详情）</div>
+        <div className="rounded-xl border border-white/5 bg-slate-900/40 px-4 py-3">
+          <div className="text-[10px] text-navy-400 mb-1">阶段方向（策划摘要，非分集详情）</div>
           <p className="text-sm text-navy-200 leading-relaxed whitespace-pre-wrap">{stageDirection}</p>
           {looksLikeEpisodeDump(block.roughOutline) && (
-            <p className="text-[11px] text-navy-500 mt-2">逐集内容请使用「生成第 N 集集纲」，不在此重复展示。</p>
+            <p className="text-[11px] text-navy-400 mt-2">逐集内容请使用「生成第 N 集集纲」，不在此重复展示。</p>
           )}
         </div>
       )}
@@ -694,7 +694,7 @@ export function OutlineStagePanel({
               阶段方向
               <span className="text-red-400 ml-1">*</span>
             </h5>
-            <span className="text-[10px] text-navy-500">{stageRoughLen} / 500</span>
+            <span className="text-[10px] text-navy-400">{stageRoughLen} / 500</span>
           </div>
           <textarea
             value={block.roughOutline || ''}
@@ -716,7 +716,7 @@ export function OutlineStagePanel({
               {editMode && <span className="text-red-400 ml-1">*</span>}
             </h5>
           </div>
-          <span className="text-[10px] text-navy-500">
+          <span className="text-[10px] text-navy-400">
             {blockFilled}/{blockEps.length} 集
           </span>
         </div>
@@ -733,13 +733,13 @@ export function OutlineStagePanel({
                   selected
                     ? 'border-gold-400/40 bg-gold-400/10'
                     : ep.filled
-                      ? 'border-navy-600/30 bg-navy-900/40 hover:bg-navy-800/50'
-                      : 'border-dashed border-navy-600/40 bg-navy-950/30 hover:bg-navy-900/40'
+                      ? 'border-white/10 bg-white/[0.03] hover:bg-white/[0.06]'
+                      : 'border-dashed border-white/10 bg-white/[0.02] hover:bg-white/[0.05]'
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm text-white font-medium">第{ep.episodeNumber}集</span>
-                  <span className="text-[10px] text-navy-500">
+                  <span className="text-[10px] text-navy-400">
                     {ep.filled ? ep.title || '已填充' : '待生成'}
                   </span>
                 </div>
@@ -752,7 +752,7 @@ export function OutlineStagePanel({
         </div>
 
         {activeEp ? (
-          <div className="pt-4 border-t border-navy-700/30">
+          <div className="pt-4 border-t border-white/5">
             <OutlineEpisodeDetail
               ep={activeEp}
               editMode={editMode}

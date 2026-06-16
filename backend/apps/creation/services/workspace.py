@@ -32,6 +32,19 @@ def save_workspace_skill(project_id: str, user, node_index: int, data: dict) -> 
 
 
 @transaction.atomic
+def acknowledge_quality_alert(project_id: str, user, node_index: int, alert_code: str) -> dict:
+    project = _get_user_project(project_id, user)
+    from ..workspace.workspace_service import acknowledge_quality_alert as _ack
+
+    try:
+        return _ack(project, int(node_index), str(alert_code or "").strip())
+    except PermissionDenied:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        raise PermissionDenied(safe_api_message(exc, "确认失败")) from exc
+
+
+@transaction.atomic
 def trigger_skill_generation(
     project_id: str,
     user,

@@ -24,6 +24,11 @@ export const creation = {
       },
     })
   },
+  acknowledgeQualityAlert(projectId, nodeIndex, alertCode) {
+    return request('POST', `/api/creation/projects/${projectId}/agents/${nodeIndex}/quality-alert/ack/`, {
+      data: { alert_code: alertCode },
+    })
+  },
   saveAgentContent(projectId, nodeIndex, data) {
     return request('PUT', `/api/creation/projects/${projectId}/agents/${nodeIndex}/content/`, {
       data,
@@ -47,8 +52,9 @@ export const creation = {
   agentCatalog() {
     return request('GET', '/api/creation/agents/catalog/')
   },
-  fusionNodes() {
-    return request('GET', '/api/creation/fusion/nodes/')
+  fusionNodes(packId) {
+    const suffix = packId ? `?pack_id=${encodeURIComponent(packId)}` : ''
+    return request('GET', `/api/creation/fusion/nodes/${suffix}`)
   },
   fusionSnapshot(projectId) {
     return request('GET', `/api/creation/fusion/${projectId}/`)

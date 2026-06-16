@@ -10,7 +10,6 @@ from apps.membership.services import MembershipService
 
 from ..models import CreationNode, Project
 from ._helpers import _get_user_project
-from ._pipeline import PIPELINE_NODES
 from ._rendering import _render_progress_html
 
 logger = logging.getLogger(__name__)
@@ -32,9 +31,19 @@ def submit(user, data: dict) -> Tuple[Project, int]:
     current_membership = MembershipService.get_current_membership(user)
 
     from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
+    from apps.workflow.pipeline_store import FusionPipelineDbService
+    from apps.workflow.services.pipeline_service import WorkflowPipelineService
 
     catalog = get_ssot_catalog()
     platform = catalog.normalize_platform(data.get("target_platform", "douyin"))
+
+    pack = FusionPipelineDbService.resolve_pack_for_creation(data.get("pipeline_pack_id"))
+    pack_id = str(pack.id) if pack else None
+    pipeline_nodes = WorkflowPipelineService.pipeline_nodes_for_creation(pack_id=pack_id)
+    if not pipeline_nodes:
+        from ..services._pipeline import _load_pipeline_nodes
+
+        pipeline_nodes = _load_pipeline_nodes()
 
     project = Project.objects.create(
         user=user,
@@ -51,9 +60,10 @@ def submit(user, data: dict) -> Tuple[Project, int]:
         global_market=data.get("global_market", "domestic"),
         user_membership=current_membership,
         pipeline_mode=data.get("pipeline_mode", Project.MODE_WORKSPACE),
+        pipeline_pack=pack,
         status=Project.STATUS_PENDING,
         current_node_index=0,
-        total_nodes=len(PIPELINE_NODES),
+        total_nodes=len(pipeline_nodes),
         progress_percent=0,
         title=catalog.theme_display_name(data["theme"]) or data["theme"],
         total_duration_minutes=0,
@@ -87,10 +97,10 @@ def submit(user, data: dict) -> Tuple[Project, int]:
                 node_index=meta["index"],
                 fusion_node_id=meta.get("fusion_node_id", ""),
                 node_name=meta["name"],
-                node_description=meta["description"],
+                node_description=meta.get("description", ""),
                 status=CreationNode.STATUS_PENDING,
             )
-            for meta in PIPELINE_NODES
+            for meta in pipeline_nodes
         ]
     )
     project.fusion_status = Project.FUSION_DRAFT

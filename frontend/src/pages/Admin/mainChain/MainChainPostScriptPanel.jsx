@@ -3,7 +3,7 @@ import { Save } from 'lucide-react'
 import { csvToList, listToCsv } from '@/components/admin/AgentConfigEditors'
 
 const inputCls =
-  'mt-1 w-full rounded-xl bg-navy-950 border border-navy-700 px-3 py-2 text-white text-sm focus:border-gold-500/40 outline-none'
+  'mt-1 w-full rounded-xl bg-slate-950 border border-white/10 px-3 py-2 text-white text-sm focus:border-gold-500/40 outline-none'
 
 export default function MainChainPostScriptPanel({ blueprint, onSave, saving = false }) {
   const [chain, setChain] = useState([])
@@ -36,20 +36,20 @@ export default function MainChainPostScriptPanel({ blueprint, onSave, saving = f
   }
 
   return (
-    <details className="glass-card rounded-2xl border border-navy-700/40 overflow-hidden group">
+    <details className="sf-console-panel border border-white/10 overflow-hidden group">
       <summary className="cursor-pointer list-none px-5 py-4 flex items-center justify-between gap-3">
         <div>
           <div className="text-sm font-medium text-white">后处理链（剧本全量生成后）</div>
-          <p className="text-xs text-navy-500 mt-1">
+          <p className="text-xs text-navy-400 mt-1">
             技能工作台：剧本全量后由此链统一执行质检/评分等（勿与分步模式节点 6/7 混用）
           </p>
           {blueprint?.execution_modes?.workspace?.hint ? (
-            <p className="text-[11px] text-navy-600 mt-1">{blueprint.execution_modes.workspace.hint}</p>
+            <p className="text-[11px] text-navy-400 mt-1">{blueprint.execution_modes.workspace.hint}</p>
           ) : null}
         </div>
-        <span className="text-xs text-navy-500 group-open:rotate-180 transition-transform">▼</span>
+        <span className="text-xs text-navy-400 group-open:rotate-180 transition-transform">▼</span>
       </summary>
-      <div className="px-5 pb-5 space-y-4 border-t border-navy-800/60 pt-4">
+      <div className="px-5 pb-5 space-y-4 border-t border-white/10 pt-4">
         <label className="block text-sm text-navy-300">
           post_script_chain（逗号分隔 agent id）
           <input

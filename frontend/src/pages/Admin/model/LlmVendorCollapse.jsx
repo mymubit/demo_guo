@@ -37,20 +37,20 @@ export function LlmVendorCollapse({
 }) {
   return (
     <details
-      className={`rounded-xl border border-navy-700/40 bg-navy-900/20 group ${className}`}
+      className={`rounded-xl border border-white/10 bg-slate-900/40 group ${className}`}
       defaultOpen={defaultOpen}
     >
       <summary className="cursor-pointer list-none px-4 py-3 flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <p className="text-sm text-white font-medium">{label}</p>
-          {hint ? <p className="text-[10px] text-navy-500 mt-0.5">{hint}</p> : null}
+          {hint ? <p className="text-[10px] text-navy-400 mt-0.5">{hint}</p> : null}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs text-navy-500">{count} 个</span>
-          <ChevronDown className="w-4 h-4 text-navy-500 transition group-open:rotate-180" />
+          <span className="text-xs text-navy-400">{count} 个</span>
+          <ChevronDown className="w-4 h-4 text-navy-400 transition group-open:rotate-180" />
         </div>
       </summary>
-      <div className="px-3 pb-3 pt-1 space-y-2 border-t border-navy-700/30">{children}</div>
+      <div className="px-3 pb-3 pt-1 space-y-2 border-t border-white/5">{children}</div>
     </details>
   )
 }

@@ -19,6 +19,7 @@ import { toast } from 'sonner'
 import { creation, billing, membership as membershipApi, useConfig } from '@/services/api'
 import CreationEntryHub from '@/components/creation/CreationEntryHub'
 import ProjectWorkspace from '@/components/creation/ProjectWorkspace'
+import CreationFormShell from '@/components/creation/CreationFormShell'
 import SkillPipelineShowcase from '@/components/creation/SkillPipelineShowcase'
 import EntryFormHeader from '@/components/creation/EntryFormHeader'
 import NovelAdaptationPanel from '@/components/creation/NovelAdaptationPanel'
@@ -55,7 +56,14 @@ const creationDraftKey = (entry) => `creation:draft:${entry || 'from-scratch'}`
 export default function Creation() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { catalog, pipelineNodes, loading: catalogLoading, error: catalogError } = useFusionCatalog()
+  const {
+    catalog,
+    pipelineNodes,
+    executionPlan,
+    loading: catalogLoading,
+    error: catalogError,
+    selectedPipelineId,
+  } = useFusionCatalog()
   const defaultEpisodeCount = useConfig('creation.default_episode_count', INITIAL_EPISODE_COUNT)
   const maxOutlineChars = useConfig('creation.max_outline_chars', 8000)
   const aiFieldFallbackCost = useConfig('creation.ai_field_fallback_cost', 10)
@@ -98,6 +106,12 @@ export default function Creation() {
   const [membershipActive, setMembershipActive] = useState(false)
   const [membershipLoaded, setMembershipLoaded] = useState(false)
   const [membershipError, setMembershipError] = useState('')
+
+  useEffect(() => {
+    if (selectedPipelineId) {
+      setFormData((prev) => ({ ...prev, pipelinePackId: selectedPipelineId }))
+    }
+  }, [selectedPipelineId])
 
   useEffect(() => {
     billing.catalog().then((data) => {
@@ -222,44 +236,91 @@ export default function Creation() {
 
   const visiblePipelineNodes = filterCreationPipelineNodes(pipelineNodes)
 
+  if (stage === 1 || stage === 2) {
+    return (
+      <div className="relative min-h-screen bg-navy-950">
+        <CreationFormShell
+          main={
+            <>
+              {(billingError || membershipError) && (
+                <Card variant="flat" padding="sm" className="mb-6 border-amber-500/30 bg-amber-500/10 text-sm text-amber-200">
+                  {billingError || membershipError}。计费或会员状态可能暂不可用，请刷新后重试。
+                </Card>
+              )}
+              <StageIndicator stage={stage} />
+              <AnimatePresence mode="wait">
+                {stage === 1 && (
+                  <StageInputForm
+                    key="stage1"
+                    formData={formData}
+                    setFormData={setFormData}
+                    catalog={catalog}
+                    themes={themes}
+                    pipelineNodes={pipelineNodes}
+                    entryMeta={entryMeta}
+                    onSubmit={goToBrief}
+                    onBackToHub={backToHub}
+                    fieldActions={fieldActions}
+                    currencyName={currencyName}
+                    actionCost={actionCost}
+                    actionRequiresMember={actionRequiresMember}
+                    membershipActive={membershipActive}
+                    membershipLoaded={membershipLoaded}
+                    aiContext={aiContext}
+                    defaultEpisodeCount={defaultEpisodeCount}
+                    maxOutlineChars={maxOutlineChars}
+                  />
+                )}
+                {stage === 2 && (
+                  <StageBrief
+                    key="stage2"
+                    formData={formData}
+                    themes={themes}
+                    entryMeta={entryMeta}
+                    catalog={catalog}
+                    getThemeName={getThemeName}
+                    getFormatName={getFormatName}
+                    submitError={submitError}
+                    isSubmitting={isSubmitting}
+                    billingCatalog={billingCatalog}
+                    billingLoaded={billingLoaded}
+                    billingError={billingError}
+                    pipelineNodes={visiblePipelineNodes}
+                    executionPlan={executionPlan}
+                    currencyName={currencyName}
+                    onBack={() => setStage(1)}
+                    onConfirm={handleConfirmStart}
+                  />
+                )}
+              </AnimatePresence>
+            </>
+          }
+        />
+      </div>
+    )
+  }
+
   return (
-    <div className="relative min-h-screen py-10 md:py-12">
-      <div className="particles-bg" />
-      <div className={cn('sf-page-shell', stage === 3 ? 'max-w-6xl' : 'max-w-5xl')}>
-        {/* 标题 */}
-        <motion.div
-          {...pageEnter}
-          className={cn('text-center', stage >= 1 && stage < 3 ? 'mb-6' : 'mb-12')}
-        >
+    <div className={cn('relative min-h-screen bg-navy-950', stage === 3 ? 'py-5 md:py-6' : 'py-10 md:py-12')}>
+      <div className={cn('sf-page-shell', stage === 3 ? 'max-w-none px-3 sm:px-4 lg:px-6' : 'max-w-5xl')}>
+        <motion.div {...pageEnter} className={cn('text-center', stage === 3 ? 'mb-4' : 'mb-12')}>
           <Badge tone="gold" size="md" className="mb-4">
             <Sparkles className={ICON.md} />
-              {stage === 0
-                ? 'Agent 驱动 · AI 创作引擎'
-                : stage >= 3
-                ? entryMeta.tag + ' · Agent 工作台'
-                : entryMeta.tag + ' · 创作流程'}
+            {stage === 0 ? 'Agent 驱动 · AI 创作引擎' : `${entryMeta.tag} · Agent 工作台`}
           </Badge>
-          <h1 className={cn('font-bold tracking-tight text-white', stage >= 1 && stage < 3 ? 'text-2xl md:text-3xl mb-3' : 'text-4xl md:text-5xl mb-4')}>
+          <h1 className={cn('font-bold tracking-tight text-white', stage === 3 ? 'text-2xl md:text-3xl mb-3' : 'text-4xl md:text-5xl mb-4')}>
             {stage === 0 ? (
               <>5 个创作 Agent · 从<span className="gradient-text">创意到专业级剧本</span></>
-            ) : stage >= 3 ? (
+            ) : (
               <>
                 {entryMeta.name}
-                <span className="block text-2xl md:text-3xl mt-2 font-semibold text-navy-200">
-                  Agent 工作台
-                </span>
+                <span className="block text-2xl md:text-3xl mt-2 font-semibold text-navy-200">Agent 工作台</span>
               </>
-            ) : (
-              entryMeta.name
             )}
           </h1>
-          <p className={stage >= 1 && stage < 3 ? 'text-sm text-navy-400' : 'text-lg text-navy-200'}>
+          <p className={stage === 3 ? 'text-sm text-navy-400' : 'text-lg text-navy-200'}>
             {stage === 0
               ? '先选创作方式，再填写该方式专属信息；确认后进入 Agent 工作台'
-              : stage === 1
-              ? '按步骤填写，字段旁「AI 生成」按需扣费'
-              : stage === 2
-              ? '核对创作参数与 Agent 流水线，确认后开始创作'
               : '五个创作 Agent 独立生成，随时切换查看与下载'}
           </p>
         </motion.div>
@@ -267,84 +328,25 @@ export default function Creation() {
         {catalogError && (
           <Card variant="flat" padding="sm" className="mb-6 border-danger-500/30 bg-danger-500/10 text-sm text-danger-300">
             {/限流|429|过于频繁/.test(catalogError) ? (
-              <>
-                请求过于频繁：{catalogError}。请等待片刻后点击刷新，或关闭其他正在轮询的页面标签。
-              </>
+              <>请求过于频繁：{catalogError}。请等待片刻后点击刷新，或关闭其他正在轮询的页面标签。</>
             ) : (
-              <>
-                Agent 目录加载失败：{catalogError}。请刷新或联系管理员检查 FUSION_SKILL_ROOT。
-              </>
+              <>Agent 目录加载失败：{catalogError}。请刷新或联系管理员检查 FUSION_SKILL_ROOT。</>
             )}
           </Card>
         )}
         {catalogLoading && !catalogError && (
           <div className="mb-6 text-center text-navy-400 text-sm">加载 Agent 配置…</div>
         )}
-        {(billingError || membershipError) && stage < 3 && (
-          <Card variant="flat" padding="sm" className="mb-6 border-amber-500/30 bg-amber-500/10 text-sm text-amber-200">
-            {billingError || membershipError}。计费或会员状态可能暂不可用，请刷新后重试。
-          </Card>
-        )}
-
-        {stage >= 1 && stage < 3 && <StageIndicator stage={stage} />}
 
         <AnimatePresence mode="wait">
           {stage === 0 && !catalogLoading && (
             <CreationEntryHub
               key="hub"
               catalog={catalog}
-              pipelineNodes={pipelineNodes}
-              currencyName={currencyName}
               onSelectEntry={selectCreationEntry}
             />
           )}
 
-          {stage === 1 && (
-            <StageInputForm
-              key="stage1"
-              formData={formData}
-              setFormData={setFormData}
-              catalog={catalog}
-              themes={themes}
-              pipelineNodes={pipelineNodes}
-              entryMeta={entryMeta}
-              onSubmit={goToBrief}
-              onBackToHub={backToHub}
-              fieldActions={fieldActions}
-              currencyName={currencyName}
-              actionCost={actionCost}
-              actionRequiresMember={actionRequiresMember}
-              membershipActive={membershipActive}
-              membershipLoaded={membershipLoaded}
-              aiContext={aiContext}
-              defaultEpisodeCount={defaultEpisodeCount}
-              maxOutlineChars={maxOutlineChars}
-            />
-          )}
-
-          {/* 阶段2：项目简报确认 */}
-          {stage === 2 && (
-            <StageBrief
-              key="stage2"
-              formData={formData}
-              themes={themes}
-              entryMeta={entryMeta}
-              catalog={catalog}
-              getThemeName={getThemeName}
-              getFormatName={getFormatName}
-              submitError={submitError}
-              isSubmitting={isSubmitting}
-              billingCatalog={billingCatalog}
-              billingLoaded={billingLoaded}
-              billingError={billingError}
-              pipelineNodes={visiblePipelineNodes}
-              currencyName={currencyName}
-              onBack={() => setStage(1)}
-              onConfirm={handleConfirmStart}
-            />
-          )}
-
-          {/* 阶段3：技能工作台 */}
           {stage === 3 && projectId && (
             <ProjectWorkspace
               key="workspace"
@@ -386,7 +388,7 @@ function StageIndicator({ stage }) {
                     'w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all',
                     passed && 'bg-gradient-to-br from-gold-400 to-gold-600 text-navy-950',
                     active && 'bg-gradient-to-br from-gold-400 to-gold-600 text-navy-950 node-active',
-                    !active && !passed && 'bg-navy-700/50 text-navy-300 border border-navy-600/50',
+                    !active && !passed && 'bg-white/[0.05] text-navy-300 border border-white/10',
                   )}
                 >
                   {passed ? <Check className={ICON.lg} /> : s.id}
@@ -396,7 +398,7 @@ function StageIndicator({ stage }) {
                 </div>
               </div>
               {idx < stages.length - 1 && (
-                <div className="flex-1 mx-2 h-0.5 bg-navy-700/50 relative overflow-hidden">
+                <div className="flex-1 mx-2 h-0.5 relative overflow-hidden bg-white/10">
                   <motion.div
                     initial={{ width: '0%' }}
                     animate={{ width: passed ? '100%' : active ? '50%' : '0%' }}
@@ -423,7 +425,7 @@ function OptionTile({ active, title, description, onClick, className = '' }) {
         'rounded-2xl text-left transition-all border p-4 sf-focus-ring',
         active
           ? 'border-gold-400/50 bg-gold-400/10 ring-1 ring-gold-400/40'
-          : 'border-navy-700/40 bg-navy-800/30 hover:bg-navy-700/30',
+          : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.06]',
         className,
       )}
     >
@@ -466,10 +468,11 @@ function StageInputForm({
   const epDuration = epCfg.durationMinutes ?? 2
   const totalMinutes = formData.episodes * epDuration
   const EntryIcon = entryMeta?.icon || Compass
-  const configReady = (!show.theme || Boolean(formData.theme)) && validation.ok
   const isNovelEntry = Boolean(show.novel)
   const novelMinLength = getRequiredFieldMinLength(entryProfile, 'novel_text', 200)
   const novelReady = !isNovelEntry || (formData.novelText || '').trim().length >= novelMinLength
+  const storyFormReady =
+    (show.theme === false || Boolean(formData.theme)) && novelReady
   const budgetLevels = catalog.budgetLevels || []
   const fieldMeta = (block, fallbackTitle, fallbackSubtitle) => ({
     title: block?.title || fallbackTitle,
@@ -499,7 +502,7 @@ function StageInputForm({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -30 }}
       transition={{ duration: 0.4 }}
-      className="space-y-6 max-w-4xl mx-auto"
+      className="space-y-6"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Button
@@ -528,7 +531,7 @@ function StageInputForm({
       )}
 
       {isNovelEntry && novelReady && (
-        <p className="text-xs text-navy-500 -mt-4 px-1">
+        <p className="text-xs text-navy-400 -mt-4 px-1">
           小说已就绪，请继续选择改编参数（题材、集数、格式等）
         </p>
       )}
@@ -565,7 +568,7 @@ function StageInputForm({
               className={`px-4 py-2 rounded-xl text-sm transition-colors sf-focus-ring ${
                 formData.ipSequelMode === m.key
                   ? 'bg-gold-400/20 text-gold-400 ring-1 ring-gold-400/50'
-                  : 'bg-navy-800/40 text-navy-300'
+                  : 'bg-white/[0.03] text-navy-300'
               }`}
             >
               {m.label}
@@ -579,25 +582,6 @@ function StageInputForm({
           rows={5}
           textareaClassName="min-h-32 rounded-2xl"
         />
-      </SectionCard>
-      )}
-
-      {show.referenceBlock && show.referenceBlock !== 'hidden' && (
-      <SectionCard
-        title={fieldMeta(entryProfile.reference, '参考作品', '仅学习风格、节奏与类型经验，不复制剧情和台词').title}
-        subtitle={fieldMeta(entryProfile.reference, '', '').subtitle}
-        icon={Film}
-      >
-        <Textarea
-          value={formData.referenceWork}
-          onChange={(e) => update('referenceWork', e.target.value.slice(0, 2000))}
-          placeholder={fieldMeta(entryProfile.reference, '', '例：《某某短剧》的台词节奏 + 《某某剧》的反转密度…').placeholder}
-          rows={5}
-          textareaClassName="min-h-32 rounded-2xl"
-        />
-        <p className="text-xs text-navy-400 mt-2">
-          {show.referenceBlock === 'required' ? '必填' : '可选'} · {formData.referenceWork.length} / 2000 字
-        </p>
       </SectionCard>
       )}
 
@@ -619,8 +603,8 @@ function StageInputForm({
                 onClick={() => update('theme', theme.key)}
                 className={`p-4 rounded-2xl text-left transition-all relative overflow-hidden ${
                   active
-                    ? 'ring-2 ring-gold-400 bg-navy-700/40'
-                    : 'bg-navy-800/30 hover:bg-navy-700/30 border border-navy-600/30'
+                    ? 'ring-2 ring-gold-400 bg-gold-400/10 shadow-gold'
+                    : 'border border-white/10 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]'
                 }`}
                 style={active ? { borderColor: theme.color + '60' } : {}}
               >
@@ -642,14 +626,91 @@ function StageInputForm({
       </SectionCard>
       )}
 
+      {storyFormReady && (show.coreIdea || show.audience) && (
+        <div className="flex items-center gap-3 px-1">
+          <div className="h-px flex-1 bg-slate-700/50" />
+          <span className="text-sm font-medium text-gold-300">故事策划</span>
+          <div className="h-px flex-1 bg-slate-700/50" />
+        </div>
+      )}
+
+      {!storyFormReady && show.coreIdea && (
+        <div className="rounded-xl border border-dashed border-white/10 px-4 py-3 text-sm text-navy-400 text-center">
+          {isNovelEntry && !novelReady
+            ? '请先上传小说正文，再选择题材与填写故事策划'
+            : '请先选择题材，再填写故事策划'}
+        </div>
+      )}
+
+      {storyFormReady && show.audience && (
+        <SectionCard title="目标受众" subtitle="可选：标签 + 画像描述" icon={Users}>
+          <AudienceProfileField
+            profile={normalizeAudienceProfile(formData.audienceProfile, formData.audience)}
+            onChange={(audienceProfile, audience) =>
+              setFormData((prev) => ({ ...prev, audienceProfile, audience }))
+            }
+            currencyName={currencyName}
+            actionCost={actionCost}
+            actionRequiresMember={actionRequiresMember}
+            membershipActive={membershipLoaded && membershipActive}
+            aiContext={ctx}
+            disabled={!membershipLoaded}
+          />
+        </SectionCard>
+      )}
+
+      {show.coreIdea && storyFormReady && (
+      <SectionCard
+        title={fieldMeta(entryProfile.coreIdea, '故事策划', '根据上方题材与项目参数生成').title}
+        subtitle={fieldMeta(entryProfile.coreIdea, '故事策划', '一句话梗概 + 核心冲突 + 情绪基调 + 前三集钩子').subtitle}
+        icon={Sparkles}
+      >
+        <StoryBriefFields
+          formData={formData}
+          onChange={(key, value) => {
+            if (key === 'batch') {
+              setFormData((prev) => ({ ...prev, ...value }))
+            } else {
+              update(key, value)
+            }
+          }}
+          currencyName={currencyName}
+          actionCost={actionCost}
+          actionRequiresMember={actionRequiresMember}
+          membershipActive={membershipLoaded && membershipActive}
+          aiContext={ctx}
+          disabled={!membershipLoaded}
+        />
+      </SectionCard>
+      )}
+
+      {show.referenceBlock && show.referenceBlock !== 'hidden' && storyFormReady && (
+      <SectionCard
+        title={fieldMeta(entryProfile.reference, '参考作品', '仅学习风格、节奏与类型经验，不复制剧情和台词').title}
+        subtitle={fieldMeta(entryProfile.reference, '', '对标热门短剧的叙事节奏与情绪曲线，不复制剧情和台词').subtitle}
+        icon={Film}
+      >
+        <Textarea
+          value={formData.referenceWork}
+          onChange={(e) => update('referenceWork', e.target.value.slice(0, 2000))}
+          placeholder={fieldMeta(entryProfile.reference, '', '例：《某某短剧》的台词节奏 + 《某某剧》的反转密度…').placeholder}
+          rows={5}
+          textareaClassName="min-h-32 rounded-2xl"
+        />
+        <p className="text-xs text-navy-400 mt-2">
+          {show.referenceBlock === 'required' ? '必填' : '可选'} · {formData.referenceWork.length} / 2000 字
+        </p>
+      </SectionCard>
+      )}
+
       {show.projectParams !== false && novelReady && (
       <>
       {/* 项目参数 */}
       <div className="space-y-6">
         <div className="flex items-center gap-3 px-1">
-          <div className="h-px flex-1 bg-navy-700/50" />
+          <div className="h-px flex-1 bg-slate-700/50" />
           <span className="text-sm font-medium text-navy-300">项目参数</span>
-          <div className="h-px flex-1 bg-navy-700/50" />
+          <div className="h-px flex-1 bg-slate-700/50" />
         </div>
 
       <SectionCard
@@ -710,7 +771,7 @@ function StageInputForm({
               step={epStep}
               value={formData.episodes}
               onChange={(e) => update('episodes', parseInt(e.target.value, 10))}
-              className="w-full h-2 rounded-full bg-navy-700/50 appearance-none cursor-pointer accent-gold-400"
+              className="w-full h-2 rounded-full bg-slate-700/50 appearance-none cursor-pointer accent-gold-400"
               style={{
                 background: `linear-gradient(to right, #f6d365 0%, #fda085 ${
                   ((formData.episodes - epMin) / Math.max(epMax - epMin, 1)) * 100
@@ -727,7 +788,7 @@ function StageInputForm({
             key={formData.episodes}
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
-            className="w-24 h-24 rounded-2xl glass-card-gold flex flex-col items-center justify-center"
+            className="flex h-24 w-24 flex-col items-center justify-center rounded-2xl border border-gold-400/40 bg-gold-400/10 shadow-gold"
           >
             <span className="text-3xl font-bold gradient-text">{formData.episodes}</span>
             <span className="text-xs text-navy-300 mt-1">集</span>
@@ -742,7 +803,7 @@ function StageInputForm({
               className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all ${
                 formData.episodes === n
                   ? 'bg-gold-400/20 text-gold-400 border border-gold-400/40'
-                  : 'bg-navy-700/30 text-navy-300 hover:bg-navy-700/50 border border-transparent'
+                  : 'bg-white/[0.05] text-navy-300 hover:bg-white/[0.06] border border-transparent'
               }`}
             >
               {n}集
@@ -764,64 +825,6 @@ function StageInputForm({
       </SectionCard>
       </div>
       </>
-      )}
-
-      {configReady && (show.coreIdea || show.audience) && (
-        <div className="flex items-center gap-3 px-1">
-          <div className="h-px flex-1 bg-navy-700/50" />
-          <span className="text-sm font-medium text-gold-300">AI 辅助填写</span>
-          <div className="h-px flex-1 bg-navy-700/50" />
-        </div>
-      )}
-
-      {!configReady && show.coreIdea && (
-        <div className="rounded-xl border border-dashed border-navy-600/40 px-4 py-3 text-sm text-navy-400 text-center">
-          {isNovelEntry && !novelReady
-            ? '请先上传小说正文，再选择题材与项目参数'
-            : '请先选择题材并完成项目参数，再使用 AI 生成故事策划'}
-        </div>
-      )}
-
-      {configReady && show.audience && (
-        <SectionCard title="目标受众" subtitle="可选：标签 + 画像描述" icon={Users}>
-          <AudienceProfileField
-            profile={normalizeAudienceProfile(formData.audienceProfile, formData.audience)}
-            onChange={(audienceProfile, audience) =>
-              setFormData((prev) => ({ ...prev, audienceProfile, audience }))
-            }
-            currencyName={currencyName}
-            actionCost={actionCost}
-            actionRequiresMember={actionRequiresMember}
-            membershipActive={membershipLoaded && membershipActive}
-            aiContext={ctx}
-            disabled={!configReady || !membershipLoaded}
-          />
-        </SectionCard>
-      )}
-
-      {show.coreIdea && configReady && (
-      <SectionCard
-        title={fieldMeta(entryProfile.coreIdea, '故事策划', '根据上方题材与项目参数生成').title}
-        subtitle={fieldMeta(entryProfile.coreIdea, '故事策划', '一句话梗概 + 核心冲突 + 情绪基调 + 前三集钩子').subtitle}
-        icon={Sparkles}
-      >
-        <StoryBriefFields
-          formData={formData}
-          onChange={(key, value) => {
-            if (key === 'batch') {
-              setFormData((prev) => ({ ...prev, ...value }))
-            } else {
-              update(key, value)
-            }
-          }}
-          currencyName={currencyName}
-          actionCost={actionCost}
-          actionRequiresMember={actionRequiresMember}
-          membershipActive={membershipLoaded && membershipActive}
-          aiContext={ctx}
-          disabled={!configReady || !membershipLoaded}
-        />
-      </SectionCard>
       )}
 
       {/* 提交按钮 */}
@@ -859,6 +862,7 @@ function StageBrief({
   billingLoaded = true,
   billingError = '',
   pipelineNodes: fusionPipelineNodes = [],
+  executionPlan = null,
   currencyName = '创作币',
 }) {
   const entryProfile = resolveEntryProfile(catalog, formData.creationEntry)
@@ -912,7 +916,7 @@ function StageBrief({
                 {(formData.novelText || '').trim().slice(0, 400)}
                 {(formData.novelText || '').length > 400 ? '…' : ''}
               </p>
-              <p className="text-xs text-navy-500 mt-1">共 {(formData.novelText || '').length} 字</p>
+              <p className="text-xs text-navy-400 mt-1">共 {(formData.novelText || '').length} 字</p>
             </BriefRow>
           )}
 
@@ -957,28 +961,28 @@ function StageBrief({
 
           {show.coreIdea && (formData.idea || formData.coreConflict || formData.emotionalTone || formData.openingHooks) && (
           <BriefRow icon={Sparkles} label="故事策划">
-            <div className="bg-navy-800/40 rounded-2xl p-5 border border-navy-600/20 space-y-3 text-sm">
+            <div className="rounded-2xl border border-white/5 bg-slate-900/40 p-5 space-y-3 text-sm">
               {formData.idea && (
                 <div>
-                  <div className="text-navy-500 text-xs mb-1">一句话梗概</div>
+                  <div className="text-navy-400 text-xs mb-1">一句话梗概</div>
                   <p className="text-navy-100 leading-relaxed">{formData.idea}</p>
                 </div>
               )}
               {formData.coreConflict && (
                 <div>
-                  <div className="text-navy-500 text-xs mb-1">核心冲突</div>
+                  <div className="text-navy-400 text-xs mb-1">核心冲突</div>
                   <p className="text-navy-100 leading-relaxed">{formData.coreConflict}</p>
                 </div>
               )}
               {formData.emotionalTone && (
                 <div>
-                  <div className="text-navy-500 text-xs mb-1">情绪基调</div>
+                  <div className="text-navy-400 text-xs mb-1">情绪基调</div>
                   <p className="text-navy-100">{formData.emotionalTone}</p>
                 </div>
               )}
               {formData.openingHooks && (
                 <div>
-                  <div className="text-navy-500 text-xs mb-1">前三集钩子</div>
+                  <div className="text-navy-400 text-xs mb-1">前三集钩子</div>
                   <p className="text-navy-100 leading-relaxed whitespace-pre-wrap">{formData.openingHooks}</p>
                 </div>
               )}
@@ -1012,15 +1016,16 @@ function StageBrief({
               currencyName={currencyName}
               compact
               prefilledSteps={pipelineHints.prefilledSteps}
+              executionPlan={executionPlan}
             />
             {pipelineHints.caption ? (
-              <p className="text-xs text-navy-500 mt-2 px-1">{pipelineHints.caption}</p>
+              <p className="text-xs text-navy-400 mt-2 px-1">{pipelineHints.caption}</p>
             ) : null}
           </div>
         )}
 
         {/* 预估信息 */}
-        <div className="bg-navy-800/30 rounded-2xl p-5 mb-8 border border-navy-600/20 space-y-3">
+        <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-5 mb-8 space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-navy-300">预估扣费</span>
             <span className="text-gold-400 font-semibold">
@@ -1041,13 +1046,13 @@ function StageBrief({
             </span>
           </div>
           {pipelineNodes.length > 0 && (
-            <div className="pt-2 border-t border-navy-700/30">
+            <div className="pt-2 border-t border-white/5">
               <div className="text-xs text-navy-400 mb-2">主链节点币价（启用项）</div>
               <div className="flex flex-wrap gap-2">
                 {pipelineNodes.map((node) => (
                   <span
                     key={node.step || node.index || node.name}
-                    className="text-xs px-2 py-1 rounded-lg bg-navy-900/50 text-navy-200 border border-navy-700/40"
+                    className="text-xs px-2 py-1 rounded-lg rounded-lg border border-white/10 bg-white/[0.03] text-navy-200"
                   >
                     {node.name} · {node.coinCost ?? node.coin_cost ?? '—'} {currencyName}
                   </span>
@@ -1102,9 +1107,9 @@ function BriefRow({ icon: Icon, label, children }) {
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: 0.1 }}
-      className="flex items-start gap-4 py-4 border-b border-navy-700/30 last:border-0"
+      className="flex items-start gap-4 py-4 border-b border-white/5 last:border-0"
     >
-      <div className="w-10 h-10 rounded-xl bg-navy-700/50 flex items-center justify-center flex-shrink-0">
+      <div className="w-10 h-10 rounded-xl flex flex-shrink-0 items-center justify-center bg-white/[0.05]">
         <Icon className={`${ICON.lg} text-gold-400`} />
       </div>
       <div className="flex-1">

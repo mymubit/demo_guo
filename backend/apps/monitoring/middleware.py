@@ -9,6 +9,7 @@ from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.utils.deprecation import MiddlewareMixin
 
+from apps.monitoring.services.business_error import process_business_api_response
 from apps.monitoring.services.sanitizer import sanitize_payload
 from apps.monitoring.services.storage import store_api_performance, store_backend_exception
 from apps.monitoring.sql import capture_sql
@@ -97,6 +98,14 @@ class MonitoringRequestMiddleware(MiddlewareMixin):
         duration_ms = int((time.perf_counter() - started_at) * 1000)
         user = getattr(request, "user", None)
         response["X-Trace-Id"] = trace_id
+        business_extra = process_business_api_response(
+            request,
+            response,
+            trace_id=trace_id,
+            duration_ms=duration_ms,
+            request_data=request_data,
+            get_client_ip=get_client_ip,
+        )
         store_api_performance(
             path=request.path,
             method=request.method,
@@ -112,6 +121,6 @@ class MonitoringRequestMiddleware(MiddlewareMixin):
             trace_id=trace_id,
             request_data=request_data,
             response_data=response_payload(response),
-            extra={"slow_api": duration_ms >= int(getattr(settings, "MONITORING_SLOW_API_MS", 1000))},
+            extra=business_extra,
         )
         return response

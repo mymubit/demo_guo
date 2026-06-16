@@ -8,6 +8,7 @@ from apps.monitoring.views import (
     FrontendEventViewSet,
     MonitoringExceptionViewSet,
     MonitoringHealthView,
+    MonitoringMaintenanceView,
     MonitoringOverviewView,
     SlowSqlViewSet,
 )
@@ -25,5 +26,6 @@ app_name = "monitoring_admin"
 urlpatterns = [
     path("overview/", MonitoringOverviewView.as_view(), name="overview"),
     path("health/", MonitoringHealthView.as_view(), name="health"),
+    path("maintenance/", MonitoringMaintenanceView.as_view(), name="maintenance"),
     path("", include(router.urls)),
 ]

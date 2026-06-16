@@ -6,15 +6,12 @@ import {
   Share2,
   Copy,
   Check,
-  Film,
-  Calendar,
   Clock,
   FileText,
   Sparkles,
   Star,
   Users,
   ChevronRight,
-  RefreshCw,
 } from 'lucide-react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -24,7 +21,9 @@ import { sanitizeHtml } from '@/utils/sanitizeHtml'
 import ScoreReport from '@/components/creation/ScoreReport'
 import GateReport from '@/components/creation/GateReport'
 import WorkVisualizationSection from '@/components/works/WorkVisualizationSection'
+import WorkMetaPanel from '@/components/works/WorkMetaPanel'
 import { ExecutionDurationLabel } from '@/components/shared/ExecutionRunPanel'
+import { cn } from '@/utils/cn'
 
 import { getThemeMeta } from '@/constants/themeMeta'
 import ThemeBadge from '@/components/ui/ThemeBadge'
@@ -211,8 +210,7 @@ export default function WorksDetail() {
 
   return (
     <div className="relative min-h-screen py-12">
-      <div className="particles-bg" />
-      <div className="max-w-5xl mx-auto px-6 relative z-10">
+      <div className="mx-auto max-w-7xl px-6">
         {/* 返回导航 */}
         <motion.div
           initial={{ opacity: 0, y: -12 }}
@@ -228,68 +226,57 @@ export default function WorksDetail() {
           </button>
         </motion.div>
 
-        {/* 头部信息卡 */}
+        {/* 封面 Hero + 标题操作 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="glass-card rounded-3xl p-8 mb-8 relative overflow-hidden"
+          className="mb-8 overflow-hidden rounded-3xl border border-white/5"
         >
           <div
-            className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-20 blur-3xl pointer-events-none"
-            style={{ background: theme.color, transform: 'translate(30%, -30%)' }}
-          />
-
-          <div className="relative">
-            {/* 徽章 */}
-            <div className="flex flex-wrap items-center gap-3 mb-5">
-              <ThemeBadge theme={theme} size="md" className="!px-4 !py-2" />
-              {work.overall_score != null ? (
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold-400/15 text-gold-400">
-                  <Star className="w-4 h-4 fill-gold-400" />
-                  <span className="text-sm font-bold">
+            className="relative h-44 md:h-52 bg-cover bg-center"
+            style={{
+              backgroundImage: `linear-gradient(135deg, ${theme.color}55 0%, #0a1628 55%, #050d18 100%)`,
+            }}
+          >
+            <div className="absolute inset-0 bg-gradient-to-t from-navy-950 via-navy-950/70 to-transparent" />
+          </div>
+          <div className="flex flex-wrap items-end justify-between gap-4 bg-slate-950 px-6 pb-6 md:px-7">
+            <div className="-mt-10 min-w-0 flex-1">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <ThemeBadge theme={theme} size="md" className="!px-3 !py-1.5" />
+                {work.overall_score != null ? (
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-gold-400/15 px-3 py-1 text-xs font-semibold text-gold-400">
+                    <Star className="h-3.5 w-3.5 fill-gold-400" />
                     {work.overall_score} 分 · {work.grade || '—'}
-                  </span>
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-gold-400/15 px-3 py-1 text-xs font-semibold text-gold-400">
+                    {work.progress_percent || 0}% 生成中
+                  </div>
+                )}
+                <div className={cn('inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold', statusInfo.cls)}>
+                  {statusInfo.text}
                 </div>
-              ) : (
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold-400/15 text-gold-400">
-                  <Star className="w-4 h-4 fill-gold-400" />
-                  <span className="text-sm font-bold">{work.progress_percent || 0}%</span>
-                </div>
-              )}
-              {work.fusion_status === 'ready' && (
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500/15 text-green-400">
-                  <span className="text-sm font-semibold">可发布</span>
-                </div>
-              )}
-              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl ${statusInfo.cls}`}>
-                <span className="text-sm font-semibold">{statusInfo.text}</span>
+                {work.fusion_status === 'ready' && (
+                  <div className="inline-flex items-center rounded-full bg-green-500/15 px-3 py-1 text-xs font-semibold text-green-400">
+                    可发布
+                  </div>
+                )}
               </div>
+              <h1 className="text-3xl font-bold leading-tight text-white md:text-4xl">
+                {work.title || '未命名剧本'}
+              </h1>
+              <p className="mt-2 text-sm text-navy-400">
+                {theme.name} · {work.episode_count || 0} 集 · {work.format_variant || '通用'} ·{' '}
+                {formatDateTime(work.created_at)}
+              </p>
             </div>
-
-            {/* 标题 */}
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-5 leading-tight">
-              {work.title || '未命名剧本'}
-            </h1>
-
-            {/* 元信息 */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <MetaItem icon={Film} label="集数" value={`${work.episode_count || 0} 集`} />
-              <MetaItem icon={FileText} label="格式" value={work.format_variant || '通用'} />
-              <MetaItem icon={Calendar} label="创建时间" value={formatDateTime(work.created_at)} />
-              <MetaItem
-                icon={Sparkles}
-                label="项目ID"
-                value={work.project_id.toString().slice(0, 12)}
-              />
-            </div>
-
-            {/* 操作按钮组 */}
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2">
               {work.status !== 'completed' && work.project_id && (
                 <button
                   onClick={() => navigate(`/creation?project=${work.project_id}`)}
-                  className="px-5 py-3 rounded-xl font-semibold flex items-center gap-2 btn-gold"
+                  className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold btn-gold"
                 >
                   <Sparkles className="w-4 h-4" />
                   继续编辑
@@ -298,42 +285,35 @@ export default function WorksDetail() {
               <button
                 onClick={() => handleDownload('md')}
                 disabled={work.status !== 'completed'}
-                className="px-5 py-3 rounded-xl font-medium flex items-center gap-2 bg-navy-700/50 hover:bg-navy-700 text-white transition-all border border-navy-600/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Download className="w-4 h-4" />
-                下载 Markdown
-                {downloading === 'md' && <span className="text-xs">处理中…</span>}
+                Markdown
+                {downloading === 'md' && <span className="text-xs">…</span>}
               </button>
               <button
                 onClick={() => handleDownload('html')}
                 disabled={work.status !== 'completed'}
-                className="px-5 py-3 rounded-xl font-medium flex items-center gap-2 bg-navy-700/50 hover:bg-navy-700 text-white transition-all border border-navy-600/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-white/[0.06] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Download className="w-4 h-4" />
-                下载 HTML
-                {downloading === 'html' && <span className="text-xs">处理中…</span>}
+                HTML
+                {downloading === 'html' && <span className="text-xs">…</span>}
               </button>
               <button
                 onClick={handleCopy}
-                className="px-5 py-3 rounded-xl font-medium flex items-center gap-2 bg-navy-700/50 hover:bg-navy-700 text-white transition-all border border-navy-600/30"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-white/[0.06]"
               >
                 {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-                {copied ? '已复制链接' : '复制链接'}
+                {copied ? '已复制' : '复制链接'}
               </button>
               <button
                 onClick={handleShare}
                 disabled={work.status !== 'completed' || sharing}
-                className="px-5 py-3 rounded-xl font-semibold flex items-center gap-2 btn-gold hover:shadow-lg hover:shadow-gold-500/30 transition-all disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold btn-gold transition-all hover:shadow-lg hover:shadow-gold-500/30 disabled:opacity-50"
               >
                 <Share2 className="w-4 h-4" />
-                {sharing ? '生成中…' : '分享作品'}
-              </button>
-              <button
-                onClick={() => navigate('/creation')}
-                className="px-5 py-3 rounded-xl font-medium flex items-center gap-2 bg-navy-700/50 hover:bg-navy-700 text-white transition-all border border-navy-600/30"
-              >
-                <RefreshCw className="w-4 h-4" />
-                创作新剧本
+                {sharing ? '生成中…' : '分享'}
               </button>
             </div>
           </div>
@@ -344,7 +324,7 @@ export default function WorksDetail() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.11 }}
-            className="glass-card rounded-3xl p-8 mb-8"
+            className="rounded-2xl border border-white/5 bg-slate-900/60 p-8 mb-8"
           >
             <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
               <h2 className="text-2xl font-bold text-white flex items-center gap-2">
@@ -356,7 +336,7 @@ export default function WorksDetail() {
                   type="button"
                   disabled={agentRunning != null}
                   onClick={() => handleRunAgent('insight')}
-                  className="px-4 py-2 rounded-xl text-sm font-medium bg-navy-700/50 hover:bg-navy-700 text-white border border-navy-600/30 disabled:opacity-50"
+                  className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/[0.06] disabled:opacity-50"
                 >
                   {agentRunning === 'insight' ? '分析中…' : '拉片分析'}
                 </button>
@@ -372,7 +352,7 @@ export default function WorksDetail() {
                   type="button"
                   disabled={agentRunning != null}
                   onClick={() => handleRunAgent('review')}
-                  className="px-4 py-2 rounded-xl text-sm font-medium bg-navy-700/50 hover:bg-navy-700 text-white border border-navy-600/30 disabled:opacity-50"
+                  className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/[0.06] disabled:opacity-50"
                 >
                   {agentRunning === 'review' ? '质检中…' : '重新质检'}
                 </button>
@@ -380,7 +360,7 @@ export default function WorksDetail() {
                   type="button"
                   disabled={agentRunning != null}
                   onClick={() => handleRunAgent('polish')}
-                  className="px-4 py-2 rounded-xl text-sm font-medium bg-navy-700/50 hover:bg-navy-700 text-white border border-navy-600/30 disabled:opacity-50"
+                  className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/[0.06] disabled:opacity-50"
                 >
                   {agentRunning === 'polish' ? '分析中…' : '润色建议'}
                 </button>
@@ -388,7 +368,7 @@ export default function WorksDetail() {
             </div>
 
             {work.fusionSnapshot?.agentArtifacts?.score?.overallScore != null && (
-              <div className="mb-6 rounded-2xl bg-navy-800/30 border border-navy-700/30 p-5">
+              <div className="mb-6 rounded-2xl border border-white/5 bg-slate-900/60 p-5">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <h3 className="text-sm font-semibold text-gold-400">深度评分</h3>
                   <ExecutionDurationLabel
@@ -406,7 +386,7 @@ export default function WorksDetail() {
             )}
 
             {work.fusionSnapshot?.agentArtifacts?.review && (
-              <div className="mb-6 rounded-2xl bg-navy-800/30 border border-navy-700/30 p-5">
+              <div className="mb-6 rounded-2xl border border-white/5 bg-slate-900/60 p-5">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <h3 className="text-sm font-semibold text-gold-400">质检报告</h3>
                   <ExecutionDurationLabel
@@ -429,7 +409,7 @@ export default function WorksDetail() {
             )}
 
             {(work.fusionSnapshot?.agentArtifacts?.polish?.suggestions || []).length > 0 && (
-              <div className="mb-6 rounded-2xl bg-navy-800/30 border border-navy-700/30 p-5">
+              <div className="mb-6 rounded-2xl border border-white/5 bg-slate-900/60 p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                   <h3 className="text-sm font-semibold text-gold-400">润色建议</h3>
                   <div className="flex items-center gap-3">
@@ -446,19 +426,19 @@ export default function WorksDetail() {
                   {work.fusionSnapshot.agentArtifacts.polish.suggestions.map((s) => (
                     <li
                       key={s.index}
-                      className="flex gap-3 items-start text-sm text-navy-200 rounded-lg bg-navy-900/40 p-3"
+                      className="flex items-start gap-3 rounded-lg border border-white/5 bg-slate-900/40 p-3 text-sm text-navy-200"
                     >
                       <input
                         type="checkbox"
                         checked={selectedPolish.has(s.index)}
                         onChange={() => togglePolishIndex(s.index)}
-                        className="mt-1 rounded border-navy-600"
+                        className="mt-1 rounded border-white/20"
                       />
                       <div className="min-w-0 flex-1">
                         {s.episodeNumber != null && (
                           <span className="text-xs text-gold-400/90 mr-2">第{s.episodeNumber}集</span>
                         )}
-                        {s.field && <span className="text-xs text-navy-500 mr-2">{s.field}</span>}
+                        {s.field && <span className="text-xs text-navy-400 mr-2">{s.field}</span>}
                         <p className="whitespace-pre-wrap">{s.advice}</p>
                       </div>
                     </li>
@@ -477,7 +457,7 @@ export default function WorksDetail() {
                     type="button"
                     disabled={polishApplying}
                     onClick={() => handleApplyPolish(true)}
-                    className="px-4 py-2 rounded-xl text-sm font-medium bg-navy-700/50 text-white border border-navy-600/30 disabled:opacity-50"
+                    className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
                   >
                     全部应用
                   </button>
@@ -486,7 +466,7 @@ export default function WorksDetail() {
             )}
 
             {work.fusionSnapshot?.agentArtifacts?.insight?.lineCount > 0 && (
-              <div className="mb-6 rounded-2xl bg-navy-800/30 border border-navy-700/30 p-5">
+              <div className="mb-6 rounded-2xl border border-white/5 bg-slate-900/60 p-5">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <h3 className="text-sm font-semibold text-gold-400">拉片报告</h3>
                   <ExecutionDurationLabel
@@ -517,7 +497,7 @@ export default function WorksDetail() {
             )}
 
             {(work.fusionSnapshot?.agentArtifacts?.marketing?.titles || []).length > 0 && (
-              <div className="rounded-2xl bg-navy-800/30 border border-navy-700/30 p-5">
+              <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-5">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <h3 className="text-sm font-semibold text-gold-400">宣发物料</h3>
                   <ExecutionDurationLabel
@@ -547,7 +527,7 @@ export default function WorksDetail() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.12 }}
-            className="glass-card rounded-3xl p-8 mb-8"
+            className="rounded-2xl border border-white/5 bg-slate-900/60 p-8 mb-8"
           >
             <h2 className="text-2xl font-bold text-white mb-4">逐集质检</h2>
             <GateReport summary={work.gateSummary} />
@@ -559,7 +539,7 @@ export default function WorksDetail() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="glass-card rounded-3xl p-8 mb-8"
+            className="rounded-2xl border border-white/5 bg-slate-900/60 p-8 mb-8"
           >
             <h2 className="text-2xl font-bold text-white mb-4">8 维评分</h2>
             <ScoreReport report={work.scoreReport} />
@@ -574,23 +554,31 @@ export default function WorksDetail() {
           <WorkVisualizationSection projectId={work.project_id} />
         </motion.div>
 
-        {/* 剧本正文（直接插入后端返回的预渲染 HTML） */}
+        {/* 剧本正文 — 左正文 / 右元信息 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="glass-card rounded-3xl p-6 md:p-10 mb-8"
+          className="mb-8 grid grid-cols-1 gap-5 lg:grid-cols-[1fr_320px]"
         >
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-navy-700/40">
-            <FileText className="w-5 h-5 text-gold-400" />
-            <h2 className="text-2xl font-bold text-white">剧本内容</h2>
-          </div>
-          <div
-            className="sf-script-rendered prose prose-invert max-w-none prose-headings:text-white prose-p:text-navy-100 prose-strong:text-gold-300"
-            dangerouslySetInnerHTML={{
-              __html: sanitizeHtml(work.resultHtml || '<p class="text-navy-300">暂无内容</p>'),
-            }}
-          />
+          <section className="rounded-2xl border border-white/5 bg-slate-900/60 p-5 md:p-6">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-white/5 pb-4">
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-gold-400" />
+                <h2 className="text-xl font-bold text-white">剧本内容</h2>
+              </div>
+              <span className="rounded-full border border-gold-400/40 bg-gold-400/10 px-3 py-1 text-xs font-medium text-white">
+                {work.format_variant || '通用格式'}
+              </span>
+            </div>
+            <div
+              className="sf-script-rendered prose prose-invert max-w-none prose-headings:text-white prose-p:text-navy-100 prose-strong:text-gold-300"
+              dangerouslySetInnerHTML={{
+                __html: sanitizeHtml(work.resultHtml || '<p class="text-navy-300">暂无内容</p>'),
+              }}
+            />
+          </section>
+          <WorkMetaPanel work={work} themeName={theme.name} />
         </motion.div>
 
         {/* 进度时间线（如后端返回 progress HTML 则直接展示） */}
@@ -599,7 +587,7 @@ export default function WorksDetail() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="glass-card rounded-3xl p-8 mb-8"
+            className="rounded-2xl border border-white/5 bg-slate-900/60 p-8 mb-8"
           >
             <div className="flex items-center gap-3 mb-6">
               <Clock className="w-5 h-5 text-gold-400" />
@@ -621,7 +609,7 @@ export default function WorksDetail() {
         >
           <button
             onClick={() => navigate('/works')}
-            className="px-8 py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 bg-navy-700/40 hover:bg-navy-700/60 text-white transition-all border border-navy-600/30"
+            className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-8 py-4 font-semibold text-white transition-all hover:bg-white/[0.06]"
           >
             <ArrowLeft className="w-5 h-5" />
             查看更多作品
@@ -650,7 +638,7 @@ export default function WorksDetail() {
                 initial={{ scale: 0.9, y: 20 }}
                 animate={{ scale: 1, y: 0 }}
                 onClick={(e) => e.stopPropagation()}
-                className="glass-card rounded-3xl p-8 max-w-md w-full border border-navy-600/30"
+                className="max-w-md w-full rounded-2xl border border-white/5 bg-slate-900/60 p-8"
               >
                 <div className="text-center mb-6">
                   <div className="w-16 h-16 rounded-2xl mx-auto mb-4 bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center">
@@ -660,7 +648,7 @@ export default function WorksDetail() {
                   <p className="text-sm text-navy-300">复制链接分享给他人查看</p>
                 </div>
 
-                <div className="bg-navy-800/50 rounded-xl p-4 mb-5 border border-navy-600/30">
+                <div className="mb-5 rounded-xl border border-white/5 bg-slate-900/40 p-4">
                   <p className="text-xs text-navy-400 mb-2">分享链接</p>
                   <p className="text-sm text-navy-100 font-mono break-all">
                     {shareLink || window.location.href}
@@ -670,7 +658,7 @@ export default function WorksDetail() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShareOpen(false)}
-                    className="flex-1 py-3 rounded-xl font-medium bg-navy-700/50 hover:bg-navy-700 text-white transition-all"
+                    className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] py-3 font-medium text-white transition-all hover:bg-white/[0.06]"
                   >
                     关闭
                   </button>
@@ -697,8 +685,8 @@ export default function WorksDetail() {
 
 function AgentStat({ label, value }) {
   return (
-    <div className="bg-navy-900/40 rounded-xl p-3 border border-navy-700/20">
-      <p className="text-[10px] text-navy-500 uppercase tracking-wider mb-1">{label}</p>
+    <div className="rounded-xl border border-white/5 bg-slate-900/40 p-3">
+      <p className="text-[10px] text-navy-400 uppercase tracking-wider mb-1">{label}</p>
       <p className="text-white font-semibold text-sm">{value ?? '—'}</p>
     </div>
   )
@@ -708,7 +696,7 @@ function AgentList({ label, items }) {
   if (!items?.length) return null
   return (
     <div>
-      <p className="text-xs text-navy-500 mb-2">{label}</p>
+      <p className="text-xs text-navy-400 mb-2">{label}</p>
       <ul className="space-y-1">
         {items.map((item, i) => (
           <li key={i} className="text-sm text-navy-100">
@@ -716,18 +704,6 @@ function AgentList({ label, items }) {
           </li>
         ))}
       </ul>
-    </div>
-  )
-}
-
-function MetaItem({ icon: Icon, label, value }) {
-  return (
-    <div className="bg-navy-800/30 rounded-xl p-4 border border-navy-600/20">
-      <div className="flex items-center gap-2 mb-2">
-        <Icon className="w-3.5 h-3.5 text-gold-400" />
-        <span className="text-xs text-navy-400 uppercase tracking-wider">{label}</span>
-      </div>
-      <div className="text-white font-semibold text-sm">{value}</div>
     </div>
   )
 }

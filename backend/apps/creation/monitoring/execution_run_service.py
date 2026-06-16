@@ -143,6 +143,13 @@ class AgentExecutionRunService:
         for field, value in updates.items():
             setattr(run, field, value)
         run.save(update_fields=list(updates.keys()))
+        if status == AgentExecutionRun.STATUS_FAILED:
+            try:
+                from apps.monitoring.services.task_error import record_agent_execution_failure
+
+                record_agent_execution_failure(run, error_message=updates["error_message"])
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("[AgentLog] monitoring failure write skipped: %s", exc)
         return run
 
     @staticmethod
@@ -490,6 +497,57 @@ class AgentExecutionRunService:
                 for item in payload["sub_skills"]
             ]
         return alias_agent_id(payload)
+
+    @staticmethod
+    def list_recent_runs_global(*, limit: int = 40) -> Dict[str, Any]:
+        from apps.workflow.step_admin import PipelineStepAdminService
+
+        limit = max(1, min(limit, 100))
+        runs = (
+            AgentExecutionRun.objects.select_related("project")
+            .order_by("-started_at")[:limit]
+        )
+        steps = PipelineStepAdminService.list_steps()
+        index_to_node_id = {
+            int(row.get("node_index") or 0): str(row.get("node_id") or "")
+            for row in steps
+            if row.get("node_index") is not None
+        }
+        agent_to_node_id = {
+            str(row.get("agent_id") or ""): str(row.get("node_id") or "")
+            for row in steps
+            if row.get("agent_id")
+        }
+
+        items: List[Dict[str, Any]] = []
+        node_states: Dict[str, str] = {}
+        for run in runs:
+            node_id = ""
+            if run.node_index is not None:
+                node_id = index_to_node_id.get(int(run.node_index), "")
+            if not node_id:
+                node_id = agent_to_node_id.get(str(run.agent_id or ""), "")
+            payload = AgentExecutionRunService.compact_run_summary(run)
+            payload.update(
+                {
+                    "project_id": str(run.project_id),
+                    "project_title": getattr(run.project, "title", "") or "",
+                    "fusion_node_id": node_id,
+                }
+            )
+            items.append(payload)
+            if node_id and node_id not in node_states:
+                status = str(run.status or "")
+                if status == AgentExecutionRun.STATUS_RUNNING:
+                    node_states[node_id] = "running"
+                elif status == AgentExecutionRun.STATUS_FAILED:
+                    node_states[node_id] = "failed"
+                elif status in (AgentExecutionRun.STATUS_COMPLETED, AgentExecutionRun.STATUS_PARTIAL):
+                    node_states[node_id] = "completed"
+                else:
+                    node_states[node_id] = "idle"
+
+        return {"runs": items, "node_states": node_states, "limit": limit}
 
     @staticmethod
     def list_runs_for_project(

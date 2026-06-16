@@ -52,7 +52,7 @@ export default function OutlineSkillPanel({
   }, [activeStageKey, activeBlock, editMode, activeEpByStage])
 
   const inputClass =
-    'w-full rounded-xl bg-navy-950/50 border border-navy-600/30 text-white text-sm px-4 py-3 focus:border-gold-400/50 outline-none resize-y'
+    'sf-control resize-y'
 
   function updateStructureSummary(value) {
     onDraftChange((prev) => ({ ...prev, structureSummary: value }))
@@ -161,7 +161,7 @@ export default function OutlineSkillPanel({
           onChange={updateStructureSummary}
           inputClass={inputClass}
         />
-        <div className="rounded-2xl border border-navy-700/30 bg-navy-800/20 px-6 py-12 text-center text-sm text-navy-400">
+        <div className="rounded-2xl border border-white/5 bg-slate-900/40 px-6 py-12 text-center text-sm text-navy-400">
           暂无大纲内容，请使用 AI 生成
         </div>
       </div>

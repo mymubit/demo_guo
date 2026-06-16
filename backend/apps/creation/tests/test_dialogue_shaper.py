@@ -293,6 +293,32 @@ class IpLockTests(SimpleTestCase):
         script_report = run_script_ip_lock(script, brief=brief, character_bible=out)
         self.assertTrue(script_report.get("passed"))
 
+    def test_character_ip_lock_accepts_name_aliases(self):
+        from apps.creation.ip_lock import merge_character_ip_lock
+
+        bible = {
+            "protagonists": [
+                {
+                    "characterId": "p1",
+                    "characterName": "林小雨",
+                    "role": "protagonist-female",
+                }
+            ],
+            "antagonists": [
+                {
+                    "character_id": "a1",
+                    "displayName": "赵婆",
+                    "characterRole": "antagonist-female",
+                }
+            ],
+        }
+        brief = {"creationEntry": "ip-sequel", "ipKeepRules": "林小雨"}
+
+        out = merge_character_ip_lock(bible, brief)
+
+        self.assertEqual(len(out.get("ipLockRoster") or []), 2)
+        self.assertTrue((out.get("ipCharacterLockLog") or {}).get("passed"))
+
 
 class ScriptPsychologyTests(SimpleTestCase):
     def test_build_episode_hints(self):

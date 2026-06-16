@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion'
+﻿import { motion } from 'framer-motion'
 import { Check, FileText, Zap, Star, BookOpen, Clapperboard } from 'lucide-react'
 
 const FORMAT_META = {
@@ -13,7 +13,7 @@ function previewLine(label, value) {
   const text = String(value).replace(/\*\*/g, '')
   return (
     <div className="flex gap-2 text-[11px] leading-relaxed">
-      <span className="text-navy-500 shrink-0 w-8">{label}</span>
+      <span className="text-navy-400 shrink-0 w-8">{label}</span>
       <code className="text-navy-200 font-mono break-all">{text}</code>
     </div>
   )
@@ -35,15 +35,15 @@ export default function FormatVariantPicker({ variants = [], value, onChange }) 
             onClick={() => onChange(f.key)}
             className={`p-5 rounded-2xl text-left transition-all border ${
               active
-                ? 'border-gold-400/50 bg-gold-400/10 ring-1 ring-gold-400/40'
-                : 'border-navy-700/40 bg-navy-800/30 hover:bg-navy-700/30 hover:border-navy-600/50'
+                ? 'border-gold-400/50 bg-gold-400/10 ring-1 ring-gold-400/40 shadow-gold'
+                : 'border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]'
             }`}
           >
             <div className="flex items-start justify-between gap-3 mb-3">
               <div className="flex items-start gap-3 min-w-0">
                 <div
                   className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${
-                    active ? 'bg-gold-400/20' : 'bg-navy-700/50'
+                    active ? 'bg-gold-400/20' : 'border border-white/10 bg-white/5'
                   }`}
                 >
                   <Icon className={`w-5 h-5 ${active ? 'text-gold-400' : 'text-navy-300'}`} />
@@ -69,13 +69,13 @@ export default function FormatVariantPicker({ variants = [], value, onChange }) 
               )}
             </div>
 
-            <div className="rounded-xl bg-navy-950/60 border border-navy-700/40 p-3 space-y-1.5">
-              <div className="text-[10px] text-navy-500 uppercase tracking-wider mb-1">格式样例</div>
+            <div className="rounded-xl border border-white/5 bg-slate-900/40 p-3 space-y-1.5">
+              <div className="text-[10px] text-navy-400 uppercase tracking-wider mb-1">格式样例</div>
               {previewLine('场景', f.sceneHeading)}
               {previewLine('台词', f.dialogueMarker)}
               {previewLine('动作', f.actionMarker)}
               {!f.sceneHeading && !f.dialogueMarker && !f.actionMarker && (
-                <div className="flex items-center gap-2 text-[11px] text-navy-500">
+                <div className="flex items-center gap-2 text-[11px] text-navy-400">
                   <FileText className="w-3.5 h-3.5" />
                   变体 {f.key}
                 </div>

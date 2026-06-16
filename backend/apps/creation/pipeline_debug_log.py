@@ -213,6 +213,18 @@ def log_fusion_node_fail(
         error[:500],
         _json(summarize_upstream(node_id, upstream)),
     )
+    try:
+        from apps.monitoring.services.task_error import record_fusion_node_failure
+
+        record_fusion_node_failure(
+            project_id=project_id,
+            node_id=node_id,
+            node_index=node_index,
+            error=error,
+            upstream=summarize_upstream(node_id, upstream),
+        )
+    except Exception:
+        logger.exception("[Fusion] monitoring write failed project=%s node=%s", project_id, node_id)
 
 
 def log_skill_task_begin(
@@ -249,6 +261,20 @@ def log_skill_task_done(
         artifact_key,
         _json(detail or {}),
     )
+    if status in {"failed", "exception", "error"} and not (detail or {}).get("execution_run_id"):
+        try:
+            from apps.monitoring.services.task_error import record_background_task_failure
+
+            record_background_task_failure(
+                task_name="creation.skill_task",
+                project_id=project_id,
+                node_index=node_index,
+                status=status,
+                detail=detail,
+                exception_type="SkillTaskFailed",
+            )
+        except Exception:
+            logger.exception("[SkillTask] monitoring write failed project=%s node=%s", project_id, node_index)
 
 
 def log_skill_enqueue(

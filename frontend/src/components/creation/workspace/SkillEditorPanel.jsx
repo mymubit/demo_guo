@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { Save, UserPlus } from 'lucide-react'
 import { parseInspirationPlan } from '@/utils/storyBrief'
 import { resolveRoleTypeLabel } from '@/utils/displayLabels'
@@ -19,8 +19,7 @@ const ROLE_TYPE_OPTIONS = [
 ]
 
 function FieldInput({ field, onChange }) {
-  const common =
-    'w-full rounded-xl bg-navy-950/60 border border-navy-600/30 text-white text-sm px-4 py-3 focus:border-gold-400/50 outline-none'
+  const common = 'sf-control'
   if (field.type === 'textarea') {
     return (
       <textarea
@@ -168,7 +167,7 @@ export default function SkillEditorPanel({
                   setDraft((p) => ({ ...p, relationshipSummary: e.target.value }))
                 }
                 rows={3}
-                className="w-full rounded-xl bg-navy-950/60 border border-navy-600/30 text-white text-sm px-4 py-3 resize-y"
+                className="sf-control resize-y"
               />
             ) : (
               <p className="text-sm text-navy-100 whitespace-pre-wrap">
@@ -179,28 +178,28 @@ export default function SkillEditorPanel({
           {(draft.characters || []).map((c, idx) => (
             <div
               key={c.id || idx}
-              className="rounded-xl border border-navy-700/40 bg-navy-950/40 p-4 space-y-3 mb-4"
+              className="mb-4 space-y-3 rounded-xl border border-white/5 bg-slate-900/40 p-4"
             >
               <div className="flex flex-wrap gap-3">
                 <div className="flex-1 min-w-[120px]">
-                  <label className="text-xs text-navy-500">姓名</label>
+                  <label className="text-xs text-navy-400">姓名</label>
                   {editMode ? (
                     <input
                       value={c.name || ''}
                       onChange={(e) => updateCharacter(idx, 'name', e.target.value)}
-                      className="w-full mt-1 rounded-lg bg-navy-900/60 border border-navy-600/30 px-3 py-2 text-sm text-white"
+                      className="sf-control mt-1"
                     />
                   ) : (
                     <p className="text-white font-semibold mt-1">{c.name || '—'}</p>
                   )}
                 </div>
                 <div className="w-28">
-                  <label className="text-xs text-navy-500">定位</label>
+                  <label className="text-xs text-navy-400">定位</label>
                   {editMode ? (
                     <select
                       value={c.roleType || 'supporting'}
                       onChange={(e) => updateCharacter(idx, 'roleType', e.target.value)}
-                      className="w-full mt-1 rounded-lg bg-navy-900/60 border border-navy-600/30 px-3 py-2 text-sm text-white"
+                      className="sf-control mt-1"
                     >
                       {ROLE_TYPE_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>
@@ -215,7 +214,7 @@ export default function SkillEditorPanel({
               </div>
               {['oneLineSummary', 'personality', 'background'].map((key) => (
                 <div key={key}>
-                  <label className="text-xs text-navy-500">
+                  <label className="text-xs text-navy-400">
                     {key === 'oneLineSummary' ? '一句话' : key === 'personality' ? '性格' : '背景'}
                   </label>
                   {editMode ? (
@@ -223,7 +222,7 @@ export default function SkillEditorPanel({
                       value={c[key] || ''}
                       onChange={(e) => updateCharacter(idx, key, e.target.value)}
                       rows={key === 'background' ? 4 : 2}
-                      className="w-full mt-1 rounded-lg bg-navy-900/60 border border-navy-600/30 px-3 py-2 text-sm text-white resize-y"
+                      className="sf-control mt-1 resize-y"
                     />
                   ) : (
                     <p className="text-sm text-navy-100 mt-1 whitespace-pre-wrap">{c[key] || '—'}</p>
@@ -248,7 +247,7 @@ export default function SkillEditorPanel({
                 type="button"
                 disabled={saving}
                 onClick={handleSave}
-                className="px-5 py-2.5 rounded-xl bg-navy-700/60 hover:bg-navy-600/60 border border-navy-500/30 text-white text-sm inline-flex items-center gap-2 disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-5 py-2.5 text-sm text-white transition-colors hover:bg-white/[0.06] disabled:opacity-50"
               >
                 <Save className="w-4 h-4" />
                 {saving ? '保存中…' : '保存修改'}

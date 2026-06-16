@@ -87,3 +87,28 @@ class PipelineStepAdminServiceTests(TestCase):
         self.assertEqual(steps[0]["node_id"], "node-1-input")
         self.assertEqual(steps[0]["agent_id"], "brief")
         self.assertNotIn("skill_id", steps[0])
+
+    def test_reorder_steps_updates_chain_order(self):
+        pack = FusionPipelinePack.objects.create(version="test-reorder", is_active=True)
+        node_a = FusionPipelineNode.objects.create(
+            pack=pack,
+            fusion_node_id="node-a",
+            chain_order=1,
+            website_index=1,
+            name="A",
+        )
+        node_b = FusionPipelineNode.objects.create(
+            pack=pack,
+            fusion_node_id="node-b",
+            chain_order=2,
+            website_index=2,
+            name="B",
+        )
+        FusionPipelineDbService.clear_caches()
+
+        steps = PipelineStepAdminService.reorder_steps([str(node_b.id), str(node_a.id)])
+        self.assertEqual([s["node_id"] for s in steps], ["node-b", "node-a"])
+        node_a.refresh_from_db()
+        node_b.refresh_from_db()
+        self.assertEqual(node_b.chain_order, 1)
+        self.assertEqual(node_a.chain_order, 2)

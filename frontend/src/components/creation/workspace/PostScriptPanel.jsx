@@ -14,7 +14,7 @@ import { ExecutionDurationLabel } from '@/components/shared/ExecutionRunPanel'
 
 function AgentCard({ title, icon: Icon, children, action, durationMs }) {
   return (
-    <div className="rounded-xl bg-navy-800/30 border border-navy-700/25 p-4 flex flex-col min-h-[140px]">
+    <div className="flex min-h-[140px] flex-col rounded-xl border border-white/5 bg-slate-900/40 p-4">
       <div className="flex items-center justify-between gap-2 mb-2">
         <p className="text-xs text-gold-400/90 flex items-center gap-1">
           {Icon && <Icon className="w-3.5 h-3.5" />}
@@ -34,7 +34,7 @@ function ReviewSubReport({ label, passed, skipped, issues = [], extra }) {
   if (passed == null && !visibleIssues.length && !extra) return null
   const ok = passed !== false
   return (
-    <div className="mt-2 rounded-lg bg-navy-900/40 border border-navy-700/20 px-2.5 py-2">
+    <div className="mt-2 rounded-lg border border-white/5 bg-slate-900/40 px-2.5 py-2">
       <p className={`text-[11px] font-medium ${ok ? 'text-green-400/90' : 'text-amber-400/90'}`}>
         {label}
         {passed != null ? (ok ? ' · 通过' : ' · 待优化') : ''}
@@ -132,7 +132,7 @@ export default function PostScriptPanel({ projectId, postScript, onRefresh }) {
   const visiblePolish = showAllPolish ? suggestions : suggestions.slice(0, 4)
 
   return (
-    <div className="mt-6 rounded-2xl bg-navy-900/40 border border-navy-700/30 p-5">
+    <div className="mt-6 rounded-2xl border border-white/5 bg-slate-900/60 p-5">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
           <ShieldCheck className="w-5 h-5 text-gold-400/90" />
@@ -197,7 +197,7 @@ export default function PostScriptPanel({ projectId, postScript, onRefresh }) {
                 />
               )}
               {review.scoreQuick?.skipped && review.scoreQuick.reason && (
-                <p className="text-[10px] text-navy-500 mt-1">快评跳过：{review.scoreQuick.reason}</p>
+                <p className="text-[10px] text-navy-400 mt-1">快评跳过：{review.scoreQuick.reason}</p>
               )}
               {review.complianceFuse?.triggered && (
                 <ReviewSubReport
@@ -227,7 +227,7 @@ export default function PostScriptPanel({ projectId, postScript, onRefresh }) {
               ))}
             </>
           ) : (
-            <p className="text-xs text-navy-500">暂无报告</p>
+            <p className="text-xs text-navy-400">暂无报告</p>
           )}
         </AgentCard>
 
@@ -254,7 +254,7 @@ export default function PostScriptPanel({ projectId, postScript, onRefresh }) {
               </p>
             </>
           ) : (
-            <p className="text-xs text-navy-500">暂无评分</p>
+            <p className="text-xs text-navy-400">暂无评分</p>
           )}
         </AgentCard>
 
@@ -291,7 +291,7 @@ export default function PostScriptPanel({ projectId, postScript, onRefresh }) {
               )}
             </>
           ) : insightStatus === 'not_run' ? (
-            <p className="text-xs text-navy-500">拆解钩子、节奏与 CP 线</p>
+            <p className="text-xs text-navy-400">拆解钩子、节奏与 CP 线</p>
           ) : null}
         </AgentCard>
 
@@ -328,12 +328,12 @@ export default function PostScriptPanel({ projectId, postScript, onRefresh }) {
               )}
             </>
           ) : marketingStatus === 'not_run' ? (
-            <p className="text-xs text-navy-500">投流标题、切片钩子、海报 Slogan</p>
+            <p className="text-xs text-navy-400">投流标题、切片钩子、海报 Slogan</p>
           ) : null}
         </AgentCard>
       </div>
 
-      <div className="rounded-xl bg-navy-800/30 border border-navy-700/25 p-4">
+      <div className="rounded-xl border border-white/5 bg-slate-900/40 p-4">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <p className="text-xs text-gold-400/90 flex items-center gap-1">
             <Sparkles className="w-3.5 h-3.5" />
@@ -364,19 +364,19 @@ export default function PostScriptPanel({ projectId, postScript, onRefresh }) {
               {visiblePolish.map((s) => (
                 <li
                   key={s.index}
-                  className="flex gap-3 items-start text-sm rounded-lg bg-navy-900/40 p-3 border border-navy-700/20"
+                  className="flex items-start gap-3 rounded-lg border border-white/5 bg-slate-900/40 p-3 text-sm"
                 >
                   <input
                     type="checkbox"
                     checked={selectedPolish.has(s.index)}
                     onChange={() => togglePolishIndex(s.index)}
-                    className="mt-1 rounded border-navy-600"
+                    className="mt-1 rounded border-white/20"
                   />
                   <div className="min-w-0 flex-1">
                     {s.episodeNumber != null && (
                       <span className="text-xs text-gold-400/90 mr-2">第{s.episodeNumber}集</span>
                     )}
-                    {s.field && <span className="text-xs text-navy-500 mr-2">{s.field}</span>}
+                    {s.field && <span className="text-xs text-navy-400 mr-2">{s.field}</span>}
                     <p className="text-navy-200 text-xs whitespace-pre-wrap leading-relaxed">
                       {s.advice}
                     </p>
@@ -393,7 +393,7 @@ export default function PostScriptPanel({ projectId, postScript, onRefresh }) {
                 {showAllPolish ? '收起' : `展开全部 ${suggestions.length} 条`}
               </button>
             )}
-            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-navy-700/30">
+            <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-white/5">
               <button
                 type="button"
                 disabled={polishApplying || selectedPolish.size === 0}
@@ -406,18 +406,18 @@ export default function PostScriptPanel({ projectId, postScript, onRefresh }) {
                 type="button"
                 disabled={polishApplying}
                 onClick={() => handleApplyPolish(true)}
-                className="px-3 py-1.5 rounded-lg text-xs border border-navy-600/40 text-navy-200 hover:bg-navy-700/40 disabled:opacity-50"
+                className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-navy-200 transition-colors hover:bg-white/[0.05] disabled:opacity-50"
               >
                 应用全部
               </button>
             </div>
           </>
         ) : (
-          <p className="text-xs text-navy-500">生成后可将建议写入对应集的润色备注（polishRevisionNotes）</p>
+          <p className="text-xs text-navy-400">生成后可将建议写入对应集的润色备注（polishRevisionNotes）</p>
         )}
       </div>
 
-      <p className="text-[10px] text-navy-500 mt-3">
+      <p className="text-[10px] text-navy-400 mt-3">
         全剧剧本齐后自动执行 review → polish → review → score；应用润色后请刷新剧本 Tab 查看各集备注。
       </p>
     </div>

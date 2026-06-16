@@ -32,6 +32,11 @@ class CreationService:
 
     @staticmethod
     @transaction.atomic
+    def acknowledge_quality_alert(project_id: str, user, node_index: int, alert_code: str) -> dict:
+        return workspace.acknowledge_quality_alert(project_id, user, node_index, alert_code)
+
+    @staticmethod
+    @transaction.atomic
     def trigger_skill_generation(
         project_id: str,
         user,

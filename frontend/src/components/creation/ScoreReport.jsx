@@ -41,7 +41,7 @@ export default function ScoreReport({ report, className = '' }) {
           return (
             <div key={dim.key} className="flex items-center gap-3 text-sm">
               <span className="w-24 text-navy-300 flex-shrink-0">{dim.label}</span>
-              <div className="flex-1 h-2 rounded-full bg-navy-700/50 overflow-hidden">
+              <div className="flex-1 h-2 rounded-full bg-slate-700/50 overflow-hidden">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-gold-400 to-gold-600"
                   style={{ width: `${pct}%` }}

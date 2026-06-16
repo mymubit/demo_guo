@@ -177,6 +177,7 @@ export function buildSubmitPayload(formData, pipelineMode, profile = null) {
   if ((formData.novelText || '').trim()) payload.novel_text = formData.novelText.trim()
   if (formData.ipSequelMode) payload.ip_sequel_mode = formData.ipSequelMode
   if ((formData.ipKeepRules || '').trim()) payload.ip_keep_rules = formData.ipKeepRules.trim()
+  if (formData.pipelinePackId) payload.pipeline_pack_id = formData.pipelinePackId
 
   return payload
 }

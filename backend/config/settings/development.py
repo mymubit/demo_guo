@@ -21,11 +21,11 @@ CORS_ALLOW_ALL_ORIGINS = True
 SECURITY_SIGNATURE_ENABLED = False
 
 # 开发环境默认关闭限流，可通过环境变量临时开启
-SECURITY_RATE_LIMIT_ENABLED = os.getenv("SECURITY_RATE_LIMIT_ENABLED", "false").lower() in (
-    "1",
-    "true",
-    "yes",
-)
+# 本地 HMR / 多 Tab 调试时若开启限流极易触发 429，故开发环境强制关闭（忽略环境变量）
+SECURITY_RATE_LIMIT_ENABLED = False
+
+# 开发环境关闭 DRF 全局限流，避免后台多接口并行加载触发 1000/hour
+REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = []
 
 # 仅本地开发允许模拟支付，便于联调会员/充值链路。
 ALLOW_MOCK_PAYMENT = os.getenv("ALLOW_MOCK_PAYMENT", "true").lower() in (

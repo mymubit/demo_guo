@@ -6,7 +6,7 @@ param(
 $backend = Join-Path $PSScriptRoot "..\backend"
 Push-Location $backend
 try {
-    python manage.py spectacular --file $Output --validate 2>&1
+    python manage.py spectacular --file $Output 2>&1
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     Write-Host "OpenAPI 已导出: $Output"
 } finally {

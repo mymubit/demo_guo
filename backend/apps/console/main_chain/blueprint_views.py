@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """主链工作室 API。"""
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
 
 from apps.common.agent_term import attach_api_meta
 from apps.common.permissions import IsAdminUser
 
+from apps.console.base_views import AdminAPIView
 from apps.console.responses import api_fail, api_ok
 from apps.console.main_chain.blueprint_service import MainChainBlueprintService
 
 
-class MainChainBlueprintView(APIView):
+class MainChainBlueprintView(AdminAPIView):
     """GET /api/admin/main-chain/blueprint/ — 主链蓝图聚合。"""
 
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -20,7 +20,7 @@ class MainChainBlueprintView(APIView):
         return api_ok(attach_api_meta(payload))
 
 
-class MainChainStepPatchView(APIView):
+class MainChainStepPatchView(AdminAPIView):
     """PUT /api/admin/main-chain/steps/<uuid>/ — 更新单步（运营 + Agent 技能字段）。"""
 
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -33,7 +33,7 @@ class MainChainStepPatchView(APIView):
         return api_ok(step, message="步骤已保存")
 
 
-class MainChainRegistryMetaView(APIView):
+class MainChainRegistryMetaView(AdminAPIView):
     """PUT /api/admin/main-chain/registry-meta/ — 更新后处理链等 _meta 编排。"""
 
     permission_classes = [IsAuthenticated, IsAdminUser]

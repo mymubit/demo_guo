@@ -163,7 +163,14 @@ def confirm_node(project_id: str, user) -> Project:
         raise PermissionDenied("仅分步模式可手动确认节点")
     if project.status != Project.STATUS_AWAITING:
         raise PermissionDenied("当前不在待确认状态")
-    nxt = next_node_index(project.current_node_index)
+    from apps.workflow.services.flow_graph_service import FlowGraphPlanService
+
+    pending = FlowGraphPlanService.pending_parallel_indices(project, project.current_node_index)
+    nxt = (
+        pending[0]
+        if pending
+        else FlowGraphPlanService.next_node_index_for_project(project, project.current_node_index)
+    )
     if nxt is None:
         raise PermissionDenied("主链节点已全部完成")
     project.status = Project.STATUS_PENDING

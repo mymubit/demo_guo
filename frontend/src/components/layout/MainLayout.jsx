@@ -12,6 +12,7 @@ import {
   LogOut,
   BarChart3,
   Eye,
+  ShoppingBag,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import WalletBadge from '@/components/billing/WalletBadge'
@@ -51,6 +52,7 @@ export default function MainLayout() {
     { path: '/works', label: '我的作品', icon: FolderKanban },
     { path: '/wallet', label: '创作币', icon: Coins },
     { path: '/member', label: '会员中心', icon: Crown },
+    { path: '/orders', label: '我的订单', icon: ShoppingBag },
   ]
 
   return (
@@ -61,7 +63,7 @@ export default function MainLayout() {
         animate={{ y: 0 }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled
-            ? 'bg-navy-950/90 backdrop-blur-xl border-b border-navy-700/40'
+            ? 'bg-navy-950/90 backdrop-blur-xl border-b border-white/5'
             : 'bg-transparent'
         }`}
       >
@@ -79,8 +81,8 @@ export default function MainLayout() {
                     to={item.path}
                     className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                       isActive
-                        ? 'bg-navy-700/50 text-white'
-                        : 'text-navy-200 hover:text-white hover:bg-navy-800/50'
+                        ? 'bg-slate-700/50 text-white'
+                        : 'text-navy-200 hover:text-white hover:bg-white/[0.06]'
                     }`}
                   >
                     {item.label}
@@ -96,7 +98,7 @@ export default function MainLayout() {
                 <div className="relative">
                   <button
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-navy-800/50 transition-all"
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-white/[0.06] transition-all"
                   >
                     <UserAvatar src={user?.avatar} name={user?.nickname} phone={user?.phone} size="sm" />
                     <span className="text-sm text-navy-100">
@@ -110,37 +112,44 @@ export default function MainLayout() {
                         initial={{ opacity: 0, y: -10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                        className="absolute right-0 top-full mt-2 w-56 py-2 rounded-2xl glass-card shadow-xl"
+                        className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-white/5 bg-slate-900/95 py-2 shadow-xl backdrop-blur-xl"
                       >
                         <Link
                           to="/profile"
-                          className="flex items-center gap-3 px-4 py-3 text-navy-100 hover:bg-navy-700/30 transition-all"
+                          className="flex items-center gap-3 px-4 py-3 text-navy-100 hover:bg-white/[0.05] transition-all"
                         >
                           <UserCircle2 className={ICON.md} />
                           <span>个人中心</span>
                         </Link>
                         <Link
                           to="/works"
-                          className="flex items-center gap-3 px-4 py-3 text-navy-100 hover:bg-navy-700/30 transition-all"
+                          className="flex items-center gap-3 px-4 py-3 text-navy-100 hover:bg-white/[0.05] transition-all"
                         >
                           <FolderKanban className="w-4 h-4" />
                           <span>我的作品</span>
                         </Link>
                         <Link
                           to="/wallet"
-                          className="flex items-center gap-3 px-4 py-3 text-navy-100 hover:bg-navy-700/30 transition-all"
+                          className="flex items-center gap-3 px-4 py-3 text-navy-100 hover:bg-white/[0.05] transition-all"
                         >
                           <Coins className="w-4 h-4 text-gold-400" />
                           <span>充值创作币</span>
                         </Link>
                         <Link
                           to="/member"
-                          className="flex items-center gap-3 px-4 py-3 text-navy-100 hover:bg-navy-700/30 transition-all"
+                          className="flex items-center gap-3 px-4 py-3 text-navy-100 hover:bg-white/[0.05] transition-all"
                         >
                           <Crown className="w-4 h-4 text-gold-400" />
                           <span>会员中心</span>
                         </Link>
-                        <div className="border-t border-navy-700/40 my-2" />
+                        <Link
+                          to="/orders"
+                          className="flex items-center gap-3 px-4 py-3 text-navy-100 hover:bg-white/[0.05] transition-all"
+                        >
+                          <ShoppingBag className="w-4 h-4 text-gold-400" />
+                          <span>我的订单</span>
+                        </Link>
+                        <div className="border-t border-white/5 my-2" />
                         <button
                           onClick={handleLogout}
                           className="flex items-center gap-3 px-4 py-3 w-full text-left text-red-400 hover:bg-red-500/10 transition-all"
@@ -156,7 +165,7 @@ export default function MainLayout() {
                 <>
                   <Link
                     to="/login"
-                    className="px-5 py-2 rounded-xl text-sm font-medium text-navy-100 hover:text-white hover:bg-navy-800/50 transition-all"
+                    className="px-5 py-2 rounded-xl text-sm font-medium text-navy-100 hover:text-white hover:bg-white/[0.06] transition-all"
                   >
                     登录
                   </Link>
@@ -172,7 +181,7 @@ export default function MainLayout() {
 
             {/* 移动端菜单按钮 */}
             <button
-              className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl bg-navy-800/50 text-white"
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-white md:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -187,7 +196,7 @@ export default function MainLayout() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="md:hidden overflow-hidden bg-navy-950/95 backdrop-blur-xl border-t border-navy-700/40"
+              className="md:hidden overflow-hidden bg-navy-950/95 backdrop-blur-xl border-t border-white/5"
             >
               <div className="px-6 py-4 space-y-2">
                 {navItems.map((item) => {
@@ -199,8 +208,8 @@ export default function MainLayout() {
                       to={item.path}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium ${
                         isActive
-                          ? 'bg-navy-700/50 text-white'
-                          : 'text-navy-200 hover:text-white hover:bg-navy-800/50'
+                          ? 'bg-slate-700/50 text-white'
+                          : 'text-navy-200 hover:text-white hover:bg-white/[0.06]'
                       }`}
                     >
                       {Icon ? <Icon className={ICON.md} /> : null}
@@ -208,12 +217,12 @@ export default function MainLayout() {
                     </Link>
                   )
                 })}
-                <div className="border-t border-navy-700/40 my-3" />
+                <div className="border-t border-white/5 my-3" />
                 {isAuthenticated ? (
                   <>
                     <Link
                       to="/profile"
-                      className="block px-4 py-3 rounded-xl text-sm text-navy-100 hover:bg-navy-800/50"
+                      className="block px-4 py-3 rounded-xl text-sm text-navy-100 hover:bg-white/[0.06]"
                     >
                       个人中心
                     </Link>
@@ -228,7 +237,7 @@ export default function MainLayout() {
                   <>
                     <Link
                       to="/login"
-                      className="block px-4 py-3 rounded-xl text-sm text-navy-100 hover:bg-navy-800/50 text-center"
+                      className="block px-4 py-3 rounded-xl text-sm text-navy-100 hover:bg-white/[0.06] text-center"
                     >
                       登录
                     </Link>
@@ -262,15 +271,17 @@ export default function MainLayout() {
       </main>
 
       {/* 页脚 */}
-      <footer className="border-t border-navy-700/40 bg-navy-950/80">
+      <footer className="border-t border-white/5 bg-navy-950/80">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-8 mb-8">
             <div>
               <h4 className="font-semibold text-white mb-4">产品</h4>
               <ul className="space-y-2 text-sm text-navy-300">
                 <li><Link to="/creation" className="hover:text-white transition-colors">剧本创作</Link></li>
+                <li><Link to="/works" className="hover:text-white transition-colors">我的作品</Link></li>
                 <li><Link to="/member" className="hover:text-white transition-colors">会员套餐</Link></li>
-                <li><Link to="/" className="hover:text-white transition-colors">功能介绍</Link></li>
+                <li><Link to="/wallet" className="hover:text-white transition-colors">创作币充值</Link></li>
+                <li><Link to="/orders" className="hover:text-white transition-colors">我的订单</Link></li>
               </ul>
             </div>
 
@@ -293,7 +304,7 @@ export default function MainLayout() {
             </div>
           </div>
 
-          <div className="pt-8 border-t border-navy-800 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-navy-400">
+          <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-navy-400">
             <p>© 2026 ScriptForge AI. 保留所有权利。</p>
             <div className="flex items-center gap-6">
               <Link to="/" className="hover:text-white transition-colors">隐私政策</Link>

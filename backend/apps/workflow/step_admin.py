@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
+from django.db import transaction
+
 from apps.agent.binding import (
     agent_id_for_fusion_node,
     pipeline_step_skill_view,
@@ -59,6 +61,7 @@ class PipelineStepAdminService:
             "node_id": row.fusion_node_id,
             "fusion_node_id": row.fusion_node_id,
             "node_index": row.website_index,
+            "chain_order": row.chain_order,
             "agent_id": agent_id,
             "display_name": row.name,
             "name": row.name,
@@ -129,6 +132,38 @@ class PipelineStepAdminService:
                 route_payload["llm_provider_id"] = data.get("llm_provider_id")
             if route_payload:
                 AgentLlmRouteService.upsert(agent_id, route_payload)
+
+    @staticmethod
+    def reorder_steps(ordered_ids: List[str]) -> List[Dict[str, Any]]:
+        pack = FusionPipelineDbService.get_active_pack()
+        if not pack:
+            raise ValueError("无激活的流水线配置包")
+
+        qs = FusionPipelineNode.objects.filter(pack=pack)
+        by_id = {str(row.id): row for row in qs}
+        active_ids = [str(item).strip() for item in ordered_ids if str(item).strip()]
+        expected_ids = {str(row.id) for row in qs}
+        if set(active_ids) != expected_ids or len(active_ids) != len(expected_ids):
+            raise ValueError("步骤列表与当前配置包不一致，无法重排")
+
+        offset = 10_000
+        with transaction.atomic():
+            temp_rows = []
+            for idx, node_id in enumerate(active_ids, start=1):
+                row = by_id[node_id]
+                row.chain_order = offset + idx
+                temp_rows.append(row)
+            FusionPipelineNode.objects.bulk_update(temp_rows, ["chain_order"])
+
+            final_rows = []
+            for idx, node_id in enumerate(active_ids, start=1):
+                row = by_id[node_id]
+                row.chain_order = idx
+                final_rows.append(row)
+            FusionPipelineNode.objects.bulk_update(final_rows, ["chain_order"])
+
+        FusionPipelineDbService.clear_caches()
+        return PipelineStepAdminService.list_steps()
 
     @staticmethod
     def update_step(node_uuid: str, data: Dict[str, Any]) -> Optional[FusionPipelineNode]:

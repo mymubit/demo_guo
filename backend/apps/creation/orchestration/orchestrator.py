@@ -142,6 +142,10 @@ class AgentOrchestrator:
                     }
                 },
             )
+        if int(options.node_index) >= 2:
+            from ..workspace.workspace_content import ensure_brief_seed_enriched
+
+            ensure_brief_seed_enriched(self.project)
         # 前置依赖检查：上游 artifact 未就绪则立即返回，不消耗任何 LLM token
         dep_error = self._check_artifact_deps(options.node_index)
         if dep_error:

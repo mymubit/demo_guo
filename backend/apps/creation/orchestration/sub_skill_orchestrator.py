@@ -52,6 +52,11 @@ _SUB_SKILL_SYSTEM_HINTS: Dict[str, str] = {
         "coreNouns 3-7 个（每项含 term/definition/tier，tier 取 root|mechanism|trace|carrier|derived）、"
         "subWorldConsistency（businessLogic/designProfession/socialHierarchy/economicLogic 各≥20 字）、"
         "dreamIndicators（absoluteSafety/efficientSatisfaction/enhancedRealism 各 6-10 与 notes≥30 字）。"
+        "一致性硬约束：rootRules 各铁律之间不得自相矛盾，coreNouns 定义须与 rootRules 自洽，"
+        "timePeriod 与 locationType 须与 settingSummary、subWorldConsistency 描述一致，"
+        "不得出现与 structurePlan 既定设定互斥的世界规则。"
+        "只输出 worldview 与可选的 workingTitle 微调，不得改写 structurePlan 的 sixStagePlan、"
+        "keyReversalPoints、rhythmCurve 等结构字段。"
         "输出 JSON：{\"worldview\": {...}}，可含对 workingTitle 的微调。只输出 JSON。"
     ),
     "world-fixer": (
@@ -75,6 +80,14 @@ _SUB_SKILL_SYSTEM_HINTS: Dict[str, str] = {
         "配角可加 contrastRelation（contrastType/contrastDescription）。"
         "顶层含 creativeDna：antiClicheElements≥1（code/label/effect）、"
         "uniqueSettings≥1（code/label/example）、aiAuthenticityNotes≥2。"
+        "生成顺序硬约束：每个角色必须先确定唯一的「关键事件版本」（写入 background 与 "
+        "characterArc.startingState，例如唯一伤源/背叛/失忆原因），再展开 appearance、secret、"
+        "weakness、signatureLines、characterArc.keyTurningPoints；后续字段只能引用这个唯一版本，"
+        "不得为了增加戏剧性临时新增第二套原因。"
+        "一致性硬约束：age 必须与 appearance/background/secret/signatureLines 中出现的年龄、"
+        "婚恋状态、职业履历、称谓完全一致；未成年人不得有婚姻/离婚/夫妻/前任等设定，"
+        "成年人不得写成未满十八或高中生；同一角色的关键创伤/事故来源只能保留一个版本，"
+        "不得前文写车祸、后文又写被推下悬崖/坠崖/火灾等互斥原因。"
         "输出含 protagonists/antagonists/supportingRoles/relationshipMap/summary 的完整对象。只输出 JSON。"
     ),
     "relationship-weaver": (
@@ -82,7 +95,9 @@ _SUB_SKILL_SYSTEM_HINTS: Dict[str, str] = {
         "至少 3 组关系；每组必填 characterAId、characterBId、characterAName、characterBName"
         "（ID 须与角色 id 一致，姓名与 name 一致）、relationType、description≥30 字、"
         "evolutionPath、perspectiveA（A 如何看待 B）、perspectiveB（B 如何看待 A）、"
-        "coreConflict、hiddenTension。只输出 JSON："
+        "coreConflict、hiddenTension。只允许输出 relationshipMap 与 relationshipSummary，"
+        "不得输出 protagonists/antagonists/supportingRoles/characters，不得改写任何角色 background、"
+        "secret、age、characterArc 或关键经历。只输出 JSON："
         "{\"relationshipMap\": [...], \"relationshipSummary\": \"...\"}。"
     ),
     "hook-planner": (
@@ -110,6 +125,11 @@ _SUB_SKILL_SYSTEM_HINTS: Dict[str, str] = {
         "oneLineSummary 100-200 字，hook/reversal/cliffhanger 各≥20 字，"
         "含 stageInfo、hookTypeCode（对照 hook-types-library）、"
         "reversalCode（对照 reversal-patterns-library，若本集有反转）。"
+        "一致性硬约束：本集必须延续 existingOutline.recentEpisodes 既定剧情与 characterBible 人设，"
+        "不得与已确定的关键事件版本（伤源/背叛/身份/失忆原因等）矛盾，"
+        "不得让已死亡或已彻底离场的角色无解释复活，"
+        "角色年龄、身份、职业、关系须与 characterBible 完全一致；"
+        "本集若复用某个反转类型，须与既往集的反转形成递进而非简单重复。"
         "只输出 JSON。"
     ),
     "plan-fixer": (
@@ -118,13 +138,21 @@ _SUB_SKILL_SYSTEM_HINTS: Dict[str, str] = {
     ),
     "episode-script-writer": (
         "你是竖屏短剧编剧（对齐 script-creator-core）。根据 seriesOutline、characterBible"
-        "与 knowledgeReferences 生成指定集数 episodes JSON。"
-        "每集：scenes≤3，竖屏 90 秒三段式（hook 0-10s / 升级 10-70s / 卡点 70-90s）；"
-        "sceneHeading 含景别与内外景；dialogues 单句≤40 字、口语化，角色语气贴合"
-        "voiceProfile/behaviorProfile/speechPatterns，禁止 OOC；"
-        "actions 简洁可拍；须引用当集大纲的 hookTypeCode（若有）并在开场体现；"
-        "若大纲含 reversalCode 须在当集 reversal 段落体现；"
-        "生成 scriptMarkdown（标准竖屏剧本 Markdown）。只输出 JSON。"
+        "生成 generateFromEpisode 到 generateToEpisode 范围内的 episodes JSON。"
+        "【硬性结构】每集必须输出 scenes 数组（1-3 场），禁止只输出 scriptMarkdown；"
+        "每场必填 sceneNumber（如 1-1）、timeOfDay、interiorExterior、location、"
+        "sceneHeading（商业场头：集号-镜号 时间 内外 地点）、actions、dialogues。"
+        "【字数硬约束·不可协商】第1集纯剧本中文字数≥900字，第2集起每集≥700字；"
+        "每场对白不少于6句（非硬性上限，应充分展开冲突与情感）；"
+        "每场 actions 不少于3条（用 △ 开头、简洁可拍）；"
+        "每集应覆盖完整的三段式节奏：钩子（0-10s）/ 冲突升级（10-70s）/ 集末卡点（70-90s）。"
+        "dialogues 单句≤40 字、口语化，角色语气贴合 speechPatterns，禁止 OOC；"
+        "须引用当集大纲的 hookTypeCode（若有）并在开场体现；"
+        "若大纲含 reversalCode 须在当集 reversal 段落体现。"
+        "一致性硬约束：剧情、人物动机、关键事件来源必须与 seriesOutline 当集大纲及 characterBible 完全一致，"
+        "不得新增与已定稿设定互斥的背景（如另一套伤源/身份/年龄），"
+        "不得改写角色既定关系与结局走向；台词须符合角色 age 与身份称谓。"
+        "scriptMarkdown 由 scenes 派生，格式须含商业场头与「角色：台词」。只输出 JSON。"
     ),
 }
 
@@ -291,12 +319,14 @@ class SubSkillOrchestrator:
                 f"{skill_id} 需要 LLM：请设置 FUSION_LLM_ENABLED=true 并配置大模型"
             )
         meta = self._meta(skill_id)
+        # system_hint 优先读 AgentRegistry（DB 可配置），无则 fallback 硬编码
+        system_hint = (meta.get("system_hint") or "").strip() or _SUB_SKILL_SYSTEM_HINTS.get(skill_id, "")
         system, user = self.orch.prompts.build_sub_skill(
             node_id,
             skill_id,
             meta,
             upstream,
-            system_hint=_SUB_SKILL_SYSTEM_HINTS.get(skill_id, ""),
+            system_hint=system_hint,
         )
         from apps.workflow.step_admin import PipelineStepAdminService
 
@@ -305,8 +335,34 @@ class SubSkillOrchestrator:
 
         provider_id = PipelineStepAdminService.resolve_provider_id(node_id)
         max_tokens = resolve_agent_max_tokens(token_key or self.agent_id)
-        if skill_id == "character-generator":
-            max_tokens = max(max_tokens, 16384)
+        if skill_id in ("character-generator", "episode-script-writer"):
+            max_tokens = max(max_tokens, 32768)
+
+        if skill_id == "episode-script-writer":
+            from_ep = upstream.get("generateFromEpisode", "?")
+            to_ep = upstream.get("generateToEpisode", "?")
+            try:
+                from_int = int(from_ep or 1)
+                to_int = int(to_ep or 1)
+                batch_count = max(1, to_int - from_int + 1)
+                if batch_count == 1:
+                    min_words = 900 if from_int == 1 else 700
+                    word_rule = f"本集（第{from_int}集）纯中文字数≥{min_words}字。"
+                else:
+                    word_rule = (
+                        f"本次生成第{from_int}集到第{to_int}集，共{batch_count}集。"
+                        "第1集纯中文字数≥900字；第2集起每集纯中文字数≥700字。"
+                    )
+            except (TypeError, ValueError):
+                word_rule = "每集纯中文字数≥700字（第1集≥900字）。"
+            user = (
+                user
+                + f"\n\n【字数硬约束（必须满足，否则输出无效）】\n"
+                f"{word_rule}\n"
+                f"每场 dialogues 不少于6句，每场 actions 不少于3条。\n"
+                f"3场戏须覆盖完整三段式：开场钩子 → 冲突升级 → 集末卡点。\n"
+                f"禁止以空数组或极简内容敷衍，必须充分展开剧情。"
+            )
         from ..monitoring.execution_run_service import get_active_run_id
 
         started = time.monotonic()
@@ -416,6 +472,17 @@ class SubSkillOrchestrator:
                 out["trendFormula"] = build_trend_formula(theme, theme_display_name=display)
             else:
                 out["trendFormula"] = normalize_trend_formula(existing, theme=theme, theme_display_name=display)
+
+            from ..workspace.workspace_editor import _story_brief_from_payload
+            from ..trend_formula import apply_project_story_to_trend_formula
+
+            story = _story_brief_from_payload(out)
+            out["trendFormula"] = apply_project_story_to_trend_formula(
+                out["trendFormula"],
+                idea=story.get("idea") or "",
+                opening_hooks=story.get("openingHooks") or "",
+                core_conflict=story.get("coreConflict") or "",
+            )
 
             if not out.get("writingBrief"):
                 tf = out.get("trendFormula") or {}

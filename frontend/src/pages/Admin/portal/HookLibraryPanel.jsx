@@ -149,7 +149,7 @@ export default function HookLibraryPanel({ onMessage, embedded = false }) {
         <select
           value={form.hook_type}
           onChange={(e) => setForm({ ...form, hook_type: e.target.value })}
-          className="w-full sm:w-64 px-3 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm"
+          className="sf-control sm:w-64"
         >
           {HOOK_TYPE_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -165,9 +165,9 @@ export default function HookLibraryPanel({ onMessage, embedded = false }) {
           onChange={(e) => setForm({ ...form, content: e.target.value })}
           rows={5}
           placeholder="例如：她总以为自己是替身，直到发现遗嘱上写的是她的名字…"
-          className="w-full px-4 py-3 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm resize-y leading-relaxed"
+          className="sf-control resize-y leading-relaxed"
         />
-        <p className="text-xs text-navy-500 mt-2">
+        <p className="text-xs text-navy-400 mt-2">
           可用占位符：{'{role}'}、{'{name}'} 等，生成时由 AI 替换。
         </p>
       </div>
@@ -176,7 +176,7 @@ export default function HookLibraryPanel({ onMessage, embedded = false }) {
           type="checkbox"
           checked={form.is_active !== false}
           onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-          className="rounded border-navy-600"
+          className="rounded border-white/20"
         />
         启用（仅启用的模板会被创作主链引用）
       </label>
@@ -193,7 +193,7 @@ export default function HookLibraryPanel({ onMessage, embedded = false }) {
         <button
           type="button"
           onClick={cancelCreate}
-          className="px-4 py-2.5 rounded-xl text-sm text-navy-300 border border-navy-600/40 hover:bg-navy-800/50"
+          className="px-4 py-2.5 rounded-xl text-sm text-navy-300 border border-white/10 hover:bg-white/[0.06]"
         >
           取消
         </button>
@@ -206,12 +206,12 @@ export default function HookLibraryPanel({ onMessage, embedded = false }) {
           {HOOK_TYPE_OPTIONS.find((o) => o.value === form.hook_type)?.label || form.hook_type}
         </span>
         {form.is_active === false && (
-          <span className="inline-flex px-2.5 py-1 rounded-lg text-xs font-medium bg-navy-700/50 text-navy-400">
+          <span className="inline-flex px-2.5 py-1 rounded-lg text-xs font-medium bg-white/[0.05] text-slate-400">
             已停用
           </span>
         )}
         {form.id && (
-          <span className="text-xs text-navy-500 ml-auto">
+          <span className="text-xs text-navy-400 ml-auto">
             已被引用 {hooks.find((h) => h.id === form.id)?.usage_count?.toLocaleString() || 0} 次
           </span>
         )}
@@ -221,7 +221,7 @@ export default function HookLibraryPanel({ onMessage, embedded = false }) {
         <select
           value={form.hook_type}
           onChange={(e) => setForm({ ...form, hook_type: e.target.value })}
-          className="w-full sm:w-64 px-3 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm"
+          className="sf-control sm:w-64"
         >
           {HOOK_TYPE_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -236,7 +236,7 @@ export default function HookLibraryPanel({ onMessage, embedded = false }) {
           value={form.content || ''}
           onChange={(e) => setForm({ ...form, content: e.target.value })}
           rows={6}
-          className="w-full px-4 py-3 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm resize-y leading-relaxed"
+          className="sf-control resize-y leading-relaxed"
         />
       </div>
       <label className="flex items-center gap-2 text-sm text-navy-300">
@@ -244,7 +244,7 @@ export default function HookLibraryPanel({ onMessage, embedded = false }) {
           type="checkbox"
           checked={form.is_active !== false}
           onChange={(e) => setForm({ ...form, is_active: e.target.checked })}
-          className="rounded border-navy-600"
+          className="rounded border-white/20"
         />
         启用
       </label>
@@ -273,7 +273,7 @@ export default function HookLibraryPanel({ onMessage, embedded = false }) {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
       {!embedded ? (
-        <div className="glass-card rounded-2xl p-5 border border-blue-500/15 bg-blue-500/5">
+        <div className="sf-console-panel p-5 border border-blue-500/15 bg-blue-500/5">
           <p className="text-sm text-navy-200 leading-relaxed">
             <span className="text-white font-medium">钩子库</span>
             存放短剧「开场 / 反转 / 悬念」等可复用短句。用户走创作主链时，系统从这里随机抽取
@@ -287,15 +287,15 @@ export default function HookLibraryPanel({ onMessage, embedded = false }) {
         {HOOK_TYPE_OPTIONS.map((opt) => (
           <div
             key={opt.value}
-            className="rounded-xl border border-navy-700/30 bg-navy-900/30 px-3 py-2"
+            className="rounded-xl border border-white/5 bg-slate-900/40 px-3 py-2"
           >
             <p className="text-xs font-medium text-white">{opt.label}</p>
-            <p className="text-[10px] text-navy-500 mt-0.5 leading-snug">{opt.hint}</p>
+            <p className="text-[10px] text-navy-400 mt-0.5 leading-snug">{opt.hint}</p>
           </div>
         ))}
       </div>
 
-      <div className="glass-card rounded-2xl p-4 flex flex-col lg:flex-row lg:items-center gap-3">
+      <div className="sf-console-panel p-4 flex flex-col lg:flex-row lg:items-center gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="w-5 h-5 text-navy-400 absolute left-4 top-1/2 -translate-y-1/2" />
           <input
@@ -303,13 +303,13 @@ export default function HookLibraryPanel({ onMessage, embedded = false }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="搜索正文内容…"
-            className="w-full pl-12 pr-4 py-3 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white placeholder:text-navy-500 focus:outline-none focus:border-gold-500/60"
+            className="sf-control pl-12"
           />
         </div>
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          className="px-4 py-3 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm min-w-[140px]"
+          className="sf-control min-w-[140px]"
         >
           <option value="all">全部类型</option>
           {HOOK_TYPE_OPTIONS.map((opt) => (
@@ -318,7 +318,7 @@ export default function HookLibraryPanel({ onMessage, embedded = false }) {
             </option>
           ))}
         </select>
-        <div className="text-xs text-navy-500 whitespace-nowrap">
+        <div className="text-xs text-navy-400 whitespace-nowrap">
           共 {hooks.length} 条 · {activeCount} 条启用
         </div>
         <button
@@ -332,8 +332,8 @@ export default function HookLibraryPanel({ onMessage, embedded = false }) {
       </div>
 
       {filteredHooks.length === 0 && !isCreating ? (
-        <div className="glass-card rounded-2xl p-12 text-center text-navy-400">
-          <BookOpen className="w-12 h-12 mx-auto mb-3 text-navy-500" />
+        <div className="sf-console-panel p-12 text-center text-navy-400">
+          <BookOpen className="w-12 h-12 mx-auto mb-3 text-navy-400" />
           <p className="text-white font-medium mb-1">暂无匹配的模板</p>
           <p className="text-sm mb-4">调整搜索或类型筛选，或新建第一条模板</p>
           <button

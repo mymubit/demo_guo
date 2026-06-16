@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react'
+﻿import { Sparkles } from 'lucide-react'
 import AiGenerateButton from '@/components/creation/AiGenerateButton'
 import { EMOTIONAL_TONE_PRESETS, parseInspirationPlan } from '@/utils/storyBrief'
 
@@ -9,7 +9,7 @@ function FieldLabel({ title, hint, required }) {
         {title}
         {required ? <span className="text-red-400 ml-0.5">*</span> : null}
       </label>
-      {hint ? <p className="text-xs text-navy-500 mt-0.5">{hint}</p> : null}
+      {hint ? <p className="text-xs text-navy-400 mt-0.5">{hint}</p> : null}
     </div>
   )
 }
@@ -58,7 +58,7 @@ export default function StoryBriefFields({
             value={formData.idea}
             onChange={(e) => update('idea', e.target.value.slice(0, 200))}
             placeholder="例：落难千金与毁容总裁闪婚，她以为只是交易，却不知他才是当年救她的人…"
-            className="w-full h-24 p-4 rounded-xl bg-navy-900/50 border border-navy-600/30 text-white placeholder-navy-500 focus:border-gold-400/50 outline-none resize-none text-sm leading-relaxed"
+            className="sf-control h-24 resize-none leading-relaxed"
           />
           <div className="absolute bottom-3 right-3 flex items-center gap-2">
             <AiGenerateButton
@@ -72,7 +72,7 @@ export default function StoryBriefFields({
               onGenerated={(text) => update('idea', text.trim().slice(0, 200))}
               className="scale-90 origin-right"
             />
-            <span className={`text-xs ${hookOk ? 'text-green-400' : 'text-navy-500'}`}>
+            <span className={`text-xs ${hookOk ? 'text-green-400' : 'text-navy-400'}`}>
               {hookLen}/200
             </span>
           </div>
@@ -85,7 +85,7 @@ export default function StoryBriefFields({
           value={formData.coreConflict}
           onChange={(e) => update('coreConflict', e.target.value.slice(0, 300))}
           placeholder="例：女主为复仇接近男主，却发现真相与记忆完全相反…"
-          className="w-full h-24 p-4 rounded-xl bg-navy-900/50 border border-navy-600/30 text-white placeholder-navy-500 focus:border-gold-400/50 outline-none resize-none text-sm leading-relaxed"
+          className="sf-control h-24 resize-none leading-relaxed"
         />
       </div>
 
@@ -102,7 +102,7 @@ export default function StoryBriefFields({
                 className={`px-3 py-1.5 rounded-lg text-xs transition-all ${
                   active
                     ? 'bg-gold-400/20 text-gold-400 ring-1 ring-gold-400/40'
-                    : 'bg-navy-800/50 text-navy-300 hover:bg-navy-700/40'
+                    : 'border border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20'
                 }`}
               >
                 {tone}
@@ -114,7 +114,7 @@ export default function StoryBriefFields({
           value={formData.emotionalTone}
           onChange={(e) => update('emotionalTone', e.target.value.slice(0, 80))}
           placeholder="或自定义，如：先虐后甜、身份反转密集"
-          className="w-full px-4 py-3 rounded-xl bg-navy-900/50 border border-navy-600/30 text-white placeholder-navy-500 focus:border-gold-400/50 outline-none text-sm"
+          className="sf-control"
         />
       </div>
 
@@ -124,7 +124,7 @@ export default function StoryBriefFields({
           value={formData.openingHooks}
           onChange={(e) => update('openingHooks', e.target.value.slice(0, 400))}
           placeholder={'第1集：…\n第2集：…\n第3集：…'}
-          className="w-full h-28 p-4 rounded-xl bg-navy-900/50 border border-navy-600/30 text-white placeholder-navy-500 focus:border-gold-400/50 outline-none resize-none text-sm leading-relaxed"
+          className="sf-control h-28 resize-none leading-relaxed"
         />
       </div>
 

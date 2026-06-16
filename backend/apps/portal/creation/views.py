@@ -471,3 +471,29 @@ class CreationAgentContentView(APIView):
         )
 
 
+class CreationAgentQualityAlertAckView(APIView):
+    """POST /api/creation/projects/<project_id>/agents/<node_index>/quality-alert/ack/"""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, project_id: str, node_index: int):
+        body = request.data if isinstance(request.data, dict) else {}
+        alert_code = str(body.get("alert_code") or "").strip()
+        try:
+            data = CreationService.acknowledge_quality_alert(
+                project_id,
+                request.user,
+                int(node_index),
+                alert_code,
+            )
+        except PermissionDenied as exc:
+            return Response(
+                {"code": 403, "message": safe_api_message(exc, "无法确认"), "data": None},
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {"code": 0, "message": "success", "data": data},
+            status=status.HTTP_200_OK,
+        )
+
+

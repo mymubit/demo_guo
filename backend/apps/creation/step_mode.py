@@ -7,6 +7,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from apps.workflow.services.pipeline_service import WorkflowPipelineService
 from apps.common.user_messages import safe_api_message
+from apps.common.agent_term import normalize_pipeline_runner_path
 from apps.workflow.fusion import FusionNodeRegistry, get_artifact_registry
 from django.utils.module_loading import import_string
 
@@ -63,9 +64,11 @@ def runner_type_for_node(node_index: int) -> str:
 def runner_path_for_node(node_index: int) -> str:
     registry = FusionNodeRegistry()
     runner_path = registry.runner_path_for_index(node_index)
-    if runner_path:
-        return runner_path
-    return _RUNNER_PATH_BY_TYPE.get(runner_type_for_node(node_index), "")
+    rtype = runner_type_for_node(node_index)
+    return normalize_pipeline_runner_path(
+        runner_path or _RUNNER_PATH_BY_TYPE.get(rtype, ""),
+        rtype,
+    )
 
 
 def resolve_step_runner(node_index: int) -> Optional[Callable[[Project, int], Dict[str, Any]]]:
@@ -244,7 +247,12 @@ def execute_step(project: Project, node_index: int) -> Dict[str, Any]:
         if node_requires_confirm(node_index):
             mark_project_awaiting(project, node_index)
             return {"status": "awaiting", "node_index": node_index}
-        next_idx = next_node_index(node_index)
+        from apps.workflow.services.flow_graph_service import FlowGraphPlanService
+
+        pending = FlowGraphPlanService.pending_parallel_indices(project, node_index)
+        if pending:
+            return execute_step(project, pending[0])
+        next_idx = FlowGraphPlanService.next_node_index_for_project(project, node_index)
         if next_idx:
             return execute_step(project, next_idx)
 

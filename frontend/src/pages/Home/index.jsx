@@ -10,11 +10,23 @@ import {
   Users,
   FileText,
   Eye,
+  Quote,
 } from 'lucide-react'
 
 import { THEME_META_LIST } from '@/constants/themeMeta'
 import ThemeBadge from '@/components/ui/ThemeBadge'
+import { Badge, Button } from '@/components/ui'
+import { SectionEyebrow } from '@/components/shared/ConsumerSection'
 import { useConfig } from '@/services/api'
+import { cn } from '@/utils/cn'
+import { ICON } from '@/constants/iconSizes'
+import { pageEnter } from '@/constants/motion'
+
+const HERO_BG =
+  'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cinematic%20wide%20shot%20of%20a%20film%20director%20sitting%20in%20a%20dark%20luxurious%20editing%20room%20with%20glowing%20scripts%20and%20amber%20spotlights%2C%20anamorphic%20lens%2C%20deep%20navy%20and%20gold%20tones%2C%20moody%20atmosphere%2C%20photorealistic%2C%208k&image_size=landscape_16_9'
+
+const POSTER_BG =
+  'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cinematic%20poster%20of%20a%20chinese%20short%20drama%20script%20manuscript%20on%20a%20dark%20mahogany%20desk%2C%20golden%20spotlight%2C%20shallow%20depth%20of%20field%2C%20film%20noir%20mood%2C%20gold%20and%20navy%20color%20grade%2C%20photorealistic%2C%208k&image_size=portrait_4_3'
 
 // 用户评价
 const TESTIMONIALS = [
@@ -107,13 +119,15 @@ const FEATURES = [
   },
 ]
 
-// 5 节点创作主链
+// 7 节点创作主链
 const PIPELINE = [
-  { step: 1, name: '立项整理' },
-  { step: 2, name: '结构规划' },
-  { step: 3, name: '人设开发' },
-  { step: 4, name: '大纲撰写' },
-  { step: 5, name: '剧本创作' },
+  { step: 1, name: '信息收集', time: '30s', state: 'done' },
+  { step: 2, name: '结构规划', time: '60s', state: 'done' },
+  { step: 3, name: '人设开发', time: '60s', state: 'done' },
+  { step: 4, name: '大纲撰写', time: '120s', state: 'active' },
+  { step: 5, name: '剧本创作', time: '3-5m', state: 'idle' },
+  { step: 6, name: '质量审查', time: '60s', state: 'idle' },
+  { step: 7, name: '输出交付', time: '30s', state: 'idle' },
 ]
 
 // FAQ
@@ -150,43 +164,81 @@ export default function Home() {
 
   return (
     <div className="relative">
-      {/* ========= Hero 区 ========= */}
-      <section className="relative overflow-hidden pt-20 pb-32">
-        <div className="particles-bg" />
+      {/* ========= Hero — 全屏电影感 ========= */}
+      <section className="relative min-h-[calc(100svh-4rem)] w-full overflow-hidden">
+        <div
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${HERO_BG})`, filter: 'brightness(.55) saturate(1.05)' }}
+          aria-hidden
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'radial-gradient(60% 50% at 70% 30%, rgba(253,160,133,.18), transparent 70%),' +
+              'radial-gradient(40% 30% at 20% 80%, rgba(102,126,234,.12), transparent 70%),' +
+              'linear-gradient(180deg, rgba(3,13,36,.3) 0%, rgba(3,13,36,.85) 75%, #030d24 100%)',
+          }}
+          aria-hidden
+        />
 
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center max-w-4xl mx-auto"
-          >
-            <h1 className="text-5xl md:text-7xl font-bold mb-16 leading-tight">
-              从一句话创意
-              <br />
-              到 <span className="gradient-text">80集专业剧本</span>
-            </h1>
+        <div className="relative z-10 mx-auto flex min-h-[calc(100svh-4rem)] max-w-7xl items-center px-6">
+          <div className="grid w-full grid-cols-1 items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
+            <motion.div {...pageEnter} className="max-w-[620px]">
+              <div className="mb-5 flex flex-wrap gap-2">
+                <Badge tone="gold" size="md">主链 7 节点</Badge>
+                <Badge tone="info" size="md">4 题材格式 · 8 题材模板</Badge>
+              </div>
+              <h1 className="font-display text-5xl font-bold leading-[1.05] tracking-tight md:text-6xl xl:text-7xl">
+                一句话创意，
+                <br />
+                <span className="bg-gradient-to-r from-gold-400 to-gold-200 bg-clip-text text-transparent">
+                  80 集可拍摄
+                </span>
+                的 A 级剧本。
+              </h1>
+              <p className="mt-5 max-w-[56ch] text-base text-navy-100 md:text-lg">
+                ScriptForge 用 7 节点主链把创意拆成结构、人设、大纲、剧本、质量与交付。
+                全流程 8–12 分钟，生成即带数字水印，剧作 / 团队 / 平台三方可溯源。
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link to="/creation">
+                  <Button variant="gold" size="lg" iconRight={<ChevronRight className={ICON.md} />}>
+                    立即开始创作
+                  </Button>
+                </Link>
+                <Link to="/member">
+                  <Button variant="ghost" size="lg">查看会员方案</Button>
+                </Link>
+              </div>
+              <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {stats.map((stat) => (
+                  <div key={stat.label} className="rounded-2xl border border-white/5 bg-white/[0.03] p-3">
+                    <div className="text-xl font-bold text-white md:text-2xl">{stat.value}</div>
+                    <div className="mt-1 text-xs text-navy-300">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
 
-            {/* 数据展示 */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-3xl mx-auto">
-              {stats.map((stat, idx) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 + idx * 0.1 }}
-                  className="p-4 rounded-2xl glass-card"
-                >
-                  <div className="text-2xl md:text-3xl font-bold gradient-text mb-1">{stat.value}</div>
-                  <div className="text-sm text-navy-300">{stat.label}</div>
-                </motion.div>
-              ))}
+            <div className="hidden lg:block">
+              <motion.div
+                initial={{ opacity: 0, y: 20, rotate: 1.5 }}
+                animate={{ opacity: 1, y: 0, rotate: 1.5 }}
+                transition={{ duration: 0.7, delay: 0.2 }}
+                className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-white/10 shadow-[0_30px_80px_-20px_rgba(0,0,0,.7)]"
+              >
+                <img src={POSTER_BG} alt="剧本海报示意" className="h-full w-full object-cover" />
+                <span className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-gold-300 to-gold-500 px-3 py-1 text-xs font-bold text-navy-950">
+                  第 17 集 · 钩子
+                </span>
+                <div className="absolute bottom-4 left-4 rounded-xl border border-white/10 bg-navy-950/70 px-3 py-2 text-xs text-navy-100 backdrop-blur-md">
+                  <b className="text-white">《逆光》</b> · 都市逆袭 · 80 集
+                </div>
+              </motion.div>
             </div>
-          </motion.div>
+          </div>
         </div>
-
-        {/* 装饰图形 */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-navy-950 to-transparent pointer-events-none" />
       </section>
 
       {/* ========= 功能展示 ========= */}
@@ -212,7 +264,7 @@ export default function Home() {
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
                 whileHover={{ y: -5 }}
-                className="p-8 rounded-3xl glass-card hover:shadow-card-hover transition-all group"
+                className="rounded-3xl border border-white/5 bg-gradient-to-br from-navy-900/65 to-navy-950/65 p-8 transition-all hover:border-gold-400/30 hover:shadow-card-hover group"
               >
                 <div
                   className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"
@@ -232,12 +284,7 @@ export default function Home() {
       </section>
 
       {/* ========= 题材选择 ========= */}
-      <section className="py-24 relative">
-        <div className="absolute inset-0 opacity-30 pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-purple-600 blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-gold-500 blur-3xl" />
-        </div>
-
+      <section className="relative py-24">
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -260,7 +307,7 @@ export default function Home() {
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.05 }}
                 whileHover={{ y: -3, scale: 1.02 }}
-                className="p-6 rounded-2xl glass-card cursor-pointer text-center group"
+                className="cursor-pointer rounded-2xl border border-white/5 bg-gradient-to-br from-navy-900/65 to-navy-950/65 p-6 text-center group"
               >
                 <ThemeBadge theme={theme} size="xl" />
                 <div className="text-xs text-navy-300 mt-2">专业优化模板</div>
@@ -270,55 +317,58 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ========= 5 节点流水线 ========= */}
-      <section className="py-24 relative">
-        <div className="max-w-7xl mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center"
-          >
-            <h2 className="section-title">
-              <span className="gradient-text">5 节点</span> 专业创作流水线
+      {/* ========= 7 节点主链叙事 ========= */}
+      <section className="py-24">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 lg:grid-cols-[1.2fr_0.8fr]">
+          <div>
+            <SectionEyebrow>主链 7 节点</SectionEyebrow>
+            <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl">
+              从一句话到可拍摄剧本，
+              <br />
+              每一步都可被复盘。
             </h2>
-            <p className="section-subtitle">
-              从创意收集到剧本交付，每一步都经过专业设计和质量把控
+            <p className="mt-4 max-w-[56ch] text-navy-200">
+              创作不是黑箱。每完成一个节点，都能回看输入、决策、产出与评分。
+              想要推到哪一步，由你说了算。
             </p>
-          </motion.div>
+          </div>
 
-          <div className="relative">
-            {/* 连接线 */}
-            <div className="hidden lg:block absolute top-[3.25rem] left-10 right-10 h-px bg-navy-600/40" />
-
-            <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-7 gap-4">
-              {PIPELINE.map((node, idx) => (
-                <motion.div
-                  key={node.step}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.08 }}
-                  className="relative"
-                >
-                  <div className="glass-card rounded-2xl p-6 text-center h-full">
-                    <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center text-xl font-bold text-gold-400 bg-navy-800/60 border border-gold-400/20">
-                      {node.step}
-                    </div>
-                    <div className="font-bold text-white">{node.name}</div>
-                  </div>
-                </motion.div>
+          <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-navy-900/80 to-navy-950/80 p-7">
+            <div className="relative grid grid-cols-7 gap-0">
+              <span className="pointer-events-none absolute left-[6%] right-[6%] top-7 h-px bg-gradient-to-r from-transparent via-gold-400/40 to-transparent" />
+              {PIPELINE.map((n) => (
+                <div key={n.step} className="flex flex-col items-center gap-2">
+                  <span
+                    className={cn(
+                      'grid h-14 w-14 place-items-center rounded-2xl border text-sm font-bold',
+                      n.state === 'active' && 'border-transparent bg-gradient-to-r from-gold-300 to-gold-500 text-navy-950 shadow-gold',
+                      n.state === 'done' && 'border-gold-400/40 bg-gold-400/15 text-gold-300',
+                      n.state === 'idle' && 'border-white/10 bg-white/5 text-navy-200',
+                    )}
+                  >
+                    {n.step}
+                  </span>
+                  <span className={cn('text-xs', n.state === 'active' ? 'text-white' : 'text-navy-200')}>{n.name}</span>
+                  <span className="text-[10px] text-navy-400">{n.time}</span>
+                </div>
               ))}
+            </div>
+            <div className="mt-6 h-1.5 overflow-hidden rounded-full bg-white/5">
+              <span className="block h-full w-[42%] rounded-full bg-gradient-to-r from-gold-300 to-gold-500 shadow-gold" />
+            </div>
+            <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 text-[13px] text-navy-200">
+              <span>
+                当前：<b className="text-white">第 4 节点 · 大纲撰写</b>
+              </span>
+              <span>已耗时 03:12 · 预计剩余 04:48</span>
             </div>
           </div>
         </div>
       </section>
 
       {/* ========= 用户评价 ========= */}
-      <section className="py-24 relative overflow-hidden">
-        <div className="absolute top-1/2 left-0 w-[600px] h-[600px] rounded-full bg-navy-700/30 blur-3xl -translate-y-1/2 -translate-x-1/2" />
-
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <section className="relative overflow-hidden py-24">
+        <div className="mx-auto max-w-7xl px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -338,7 +388,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                className="p-8 rounded-3xl glass-card"
+                className="rounded-3xl border border-white/5 bg-gradient-to-br from-navy-900/65 to-navy-950/65 p-8"
               >
                 <div className="flex items-center gap-1 mb-4">
                   {Array.from({ length: t.rating }).map((_, i) => (
@@ -389,11 +439,8 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center p-12 md:p-16 rounded-[40px] glass-card-gold relative overflow-hidden"
+            className="relative overflow-hidden rounded-[40px] border border-gold-400/30 bg-gold-400/5 p-12 text-center shadow-gold md:p-16"
           >
-            <div className="absolute top-0 left-0 w-64 h-64 rounded-full bg-gold-500/20 blur-3xl" />
-            <div className="absolute bottom-0 right-0 w-64 h-64 rounded-full bg-purple-500/20 blur-3xl" />
-
             <div className="relative z-10">
               <h2 className="text-4xl md:text-5xl font-bold mb-6">
                 准备好让你的创意 <span className="gradient-text">腾飞</span> 了吗？
@@ -427,7 +474,7 @@ function FAQItem({ q, a }) {
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="rounded-2xl glass-card overflow-hidden"
+      className="overflow-hidden rounded-2xl border border-white/5 bg-slate-900/60"
     >
       <button
         onClick={() => setOpen(!open)}

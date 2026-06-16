@@ -50,8 +50,9 @@ class FusionOrchestrator:
         self.dry_run = dry_run
         self.config = get_fusion_config()
         self.catalog = get_ssot_catalog()
-        self.registry = FusionNodeRegistry(self.config)
-        self.artifact_registry = get_artifact_registry(self.config)
+        pack_id = str(project.pipeline_pack_id) if getattr(project, "pipeline_pack_id", None) else None
+        self.registry = FusionNodeRegistry(self.config, pack_id=pack_id)
+        self.artifact_registry = get_artifact_registry(self.config, pack_id=pack_id)
         self.prompts = FusionPromptBuilder(self.config)
         self.runner = FusionCliRunner(self.config)
         self.work_dir = Path(

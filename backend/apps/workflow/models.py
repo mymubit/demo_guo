@@ -35,7 +35,14 @@ class FusionJsonSchema(models.Model):
 class FusionPipelinePack(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     version = models.CharField("技能版本", max_length=64, unique=True, db_index=True)
-    is_active = models.BooleanField("当前启用", default=False, db_index=True)
+    display_name = models.CharField("展示名称", max_length=128, blank=True, default="")
+    description = models.TextField("说明", blank=True, default="")
+    slug = models.SlugField("标识", max_length=64, unique=True, null=True, blank=True)
+    is_active = models.BooleanField("当前编辑中", default=False, db_index=True)
+    is_published_to_portal = models.BooleanField("创作入口可选", default=False, db_index=True)
+    is_default_for_creation = models.BooleanField("创作默认流水线", default=False, db_index=True)
+    flow_graph = models.JSONField("流程图画布", default=dict, blank=True)
+    post_script_chain = models.JSONField("后处理 Agent 链", default=list, blank=True)
     terminal_node_ids = models.JSONField("终止节点 ID 列表", default=list, blank=True)
     project_meta = models.JSONField("projectMeta 快照", default=dict, blank=True)
     imported_from_root = models.CharField("导入来源路径", max_length=512, blank=True, default="")
@@ -50,8 +57,16 @@ class FusionPipelinePack(models.Model):
         ordering = ["-updated_at"]
 
     def __str__(self):
-        flag = " [active]" if self.is_active else ""
-        return f"{self.version}{flag}"
+        label = self.display_name or self.version
+        flags = []
+        if self.is_active:
+            flags.append("编辑中")
+        if self.is_published_to_portal:
+            flags.append("已发布")
+        if self.is_default_for_creation:
+            flags.append("默认")
+        suffix = f" [{', '.join(flags)}]" if flags else ""
+        return f"{label}{suffix}"
 
 
 class FusionPipelineNode(models.Model):

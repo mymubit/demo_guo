@@ -367,8 +367,30 @@ class CreationFormOverrideService:
     @classmethod
     def get_format_variants(cls) -> List[Dict[str, Any]]:
         cls.ensure_defaults()
-        variants = cls.get_overrides().get("formatVariants")
-        return list(variants) if isinstance(variants, list) and variants else list(DEFAULT_FORMAT_VARIANTS)
+        overrides = cls.get_overrides()
+        configured = overrides.get("formatVariants")
+        disk_catalog = cls._build_disk_catalog()
+        disk_variants = disk_catalog.get("formatVariants") or []
+        seed = disk_variants if disk_variants else list(DEFAULT_FORMAT_VARIANTS)
+
+        if not isinstance(configured, list) or not configured:
+            return list(seed)
+
+        by_key: Dict[str, Dict[str, Any]] = {}
+        for item in seed:
+            key = item.get("key")
+            if key:
+                by_key[key] = dict(item)
+        for item in configured:
+            key = item.get("key")
+            if not key:
+                continue
+            base = by_key.get(key, {})
+            by_key[key] = cls._deep_merge(base, item)
+
+        order = ["A", "B", "C", "D"]
+        merged = [by_key[k] for k in order if k in by_key]
+        return merged if merged else list(seed)
 
     @classmethod
     def get_default_format_variant(cls) -> str:

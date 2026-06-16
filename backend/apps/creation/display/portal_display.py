@@ -27,11 +27,14 @@ def portal_gate_log(log: dict | None) -> dict:
         return {"passed": None, "skipped": True}
     if log.get("passed"):
         return {"passed": True, "skipped": False}
-    return {
+    out = {
         "passed": False,
         "skipped": False,
         "issues": [str(i) for i in (log.get("issues") or []) if str(i).strip()][:5],
     }
+    if log.get("userAcknowledgedAt"):
+        out["userAcknowledgedAt"] = str(log["userAcknowledgedAt"])
+    return out
 
 
 def portal_sanitize_reversal(rev: dict | None) -> dict:

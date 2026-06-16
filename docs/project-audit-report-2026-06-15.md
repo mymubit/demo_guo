@@ -15,7 +15,7 @@
 |----|--------|--------|
 | **整体健康度** | 黄色 | **黄绿（可继续联调/预发）** — P0 阻塞项已处理，WIP 未提交仍存在 |
 | **未应用迁移** | 11 项 | **0**（已 migrate + seed_system_config） |
-| **后端测试** | 294 OK | **317 OK**（+23 门户/用户/安全测试） |
+| **后端测试** | 294 OK | **325 OK**（+31 门户/契约/安全测试） |
 | **前端 Vitest** | 无 | **11 用例**（listAdapter + businessAdapters） |
 | **React Query** | 未使用 | Works/Detail/Admin Users/Wallet/Member 已接入 |
 | **OpenAPI** | 无 | `drf-spectacular` + `/api/schema/` + `docs/openapi.yaml` |
@@ -23,7 +23,7 @@
 **验证命令**：
 
 ```bash
-cd backend && python manage.py test --keepdb --verbosity=0   # 317 OK
+cd backend && python manage.py test --keepdb --verbosity=0   # 325 OK
 cd frontend && npm test && npm run build                      # 11 OK, build OK
 ```
 
@@ -438,14 +438,14 @@ refactor-plan → api-alignment → frontend-alignment-refactor → legacy-compa
 |----|------|----------|------|
 | AUD-001 | 部分修复 | 各阶段 test/build 门禁通过；WIP 未 commit | `test --keepdb` + `npm run build` |
 | AUD-002 | **已修复** | 11 项迁移已应用；`billing.0010` 增加 positive 重复清洗 | `migrate` + `seed_system_config` |
-| AUD-003 | **部分修复** | auth 联调表 2 行自动化覆盖；creation/works/admin 仍待复测 | `portal/tests/test_auth_api.py` |
+| AUD-003 | **已修复** | 联调表 5 行全部自动化覆盖（auth/creation/works/admin） | portal + console tests |
 | AUD-004 | **已修复** | portal/users/security 新增 API/中间件测试 | 23 新用例 |
-| AUD-005 | **已修复** | Vitest 初始化 + adapter 单测 11 例 | `npm test` |
+| AUD-005 | **已修复** | Vitest + adapter/responseParser 单测 15 例 | `npm test` |
 | AUD-006 | **已修复** | prod compose 必填密钥；production.py 启动校验 | `scripts/check-deploy-env.ps1` |
 | AUD-007 | **已修复** | `home.hero_stats` useConfig；Wallet `payment.default_method` | Home/Wallet 页面 |
 | AUD-008 | **已修复** | `creation/services/` 拆分为 facade 子模块 | `apps.creation` 236 tests OK |
 | AUD-009 | **已修复** | `hooks/queries/` 五页 React Query 迁移 | 页面手工回归 |
-| AUD-010 | **部分修复** | vite `echarts`/`echarts-react` 独立 chunk（~648kB） | `npm run build` |
+| AUD-010 | **已修复** | `LazyEChart` 懒加载 + echarts/echarts-react 独立 chunk | `npm run build` |
 | AUD-011 | **已修复** | `monitoring.frontend_sample_rate` 接入 configStore | `configStore.js` |
 | AUD-012 | **已修复** | `normalizeArrayResult` 仅接受 `{ data: array }` | `listAdapter.test.js` |
 | AUD-013 | **已修复** | 410 路由文档化 | `frontend-backend-contract-audit.md` |
@@ -456,9 +456,9 @@ refactor-plan → api-alignment → frontend-alignment-refactor → legacy-compa
 | 检查项 | 结果 |
 |--------|------|
 | 数据库迁移已应用 | 通过 |
-| 后端全量测试 | 317 OK |
+| 后端全量测试 | 325 OK |
 | 前端 build | 通过 |
-| 前端 Vitest | 11 OK |
+| 前端 Vitest | 15 OK |
 | 生产密钥无占位符 | compose + settings 校验 |
-| OpenAPI 基础设施 | `/api/schema/` + `docs/openapi.yaml` |
+| OpenAPI 基础设施 | `/api/schema/` + `docs/openapi.yaml`（导出脚本已去 `--validate`） |
 | Git 工作区收敛 | **未通过**（仍 WIP，需用户 commit/PR） |

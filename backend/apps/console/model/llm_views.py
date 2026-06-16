@@ -7,6 +7,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from apps.common.permissions import IsAdminUser
+from apps.console.base_views import AdminAPIView
 from apps.console.responses import CACHE_KEY_DASHBOARD, CACHE_KEY_STATS, api_fail, api_ok
 from apps.skill.llm.model_catalog import LlmCatalogError, LlmCatalogService
 from apps.skill.llm.providers import LlmProviderError, LlmProviderService
@@ -43,7 +44,7 @@ def _payload() -> dict:
     }
 
 
-class LlmConfigAdminView(APIView):
+class LlmConfigAdminView(AdminAPIView):
     """GET /api/admin/model/llm/ — 多模型列表与状态"""
 
     permission_classes = [IsAuthenticated, IsAdminUser]

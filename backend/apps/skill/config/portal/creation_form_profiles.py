@@ -26,7 +26,7 @@ DEFAULT_CREATION_ENTRY_PROFILES = {
         },
         "requiresAdapt": False,
         "validation": {"requiredFields": {}},
-        "show": dict(DEFAULT_SHOW),
+        "show": {**DEFAULT_SHOW, "referenceBlock": "optional"},
     },
     "from-outline": {
         "summary": "已有分集大纲，跳过创意环节，从结构规划起扩写。",
@@ -41,7 +41,7 @@ DEFAULT_CREATION_ENTRY_PROFILES = {
         },
         "requiresAdapt": False,
         "validation": {"requiredFields": {"outline_text": {"minLength": 30}}},
-        "show": {**DEFAULT_SHOW, "coreIdea": False, "outline": True},
+        "show": {**DEFAULT_SHOW, "coreIdea": False, "outline": True, "referenceBlock": "optional"},
     },
     "from-reference": {
         "summary": "对标热门短剧叙事节奏与情绪曲线，走完整技能流水线。",

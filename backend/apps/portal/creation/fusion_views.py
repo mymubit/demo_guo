@@ -30,17 +30,31 @@ def _portal_response(request, data: dict, *, legacy_marker: str, canonical_path:
     return Response(payload, status=status.HTTP_200_OK)
 
 
-def _portal_catalog() -> dict:
+def _portal_catalog(*, pack_id: str | None = None) -> dict:
     from apps.agent.catalog import enrich_portal_main_chain, portal_agent_catalog
+    from apps.workflow.pipeline_store import FusionPipelineDbService
+    from apps.workflow.services.flow_graph_service import FlowGraphPlanService
+
+    default_pack = FusionPipelineDbService.resolve_pack_for_creation(pack_id)
+    default_pack_id = str(default_pack.id) if default_pack else None
 
     catalog = get_ssot_catalog().public_catalog()
     catalog["mainChain"] = enrich_portal_main_chain(
-        WorkflowPipelineService.portal_main_chain()
+        WorkflowPipelineService.portal_main_chain(pack_id=default_pack_id),
+        pack_id=default_pack_id,
+    )
+    catalog["executionPlan"] = FlowGraphPlanService.execution_plan_payload(
+        pack_id=default_pack_id
     )
     catalog["agentCatalog"] = portal_agent_catalog()
     catalog.pop("artifactKeys", None)
     catalog["currencyName"] = BillingService.currency_name()
     catalog["estimatedAutoCost"] = BillingService.estimate_auto_pipeline_cost()
+    published = FusionPipelineDbService.list_portal_pipelines()
+    catalog["publishedPipelines"] = published
+    catalog["defaultPipelinePackId"] = default_pack_id
+    if default_pack:
+        catalog["activePipeline"] = FusionPipelineDbService.serialize_pack_portal(default_pack)
     return catalog
 
 
@@ -65,13 +79,28 @@ class FusionNodesView(APIView):
 
     def get(self, request):
         from apps.agent.catalog import enrich_portal_main_chain
+        from apps.workflow.pipeline_store import FusionPipelineDbService
+
+        pack_id = (request.query_params.get("pack_id") or "").strip() or None
+        if pack_id:
+            pack = FusionPipelineDbService.get_pack_by_id(pack_id)
+            if pack is None or not pack.is_published_to_portal:
+                return Response(
+                    {"code": 40001, "message": "流水线不可用", "data": None},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            pack = FusionPipelineDbService.resolve_pack_for_creation(None)
+        resolved_id = str(pack.id) if pack else None
 
         return _portal_response(
             request,
             {
                 "mainChain": enrich_portal_main_chain(
-                    WorkflowPipelineService.portal_main_chain()
+                    WorkflowPipelineService.portal_main_chain(pack_id=resolved_id),
+                    pack_id=resolved_id,
                 ),
+                "pipelinePackId": resolved_id,
                 "currencyName": BillingService.currency_name(),
             },
             legacy_marker="/workflow/nodes",

@@ -53,12 +53,12 @@ export default function LlmVendorCredentialForm({
           <select
             value={volcanoKeyType}
             onChange={(e) => setVolcanoKeyType(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg bg-navy-800/60 border border-navy-700/40 text-white text-sm"
+            className="sf-control"
           >
             <option value="payg">按量付费（推荐）— ep-xxx / Model ID</option>
             <option value="coding_plan">Coding Plan — 仅编程订阅 Key</option>
           </select>
-          <p className="text-[10px] text-navy-500 mt-1 font-mono truncate">{VOLCANO_PAYG_URL}</p>
+          <p className="text-[10px] text-navy-300 mt-1 font-mono truncate">{VOLCANO_PAYG_URL}</p>
         </label>
       ) : null}
       <label className="block">
@@ -84,7 +84,7 @@ export default function LlmVendorCredentialForm({
             setApiKeyTouched(true)
             setApiKey(e.target.value)
           }}
-          className="w-full px-3 py-2 rounded-lg bg-navy-800/60 border border-navy-700/40 text-white font-mono text-sm"
+          className="sf-control text-white font-mono text-sm"
         />
       </label>
       <button

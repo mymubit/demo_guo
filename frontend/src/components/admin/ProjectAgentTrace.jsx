@@ -94,14 +94,14 @@ export function ProjectTracePanel({
   return (
     <div className="space-y-4">
       {!compact ? (
-        <CreationPipelineDiagram compact blueprint={blueprint} linkTo="/admin/main-chain" />
+        <CreationPipelineDiagram compact blueprint={blueprint} linkTo="/admin/orchestration?tab=flow" />
       ) : null}
 
       {traceData?.pipeline_mode ? (
         <div
           className={`rounded-xl border px-4 py-3 text-xs leading-relaxed ${
             traceData.pipeline_mode === 'workspace'
-              ? 'border-navy-600/30 bg-navy-900/30 text-navy-400'
+              ? 'border-white/10 bg-slate-900/40 text-navy-400'
               : 'border-violet-500/20 bg-violet-500/5 text-violet-200/80'
           }`}
         >
@@ -113,13 +113,13 @@ export function ProjectTracePanel({
           ) : (
             <>
               <span className="font-medium text-violet-100">分步掌控</span>
-              ：节点 6/7 为管线尾部（fusion_review / fusion_score），与主链工作室「分步尾部」配置一致。
+              ：节点 6/7 为管线尾部（fusion_review / fusion_score），与调度中心「流程编排」配置一致。
             </>
           )}
         </div>
       ) : null}
 
-      <div className="rounded-xl bg-navy-800/25 border border-navy-700/25 px-4 py-3">
+      <div className="rounded-xl border border-white/5 bg-slate-900/40 px-4 py-3">
         <p className="text-sm text-navy-200 mb-2">
           按创作流水线顺序展示每个 Agent 的子技能步骤。绿色=已执行，红色=失败，灰色=跳过，虚线=尚未跑到。
         </p>
@@ -174,12 +174,12 @@ export function ProjectTracePanel({
         })}
 
       {!orderedKeys.length && !showAdapt ? (
-        <p className="text-sm text-navy-500 py-8 text-center">该项目尚无 Agent 执行轨迹</p>
+        <p className="text-sm text-navy-400 py-8 text-center">该项目尚无 Agent 执行轨迹</p>
       ) : null}
 
       {(traceData.execution_runs || []).length > 0 ? (
-        <details className="rounded-xl bg-navy-800/40 border border-navy-700/30">
-          <summary className="cursor-pointer px-4 py-3 text-sm text-white font-medium hover:bg-navy-800/50 rounded-xl">
+        <details className="rounded-xl border border-white/5 bg-slate-900/40">
+          <summary className="cursor-pointer px-4 py-3 text-sm text-white font-medium hover:bg-white/[0.06] rounded-xl">
             全部执行记录（{traceData.execution_runs.length} 条 DB 记录）
           </summary>
           <div className={`px-4 pb-4 space-y-2 ${compact ? 'max-h-[280px] overflow-y-auto' : ''}`}>
@@ -233,7 +233,7 @@ export function RunDetailModal({ runId, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60">
-      <div className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-navy-600/40 bg-navy-900 p-5 shadow-2xl">
+      <div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-slate-900/95 p-5 shadow-2xl">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
             <h3 className="text-lg font-semibold text-white">执行详情</h3>
@@ -243,12 +243,12 @@ export function RunDetailModal({ runId, onClose }) {
                 {detail.node_index != null ? ` · 节点${detail.node_index}` : ''}
               </p>
             ) : null}
-            <p className="text-xs text-navy-500 mt-1 font-mono">{runId}</p>
+            <p className="text-xs text-navy-300 mt-1 font-mono">{runId}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-sm text-navy-400 hover:text-white px-3 py-1 rounded-lg border border-navy-600/40"
+            className="text-sm text-navy-400 hover:text-white px-3 py-1 rounded-lg border border-white/10"
           >
             关闭
           </button>
@@ -260,7 +260,7 @@ export function RunDetailModal({ runId, onClose }) {
         {detail ? (
           <>
             <ExecutionRunPanel run={detail} catalog={catalog} />
-            <div className="mt-4 rounded-xl border border-navy-700/30 bg-navy-950/40 p-4">
+            <div className="mt-4 rounded-xl border border-white/5 bg-slate-900/40 p-4">
               <p className="text-sm text-gold-400 mb-2">关联 LLM 调用</p>
               <p className="text-xs text-navy-400 mb-3">
                 {detail.llm_summary?.call_count ?? 0} 次 ·{' '}
@@ -276,7 +276,7 @@ export function RunDetailModal({ runId, onClose }) {
                   {detail.llm_usage.map((row) => (
                     <li
                       key={row.id}
-                      className="flex flex-wrap justify-between gap-2 rounded-lg bg-navy-900/60 px-3 py-2 text-navy-200"
+                      className="flex flex-wrap justify-between gap-2 rounded-lg border border-white/5 bg-slate-900/40 px-3 py-2 text-navy-200"
                     >
                       <span>
                         {row.sub_skill_id || row.source_key || '—'} · {row.model_name}
@@ -290,7 +290,7 @@ export function RunDetailModal({ runId, onClose }) {
                   ))}
                 </ul>
               ) : (
-                <p className="text-xs text-navy-500">本次执行无 LLM 用量记录</p>
+                <p className="text-xs text-navy-400">本次执行无 LLM 用量记录</p>
               )}
             </div>
           </>
@@ -325,7 +325,7 @@ export function ProjectAgentTraceView({
   }
 
   if (!traceData) {
-    return <p className="text-sm text-navy-500">暂无轨迹数据</p>
+    return <p className="text-sm text-navy-400">暂无轨迹数据</p>
   }
 
   const traces = traceData.execution_traces || {}

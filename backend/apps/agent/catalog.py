@@ -2,7 +2,7 @@
 """Agent 中心 — C 端目录与主链展示增强。"""
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from apps.agent.runtime import (
     agent_for_workspace_index,
@@ -33,8 +33,14 @@ def enrich_portal_chain_item(item: Dict[str, Any]) -> Dict[str, Any]:
     return out
 
 
-def enrich_portal_main_chain(chain: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    return [enrich_portal_chain_item(item) for item in chain]
+def enrich_portal_main_chain(
+    chain: List[Dict[str, Any]],
+    pack_id: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    from apps.workflow.services.flow_graph_service import FlowGraphPlanService
+
+    enriched = [enrich_portal_chain_item(item) for item in chain]
+    return FlowGraphPlanService.enrich_portal_chain(enriched, pack_id=pack_id)
 
 
 def portal_agent_catalog() -> Dict[str, Any]:

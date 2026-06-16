@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 import {
   Sparkles,
   Check,
-  RefreshCw,
   Download,
   Share2,
   ArrowLeft,
@@ -16,10 +15,11 @@ import {
 } from 'lucide-react'
 import ReadableMarkdownPanel from './workspace/ReadableMarkdownPanel'
 import PostScriptPanel from './workspace/PostScriptPanel'
+import WorkspaceModuleSidebar from './workspace/WorkspaceModuleSidebar'
+import WorkspaceStatsPanel from './workspace/WorkspaceStatsPanel'
 import { ExecutionDurationLabel } from '@/components/shared/ExecutionRunPanel'
 import { toast } from 'sonner'
 import { creation } from '@/services/api'
-import { PIPELINE_NODE_ICONS } from '@/config/fusion'
 import { displayPipelineStepName } from '@/utils/pipelineNodes'
 import { resolveSkillId } from '@/utils/skillTerm'
 import { sanitizeHtml } from '@/utils/sanitizeHtml'
@@ -36,7 +36,15 @@ function agentTabName(module) {
   return displayPipelineStepName(module?.name || '')
 }
 
-function QualityAlertBanner({ alerts }) {
+function isSkillPassed(skill) {
+  if (!skill || skill.status === 'failed') return false
+  if (skill.index === 1) {
+    return skill.has_content && skill.content_kind === 'user_confirmed'
+  }
+  return skill.content_kind === 'agent_generated'
+}
+
+function QualityAlertBanner({ alerts, onAcknowledge, acknowledgingCode }) {
   const visible = (alerts || []).filter((alert) => alert.code !== 'brief-incomplete')
   if (!visible.length) return null
   return (
@@ -50,10 +58,52 @@ function QualityAlertBanner({ alerts }) {
               : 'bg-amber-500/10 border-amber-500/30 text-amber-200'
           }`}
         >
-          <p className="font-medium">{alert.title}</p>
-          {alert.message && <p className="mt-1 text-xs opacity-90">{alert.message}</p>}
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="font-medium">{alert.title}</p>
+              {alert.message && <p className="mt-1 text-xs opacity-90">{alert.message}</p>}
+            </div>
+            {alert.acknowledgable && onAcknowledge ? (
+              <button
+                type="button"
+                disabled={acknowledgingCode === alert.code}
+                onClick={() => onAcknowledge(alert.code)}
+                className="shrink-0 rounded-lg border border-gold-400/40 bg-gold-400/10 px-3 py-1.5 text-xs font-medium text-gold-200 hover:bg-gold-400/20 disabled:opacity-50"
+              >
+                {acknowledgingCode === alert.code ? '确认中…' : '我已确认，继续'}
+              </button>
+            ) : null}
+          </div>
+          {alert.details?.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {alert.details.map((detail, i) => (
+                <div
+                  key={`${alert.code}-detail-${i}`}
+                  className="rounded-lg border border-white/10 bg-black/10 px-3 py-2 text-xs leading-relaxed"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-white/90">{detail.category || '风险项'}</span>
+                    {detail.matched_text ? (
+                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[11px]">
+                        命中：{detail.matched_text}
+                      </span>
+                    ) : null}
+                  </div>
+                  {detail.excerpt ? (
+                    <p className="mt-1 text-white/80">片段：{detail.excerpt}</p>
+                  ) : null}
+                  {detail.constraint ? (
+                    <p className="mt-1 opacity-90">规则：{detail.constraint}</p>
+                  ) : null}
+                  {detail.suggestion ? (
+                    <p className="mt-1 opacity-90">建议：{detail.suggestion}</p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
           {alert.issues?.length > 0 && (
-            <ul className="mt-2 text-xs space-y-1 list-disc list-inside opacity-90">
+            <ul className={`text-xs space-y-1 list-disc list-inside opacity-90 ${alert.details?.length > 0 ? 'mt-3' : 'mt-2'}`}>
               {alert.issues.map((issue, i) => (
                 <li key={`${alert.code}-${i}`}>{issue}</li>
               ))}
@@ -84,11 +134,11 @@ function SkillStatusBadge({ skill }) {
       </span>
     )
   }
-  if (kind === 'agent_generated' || (status === 'completed' && hasContent && index !== 1)) {
+  if (isSkillPassed(skill)) {
     return (
       <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-400/15 text-green-400">
         <Check className="w-3 h-3" />
-        已生成
+        {index === 1 ? '已通过' : '已生成'}
       </span>
     )
   }
@@ -102,31 +152,17 @@ function SkillStatusBadge({ skill }) {
   }
   if (kind === 'skeleton') {
     return (
-      <span className="text-xs px-2 py-0.5 rounded-full bg-navy-700/50 text-navy-300">骨架就绪</span>
+      <span className="text-xs px-2 py-0.5 rounded-full bg-white/[0.05] text-navy-300">骨架就绪</span>
     )
   }
   if (hasContent) {
     return (
-      <span className="text-xs px-2 py-0.5 rounded-full bg-navy-700/50 text-navy-300">草稿</span>
+      <span className="text-xs px-2 py-0.5 rounded-full bg-white/[0.05] text-navy-300">草稿</span>
     )
   }
   return (
-    <span className="text-xs px-2 py-0.5 rounded-full bg-navy-700/50 text-navy-400">待生成</span>
+    <span className="text-xs px-2 py-0.5 rounded-full bg-white/[0.05] text-slate-400">待生成</span>
   )
-}
-
-function tabStatusIcon(skill) {
-  const kind = skill?.content_kind
-  if (kind === 'agent_generated') {
-    return <Check className="w-3.5 h-3.5 text-green-400 shrink-0" />
-  }
-  if (kind === 'user_confirmed' || (skill?.index === 1 && skill?.has_content)) {
-    return <Check className="w-3.5 h-3.5 text-gold-400 shrink-0" />
-  }
-  if (kind === 'skeleton') {
-    return <LayoutList className="w-3.5 h-3.5 text-navy-400 shrink-0" />
-  }
-  return null
 }
 
 export default function ProjectWorkspace({
@@ -145,6 +181,7 @@ export default function ProjectWorkspace({
   const [refreshing, setRefreshing] = useState(false)
   const [editMode, setEditMode] = useState(false)
   const [contentViewMode, setContentViewMode] = useState('structured')
+  const [acknowledgingCode, setAcknowledgingCode] = useState('')
   const [error, setError] = useState('')
   const pollCountRef = useRef(0)
   const requestSeqRef = useRef(0)
@@ -188,15 +225,21 @@ export default function ProjectWorkspace({
   }, [activeIndex])
 
   const modules = workspace?.skills || []
+  const executionPlan = workspace?.execution_plan
+  const hasOrchestrationHints =
+    Boolean(executionPlan?.has_parallel) || Boolean(executionPlan?.has_branches)
 
   const isBusy =
     workspace?.status === 'running' ||
-    workspace?.running_skill_index ||
-    modules.some((s) => s.status === 'running')
+    (workspace?.status !== 'failed' &&
+      (workspace?.running_skill_index || modules.some((s) => s.status === 'running')))
 
-  const runningSkill = modules.find((s) => s.status === 'running')
+  const runningSkill =
+    workspace?.status !== 'failed' ? modules.find((s) => s.status === 'running') : null
   const runningBlocker = workspace?.running_blocker
   const activeSkill = modules.find((s) => s.index === activeIndex)
+  const activeSkillGenerating =
+    activeSkill?.status === 'running' && workspace?.status !== 'failed'
   const contextualError =
     activeSkill?.error_message ||
     (workspace?.status === 'failed' &&
@@ -206,6 +249,7 @@ export default function ProjectWorkspace({
 
   useEffect(() => {
     if (!projectId || !isBusy) return
+    pollCountRef.current = 0
     let timer = null
     const pollDelay = () => {
       if (pollCountRef.current < 8) return 2500
@@ -243,8 +287,16 @@ export default function ProjectWorkspace({
     }
   }, [projectId, isBusy, loadWorkspace])
 
-  const completedCount = workspace?.completed_agent_count ?? workspace?.completed_skill_count ?? 0
-  const confirmedCount = workspace?.confirmed_skill_count ?? completedCount
+  const hasModuleStats = modules.length > 0
+  const generatedCount = hasModuleStats
+    ? modules.filter((skill) => skill.status !== 'failed' && skill.content_kind === 'agent_generated').length
+    : workspace?.completed_agent_count ?? workspace?.completed_skill_count ?? 0
+  const confirmedCount = hasModuleStats
+    ? modules.filter((skill) => skill.status !== 'failed' && skill.has_content).length
+    : workspace?.confirmed_skill_count ?? generatedCount
+  const completedCount = hasModuleStats
+    ? modules.filter((skill) => isSkillPassed(skill)).length
+    : generatedCount
   const totalSkills = workspace?.total_agents ?? workspace?.total_skills ?? 5
   const nextBatch = activeSkill?.editor?.nextBatch
   const outlineCoinCost =
@@ -297,6 +349,20 @@ export default function ProjectWorkspace({
       toast.error(e.message || '保存失败')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleAcknowledgeQualityAlert(alertCode) {
+    if (!projectId || acknowledgingCode) return
+    setAcknowledgingCode(alertCode)
+    try {
+      await creation.acknowledgeQualityAlert(projectId, activeIndex, alertCode)
+      toast.success('已确认，可继续后续创作')
+      await loadWorkspace()
+    } catch (e) {
+      toast.error(e.message || '确认失败')
+    } finally {
+      setAcknowledgingCode('')
     }
   }
 
@@ -365,7 +431,7 @@ export default function ProjectWorkspace({
 
   if (loading && !workspace) {
     return (
-      <div className="glass-card rounded-3xl p-12 text-center">
+      <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-12 text-center">
         <Loader2 className="w-8 h-8 text-gold-400 animate-spin mx-auto mb-4" />
         <p className="text-navy-300">加载 Agent 工作台…</p>
       </div>
@@ -378,7 +444,7 @@ export default function ProjectWorkspace({
         title="加载 Agent 工作台失败"
         description={error || '工作台数据暂时不可用，请稍后重试'}
         onRetry={loadWorkspace}
-        className="glass-card rounded-3xl"
+        className="rounded-2xl border border-white/5 bg-slate-900/60"
       />
     )
   }
@@ -387,14 +453,32 @@ export default function ProjectWorkspace({
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="glass-card rounded-3xl overflow-hidden"
+      className="overflow-hidden rounded-2xl border border-white/5 bg-slate-900/60"
     >
-      <div className="px-6 py-5 border-b border-navy-700/40 flex flex-wrap items-center justify-between gap-4">
+      <div className="px-6 py-5 border-b border-white/5 flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs text-navy-400 mb-1">
-            Agent 工作台 · {completedCount}/{totalSkills} 已生成
-            {confirmedCount > completedCount ? ` · ${confirmedCount} 步有内容` : ''}
-          </p>
+          <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
+            <span className="rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-navy-300">
+              Agent 工作台
+            </span>
+            <span className="rounded-full border border-green-400/20 bg-green-500/10 px-2 py-0.5 text-green-300">
+              已完成 {completedCount}/{totalSkills}
+            </span>
+            {generatedCount > 0 && generatedCount < completedCount ? (
+              <span className="rounded-full border border-gold-400/20 bg-gold-400/10 px-2 py-0.5 text-gold-300">
+                AI 已生成 {generatedCount} 步
+              </span>
+            ) : null}
+            {hasOrchestrationHints ? (
+              <span className="rounded-full border border-cyan-400/20 bg-cyan-500/10 px-2 py-0.5 text-cyan-300">
+                {executionPlan?.has_parallel && executionPlan?.has_branches
+                  ? '并行组 + 条件分支'
+                  : executionPlan?.has_parallel
+                    ? '含并行组'
+                    : '含条件分支'}
+              </span>
+            ) : null}
+          </div>
           <h2 className="text-xl font-bold text-white truncate">{workspace?.title || '创作项目'}</h2>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -404,7 +488,7 @@ export default function ProjectWorkspace({
                 type="button"
                 onClick={() => handleDownload('md')}
                 disabled={Boolean(downloadingFormat)}
-                className="px-3 py-2 rounded-xl text-sm bg-navy-800/60 border border-navy-600/30 text-navy-100 hover:bg-navy-700/60 inline-flex items-center gap-1.5 disabled:opacity-50"
+                className="px-3 py-2 rounded-xl text-sm border border-white/10 bg-white/[0.03] text-navy-100 hover:bg-white/[0.06] inline-flex items-center gap-1.5 disabled:opacity-50"
               >
                 {downloadingFormat === 'md' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                 Markdown
@@ -413,7 +497,7 @@ export default function ProjectWorkspace({
                 type="button"
                 onClick={() => handleDownload('html')}
                 disabled={Boolean(downloadingFormat)}
-                className="px-3 py-2 rounded-xl text-sm bg-navy-800/60 border border-navy-600/30 text-navy-100 hover:bg-navy-700/60 inline-flex items-center gap-1.5 disabled:opacity-50"
+                className="px-3 py-2 rounded-xl text-sm border border-white/10 bg-white/[0.03] text-navy-100 hover:bg-white/[0.06] inline-flex items-center gap-1.5 disabled:opacity-50"
               >
                 {downloadingFormat === 'html' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                 HTML
@@ -423,7 +507,7 @@ export default function ProjectWorkspace({
                   type="button"
                   onClick={() => handleDownload('zip')}
                   disabled={Boolean(downloadingFormat)}
-                  className="px-3 py-2 rounded-xl text-sm bg-navy-800/60 border border-navy-600/30 text-navy-100 hover:bg-navy-700/60 inline-flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-3 py-2 rounded-xl text-sm border border-white/10 bg-white/[0.03] text-navy-100 hover:bg-white/[0.06] inline-flex items-center gap-1.5 disabled:opacity-50"
                 >
                   {downloadingFormat === 'zip' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                   ZIP 全量
@@ -436,7 +520,7 @@ export default function ProjectWorkspace({
               type="button"
               onClick={handleShare}
               disabled={sharing}
-              className="px-3 py-2 rounded-xl text-sm bg-navy-800/60 border border-navy-600/30 text-navy-100 hover:bg-navy-700/60 inline-flex items-center gap-1.5 disabled:opacity-50"
+              className="px-3 py-2 rounded-xl text-sm border border-white/10 bg-white/[0.03] text-navy-100 hover:bg-white/[0.06] inline-flex items-center gap-1.5 disabled:opacity-50"
             >
               {sharing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Share2 className="w-4 h-4" />}
               {sharing ? '分享中' : '分享'}
@@ -445,7 +529,7 @@ export default function ProjectWorkspace({
           <button
             type="button"
             onClick={onBack}
-            className="px-3 py-2 rounded-xl text-sm bg-navy-800/60 border border-navy-600/30 text-navy-200 hover:bg-navy-700/60 inline-flex items-center gap-1.5"
+            className="px-3 py-2 rounded-xl text-sm border border-white/10 bg-white/[0.03] text-navy-200 hover:bg-white/[0.06] inline-flex items-center gap-1.5"
           >
             <ArrowLeft className="w-4 h-4" />
             返回
@@ -453,33 +537,17 @@ export default function ProjectWorkspace({
         </div>
       </div>
 
-      <div className="relative border-b border-navy-700/30 px-3 pt-3 after:pointer-events-none after:absolute after:right-0 after:top-0 after:h-full after:w-8 after:bg-gradient-to-l after:from-navy-950/80 after:to-transparent md:px-4 md:pt-4">
-        <div className="flex snap-x gap-1 overflow-x-auto overscroll-x-contain pb-1">
-          {modules.map((skill) => {
-            const Icon = PIPELINE_NODE_ICONS[(skill.index || 1) - 1] || Sparkles
-            const active = skill.index === activeIndex
-            return (
-              <button
-                key={skill.index}
-                type="button"
-                onClick={() => setActiveIndex(skill.index)}
-                className={cn(
-                  'flex shrink-0 snap-start items-center gap-1.5 rounded-t-xl border-b-2 px-3 py-2.5 text-xs font-medium transition-all sm:gap-2 sm:px-4 sm:py-3 sm:text-sm',
-                  active
-                    ? 'bg-navy-800/60 text-white border-gold-400'
-                    : 'text-navy-400 border-transparent hover:text-navy-200 hover:bg-navy-800/30',
-                )}
-              >
-                <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-gold-400' : ''}`} />
-                <span className="whitespace-nowrap">{agentTabName(skill)}</span>
-                {!active && tabStatusIcon(skill)}
-              </button>
-            )
-          })}
-        </div>
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] 2xl:grid-cols-[220px_minmax(0,1fr)_280px]">
+        <aside className="border-b border-white/5 bg-slate-900/40 p-4 lg:border-b-0 lg:border-r">
+          <WorkspaceModuleSidebar
+            modules={modules}
+            activeIndex={activeIndex}
+            onSelect={setActiveIndex}
+            agentTabName={agentTabName}
+          />
+        </aside>
 
-      <div className="p-6 md:p-8">
+        <main className="min-w-0 p-6 md:p-8 xl:p-10">
         {contextualError && (
           <div className="mb-6 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm">
             <p className="font-medium">{contextualError}</p>
@@ -509,7 +577,7 @@ export default function ProjectWorkspace({
                     title={(stage.issues || []).join(' · ') || stage.label}
                     className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full ${
                       stage.skipped
-                        ? 'bg-navy-700/50 text-navy-400'
+                        ? 'bg-white/[0.05] text-slate-400'
                         : stage.passed
                           ? 'bg-green-500/15 text-green-400'
                           : 'bg-red-500/15 text-red-300'
@@ -534,7 +602,11 @@ export default function ProjectWorkspace({
             </div>
           )}
 
-        <QualityAlertBanner alerts={activeSkill?.quality_alerts} />
+        <QualityAlertBanner
+          alerts={activeSkill?.quality_alerts}
+          onAcknowledge={handleAcknowledgeQualityAlert}
+          acknowledgingCode={acknowledgingCode}
+        />
 
         {isBusy && activeSkill?.status !== 'running' && (
           <div className="mb-4 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-100 text-sm">
@@ -554,7 +626,7 @@ export default function ProjectWorkspace({
         {!modules.length && (
           <div className="py-16 text-center">
             <p className="text-navy-300 mb-2">暂无可用 Agent 模块</p>
-            <p className="text-xs text-navy-500">请稍后刷新，或联系管理员检查创作流水线配置。</p>
+            <p className="text-xs text-navy-400">请稍后刷新，或联系管理员检查创作流水线配置。</p>
           </div>
         )}
 
@@ -570,6 +642,9 @@ export default function ProjectWorkspace({
                     </span>
                   )}
                   <SkillStatusBadge skill={activeSkill} />
+                  {isSkillPassed(activeSkill) && activeSkill.index === 1 && (
+                    <GateLogBadge passed label="立项" />
+                  )}
                   {activeSkill.index === 2 &&
                     activeSkill.editor?.structurePlan?.worldValidationLog &&
                     !activeSkill.editor.structurePlan.worldValidationLog.skipped && (
@@ -583,6 +658,7 @@ export default function ProjectWorkspace({
                     !activeSkill.editor.characterGateLog.skipped && (
                       <GateLogBadge
                         passed={activeSkill.editor.characterGateLog.passed}
+                        acknowledged={Boolean(activeSkill.editor.characterGateLog.userAcknowledgedAt)}
                         label="人设"
                       />
                     )}
@@ -604,14 +680,14 @@ export default function ProjectWorkspace({
 
               <div className="flex flex-wrap items-center gap-2">
                 {hasEditorContent && activeSkill.status !== 'running' && !editMode && (
-                  <div className="inline-flex rounded-xl border border-navy-600/30 overflow-hidden">
+                  <div className="inline-flex overflow-hidden rounded-xl border border-white/10">
                     <button
                       type="button"
                       onClick={() => setContentViewMode('structured')}
                       className={`px-3 py-2.5 text-sm inline-flex items-center gap-1.5 ${
                         contentViewMode === 'structured'
                           ? 'bg-gold-400/10 text-gold-300'
-                          : 'bg-navy-800/40 text-navy-300 hover:bg-navy-700/40'
+                          : 'border border-white/10 bg-white/[0.03] text-navy-300 hover:bg-white/[0.06]'
                       }`}
                     >
                       <LayoutList className="w-4 h-4" />
@@ -621,10 +697,10 @@ export default function ProjectWorkspace({
                       type="button"
                       onClick={() => setContentViewMode('markdown')}
                       disabled={!activeSkill.readable_markdown}
-                      className={`px-3 py-2.5 text-sm inline-flex items-center gap-1.5 border-l border-navy-600/30 disabled:opacity-40 ${
+                      className={`px-3 py-2.5 text-sm inline-flex items-center gap-1.5 border-l border-white/10 disabled:opacity-40 ${
                         contentViewMode === 'markdown'
                           ? 'bg-gold-400/10 text-gold-300'
-                          : 'bg-navy-800/40 text-navy-300 hover:bg-navy-700/40'
+                          : 'border border-white/10 bg-white/[0.03] text-navy-300 hover:bg-white/[0.06]'
                       }`}
                     >
                       <FileText className="w-4 h-4" />
@@ -643,7 +719,7 @@ export default function ProjectWorkspace({
                     className={`px-4 py-2.5 rounded-xl text-sm border inline-flex items-center gap-2 ${
                       editMode
                         ? 'border-gold-400/40 bg-gold-400/10 text-gold-300'
-                        : 'border-navy-600/30 bg-navy-800/40 text-navy-200 hover:bg-navy-700/40'
+                        : 'border border-white/10 bg-white/[0.03] text-navy-200 hover:bg-white/[0.06]'
                     }`}
                   >
                     {editMode ? <Eye className="w-4 h-4" /> : <Pencil className="w-4 h-4" />}
@@ -700,7 +776,7 @@ export default function ProjectWorkspace({
                     type="button"
                     disabled={generating || isBusy}
                     onClick={() => handleGenerate(5, { regenerate: true })}
-                    className="px-4 py-3 rounded-xl text-sm border border-navy-600/30 text-navy-300 hover:bg-navy-800/50 disabled:opacity-50"
+                    className="px-4 py-3 rounded-xl text-sm border border-white/10 text-navy-300 hover:bg-white/[0.05] disabled:opacity-50"
                   >
                     清空并重生成首批
                   </button>
@@ -709,11 +785,26 @@ export default function ProjectWorkspace({
             </div>
 
             <div className="min-h-[280px]">
-              {activeSkill.status === 'running' ? (
+              {activeSkillGenerating ? (
                 <div className="py-12 text-center">
                   <Loader2 className="w-10 h-10 text-gold-400 animate-spin mx-auto mb-4" />
                   <p className="text-navy-200">正在生成{agentTabName(activeSkill)}…</p>
-                  <p className="text-xs text-navy-500 mt-2">可切换 Tab，完成后自动刷新</p>
+                  <p className="text-xs text-navy-400 mt-2">可切换 Tab，完成后自动刷新</p>
+                </div>
+            ) : activeSkill.status === 'failed' && (activeSkill.error_message || contextualError) ? (
+                <div className="py-12 text-center px-4">
+                  <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-4" />
+                  <p className="text-red-200 text-sm">
+                    {activeSkill.error_message || contextualError}
+                  </p>
+                  {(activeSkill.error_message || contextualError || '').includes('立项策划') ||
+                  (activeSkill.error_message || contextualError || '').includes('立项整理') ? (
+                    <p className="text-xs text-navy-300 mt-2">
+                      立项策划在创建项目时已确认，无需 AI 生成。请刷新工作台后重试；若仍失败请重启后端服务。
+                    </p>
+                  ) : (
+                    <p className="text-xs text-navy-400 mt-2">请根据提示处理后重新点击 AI 生成</p>
+                  )}
                 </div>
               ) : hasEditorContent && contentViewMode === 'markdown' && !editMode ? (
                 <ReadableMarkdownPanel
@@ -729,7 +820,7 @@ export default function ProjectWorkspace({
                   onSave={handleSaveContent}
                   onOutlineGenerate={activeSkill.index === 4 ? handleOutlineGenerate : undefined}
                   outlineGenerating={generating}
-                  skillBusy={isBusy || activeSkill.status === 'running'}
+                  skillBusy={isBusy || activeSkillGenerating}
                   coinCost={outlineCoinCost}
                   currencyName={currencyName}
                 />
@@ -746,7 +837,7 @@ export default function ProjectWorkspace({
               ) : (
                 <div className="py-12 text-center">
                   <p className="text-navy-400 mb-2">暂无内容</p>
-                  <p className="text-xs text-navy-500">{activeSkill.hint}</p>
+                  <p className="text-xs text-navy-400">{activeSkill.hint}</p>
                 </div>
               )}
             </div>
@@ -762,26 +853,32 @@ export default function ProjectWorkspace({
           </>
         )}
 
-        <div className="mt-8 pt-6 border-t border-navy-700/30 flex flex-wrap justify-between gap-3">
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="px-4 py-2 rounded-xl text-sm text-navy-300 hover:text-white inline-flex items-center gap-1.5 disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
-            {refreshing ? '刷新中' : '刷新'}
-          </button>
-          {onRestart && (
+        {onRestart && (
+          <div className="mt-8 flex justify-end border-t border-white/5 pt-6">
             <button
               type="button"
               onClick={onRestart}
-              className="px-4 py-2 rounded-xl text-sm text-navy-400 hover:text-navy-200"
+              className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm text-navy-400 hover:text-navy-200"
             >
               新建项目
             </button>
-          )}
-        </div>
+          </div>
+        )}
+        </main>
+
+        <aside className="border-t border-white/5 bg-slate-900/40 p-4 lg:col-span-2 2xl:col-span-1 2xl:border-l 2xl:border-t-0">
+          <WorkspaceStatsPanel
+            workspace={workspace}
+            activeSkill={activeSkill}
+            completedCount={completedCount}
+            confirmedCount={confirmedCount}
+            totalSkills={totalSkills}
+            currencyName={currencyName}
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            agentTabName={agentTabName}
+          />
+        </aside>
       </div>
     </motion.div>
   )

@@ -125,6 +125,7 @@ class LlmService:
                 resp_body = (exc.response.text or "")[:500]
         except Exception:  # noqa: BLE001
             pass
+        cls._log_http_error_response(exc, cfg, response_body=resp_body)
         raise LlmServiceError(
             humanize_llm_request_error(
                 exc,
@@ -134,6 +135,38 @@ class LlmService:
             )
         ) from exc
 
+    @staticmethod
+    def _redact_response_body(text: str) -> str:
+        body = str(text or "")
+        body = re.sub(r"Bearer\s+[A-Za-z0-9._~+/=-]+", "Bearer ***", body, flags=re.I)
+        body = re.sub(r"(api[_-]?key|access[_-]?token|secret)\s*[:=]\s*['\"]?[^,'\"}\s]+", r"\1=***", body, flags=re.I)
+        body = re.sub(r"\b(sk|ak)-[A-Za-z0-9_\-]{12,}\b", r"\1-***", body)
+        return body[:1000]
+
+    @classmethod
+    def _log_http_error_response(
+        cls,
+        exc: requests.HTTPError,
+        cfg: Dict[str, Any],
+        *,
+        response_body: str = "",
+    ) -> None:
+        resp = getattr(exc, "response", None)
+        status_code = getattr(resp, "status_code", None)
+        body = cls._redact_response_body(response_body)
+        logger.warning(
+            "LLM HTTP 错误 provider=%s model=%s status=%s base_url=%s response_body=%s",
+            cfg.get("provider_name") or "",
+            cfg.get("model") or "",
+            status_code or "",
+            cfg.get("base_url") or "",
+            body or "<empty>",
+        )
+
+    @staticmethod
+    def _record_failed_usage(cfg: Dict[str, Any]) -> None:
+        LlmUsageService.record(cfg=cfg, usage={}, success=False)
+
     @classmethod
     def _json_object_unsupported(cls, exc: requests.HTTPError) -> bool:
         resp = exc.response
@@ -141,6 +174,21 @@ class LlmService:
             return False
         text = (resp.text or "").lower()
         return "json_object" in text and "not supported" in text
+
+    @staticmethod
+    def _retryable_http_status(exc: Exception) -> Optional[int]:
+        cause = getattr(exc, "__cause__", None)
+        if isinstance(exc, requests.HTTPError):
+            http_exc = exc
+        elif isinstance(cause, requests.HTTPError):
+            http_exc = cause
+        else:
+            return None
+        resp = getattr(http_exc, "response", None)
+        status_code = getattr(resp, "status_code", None)
+        if status_code in {408, 409, 425, 429} or (isinstance(status_code, int) and status_code >= 500):
+            return int(status_code)
+        return None
 
     @classmethod
     def _post_chat_completion(
@@ -223,8 +271,25 @@ class LlmService:
                                 conn_try,
                             )
                             time.sleep(min(conn_try * 2, 6))
+                status_code = cls._retryable_http_status(exc)
+                if status_code and active_body.get("thinking") is not None:
+                    retry_body = dict(active_body)
+                    retry_body.pop("thinking", None)
+                    logger.warning(
+                        "LLM 服务端临时异常，尝试移除 thinking 参数重试 provider=%s status=%s",
+                        active_cfg.get("provider_name"),
+                        status_code,
+                    )
+                    try:
+                        content, usage = cls._post_chat_completion(
+                            cfg=active_cfg, body=retry_body, json_mode=use_json_mode
+                        )
+                        LlmUsageService.record(cfg=active_cfg, usage=usage, success=True)
+                        return content
+                    except requests.HTTPError:
+                        pass
                 cls._raise_http_error(exc, active_cfg)
-            except requests.ConnectionError:
+            except (requests.Timeout, requests.ConnectionError):
                 raise
             except requests.RequestException as exc:
                 raise LlmServiceError(
@@ -370,7 +435,19 @@ class LlmService:
                         detected.get("volcano_key_type"),
                     )
                 return content
-            except LlmServiceError:
+            except LlmServiceError as exc:
+                status_code = cls._retryable_http_status(exc)
+                if status_code and attempt < max_attempts:
+                    logger.warning(
+                        "LLM 服务端临时异常 provider=%s status=%s attempt=%s/%s（将重试）",
+                        cfg.get("provider_name"),
+                        status_code,
+                        attempt,
+                        max_attempts,
+                    )
+                    time.sleep(min(attempt * 2, 8))
+                    continue
+                cls._record_failed_usage(cfg)
                 raise
             except (requests.Timeout, requests.ConnectionError) as exc:
                 last_exc = exc
@@ -397,11 +474,20 @@ class LlmService:
                 break
             except (KeyError, IndexError) as exc:
                 logger.warning("LLM 响应解析失败: %s", exc)
+                cls._record_failed_usage(cfg)
                 raise LlmServiceError(
                     "模型返回格式异常，请确认接口为 OpenAI 兼容的 Chat Completions。"
                 ) from exc
 
-        logger.exception("LLM 请求失败 provider=%s", cfg.get("provider_name"))
+        logger.error(
+            "LLM 请求失败 provider=%s model=%s base_url=%s error=%s",
+            cfg.get("provider_name"),
+            cfg.get("model"),
+            cfg.get("base_url"),
+            last_exc or "unknown",
+            exc_info=last_exc,
+        )
+        cls._record_failed_usage(cfg)
         raise LlmServiceError(
             humanize_llm_request_error(
                 last_exc, base_url=cfg.get("base_url") or "", model=cfg.get("model") or ""
@@ -426,8 +512,10 @@ class LlmService:
             content = ""
             last_parse_exc: Optional[Exception] = None
             parse_rounds = max(2, int(getattr(settings, "LLM_JSON_PARSE_RETRIES", 3) or 3))
-            token_cap = max(4096, int(getattr(settings, "LLM_JSON_MAX_TOKENS_CAP", 16384) or 16384))
+            cfg_token_cap = max(4096, int(getattr(settings, "LLM_JSON_MAX_TOKENS_CAP", 32768) or 32768))
             base_max = max_tokens
+            # token_cap 不得低于调用方显式传入的 base_max，避免重试时反而截断
+            token_cap = max(cfg_token_cap, base_max or 0)
             for attempt in range(parse_rounds):
                 effective_max = base_max
                 if base_max and attempt > 0:

@@ -97,7 +97,7 @@ export default function ReviewScoringPanel({ onMessage }) {
 
   if (loading) {
     return (
-      <div className="glass-card rounded-2xl p-12 text-center text-navy-400">加载中…</div>
+      <div className="sf-console-panel p-12 text-center text-navy-400">加载中…</div>
     )
   }
 
@@ -105,7 +105,7 @@ export default function ReviewScoringPanel({ onMessage }) {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-5 max-w-3xl">
-      <div className="glass-card rounded-2xl p-5 border border-blue-500/15 bg-blue-500/5">
+      <div className="sf-console-panel p-5 border border-blue-500/15 bg-blue-500/5">
         <p className="text-sm text-navy-200 leading-relaxed">
           ReviewAgent（步骤 6）负责全剧质检与放行判定；ScoreAgent（步骤 7）负责深度评分与等级。此处配置审查策略与通过线，保存后影响新产生的质检结果。
         </p>
@@ -124,7 +124,7 @@ export default function ReviewScoringPanel({ onMessage }) {
                 className={`text-left rounded-2xl p-4 border transition-all ${
                   active
                     ? 'border-gold-400/50 bg-gold-400/10 ring-1 ring-gold-400/30'
-                    : 'border-navy-700/40 bg-navy-900/30 hover:border-navy-600/60'
+                    : 'border-white/10 bg-white/[0.03] hover:border-white/20'
                 }`}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
@@ -134,9 +134,9 @@ export default function ReviewScoringPanel({ onMessage }) {
                   <span className="text-xs text-navy-400 shrink-0">通过 ≥{preset.pass_threshold}</span>
                 </div>
                 <p className="text-xs text-navy-400 leading-relaxed mb-3">{preset.description}</p>
-                <div className="flex flex-wrap gap-1.5 text-[11px] text-navy-500">
+                <div className="flex flex-wrap gap-1.5 text-[11px] text-navy-400">
                   {Object.entries(preset.weights || {}).map(([key, val]) => (
-                    <span key={key} className="px-2 py-0.5 rounded bg-navy-800/60">
+                    <span key={key} className="rounded bg-white/[0.05] px-2 py-0.5">
                       {weightLabels[key] || key} {val}%
                     </span>
                   ))}
@@ -147,7 +147,7 @@ export default function ReviewScoringPanel({ onMessage }) {
         </div>
       </div>
 
-      <div className="glass-card rounded-2xl p-5 space-y-4">
+      <div className="sf-console-panel p-5 space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="text-white font-medium">
@@ -166,7 +166,7 @@ export default function ReviewScoringPanel({ onMessage }) {
                 const standard = presets.find((item) => item.id === 'standard')
                 if (standard) handleApplyAndSave(standard)
               }}
-              className="px-4 py-2 rounded-xl text-sm text-navy-200 border border-navy-600/40 hover:bg-navy-800/50 disabled:opacity-50"
+              className="px-4 py-2 rounded-xl text-sm text-navy-200 border border-white/10 hover:bg-white/[0.06] disabled:opacity-50"
             >
               恢复默认
             </button>
@@ -191,14 +191,14 @@ export default function ReviewScoringPanel({ onMessage }) {
         </button>
 
         {showAdvanced && (
-          <div className="space-y-4 pt-2 border-t border-navy-700/40">
+          <div className="space-y-4 pt-2 border-t border-white/5">
             <label className="block text-sm text-navy-300">
               通过分数线
               <input
                 type="number"
                 min={0}
                 max={100}
-                className="mt-1 w-full max-w-xs rounded-xl bg-navy-900 border border-navy-700 px-4 py-2 text-white"
+                className="sf-control mt-1 max-w-xs px-4 py-2 text-white"
                 value={form.pass_threshold}
                 onChange={(e) => {
                   setPresetId('custom')
@@ -216,7 +216,7 @@ export default function ReviewScoringPanel({ onMessage }) {
                       type="number"
                       min={0}
                       max={100}
-                      className="mt-1 w-full rounded-xl bg-navy-900 border border-navy-700 px-3 py-2 text-white"
+                      className="sf-control mt-1 px-3 py-2 text-white"
                       value={form.weights[key] ?? 0}
                       onChange={(e) => {
                         setPresetId('custom')
@@ -240,7 +240,7 @@ export default function ReviewScoringPanel({ onMessage }) {
                       type="number"
                       min={0}
                       max={100}
-                      className="mt-1 w-full rounded-xl bg-navy-900 border border-navy-700 px-2 py-2 text-white text-center"
+                      className="sf-control mt-1 px-2 py-2 text-white text-center"
                       value={form.grade_thresholds[g] ?? 0}
                       onChange={(e) => {
                         setPresetId('custom')
@@ -258,7 +258,7 @@ export default function ReviewScoringPanel({ onMessage }) {
               type="button"
               onClick={() => save('custom')}
               disabled={saving}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-navy-800 text-gold-300 border border-gold-500/30 text-sm disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-gold-500/30 bg-gold-400/10 px-5 py-2.5 text-sm text-gold-300 disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
               保存自定义参数

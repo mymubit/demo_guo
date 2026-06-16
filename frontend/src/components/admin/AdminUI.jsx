@@ -1,20 +1,95 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, AlertTriangle } from 'lucide-react'
+import { Loader2, AlertTriangle, ChevronDown, Info } from 'lucide-react'
 import { Badge, Button, Card, EmptyState, MetricCard, Pagination } from '@/components/ui'
 import { cn } from '@/utils/cn'
 import { ICON } from '@/constants/iconSizes'
 import { cardEnter, modalOverlay, modalPanel } from '@/constants/motion'
 import { formatDateTime as formatDateTimeUtil } from '@/utils/date'
+import {
+  AdminPageHeader as AdminDesignPageHeader,
+  AdminPanel,
+  AdminDataTable,
+  ToolbarSearch,
+  KpiTile,
+  Sparkline,
+  AdminPillTabs,
+  AdminDonutChart,
+} from './AdminPrimitives'
 
-export function AdminPageHeader({ title, description, actions }) {
+export {
+  AdminDesignPageHeader,
+  AdminPanel,
+  AdminDataTable,
+  ToolbarSearch,
+  KpiTile,
+  Sparkline,
+  AdminPillTabs,
+  AdminDonutChart,
+}
+
+export function AdminPageHeader({ title, description, subtitle, crumbs, toolbar, actions }) {
+  if (crumbs || subtitle || toolbar) {
+    return (
+      <AdminDesignPageHeader
+        crumbs={crumbs}
+        title={title}
+        subtitle={subtitle}
+        description={description}
+        toolbar={toolbar}
+        actions={actions}
+      />
+    )
+  }
   return (
     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
       <div>
-        <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">{title}</h1>
-        {description && <p className="text-navy-300 text-base leading-relaxed max-w-3xl">{description}</p>}
+        <h1 className="text-2xl font-bold text-white tracking-tight">{title}</h1>
+        {description && (
+          <p className="text-navy-400 text-sm leading-relaxed max-w-3xl mt-1.5">{description}</p>
+        )}
       </div>
       {actions && <div className="flex items-center gap-2 flex-wrap">{actions}</div>}
     </div>
+  )
+}
+
+/** 可折叠说明条 — 减少页头与正文重复提示 */
+export function AdminContextBanner({ summary, children, defaultOpen = false }) {
+  return (
+    <details className="sf-console-panel-subtle group" open={defaultOpen || undefined}>
+      <summary className="cursor-pointer list-none px-4 py-3 flex items-center justify-between gap-3 sf-focus-ring rounded-2xl">
+        <span className="inline-flex items-center gap-2 text-sm text-navy-300">
+          <Info className={cn(ICON.sm, 'text-gold-400/80 shrink-0')} />
+          {summary}
+        </span>
+        <ChevronDown className={cn(ICON.sm, 'text-navy-400 transition-transform group-open:rotate-180')} />
+      </summary>
+      <div className="px-4 pb-4 text-sm text-navy-400 leading-relaxed border-t border-white/5 -mt-1 pt-3">
+        {children}
+      </div>
+    </details>
+  )
+}
+
+/** Tab 区 + 单行提示 */
+export function AdminTabSection({ hint, children, className }) {
+  return (
+    <div className={cn('space-y-3', className)}>
+      {children}
+      {hint ? (
+        <p className="text-xs text-navy-400 leading-relaxed border-l-2 border-gold-500/25 pl-3">{hint}</p>
+      ) : null}
+    </div>
+  )
+}
+
+/** 配置面板内分区 */
+export function AdminInspectorSection({ title, children, className }) {
+  return (
+    <section className={cn('sf-console-panel-subtle p-4 space-y-3', className)}>
+      {title ? <h4 className="text-sm font-medium text-navy-100">{title}</h4> : null}
+      {children}
+    </section>
   )
 }
 
@@ -24,7 +99,7 @@ export function AdminTabBar({ tabs, active, onChange, className = '', stretch = 
   return (
     <div
       className={cn(
-        'flex flex-wrap gap-2.5 rounded-2xl border border-navy-600/25 bg-navy-900/55 p-1.5 shadow-card backdrop-blur-xl',
+        'flex flex-wrap gap-2.5 sf-console-panel p-1.5 shadow-card',
         stretch ? 'w-full' : 'w-fit',
         className,
       )}
@@ -38,14 +113,14 @@ export function AdminTabBar({ tabs, active, onChange, className = '', stretch = 
             type="button"
             onClick={() => onChange(t.key)}
             className={cn(
-              'flex items-center gap-2.5 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all sf-focus-ring',
+              'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all sf-focus-ring border',
               stretch && 'flex-1 justify-center',
               isActive
-                ? 'bg-gradient-to-r from-gold-400 to-gold-600 text-navy-950 shadow-lg shadow-gold-500/20'
-                : 'text-navy-200 hover:bg-navy-800/55 hover:text-white',
+                ? 'border-gold-500/35 bg-gold-400/10 text-gold-200 shadow-sm'
+                : 'text-navy-300 border-transparent hover:bg-white/[0.06] hover:text-white',
             )}
           >
-            {Icon ? <Icon className={ICON.lg} /> : null}
+            {Icon ? <Icon className={ICON.md} /> : null}
             {t.label}
           </button>
         )
@@ -61,13 +136,16 @@ export function AdminMessage({ message, onClose }) {
     <motion.div
       {...cardEnter}
       className={cn(
-        'flex items-center justify-between gap-3 rounded-2xl border px-5 py-4',
+        'flex items-center justify-between gap-3 rounded-xl border px-4 py-3',
         ok
           ? 'border-success-500/30 bg-success-500/10 text-success-300'
-          : 'border-danger-500/30 bg-danger-500/10 text-danger-300',
+          : 'border-danger-500/40 bg-danger-500/15 text-danger-200',
       )}
     >
-      <span className="text-sm">{message.text}</span>
+      <span className="inline-flex items-center gap-2 text-sm font-medium">
+        {!ok ? <AlertTriangle className={cn(ICON.sm, 'shrink-0')} /> : null}
+        {message.text}
+      </span>
       {onClose && (
         <button type="button" onClick={onClose} className="text-xs opacity-70 hover:opacity-100 sf-focus-ring">
           关闭
@@ -143,7 +221,7 @@ export function AdminTable({ columns, rows, rowKey = 'id', emptyText = '暂无�
     typeof rowKey === 'function' ? rowKey(row, index) : row[rowKey] || row.user_id || row.order_no || index
 
   return (
-    <Card padding="none" className={cn('overflow-hidden', mobileCardRender && 'md:bg-navy-900/55')}>
+    <Card padding="none" className={cn('overflow-hidden', mobileCardRender && 'md:bg-slate-900/55')}>
       {mobileCardRender ? (
         <div className="space-y-3 p-3 md:hidden">
           {rows.map((row, index) => (
@@ -154,7 +232,7 @@ export function AdminTable({ columns, rows, rowKey = 'id', emptyText = '暂无�
       <div className={cn('overflow-x-auto overscroll-x-contain', mobileCardRender && 'hidden md:block')}>
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-navy-700/40 text-navy-400">
+            <tr className="border-b border-white/5 text-navy-400">
               {columns.map((col) => (
                 <th
                   key={col.key}
@@ -169,7 +247,7 @@ export function AdminTable({ columns, rows, rowKey = 'id', emptyText = '暂无�
             {rows.map((row) => (
               <tr
                 key={getRowKey(row)}
-                className="border-b border-navy-800/60 hover:bg-navy-800/30 transition-colors"
+                className="border-b border-white/5 hover:bg-white/[0.03] transition-colors"
               >
                 {columns.map((col) => (
                   <td key={col.key} className={cn('px-5 py-4 align-middle', col.className)}>
@@ -199,7 +277,7 @@ export function AdminConfirmDialog({ open, title, message, confirmText = '确认
         >
           <motion.div
             {...modalPanel}
-            className="glass-card rounded-2xl p-6 max-w-md w-full shadow-modal"
+            className="sf-console-panel p-6 max-w-md w-full shadow-modal"
           >
             <div className="flex items-start gap-3 mb-4">
               <div className="w-10 h-10 rounded-xl bg-gold-500/15 flex items-center justify-center flex-shrink-0">

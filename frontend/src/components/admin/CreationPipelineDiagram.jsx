@@ -21,8 +21,8 @@ const FALLBACK_POST_CHAIN = [
  */
 export default function CreationPipelineDiagram({ compact = false, linkTo, blueprint }) {
   const stepClass = compact
-    ? 'px-2.5 py-1 rounded-lg text-[11px] bg-navy-800/60 border border-navy-700/40 text-navy-200'
-    : 'px-3 py-1.5 rounded-xl text-xs bg-navy-800/60 border border-navy-700/40 text-navy-100'
+    ? 'px-2.5 py-1 rounded-lg text-[11px] bg-slate-800/60 border border-white/10 text-navy-200'
+    : 'px-3 py-1.5 rounded-xl text-xs bg-slate-800/60 border border-white/10 text-navy-100'
 
   const workspaceSteps = blueprint?.workspace_steps?.length
     ? blueprint.workspace_steps.map((s) => ({
@@ -52,7 +52,7 @@ export default function CreationPipelineDiagram({ compact = false, linkTo, bluep
     : []
 
   const content = (
-    <div className={`space-y-2 ${compact ? '' : 'p-4 rounded-2xl border border-navy-700/30 bg-navy-900/30'}`}>
+    <div className={`space-y-2 ${compact ? '' : 'p-4 rounded-2xl border border-white/5 bg-slate-900/40'}`}>
       <div className={`flex flex-wrap items-center gap-1.5`}>
       {workspaceSteps.map((s, i) => (
         <span key={s.id || i} className="flex items-center gap-1.5">
@@ -61,20 +61,20 @@ export default function CreationPipelineDiagram({ compact = false, linkTo, bluep
             {s.label}
           </span>
           {i < workspaceSteps.length - 1 ? (
-            <ArrowRight className="w-3 h-3 text-navy-600 shrink-0" />
+            <ArrowRight className="w-3 h-3 text-navy-500 shrink-0" />
           ) : null}
         </span>
       ))}
       {postChain.length > 0 ? (
         <>
-          <ArrowRight className="w-3 h-3 text-navy-600 shrink-0" />
+          <ArrowRight className="w-3 h-3 text-navy-500 shrink-0" />
           <span className="flex flex-wrap items-center gap-1">
-            <span className="text-[10px] text-navy-500 mr-1">后处理</span>
+            <span className="text-[10px] text-navy-400 mr-1">后处理</span>
             {postChain.map((s, i) => (
               <span key={`${s.id}-${i}`} className="flex items-center gap-1">
                 <span className={`${stepClass} text-navy-300 border-dashed`}>{s.label}</span>
                 {i < postChain.length - 1 ? (
-                  <ArrowRight className="w-3 h-3 text-navy-600 shrink-0" />
+                  <ArrowRight className="w-3 h-3 text-navy-500 shrink-0" />
                 ) : null}
               </span>
             ))}
@@ -92,11 +92,29 @@ export default function CreationPipelineDiagram({ compact = false, linkTo, bluep
                 {s.label}
               </span>
               {i < tailSteps.length - 1 ? (
-                <ArrowRight className="w-3 h-3 text-navy-600 shrink-0" />
+                <ArrowRight className="w-3 h-3 text-navy-500 shrink-0" />
               ) : null}
             </span>
           ))}
         </div>
+      ) : null}
+      {blueprint?.execution_plan?.stages?.some((s) => s.type === 'parallel') ? (
+        <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-cyan-400/80 pt-1">
+          <span>并行阶段</span>
+          {blueprint.execution_plan.stages
+            .filter((s) => s.type === 'parallel')
+            .map((stage) => (
+              <span
+                key={stage.group_id || stage.label}
+                className="px-2 py-0.5 rounded-md border border-cyan-500/25 bg-cyan-500/10"
+              >
+                {stage.label}
+              </span>
+            ))}
+        </div>
+      ) : null}
+      {blueprint?.execution_plan?.has_branches ? (
+        <div className="text-[11px] text-violet-400/80 pt-1">含条件分支路由</div>
       ) : null}
     </div>
   )

@@ -1,12 +1,10 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
   FolderKanban,
   Search,
-  Filter,
   ArrowLeft,
-  Film,
   Clock,
   Calendar,
   Star,
@@ -14,7 +12,6 @@ import {
   CheckCircle2,
   Loader2,
   FileText,
-  ChevronDown,
   RefreshCw,
   ArrowRight,
   Trash2,
@@ -26,11 +23,13 @@ import { works as worksApi } from '@/services/api'
 import { getThemeMeta } from '@/constants/themeMeta'
 import ThemeBadge from '@/components/ui/ThemeBadge'
 import EmptyState from '@/components/ui/EmptyState'
+import { SectionEyebrow, PillFilterGroup } from '@/components/shared/ConsumerSection'
 import { getWorkStatusMeta, WORK_FILTER_OPTIONS } from '@/utils/workStatus'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { useWorksList } from '@/hooks/queries/useWorksList'
 
 const STATUS_LIST = WORK_FILTER_OPTIONS
+const FILTER_OPTIONS = STATUS_LIST.map((s) => ({ key: s.key, label: s.name }))
 
 export default function Works() {
   const navigate = useNavigate()
@@ -38,7 +37,6 @@ export default function Works() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [sortBy, setSortBy] = useState('newest')
-  const [showStatusMenu, setShowStatusMenu] = useState(false)
   const [page, setPage] = useState(1)
   const [deletingId, setDeletingId] = useState(null)
   const debouncedSearch = useDebouncedValue(search, 400)
@@ -73,7 +71,8 @@ export default function Works() {
   }
 
   const getTheme = (key) => getThemeMeta(key)
-  const getStatus = (key) => STATUS_LIST.find((s) => s.key === key) || STATUS_LIST[0]
+  const completedCount = works.filter((w) => w.status === 'completed').length
+  const generatingCount = works.filter((w) => w.status === 'generating').length
 
   const handleDelete = async (work) => {
     const pid = work.project_id
@@ -94,32 +93,34 @@ export default function Works() {
 
   return (
     <div className="relative min-h-screen py-12">
-      <div className="particles-bg" />
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
-        {/* 顶部标题 */}
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-10">
-          <div className="flex items-center gap-2 mb-4">
-            <button
-              onClick={() => navigate('/')}
-              className="w-10 h-10 rounded-xl flex items-center justify-center bg-navy-800/50 hover:bg-navy-700/50 text-navy-200 hover:text-white transition-all"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-            <div className="inline-flex items-center gap-2 badge">
-              <FolderKanban className="w-4 h-4" />
-              <span>我的作品库</span>
+      <div className="mx-auto max-w-7xl px-6">
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-7">
+          <button
+            onClick={() => navigate('/')}
+            className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-navy-200 transition-all hover:bg-white/[0.06] hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <header className="flex flex-wrap items-end justify-between gap-6">
+            <div>
+              <SectionEyebrow>我的作品</SectionEyebrow>
+              <h1 className="mt-3 text-3xl font-bold leading-tight tracking-tight text-white md:text-4xl">
+                {pagination.total} 部剧本
+                {generatingCount > 0 ? ` · ${generatingCount} 部正在生成` : ''}
+              </h1>
+              <p className="mt-2 max-w-[56ch] text-navy-200">
+                共 {pagination.total} 个项目 · 当前页已完成 {completedCount} 个 · 所有作品自动加密存档
+              </p>
             </div>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-3">
-            我的<span className="gradient-text">作品</span>
-          </h1>
-          <p className="text-lg text-navy-300">
-            共 <span className="text-gold-400 font-semibold">{pagination.total}</span> 个项目 · 当前页已完成{' '}
-            <span className="text-green-400 font-semibold">
-              {works.filter((w) => w.status === 'completed').length}
-            </span>{' '}
-            个
-          </p>
+            <PillFilterGroup
+              options={FILTER_OPTIONS}
+              value={statusFilter}
+              onChange={(key) => {
+                setStatusFilter(key)
+                setPage(1)
+              }}
+            />
+          </header>
         </motion.div>
 
         {/* 搜索 + 筛选栏 */}
@@ -127,7 +128,7 @@ export default function Works() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="glass-card rounded-2xl p-5 mb-8"
+          className="mb-8 rounded-2xl border border-white/5 bg-slate-900/60 p-5"
         >
           <div className="flex flex-col md:flex-row gap-3">
             {/* 搜索框 */}
@@ -140,57 +141,8 @@ export default function Works() {
                   setPage(1)
                 }}
                 placeholder="搜索作品标题或创意描述..."
-                className="w-full pl-11 pr-4 py-3 rounded-xl bg-navy-800/50 border border-navy-600/30 text-white placeholder-navy-500 focus:border-gold-400/50 focus:ring-2 focus:ring-gold-400/20 outline-none transition-all"
+                className="sf-control pl-11"
               />
-            </div>
-
-            {/* 状态筛选 */}
-            <div className="relative">
-              <button
-                onClick={() => setShowStatusMenu(!showStatusMenu)}
-                className="w-full md:w-auto px-5 py-3 rounded-xl bg-navy-800/50 hover:bg-navy-700/50 border border-navy-600/30 text-white flex items-center gap-2 transition-all"
-              >
-                <Filter className="w-4 h-4 text-gold-400" />
-                <span className="text-sm">{getStatus(statusFilter).name}</span>
-                <ChevronDown className="w-4 h-4 text-navy-300" />
-              </button>
-              <AnimatePresence>
-                {showStatusMenu && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute right-0 top-full mt-2 w-44 py-2 rounded-2xl glass-card shadow-xl z-20"
-                  >
-                    {STATUS_LIST.map((s) => (
-                      <button
-                        key={s.key}
-                        onClick={() => {
-                          setStatusFilter(s.key)
-                          setPage(1)
-                          setShowStatusMenu(false)
-                        }}
-                        className={`w-full px-4 py-2.5 flex items-center gap-3 text-left transition-all ${
-                          statusFilter === s.key
-                            ? 'bg-gold-400/10 text-gold-400'
-                            : 'text-navy-100 hover:bg-navy-700/30'
-                        }`}
-                      >
-                        <span
-                          className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ background: s.color }}
-                        />
-                        <span className="text-sm">{s.name}</span>
-                        <span className="ml-auto text-xs text-navy-400">
-                          {s.key === 'all'
-                            ? works.length
-                            : works.filter((w) => w.status === s.key).length}
-                        </span>
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
 
             {/* 排序 */}
@@ -200,7 +152,7 @@ export default function Works() {
                 setSortBy(e.target.value)
                 setPage(1)
               }}
-              className="px-5 py-3 rounded-xl bg-navy-800/50 hover:bg-navy-700/50 border border-navy-600/30 text-white outline-none transition-all cursor-pointer text-sm"
+              className="sf-control cursor-pointer text-sm"
             >
               <option value="newest">最新创建</option>
               <option value="score">评分最高</option>
@@ -211,7 +163,7 @@ export default function Works() {
             <button
               onClick={() => refetch()}
               disabled={loading}
-              className="px-5 py-3 rounded-xl bg-navy-800/50 hover:bg-navy-700/50 border border-navy-600/30 text-white flex items-center gap-2 transition-all disabled:opacity-50"
+              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-5 py-3 text-white transition-all hover:bg-white/[0.06] disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               刷新
@@ -268,7 +220,7 @@ export default function Works() {
             <button
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="px-4 py-2 rounded-xl bg-navy-800/50 border border-navy-600/30 text-navy-200 disabled:opacity-40"
+              className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-navy-200 transition-colors hover:bg-white/[0.06] disabled:opacity-40"
             >
               上一页
             </button>
@@ -278,7 +230,7 @@ export default function Works() {
             <button
               disabled={page >= pagination.total_pages}
               onClick={() => setPage((p) => p + 1)}
-              className="px-4 py-2 rounded-xl bg-navy-800/50 border border-navy-600/30 text-navy-200 disabled:opacity-40"
+              className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-navy-200 transition-colors hover:bg-white/[0.06] disabled:opacity-40"
             >
               下一页
             </button>
@@ -303,6 +255,13 @@ function WorkCard({ work, index, theme, navigate, onDelete, deleting }) {
             ? Clock
             : FileText
 
+  const coverUrl = work.cover_url || work.cover
+  const coverStyle = coverUrl
+    ? { backgroundImage: `url(${coverUrl})` }
+    : {
+        background: `linear-gradient(135deg, ${theme.color}44 0%, ${theme.color}88 45%, rgba(15, 23, 42, 0.95) 100%)`,
+      }
+
   const goToWork = () => {
     const pid = work.project_id
     if (work.status === 'completed') {
@@ -313,83 +272,76 @@ function WorkCard({ work, index, theme, navigate, onDelete, deleting }) {
   }
 
   return (
-    <motion.div
+    <motion.article
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      whileHover={{ y: -6, scale: 1.01 }}
+      whileHover={{ y: -2 }}
       onClick={goToWork}
-      className="glass-card rounded-3xl p-6 cursor-pointer group relative overflow-hidden transition-all hover:shadow-lg hover:shadow-gold-500/10 border border-navy-600/20"
+      className="group cursor-pointer overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-navy-900/65 to-navy-950/65 transition-all hover:border-gold-400/35 hover:shadow-gold"
     >
-      {/* 装饰渐变 */}
-      <div
-        className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-20 blur-3xl group-hover:opacity-30 transition-opacity"
-        style={{ background: theme.color, transform: 'translate(50%, -50%)' }}
-      />
-
-      <div className="relative">
-        {/* 顶部：题材 + 状态 */}
-        <div className="flex items-start justify-between mb-4">
+      <div className="relative aspect-video w-full bg-cover bg-center" style={coverStyle} role="img" aria-label={work.title}>
+        <div className="absolute inset-0 bg-gradient-to-t from-navy-950/80 via-transparent to-transparent" />
+        <div className="absolute left-3 top-3">
           <ThemeBadge theme={theme} size="sm" />
-          <div className="flex flex-col items-end gap-1">
-            <div className="flex items-center gap-1.5">
-              <div
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
-                style={{ background: meta.bg, color: meta.color }}
-              >
-                {meta.spin ? (
-                  <StatusIcon className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <StatusIcon className="w-3.5 h-3.5" />
-                )}
-                <span className="text-xs font-medium">{meta.label}</span>
-              </div>
-              <button
-                type="button"
-                title={work.raw_status === 'running' ? '创作中不可删除' : '删除作品'}
-                disabled={deleting}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onDelete?.(work)
-                }}
-                className="p-2 rounded-xl text-navy-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all disabled:opacity-50"
-              >
-                {deleting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Trash2 className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-            {meta.hint ? (
-              <p className="text-[10px] text-navy-500 text-right max-w-[140px] leading-snug">{meta.hint}</p>
-            ) : null}
-          </div>
         </div>
+        <div className="absolute right-3 top-3 flex items-center gap-1.5">
+          <div
+            className="flex items-center gap-1.5 rounded-xl px-2.5 py-1 backdrop-blur-sm"
+            style={{ background: meta.bg, color: meta.color }}
+          >
+            {meta.spin ? (
+              <StatusIcon className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <StatusIcon className="h-3.5 w-3.5" />
+            )}
+            <span className="text-xs font-medium">{meta.label}</span>
+          </div>
+          <button
+            type="button"
+            title={work.raw_status === 'running' ? '创作中不可删除' : '删除作品'}
+            disabled={deleting}
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete?.(work)
+            }}
+            className="rounded-xl border border-transparent bg-white/[0.03] p-2 text-navy-300 transition-all transition-all hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+          >
+            {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          </button>
+        </div>
+      </div>
 
-        {/* 标题 */}
-        <h3 className="text-xl font-bold text-white mb-3 group-hover:text-gold-400 transition-colors line-clamp-2">
+      <div className="p-4 pb-5">
+        <h3 className="mb-1 line-clamp-2 text-base font-semibold text-white transition-colors group-hover:text-gold-400">
           {work.title}
         </h3>
-
-        {/* 创意摘要 */}
-        <p className="text-sm text-navy-300 leading-relaxed mb-4 line-clamp-3 min-h-[3.75rem]">
+        <p className="mb-2 line-clamp-2 text-xs text-navy-300">
           {work.idea ? (
             work.idea
           ) : (
-            <span className="text-navy-500 italic">
-              {meta.key === 'draft' ? '尚未填写创意描述，点击进入工作台补充' : '暂无创意摘要'}
+            <span className="italic text-navy-400">
+              {meta.key === 'draft' ? '尚未填写创意描述' : '暂无创意摘要'}
             </span>
           )}
         </p>
+        <div className="text-xs text-navy-300">
+          {theme.name} · {work.episodes} 集 · {work.format}
+          {work.score ? (
+            <span className="ml-2 inline-flex items-center gap-1 text-gold-400">
+              <Star className="h-3 w-3 fill-gold-400" />
+              {work.score}
+            </span>
+          ) : null}
+        </div>
 
         {meta.progress > 0 && meta.progress < 100 && meta.key === 'generating' ? (
-          <div className="mb-4">
-            <div className="flex justify-between text-[10px] text-navy-500 mb-1">
+          <div className="mt-3">
+            <div className="mb-1 flex justify-between text-[10px] text-navy-400">
               <span>创作进度</span>
               <span>{meta.progress}%</span>
             </div>
-            <div className="h-1.5 rounded-full bg-navy-800/80 overflow-hidden">
+            <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-gold-500 to-amber-400 transition-all"
                 style={{ width: `${meta.progress}%` }}
@@ -398,68 +350,38 @@ function WorkCard({ work, index, theme, navigate, onDelete, deleting }) {
           </div>
         ) : null}
 
-        {/* 元信息 */}
-        <div className="flex flex-wrap gap-3 mb-5 text-xs text-navy-400">
-          <div className="flex items-center gap-1.5">
-            <Film className="w-3.5 h-3.5 text-navy-400" />
-            <span>{work.episodes} 集</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <FileText className="w-3.5 h-3.5 text-navy-400" />
-            <span>{work.format}</span>
-          </div>
-          {work.score && (
-            <div className="flex items-center gap-1.5">
-              <Star className="w-3.5 h-3.5 text-gold-400 fill-gold-400" />
-              <span className="text-gold-400 font-semibold">{work.score}</span>
-            </div>
-          )}
-        </div>
-
-        {/* 底部：时间 + 箭头 */}
-        <div className="flex items-center justify-between pt-4 border-t border-navy-700/40">
+        <div className="mt-3 flex items-center justify-between border-t border-white/5 pt-3">
           <div className="flex items-center gap-1.5 text-xs text-navy-400">
-            <Calendar className="w-3.5 h-3.5" />
+            <Calendar className="h-3.5 w-3.5" />
             <span>{work.createdAt}</span>
           </div>
-          <div className="flex items-center gap-1 text-sm text-gold-400 group-hover:gap-2 transition-all">
+          <div className="flex items-center gap-1 text-sm text-gold-400 transition-all group-hover:gap-2">
             <span>{meta.cta}</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="h-4 w-4" />
           </div>
         </div>
       </div>
-    </motion.div>
+    </motion.article>
   )
 }
 
 // ============ 加载骨架屏 ============
 function LoadingSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }).map((_, i) => (
         <motion.div
           key={i}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: i * 0.05 }}
-          className="glass-card rounded-3xl p-6 border border-navy-600/20 overflow-hidden"
+          className="overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-navy-900/65 to-navy-950/65"
         >
-          <div className="flex items-start justify-between mb-4">
-            <div className="h-7 w-24 rounded-xl bg-navy-700/40 animate-pulse" />
-            <div className="h-7 w-16 rounded-xl bg-navy-700/40 animate-pulse" />
-          </div>
-          <div className="h-6 w-4/5 rounded-lg bg-navy-700/40 animate-pulse mb-3" />
-          <div className="h-4 w-full rounded bg-navy-700/30 animate-pulse mb-2" />
-          <div className="h-4 w-5/6 rounded bg-navy-700/30 animate-pulse mb-2" />
-          <div className="h-4 w-3/4 rounded bg-navy-700/30 animate-pulse mb-5" />
-          <div className="flex gap-4 mb-5">
-            <div className="h-4 w-16 rounded bg-navy-700/30 animate-pulse" />
-            <div className="h-4 w-20 rounded bg-navy-700/30 animate-pulse" />
-            <div className="h-4 w-12 rounded bg-navy-700/30 animate-pulse" />
-          </div>
-          <div className="flex justify-between pt-4 border-t border-navy-700/40">
-            <div className="h-3 w-24 rounded bg-navy-700/30 animate-pulse" />
-            <div className="h-4 w-16 rounded bg-navy-700/30 animate-pulse" />
+          <div className="aspect-video animate-pulse bg-white/10" />
+          <div className="space-y-3 p-4 pb-5">
+            <div className="h-5 w-4/5 animate-pulse rounded-lg bg-white/10" />
+            <div className="h-3 w-full animate-pulse rounded bg-white/[0.05]" />
+            <div className="h-3 w-2/3 animate-pulse rounded bg-white/[0.05]" />
           </div>
         </motion.div>
       ))}

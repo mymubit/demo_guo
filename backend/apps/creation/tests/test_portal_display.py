@@ -22,6 +22,16 @@ class PortalDisplayTests(SimpleTestCase):
         log = portal_gate_log({"passed": False, "issues": issues})
         self.assertEqual(len(log["issues"]), 5)
 
+    def test_portal_gate_log_includes_user_acknowledged(self):
+        log = portal_gate_log(
+            {
+                "passed": False,
+                "issues": ["年龄不一致"],
+                "userAcknowledgedAt": "2026-06-16T12:00:00+00:00",
+            }
+        )
+        self.assertEqual(log["userAcknowledgedAt"], "2026-06-16T12:00:00+00:00")
+
     def test_portal_sanitize_reversal_strips_weapon_fields(self):
         rev = portal_sanitize_reversal(
             {

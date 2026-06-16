@@ -384,9 +384,9 @@ def build_editor_view(project: Project, node_index: int) -> Optional[dict]:
         if not payload:
             return None
         bible_view = portal_sanitize_character_bible_view(build_character_bible_view(payload))
-        gate = portal_gate_log(
-            payload.get("characterGateLog") if isinstance(payload.get("characterGateLog"), dict) else {}
-        )
+        from .workspace_content import resolve_character_gate_log
+
+        gate = portal_gate_log(resolve_character_gate_log(payload))
         return {
             "mode": "characters",
             "editable": True,
@@ -503,6 +503,10 @@ def build_editor_view(project: Project, node_index: int) -> Optional[dict]:
         }
 
     if node_index == 5:
+        from ..script_normalizer import apply_script_normalizer
+
+        brief = get_artifact(project, "project_brief") or {}
+        payload, _ = apply_script_normalizer(payload, brief)
         eps_in = payload.get("episodes") or []
         episodes = []
         for ep in eps_in:
@@ -518,7 +522,7 @@ def build_editor_view(project: Project, node_index: int) -> Optional[dict]:
                         "title": ep.get("title") or "",
                         "scriptMarkdown": ep.get("scriptMarkdown") or ep.get("full_script_text") or "",
                         "wordCount": ep.get("wordCount") or 0,
-                        "sceneCount": ep.get("sceneCount") or 0,
+                        "sceneCount": ep.get("sceneCount") or len(ep.get("scenes") or []),
                         "gateLog": gate,
                         "gatePassed": gate.get("passed") if gate else None,
                         "polishRevisionNotes": notes,
@@ -796,6 +800,9 @@ def apply_editor_save(project: Project, node_index: int, data: dict) -> dict:
             if isinstance(items, list):
                 payload[bucket] = [_patch_char(c) for c in items if isinstance(c, dict)]
 
+        from ..orchestration.agent_detection import run_character_gate
+
+        payload["characterGateLog"] = run_character_gate(payload)
         save_artifact(project, key, payload)
         count = build_character_bible_view(payload)["characterCount"]
         _mark_skill_has_content(project, 3, f"人物小传 · {count} 人")

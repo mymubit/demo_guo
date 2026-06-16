@@ -89,7 +89,7 @@ export default function OrdersAdmin() {
     <AdminShell actions={<AdminDashboardHints scope="orders" />}>
       <AdminMessage message={message} onClose={() => setMessage(null)} />
 
-      <p className="text-sm text-navy-400 rounded-xl border border-navy-700/40 bg-navy-900/40 px-4 py-3 mb-4">
+      <p className="text-sm text-navy-400 rounded-xl border border-white/5 bg-slate-900/60 px-4 py-3 mb-4">
         {ORDERS_PAGE_NOTE}
       </p>
 
@@ -120,7 +120,7 @@ export default function OrdersAdmin() {
                 setPage(1)
               }}
               className={`px-4 py-2.5 rounded-xl text-sm ${
-                status === tab.key ? 'btn-gold' : 'bg-navy-800/60 text-navy-200'
+                status === tab.key ? 'btn-gold' : 'border border-white/10 bg-white/[0.03] text-navy-200'
               }`}
             >
               {tab.label}

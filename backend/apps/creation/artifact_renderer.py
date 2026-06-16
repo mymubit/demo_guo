@@ -3,10 +3,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List
-
-# skill-thresholds outputCompleteness 默认：第1集≥900字，其余≥700字
-_GATE_MIN_WORDS = {1: 900, "default": 700}
+from typing import Dict, List
 
 
 def _cjk_len(text: str) -> int:
@@ -15,21 +12,6 @@ def _cjk_len(text: str) -> int:
 
 def _dialogue_line(speaker: str, line: str) -> str:
     return f"{speaker}：{line}"
-
-
-def _pad_episode_markdown(body: str, ep_num: int, min_cjk: int) -> str:
-    """补足 gate 字数门槛（仅影响 sub-gate 检测用 MD，不改 JSON 载荷）。"""
-    if _cjk_len(body) >= min_cjk:
-        return body
-    pad_lines = []
-    idx = 0
-    while _cjk_len(body + "\n".join(pad_lines)) < min_cjk:
-        idx += 1
-        pad_lines.append(f"△ 林晚将证据逐页摊开，逼对方正视代价（{idx}）")
-        pad_lines.append(_dialogue_line("林晚", f"这一页记录你转移资产的每一笔（{idx}）"))
-        if idx > 80:
-            break
-    return body + "\n\n" + "\n".join(pad_lines)
 
 
 def outline_to_gate_markdown(outline: dict) -> str:
@@ -54,8 +36,8 @@ def outline_to_gate_markdown(outline: dict) -> str:
     return "\n".join(parts).strip()
 
 
-def episode_to_gate_markdown(ep: dict) -> str:
-    """单集 markdown，供 sub-gate --episode（商业场头 + 足够对白/字数）。"""
+def episode_to_markdown(ep: dict) -> str:
+    """单集商业剧本 markdown（展示、持久化、sub-gate 质检同源）。"""
     ep_num = ep.get("episodeNumber") or 1
     lines = [f"# 第{ep_num}集"]
 
@@ -76,15 +58,18 @@ def episode_to_gate_markdown(ep: dict) -> str:
                 sp, line = "角色", str(dlg)
             lines.append(_dialogue_line(sp, line))
 
-    body = "\n".join(lines).strip()
-    min_cjk = _GATE_MIN_WORDS.get(ep_num, _GATE_MIN_WORDS["default"])
-    return _pad_episode_markdown(body, ep_num, min_cjk)
+    return "\n".join(lines).strip()
+
+
+# 向后兼容别名：全链路统一使用 episode_to_markdown，禁止对正文做任何人工扩写
+episode_to_display_markdown = episode_to_markdown
+episode_to_gate_markdown = episode_to_markdown
 
 
 def episode_scripts_to_markdown(episode_scripts: dict) -> str:
     parts: List[str] = []
     for ep in episode_scripts.get("episodes") or []:
-        md = episode_to_gate_markdown(ep)
+        md = episode_to_markdown(ep)
         if md:
             parts.append(md)
     return "\n\n".join(parts)
@@ -95,14 +80,14 @@ def episode_scripts_to_legacy_scripts(episode_scripts: dict) -> dict:
     total_words = 0
     total_scenes = 0
     for ep in episode_scripts.get("episodes") or []:
-        md = episode_to_gate_markdown(ep)
+        md = episode_to_markdown(ep)
         total_words += _cjk_len(md)
         total_scenes += len(ep.get("scenes") or [])
         episodes.append(
             {
                 "episode": ep.get("episodeNumber"),
                 "title": ep.get("title"),
-                "full_script_text": _episode_to_md(ep),
+                "full_script_text": md or _episode_to_md(ep),
                 "word_count": _cjk_len(md),
                 "scenes_count": len(ep.get("scenes") or []),
                 "gate_log": ep.get("gateLog"),

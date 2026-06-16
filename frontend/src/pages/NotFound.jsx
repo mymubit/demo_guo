@@ -1,67 +1,39 @@
-import { motion } from 'framer-motion'
+﻿import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Home, ArrowLeft, Film, Compass, Search, AlertTriangle } from 'lucide-react'
+import { Home, ArrowLeft, Film, Compass, Search, AlertTriangle, Crown } from 'lucide-react'
+import { pageEnter } from '@/constants/motion'
+
+const SUGGESTIONS = [
+  { name: '首页', icon: Home, path: '/' },
+  { name: '开始创作', icon: Film, path: '/creation' },
+  { name: '我的作品', icon: Film, path: '/works' },
+  { name: '会员中心', icon: Crown, path: '/member' },
+]
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-navy-950 via-navy-900 to-navy-950 flex items-center justify-center px-6 relative overflow-hidden">
-      {/* 背景装饰 */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-purple-600/10 blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-gold-500/10 blur-3xl" />
-      </div>
+    <motion.div
+      {...pageEnter}
+      className="flex min-h-screen items-center justify-center bg-navy-950 px-6 py-16"
+    >
+      <div className="w-full max-w-2xl text-center">
+        <div className="relative mb-8 inline-block">
+          <div className="mx-auto grid h-24 w-24 place-items-center rounded-2xl border border-white/10 bg-white/[0.03]">
+            <Compass className="h-12 w-12 text-gold-400" />
+          </div>
+        </div>
 
-      <div className="relative z-10 max-w-2xl w-full text-center">
-        {/* 图标 */}
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="relative inline-block mb-8"
-        >
-          <motion.div
-            animate={{ rotate: [0, 5, -5, 5, 0] }}
-            transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
-            className="w-28 h-28 rounded-3xl mx-auto flex items-center justify-center"
-            style={{
-              background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%)',
-              border: '1px solid rgba(102, 126, 234, 0.3)',
-            }}
-          >
-            <Compass className="w-14 h-14 text-purple-400" />
-          </motion.div>
-        </motion.div>
+        <h1 className="mb-4 text-7xl font-bold text-white md:text-8xl">
+          <span className="gradient-text">404</span>
+        </h1>
+        <h2 className="mb-4 text-2xl font-bold text-white md:text-3xl">页面不存在</h2>
+        <p className="mx-auto mb-10 max-w-md text-lg leading-relaxed text-navy-300">
+          很抱歉，你访问的页面可能已经被删除、重命名或暂时不可用。让我们帮你回到正确的轨道。
+        </p>
 
-        {/* 404 文字 */}
-        <motion.div
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.1, duration: 0.6 }}
-        >
-          <h1 className="text-8xl md:text-9xl font-bold mb-4">
-            <span className="gradient-text">404</span>
-          </h1>
-          <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
-            页面不存在
-          </h2>
-          <p className="text-navy-300 text-lg mb-10 max-w-md mx-auto leading-relaxed">
-            很抱歉，你访问的页面可能已经被删除、重命名或暂时不可用。
-            让我们帮你回到正确的轨道。
-          </p>
-        </motion.div>
-
-        {/* 按钮组 */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12"
-        >
-          <Link
-            to="/"
-            className="btn-gold text-base inline-flex items-center gap-2 !py-4 !px-8"
-          >
-            <Home className="w-5 h-5" />
+        <div className="mb-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <Link to="/" className="btn-gold inline-flex items-center gap-2 !px-8 !py-4 text-base">
+            <Home className="h-5 w-5" />
             返回首页
           </Link>
           <Link
@@ -70,56 +42,39 @@ export default function NotFound() {
               e.preventDefault()
               window.history.back()
             }}
-            className="btn-ghost text-base inline-flex items-center gap-2 !py-4 !px-8"
+            className="btn-ghost inline-flex items-center gap-2 !px-8 !py-4 text-base"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="h-5 w-5" />
             上一页
           </Link>
-        </motion.div>
+        </div>
 
-        {/* 建议链接 */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.6 }}
-          className="glass-card rounded-3xl p-6 md:p-8"
-        >
-          <h3 className="text-white font-semibold mb-5 flex items-center justify-center gap-2">
-            <Search className="w-4 h-4 text-gold-400" />
+        <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-6 md:p-8">
+          <h3 className="mb-5 flex items-center justify-center gap-2 font-semibold text-white">
+            <Search className="h-4 w-4 text-gold-400" />
             你可能想访问
           </h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[
-              { name: '首页', icon: Home, path: '/' },
-              { name: '开始创作', icon: Film, path: '/creation' },
-              { name: '我的作品', icon: Film, path: '/works' },
-              { name: '会员中心', icon: Film, path: '/member' },
-            ].map((item, idx) => (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            {SUGGESTIONS.map((item) => (
               <Link
-                key={idx}
+                key={item.path}
                 to={item.path}
-                className="p-4 rounded-xl bg-navy-800/50 hover:bg-navy-700/50 border border-navy-700/30 hover:border-gold-500/40 transition-all group"
+                className="group rounded-xl border border-white/5 bg-white/[0.02] p-4 transition-all hover:border-gold-400/40 hover:bg-gold-400/5"
               >
-                <item.icon className="w-5 h-5 text-navy-300 group-hover:text-gold-400 transition-colors mx-auto mb-2" />
-                <span className="text-sm text-navy-200 group-hover:text-white transition-colors">
+                <item.icon className="mx-auto mb-2 h-5 w-5 text-navy-300 transition-colors group-hover:text-gold-400" />
+                <span className="text-sm text-navy-200 transition-colors group-hover:text-white">
                   {item.name}
                 </span>
               </Link>
             ))}
           </div>
-        </motion.div>
+        </div>
 
-        {/* 底部提示 */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="mt-10 text-sm text-navy-500 flex items-center justify-center gap-2"
-        >
-          <AlertTriangle className="w-4 h-4" />
+        <p className="mt-10 flex items-center justify-center gap-2 text-sm text-navy-400">
+          <AlertTriangle className="h-4 w-4" />
           如果你认为这是一个错误，请联系管理员或稍后再试
-        </motion.p>
+        </p>
       </div>
-    </div>
+    </motion.div>
   )
 }

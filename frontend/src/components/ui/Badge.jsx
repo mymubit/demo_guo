@@ -1,7 +1,7 @@
 import { cn } from '@/utils/cn'
 
 const tones = {
-  default: 'border-navy-700/45 bg-navy-800/55 text-navy-200',
+  default: 'border-white/10 bg-slate-800/55 text-navy-200',
   gold: 'border-gold-400/30 bg-gold-400/14 text-gold-300',
   success: 'border-success-500/30 bg-success-500/12 text-success-300',
   warning: 'border-warning-500/30 bg-warning-500/12 text-warning-300',

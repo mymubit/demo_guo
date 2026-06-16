@@ -52,24 +52,19 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-navy-950 via-navy-900 to-navy-950 flex items-center justify-center px-6 relative overflow-hidden">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-purple-600/20 blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full bg-gold-500/15 blur-3xl" />
-      </div>
-
+    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-6">
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative z-10 w-full max-w-md"
       >
-        <div className="text-center mb-8">
-          <BrandLogo variant="admin" size="lg" to={null} showText={false} className="justify-center mb-4" />
-          <h1 className="text-2xl font-bold text-white mb-1">ScriptForge 管理后台</h1>
-          <p className="text-navy-300 text-sm">使用管理员手机号登录（需 is_staff 权限）</p>
+        <div className="mb-8 text-center">
+          <BrandLogo variant="admin" size="lg" to={null} showText={false} className="mb-4 justify-center" />
+          <h1 className="mb-1 text-2xl font-bold text-white">ScriptForge 管理后台</h1>
+          <p className="text-sm text-slate-400">使用管理员手机号登录（需 is_staff 权限）</p>
         </div>
 
-        <div className="glass-card rounded-3xl p-8">
+        <div className="sf-console-panel rounded-3xl p-8">
           <div className="flex items-center gap-3 mb-6 px-4 py-3 rounded-xl bg-gold-500/10 border border-gold-500/30">
             <Shield className="w-5 h-5 text-gold-400 flex-shrink-0" />
             <span className="text-sm text-gold-400">独立管理控制台 · 非 Django Admin</span>
@@ -92,7 +87,7 @@ export default function AdminLogin() {
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   placeholder="11 位手机号"
-                  className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white placeholder:text-navy-500 focus:outline-none focus:border-gold-500/60"
+                  className="sf-control pl-12"
                   autoComplete="username"
                 />
               </div>
@@ -107,7 +102,7 @@ export default function AdminLogin() {
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   placeholder="请输入密码"
-                  className="w-full pl-12 pr-12 py-3.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white placeholder:text-navy-500 focus:outline-none focus:border-gold-500/60"
+                  className="sf-control pl-12 pr-12"
                   autoComplete="current-password"
                 />
                 <button
@@ -129,7 +124,7 @@ export default function AdminLogin() {
             </button>
           </form>
 
-          <div className="mt-6 pt-6 border-t border-navy-700/40">
+          <div className="mt-6 pt-6 border-t border-white/5">
             <Link to="/" className="text-navy-400 hover:text-white text-sm flex items-center gap-1">
               <ArrowRight className="w-4 h-4 rotate-180" />
               返回主站

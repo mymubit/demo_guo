@@ -334,9 +334,8 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
     }
   }
 
-  const inputCls =
-    'w-full px-3 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm focus:border-gold-500/50 outline-none'
-  const labelCls = 'text-xs text-navy-400 mb-1 block'
+  const inputCls = 'sf-control text-sm'
+  const labelCls = 'sf-label text-xs'
 
   if (loading) {
     return <div className="text-center py-16 text-navy-400">加载创作表单配置…</div>
@@ -352,27 +351,31 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
   return (
     <div className="space-y-5 pb-24">
       {!embedded ? (
-        <div className="glass-card rounded-2xl p-5 border border-gold-500/20 bg-gradient-to-r from-gold-500/5 to-transparent">
+        <div className="sf-console-panel p-5 border border-gold-500/20 bg-gradient-to-r from-gold-500/5 to-transparent">
           <h2 className="text-lg font-bold text-white mb-1">创作页配置</h2>
           <p className="text-sm text-navy-300 leading-relaxed">
             用户在 C 端「发起创作」看到的入口、题材、参数与表单文案，<strong className="text-gold-300">全部存数据库</strong>
             。保存后用户刷新创作页即生效；与主链 Agent 提示词无关。
           </p>
-          <p className="text-xs text-navy-500 mt-2">
+          <p className="text-xs text-navy-400 mt-2">
             主链步骤与扣费请前往
-            <Link to="/admin/main-chain" className="text-gold-400 hover:underline mx-1">
-              主链工作室
+            <Link to="/admin/orchestration?tab=flow" className="text-gold-400 hover:underline mx-1">
+              流程编排
             </Link>
           </p>
         </div>
       ) : null}
 
       <AdminTabBar tabs={FORM_SUB_TABS} active={subTab} onChange={setSubTab} stretch />
-      <p className="text-sm text-navy-400">{CREATION_FORM_TAB_HINTS[subTab] || ''}</p>
+      {CREATION_FORM_TAB_HINTS[subTab] ? (
+        <p className="text-xs text-navy-400 border-l-2 border-gold-500/25 pl-3 leading-relaxed">
+          {CREATION_FORM_TAB_HINTS[subTab]}
+        </p>
+      ) : null}
 
       {subTab === 'entries' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          <div className="lg:col-span-4 space-y-2">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-4 space-y-2 sf-console-panel-subtle p-3">
             <div className="flex items-center justify-between px-1 mb-2">
               <p className="text-xs text-navy-400">选择要配置的入口（与 C 端顶部 Tab 一致）</p>
               <button
@@ -394,7 +397,7 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
                   className={`w-full text-left p-4 rounded-2xl border transition-all ${
                     active
                       ? 'border-gold-400/50 bg-gold-400/10 ring-1 ring-gold-400/30'
-                      : 'border-navy-700/40 bg-navy-800/30 hover:bg-navy-800/50'
+                      : 'border-white/10 bg-white/[0.03] hover:bg-white/[0.06]'
                   }`}
                 >
                   <div className={`font-semibold ${active ? 'text-gold-300' : 'text-white'}`}>
@@ -402,7 +405,7 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
                   </div>
                   <div className="flex flex-wrap gap-1 mt-2">
                     {entryPreviewChips(entry.key).map((c) => (
-                      <span key={c} className="text-[10px] px-1.5 py-0.5 rounded bg-navy-900/60 text-navy-400">
+                      <span key={c} className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[10px] text-slate-400">
                         {c}
                       </span>
                     ))}
@@ -412,10 +415,10 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
             })}
           </div>
 
-          <div className="lg:col-span-8 glass-card rounded-2xl p-6 space-y-6">
+          <div className="lg:col-span-8 sf-console-panel p-6 space-y-6">
             <div>
               <h3 className="text-white font-semibold text-lg">{getCatalogEntry(activeEntry).name}</h3>
-              <p className="text-xs text-navy-500 font-mono mt-0.5">{activeEntry}</p>
+              <p className="text-xs text-navy-300 font-mono mt-0.5">{activeEntry}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -517,7 +520,7 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
                   if (block.isRef) {
                     const val = show.referenceBlock || 'optional'
                     return (
-                      <div key={block.key} className="p-3 rounded-xl bg-navy-900/40 border border-navy-700/40">
+                      <div key={block.key} className="rounded-xl border border-white/5 bg-slate-900/40 p-3">
                         <div className="text-sm text-navy-200 mb-2">{block.label}</div>
                         <div className="flex gap-1 flex-wrap">
                           {[
@@ -532,7 +535,7 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
                               className={`px-2.5 py-1 rounded-lg text-xs ${
                                 val === opt.v
                                   ? 'bg-gold-400/20 text-gold-300'
-                                  : 'bg-navy-800/60 text-navy-400'
+                                  : 'border border-white/10 bg-white/[0.03] text-slate-400'
                               }`}
                             >
                               {opt.l}
@@ -550,7 +553,7 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
                     <label
                       key={block.key}
                       className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer ${
-                        isOn ? 'border-gold-500/30 bg-gold-500/5' : 'border-navy-700/40 bg-navy-900/30'
+                        isOn ? 'border-gold-500/30 bg-gold-500/5' : 'border-white/10 bg-white/[0.03]'
                       }`}
                     >
                       <input
@@ -566,11 +569,11 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl border border-navy-700/40 bg-navy-900/30 space-y-4">
+            <div className="p-4 rounded-xl border border-white/5 bg-slate-900/40 space-y-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <h4 className="text-sm font-semibold text-white">入口执行与校验规则</h4>
-                  <p className="text-xs text-navy-500 mt-1">保存后同时影响 C 端前置校验与后端提交校验。</p>
+                  <p className="text-xs text-navy-400 mt-1">保存后同时影响 C 端前置校验与后端提交校验。</p>
                 </div>
                 <label className="flex items-center gap-2 text-sm text-navy-200">
                   <input
@@ -610,7 +613,7 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
               <h4 className="text-sm font-semibold text-white mb-3">输入区文案（仅已启用的区块）</h4>
               <div className="space-y-4">
                 {FIELD_BLOCKS.filter((b) => isFieldBlockVisible(activeEntry, b.key)).map((block) => (
-                  <div key={block.key} className="p-4 rounded-xl border border-navy-700/40 bg-navy-900/30 space-y-3">
+                  <div key={block.key} className="p-4 rounded-xl border border-white/5 bg-slate-900/40 space-y-3">
                     <div className="text-sm font-medium text-gold-400/90">{block.label}</div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <label className="block">
@@ -641,7 +644,7 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
                   </div>
                 ))}
                 {FIELD_BLOCKS.every((b) => !isFieldBlockVisible(activeEntry, b.key)) && (
-                  <p className="text-sm text-navy-500 py-4 text-center">请在上方勾选需要文案的输入区块</p>
+                  <p className="text-sm text-navy-400 py-4 text-center">请在上方勾选需要文案的输入区块</p>
                 )}
               </div>
             </div>
@@ -654,7 +657,7 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
           {(form.themes || []).map((item, idx) => (
             <div
               key={item.key}
-              className={`glass-card rounded-2xl p-5 space-y-3 ${item.enabled === false ? 'opacity-50' : ''}`}
+              className={`sf-console-panel p-5 space-y-3 ${item.enabled === false ? 'opacity-50' : ''}`}
             >
               <div className="flex items-center justify-between">
                 <span className="text-2xl">{item.icon || '🎬'}</span>
@@ -667,7 +670,7 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
                   启用
                 </label>
               </div>
-              <div className="text-xs text-navy-500 font-mono">{item.key}</div>
+              <div className="text-xs text-navy-300 font-mono">{item.key}</div>
               <label className="block">
                 <span className={labelCls}>显示名称</span>
                 <input
@@ -691,7 +694,7 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
                     type="color"
                     value={item.color || '#667eea'}
                     onChange={(e) => patchTheme(idx, 'color', e.target.value)}
-                    className="h-[42px] w-14 rounded-xl border border-navy-700/40 cursor-pointer"
+                    className="h-[42px] w-14 cursor-pointer rounded-xl border border-white/10"
                   />
                 </label>
               </div>
@@ -702,14 +705,14 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
 
       {subTab === 'params' && (
         <div className="space-y-6">
-          <div className="glass-card rounded-2xl p-6">
+          <div className="sf-console-panel p-6">
             <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
               <Gauge className="w-4 h-4 text-gold-400" /> 预算档位
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {(form.budgetLevels || []).map((item, idx) => (
-                <div key={item.key} className="p-4 rounded-xl bg-navy-900/40 border border-navy-700/40 space-y-2">
-                  <div className="text-xs text-navy-500">{item.key}</div>
+                <div key={item.key} className="space-y-2 rounded-xl border border-white/5 bg-slate-900/40 p-4">
+                  <div className="text-xs text-navy-300 font-mono">{item.key}</div>
                   <input
                     value={item.name || ''}
                     placeholder="名称"
@@ -728,14 +731,14 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
             </div>
           </div>
 
-          <div className="glass-card rounded-2xl p-6">
+          <div className="sf-console-panel p-6">
             <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
               <Compass className="w-4 h-4 text-gold-400" /> 目标平台
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {(form.platforms || []).map((item, idx) => (
-                <div key={item.key} className="p-4 rounded-xl bg-navy-900/40 border border-navy-700/40 space-y-2">
-                  <div className="text-xs text-navy-500">{item.key}</div>
+                <div key={item.key} className="space-y-2 rounded-xl border border-white/5 bg-slate-900/40 p-4">
+                  <div className="text-xs text-navy-300 font-mono">{item.key}</div>
                   <input
                     value={item.name || ''}
                     onChange={(e) => patchList('platforms', idx, 'name', e.target.value)}
@@ -753,7 +756,7 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
             </div>
           </div>
 
-          <div className="glass-card rounded-2xl p-6">
+          <div className="sf-console-panel p-6">
             <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
               <Clock className="w-4 h-4 text-gold-400" /> 集数规则
             </h3>
@@ -786,14 +789,14 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
             </label>
           </div>
 
-          <div className="glass-card rounded-2xl p-6">
+          <div className="sf-console-panel p-6">
             <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
               <LayoutList className="w-4 h-4 text-gold-400" /> 格式变体
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {(form.formatVariants || []).map((item, idx) => (
-                <div key={item.key} className="p-4 rounded-xl bg-navy-900/40 border border-navy-700/40 space-y-2">
-                  <div className="text-xs text-navy-500">格式 {item.key}</div>
+                <div key={item.key} className="space-y-2 rounded-xl border border-white/5 bg-slate-900/40 p-4">
+                  <div className="text-xs text-navy-300 font-mono">格式 {item.key}</div>
                   <input
                     value={item.name || ''}
                     onChange={(e) => patchList('formatVariants', idx, 'name', e.target.value)}
@@ -814,10 +817,10 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
       )}
 
       {subTab === 'copy' && (
-        <div className="glass-card rounded-2xl p-6 space-y-4">
+        <div className="sf-console-panel p-6 space-y-4">
           <p className="text-sm text-navy-400 mb-2">修改 C 端各区块的标题与副标题（与具体入口无关的通用文案）</p>
           {Object.entries(form.sections || {}).map(([key, block]) => (
-            <div key={key} className="p-4 rounded-xl bg-navy-900/30 border border-navy-700/40">
+            <div key={key} className="rounded-xl border border-white/5 bg-slate-900/40 p-4">
               <div className="text-sm text-gold-400/80 mb-3">{SECTION_TITLE_LABELS[key] || key}</div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <label className="block">
@@ -842,7 +845,7 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
         </div>
       )}
 
-      <div className="fixed bottom-0 left-0 right-0 md:left-64 z-30 px-6 py-4 bg-navy-950/90 border-t border-navy-800/60 backdrop-blur-md flex items-center justify-between gap-4">
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/5 bg-slate-950/90 px-6 py-4 backdrop-blur-md md:left-64 flex items-center justify-between gap-4">
         <p className="text-sm text-navy-400 hidden sm:block">
           配置包 {skillVersion || '—'} · 保存后 C 端刷新创作页生效
         </p>

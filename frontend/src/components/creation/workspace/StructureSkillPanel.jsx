@@ -4,6 +4,7 @@ import RhythmCurveChart from './RhythmCurveChart'
 import {
   RhythmBeatList,
   ReversalTimeline,
+  ActStructureSummary,
   StoryStructurePanel,
   StructureMetaStrip,
   WorldviewPanel,
@@ -18,7 +19,7 @@ export default function StructureSkillPanel({ draft, editMode, onDraftChange, sa
   const constraints = plan.structuralConstraints || {}
 
   const inputClass =
-    'w-full rounded-xl bg-navy-950/50 border border-navy-600/30 text-white text-sm px-4 py-3 focus:border-gold-400/50 outline-none resize-y'
+    'sf-control resize-y'
 
   const hasWorldviewContentData = hasWorldviewContent(wv)
   const validationLog = plan.worldValidationLog
@@ -82,6 +83,16 @@ export default function StructureSkillPanel({ draft, editMode, onDraftChange, sa
       structurePlan: {
         ...(prev.structurePlan || {}),
         worldview: { ...(prev.structurePlan?.worldview || {}), [key]: value },
+      },
+    }))
+  }
+
+  function updateWorkingTitle(value) {
+    onDraftChange((prev) => ({
+      ...prev,
+      structurePlan: {
+        ...(prev.structurePlan || {}),
+        workingTitle: value,
       },
     }))
   }
@@ -154,7 +165,6 @@ export default function StructureSkillPanel({ draft, editMode, onDraftChange, sa
         <StoryStructurePanel
           arc={arc}
           stages={plan.sixStagePlan || []}
-          actStructure={plan.actStructure || {}}
           sankeyOption={structureSankey.option}
           sankeyHeight={structureSankey.height}
           editMode={editMode}
@@ -199,15 +209,33 @@ export default function StructureSkillPanel({ draft, editMode, onDraftChange, sa
           : []
 
       return (
-        <WorldviewPanel
-          worldview={wv}
-          validationLog={validationLog}
-          validationIssues={validationIssues}
-          editMode={editMode}
-          inputClass={inputClass}
-          onUpdateField={updateWorldview}
-          onUpdateRootRules={updateRootRules}
-        />
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-gold-400/20 bg-gold-400/10 px-5 py-4">
+            <div className="text-xs font-medium text-gold-300 mb-1">依据世界观生成的建议剧名</div>
+            {editMode ? (
+              <input
+                type="text"
+                value={plan.workingTitle || ''}
+                onChange={(e) => updateWorkingTitle(e.target.value)}
+                className={inputClass}
+                placeholder="请输入建议剧名"
+              />
+            ) : (
+              <div className="text-lg font-bold text-white leading-snug">
+                {plan.workingTitle || '待生成'}
+              </div>
+            )}
+          </div>
+          <WorldviewPanel
+            worldview={wv}
+            validationLog={validationLog}
+            validationIssues={validationIssues}
+            editMode={editMode}
+            inputClass={inputClass}
+            onUpdateField={updateWorldview}
+            onUpdateRootRules={updateRootRules}
+          />
+        </div>
       )
     }
 
@@ -249,6 +277,11 @@ export default function StructureSkillPanel({ draft, editMode, onDraftChange, sa
   return (
     <StructureSectionLayout
       meta={metaChips}
+      headerExtra={
+        activeId === 'structure' ? (
+          <ActStructureSummary actStructure={plan.actStructure || {}} />
+        ) : null
+      }
       sections={sections}
       activeId={activeId}
       onSelect={setActiveId}

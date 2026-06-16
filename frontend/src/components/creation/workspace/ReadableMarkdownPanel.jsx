@@ -1,4 +1,4 @@
-import { FileText } from 'lucide-react'
+﻿import { FileText } from 'lucide-react'
 
 export default function ReadableMarkdownPanel({ markdown, title = '可读预览' }) {
   if (!markdown?.trim()) {
@@ -10,11 +10,11 @@ export default function ReadableMarkdownPanel({ markdown, title = '可读预览'
   }
 
   return (
-    <div className="rounded-2xl bg-navy-800/20 border border-navy-700/30 overflow-hidden">
-      <div className="flex items-center gap-2 px-5 py-3 border-b border-navy-700/30 bg-navy-900/30">
+    <div className="overflow-hidden rounded-2xl border border-white/5 bg-slate-900/40">
+      <div className="flex items-center gap-2 border-b border-white/5 bg-slate-900/60 px-5 py-3">
         <FileText className="w-4 h-4 text-gold-400/80" />
         <span className="text-sm text-navy-200">{title}</span>
-        <span className="text-[10px] text-navy-500 ml-auto">Markdown 原文</span>
+        <span className="text-[10px] text-navy-400 ml-auto">Markdown 原文</span>
       </div>
       <pre className="text-sm text-navy-100 whitespace-pre-wrap leading-relaxed font-sans px-5 py-4 max-h-[70vh] overflow-y-auto">
         {markdown}

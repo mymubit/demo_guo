@@ -10,7 +10,10 @@ from apps.console.workflow.fusion_views import (
     FusionPipelineImportView,
     FusionPipelineMetaView,
     FusionPipelinePackActivateView,
+    FusionPipelinePackDetailView,
     FusionPipelinePackListView,
+    FusionPipelinePackPublishView,
+    FusionPipelinePackSetDefaultView,
 )
 from apps.console.workflow.pipeline_views import (
     PipelineStepListView,
@@ -42,6 +45,14 @@ from apps.console.orchestration.execution_views import (
     AgentExecutionRunDetailView,
     AgentProjectTraceView,
     AgentSubSkillStatsView,
+    OrchestrationRecentRunsView,
+)
+from apps.console.orchestration.flow_views import (
+    OrchestrationFlowBlueprintView,
+    OrchestrationFlowPublishView,
+    OrchestrationFlowRegistryMetaView,
+    OrchestrationFlowStepPatchView,
+    OrchestrationFlowStepsReorderView,
 )
 from apps.console.agent.registry_views import (
     AgentRegistryConfigView,
@@ -133,9 +144,24 @@ _main_chain_routes = [
     path("main-chain/fusion/import/", FusionPipelineImportView.as_view(), name="admin-main-chain-fusion-import"),
     path("main-chain/fusion/packs/", FusionPipelinePackListView.as_view(), name="admin-main-chain-fusion-packs"),
     path(
+        "main-chain/fusion/packs/<uuid:pack_id>/",
+        FusionPipelinePackDetailView.as_view(),
+        name="admin-main-chain-fusion-pack-detail",
+    ),
+    path(
         "main-chain/fusion/packs/<uuid:pack_id>/activate/",
         FusionPipelinePackActivateView.as_view(),
         name="admin-main-chain-fusion-pack-activate",
+    ),
+    path(
+        "main-chain/fusion/packs/<uuid:pack_id>/set-default/",
+        FusionPipelinePackSetDefaultView.as_view(),
+        name="admin-main-chain-fusion-pack-set-default",
+    ),
+    path(
+        "main-chain/fusion/packs/<uuid:pack_id>/publish/",
+        FusionPipelinePackPublishView.as_view(),
+        name="admin-main-chain-fusion-pack-publish",
     ),
 ]
 
@@ -151,9 +177,35 @@ _agent_routes = [
     path("agent/catalog/", AgentCatalogAdminView.as_view(), name="admin-agent-catalog"),
 ]
 
-# 调度监察
+# 调度监察 + 流程编排
 _orchestration_routes = [
+    path("orchestration/flow/blueprint/", OrchestrationFlowBlueprintView.as_view(), name="admin-orchestration-flow-blueprint"),
+    path(
+        "orchestration/flow/steps/reorder/",
+        OrchestrationFlowStepsReorderView.as_view(),
+        name="admin-orchestration-flow-steps-reorder",
+    ),
+    path(
+        "orchestration/flow/steps/<uuid:step_id>/",
+        OrchestrationFlowStepPatchView.as_view(),
+        name="admin-orchestration-flow-step-patch",
+    ),
+    path(
+        "orchestration/flow/registry-meta/",
+        OrchestrationFlowRegistryMetaView.as_view(),
+        name="admin-orchestration-flow-registry-meta",
+    ),
+    path(
+        "orchestration/flow/publish/",
+        OrchestrationFlowPublishView.as_view(),
+        name="admin-orchestration-flow-publish",
+    ),
     path("orchestration/stats/", AgentSubSkillStatsView.as_view(), name="admin-orchestration-stats"),
+    path(
+        "orchestration/recent-runs/",
+        OrchestrationRecentRunsView.as_view(),
+        name="admin-orchestration-recent-runs",
+    ),
     path(
         "orchestration/projects/<str:project_id>/traces/",
         AgentProjectTraceView.as_view(),

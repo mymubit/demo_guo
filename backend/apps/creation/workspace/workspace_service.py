@@ -128,14 +128,45 @@ def _quality_alerts_for_node(
     if node_index == 2 and isinstance(payload, dict):
         val_log = payload.get("worldValidationLog") or {}
         compliance_warnings = val_log.get("complianceWarnings") or []
+        if compliance_warnings and any(
+            isinstance(w, dict) and not (w.get("matchedText") or w.get("excerpt"))
+            for w in compliance_warnings
+        ):
+            from ..orchestration.world_engine import _scan_world_compliance
+
+            compliance_warnings = _scan_world_compliance(payload)
         if compliance_warnings:
-            issues = [f"{w.get('category', '?')}：{w.get('constraint', '')}" for w in compliance_warnings[:4]]
+            details = []
+            issues = []
+            for warning in compliance_warnings[:4]:
+                if not isinstance(warning, dict):
+                    continue
+                category = str(warning.get("category") or "未知分类")
+                matched = str(warning.get("matchedText") or "").strip()
+                constraint = str(warning.get("constraint") or "").strip()
+                excerpt = str(warning.get("excerpt") or "").strip()
+                suggestion = str(warning.get("suggestion") or "").strip()
+                issues.append(
+                    f"{category}"
+                    f"{f'（命中：{matched}）' if matched else ''}"
+                    f"：{constraint}"
+                )
+                details.append(
+                    {
+                        "category": category,
+                        "matched_text": matched,
+                        "excerpt": excerpt,
+                        "constraint": constraint,
+                        "suggestion": suggestion,
+                    }
+                )
             alert = {
                 "level": "warning",
                 "code": "world-compliance-p1",
                 "title": f"世界观合规提示（P1·共{len(compliance_warnings)}项）",
-                "message": "世界观设定含敏感元素，请确认内容符合平台规范后再继续。生成不中断，但需在结局设计中遵守对应约束。",
+                "message": "以下设定触发平台合规扫描，请按命中片段逐项确认。生成不中断，但后续大纲/剧本必须遵守对应约束。",
                 "issues": issues,
+                "details": details,
             }
             if should_emit_quality_alert(
                 node_index, alert["code"], node_status=node_status, payload=payload, content_kind=content_kind
@@ -143,14 +174,17 @@ def _quality_alerts_for_node(
                 alerts.append(alert)
 
     if node_index == 3 and isinstance(payload, dict):
-        gate = payload.get("characterGateLog") or {}
-        if gate.get("passed") is False:
+        from .workspace_content import resolve_character_gate_log
+
+        gate = resolve_character_gate_log(payload)
+        if gate.get("passed") is False and not gate.get("userAcknowledgedAt"):
             alert = {
                 "level": "warning",
                 "code": "character-gate",
                 "title": "人设完整性待补全",
                 "message": "人物档案或关系网信息不完整，建议重新生成或手动编辑",
                 "issues": [str(i) for i in (gate.get("issues") or [])][:5],
+                "acknowledgable": True,
             }
             if should_emit_quality_alert(
                 node_index, alert["code"], node_status=node_status, payload=payload, content_kind=content_kind
@@ -234,6 +268,41 @@ def _has_artifact_content(project: Project, node_index: int) -> bool:
     return node_has_meaningful_content(project, node_index)
 
 
+def _reconcile_stale_running_nodes(project: Project) -> bool:
+    """项目已结束但节点仍 running 时回退（依赖快速失败等路径曾漏更新节点）。"""
+    if project.status == Project.STATUS_RUNNING:
+        return False
+    stale_nodes = list(project.nodes.filter(status=CreationNode.STATUS_RUNNING))
+    if not stale_nodes:
+        return False
+    err = _workspace_error_message(project)
+    for node in stale_nodes:
+        if project.status == Project.STATUS_FAILED:
+            node.status = CreationNode.STATUS_FAILED
+            node.error_message = err or node.error_message or ""
+            node.summary_text = "生成失败"
+        else:
+            node.status = CreationNode.STATUS_PENDING
+            node.error_message = ""
+            node.summary_text = ""
+        node.completed_at = None
+        node.save(
+            update_fields=[
+                "status",
+                "error_message",
+                "summary_text",
+                "completed_at",
+            ]
+        )
+        logger.warning(
+            "[Workspace] reconciled stale running node=%s project=%s project_status=%s",
+            node.node_index,
+            project.id,
+            project.status,
+        )
+    return True
+
+
 def _reconcile_workspace_node_status(project: Project) -> bool:
     """节点标为已完成但无实质产物时回退，避免 Tab 误显示绿勾。"""
     changed = False
@@ -265,6 +334,35 @@ def _reconcile_workspace_node_status(project: Project) -> bool:
         project.save(update_fields=["status", "error_message", "updated_at"])
         changed = True
     return changed
+
+
+def reconcile_workspace_brief_status(project: Project) -> bool:
+    """立项整理是用户提交确认内容，已有有效 brief 时状态应为 completed。"""
+    try:
+        node = project.nodes.get(node_index=1)
+    except CreationNode.DoesNotExist:
+        return False
+    if node.status == CreationNode.STATUS_COMPLETED:
+        return False
+    if not _has_artifact_content(project, 1):
+        return False
+
+    now = timezone.now()
+    node.status = CreationNode.STATUS_COMPLETED
+    node.summary_text = node.summary_text or "立项参数已确认"
+    node.error_message = ""
+    if not node.completed_at:
+        node.completed_at = now
+    node.save(
+        update_fields=[
+            "status",
+            "summary_text",
+            "error_message",
+            "completed_at",
+        ]
+    )
+    logger.info("[Workspace] reconciled brief node completed project=%s", project.id)
+    return True
 
 
 def _workspace_error_message(project: Project) -> str:
@@ -390,7 +488,11 @@ def build_workspace_payload(project: Project) -> Dict[str, Any]:
     ensure_brief_seed_enriched(project)
     if recover_stale_workspace_running_state(project):
         project.refresh_from_db()
+    if _reconcile_stale_running_nodes(project):
+        project.refresh_from_db()
     if _reconcile_workspace_node_status(project):
+        project.refresh_from_db()
+    if reconcile_workspace_brief_status(project):
         project.refresh_from_db()
 
     meta_by_index = WorkflowPipelineService.node_meta_by_index()
@@ -480,6 +582,10 @@ def build_workspace_payload(project: Project) -> Dict[str, Any]:
             "can_edit": idx >= 1,
             "hint": _AGENT_HINTS.get(idx, ""),
             "description": agent_def.get("description") or meta.get("description") or "",
+            "orchestration_stage_type": meta.get("orchestration_stage_type"),
+            "orchestration_stage_label": meta.get("orchestration_stage_label"),
+            "orchestration_parallel_peers": meta.get("orchestration_parallel_peers") or [],
+            "orchestration_has_branch": bool(meta.get("orchestration_has_branch")),
             "preview_html": (preview or {}).get("preview_html") or "",
             "readable_markdown": build_workspace_markdown(project, idx) if has_content else "",
             "editor": editor,
@@ -536,6 +642,8 @@ def build_workspace_payload(project: Project) -> Dict[str, Any]:
         },
     }
 
+    from apps.workflow.services.flow_graph_service import FlowGraphPlanService
+
     return {
         "project_id": str(project.id),
         "title": workspace_display_title(project),
@@ -575,6 +683,7 @@ def build_workspace_payload(project: Project) -> Dict[str, Any]:
         "can_export_zip": _project_can_export_zip(project),
         "can_share": _project_can_share(project),
         "post_script": post_script_data,
+        "execution_plan": FlowGraphPlanService.execution_plan_payload(),
     }
 
 
@@ -601,9 +710,9 @@ def finalize_workspace_brief(project: Project) -> None:
     ensure_outline_skeleton(project)
     now = timezone.now()
     CreationNode.objects.filter(project=project, node_index=1).update(
-        status=CreationNode.STATUS_PENDING,
+        status=CreationNode.STATUS_COMPLETED,
         summary_text="立项参数已确认",
-        completed_at=None,
+        completed_at=now,
         started_at=now,
     )
     total = max(1, project.total_nodes or len(WorkflowPipelineService.portal_main_chain()))
@@ -636,6 +745,44 @@ def save_skill_content(project: Project, node_index: int, data: dict) -> Dict[st
     return {"project_id": str(project.id), "node_index": node_index, "status": "saved"}
 
 
+def acknowledge_quality_alert(project: Project, node_index: int, alert_code: str) -> Dict[str, Any]:
+    """人工确认质检告警（当前仅支持 character-gate）。"""
+    if alert_code != "character-gate":
+        raise PermissionDenied("该告警不支持人工确认")
+    if node_index != 3:
+        raise PermissionDenied("无效节点")
+
+    from ..artifact_service import get_artifact, save_artifact
+    from ..step_mode import artifact_key_for_node
+    from .workspace_content import resolve_character_gate_log
+
+    key = artifact_key_for_node(node_index)
+    if not key:
+        raise PermissionDenied("无效节点")
+
+    payload = dict(get_artifact(project, key) or {})
+    gate = resolve_character_gate_log(payload)
+    if gate.get("passed"):
+        raise PermissionDenied("质检已通过，无需确认")
+    if gate.get("userAcknowledgedAt"):
+        return {
+            "project_id": str(project.id),
+            "node_index": node_index,
+            "alert_code": alert_code,
+            "status": "already_acknowledged",
+        }
+
+    gate["userAcknowledgedAt"] = timezone.now().isoformat()
+    payload["characterGateLog"] = gate
+    save_artifact(project, key, payload)
+    return {
+        "project_id": str(project.id),
+        "node_index": node_index,
+        "alert_code": alert_code,
+        "status": "acknowledged",
+    }
+
+
 def generate_skill(
     project: Project,
     node_index: int,
@@ -657,6 +804,10 @@ def generate_skill(
 
     recover_stale_workspace_running_state(project)
     project.refresh_from_db()
+
+    from .workspace_content import ensure_brief_seed_enriched
+
+    ensure_brief_seed_enriched(project)
 
     if project.status == Project.STATUS_RUNNING:
         raise PermissionDenied("有技能正在执行，请稍候")

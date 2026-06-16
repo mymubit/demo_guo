@@ -143,7 +143,7 @@ export default function AdminDashboardHints({ scope = 'users' }) {
           className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition ${
             chip.warn
               ? 'bg-amber-500/10 text-amber-200 hover:bg-amber-500/15'
-              : 'bg-navy-800/50 text-navy-300 hover:bg-navy-800 hover:text-white'
+              : 'bg-slate-800/50 text-navy-300 hover:bg-slate-800 hover:text-white'
           }`}
         >
           {chip.warn ? <AlertTriangle className="w-3 h-3 shrink-0 opacity-80" /> : null}

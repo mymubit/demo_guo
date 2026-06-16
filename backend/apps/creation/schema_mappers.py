@@ -126,6 +126,18 @@ def enrich_brief_from_form_seed(
             theme_display_name=out.get("themeDisplayName") or _theme_display(theme),
         )
 
+    if isinstance(out.get("trendFormula"), dict):
+        from .workspace.workspace_editor import _story_brief_from_payload
+        from .trend_formula import apply_project_story_to_trend_formula
+
+        story = _story_brief_from_payload(out)
+        out["trendFormula"] = apply_project_story_to_trend_formula(
+            out["trendFormula"],
+            idea=(data.get("idea") or story.get("idea") or "").strip(),
+            opening_hooks=(data.get("opening_hooks") or story.get("openingHooks") or "").strip(),
+            core_conflict=(data.get("core_conflict") or story.get("coreConflict") or "").strip(),
+        )
+
     wb = out.get("writingBrief")
     has_writing = isinstance(wb, dict) and (
         (wb.get("tone") or "").strip() or (wb.get("notes") or "").strip()

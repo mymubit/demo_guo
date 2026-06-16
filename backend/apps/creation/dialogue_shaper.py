@@ -6,7 +6,7 @@ import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Tuple
 
-from .artifact_renderer import episode_to_gate_markdown
+from .artifact_renderer import episode_to_markdown
 
 MAX_DIALOGUE_CHARS = 40
 _STRIP_PUNCT_TAIL = re.compile(r"[，。！？、；：…]+$")
@@ -129,7 +129,7 @@ def shape_episode_dialogues(
             name_to_id=name_to_id,
         )
     if total or episode.get("scenes"):
-        episode["scriptMarkdown"] = episode_to_gate_markdown(episode)
+        episode["scriptMarkdown"] = episode_to_markdown(episode)
     return total
 
 

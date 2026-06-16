@@ -17,7 +17,7 @@ export function PageLoading({ label = '加载中…', className }) {
 }
 
 export function SkeletonBlock({ className }) {
-  return <div className={cn('animate-pulse rounded-2xl bg-navy-800/55', className)} />
+  return <div className={cn('animate-pulse rounded-2xl bg-slate-800/55', className)} />
 }
 
 export function PageSkeleton({ rows = 3 }) {

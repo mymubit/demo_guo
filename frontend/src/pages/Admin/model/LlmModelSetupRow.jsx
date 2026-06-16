@@ -31,16 +31,16 @@ export default function LlmModelSetupRow({
 
   return (
     <details
-      className="rounded-lg border border-navy-700/35 bg-navy-900/30 group"
+      className="group rounded-lg border border-white/5 bg-slate-900/40"
       defaultOpen={!preset.configured || !hasSavedCatalogPricing(row)}
     >
       <summary className="cursor-pointer list-none px-3 py-2.5 flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="text-sm text-white font-medium">{preset.name}</p>
-          <p className="text-[10px] text-navy-500 font-mono truncate">{preset.model_name}</p>
+          <p className="text-[10px] text-navy-300 font-mono truncate">{preset.model_name}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0 justify-end">
-          <span className={`text-[10px] ${preset.configured ? 'text-green-400' : 'text-navy-500'}`}>
+          <span className={`text-[10px] ${preset.configured ? 'text-green-400' : 'text-navy-400'}`}>
             {preset.configured ? '已接入' : '未接入'}
           </span>
           <span className={`text-xs ${savedHint ? 'text-navy-400' : 'text-amber-300'}`}>
@@ -51,11 +51,11 @@ export default function LlmModelSetupRow({
               未保存
             </span>
           ) : null}
-          <ChevronDown className="w-3.5 h-3.5 text-navy-500 transition group-open:rotate-180" />
+          <ChevronDown className="w-3.5 h-3.5 text-navy-400 transition group-open:rotate-180" />
         </div>
       </summary>
-      <div className="px-3 pb-3 pt-1 border-t border-navy-700/30 space-y-3">
-        <p className="text-[10px] text-navy-500">
+      <div className="px-3 pb-3 pt-1 border-t border-white/5 space-y-3">
+        <p className="text-[10px] text-navy-400">
           Dashboard「大模型成本」核算用，与「主链 Agent」创作币扣费无关。单价与控制台「元/千 Token」一致。
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -68,7 +68,7 @@ export default function LlmModelSetupRow({
               value={pricingDraft.input_price_per_thousand ?? ''}
               onChange={(e) => onPatchPricing(row.id, 'input_price_per_thousand', e.target.value)}
               placeholder="如 0.012"
-              className="w-full px-3 py-2 rounded-lg bg-navy-800/60 border border-navy-700/40 text-white text-sm"
+              className="sf-control"
             />
           </label>
           <label className="block">
@@ -80,7 +80,7 @@ export default function LlmModelSetupRow({
               value={pricingDraft.output_price_per_thousand ?? ''}
               onChange={(e) => onPatchPricing(row.id, 'output_price_per_thousand', e.target.value)}
               placeholder="如 0.024"
-              className="w-full px-3 py-2 rounded-lg bg-navy-800/60 border border-navy-700/40 text-white text-sm"
+              className="sf-control"
             />
           </label>
         </div>

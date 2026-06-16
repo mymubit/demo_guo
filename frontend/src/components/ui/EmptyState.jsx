@@ -19,14 +19,14 @@ export default function EmptyState({
     <motion.div
       {...cardEnter}
       className={cn(
-        'glass-card rounded-3xl border border-navy-600/20 text-center shadow-card',
+        'rounded-2xl border border-white/5 bg-slate-900/60 text-center shadow-card',
         isCompact ? 'p-8' : 'p-10 md:p-14',
         className,
       )}
     >
       <div
         className={cn(
-          'mx-auto rounded-2xl border border-navy-700/40 bg-navy-800/50 flex items-center justify-center',
+          'mx-auto rounded-2xl border border-white/10 bg-slate-800/50 flex items-center justify-center',
           isCompact ? 'mb-4 h-14 w-14' : 'mb-6 h-20 w-20',
         )}
       >

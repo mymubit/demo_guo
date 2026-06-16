@@ -2,7 +2,7 @@ import { AdminBadge, formatDateTime } from '@/components/admin/AdminUI'
 
 export function CreationVerifyBadge({ summary }) {
   if (!summary?.hasReports) {
-    return <span className="text-navy-500 text-xs">无复核报告</span>
+    return <span className="text-navy-400 text-xs">无复核报告</span>
   }
   if (summary.allPassed) {
     return <AdminBadge tone="success">复核通过</AdminBadge>
@@ -34,7 +34,7 @@ export default function ProjectOpsSummary({ data, compact = false }) {
 
   return (
     <div
-      className={`glass-card rounded-2xl border border-navy-700/30 ${
+      className={`sf-console-panel border border-white/5 ${
         compact ? 'p-4 space-y-3' : 'p-5 space-y-4'
       }`}
     >
@@ -43,7 +43,7 @@ export default function ProjectOpsSummary({ data, compact = false }) {
           <h2 className={`font-bold text-white ${compact ? 'text-base' : 'text-lg'}`}>
             {data.title || '未命名'}
           </h2>
-          <p className="text-xs text-navy-500 font-mono mt-1 break-all">{data.project_id}</p>
+          <p className="text-xs text-navy-300 font-mono mt-1 break-all">{data.project_id}</p>
         </div>
         <AdminBadge tone={STATUS_TONE[data.status] || 'default'}>
           {data.status_text || data.status}
@@ -70,8 +70,8 @@ export default function ProjectOpsSummary({ data, compact = false }) {
         ]
           .filter((_, i) => !compact || i < 4)
           .map((item) => (
-            <div key={item.label} className="rounded-xl bg-navy-800/40 px-3 py-2 border border-navy-700/25">
-              <p className="text-[10px] text-navy-500">{item.label}</p>
+            <div key={item.label} className="rounded-xl border border-white/5 bg-slate-900/40 px-3 py-2">
+              <p className="text-[10px] text-navy-400">{item.label}</p>
               <p className="text-sm text-white font-medium mt-0.5 truncate">{item.value}</p>
               {item.hint ? <p className="text-[10px] text-red-400/90 mt-0.5">{item.hint}</p> : null}
             </div>
@@ -85,7 +85,7 @@ export default function ProjectOpsSummary({ data, compact = false }) {
             <span className="text-navy-400">融合状态 {data.fusion_status}</span>
           ) : null}
           {data.updated_at ? (
-            <span className="text-navy-500">更新 {formatDateTime(data.updated_at)}</span>
+            <span className="text-navy-400">更新 {formatDateTime(data.updated_at)}</span>
           ) : null}
         </div>
       )}
@@ -95,13 +95,13 @@ export default function ProjectOpsSummary({ data, compact = false }) {
 
 export function ProjectFusionNodesPanel({ nodes = [] }) {
   if (!nodes.length) {
-    return <p className="text-sm text-navy-500 py-6 text-center">暂无融合节点记录</p>
+    return <p className="text-sm text-navy-400 py-6 text-center">暂无融合节点记录</p>
   }
   return (
-    <div className="glass-card rounded-2xl overflow-hidden border border-navy-700/30">
+    <div className="sf-console-panel overflow-hidden border border-white/5">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-navy-700/40 text-navy-400 text-left">
+          <tr className="border-b border-white/5 text-navy-400 text-left">
             <th className="px-4 py-3 font-medium">步骤</th>
             <th className="px-4 py-3 font-medium">节点</th>
             <th className="px-4 py-3 font-medium">状态</th>
@@ -110,11 +110,11 @@ export function ProjectFusionNodesPanel({ nodes = [] }) {
         </thead>
         <tbody>
           {nodes.map((n) => (
-            <tr key={n.node_index} className="border-b border-navy-800/50 text-navy-200">
+            <tr key={n.node_index} className="border-b border-white/10 text-navy-200">
               <td className="px-4 py-3 text-gold-400/90">{n.node_index}</td>
               <td className="px-4 py-3">
                 <span className="text-white">{n.name || n.fusion_node_id}</span>
-                <span className="text-navy-500 text-xs block font-mono">{n.fusion_node_id}</span>
+                <span className="text-navy-300 text-xs block font-mono">{n.fusion_node_id}</span>
               </td>
               <td className="px-4 py-3">
                 <AdminBadge tone={STATUS_TONE[n.status] || 'default'}>{n.status}</AdminBadge>
@@ -132,14 +132,14 @@ export function ProjectFusionNodesPanel({ nodes = [] }) {
 
 export function ProjectVerifyPanel({ summary }) {
   if (!summary?.hasReports) {
-    return <p className="text-sm text-navy-500 py-6 text-center">该项目尚无原创复核报告</p>
+    return <p className="text-sm text-navy-400 py-6 text-center">该项目尚无原创复核报告</p>
   }
   const stages = summary.stages || []
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
         <CreationVerifyBadge summary={summary} />
-        <span className="text-xs text-navy-500">
+        <span className="text-xs text-navy-400">
           {summary.allPassed ? '全部阶段通过' : '以下阶段需运营关注'}
         </span>
       </div>
@@ -147,7 +147,7 @@ export function ProjectVerifyPanel({ summary }) {
         {stages.map((stage) => (
           <li
             key={stage.key || stage.label}
-            className="rounded-xl border border-navy-700/30 bg-navy-900/40 px-4 py-3 flex flex-wrap items-center justify-between gap-2"
+            className="rounded-xl border border-white/5 bg-slate-900/40 px-4 py-3 flex flex-wrap items-center justify-between gap-2"
           >
             <span className="text-sm text-white">{stage.label || stage.key}</span>
             {stage.skipped ? (

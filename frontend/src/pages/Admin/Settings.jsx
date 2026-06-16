@@ -63,7 +63,7 @@ export default function AdminSettings() {
     <div className="space-y-6">
       <AdminMessage message={message} onClose={() => setMessage(null)} />
 
-      <div className="glass-card rounded-2xl p-5 border border-blue-500/15 bg-blue-500/5">
+      <div className="sf-console-panel p-5 border border-blue-500/15 bg-blue-500/5">
         <p className="text-sm text-navy-200 leading-relaxed">
           <span className="text-white font-medium">此处为部署环境只读快照</span>
           （站点名、时区、DEBUG 等需改服务器配置，后台不能在线改）。
@@ -83,11 +83,11 @@ export default function AdminSettings() {
         </p>
       </div>
 
-      <div className="glass-card rounded-2xl p-6 space-y-4">
+      <div className="sf-console-panel p-6 space-y-4">
         {rows.map((row) => (
           <div
             key={row.label}
-            className="flex items-center justify-between gap-4 py-3 border-b border-navy-700/30 last:border-0"
+            className="flex items-center justify-between gap-4 py-3 border-b border-white/5 last:border-0"
           >
             <div className="flex items-center gap-3 text-navy-200">
               <row.icon className="w-5 h-5 text-gold-400" />
@@ -104,7 +104,7 @@ export default function AdminSettings() {
         ))}
       </div>
 
-      <div className="glass-card rounded-2xl p-6">
+      <div className="sf-console-panel p-6">
         <h3 className="text-lg font-semibold text-white mb-2">缓存维护</h3>
         <p className="text-sm text-navy-300 mb-4">
           清除仪表盘统计与运营配置缓存。修改 LLM / Agent 参数后若未生效，可尝试此操作。

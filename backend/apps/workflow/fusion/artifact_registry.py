@@ -39,9 +39,9 @@ def _primary_artifact_map(nodes: List[dict]) -> Dict[str, str]:
 
 
 class FusionArtifactRegistry:
-    def __init__(self, config: Optional[FusionSkillConfig] = None):
+    def __init__(self, config: Optional[FusionSkillConfig] = None, *, pack_id: Optional[str] = None):
         self.config = config or get_fusion_config()
-        self.node_registry = FusionNodeRegistry(self.config)
+        self.node_registry = FusionNodeRegistry(self.config, pack_id=pack_id)
         nodes = self.node_registry.main_chain_nodes()
         self._fusion_primary = _primary_artifact_map(nodes)
         self._index_primary: Dict[int, str] = {}
@@ -161,5 +161,9 @@ class FusionArtifactRegistry:
         return list(GATE_ARTIFACTS.keys()) + ["quality_report"]
 
 
-def get_artifact_registry(config: Optional[FusionSkillConfig] = None) -> FusionArtifactRegistry:
-    return FusionArtifactRegistry(config)
+def get_artifact_registry(
+    config: Optional[FusionSkillConfig] = None,
+    *,
+    pack_id: Optional[str] = None,
+) -> FusionArtifactRegistry:
+    return FusionArtifactRegistry(config, pack_id=pack_id)

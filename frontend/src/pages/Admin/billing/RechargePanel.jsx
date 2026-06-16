@@ -84,19 +84,19 @@ export default function RechargePanel() {
               <label className="block text-sm text-navy-300">
                 档位名称
                 <input
-                  className="mt-1 w-full max-w-md rounded-xl bg-navy-900 border border-navy-700 px-3 py-2 text-white text-sm"
+                  className="sf-control mt-1 max-w-md"
                   value={row.name}
                   onChange={(e) => patchRechargeRow(row.id, { name: e.target.value })}
                 />
               </label>
 
-              <div className="rounded-xl border border-navy-700/50 bg-navy-900/30 p-4 space-y-3">
+              <div className="space-y-3 rounded-xl border border-white/5 bg-slate-900/40 p-4">
                 <h4 className="text-sm font-semibold text-white">人民币定价（打折）</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <label className="text-sm text-navy-300">
                     划线原价(元)
                     <input
-                      className="mt-1 w-full rounded-xl bg-navy-900 border border-navy-700 px-3 py-2 text-white text-sm"
+                      className="sf-control mt-1"
                       placeholder="可选"
                       value={row.original_price_yuan ?? ''}
                       onChange={(e) =>
@@ -112,7 +112,7 @@ export default function RechargePanel() {
                       type="number"
                       min={1}
                       max={100}
-                      className="mt-1 w-full rounded-xl bg-navy-900 border border-navy-700 px-3 py-2 text-white text-sm"
+                      className="sf-control mt-1"
                       value={row.discount_percent ?? 100}
                       onChange={(e) =>
                         patchRechargeRow(row.id, { discount_percent: e.target.value })
@@ -123,10 +123,10 @@ export default function RechargePanel() {
                     实付(元){autoCharge ? '（自动计算）' : ''}
                     <input
                       readOnly={autoCharge}
-                      className={`mt-1 w-full rounded-xl border border-navy-700 px-3 py-2 text-sm ${
+                      className={`sf-control mt-1 text-sm ${
                         autoCharge
-                          ? 'bg-navy-950 text-gold-300 cursor-not-allowed'
-                          : 'bg-navy-900 text-white'
+                          ? 'bg-slate-950 text-gold-300 cursor-not-allowed'
+                          : 'bg-slate-900 text-white'
                       }`}
                       value={row.price_yuan}
                       onChange={(e) => patchRechargeRow(row.id, { price_yuan: e.target.value })}
@@ -145,14 +145,14 @@ export default function RechargePanel() {
                 </p>
               </div>
 
-              <div className="rounded-xl border border-navy-700/50 bg-navy-900/30 p-4 space-y-3">
+              <div className="space-y-3 rounded-xl border border-white/5 bg-slate-900/40 p-4">
                 <h4 className="text-sm font-semibold text-white">创作币到账（送积分）</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <label className="text-sm text-navy-300">
                     基础到账
                     <input
                       type="number"
-                      className="mt-1 w-full rounded-xl bg-navy-900 border border-navy-700 px-3 py-2 text-white text-sm"
+                      className="sf-control mt-1"
                       value={row.base_coins}
                       onChange={(e) => patchRechargeRow(row.id, { base_coins: e.target.value })}
                     />
@@ -161,7 +161,7 @@ export default function RechargePanel() {
                     额外赠送
                     <input
                       type="number"
-                      className="mt-1 w-full rounded-xl bg-navy-900 border border-navy-700 px-3 py-2 text-white text-sm"
+                      className="sf-control mt-1"
                       value={row.bonus_coins}
                       onChange={(e) => patchRechargeRow(row.id, { bonus_coins: e.target.value })}
                     />
@@ -183,7 +183,7 @@ export default function RechargePanel() {
                 />
                 上架销售
               </label>
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-navy-700/40">
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-white/5">
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"

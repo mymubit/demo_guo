@@ -138,10 +138,10 @@ export default function SkillRulesPanel({ onMessage }) {
 
   return (
     <div className="space-y-4 pb-24">
-      <div className="glass-card rounded-2xl p-5 border border-emerald-500/15 bg-emerald-500/5">
+      <div className="sf-console-panel p-5 border border-emerald-500/15 bg-emerald-500/5">
         <h2 className="text-lg font-bold text-white mb-1">技能规则库</h2>
         <p className="text-sm text-navy-300">
-          Tier1–4 规则 DB 优先，磁盘 skill-rules JSON 兜底。批准后同 scope 旧 active 自动归档。
+          Tier1–4 规则 DB 优先，磁盘 skill-rules JSON 兜底。Tier1/Tier4 按分区维护，批准后同 scope 旧 active 自动归档。
         </p>
       </div>
 
@@ -154,7 +154,7 @@ export default function SkillRulesPanel({ onMessage }) {
             className={`px-3 py-1.5 rounded-lg text-sm ${
               tab === t.key
                 ? 'bg-gold-400/20 text-gold-300 border border-gold-400/30'
-                : 'bg-navy-800/50 text-navy-300 border border-navy-700/40'
+                : 'border border-white/10 bg-white/[0.03] text-navy-300'
             }`}
           >
             {t.label}
@@ -172,7 +172,7 @@ export default function SkillRulesPanel({ onMessage }) {
         emptyList={
           <div className="px-3 py-6 text-sm text-navy-400 space-y-3">
             <p>当前分类暂无已生效规则。</p>
-            <p className="text-xs text-navy-500 leading-relaxed">
+            <p className="text-xs text-navy-400 leading-relaxed">
               首次使用请点击右下角「从磁盘导入」，将 demo4book 下 tier1–4 JSON 写入数据库。
             </p>
             <button
@@ -191,7 +191,13 @@ export default function SkillRulesPanel({ onMessage }) {
             key={item.id}
             active={active}
             onClick={onSelect}
-            title={item.content?.label || item.scope_key || item.section || 'global'}
+            title={
+              item.section_label
+              || item.content?.label
+              || item.scope_key
+              || item.section
+              || 'global'
+            }
             subtitle={`T${item.tier} · ${STATUS_LABEL[item.status] || item.status}`}
           />
         )}
@@ -199,8 +205,10 @@ export default function SkillRulesPanel({ onMessage }) {
           item ? (
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold text-white">{item.label || item.section}</h3>
-                <p className="text-xs text-navy-500 font-mono mt-1">{item.id}</p>
+                <h3 className="text-lg font-semibold text-white">
+                  {item.section_label || item.label || item.section}
+                </h3>
+                <p className="text-xs text-navy-300 font-mono mt-1">{item.id}</p>
                 <p className="text-sm text-navy-400 mt-2">
                   Tier {item.tier} · {item.scope_type}/{item.scope_key || 'global'} · {item.section}
                 </p>
@@ -210,14 +218,14 @@ export default function SkillRulesPanel({ onMessage }) {
                 <input
                   value={editNote}
                   onChange={(e) => setEditNote(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm"
+                  className="sf-control"
                 />
               </label>
               <textarea
                 rows={20}
                 value={editJson}
                 onChange={(e) => setEditJson(e.target.value)}
-                className="w-full font-mono text-xs px-4 py-3 rounded-2xl bg-navy-950 border border-navy-700/40 text-navy-100"
+                className="sf-control rounded-2xl font-mono text-xs text-navy-100"
                 spellCheck={false}
               />
               <div className="flex flex-wrap gap-2">
@@ -244,7 +252,7 @@ export default function SkillRulesPanel({ onMessage }) {
                   <button
                     type="button"
                     onClick={archiveRule}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-navy-800/70 text-navy-200 text-sm"
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-navy-200 hover:bg-white/[0.06]"
                   >
                     <Archive className="w-4 h-4" />
                     归档
@@ -253,17 +261,17 @@ export default function SkillRulesPanel({ onMessage }) {
               </div>
             </div>
           ) : (
-            <p className="text-navy-500">请选择一条规则</p>
+            <p className="text-navy-400">请选择一条规则</p>
           )
         }
       />
 
-      <div className="fixed bottom-0 left-0 right-0 md:left-64 z-30 px-6 py-4 bg-navy-950/90 border-t border-navy-800/60 backdrop-blur-md flex justify-end gap-3">
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/5 bg-slate-950/90 px-6 py-4 backdrop-blur-md md:left-64 flex justify-end gap-3">
         <button
           type="button"
           disabled={importing}
           onClick={importRules}
-          className="px-4 py-2.5 rounded-xl bg-navy-800/70 text-navy-100 text-sm flex items-center gap-2"
+          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-navy-100 hover:bg-white/[0.06]"
         >
           <Upload className="w-4 h-4" />
           {importing ? '导入中…' : '从磁盘导入'}
@@ -271,7 +279,7 @@ export default function SkillRulesPanel({ onMessage }) {
         <button
           type="button"
           onClick={load}
-          className="px-4 py-2.5 rounded-xl bg-navy-800/70 text-navy-100 text-sm flex items-center gap-2"
+          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-navy-100 hover:bg-white/[0.06]"
         >
           <RefreshCw className="w-4 h-4" />
           刷新

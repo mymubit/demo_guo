@@ -17,7 +17,7 @@ function runStatusClass(status) {
 function traceStatusClass(status) {
   if (status === 'executed') return 'bg-green-500/15 text-green-400'
   if (status === 'failed') return 'bg-red-500/15 text-red-400'
-  if (status === 'skipped') return 'bg-navy-700/50 text-navy-400'
+  if (status === 'skipped') return 'bg-white/[0.05] text-slate-400'
   return 'bg-amber-500/15 text-amber-300'
 }
 
@@ -42,7 +42,7 @@ function SummaryBlock({ title, data }) {
   return (
     <details className="mt-2">
       <summary className="text-xs text-navy-400 cursor-pointer hover:text-navy-200">{title}</summary>
-      <pre className="mt-1 text-[10px] text-navy-300 bg-navy-950/50 rounded-lg p-2 overflow-x-auto whitespace-pre-wrap">
+      <pre className="mt-1 overflow-x-auto whitespace-pre-wrap rounded-lg border border-white/5 bg-slate-900/40 p-2 text-[10px] text-navy-300">
         {JSON.stringify(data, null, 2)}
       </pre>
     </details>
@@ -51,7 +51,7 @@ function SummaryBlock({ title, data }) {
 
 /** 紧凑 pills — 用户工作台等场景 */
 export function ExecutionTracePills({ trace, compact = false }) {
-  if (!trace?.length) return <span className="text-navy-500 text-xs">无轨迹</span>
+  if (!trace?.length) return <span className="text-navy-400 text-xs">无轨迹</span>
   return (
     <div className={`flex flex-wrap gap-1.5 ${compact ? '' : 'mt-1'}`}>
       {trace.map((step) => (
@@ -84,7 +84,7 @@ export default function ExecutionRunPanel({
 
   return (
     <div
-      className={`rounded-xl border border-navy-700/30 bg-navy-950/30 ${compact ? 'p-3' : 'p-4'} ${className}`}
+      className={`rounded-xl border border-white/5 bg-slate-900/40 ${compact ? 'p-3' : 'p-4'} ${className}`}
     >
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
         <span className={`font-medium ${runStatusClass(run.status)}`}>
@@ -94,10 +94,10 @@ export default function ExecutionRunPanel({
           <span className="text-navy-400">耗时 {fmtExecutionDuration(run.duration_ms)}</span>
         ) : null}
         {run.output_artifact_key ? (
-          <span className="text-navy-500">产出 {run.output_artifact_key}</span>
+          <span className="text-navy-400">产出 {run.output_artifact_key}</span>
         ) : null}
         {run.started_at ? (
-          <span className="text-navy-500">{new Date(run.started_at).toLocaleString()}</span>
+          <span className="text-navy-400">{new Date(run.started_at).toLocaleString()}</span>
         ) : null}
       </div>
 
@@ -106,7 +106,7 @@ export default function ExecutionRunPanel({
       ) : null}
 
       <div className={compact ? 'mt-2' : 'mt-3'}>
-        <p className="text-[10px] text-navy-500 mb-1">子技能步骤</p>
+        <p className="text-[10px] text-navy-400 mb-1">子技能步骤</p>
         {steps?.length ? (
           <SubSkillStepBar steps={steps} compact={compact} />
         ) : (

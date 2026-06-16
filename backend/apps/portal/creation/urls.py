@@ -19,6 +19,7 @@ from .views import (
     CreationWorkspaceView,
     CreationAgentGenerateView,
     CreationAgentContentView,
+    CreationAgentQualityAlertAckView,
 )
 from .fusion_views import (
     AgentCatalogView,
@@ -49,6 +50,11 @@ urlpatterns = [
         "projects/<str:project_id>/workspace/",
         CreationWorkspaceView.as_view(),
         name="creation-workspace",
+    ),
+    path(
+        "projects/<str:project_id>/agents/<int:node_index>/quality-alert/ack/",
+        CreationAgentQualityAlertAckView.as_view(),
+        name="creation-agent-quality-alert-ack",
     ),
     path(
         "projects/<str:project_id>/agents/<int:node_index>/content/",

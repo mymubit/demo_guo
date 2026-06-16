@@ -25,11 +25,17 @@ class SkillRuleListView(APIView):
         except ValueError:
             return api_fail("tier 参数无效")
         SkillRuleConfigService.ensure_defaults()
+        exclude_bundle = request.query_params.get("exclude_bundle", "true").strip().lower() not in (
+            "0",
+            "false",
+            "no",
+        )
         items = SkillRuleConfigService.list_rules(
             tier=tier_val,
             status=status or None,
             scope_type=scope_type or None,
             q=q,
+            exclude_bundle=exclude_bundle,
         )
         return api_ok({"items": items, "summary": SkillRuleConfigService.summary()})
 

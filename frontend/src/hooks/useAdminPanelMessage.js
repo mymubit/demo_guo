@@ -1,4 +1,4 @@
-import { createElement, useState } from 'react'
+import { createElement, useCallback, useState } from 'react'
 import { AdminMessage } from '@/components/admin/AdminUI'
 import { formatUserError } from '@/utils/userError'
 
@@ -12,10 +12,10 @@ export { formatAdminError }
 export function useAdminPanelMessage() {
   const [message, setMessage] = useState(null)
 
-  function showMessage(text, type = 'success') {
+  const showMessage = useCallback((text, type = 'success') => {
     setMessage({ text: formatAdminError(text, type), type })
     setTimeout(() => setMessage(null), type === 'error' ? 8000 : 3000)
-  }
+  }, [])
 
   function MessageBanner() {
     return createElement(AdminMessage, { message, onClose: () => setMessage(null) })

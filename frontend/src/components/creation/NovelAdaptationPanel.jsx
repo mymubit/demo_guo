@@ -24,9 +24,9 @@ export default function NovelAdaptationPanel({ novelText, onChange, onFileLoaded
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass-card rounded-3xl border border-dashed border-navy-600/50 py-16 px-8 text-center"
+        className="rounded-3xl border border-dashed border-white/10 bg-white/[0.02] py-16 px-8 text-center"
       >
-        <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-navy-800/60 flex items-center justify-center">
+        <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-slate-800/60 flex items-center justify-center">
           <FileSearch className="w-10 h-10 text-navy-400" />
         </div>
         <h3 className="text-xl font-bold text-white mb-2">上传小说，开始改编</h3>
@@ -48,12 +48,12 @@ export default function NovelAdaptationPanel({ novelText, onChange, onFileLoaded
           <Upload className="w-5 h-5" />
           上传文件
         </button>
-        <p className="text-xs text-navy-500 mt-6">或在下方直接粘贴小说正文，当前 {textLength} / {minLength} 字</p>
+        <p className="text-xs text-navy-400 mt-6">或在下方直接粘贴小说正文，当前 {textLength} / {minLength} 字</p>
         <textarea
           value={novelText}
           onChange={(e) => onChange(e.target.value.slice(0, 20000))}
           placeholder="粘贴小说章节或全文…"
-          className="mt-4 w-full max-w-2xl mx-auto h-32 p-4 rounded-xl bg-navy-900/50 border border-navy-700/40 text-white text-sm placeholder-navy-500 focus:border-gold-400/40 outline-none resize-none text-left"
+          className="mt-4 w-full max-w-2xl mx-auto h-32 p-4 rounded-xl bg-slate-900/50 border border-white/10 text-white text-sm placeholder-navy-400 focus:border-gold-400/40 outline-none resize-none text-left"
         />
       </motion.div>
     )
@@ -72,7 +72,7 @@ export default function NovelAdaptationPanel({ novelText, onChange, onFileLoaded
         <button
           type="button"
           onClick={() => inputRef.current?.click()}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-navy-200 border border-navy-600/40 hover:border-gold-500/30"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-navy-200 border border-white/10 hover:border-gold-500/30"
         >
           <Upload className="w-4 h-4" />
           重新上传
@@ -88,7 +88,7 @@ export default function NovelAdaptationPanel({ novelText, onChange, onFileLoaded
       <textarea
         value={novelText}
         onChange={(e) => onChange(e.target.value.slice(0, 20000))}
-        className="w-full h-64 p-5 rounded-2xl bg-navy-900/50 border border-navy-600/30 text-white text-sm leading-relaxed focus:border-gold-400/50 outline-none resize-y"
+        className="w-full h-64 p-5 rounded-2xl bg-slate-900/50 border border-white/10 text-white text-sm leading-relaxed focus:border-gold-400/50 outline-none resize-y"
       />
       <p className="text-xs text-navy-400 mt-2">{novelText.length} / 20000 字</p>
     </SectionShell>
@@ -97,7 +97,7 @@ export default function NovelAdaptationPanel({ novelText, onChange, onFileLoaded
 
 function SectionShell({ icon: Icon, title, subtitle, children }) {
   return (
-    <div className="glass-card rounded-2xl p-6">
+    <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-6">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-xl bg-gold-400/10 flex items-center justify-center">
           <Icon className="w-5 h-5 text-gold-400" />

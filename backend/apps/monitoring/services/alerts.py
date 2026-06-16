@@ -4,7 +4,7 @@ from datetime import timedelta
 from django.db.models import Avg, Count, Q
 from django.utils import timezone
 
-from apps.monitoring.models import AlertEvent, AlertRule, ApiPerformanceLog, FrontendEvent, SqlPerformanceLog
+from apps.monitoring.models import AlertEvent, AlertRule, ApiPerformanceLog, FrontendEvent, MonitoringException, SqlPerformanceLog
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,17 @@ def _metric_value(rule: AlertRule, since):
         return float(qs.count()), {"sample_count": qs.count()}
 
     if rule.metric_type == AlertRule.MetricType.BACKEND_ERROR_COUNT:
-        qs = ApiPerformanceLog.objects.filter(created_at__gte=since).filter(path_filter).filter(status_code__gte=500)
+        qs = MonitoringException.objects.filter(
+            created_at__gte=since,
+            source=MonitoringException.Source.BACKEND,
+        ).filter(path_filter)
+        return float(qs.count()), {"sample_count": qs.count()}
+
+    if rule.metric_type == AlertRule.MetricType.BUSINESS_ERROR_COUNT:
+        qs = MonitoringException.objects.filter(
+            created_at__gte=since,
+            source=MonitoringException.Source.BUSINESS,
+        ).filter(path_filter)
         return float(qs.count()), {"sample_count": qs.count()}
 
     if rule.metric_type == AlertRule.MetricType.API_AVG_DURATION:
@@ -51,7 +61,7 @@ def _metric_value(rule: AlertRule, since):
         total = qs.count()
         if total == 0:
             return 0.0, {"sample_count": 0, "error_count": 0}
-        error_count = qs.filter(status_code__gte=400).count()
+        error_count = qs.filter(extra__business_error=True).count()
         return round(error_count / total * 100, 4), {"sample_count": total, "error_count": error_count}
 
     if rule.metric_type == AlertRule.MetricType.SLOW_SQL_COUNT:

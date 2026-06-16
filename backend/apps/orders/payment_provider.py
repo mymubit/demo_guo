@@ -17,6 +17,15 @@ class PaymentProvider:
     """统一支付入口，避免业务层散落 payment_method='mock'。"""
 
     @classmethod
+    def catalog_payment_method(cls) -> str:
+        """计费目录等只读场景：返回配置的支付方式，不做支付权限校验。"""
+        method = (default_payment_method() or "mock").strip().lower()
+        allowed = {"mock"}
+        if method not in allowed:
+            return "mock"
+        return method
+
+    @classmethod
     def resolve_method(cls, requested: str | None = None) -> str:
         method = (requested or default_payment_method() or "mock").strip().lower()
         allowed = {"mock"}

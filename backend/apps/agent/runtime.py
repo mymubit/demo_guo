@@ -8,9 +8,11 @@ from typing import Any, Callable, Dict, List, Optional
 
 from django.utils.module_loading import import_string
 
+from apps.common.agent_term import AGENT_RUNNER_PREFIX, normalize_agent_runner_path
+
 logger = logging.getLogger(__name__)
 
-_RUNNER_IMPORT_PREFIX = "apps.creation.orchestration."
+_RUNNER_IMPORT_PREFIX = AGENT_RUNNER_PREFIX
 _EMPTY_REGISTRY: Dict[str, Any] = {"agents": [], "_meta": {}, "_registry_source": "none"}
 
 
@@ -111,7 +113,7 @@ def agent_runner_path(agent_id: str) -> str:
     agent = get_agent(agent_id) or {}
     configured = str(agent.get("runner") or agent.get("runner_path") or "").strip()
     if configured:
-        return configured
+        return normalize_agent_runner_path(configured)
     normalized = str(agent_id or "").strip().replace("-", "_")
     return f"{_RUNNER_IMPORT_PREFIX}{normalized}.run_{normalized}_agent"
 

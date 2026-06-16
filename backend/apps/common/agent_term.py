@@ -12,6 +12,15 @@ DEPRECATED_API_FIELDS: Dict[str, str] = {
     "default_tier1_sections_by_skill": "default_tier1_sections_by_agent",
 }
 
+LEGACY_AGENT_RUNNER_PREFIX = "apps.creation.agents."
+AGENT_RUNNER_PREFIX = "apps.creation.orchestration."
+
+PIPELINE_RUNNER_BY_TYPE: Dict[str, str] = {
+    "fusion_node": "apps.creation.step_mode.run_orchestrator_step",
+    "fusion_review": "apps.creation.step_mode.run_fusion_review_step",
+    "fusion_score": "apps.creation.step_mode.run_fusion_score_step",
+}
+
 
 def api_deprecation_meta() -> Dict[str, str]:
     return dict(DEPRECATED_API_FIELDS)
@@ -42,6 +51,23 @@ def resolve_agent_id(data: Optional[Mapping[str, Any]]) -> str:
     if not data:
         return ""
     return str(data.get("agent_id") or data.get("skill_id") or "").strip()
+
+
+def normalize_agent_runner_path(path: Any) -> str:
+    """兼容旧 Agent runner 包路径，统一映射到当前 orchestration 模块。"""
+    text = str(path or "").strip()
+    if text.startswith(LEGACY_AGENT_RUNNER_PREFIX):
+        return f"{AGENT_RUNNER_PREFIX}{text[len(LEGACY_AGENT_RUNNER_PREFIX):]}"
+    return text
+
+
+def normalize_pipeline_runner_path(path: Any, runner_type: Any = "") -> str:
+    """规范化 FusionPipelineNode.runner_path，避免把 Agent runner 挂到步骤 runner 上。"""
+    text = str(path or "").strip()
+    rtype = str(runner_type or "").strip()
+    if text.startswith((LEGACY_AGENT_RUNNER_PREFIX, AGENT_RUNNER_PREFIX)):
+        return PIPELINE_RUNNER_BY_TYPE.get(rtype, "")
+    return text or PIPELINE_RUNNER_BY_TYPE.get(rtype, "")
 
 
 def alias_agent_id(record: JsonDict) -> JsonDict:
@@ -87,13 +113,11 @@ def enrich_registry_for_api(registry: JsonDict) -> JsonDict:
 
 
 def normalize_registry_for_save(registry: JsonDict) -> JsonDict:
-    """PUT 请求：skill_id 别名写入 agent_id 后落库。"""
+    """PUT 请求：skill_id 别名写入 agent_id，并规范化历史 runner 路径后落库。"""
     if not isinstance(registry, dict):
         return registry
     out = dict(registry)
     meta = out.get("_meta")
-    if not isinstance(meta, dict):
-        return out
 
     def _normalize_modules(modules: Any) -> Any:
         if not isinstance(modules, list):
@@ -111,9 +135,24 @@ def normalize_registry_for_save(registry: JsonDict) -> JsonDict:
             normalized.append(row)
         return normalized
 
-    meta_out = dict(meta)
-    for key in ("workspace_modules", "post_script_pipeline_index"):
-        if key in meta_out:
-            meta_out[key] = _normalize_modules(meta_out[key])
-    out["_meta"] = meta_out
+    if isinstance(meta, dict):
+        meta_out = dict(meta)
+        for key in ("workspace_modules", "post_script_pipeline_index"):
+            if key in meta_out:
+                meta_out[key] = _normalize_modules(meta_out[key])
+        out["_meta"] = meta_out
+
+    agents = out.get("agents")
+    if isinstance(agents, list):
+        normalized_agents: List[JsonDict] = []
+        for agent in agents:
+            if not isinstance(agent, dict):
+                normalized_agents.append(agent)
+                continue
+            row = dict(agent)
+            for key in ("runner", "runner_path"):
+                if key in row:
+                    row[key] = normalize_agent_runner_path(row[key])
+            normalized_agents.append(row)
+        out["agents"] = normalized_agents
     return out

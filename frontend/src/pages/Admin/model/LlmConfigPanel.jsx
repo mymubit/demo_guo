@@ -81,7 +81,7 @@ function LlmProviderFormFields({
           <input
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
-            className="w-full px-4 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm"
+            className="sf-control"
           />
         </label>
       ) : null}
@@ -118,7 +118,7 @@ function LlmProviderFormFields({
               setApiKeyTouched(true)
               setForm({ ...form, api_key: e.target.value })
             }}
-            className="w-full px-4 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white font-mono text-sm"
+            className="sf-control font-mono"
           />
         </label>
       ) : null}
@@ -136,7 +136,7 @@ function LlmProviderFormFields({
                 base_url: volcanoBaseUrlForKeyType(keyType),
               })
             }}
-            className="w-full px-4 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm"
+            className="sf-control"
           >
             <option value="payg">按量付费（推荐）— ep-xxx / Model ID</option>
             <option value="coding_plan">Coding Plan — 仅编程订阅 Key</option>
@@ -150,7 +150,7 @@ function LlmProviderFormFields({
           value={form.model_name}
           placeholder={isVolcengine ? '按量付费填 ep-xxxxxxxx（推理接入点 ID）' : 'gpt-4o-mini'}
           onChange={(e) => setForm({ ...form, model_name: e.target.value })}
-          className="w-full px-4 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm font-mono"
+          className="sf-control font-mono"
         />
       </label>
 
@@ -162,7 +162,7 @@ function LlmProviderFormFields({
               value={form.base_url}
               readOnly={isVolcengine}
               onChange={(e) => setForm({ ...form, base_url: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white font-mono text-sm read-only:opacity-80"
+              className="sf-control font-mono read-only:opacity-80"
             />
           </label>
           <label className="block">
@@ -174,7 +174,7 @@ function LlmProviderFormFields({
               step={0.1}
               value={form.temperature}
               onChange={(e) => setForm({ ...form, temperature: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm"
+              className="sf-control"
             />
           </label>
           <label className="block">
@@ -186,7 +186,7 @@ function LlmProviderFormFields({
               step={256}
               value={form.max_tokens}
               onChange={(e) => setForm({ ...form, max_tokens: e.target.value })}
-              className="w-full px-4 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm"
+              className="sf-control"
             />
           </label>
           <label className="flex items-center gap-2 text-sm text-navy-200 md:col-span-2">
@@ -197,11 +197,11 @@ function LlmProviderFormFields({
             />
             启用此模型
           </label>
-          <div className="md:col-span-2 border border-navy-700/40 rounded-xl overflow-hidden">
+          <div className="md:col-span-2 overflow-hidden rounded-xl border border-white/10">
             <button
               type="button"
               onClick={() => setShowAdvanced((v) => !v)}
-              className="w-full flex items-center justify-between px-4 py-3 text-sm text-navy-200 bg-navy-900/40"
+              className="flex w-full items-center justify-between bg-slate-900/40 px-4 py-3 text-sm text-navy-200"
             >
               <span className="flex items-center gap-2">
                 <SlidersHorizontal className="w-4 h-4" />
@@ -210,14 +210,14 @@ function LlmProviderFormFields({
               <ChevronDown className={`w-4 h-4 transition ${showAdvanced ? 'rotate-180' : ''}`} />
             </button>
             {showAdvanced ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border-t border-navy-700/40">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border-t border-white/5">
                 <label className="block">
                   <span className="text-xs text-navy-400 mb-1 block">上下文窗口-输入</span>
                   <input
                     type="number"
                     value={form.context_window_input ?? ''}
                     onChange={(e) => setForm({ ...form, context_window_input: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm"
+                    className="sf-control"
                   />
                 </label>
                 <label className="block">
@@ -225,7 +225,7 @@ function LlmProviderFormFields({
                   <input
                     value={form.remark || ''}
                     onChange={(e) => setForm({ ...form, remark: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm"
+                    className="sf-control"
                   />
                 </label>
               </div>
@@ -532,8 +532,7 @@ export default function LlmConfigPanel({ onMessage }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-      {/* 状态条 */}
-      <div className="glass-card rounded-2xl p-4 border border-navy-700/30 flex flex-wrap items-center justify-between gap-4">
+      <div className="sf-console-panel px-4 py-3 flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-4">
           <label className="flex items-center gap-2 text-sm text-white cursor-pointer">
             <input
@@ -556,30 +555,27 @@ export default function LlmConfigPanel({ onMessage }) {
               全局默认：<span className="text-purple-300">{status.active_provider_name}</span>
             </span>
           ) : null}
+          {totalNodes ? (
+            <span className="text-xs text-navy-400">
+              Agent 路由已绑 {boundNodeCount}/{totalNodes}
+            </span>
+          ) : null}
         </div>
-        <Link
-          to="/admin/agent?tab=routes"
-          className="text-xs text-gold-400 hover:text-gold-300"
-        >
-          各 Agent 用哪台模型 → Agent LLM 路由
-          {totalNodes ? `（已绑 ${boundNodeCount}/${totalNodes}）` : ''}
-        </Link>
       </div>
 
       <div className="space-y-5">
-          <p className="text-sm text-navy-400 -mt-2">
-            ① 厂商保存共用 Key → ② 展开模型设 Token 单价与 model ID。Agent 模型绑定在「主链工作室」或「Agent 中心 → LLM 路由」。
-            <span className="block mt-1 text-xs">{LLM_PRICING_NOTE}</span>
+          <p className="text-xs text-navy-400">
+            {LLM_PRICING_NOTE}
           </p>
 
           {/* 已接入 */}
           {providers.length > 0 ? (
-            <details className="rounded-xl border border-navy-700/40 bg-navy-900/20 group" defaultOpen>
+            <details className="rounded-xl border border-white/10 bg-slate-900/40 group" defaultOpen>
               <summary className="cursor-pointer list-none px-4 py-3 flex items-center justify-between gap-2">
-                <span className="text-xs text-navy-500 font-medium">已接入（{providers.length}）</span>
-                <ChevronDown className="w-4 h-4 text-navy-500 transition group-open:rotate-180" />
+                <span className="text-xs text-navy-400 font-medium">已接入（{providers.length}）</span>
+                <ChevronDown className="w-4 h-4 text-navy-400 transition group-open:rotate-180" />
               </summary>
-              <div className="px-3 pb-3 pt-1 space-y-2 border-t border-navy-700/30">
+              <div className="px-3 pb-3 pt-1 space-y-2 border-t border-white/5">
                 {providerGroups.map((group) => (
                   <LlmVendorCollapse
                     key={group.vendor}
@@ -600,15 +596,15 @@ export default function LlmConfigPanel({ onMessage }) {
                           className={`text-left px-3 py-2 rounded-xl border text-sm transition ${
                             editingId === p.id && !creating
                               ? 'border-gold-500/40 bg-gold-500/10 text-gold-200'
-                              : 'border-navy-700/40 bg-navy-900/40 text-navy-200 hover:border-navy-600'
+                              : 'border-white/10 bg-white/[0.03] text-navy-200 hover:border-white/20'
                           }`}
                         >
                           <span className="font-medium block">{p.name}</span>
-                          <span className="text-[10px] text-navy-500 font-mono">{p.model_name}</span>
+                          <span className="text-[10px] text-navy-300 font-mono">{p.model_name}</span>
                           <span
                             className={`text-[10px] block mt-0.5 ${
                               p.catalog_id && p.catalog_input_price_per_million != null
-                                ? 'text-navy-500'
+                                ? 'text-navy-400'
                                 : 'text-amber-400'
                             }`}
                           >
@@ -628,13 +624,13 @@ export default function LlmConfigPanel({ onMessage }) {
 
           {/* 内联编辑器 */}
           {editorOpen ? (
-            <div className="glass-card rounded-2xl p-5 border border-gold-500/25 space-y-4">
+            <div className="sf-console-panel p-5 border border-gold-500/25 space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <h4 className="text-white font-semibold">
                     {creating ? `接入：${form.name || '新模型'}` : `编辑：${selectedProvider?.name}`}
                   </h4>
-                  <p className="text-xs text-navy-500 mt-0.5">
+                  <p className="text-xs text-navy-400 mt-0.5">
                     {activeVendorCredential?.api_key_set
                       ? '只需填模型 ID，Key 使用厂商共用'
                       : '请先在该厂商区块保存共用 API Key'}
@@ -803,19 +799,19 @@ export default function LlmConfigPanel({ onMessage }) {
             </button>
           </div>
 
-          <details className="rounded-xl border border-navy-700/40 bg-navy-900/20 group">
+          <details className="rounded-xl border border-white/10 bg-slate-900/40 group">
             <summary className="cursor-pointer list-none px-4 py-3 flex items-center justify-between gap-2">
               <span className="text-sm text-navy-300 font-medium">高级运维（部署 / 批量）</span>
-              <ChevronDown className="w-4 h-4 text-navy-500 transition group-open:rotate-180" />
+              <ChevronDown className="w-4 h-4 text-navy-400 transition group-open:rotate-180" />
             </summary>
-            <div className="px-4 pb-4 pt-2 space-y-4 border-t border-navy-700/30">
+            <div className="px-4 pb-4 pt-2 space-y-4 border-t border-white/5">
               <p className="text-sm text-navy-400">同步目录种子、从 .env 一键接入、测试全局默认模型。日常改 Key / 模型 ID 请在上方操作。</p>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   disabled={!!busyId}
                   onClick={handleSyncPresets}
-                  className="px-4 py-2 rounded-xl bg-navy-800/60 text-sm text-navy-200 border border-navy-600/40"
+                  className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-navy-200 hover:bg-white/[0.06]"
                 >
                   同步目录种子
                 </button>
@@ -838,12 +834,12 @@ export default function LlmConfigPanel({ onMessage }) {
                 </button>
               </div>
               {routingPlan ? (
-                <div className="rounded-xl border border-navy-700/40 p-4 text-xs text-navy-300 space-y-2">
+                <div className="rounded-xl space-y-2 rounded-xl border border-white/10 p-4 text-xs text-navy-300">
                   <p className="text-white text-sm font-medium">Agent 绑定概况</p>
-                  <p className="text-navy-500">
+                  <p className="text-navy-400">
                     详细绑定请在
-                    <Link to="/admin/main-chain" className="text-gold-400 mx-1">
-                      主链工作室
+                    <Link to="/admin/orchestration?tab=flow" className="text-gold-400 mx-1">
+                      调度中心 · 流程编排
                     </Link>
                     Tab 配置。
                   </p>

@@ -1,4 +1,4 @@
-import { forwardRef } from 'react'
+﻿import { forwardRef } from 'react'
 import { cn } from '@/utils/cn'
 
 function FieldShell({ label, hint, error, children, className }) {
@@ -23,7 +23,7 @@ export const Input = forwardRef(function Input(
     <FieldShell label={label} hint={hint} error={error} className={className}>
       <div className="relative">
         {leftIcon ? (
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-navy-500">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-navy-400">
             {leftIcon}
           </span>
         ) : null}

@@ -25,8 +25,11 @@ import {
   AdminLoading,
   AdminMessage,
   AdminBadge,
+  AdminPageHeader,
+  AdminPanel,
   formatDateTime,
 } from '@/components/admin/AdminUI'
+import ProjectSpotlightCard from '@/components/admin/ProjectSpotlightCard'
 
 const STATUS_OPTIONS = [
   { key: '', label: '全部状态' },
@@ -147,6 +150,24 @@ export default function CreationProjectsPage() {
     [status, hasFailedRun]
   )
 
+  const spotlightProjects = useMemo(() => {
+    if (!items?.length) return []
+    const running = items.find((p) => p.status === 'running')
+    const completed = items.find((p) => p.status === 'completed')
+    const picked = []
+    if (running) picked.push(running)
+    if (completed && completed.project_id !== running?.project_id) picked.push(completed)
+    if (picked.length < 2) {
+      for (const p of items) {
+        if (picked.length >= 2) break
+        if (!picked.some((x) => x.project_id === p.project_id)) picked.push(p)
+      }
+    }
+    return picked.slice(0, 2)
+  }, [items])
+
+  const runningCount = facets?.running ?? pagination?.total ?? items.length
+
   const applyQuickFilter = (filter) => {
     patchParams({
       status: filter.status || '',
@@ -191,7 +212,7 @@ export default function CreationProjectsPage() {
       render: (row) => (
         <div className="min-w-[160px]">
           <p className="text-white font-medium truncate max-w-[240px]">{row.title}</p>
-          <p className="text-xs text-navy-500 font-mono mt-0.5">{row.project_id}</p>
+          <p className="text-xs text-navy-300 font-mono mt-0.5">{row.project_id}</p>
         </div>
       ),
     },
@@ -220,7 +241,7 @@ export default function CreationProjectsPage() {
           >
             {row.status_text || row.status}
           </AdminBadge>
-          <p className="text-[10px] text-navy-500">{row.pipeline_mode}</p>
+          <p className="text-[10px] text-navy-400">{row.pipeline_mode}</p>
         </div>
       ),
     },
@@ -239,7 +260,7 @@ export default function CreationProjectsPage() {
         const latest = row.latest_execution_run
         const target = failed || latest
         if (!target) {
-          return <span className="text-navy-500 text-xs">尚无执行记录</span>
+          return <span className="text-navy-400 text-xs">尚无执行记录</span>
         }
         const summary = formatProjectExecutionSummary(target, agentCatalog)
         return (
@@ -286,7 +307,7 @@ export default function CreationProjectsPage() {
         <div className="text-xs">
           <CreationVerifyBadge summary={row.verify_summary} />
           {row.has_agent_traces ? (
-            <p className="text-[10px] text-navy-500 mt-1">artifact 轨迹 {row.trace_agent_count} 组</p>
+            <p className="text-[10px] text-navy-400 mt-1">artifact 轨迹 {row.trace_agent_count} 组</p>
           ) : null}
         </div>
       ),
@@ -301,7 +322,7 @@ export default function CreationProjectsPage() {
             {row.grade ? ` · ${row.grade}` : ''}
           </span>
         ) : (
-          <span className="text-navy-500">—</span>
+          <span className="text-navy-400">—</span>
         ),
     },
     {
@@ -334,7 +355,7 @@ export default function CreationProjectsPage() {
             <button
               type="button"
               onClick={() => navigate(`/admin/creation/projects/${row.project_id}/trace`)}
-              className="inline-flex items-center gap-1 text-xs text-navy-500 hover:text-navy-300"
+              className="inline-flex items-center gap-1 text-xs text-navy-400 hover:text-navy-300"
               title="打开完整监察页"
             >
               <Maximize2 className="w-3.5 h-3.5" />
@@ -359,6 +380,31 @@ export default function CreationProjectsPage() {
     <AdminShell hideDescription actions={<AdminDashboardHints scope="creation" />}>
       <AdminMessage message={message} onClose={() => setMessage(null)} />
 
+      <AdminPageHeader
+        crumbs={[{ label: 'Console' }, { label: '创作项目' }]}
+        title={`创作项目监控 · ${runningCount ?? 0} 在跑`}
+        subtitle="项目卡 + 7 节点状态条 + 全量列表"
+      />
+
+      {spotlightProjects.length > 0 ? (
+        <div className="mb-5 grid grid-cols-1 gap-3.5 lg:grid-cols-2">
+          {spotlightProjects.map((p) => (
+            <ProjectSpotlightCard
+              key={p.project_id}
+              project={{
+                ...p,
+                current_node: p.current_step || p.current_node || 1,
+                elapsed: p.elapsed_text,
+                remain: p.remain_text,
+              }}
+              onTrace={() => setTraceDrawerId(p.project_id)}
+              onFullTrace={() => navigate(`/admin/creation/projects/${p.project_id}/trace`)}
+              onIntervene={() => navigate(`/admin/creation/projects/${p.project_id}/trace`)}
+            />
+          ))}
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {QUICK_FILTERS.map((filter) => {
           const active = quickActive === filter.id
@@ -372,7 +418,7 @@ export default function CreationProjectsPage() {
               className={`rounded-2xl border p-4 text-left transition-all ${
                 active
                   ? 'border-gold-500/40 bg-gold-500/10 ring-1 ring-gold-500/25'
-                  : 'border-navy-700/40 bg-navy-900/30 hover:border-navy-600/50'
+                  : 'border-white/10 bg-white/[0.03] hover:border-white/20'
               }`}
             >
               <div className="flex items-center justify-between gap-2 mb-1">
@@ -398,7 +444,7 @@ export default function CreationProjectsPage() {
         <select
           value={status}
           onChange={(e) => patchParams({ status: e.target.value, failed_run: false })}
-          className="px-4 py-3 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm"
+          className="sf-control"
         >
           {STATUS_OPTIONS.map((o) => (
             <option key={o.key || 'all'} value={o.key}>
@@ -409,7 +455,7 @@ export default function CreationProjectsPage() {
         <select
           value={pipelineMode}
           onChange={(e) => patchParams({ mode: e.target.value })}
-          className="px-4 py-3 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm"
+          className="sf-control"
         >
           {MODE_OPTIONS.map((o) => (
             <option key={o.key || 'all'} value={o.key}>
@@ -417,7 +463,7 @@ export default function CreationProjectsPage() {
             </option>
           ))}
         </select>
-        <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-navy-800/60 border border-navy-700/40 text-sm text-navy-200 cursor-pointer">
+        <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-navy-200">
           <input
             type="checkbox"
             checked={hasFailedRun}
@@ -427,7 +473,7 @@ export default function CreationProjectsPage() {
                 status: e.target.checked ? '' : status,
               })
             }
-            className="rounded border-navy-600"
+            className="rounded border-white/20"
           />
           仅有失败 run
         </label>
@@ -436,12 +482,10 @@ export default function CreationProjectsPage() {
       {loading ? (
         <AdminLoading label="加载项目…" />
       ) : (
-        <>
-          <p className="text-xs text-navy-500">
-            共 {pagination?.total ?? 0} 条
-            {keyword ? ` · 搜索「${keyword}」` : ''}
-            {pipelineMode ? ` · 模式 ${pipelineMode}` : ''}
-          </p>
+        <AdminPanel
+          title="全部项目"
+          sub={`按开始时间倒序 · 共 ${pagination?.total ?? 0}${keyword ? ` · 搜索「${keyword}」` : ''}${pipelineMode ? ` · 模式 ${pipelineMode}` : ''}`}
+        >
           <AdminTable columns={columns} rows={items} rowKey="project_id" emptyText="暂无创作项目" />
           <AdminPagination
             page={pagination?.page || 1}
@@ -449,7 +493,7 @@ export default function CreationProjectsPage() {
             total={pagination?.total}
             onPageChange={(p) => patchParams({ page: p }, false)}
           />
-        </>
+        </AdminPanel>
       )}
 
       {traceDrawerId ? (

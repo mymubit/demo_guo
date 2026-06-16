@@ -8,7 +8,11 @@ from apps.agent.catalog import portal_agent_catalog
 from apps.agent.registry import AgentRegistryConfigService
 from apps.agent.routes import AgentLlmRouteService
 from apps.agent.runtime import post_script_pipeline_index_map
+from apps.workflow.bootstrap.workflow_disk import DISK_INDEX_BY_NODE
 from apps.workflow.step_admin import PipelineStepAdminService
+from apps.workflow.services.flow_graph_service import FlowGraphPlanService
+from apps.workflow.pipeline_store import FusionPipelineDbService
+from apps.console.orchestration.publish_service import OrchestrationPublishService
 
 
 class MainChainBlueprintService:
@@ -44,6 +48,72 @@ class MainChainBlueprintService:
             "route_max_tokens": route.get("max_tokens"),
         }
 
+    @staticmethod
+    def _fusion_node_for_agent(agent_id: str) -> str:
+        aid = (agent_id or "").strip()
+        for fusion_id, index in DISK_INDEX_BY_NODE.items():
+            if index > 5:
+                continue
+            try:
+                from apps.agent.runtime import agent_for_pipeline_node_index
+
+                if agent_for_pipeline_node_index(index) == aid:
+                    return fusion_id
+            except Exception:  # noqa: BLE001
+                continue
+        return f"agent-{aid}"
+
+    @classmethod
+    def _supplement_workspace_steps(
+        cls,
+        steps: List[Dict[str, Any]],
+        agents: Dict[str, Dict[str, Any]],
+        routes: Dict[str, Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        """DB 缺主链步骤时，从 Registry workspace agent 补画布占位（提示同步 SSOT）。"""
+        present_agents = {
+            str(step.get("agent_id") or "").strip()
+            for step in steps
+            if str(step.get("agent_id") or "").strip()
+        }
+        present_indices = {
+            int(step.get("node_index"))
+            for step in steps
+            if step.get("node_index") is not None
+        }
+        merged = list(steps)
+        for agent in sorted(
+            (a for a in agents.values() if a.get("workspace_index")),
+            key=lambda item: int(item.get("workspace_index") or 0),
+        ):
+            agent_id = str(agent.get("id") or "").strip()
+            workspace_index = int(agent.get("workspace_index") or 0)
+            if not agent_id or workspace_index <= 0:
+                continue
+            if agent_id in present_agents or workspace_index in present_indices:
+                continue
+            fusion_node_id = cls._fusion_node_for_agent(agent_id)
+            merged.append(
+                cls.enrich_step(
+                    {
+                        "id": f"placeholder-{agent_id}",
+                        "node_id": fusion_node_id,
+                        "fusion_node_id": fusion_node_id,
+                        "node_index": workspace_index,
+                        "chain_order": workspace_index,
+                        "agent_id": agent_id,
+                        "display_name": agent.get("name_zh") or agent.get("name") or agent_id,
+                        "enabled": False,
+                        "portal_visible": True,
+                        "flow_placeholder": True,
+                    },
+                    agents,
+                    routes,
+                )
+            )
+        merged.sort(key=lambda item: (item.get("chain_order") or 999, item.get("node_index") or 999))
+        return merged
+
     @classmethod
     def build_blueprint(cls) -> Dict[str, Any]:
         reg_payload = AgentRegistryConfigService.admin_payload()
@@ -56,14 +126,28 @@ class MainChainBlueprintService:
             cls.enrich_step(step, agents, routes)
             for step in PipelineStepAdminService.list_steps()
         ]
+        steps = cls._supplement_workspace_steps(steps, agents, routes)
 
         workspace_steps = [s for s in steps if s.get("portal_visible") is not False and (s.get("node_index") or 0) <= 5]
         pipeline_tail = [s for s in steps if s not in workspace_steps]
 
+        active_pack = FusionPipelineDbService.get_active_pack()
         registry_meta = registry.get("_meta") or {}
+        pack_flow_graph = dict(active_pack.flow_graph or {}) if active_pack else {}
+        flow_graph = pack_flow_graph or registry_meta.get("flow_graph") or {}
+        post_script_chain = list(
+            (active_pack.post_script_chain if active_pack else None)
+            or catalog.get("post_script_chain")
+            or registry_meta.get("post_script_chain")
+            or []
+        )
+        execution_plan = FlowGraphPlanService.execution_plan_payload(
+            pack_id=str(active_pack.id) if active_pack else None
+        )
         pipeline_tail_indices = sorted(post_script_pipeline_index_map().keys())
+        publish_state = OrchestrationPublishService.get_publish_state()
         return {
-            "version": catalog.get("version") or meta.get("db_version") or registry_meta.get("version"),
+            "version": publish_state.get("published_version") or catalog.get("version") or meta.get("db_version") or registry_meta.get("version"),
             "meta": meta,
             "registry_meta": {
                 "source": reg_payload.get("source"),
@@ -74,9 +158,15 @@ class MainChainBlueprintService:
             "steps": steps,
             "workspace_steps": workspace_steps,
             "pipeline_tail_steps": pipeline_tail,
-            "post_script_chain": list(catalog.get("post_script_chain") or []),
+            "post_script_chain": post_script_chain,
             "post_script_append_agents": list(catalog.get("post_script_append_agents") or []),
             "polish_max_rounds": catalog.get("polish_max_rounds"),
+            "flow_graph": flow_graph,
+            "execution_plan": execution_plan,
+            "publish_state": publish_state,
+            "pipeline_pack": FusionPipelineDbService.serialize_pack_summary(active_pack)
+            if active_pack
+            else None,
             "execution_modes": {
                 "step": {
                     "label": "分步掌控",
@@ -139,13 +229,26 @@ class MainChainBlueprintService:
             ]
         if "polish_max_rounds" in data:
             meta["polish_max_rounds"] = max(0, int(data.get("polish_max_rounds") or 0))
+        if "flow_graph" in data:
+            raw_graph = data.get("flow_graph")
+            meta["flow_graph"] = raw_graph if isinstance(raw_graph, dict) else {}
         registry["_meta"] = meta
         AgentRegistryConfigService.save_registry(
             registry,
             note="主链工作室更新编排元数据",
         )
+        active_pack = FusionPipelineDbService.get_active_pack()
+        if active_pack:
+            pack_updates: Dict[str, Any] = {}
+            if "flow_graph" in data:
+                pack_updates["flow_graph"] = meta.get("flow_graph") or {}
+            if "post_script_chain" in data:
+                pack_updates["post_script_chain"] = meta.get("post_script_chain") or []
+            if pack_updates:
+                FusionPipelineDbService.update_pack_meta(active_pack.id, pack_updates)
         return {
             "post_script_chain": list(meta.get("post_script_chain") or []),
             "post_script_append_agents": list(meta.get("post_script_append_agents") or []),
             "polish_max_rounds": meta.get("polish_max_rounds"),
+            "flow_graph": dict(meta.get("flow_graph") or {}),
         }

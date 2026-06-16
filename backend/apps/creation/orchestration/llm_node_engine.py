@@ -55,6 +55,7 @@ def run_llm_node(
         },
     )
     max_tokens = resolve_agent_max_tokens(agent_id)
+    from apps.creation.monitoring.execution_run_service import get_active_run_id
     from apps.skill.llm.usage_log import llm_usage_scope
     from apps.skill.models import LlmUsageLog
 
@@ -63,6 +64,7 @@ def run_llm_node(
         source_key=node_id,
         project_id=orch.project.id,
         user_id=orch.project.user_id,
+        execution_run_id=get_active_run_id(),
         sub_skill_id=agent_id,
     ):
         payload = LlmService.generate_json(

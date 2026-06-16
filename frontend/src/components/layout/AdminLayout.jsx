@@ -5,7 +5,7 @@ import { LogOut, Menu, ChevronRight, ChevronDown } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import {
   ADMIN_NAV_GROUPS,
-  flattenAdminNav,
+  findAdminNavItem,
   getAdminBreadcrumb,
   isAdminNavItemActive,
 } from '@/config/adminNav'
@@ -40,7 +40,7 @@ function NavItem({ item, active, onNavigate }) {
       className={`group relative flex items-center gap-3.5 rounded-xl px-3.5 py-3 text-base leading-snug transition-all ${
         active
           ? 'bg-gold-500/16 text-gold-50 font-semibold shadow-sm shadow-gold-500/10'
-          : 'text-navy-200 hover:bg-navy-800/55 hover:text-white font-medium'
+          : 'text-navy-200 hover:bg-white/[0.06] hover:text-white font-medium'
       }`}
     >
       {active ? (
@@ -63,17 +63,15 @@ export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(() => readCollapsedState())
 
-  const breadcrumb = useMemo(() => getAdminBreadcrumb(location.pathname), [location.pathname])
+  const breadcrumb = useMemo(
+    () => getAdminBreadcrumb(location.pathname, location.search),
+    [location.pathname, location.search]
+  )
 
   const activeGroupId = useMemo(() => {
-    const flat = flattenAdminNav()
-    const sorted = [...flat].sort((a, b) => b.path.length - a.path.length)
-    const hit = sorted.find(
-      (item) =>
-        location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
-    )
-    return hit?.groupId || ''
-  }, [location.pathname])
+    const item = findAdminNavItem(location.pathname, location.search)
+    return item?.groupId || ''
+  }, [location.pathname, location.search])
 
   useEffect(() => {
     if (!activeGroupId) return
@@ -123,8 +121,8 @@ export default function AdminLayout() {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-full bg-gradient-to-b from-navy-900 via-navy-950 to-navy-950 border-r border-navy-700/50 flex flex-col shadow-xl shadow-black/20">
-          <div className="px-5 pt-6 pb-5 border-b border-navy-800/50">
+        <div className="h-full bg-gradient-to-b from-navy-900 via-navy-950 to-navy-950 border-r border-white/5 flex flex-col shadow-xl shadow-black/20">
+          <div className="px-5 pt-6 pb-5 border-b border-white/10">
             <Link to="/admin" className="flex items-center gap-4 group">
               <BrandLogo variant="admin" size="lg" showText={false} to={null} interactive={false} />
               <div className="min-w-0">
@@ -134,13 +132,13 @@ export default function AdminLayout() {
                 <div className="text-[15px] text-navy-400 mt-1 tracking-wide">运营控制台</div>
               </div>
             </Link>
-            <div className="mt-5 flex items-center gap-3.5 min-w-0 rounded-2xl bg-navy-800/35 px-4 py-3 border border-navy-700/35">
+            <div className="mt-5 flex min-w-0 items-center gap-3.5 rounded-2xl border border-white/5 bg-slate-900/40 px-4 py-3">
               <div className="w-11 h-11 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-navy-950 font-bold text-sm shrink-0 shadow-md shadow-gold-500/20">
                 {adminInitials}
               </div>
               <div className="min-w-0">
                 <div className="text-base font-semibold text-white truncate">{adminName}</div>
-                <div className="text-[15px] text-navy-500 truncate">运营账号</div>
+                <div className="text-[15px] text-navy-400 truncate">运营账号</div>
               </div>
             </div>
           </div>
@@ -150,7 +148,7 @@ export default function AdminLayout() {
               const isCollapsible = Boolean(group.collapsible)
               const isExpanded = isCollapsible ? !collapsed[group.id] : true
               const groupHasActive = group.items.some((item) =>
-                isAdminNavItemActive(location.pathname, item)
+                isAdminNavItemActive(location.pathname, item, location.search)
               )
 
               return (
@@ -183,7 +181,7 @@ export default function AdminLayout() {
                         <NavItem
                           key={item.id}
                           item={item}
-                          active={isAdminNavItemActive(location.pathname, item)}
+                          active={isAdminNavItemActive(location.pathname, item, location.search)}
                           onNavigate={closeSidebar}
                         />
                       ))}
@@ -194,7 +192,7 @@ export default function AdminLayout() {
             })}
           </nav>
 
-          <div className="p-4 border-t border-navy-800/50">
+          <div className="p-4 border-t border-white/10">
             <button
               type="button"
               onClick={handleLogout}
@@ -208,25 +206,25 @@ export default function AdminLayout() {
       </aside>
 
       <div className="flex-1 lg:ml-72 flex flex-col min-h-screen">
-        <header className="sticky top-0 z-30 bg-navy-950/95 backdrop-blur-xl border-b border-navy-800/50">
+        <header className="sticky top-0 z-30 bg-navy-950/95 backdrop-blur-xl border-b border-white/10">
           <div className="flex items-center justify-between px-8 py-4">
             <div className="flex items-center gap-3 min-w-0">
               <button
                 type="button"
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-lg text-navy-300 hover:bg-navy-800/50"
+                className="lg:hidden p-2 rounded-lg text-navy-300 hover:bg-white/[0.06]"
               >
                 <Menu className="w-5 h-5" />
               </button>
               <div className="flex items-center gap-2.5 text-base min-w-0 flex-wrap">
                 {breadcrumb.map((crumb, idx) => (
                   <div key={`${crumb}-${idx}`} className="flex items-center gap-2.5 min-w-0">
-                    {idx > 0 && <ChevronRight className="w-4 h-4 text-navy-600 shrink-0" />}
+                    {idx > 0 && <ChevronRight className="w-4 h-4 text-navy-500 shrink-0" />}
                     <span
                       className={
                         idx === breadcrumb.length - 1
                           ? 'text-white font-semibold text-[17px] truncate'
-                          : 'text-navy-500 truncate'
+                          : 'text-navy-400 truncate'
                       }
                     >
                       {crumb}
@@ -238,7 +236,7 @@ export default function AdminLayout() {
             <button
               type="button"
               onClick={handleLogout}
-              className="hidden sm:inline-flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-base text-navy-400 hover:bg-navy-800/50"
+              className="hidden sm:inline-flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-base text-navy-400 hover:bg-white/[0.06]"
             >
               <LogOut className="w-4 h-4" />
               退出
@@ -246,7 +244,7 @@ export default function AdminLayout() {
           </div>
         </header>
 
-        <main className="flex-1 min-w-0 w-full p-6 lg:p-9">
+        <main className="flex-1 min-w-0 w-full bg-gradient-to-b from-[#0a0e1a] to-[#0e1424] p-6 lg:p-9">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -262,7 +260,7 @@ export default function AdminLayout() {
           </AnimatePresence>
         </main>
 
-        <footer className="px-8 py-3 border-t border-navy-800/40 text-center text-sm text-navy-600">
+        <footer className="px-8 py-3 border-t border-white/5 text-center text-sm text-navy-400">
           ScriptForge 管理后台
         </footer>
       </div>

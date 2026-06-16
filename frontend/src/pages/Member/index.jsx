@@ -79,24 +79,20 @@ import {
   Sparkles,
   Check,
   Ticket,
-  Clock,
   Zap,
   Gift,
   Shield,
   ChevronRight,
   Loader2,
   Calendar,
-  CheckCircle2,
-  XCircle,
-  Copy,
-  ShoppingBag,
-  RefreshCw,
   Star,
   Flame,
   FileText,
   Users,
   Award,
   Wallet,
+  XCircle,
+  ShoppingBag,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useWalletStore } from '@/store/walletStore'
@@ -107,8 +103,11 @@ import {
   mergeMembershipState,
 } from '@/utils/date'
 import PriceWithDiscount from '@/components/commerce/PriceWithDiscount'
-import { Badge, Button, EmptyState, PageLoading } from '@/components/ui'
+import { Button, PageLoading } from '@/components/ui'
+import { SectionHeader } from '@/components/shared/ConsumerSection'
+import { cn } from '@/utils/cn'
 import { useMyMembership } from '@/hooks/queries/useMyMembership'
+import OrdersListPanel from '@/components/orders/OrdersListPanel'
 
 const DEFAULT_MEMBERSHIP = {
   plan: 'free',
@@ -119,30 +118,6 @@ const DEFAULT_MEMBERSHIP = {
   creation_quota_total: 0,
 }
 
-function OrderStatusBadge({ status }) {
-  if (status === 'paid') {
-    return (
-      <Badge tone="success" icon={<CheckCircle2 className="w-3.5 h-3.5" />}>
-        已支付
-      </Badge>
-    )
-  }
-  if (status === 'cancelled') {
-    return (
-      <Badge tone="default" icon={<XCircle className="w-3.5 h-3.5" />}>
-        已取消
-      </Badge>
-    )
-  }
-  if (status === 'refunded') {
-    return <Badge tone="info">已退款</Badge>
-  }
-  return (
-    <Badge tone="warning" icon={<Clock className="w-3.5 h-3.5" />}>
-      待支付
-    </Badge>
-  )
-}
 
 export default function Member() {
   const queryClient = useQueryClient()
@@ -287,12 +262,8 @@ export default function Member() {
   }
 
   return (
-    <div className="min-h-screen pt-16 pb-20 px-6 relative">
-      <div className="particles-bg" />
-      <div className="absolute top-40 left-10 w-96 h-96 rounded-full bg-gold-500/10 blur-3xl pointer-events-none" />
-      <div className="absolute top-80 right-10 w-[500px] h-[500px] rounded-full bg-purple-600/10 blur-3xl pointer-events-none" />
-
-      <div className="max-w-6xl mx-auto relative z-10">
+    <div className="min-h-screen pt-16 pb-20 px-6">
+      <div className="max-w-6xl mx-auto">
         {/* 页面标题 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -308,6 +279,13 @@ export default function Member() {
               你好，<span className="text-white font-semibold">{user?.nickname || user?.phone?.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') || '创作者'}</span>
               ，解锁专业能力，让创意腾飞
             </span>
+            <Link
+              to="/orders"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm text-navy-200 border border-white/10 hover:bg-white/5 transition-colors"
+            >
+              <ShoppingBag className="w-4 h-4" />
+              我的订单
+            </Link>
             <Link
               to="/wallet"
               className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm text-gold-300 border border-gold-500/30 hover:bg-gold-500/10 transition-colors"
@@ -325,29 +303,24 @@ export default function Member() {
           transition={{ delay: 0.1 }}
           className="mb-10"
         >
-          <div className="relative overflow-hidden rounded-[32px] p-8 md:p-10" style={{
-            background: membershipInfo?.is_active
-              ? 'linear-gradient(135deg, rgba(244, 183, 25, 0.15) 0%, rgba(253, 160, 133, 0.1) 50%, rgba(102, 126, 234, 0.1) 100%)'
-              : 'linear-gradient(135deg, rgba(15, 42, 92, 0.6) 0%, rgba(15, 42, 92, 0.3) 100%)',
-            border: membershipInfo?.is_active ? '1px solid rgba(244, 183, 25, 0.35)' : '1px solid rgba(102, 126, 234, 0.2)',
-            backdropFilter: 'blur(20px)',
-            boxShadow: membershipInfo?.is_active ? '0 20px 60px -20px rgba(244, 183, 25, 0.3)' : 'none',
-          }}>
-            {/* 装饰 */}
-            <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-30 blur-3xl pointer-events-none"
-              style={{ background: membershipInfo?.is_active ? 'radial-gradient(circle, #f4b719 0%, transparent 70%)' : 'radial-gradient(circle, #667eea 0%, transparent 70%)' }} />
-
-            <div className="relative z-10 flex flex-col md:flex-row gap-8 md:gap-12 items-start md:items-center">
+          <div
+            className={cn(
+              'relative overflow-hidden rounded-3xl border p-8 md:p-10',
+              membershipInfo?.is_active
+                ? 'border-gold-400/35 bg-gradient-to-br from-gold-400/15 via-navy-900/80 to-navy-950 shadow-gold'
+                : 'border-white/5 bg-gradient-to-br from-navy-900/65 to-navy-950/65',
+            )}
+          >
+            <div className="relative flex flex-col gap-8 md:flex-row md:items-center md:gap-12">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-4">
                   {membershipInfo?.is_active ? (
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-navy-950"
-                      style={{ background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)' }}>
+                    <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-[#f6d365] to-[#fda085] px-4 py-1.5 text-sm font-semibold text-navy-950">
                       <Crown className="w-4 h-4" />
                       {membershipInfo?.plan_name || '会员'}
                     </div>
                   ) : (
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-navy-200 bg-navy-700/50 border border-navy-600/40">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-navy-200 bg-slate-700/50 border border-white/10">
                       <Gift className="w-4 h-4" />
                       {membershipInfo?.plan_name || '免费用户'}
                     </div>
@@ -369,7 +342,7 @@ export default function Member() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
                   {/* 创作次数 */}
-                  <div className="p-5 rounded-2xl bg-navy-900/40 border border-navy-600/30">
+                  <div className="p-5 rounded-2xl bg-slate-900/40 border border-white/10">
                     <div className="flex items-center justify-between mb-3">
                       <div className="text-sm text-navy-300 flex items-center gap-1.5">
                         <Wallet className="w-4 h-4" /> 创作币余额
@@ -386,7 +359,7 @@ export default function Member() {
                   </div>
 
                   {/* 到期时间 */}
-                  <div className="p-5 rounded-2xl bg-navy-900/40 border border-navy-600/30">
+                  <div className="p-5 rounded-2xl bg-slate-900/40 border border-white/10">
                     <div className="text-sm text-navy-300 flex items-center gap-1.5 mb-3">
                       <Calendar className="w-4 h-4" /> 会员到期时间
                     </div>
@@ -401,7 +374,7 @@ export default function Member() {
                   </div>
 
                   {/* 会员权益 */}
-                  <div className="p-5 rounded-2xl bg-navy-900/40 border border-navy-600/30">
+                  <div className="p-5 rounded-2xl bg-slate-900/40 border border-white/10">
                     <div className="text-sm text-navy-300 flex items-center gap-1.5 mb-3">
                       <Shield className="w-4 h-4" /> 专属权益
                     </div>
@@ -417,20 +390,21 @@ export default function Member() {
 
               {/* 右侧图标 */}
               <div className="hidden md:flex flex-col items-center">
-                <div className="relative w-32 h-32 rounded-3xl flex items-center justify-center"
-                  style={{
-                    background: membershipInfo?.is_active
-                      ? 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)'
-                      : 'linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(118, 75, 162, 0.3) 100%)',
-                    boxShadow: membershipInfo?.is_active ? '0 20px 40px -10px rgba(244, 183, 25, 0.4)' : 'none',
-                  }}>
+                <div
+                  className={cn(
+                    'relative flex h-32 w-32 items-center justify-center rounded-3xl',
+                    membershipInfo?.is_active
+                      ? 'bg-gradient-to-br from-[#f6d365] to-[#fda085] shadow-gold'
+                      : 'bg-gradient-to-br from-indigo-500/30 to-purple-600/30',
+                  )}
+                >
                   <Crown className={`w-16 h-16 ${membershipInfo?.is_active ? 'text-navy-950' : 'text-gold-400'}`} />
                 </div>
                 {!membershipInfo?.is_active && (
                   <button
                     onClick={() => setTab('plans')}
-                    className="mt-5 px-6 py-2.5 rounded-xl font-semibold text-navy-950 text-sm inline-flex items-center gap-2"
-                    style={{ background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)' }}>
+                    className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-[#f6d365] to-[#fda085] px-6 py-2.5 text-sm font-semibold text-navy-950"
+                  >
                     <Sparkles className="w-4 h-4" />
                     立即升级
                   </button>
@@ -448,30 +422,30 @@ export default function Member() {
           >
             <h2 className="text-lg font-semibold text-white mb-4">会员与非会员权益对比</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="glass-card rounded-2xl p-6 border border-navy-700/40">
+            <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-navy-900/65 to-navy-950/65 p-6">
               <h3 className="text-lg font-bold text-white mb-1">
                 {featureMatrix.free_tier?.name || '普通用户'}
               </h3>
-              <p className="text-xs text-navy-500 mb-4">充值仅到账基础创作币，无额外赠送</p>
+              <p className="text-xs text-navy-400 mb-4">充值仅到账基础创作币，无额外赠送</p>
               <ul className="space-y-2">
                 {(featureMatrix.free_tier?.matrix || []).map((row) => (
                   <li
                     key={row.key}
                     className={`flex items-center justify-between text-sm gap-2 rounded-lg px-2 py-1.5 ${
-                      row.free !== row.member ? 'bg-navy-800/40' : ''
+                      row.free !== row.member ? 'bg-white/[0.04]' : ''
                     }`}
                   >
                     <span className="text-navy-200">{row.label}</span>
                     {row.free ? (
                       <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
                     ) : (
-                      <XCircle className="w-4 h-4 text-navy-600 flex-shrink-0" />
+                      <XCircle className="w-4 h-4 text-navy-500 flex-shrink-0" />
                     )}
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="glass-card rounded-2xl p-6 border border-gold-500/30">
+            <div className="rounded-2xl border border-gold-400/30 bg-gradient-to-br from-navy-900/65 to-navy-950/65 p-6 shadow-gold">
               <h3 className="text-lg font-bold text-gold-400 mb-1">
                 {featureMatrix.member_tier?.name || '会员用户'}
               </h3>
@@ -495,7 +469,7 @@ export default function Member() {
                     {row.member ? (
                       <Check className="w-4 h-4 text-gold-400 flex-shrink-0" />
                     ) : (
-                      <XCircle className="w-4 h-4 text-navy-600 flex-shrink-0" />
+                      <XCircle className="w-4 h-4 text-navy-500 flex-shrink-0" />
                     )}
                   </li>
                 ))}
@@ -524,15 +498,13 @@ export default function Member() {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 transition-all ${
+              className={cn(
+                'flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all',
                 tab === t.key
-                  ? 'text-navy-950'
-                  : 'text-navy-200 hover:text-white bg-navy-800/50 border border-navy-600/30 hover:border-navy-500/40'
-              }`}
-              style={tab === t.key ? {
-                background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
-                boxShadow: '0 8px 20px -8px rgba(244, 183, 25, 0.5)',
-              } : {}}>
+                  ? 'bg-gradient-to-br from-[#f6d365] to-[#fda085] text-navy-950 shadow-gold'
+                  : 'border border-white/10 bg-slate-800/50 text-navy-200 hover:border-white/20 hover:text-white',
+              )}
+            >
               <t.icon className="w-4 h-4" />
               {t.label}
             </button>
@@ -548,40 +520,40 @@ export default function Member() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <SectionHeader
+                align="center"
+                eyebrow="套餐选择"
+                title="选择适合你的版本"
+                subtitle="开通后立即生效，创作次数与创作币将自动到账"
+                className="mb-10"
+              />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
                 {plans.map((plan, idx) => (
-                  <motion.div
+                  <motion.article
                     key={plan.id}
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 + idx * 0.1 }}
-                    whileHover={{ y: -5 }}
-                    className={`relative rounded-[28px] p-8 ${
-                      plan.highlight ? 'scale-105 md:scale-100' : ''
-                    }`}
-                    style={{
-                      background: plan.highlight
-                        ? 'linear-gradient(135deg, rgba(244, 183, 25, 0.12) 0%, rgba(253, 160, 133, 0.08) 50%, rgba(15, 42, 92, 0.5) 100%)'
-                        : 'rgba(15, 42, 92, 0.5)',
-                      border: plan.highlight ? '1px solid rgba(244, 183, 25, 0.4)' : '1px solid rgba(102, 126, 234, 0.2)',
-                      backdropFilter: 'blur(20px)',
-                      boxShadow: plan.highlight ? '0 20px 60px -20px rgba(244, 183, 25, 0.4)' : 'none',
-                    }}>
+                    whileHover={{ y: plan.highlight ? -4 : -2 }}
+                    className={cn(
+                      'relative flex flex-col rounded-3xl border border-white/5 bg-gradient-to-br from-navy-900/65 to-navy-950/65 p-8 transition-shadow',
+                      plan.highlight && 'border-gold-400/50 shadow-gold -translate-y-1.5',
+                    )}
+                  >
                     {plan.highlight && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full text-xs font-bold text-navy-950 whitespace-nowrap"
-                        style={{ background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)' }}>
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-gradient-to-br from-[#f6d365] to-[#fda085] px-4 py-1.5 text-xs font-bold text-navy-950">
                         {plan.badge}
                       </div>
                     )}
 
                     {!plan.highlight && plan.badge && (
-                      <div className="text-xs text-navy-400 font-semibold uppercase tracking-wider mb-3">
+                      <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-navy-400">
                         {plan.badge}
                       </div>
                     )}
 
                     <div className="mb-5">
-                      <h3 className={`text-2xl font-bold ${plan.highlight ? 'gradient-text' : 'text-white'}`}>
+                      <h3 className={cn('text-2xl font-bold', plan.highlight ? 'gradient-text' : 'text-white')}>
                         {plan.name}
                       </h3>
                     </div>
@@ -602,10 +574,10 @@ export default function Member() {
                       className="mb-6"
                     />
 
-                    <ul className="space-y-2.5 mb-8 min-h-[200px]">
+                    <ul className="mb-8 min-h-[200px] space-y-2.5">
                       {plan.features.map((feat) => (
                         <li key={feat} className="flex items-start gap-2 text-sm text-navy-100">
-                          <Check className={`w-4 h-4 mt-0.5 flex-shrink-0 ${plan.highlight ? 'text-gold-400' : 'text-navy-400'}`} />
+                          <Check className={cn('mt-0.5 h-4 w-4 flex-shrink-0', plan.highlight ? 'text-gold-400' : 'text-navy-400')} />
                           <span>{feat}</span>
                         </li>
                       ))}
@@ -616,16 +588,13 @@ export default function Member() {
                       disabled={!!payLoading[plan.id]}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className={`w-full py-3.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all ${
-                        plan.highlight ? 'text-navy-950' : 'text-white'
-                      }`}
-                      style={plan.highlight ? {
-                        background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
-                        boxShadow: '0 10px 30px -10px rgba(244, 183, 25, 0.5)',
-                      } : {
-                        background: 'rgba(102, 126, 234, 0.2)',
-                        border: '1px solid rgba(102, 126, 234, 0.4)',
-                      }}>
+                      className={cn(
+                        'mt-auto flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-60',
+                        plan.highlight
+                          ? 'bg-gradient-to-br from-[#f6d365] to-[#fda085] text-navy-950 shadow-gold'
+                          : 'border border-white/10 bg-indigo-500/20 text-white',
+                      )}
+                    >
                       {payLoading[plan.id] ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -638,7 +607,7 @@ export default function Member() {
                         </>
                       )}
                     </motion.button>
-                  </motion.div>
+                  </motion.article>
                 ))}
               </div>
 
@@ -647,7 +616,8 @@ export default function Member() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="p-6 rounded-2xl glass-card-gold">
+                className="rounded-2xl border border-gold-400/30 bg-gold-400/5 p-6"
+              >
                 <div className="flex items-start gap-3">
                   <Shield className="w-5 h-5 text-gold-400 flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-navy-200">
@@ -669,11 +639,10 @@ export default function Member() {
               className="grid grid-cols-1 lg:grid-cols-2 gap-6"
             >
               {/* 兑换表单 */}
-              <div className="p-8 rounded-[28px] glass-card">
+              <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                    style={{ background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)' }}>
-                    <Ticket className="w-6 h-6 text-navy-950" />
+                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gold-400/15 border border-gold-400/30">
+                    <Ticket className="w-6 h-6 text-gold-400" />
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-white">卡密兑换</h3>
@@ -689,7 +658,7 @@ export default function Member() {
                       placeholder="请输入卡密（例如 SF-XXXX-XXXX-XXXX）"
                       value={redeemCode}
                       onChange={(e) => setRedeemCode(e.target.value.toUpperCase())}
-                      className="w-full px-5 py-4 rounded-xl bg-navy-900/60 border border-navy-600/40 focus:border-gold-400 text-white placeholder-navy-400 outline-none transition-all focus:ring-2 focus:ring-gold-400/20 text-sm tracking-wider font-mono"
+                      className="w-full px-5 py-4 rounded-xl bg-slate-900/60 border border-white/10 focus:border-gold-400 text-white placeholder-navy-400 outline-none transition-all focus:ring-2 focus:ring-gold-400/20 text-sm tracking-wider font-mono"
                     />
                   </div>
 
@@ -698,11 +667,8 @@ export default function Member() {
                     disabled={redeemLoading}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="w-full py-4 rounded-xl font-bold text-navy-950 text-base flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed transition-all"
-                    style={{
-                      background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
-                      boxShadow: '0 10px 30px -10px rgba(244, 183, 25, 0.5)',
-                    }}>
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-[#f6d365] to-[#fda085] py-4 text-base font-bold text-navy-950 shadow-gold transition-all disabled:cursor-not-allowed disabled:opacity-60"
+                  >
                     {redeemLoading ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
@@ -717,7 +683,7 @@ export default function Member() {
                   </motion.button>
                 </form>
 
-                <div className="mt-6 pt-6 border-t border-navy-600/30">
+                <div className="mt-6 pt-6 border-t border-white/10">
                   <div className="text-xs text-navy-400 space-y-1.5">
                     <p>• 卡密格式：字母和数字组成，区分大小写</p>
                     <p>• 每张卡密仅可使用一次，兑换后立即生效</p>
@@ -728,9 +694,9 @@ export default function Member() {
               </div>
 
               {/* 卡密信息 */}
-              <div className="p-8 rounded-[28px] glass-card">
+              <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-8">
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-2xl bg-navy-700/50 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-700/50 flex items-center justify-center">
                     <Award className="w-6 h-6 text-gold-400" />
                   </div>
                   <div>
@@ -742,12 +708,12 @@ export default function Member() {
                 {redeemHistory.length > 0 ? (
                   <div className="space-y-3">
                     {redeemHistory.map((record) => (
-                      <div key={record.id} className="p-4 rounded-xl bg-navy-900/40 border border-navy-600/30 flex items-center justify-between">
+                      <div key={record.id} className="p-4 rounded-xl bg-slate-900/40 border border-white/10 flex items-center justify-between">
                         <div>
                           <div className="text-sm text-white font-semibold">{record.plan_name}</div>
                           <div className="text-xs text-navy-400 mt-1">开通于 {formatDate(record.redeemed_at)}</div>
                           {record.end_at && (
-                            <div className="text-xs text-navy-500 mt-0.5">到期 {formatDate(record.end_at)}</div>
+                            <div className="text-xs text-navy-400 mt-0.5">到期 {formatDate(record.end_at)}</div>
                           )}
                         </div>
                         <div className="text-xs text-gold-400 font-semibold">已激活</div>
@@ -756,7 +722,7 @@ export default function Member() {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <Ticket className="w-16 h-16 text-navy-600 mx-auto mb-4" />
+                    <Ticket className="w-16 h-16 text-navy-500 mx-auto mb-4" />
                     <p className="text-navy-300 mb-1">暂无兑换记录</p>
                     <p className="text-xs text-navy-400">使用卡密激活会员后将显示在此处</p>
                   </div>
@@ -772,176 +738,33 @@ export default function Member() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="p-6 md:p-8 rounded-[28px] glass-card"
+              className="rounded-2xl border border-white/5 bg-slate-900/60 p-6 md:p-8"
             >
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-navy-700/50 flex items-center justify-center">
-                    <ShoppingBag className="w-6 h-6 text-gold-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-white">我的订单</h3>
-                    <p className="text-sm text-navy-300">共 {orderList.length} 条订单记录</p>
-                  </div>
-                </div>
-                <button
-                  onClick={async () => {
-                    try {
-                      await reloadMembershipData()
-                      toast.success('订单列表已刷新')
-                    } catch {
-                      toast.error('刷新失败')
-                    }
-                  }}
-                  className="p-2.5 rounded-xl bg-navy-800/50 border border-navy-600/30 text-navy-300 hover:text-white hover:border-navy-500/40 transition-all">
-                  <RefreshCw className="w-5 h-5" />
-                </button>
-              </div>
-
-              <div className="space-y-3 md:hidden">
-                {orderList.map((order) => (
-                  <div
-                    key={order.id || order.order_no}
-                    className="rounded-2xl border border-navy-700/35 bg-navy-900/45 p-4"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <button
-                          type="button"
-                          onClick={() => copyOrderNo(order.order_no)}
-                          className="flex max-w-full items-center gap-1.5 truncate font-mono text-sm text-white hover:text-gold-400"
-                        >
-                          <span className="truncate">{order.order_no}</span>
-                          <Copy className="w-3.5 h-3.5 shrink-0 text-navy-400" />
-                        </button>
-                        <p className="mt-1 text-xs text-navy-500">创建于 {formatDate(order.created_at)}</p>
-                      </div>
-                      <OrderStatusBadge status={order.status} />
-                    </div>
-                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <p className="text-xs text-navy-500">套餐</p>
-                        <p className="mt-1 font-semibold text-white">{order.plan_name}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-navy-500">金额</p>
-                        <p className="mt-1 text-lg font-bold gradient-text">¥{order.amount}</p>
-                      </div>
-                      <div className="col-span-2">
-                        <p className="text-xs text-navy-500">支付时间</p>
-                        <p className="mt-1 text-navy-300">{order.paid_at ? formatDate(order.paid_at) : '-'}</p>
-                      </div>
-                    </div>
-                    {order.status === 'pending' && (
-                      <div className="mt-4 grid grid-cols-2 gap-2">
-                        <Button
-                          size="sm"
-                          variant="gold"
-                          isLoading={orderActionLoading === order.order_no}
-                          onClick={() => handlePayOrder(order.order_no)}
-                        >
-                          去支付
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          disabled={orderActionLoading === order.order_no}
-                          onClick={() => handleCancelOrder(order.order_no)}
-                        >
-                          取消
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <div className="hidden overflow-x-auto overscroll-x-contain md:block">
-                <table className="w-full min-w-[700px]">
-                  <thead>
-                    <tr className="border-b border-navy-600/30">
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-navy-400 uppercase tracking-wider">订单信息</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-navy-400 uppercase tracking-wider">套餐</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-navy-400 uppercase tracking-wider">金额</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-navy-400 uppercase tracking-wider">状态</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-navy-400 uppercase tracking-wider">时间</th>
-                      <th className="text-left py-3 px-4 text-xs font-semibold text-navy-400 uppercase tracking-wider">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orderList.map((order) => (
-                      <tr key={order.id} className="border-b border-navy-600/20 hover:bg-navy-800/20 transition-colors">
-                        <td className="py-5 px-4">
-                          <div className="flex items-center gap-3">
-                            <div className="text-sm">
-                              <div className="font-mono text-white cursor-pointer hover:text-gold-400 transition-colors flex items-center gap-1.5"
-                                onClick={() => copyOrderNo(order.order_no)}>
-                                {order.order_no}
-                                <Copy className="w-3.5 h-3.5 text-navy-400" />
-                              </div>
-                              <div className="text-xs text-navy-400 mt-1">
-                                创建于 {formatDate(order.created_at)}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="py-5 px-4 text-sm text-white font-semibold">
-                          {order.plan_name}
-                        </td>
-                        <td className="py-5 px-4">
-                          <span className="text-lg font-bold gradient-text">¥{order.amount}</span>
-                        </td>
-                        <td className="py-5 px-4">
-                          <OrderStatusBadge status={order.status} />
-                        </td>
-                        <td className="py-5 px-4 text-sm text-navy-300">
-                          {order.paid_at ? formatDate(order.paid_at) : '-'}
-                        </td>
-                        <td className="py-5 px-4">
-                          {order.status === 'pending' && (
-                            <div className="flex gap-2">
-                              <button
-                                disabled={orderActionLoading === order.order_no}
-                                onClick={() => handlePayOrder(order.order_no)}
-                                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-navy-950 bg-gold-400 hover:bg-gold-300 disabled:opacity-50"
-                              >
-                                {orderActionLoading === order.order_no ? '处理中' : '去支付'}
-                              </button>
-                              <button
-                                disabled={orderActionLoading === order.order_no}
-                                onClick={() => handleCancelOrder(order.order_no)}
-                                className="px-3 py-1.5 rounded-lg text-xs text-navy-300 border border-navy-600/40 hover:text-white disabled:opacity-50"
-                              >
-                                取消
-                              </button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {orderList.length === 0 && (
-                <EmptyState
-                  compact
-                  icon={ShoppingBag}
-                  title="暂无订单记录"
-                  description="购买套餐后将显示在此处"
-                  action={
-                    <Button
-                      variant="gold"
-                      size="sm"
-                      iconRight={<ChevronRight className="w-4 h-4" />}
-                      onClick={() => setTab('plans')}
-                    >
-                      去选购套餐
-                    </Button>
+              <OrdersListPanel
+                orders={orderList}
+                orderActionLoading={orderActionLoading}
+                onCopyOrderNo={copyOrderNo}
+                onPayOrder={handlePayOrder}
+                onCancelOrder={handleCancelOrder}
+                onRefresh={async () => {
+                  try {
+                    await reloadMembershipData()
+                    toast.success('订单列表已刷新')
+                  } catch {
+                    toast.error('刷新失败')
                   }
-                  className="mt-4"
-                />
-              )}
+                }}
+                emptyAction={
+                  <Button
+                    variant="gold"
+                    size="sm"
+                    iconRight={<ChevronRight className="w-4 h-4" />}
+                    onClick={() => setTab('plans')}
+                  >
+                    去选购套餐
+                  </Button>
+                }
+              />
             </motion.div>
           )}
         </AnimatePresence>

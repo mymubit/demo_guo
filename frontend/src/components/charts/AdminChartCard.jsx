@@ -1,8 +1,8 @@
-import EChart from './EChart'
+import EChart from './LazyEChart'
 import { Card } from '@/components/ui'
 import { cn } from '@/utils/cn'
 
-/** 带 glass-card 标题的图表卡片 */
+/** 带 Console 面板标题的图表卡片 */
 export default function AdminChartCard({
   title,
   subtitle,

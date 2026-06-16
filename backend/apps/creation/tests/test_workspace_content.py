@@ -43,6 +43,12 @@ class WorkspaceContentTests(TestCase):
         brief = get_artifact(self.project, "project_brief") or {}
         self.assertTrue(brief.get("seedEnriched"))
         self.assertIsInstance(brief.get("trendFormula"), dict)
+
+    def test_ensure_brief_materializes_from_project_when_artifact_missing(self):
+        ensure_brief_seed_enriched(self.project)
+        brief = get_artifact(self.project, "project_brief") or {}
+        self.assertTrue(brief.get("coreHook") or brief.get("coreIdea"))
+        self.assertEqual(brief.get("theme"), "sweet-pet")
         self.assertIsInstance(brief.get("writingBrief"), dict)
         self.assertTrue((brief.get("writingBrief") or {}).get("tone") or (brief.get("writingBrief") or {}).get("notes"))
 

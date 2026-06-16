@@ -17,10 +17,10 @@ export default function RhythmCurveChart({ curve = [], showSummaryGrid = true })
   }
 
   return (
-    <div className="mb-5 rounded-2xl bg-navy-950/50 border border-navy-700/30 p-4">
+    <div className="mb-5 rounded-2xl border border-white/5 bg-slate-900/40 p-4">
       <div className="flex items-center justify-between mb-3">
         <div className="text-xs text-navy-400">全剧情绪强度曲线</div>
-        <div className="text-[10px] text-navy-500">悬停查看推荐钩子 · 纵轴 1–10</div>
+        <div className="text-[10px] text-navy-400">悬停查看推荐钩子 · 纵轴 1–10</div>
       </div>
       <EChart option={option} height={240} />
       {showSummaryGrid ? (
@@ -28,9 +28,9 @@ export default function RhythmCurveChart({ curve = [], showSummaryGrid = true })
           {curve.map((block, index) => (
             <div
               key={block.episodeRange || block.episodeGroup || block.episodeStart || index}
-              className="rounded-lg bg-navy-900/40 border border-navy-700/25 px-2.5 py-2 text-center"
+              className="rounded-lg border border-white/5 bg-slate-900/40 px-2.5 py-2 text-center"
             >
-              <div className="text-[10px] text-navy-500">{formatRhythmEpisodeLabel(block)}</div>
+              <div className="text-[10px] text-navy-400">{formatRhythmEpisodeLabel(block)}</div>
               <div className="text-sm font-semibold text-gold-400">{block.intensityLevel ?? '—'}/10</div>
             </div>
           ))}

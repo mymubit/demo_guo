@@ -16,6 +16,36 @@ def is_ip_sequel(brief: Optional[dict]) -> bool:
     return entry == "ip-sequel"
 
 
+def _first_text(row: dict, keys: tuple[str, ...]) -> str:
+    for key in keys:
+        val = row.get(key)
+        if isinstance(val, str) and val.strip():
+            return val.strip()
+    return ""
+
+
+def _character_name(row: dict) -> str:
+    return _first_text(
+        row,
+        (
+            "name",
+            "characterName",
+            "character_name",
+            "displayName",
+            "fullName",
+            "姓名",
+            "角色名",
+        ),
+    )
+
+
+def _character_id(row: dict, fallback_name: str) -> str:
+    cid = _first_text(row, ("id", "characterId", "character_id", "角色ID"))
+    if cid:
+        return cid
+    return fallback_name
+
+
 def build_ip_roster(character_bible: dict) -> List[Dict[str, str]]:
     roster: List[Dict[str, str]] = []
     seen: Set[str] = set()
@@ -23,8 +53,8 @@ def build_ip_roster(character_bible: dict) -> List[Dict[str, str]]:
         for c in character_bible.get(key) or []:
             if not isinstance(c, dict):
                 continue
-            name = (c.get("name") or "").strip()
-            cid = (c.get("id") or "").strip()
+            name = _character_name(c)
+            cid = _character_id(c, name)
             if not name or name in seen:
                 continue
             seen.add(name)
@@ -32,7 +62,12 @@ def build_ip_roster(character_bible: dict) -> List[Dict[str, str]]:
                 {
                     "id": cid,
                     "name": name,
-                    "roleType": (c.get("roleType") or key.rstrip("s"))[:40],
+                    "roleType": str(
+                        c.get("roleType")
+                        or c.get("role")
+                        or c.get("characterRole")
+                        or key.rstrip("s")
+                    )[:40],
                 }
             )
     return roster
@@ -86,9 +121,9 @@ def run_character_ip_lock(
                 issues.append(f"须保留角色/设定未出现：{token[:24]}")
 
     protagonists = [
-        (c.get("name") or "").strip()
+        _character_name(c)
         for c in (character_bible.get("protagonists") or [])
-        if isinstance(c, dict) and (c.get("name") or "").strip()
+        if isinstance(c, dict) and _character_name(c)
     ]
     if not protagonists:
         issues.append("IP 续作须至少锁定 1 名主角")

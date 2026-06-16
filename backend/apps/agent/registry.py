@@ -9,7 +9,12 @@ from typing import Any, Dict, Optional, Tuple
 
 from apps.agent.models import AgentRegistryConfig
 
-from apps.common.agent_term import attach_api_meta, enrich_registry_for_api, normalize_registry_for_save
+from apps.common.agent_term import (
+    attach_api_meta,
+    enrich_registry_for_api,
+    normalize_agent_runner_path,
+    normalize_registry_for_save,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -187,6 +192,8 @@ class AgentRegistryConfigService:
                     prompt = dict(merged.get("prompt") or {})
                     prompt.update(value)
                     merged["prompt"] = prompt
+                elif key in ("runner", "runner_path"):
+                    merged[key] = normalize_agent_runner_path(value)
                 else:
                     merged[key] = value
             agents[index] = merged
@@ -194,6 +201,51 @@ class AgentRegistryConfigService:
             break
         if not updated:
             raise ValueError(f"未找到 Agent: {aid}")
+        registry["agents"] = agents
+        row.registry = registry
+        row.save(update_fields=["registry", "updated_at"])
+        cls._clear_runtime_cache()
+
+    @classmethod
+    def patch_sub_skill_hint(cls, agent_id: str, skill_id: str, system_hint: str) -> None:
+        """更新 registry 中单个子技能的 system_hint 字段（运营后台直接调整提示词）。"""
+        aid = (agent_id or "").strip()
+        sid = (skill_id or "").strip()
+        if not aid or not sid:
+            raise ValueError("agent_id 和 skill_id 不能为空")
+        row = cls.get_active_row()
+        if not row or not isinstance(row.registry, dict):
+            cls.ensure_defaults()
+            row = cls.get_active_row()
+        if not row:
+            raise ValueError("Agent Registry 未初始化")
+
+        registry = dict(row.registry or {})
+        agents = list(registry.get("agents") or [])
+        agent_found = False
+        skill_found = False
+        for ai, agent in enumerate(agents):
+            if not isinstance(agent, dict) or str(agent.get("id") or "").strip() != aid:
+                continue
+            agent_found = True
+            sub_skills = list(agent.get("sub_skills") or [])
+            for si, skill in enumerate(sub_skills):
+                if not isinstance(skill, dict) or str(skill.get("id") or "").strip() != sid:
+                    continue
+                skill_found = True
+                updated_skill = dict(skill)
+                updated_skill["system_hint"] = (system_hint or "").strip()
+                sub_skills[si] = updated_skill
+            updated_agent = dict(agent)
+            updated_agent["sub_skills"] = sub_skills
+            agents[ai] = updated_agent
+            break
+
+        if not agent_found:
+            raise ValueError(f"未找到 Agent: {aid}")
+        if not skill_found:
+            raise ValueError(f"未找到 Agent {aid} 的子技能: {sid}")
+
         registry["agents"] = agents
         row.registry = registry
         row.save(update_fields=["registry", "updated_at"])
@@ -266,6 +318,65 @@ class AgentRegistryConfigService:
         return migrated
 
     @classmethod
+    def _merge_file_registry_with_db_hints(
+        cls,
+        file_registry: Dict[str, Any],
+        db_registry: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """将磁盘 registry 与 DB registry 合并：保留 DB 中已配置的子技能 system_hint。
+
+        规则：磁盘文件为主，但 sub_skill.system_hint 字段以 DB 中已有值优先，
+        避免重新 import_from_file 时覆盖运营手动调整的提示词。
+        """
+        db_agents: Dict[str, Dict[str, str]] = {}
+        for agent in (db_registry.get("agents") or []):
+            if not isinstance(agent, dict):
+                continue
+            aid = str(agent.get("id") or "").strip()
+            if not aid:
+                continue
+            skill_hints: Dict[str, str] = {}
+            for skill in (agent.get("sub_skills") or []):
+                if not isinstance(skill, dict):
+                    continue
+                sid = str(skill.get("id") or "").strip()
+                hint = (skill.get("system_hint") or "").strip()
+                if sid and hint:
+                    skill_hints[sid] = hint
+            if skill_hints:
+                db_agents[aid] = skill_hints
+
+        if not db_agents:
+            return file_registry
+
+        merged = dict(file_registry)
+        merged_agents = []
+        for agent in (merged.get("agents") or []):
+            if not isinstance(agent, dict):
+                merged_agents.append(agent)
+                continue
+            aid = str(agent.get("id") or "").strip()
+            hints = db_agents.get(aid) or {}
+            if not hints:
+                merged_agents.append(agent)
+                continue
+            sub_skills = []
+            for skill in (agent.get("sub_skills") or []):
+                if not isinstance(skill, dict):
+                    sub_skills.append(skill)
+                    continue
+                sid = str(skill.get("id") or "").strip()
+                if sid in hints:
+                    skill = dict(skill)
+                    skill["system_hint"] = hints[sid]
+                sub_skills.append(skill)
+            agent = dict(agent)
+            agent["sub_skills"] = sub_skills
+            merged_agents.append(agent)
+        merged["agents"] = merged_agents
+        return merged
+
+    @classmethod
     def import_from_file(cls, *, overwrite: bool = True) -> AgentRegistryConfig:
         file_registry = cls._load_file_registry()
         registry = dict(file_registry)
@@ -274,6 +385,10 @@ class AgentRegistryConfigService:
         existing = AgentRegistryConfig.objects.filter(config_key=CONFIG_KEY).first()
         if existing and not overwrite:
             raise ValueError("default 配置已存在，请使用覆盖导入")
+
+        # 保留 DB 中运营已配置的子技能 system_hint，不被磁盘文件覆盖
+        if existing and isinstance(existing.registry, dict) and existing.registry.get("agents"):
+            registry = cls._merge_file_registry_with_db_hints(registry, existing.registry)
 
         return cls.save_registry(
             registry,

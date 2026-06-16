@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { RefreshCw, Save, Upload } from 'lucide-react'
 import { admin } from '@/services/api'
+import { SubSkillEditor, Tier1SectionPicker } from '@/components/admin/AgentConfigEditors'
 
-const inputCls =
-  'w-full px-3 py-2 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm focus:border-gold-500/50 outline-none'
-const labelCls = 'text-xs text-navy-400 mb-1 block'
+const inputCls = 'sf-control text-sm'
+const labelCls = 'sf-label text-xs'
 
 function csvToList(text) {
   return String(text || '')
@@ -20,195 +20,6 @@ function listToCsv(list) {
 
 function cloneRegistry(registry) {
   return JSON.parse(JSON.stringify(registry || {}))
-}
-
-const SUB_SKILL_TYPES = ['rule', 'cli', 'retrieval', 'llm', 'llm+rule', 'retrieval+rule', 'trace']
-
-function emptySubSkill() {
-  return { id: '', type: 'rule', description: '' }
-}
-
-function Tier1SectionPicker({ catalog = [], selected = [], onChange }) {
-  const selectedSet = new Set(selected || [])
-  return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap gap-1.5">
-        {catalog.map((section) => {
-          const key = section.key || section
-          const label = section.label || key
-          const active = selectedSet.has(key)
-          return (
-            <button
-              key={key}
-              type="button"
-              title={key}
-              onClick={() => {
-                const next = active
-                  ? selected.filter((item) => item !== key)
-                  : [...selected, key]
-                onChange(next)
-              }}
-              className={`px-2 py-1 rounded-lg text-[11px] border transition-colors ${
-                active
-                  ? 'bg-gold-400/15 text-gold-300 border-gold-400/40'
-                  : 'bg-navy-900/50 text-navy-400 border-navy-700/40 hover:border-navy-600'
-              }`}
-            >
-              {label}
-            </button>
-          )
-        })}
-      </div>
-      {!catalog.length ? (
-        <p className="text-xs text-navy-500">暂无 Tier1 目录，请检查 skill rule renderers。</p>
-      ) : null}
-      <label className="block">
-        <span className={labelCls}>手动编辑（逗号分隔）</span>
-        <input
-          value={listToCsv(selected)}
-          onChange={(e) => onChange(csvToList(e.target.value))}
-          className={`${inputCls} font-mono text-xs`}
-        />
-      </label>
-    </div>
-  )
-}
-
-function SubSkillEditor({ skills = [], onChange }) {
-  function patchSkill(index, field, value) {
-    const next = skills.map((item, idx) => (idx === index ? { ...item, [field]: value } : item))
-    onChange(next)
-  }
-
-  function removeSkill(index) {
-    onChange(skills.filter((_, idx) => idx !== index))
-  }
-
-  function addSkill() {
-    onChange([...(skills || []), emptySubSkill()])
-  }
-
-  function moveSkill(index, delta) {
-    const target = index + delta
-    if (target < 0 || target >= skills.length) return
-    const next = [...skills]
-    ;[next[index], next[target]] = [next[target], next[index]]
-    onChange(next)
-  }
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs text-navy-400">子技能 ({skills.length})</span>
-        <button
-          type="button"
-          onClick={addSkill}
-          className="text-xs text-gold-400 hover:text-gold-300"
-        >
-          + 添加子技能
-        </button>
-      </div>
-      {skills.map((skill, index) => (
-        <div
-          key={`${skill.id || 'skill'}-${index}`}
-          className="p-3 rounded-xl border border-navy-700/40 bg-navy-950/40 space-y-2"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[10px] text-navy-500 font-mono">#{index + 1}</span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={index === 0}
-                onClick={() => moveSkill(index, -1)}
-                className="text-[10px] text-navy-400 hover:text-navy-200 disabled:opacity-30"
-              >
-                上移
-              </button>
-              <button
-                type="button"
-                disabled={index >= skills.length - 1}
-                onClick={() => moveSkill(index, 1)}
-                className="text-[10px] text-navy-400 hover:text-navy-200 disabled:opacity-30"
-              >
-                下移
-              </button>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <label className="block">
-              <span className={labelCls}>id</span>
-              <input
-                value={skill.id || ''}
-                onChange={(e) => patchSkill(index, 'id', e.target.value)}
-                className={`${inputCls} font-mono text-xs`}
-              />
-            </label>
-            <label className="block">
-              <span className={labelCls}>type</span>
-              <select
-                value={skill.type || 'rule'}
-                onChange={(e) => patchSkill(index, 'type', e.target.value)}
-                className={`${inputCls} text-xs`}
-              >
-                {SUB_SKILL_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <label className="block">
-            <span className={labelCls}>description</span>
-            <input
-              value={skill.description || ''}
-              onChange={(e) => patchSkill(index, 'description', e.target.value)}
-              className={`${inputCls} text-xs`}
-            />
-          </label>
-          {['cli', 'llm', 'llm+rule', 'retrieval+rule'].includes(skill.type) ? (
-            <label className="block">
-              <span className={labelCls}>cli（CLI 子技能）</span>
-              <input
-                value={skill.cli || ''}
-                onChange={(e) => patchSkill(index, 'cli', e.target.value)}
-                className={`${inputCls} font-mono text-xs`}
-                placeholder="sub-brief"
-              />
-            </label>
-          ) : null}
-          {String(skill.type || '').includes('llm') ? (
-            <label className="block">
-              <span className={labelCls}>handbook</span>
-              <input
-                value={skill.handbook || ''}
-                onChange={(e) => patchSkill(index, 'handbook', e.target.value)}
-                className={`${inputCls} font-mono text-xs`}
-                placeholder="nodes/node-2-structure.md"
-              />
-            </label>
-          ) : null}
-          {String(skill.type || '').includes('retrieval') ? (
-            <label className="block">
-              <span className={labelCls}>references（逗号分隔）</span>
-              <input
-                value={listToCsv(skill.references)}
-                onChange={(e) => patchSkill(index, 'references', csvToList(e.target.value))}
-                className={`${inputCls} font-mono text-xs`}
-              />
-            </label>
-          ) : null}
-          <button
-            type="button"
-            onClick={() => removeSkill(index)}
-            className="text-xs text-red-400/80 hover:text-red-300"
-          >
-            移除
-          </button>
-        </div>
-      ))}
-    </div>
-  )
 }
 
 export default function AgentRegistryPanel({ onMessage }) {
@@ -383,31 +194,36 @@ export default function AgentRegistryPanel({ onMessage }) {
   return (
     <>
       <div className="space-y-5 pb-8">
-      <div className="glass-card rounded-2xl p-5 border border-purple-500/20 bg-purple-500/5">
-        <h2 className="text-lg font-bold text-white mb-1">Agent 注册表（高级）</h2>
-        <p className="text-sm text-navy-300 leading-relaxed">
-          日常主链步骤、Prompt、Tier1、模型请优先在
-          <Link to="/admin/main-chain" className="text-gold-400 hover:underline mx-1">
-            主链工作室
-          </Link>
-          维护。此页用于批量 Agent 定义、后处理元数据与全量 JSON。
-        </p>
-        <div className="flex flex-wrap gap-3 mt-3 text-xs text-navy-400">
-          <span>
-            来源：<strong className="text-gold-300">{meta.source || '—'}</strong>
-          </span>
-          <span>版本：{registryMeta.version || meta.file_version || '—'}</span>
-          {meta.updated_at ? <span>更新：{meta.updated_at}</span> : null}
+      <div className="sf-console-panel p-5 space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-white">Agent 注册表</h2>
+            <p className="text-xs text-navy-400 mt-1">高级 · 全量 JSON 与后处理元数据</p>
+          </div>
+          <div className="flex flex-wrap gap-3 text-xs text-navy-400">
+            <span>
+              来源：<strong className="text-gold-300/90">{meta.source || '—'}</strong>
+            </span>
+            <span>版本：{registryMeta.version || meta.file_version || '—'}</span>
+            {meta.updated_at ? <span>更新：{meta.updated_at}</span> : null}
+          </div>
         </div>
+        <p className="text-xs text-navy-400 leading-relaxed">
+          日常步骤与 Prompt 请在
+          <Link to="/admin/orchestration?tab=flow" className="text-gold-400 hover:underline mx-1">
+            流程编排
+          </Link>
+          维护；此页用于批量 Agent 定义与全量 JSON。
+        </p>
       </div>
 
       <div className="space-y-5">
-          <section className="glass-card rounded-2xl p-5 space-y-4">
-            <h3 className="text-white font-semibold">编排元数据 (_meta)</h3>
-            <p className="text-xs text-navy-500">
+          <section className="sf-console-panel p-5 space-y-4">
+            <h3 className="text-sm font-semibold text-white">编排元数据</h3>
+            <p className="text-xs text-navy-400">
               后处理链也可在
-              <Link to="/admin/main-chain" className="text-gold-400 hover:underline mx-1">
-                主链工作室
+              <Link to="/admin/orchestration?tab=flow" className="text-gold-400 hover:underline mx-1">
+                流程编排
               </Link>
               编辑。
             </p>
@@ -420,7 +236,7 @@ export default function AgentRegistryPanel({ onMessage }) {
                   className={inputCls}
                   placeholder="review, polish, review, score"
                 />
-                <p className="text-[11px] text-navy-500 mt-1">
+                <p className="text-[11px] text-navy-400 mt-1">
                   可重复同一 agent（如 polish 前后各 review 一次）；顺序即执行顺序。
                 </p>
               </label>
@@ -500,19 +316,19 @@ export default function AgentRegistryPanel({ onMessage }) {
             </div>
           </section>
 
-          <section className="glass-card rounded-2xl p-5">
+          <section className="sf-console-panel p-5">
             <h3 className="text-white font-semibold mb-3">技能列表 ({agents.length})</h3>
             <div className="space-y-3 max-h-[480px] overflow-y-auto pr-1">
               {agents.map((agent) => (
                 <div
                   key={agent.id}
-                  className="p-4 rounded-xl border border-navy-700/40 bg-navy-900/30 space-y-2"
+                  className="p-4 rounded-xl border border-white/5 bg-slate-900/40 space-y-2"
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-white font-medium">{agent.name_zh || agent.name || agent.id}</span>
-                    <code className="text-[10px] text-navy-500">{agent.id}</code>
+                    <code className="text-[10px] text-navy-300">{agent.id}</code>
                     {agent.workspace_index ? (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-navy-800 text-navy-300">
+                      <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[10px] text-slate-300">
                         步骤 {agent.workspace_index}
                       </span>
                     ) : null}
@@ -540,7 +356,7 @@ export default function AgentRegistryPanel({ onMessage }) {
                     {expandedAgentId === agent.id ? '收起技能配置' : '编辑 Tier1 / Prompt / 子技能'}
                   </button>
                   {expandedAgentId === agent.id ? (
-                    <div className="space-y-3 pt-2 border-t border-navy-700/40">
+                    <div className="space-y-3 pt-2 border-t border-white/5">
                       <div className="flex flex-wrap gap-2">
                         {['skill', 'sub_skills'].map((section) => (
                           <button
@@ -550,7 +366,7 @@ export default function AgentRegistryPanel({ onMessage }) {
                             className={`px-2 py-1 rounded-lg text-xs border ${
                               expandedSection === section
                                 ? 'bg-purple-500/15 text-purple-200 border-purple-400/30'
-                                : 'bg-navy-900/40 text-navy-400 border-navy-700/40'
+                                : 'border-white/10 bg-white/[0.03] text-slate-400'
                             }`}
                           >
                             {section === 'skill' ? 'Tier1 / Prompt' : '子技能'}
@@ -616,7 +432,7 @@ export default function AgentRegistryPanel({ onMessage }) {
                       )}
                     </div>
                   ) : null}
-                  <p className="text-xs text-navy-500">
+                  <p className="text-xs text-navy-400">
                     outputs: {(agent.outputs || []).join(', ') || '—'} · tier1:{' '}
                     {(agent.tier1_sections || []).length} · sub_skills: {(agent.sub_skills || []).length}
                   </p>
@@ -626,20 +442,20 @@ export default function AgentRegistryPanel({ onMessage }) {
           </section>
         </div>
 
-        <details className="glass-card rounded-2xl border border-navy-700/40 overflow-hidden group">
+        <details className="sf-console-panel border border-white/10 overflow-hidden group">
           <summary className="cursor-pointer list-none px-5 py-4 text-sm text-navy-400 select-none flex items-center justify-between">
             <span>开发者 · JSON 全量编辑</span>
-            <span className="text-[10px] text-navy-600 group-open:rotate-180 transition-transform">▼</span>
+            <span className="text-[10px] text-navy-400 group-open:rotate-180 transition-transform">▼</span>
           </summary>
-          <div className="px-5 pb-5 space-y-3 border-t border-navy-800/60 pt-4">
-            <p className="text-xs text-navy-500 leading-relaxed">
-              直接编辑完整 registry.json 结构。保存前请确认 JSON 合法；日常配置建议使用上方结构化表单或主链工作室。
+          <div className="px-5 pb-5 space-y-3 border-t border-white/10 pt-4">
+            <p className="text-xs text-navy-400 leading-relaxed">
+              直接编辑完整 registry.json 结构。保存前请确认 JSON 合法；日常配置建议使用上方结构化表单或流程编排。
             </p>
             <textarea
               rows={20}
               value={jsonText}
               onChange={(e) => setJsonText(e.target.value)}
-              className="w-full font-mono text-xs px-4 py-3 rounded-2xl bg-navy-950 border border-navy-700/40 text-navy-100"
+              className="sf-control rounded-2xl font-mono text-xs text-navy-100"
               spellCheck={false}
             />
             <div className="flex justify-end">
@@ -647,7 +463,7 @@ export default function AgentRegistryPanel({ onMessage }) {
                 type="button"
                 disabled={saving}
                 onClick={saveFromJson}
-                className="px-4 py-2 rounded-xl bg-navy-800/70 text-gold-300 text-sm border border-gold-500/25 disabled:opacity-50"
+                className="rounded-xl border border-gold-500/25 bg-gold-400/5 px-4 py-2 text-sm text-gold-300 disabled:opacity-50"
               >
                 从 JSON 保存
               </button>
@@ -656,12 +472,12 @@ export default function AgentRegistryPanel({ onMessage }) {
         </details>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 md:left-64 z-30 px-6 py-4 bg-navy-950/90 border-t border-navy-800/60 backdrop-blur-md flex items-center justify-end gap-3">
+      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/5 bg-slate-950/90 px-6 py-4 backdrop-blur-md md:left-64 flex items-center justify-end gap-3">
         <button
           type="button"
           disabled={migrating}
           onClick={migrateSkillConfig}
-          className="px-4 py-2.5 rounded-xl bg-navy-800/70 text-navy-100 text-sm disabled:opacity-60"
+          className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-navy-100 hover:bg-white/[0.06] disabled:opacity-60"
         >
           {migrating ? '迁移中…' : '迁移流水线遗留配置'}
         </button>
@@ -669,7 +485,7 @@ export default function AgentRegistryPanel({ onMessage }) {
           type="button"
           disabled={importing}
           onClick={importFromFile}
-          className="px-4 py-2.5 rounded-xl bg-navy-800/70 text-navy-100 text-sm flex items-center gap-2 disabled:opacity-60"
+          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-navy-100 hover:bg-white/[0.06] disabled:opacity-60"
         >
           <Upload className="w-4 h-4" />
           {importing ? '导入中…' : '从磁盘导入'}
@@ -678,7 +494,7 @@ export default function AgentRegistryPanel({ onMessage }) {
           type="button"
           disabled={saving}
           onClick={load}
-          className="px-4 py-2.5 rounded-xl bg-navy-800/70 text-navy-100 text-sm flex items-center gap-2"
+          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-navy-100 hover:bg-white/[0.06]"
         >
           <RefreshCw className="w-4 h-4" />
           刷新

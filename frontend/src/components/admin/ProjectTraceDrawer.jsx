@@ -24,17 +24,17 @@ export default function ProjectTraceDrawer({ projectId, onClose }) {
           exit={{ x: '100%' }}
           transition={{ type: 'spring', damping: 28, stiffness: 320 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-xl h-full bg-navy-950 border-l border-navy-700/40 shadow-2xl flex flex-col"
+          className="w-full max-w-xl h-full bg-navy-950 border-l border-white/10 shadow-2xl flex flex-col"
         >
-          <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-navy-700/40 shrink-0">
+          <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-white/5 shrink-0">
             <div>
               <h2 className="text-lg font-semibold text-white">项目轨迹</h2>
-              <p className="text-xs text-navy-500 mt-0.5">侧栏预览 · 完整复核请打开监察页</p>
+              <p className="text-xs text-navy-400 mt-0.5">侧栏预览 · 完整复核请打开监察页</p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="p-2 rounded-xl text-navy-400 hover:text-white hover:bg-navy-800/50"
+              className="p-2 rounded-xl text-navy-400 hover:text-white hover:bg-white/[0.06]"
               aria-label="关闭"
             >
               <X className="w-5 h-5" />
@@ -45,7 +45,7 @@ export default function ProjectTraceDrawer({ projectId, onClose }) {
             <ProjectAgentTraceView projectId={projectId} compact showSummary />
           </div>
 
-          <div className="shrink-0 px-5 py-4 border-t border-navy-700/40 flex flex-wrap gap-3">
+          <div className="shrink-0 px-5 py-4 border-t border-white/5 flex flex-wrap gap-3">
             <Link
               to={fullUrl}
               onClick={onClose}
@@ -57,7 +57,7 @@ export default function ProjectTraceDrawer({ projectId, onClose }) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-sm text-navy-300 border border-navy-600/40 hover:bg-navy-800/50"
+              className="px-4 py-2.5 rounded-xl text-sm text-navy-300 border border-white/10 hover:bg-white/[0.06]"
             >
               关闭
             </button>

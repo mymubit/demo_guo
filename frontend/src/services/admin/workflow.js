@@ -10,7 +10,22 @@ export const adminWorkflow = {
     adminRequest('POST', '/api/admin/main-chain/fusion/import/', { data: data || {} }),
   listFusionPacks: () =>
     adminRequest('GET', '/api/admin/main-chain/fusion/packs/').then(normalizeFusionPacks),
+  duplicateFusionPack: (sourcePackId, displayName, options = {}) =>
+    adminRequest('POST', '/api/admin/main-chain/fusion/packs/', {
+      data: {
+        source_pack_id: sourcePackId,
+        display_name: displayName,
+        slug: options.slug || '',
+        activate: options.activate ?? false,
+      },
+    }),
+  updateFusionPack: (packId, data) =>
+    adminRequest('PATCH', `/api/admin/main-chain/fusion/packs/${packId}/`, { data }),
   activateFusionPack: (packId) =>
     adminRequest('POST', `/api/admin/main-chain/fusion/packs/${packId}/activate/`),
+  setDefaultFusionPack: (packId) =>
+    adminRequest('POST', `/api/admin/main-chain/fusion/packs/${packId}/set-default/`),
+  publishFusionPack: (packId, data = {}) =>
+    adminRequest('POST', `/api/admin/main-chain/fusion/packs/${packId}/publish/`, { data }),
   getFusionMeta: () => adminRequest('GET', '/api/admin/main-chain/fusion/meta/'),
 }

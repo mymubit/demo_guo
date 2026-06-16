@@ -102,13 +102,13 @@ export default function AgentLlmRoutePanel({ onMessage }) {
 
   if (loading) {
     return (
-      <div className="glass-card rounded-2xl p-8 text-center text-navy-400 mt-8">加载技能模型路由…</div>
+      <div className="sf-console-panel p-8 text-center text-navy-400 mt-8">加载技能模型路由…</div>
     )
   }
 
   if (rows.length === 0) {
     return (
-      <div className="glass-card rounded-2xl p-8 text-center space-y-4 mt-8">
+      <div className="sf-console-panel p-8 text-center space-y-4 mt-8">
         <p className="text-navy-400">暂无技能模型路由，请先同步占位。</p>
         <button
           type="button"
@@ -123,7 +123,7 @@ export default function AgentLlmRoutePanel({ onMessage }) {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 mt-10">
-      <div className="glass-card rounded-2xl p-5 border border-purple-500/15 bg-purple-500/5">
+      <div className="sf-console-panel p-5 border border-purple-500/15 bg-purple-500/5">
         <p className="text-sm text-navy-200 leading-relaxed">
           <span className="text-white font-medium">技能模型路由</span>
           ——主链与辅助技能的 Provider 与 Max Tokens 统一在此配置；流水线步骤不再绑定模型。
@@ -165,7 +165,7 @@ export default function AgentLlmRoutePanel({ onMessage }) {
               <div className="text-lg font-semibold text-white">
                 {row.display_name || row.route_key}
               </div>
-              <div className="text-xs text-navy-500 mt-1">{ROUTE_HINTS[row.route_key] || row.route_key}</div>
+              <div className="text-xs text-navy-400 mt-1">{ROUTE_HINTS[row.route_key] || row.route_key}</div>
             </div>
 
             <label className="block text-sm text-navy-300">
@@ -174,7 +174,7 @@ export default function AgentLlmRoutePanel({ onMessage }) {
                 type="number"
                 min={256}
                 step={256}
-                className="mt-1 w-full max-w-xs rounded-xl bg-navy-900 border border-navy-700 px-3 py-2 text-white text-sm"
+                className="sf-control mt-1 max-w-xs px-3 py-2 text-white text-sm"
                 value={row.max_tokens ?? ''}
                 onChange={(e) =>
                   patchRow(row.route_key, {
@@ -187,7 +187,7 @@ export default function AgentLlmRoutePanel({ onMessage }) {
             <label className="block text-sm text-navy-300">
               使用大模型
               <select
-                className="mt-1 w-full max-w-md rounded-xl bg-navy-900 border border-navy-700 px-3 py-2 text-white text-sm"
+                className="sf-control mt-1 max-w-md"
                 value={row.llm_provider_id || ''}
                 onChange={(e) =>
                   patchRow(row.route_key, {
@@ -205,7 +205,7 @@ export default function AgentLlmRoutePanel({ onMessage }) {
               </select>
             </label>
 
-            <div className="flex items-center justify-between gap-3 pt-1 border-t border-navy-700/40">
+            <div className="flex items-center justify-between gap-3 pt-1 border-t border-white/5">
               <span
                 className={`text-xs ${
                   dirtyKeys.has(row.route_key) ? 'text-amber-300' : 'text-emerald-400/90'

@@ -11,9 +11,9 @@ const STORY_FIELDS = [
 function PanelBlock({ title, icon: Icon, children, className = '' }) {
   if (!children) return null
   return (
-    <div className={`rounded-2xl border border-navy-700/30 bg-navy-950/30 overflow-hidden ${className}`}>
+    <div className={`rounded-2xl border border-white/5 bg-slate-900/40 overflow-hidden ${className}`}>
       {title ? (
-        <div className="px-4 py-2.5 border-b border-navy-700/25 bg-navy-900/35 flex items-center gap-2">
+        <div className="border-b border-white/5 bg-slate-900/60 px-4 py-2.5 flex items-center gap-2">
           {Icon ? <Icon className="w-3.5 h-3.5 text-gold-400/70" /> : null}
           <span className="text-xs font-medium text-gold-400/85">{title}</span>
         </div>
@@ -47,7 +47,7 @@ export function StoryBriefPanel({ storyBrief = {}, editMode, inputClass, onUpdat
       <div className="space-y-4">
         {STORY_FIELDS.map(({ key, label, rows }) => (
           <div key={key}>
-            <div className="text-xs text-navy-500 mb-1.5">{label}</div>
+            <div className="text-xs text-navy-400 mb-1.5">{label}</div>
             {rows === 1 ? (
               <input
                 type="text"
@@ -106,11 +106,11 @@ export function StoryBriefPanel({ storyBrief = {}, editMode, inputClass, onUpdat
                 <div key={`hook-${hook.episode}-${index}`} className="relative flex gap-4 pb-5 last:pb-0">
                   {!isLast ? (
                     <span
-                      className="absolute left-[15px] top-8 bottom-0 w-px bg-gradient-to-b from-gold-400/35 to-navy-700/15"
+                      className="absolute left-[15px] top-8 bottom-0 w-px bg-gradient-to-b from-gold-400/35 to-white/10"
                       aria-hidden
                     />
                   ) : null}
-                  <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-gold-400/45 bg-navy-900 text-xs font-bold text-gold-300">
+                  <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 border-gold-400/45 bg-slate-950 text-xs font-bold text-gold-300">
                     E{hook.episode}
                   </div>
                   <p className="flex-1 text-sm text-navy-100 leading-relaxed pt-1">{hook.text}</p>
@@ -142,10 +142,10 @@ export function ProjectSpecPanel({
 
   if (editMode) {
     return (
-      <div className="space-y-4 rounded-2xl border border-navy-700/30 bg-navy-950/30 p-4">
+      <div className="space-y-4 rounded-2xl border border-white/5 bg-slate-900/40 p-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <div className="text-xs text-navy-500 mb-1.5">题材</div>
+            <div className="text-xs text-navy-400 mb-1.5">题材</div>
             <input
               type="text"
               value={theme || ''}
@@ -154,7 +154,7 @@ export function ProjectSpecPanel({
             />
           </div>
           <div>
-            <div className="text-xs text-navy-500 mb-1.5">集数</div>
+            <div className="text-xs text-navy-400 mb-1.5">集数</div>
             <input
               type="text"
               value={episodes || ''}
@@ -164,7 +164,7 @@ export function ProjectSpecPanel({
           </div>
         </div>
         {specItems.length > 0 ? (
-          <p className="text-[11px] text-navy-500">格式、平台等参数由立项时确定，此处仅可编辑题材与集数。</p>
+          <p className="text-[11px] text-navy-400">格式、平台等参数由立项时确定，此处仅可编辑题材与集数。</p>
         ) : null}
       </div>
     )
@@ -181,8 +181,8 @@ export function ProjectSpecPanel({
           <div className="text-lg font-semibold text-white leading-snug">{theme || '—'}</div>
         </div>
         {episodes ? (
-          <div className="rounded-xl border border-navy-700/30 bg-navy-900/40 px-4 py-4">
-            <div className="flex items-center gap-2 text-[10px] text-navy-500 mb-2">
+          <div className="rounded-xl border border-white/5 bg-slate-900/40 px-4 py-4">
+            <div className="flex items-center gap-2 text-[10px] text-navy-400 mb-2">
               <Clock className="w-3.5 h-3.5" />
               计划集数
             </div>
@@ -200,7 +200,7 @@ export function ProjectSpecPanel({
             {specItems.map((item) => (
               <span
                 key={item}
-                className="inline-flex text-xs px-2.5 py-1 rounded-lg bg-navy-800/60 border border-navy-600/25 text-navy-100"
+                className="inline-flex rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1 text-xs text-navy-100"
               >
                 {item}
               </span>
@@ -217,17 +217,44 @@ export function TrendFormulaPanel({ trendFormula }) {
   if (!tf) return null
 
   const highlights = (tf.highlights || []).filter(Boolean)
+  const hasProjectStory = tf.projectHook || tf.projectIdea || tf.projectConflict
+  const sampleHook = (tf.sampleHook || '').trim()
 
   return (
     <div className="space-y-4">
-      <p className="text-[11px] text-navy-500">根据所选题材自动匹配，无需单独填写</p>
+      <p className="text-[11px] text-navy-400">根据所选题材自动匹配行业趋势；你的梗概与钩子见「故事策划」</p>
 
       {(tf.themeDisplayName || tf.theme) && (
-        <div className="rounded-xl border border-navy-700/30 bg-navy-900/40 px-4 py-3">
-          <div className="text-[10px] text-navy-500 mb-1">匹配题材</div>
+        <div className="rounded-xl border border-white/5 bg-slate-900/40 px-4 py-3">
+          <div className="text-[10px] text-navy-400 mb-1">匹配题材</div>
           <div className="text-sm text-white">{tf.themeDisplayName || tf.theme}</div>
         </div>
       )}
+
+      {hasProjectStory ? (
+        <PanelBlock title="本项目故事锚点" icon={Sparkles}>
+          <div className="space-y-3">
+            {tf.projectIdea ? (
+              <div>
+                <div className="text-[10px] text-gold-400/80 mb-1">一句话梗概</div>
+                <p className="text-sm text-navy-100 leading-relaxed whitespace-pre-wrap">{tf.projectIdea}</p>
+              </div>
+            ) : null}
+            {tf.projectConflict ? (
+              <div>
+                <div className="text-[10px] text-amber-300/80 mb-1">核心冲突</div>
+                <p className="text-sm text-navy-100 leading-relaxed whitespace-pre-wrap">{tf.projectConflict}</p>
+              </div>
+            ) : null}
+            {tf.projectHook ? (
+              <div>
+                <div className="text-[10px] text-gold-400/80 mb-1">开篇钩子</div>
+                <p className="text-sm text-navy-100 leading-relaxed whitespace-pre-wrap">{tf.projectHook}</p>
+              </div>
+            ) : null}
+          </div>
+        </PanelBlock>
+      ) : null}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {tf.audienceFit ? (
@@ -250,7 +277,7 @@ export function TrendFormulaPanel({ trendFormula }) {
             {highlights.map((line, i) => (
               <span
                 key={`tf-h-${i}`}
-                className="inline-flex max-w-full text-[11px] leading-snug px-2.5 py-1.5 rounded-lg bg-navy-800/60 border border-gold-400/15 text-navy-100"
+                className="inline-flex max-w-full rounded-lg border border-gold-400/20 bg-gold-400/5 px-2.5 py-1.5 text-[11px] leading-snug text-navy-100"
               >
                 {line}
               </span>
@@ -259,8 +286,15 @@ export function TrendFormulaPanel({ trendFormula }) {
         </PanelBlock>
       ) : null}
 
+      {sampleHook ? (
+        <div className="rounded-xl border border-white/5 bg-slate-900/30 px-4 py-3">
+          <div className="text-[10px] text-navy-500 mb-1.5">题材库示例开篇（非本项目定稿）</div>
+          <p className="text-xs text-navy-400 leading-relaxed">{sampleHook}</p>
+        </div>
+      ) : null}
+
       {tf.structuralNotes ? (
-        <p className="text-xs text-navy-400 leading-relaxed border-t border-navy-700/20 pt-3">
+        <p className="text-xs text-navy-400 leading-relaxed border-t border-white/5 pt-3">
           {tf.structuralNotes}
         </p>
       ) : null}
@@ -301,10 +335,10 @@ export function SupplementPanel({
 
       {hasWriting && !editMode ? (
         <PanelBlock title="写作指引" icon={FileText}>
-          <p className="text-[11px] text-navy-500 mb-3">由故事策划自动整理</p>
+          <p className="text-[11px] text-navy-400 mb-3">由故事策划自动整理</p>
           {writingBrief.tone ? (
-            <div className="rounded-lg border border-navy-700/25 bg-navy-900/35 px-3 py-2 mb-3">
-              <div className="text-[10px] text-navy-500 mb-1">基调</div>
+            <div className="rounded-lg border border-white/5 bg-slate-900/40 px-3 py-2 mb-3">
+              <div className="text-[10px] text-navy-400 mb-1">基调</div>
               <p className="text-sm text-navy-100">{writingBrief.tone}</p>
             </div>
           ) : null}
@@ -358,7 +392,7 @@ export function ThemeRecommendationsPanel({ recommendations = [] }) {
         {recs.slice(0, 5).map((rec) => (
           <li
             key={rec.themeCode || rec.displayName}
-            className="rounded-lg border border-navy-700/25 bg-navy-900/35 px-3 py-2"
+            className="rounded-lg border border-white/5 bg-slate-900/40 px-3 py-2"
           >
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm text-white font-medium">{rec.displayName || rec.themeCode}</span>

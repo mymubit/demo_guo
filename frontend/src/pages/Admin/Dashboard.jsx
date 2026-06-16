@@ -10,14 +10,14 @@ import {
   Coins,
   Cpu,
   AlertTriangle,
-  ArrowRight,
 } from 'lucide-react'
 import { admin } from '@/services/api'
 import { resolveAgentId } from '@/utils/agentTerm'
 import { formatLlmSourceLabel } from '@/utils/adminAgentLabels'
 import ExecutionRunPanel from '@/components/shared/ExecutionRunPanel'
 import { AdminPageHeader, AdminLoading, AdminMessage, AdminStatGrid, AdminTabBar } from '@/components/admin/AdminUI'
-import { Badge, Button, Card } from '@/components/ui'
+import { findAdminNavItem } from '@/config/adminNav'
+import { Button, Card } from '@/components/ui'
 import { ICON } from '@/constants/iconSizes'
 import {
   AdminChartCard,
@@ -61,24 +61,25 @@ const DASHBOARD_TABS = [
 ]
 
 function useDashboardCharts(dashboard) {
-  const userGrowth = dashboard?.user_growth_30d || []
-  const memberShare = dashboard?.membership_share || []
-  const finance7d = dashboard?.finance_7d || []
-  const skillTop = dashboard?.skill_usage_top || []
-  const skillCalls7d = dashboard?.skill_calls_7d || []
-  const creation7d = dashboard?.creation_7d || []
   const agentOps = dashboard?.agent_ops || {}
-  const topSubSkills = agentOps.top_sub_skills || []
   const agentExecution = agentOps.execution || {}
   const agentRuns7d = agentExecution.runs_7d || []
   const agentStats = agentExecution.agent_stats || []
   const topFailedSubSkills = agentExecution.top_failed_sub_skills || []
+  const topSubSkills = agentOps.top_sub_skills || []
   const llmUsage = dashboard?.llm_usage || {}
   const llmUsageTop = llmUsage.llm_usage_top || []
-  const llmUsage7d = llmUsage.llm_usage_7d || []
   const llmUsageBySource = llmUsage.llm_usage_by_source || []
+  const skillTop = dashboard?.skill_usage_top || []
 
   const options = useMemo(() => {
+    const userGrowth = dashboard?.user_growth_30d || []
+    const memberShare = dashboard?.membership_share || []
+    const finance7d = dashboard?.finance_7d || []
+    const skillCalls7d = dashboard?.skill_calls_7d || []
+    const creation7d = dashboard?.creation_7d || []
+    const llmUsage7d = llmUsage.llm_usage_7d || []
+
     const bar = (labels, series, stacked = false) =>
       buildBarChartOption({ labels, series, stacked })
 
@@ -264,21 +265,7 @@ function useDashboardCharts(dashboard) {
         labelMaxLen: 36,
       }),
     }
-  }, [
-    userGrowth,
-    finance7d,
-    skillCalls7d,
-    creation7d,
-    agentRuns7d,
-    agentStats,
-    topFailedSubSkills,
-    topSubSkills,
-    memberShare,
-    skillTop,
-    llmUsageTop,
-    llmUsageBySource,
-    llmUsage7d,
-  ])
+  }, [dashboard])
 
   return {
     options,
@@ -300,7 +287,7 @@ function CompareDelta({ today, yesterday, invert = false }) {
   const t = Number(today) || 0
   const y = Number(yesterday) || 0
   if (y === 0 && t === 0) {
-    return <span className="text-[10px] text-navy-500">较昨日持平</span>
+    return <span className="text-[10px] text-navy-400">较昨日持平</span>
   }
   const diff = t - y
   let pct
@@ -311,7 +298,7 @@ function CompareDelta({ today, yesterday, invert = false }) {
   }
   const positive = invert ? diff < 0 : diff > 0
   const negative = invert ? diff > 0 : diff < 0
-  const color = positive ? 'text-success-400' : negative ? 'text-danger-400' : 'text-navy-500'
+  const color = positive ? 'text-success-400' : negative ? 'text-danger-400' : 'text-navy-400'
   const arrow = diff > 0 ? '↑' : diff < 0 ? '↓' : '—'
   return (
     <span className={`text-[10px] ${color}`}>
@@ -321,67 +308,10 @@ function CompareDelta({ today, yesterday, invert = false }) {
   )
 }
 
-function TodayFocusStrip({ summary, execToday, compare, opsAlerts, commerceAlerts }) {
+function TodayFocusStrip({ summary, execToday, compare }) {
   const agentFailRate = execToday.run_count
     ? Math.round((execToday.failure_rate || 0) * 100)
     : null
-
-  const alerts = opsAlerts || {}
-  const commerce = commerceAlerts || {}
-
-  const actions = [
-    {
-      to: '/admin/creation/projects?status=running',
-      label: '创作中',
-      badge: alerts.running,
-      hint: '进行中',
-      warn: (alerts.running ?? 0) > 0,
-    },
-    {
-      to: '/admin/creation/projects?status=failed',
-      label: '失败项目',
-      badge: alerts.failed,
-      hint: '需关注',
-      warn: (alerts.failed ?? 0) > 0,
-    },
-    {
-      to: '/admin/creation/projects?failed_run=1',
-      label: '有失败 run',
-      badge: alerts.has_failed_run,
-      hint: '排查 Agent',
-      warn: (alerts.has_failed_run ?? 0) > 0,
-    },
-    {
-      to: '/admin/creation/projects?status=awaiting',
-      label: '待确认',
-      badge: alerts.awaiting,
-      hint: '分步模式',
-    },
-    {
-      to: '/admin/creation',
-      label: '创作中心',
-      hint: '配置监察',
-    },
-    {
-      to: '/admin/orders?status=pending',
-      label: '待支付订单',
-      badge: commerce.pending_orders,
-      hint: '订单明细',
-      warn: (commerce.pending_orders ?? 0) > 0,
-    },
-    {
-      to: '/admin/users?filter=inactive',
-      label: '已禁用用户',
-      badge: commerce.inactive_users,
-      hint: '账号管理',
-      warn: (commerce.inactive_users ?? 0) > 0,
-    },
-    {
-      to: '/admin/dashboard?tab=commerce',
-      label: '商业概览',
-      hint: '人民币收入',
-    },
-  ]
 
   const cmp = compare || {}
 
@@ -439,7 +369,7 @@ function TodayFocusStrip({ summary, execToday, compare, opsAlerts, commerceAlert
           >
             <p className="text-xs text-navy-400">{card.label}</p>
             <p className={`text-2xl font-bold mt-1 ${card.tone}`}>{card.value}</p>
-            <p className="text-[10px] text-navy-500 mt-1 leading-snug">{card.hint}</p>
+            <p className="text-[10px] text-navy-400 mt-1 leading-snug">{card.hint}</p>
             {card.delta ? (
               <div className="mt-1.5">
                 <CompareDelta
@@ -452,30 +382,6 @@ function TodayFocusStrip({ summary, execToday, compare, opsAlerts, commerceAlert
           </Card>
         ))}
       </div>
-
-      <div className="flex flex-wrap gap-2">
-        {actions.map((a) => (
-          <Link
-            key={a.to + a.label}
-            to={a.to}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm border transition sf-focus-ring ${
-              a.warn
-                ? 'border-warning-500/30 bg-warning-500/10 text-warning-200 hover:bg-warning-500/15'
-                : 'border-navy-600/40 bg-navy-800/30 text-navy-200 hover:border-navy-500/50'
-            }`}
-          >
-            {a.warn ? <AlertTriangle className={`${ICON.sm} shrink-0`} /> : null}
-            <span>{a.label}</span>
-            {a.badge != null && a.badge > 0 ? (
-              <Badge tone={a.warn ? 'warning' : 'default'} className="min-w-[1.25rem] justify-center px-1.5 py-0.5 text-[10px]">
-                {a.badge}
-              </Badge>
-            ) : null}
-            <span className="text-[10px] text-navy-500 hidden sm:inline">{a.hint}</span>
-            <ArrowRight className={`${ICON.sm} opacity-50 shrink-0`} />
-          </Link>
-        ))}
-      </div>
     </div>
   )
 }
@@ -483,11 +389,11 @@ function TodayFocusStrip({ summary, execToday, compare, opsAlerts, commerceAlert
 function RunFilterBanner({ runFilterId, runLoading, runDetail, onClear }) {
   if (!runFilterId) return null
   return (
-    <Card as="section" className="border-gold-500/30 bg-navy-900/50">
+    <Card as="section" className="border-gold-500/30 bg-gold-400/5">
       <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
         <div>
           <h3 className="text-sm font-semibold text-gold-400">Run 详情（从项目轨迹跳入）</h3>
-          <p className="text-xs text-navy-500 font-mono mt-1">{runFilterId}</p>
+          <p className="text-xs text-navy-300 font-mono mt-1">{runFilterId}</p>
         </div>
         <Button
           onClick={onClear}
@@ -525,7 +431,7 @@ function RunFilterBanner({ runFilterId, runLoading, runDetail, onClear }) {
                 {runDetail.llm_usage.map((row) => (
                   <li
                     key={row.id}
-                    className="flex flex-wrap justify-between gap-2 rounded-lg bg-navy-900/60 px-3 py-2 text-navy-200"
+                    className="flex flex-wrap justify-between gap-2 rounded-lg border border-white/5 bg-slate-900/40 px-3 py-2 text-navy-200"
                   >
                     <span>
                       {row.sub_skill_id || row.source_key || '—'} · {row.model_name}
@@ -542,7 +448,7 @@ function RunFilterBanner({ runFilterId, runLoading, runDetail, onClear }) {
                 ))}
               </ul>
             ) : (
-              <p className="text-xs text-navy-500">该 Run 无 LLM 用量</p>
+              <p className="text-xs text-navy-400">该 Run 无 LLM 用量</p>
             )}
           </Card>
         </>
@@ -552,6 +458,7 @@ function RunFilterBanner({ runFilterId, runLoading, runDetail, onClear }) {
 }
 
 export default function Dashboard() {
+  const dashNav = findAdminNavItem('/admin/dashboard')
   const [searchParams, setSearchParams] = useSearchParams()
   const runFilterId = (searchParams.get('run') || '').trim()
   const tab = searchParams.get('tab') || 'overview'
@@ -578,18 +485,26 @@ export default function Dashboard() {
       setRunDetail(null)
       return undefined
     }
+    let cancelled = false
     setRunLoading(true)
     admin
       .agentExecutionRun(runFilterId)
-      .then(setRunDetail)
-      .catch(() => setRunDetail(null))
-      .finally(() => setRunLoading(false))
-    return undefined
+      .then((data) => {
+        if (!cancelled) setRunDetail(data)
+      })
+      .catch(() => {
+        if (!cancelled) setRunDetail(null)
+      })
+      .finally(() => {
+        if (!cancelled) setRunLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [runFilterId])
 
   const summary = dashboard?.summary || {}
   const compare = dashboard?.compare || {}
-  const opsAlerts = dashboard?.ops_alerts || {}
   const commerceAlerts = dashboard?.commerce_alerts || {}
   const charts = useDashboardCharts(dashboard)
 
@@ -629,8 +544,9 @@ export default function Dashboard() {
     <div className="space-y-6 w-full">
       <AdminMessage message={message} onClose={() => setMessage(null)} />
       <AdminPageHeader
-        title="数据概览"
-        description="今日速览 + 分区下钻；明细配置请进创作中心 / 商业运营"
+        crumbs={[{ label: 'Console' }, { label: '今日总览' }]}
+        title={`运营仪表盘 · ${dashboard?.date || new Date().toISOString().slice(0, 10)}`}
+        subtitle={dashNav?.description}
       />
 
       <RunFilterBanner
@@ -648,8 +564,6 @@ export default function Dashboard() {
             summary={summary}
             execToday={execToday}
             compare={compare}
-            opsAlerts={opsAlerts}
-            commerceAlerts={commerceAlerts}
           />
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             <AdminChartCard
@@ -667,7 +581,7 @@ export default function Dashboard() {
               minWidth={420}
             />
           </div>
-          <p className="text-xs text-navy-500">
+          <p className="text-xs text-navy-400">
             人民币收入累计 {fmtYuan(summary.total_revenue)}（会员 {fmtYuan(summary.membership_revenue_total)} · 充值{' '}
             {fmtYuan(summary.recharge_revenue_total)}） · 30 天 LLM 真实成本{' '}
             {fmtYuan(summary.period_llm_estimated_cost_yuan ?? 0)} · 用户 {summary.total_users ?? 0} · 会员{' '}
@@ -690,14 +604,14 @@ export default function Dashboard() {
               </Link>
               Tab，勿与创作币扣费混淆。
             </p>
-            <p className="text-xs text-navy-500">
+            <p className="text-xs text-navy-400">
               配置：
               <Link to="/admin/commerce/settings" className="text-gold-400 hover:underline mx-1">
                 商业·钱包
               </Link>
               · 主链步骤扣费见
-              <Link to="/admin/main-chain" className="text-gold-400 hover:underline mx-1">
-                主链工作室
+              <Link to="/admin/orchestration?tab=flow" className="text-gold-400 hover:underline mx-1">
+                流程编排
               </Link>
               <span className="inline-flex flex-wrap gap-3 ml-0 sm:ml-2 mt-2 sm:mt-0">
                 <Link to="/admin/orders" className="text-gold-400/90 hover:text-gold-300">
@@ -781,7 +695,7 @@ export default function Dashboard() {
                   <Bot className={`${ICON.md} text-gold-400`} />
                   创作与 Agent
                 </h3>
-                <p className="text-xs text-navy-500 mt-1">
+                <p className="text-xs text-navy-400 mt-1">
                   registry {agentOps.registry_version || '—'} · 单项目轨迹请进创作项目
                 </p>
               </div>
@@ -817,7 +731,7 @@ export default function Dashboard() {
           <Card padding="md" className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h3 className="text-sm font-semibold text-white">Sub-skill 详细监察</h3>
-              <p className="text-xs text-navy-500 mt-1 leading-relaxed max-w-xl">
+              <p className="text-xs text-navy-400 mt-1 leading-relaxed max-w-xl">
                 命中率、失败 Top、各 Agent 执行量等图表已集中在调度监控，避免与总览重复展示。
               </p>
             </div>
@@ -830,7 +744,7 @@ export default function Dashboard() {
               </Link>
               <Link
                 to="/admin/creation/projects?failed_run=1"
-                className="px-4 py-2 rounded-xl text-sm text-navy-200 border border-navy-600/40 hover:bg-navy-800/50 sf-focus-ring"
+                className="sf-focus-ring rounded-xl border border-white/10 px-4 py-2 text-sm text-navy-200 hover:bg-white/[0.06]"
               >
                 有失败 run 的项目
               </Link>
@@ -941,7 +855,7 @@ export default function Dashboard() {
           <p className="text-sm text-navy-400">
             模型单价请在
             <Link to="/admin/model" className="text-gold-400/80 hover:underline mx-1">
-              主链工作室 · 大模型
+              流程编排 · 大模型
             </Link>
             调整；单价用于 Dashboard「大模型成本」核算，账单以云厂商控制台为准。
           </p>

@@ -18,6 +18,7 @@ class MonitoringException(models.Model):
     class Source(models.TextChoices):
         FRONTEND = "frontend", _("前端")
         BACKEND = "backend", _("后端")
+        BUSINESS = "business", _("业务 API")
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     source = models.CharField(max_length=16, choices=Source.choices, db_index=True)
@@ -94,6 +95,7 @@ class FrontendEvent(models.Model):
         RESOURCE_ERROR = "resource_error", _("资源加载错误")
         PROMISE_ERROR = "promise_error", _("Promise 错误")
         API_ERROR = "api_error", _("接口异常")
+        API_BUSINESS_ERROR = "api_business_error", _("业务接口失败")
         PERFORMANCE = "performance", _("页面性能")
         PAGE_VIEW = "page_view", _("页面访问")
         PAGE_LEAVE = "page_leave", _("页面离开")
@@ -164,6 +166,7 @@ class AlertRule(models.Model):
     class MetricType(models.TextChoices):
         FRONTEND_ERROR_COUNT = "frontend_error_count", _("前端异常数")
         BACKEND_ERROR_COUNT = "backend_error_count", _("后端异常数")
+        BUSINESS_ERROR_COUNT = "business_error_count", _("业务 API 错误数")
         API_AVG_DURATION = "api_avg_duration", _("接口平均耗时")
         API_ERROR_RATE = "api_error_rate", _("接口错误率")
         SLOW_SQL_COUNT = "slow_sql_count", _("慢 SQL 数")

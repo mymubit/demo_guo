@@ -16,10 +16,10 @@ import { admin } from '@/services/api'
 
 const HUB_CARDS = [
   {
-    to: '/admin/main-chain',
+    to: '/admin/orchestration?tab=flow',
     icon: GitBranch,
-    title: '主链工作室',
-    desc: '主链蓝图、步骤运营、Prompt 与模型路由',
+    title: '流程编排',
+    desc: '拖拽排序、后处理链、Prompt 与模型路由',
     accent: 'from-blue-500/20 to-blue-600/5 border-blue-500/25',
   },
   {
@@ -55,7 +55,7 @@ const HUB_CARDS = [
     to: '/admin/portal',
     icon: SlidersHorizontal,
     title: '配置中心',
-    desc: '创作表单、填表 AI、题材与钩子库',
+    desc: '创作表单、题材与钩子库（填表 Agent → Agent 中心）',
     accent: 'from-gold-500/20 to-gold-600/5 border-gold-500/25',
   },
 ]
@@ -83,10 +83,7 @@ export function CreationCenterPage() {
   const execToday = agentOps.execution?.summary?.today || {}
 
   return (
-    <AdminShell
-      title="创作中心"
-      description="按「配置 → 监察 → 内容」组织创作运营；下方入口对应十大中心快捷路径"
-    >
+    <AdminShell>
       {loading ? (
         <AdminLoading label="加载运营概览…" />
       ) : (
@@ -125,7 +122,7 @@ export function CreationCenterPage() {
               },
             ]}
           />
-          <p className="text-xs text-navy-500">
+          <p className="text-xs text-navy-400">
             Sub-skill 命中率与失败分布 →
             <Link to="/admin/orchestration?view=stats" className="text-gold-400 hover:underline mx-1">
               调度监控
@@ -134,23 +131,23 @@ export function CreationCenterPage() {
         </div>
       )}
 
-      <div className="glass-card rounded-2xl p-5 border border-navy-700/30">
+      <div className="sf-console-panel p-5 border border-white/5">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div>
             <h2 className="text-sm font-semibold text-white">创作流水线</h2>
-            <p className="text-xs text-navy-500 mt-0.5">
+            <p className="text-xs text-navy-400 mt-0.5">
               改编预处理 → 工作台五步 → 后处理链（审查 / 润色 / 评分 / 营销 / 洞察）
             </p>
           </div>
           <Link
-            to="/admin/main-chain"
+            to="/admin/orchestration?tab=flow"
             className="text-xs text-gold-400 hover:text-gold-300 inline-flex items-center gap-1"
           >
             去配置
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
-        <CreationPipelineDiagram linkTo="/admin/main-chain" blueprint={blueprint} />
+        <CreationPipelineDiagram linkTo="/admin/orchestration?tab=flow" blueprint={blueprint} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -175,10 +172,10 @@ export function CreationCenterPage() {
         })}
       </div>
 
-      <p className="text-xs text-navy-500">
-        主链步骤扣费在
-        <Link to="/admin/main-chain" className="text-gold-400/80 hover:underline mx-1">
-          主链工作室
+      <p className="text-xs text-navy-400">
+        流程步骤扣费在
+        <Link to="/admin/orchestration?tab=flow" className="text-gold-400/80 hover:underline mx-1">
+          调度中心 · 流程编排
         </Link>
         ；币种与注册赠送在
         <Link to="/admin/commerce/settings" className="text-gold-400/80 hover:underline mx-1">

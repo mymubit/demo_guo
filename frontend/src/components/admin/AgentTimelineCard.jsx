@@ -48,12 +48,12 @@ export default function AgentTimelineCard({
   const tone = RUN_TONE[runStatus] || 'default'
 
   return (
-    <div className="rounded-2xl border border-navy-700/35 bg-navy-900/25 overflow-hidden">
-      <div className="px-4 py-3 border-b border-navy-700/25 flex flex-wrap items-start justify-between gap-3">
+    <div className="rounded-2xl border border-white/5 bg-slate-900/40 overflow-hidden">
+      <div className="px-4 py-3 border-b border-white/5 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-white">{title}</p>
-          {subtitle ? <p className="text-[11px] text-navy-500 mt-0.5">{subtitle}</p> : null}
-          <p className="text-[10px] text-navy-600 mt-1">
+          {subtitle ? <p className="text-[11px] text-navy-400 mt-0.5">{subtitle}</p> : null}
+          <p className="text-[10px] text-navy-400 mt-1">
             子技能 {steps.length} 步
             {counts.executed ? ` · 已执行 ${counts.executed}` : ''}
             {counts.failed ? ` · 失败 ${counts.failed}` : ''}
@@ -75,7 +75,7 @@ export default function AgentTimelineCard({
         <button
           type="button"
           onClick={() => onInspectRun?.(dbRun.id)}
-          className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-left text-xs border-t border-navy-700/25 bg-navy-950/30 hover:bg-navy-800/40 transition"
+          className="w-full flex items-center justify-between gap-2 px-4 py-2.5 text-left text-xs border-t border-white/5 bg-slate-900/40 hover:bg-white/[0.05] transition"
         >
           <span className="text-navy-300">
             DB 记录 · {runStatusLabel(dbRun.status)}

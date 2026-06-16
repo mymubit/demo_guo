@@ -48,8 +48,11 @@ def retrieve_references(
     blocks: List[Dict[str, Any]] = []
     catalog = get_ssot_catalog()
     theme_name = catalog.theme_display_name(theme) if theme else ""
+    requested = [tag for tag in (tags or []) if isinstance(tag, str) and tag.strip()]
+    files = [fname for fname in requested if fname in _REFERENCE_FILES] or list(_REFERENCE_FILES)
+    max_blocks = max(1, int(limit or 1))
 
-    for fname in _REFERENCE_FILES:
+    for fname in files[:max_blocks]:
         raw = ReferenceLibraryService.get_json(fname)
         if not raw:
             continue
@@ -59,7 +62,7 @@ def retrieve_references(
         "theme": theme,
         "themeDisplayName": theme_name,
         "tags": tags or [],
-        "blocks": blocks[:limit],
+        "blocks": blocks[:max_blocks],
     }
 
 
@@ -92,11 +95,12 @@ def run_knowledge_search(project: Project, *, query: str = "", limit: int = 8) -
 
 
 def _summarize_json(raw: Any, *, limit: int) -> Any:
+    max_items = max(1, int(limit or 1))
     if isinstance(raw, list):
-        return raw[:limit]
+        return [_summarize_json(item, limit=max_items) for item in raw[:max_items]]
     if isinstance(raw, dict):
-        keys = list(raw.keys())[:limit]
-        return {k: raw[k] for k in keys}
+        keys = list(raw.keys())[:max_items]
+        return {k: _summarize_json(raw[k], limit=max_items) for k in keys}
     return raw
 
 

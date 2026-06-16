@@ -121,9 +121,9 @@ from apps.agent.routes import AgentLlmRouteService
 
 | 中心 | 前缀 |
 |------|------|
-| 主链工作室 | `/api/admin/main-chain/` |
+| 调度中心（流程编排 / 运行监察） | `/api/admin/orchestration/` |
+| 主链兼容 API（逐步收敛） | `/api/admin/main-chain/` |
 | Agent | `/api/admin/agent/` |
-| 调度监察 | `/api/admin/orchestration/` |
 | Agent 目录 | `/api/admin/agent/catalog/` |
 | 配置中心 | `/api/admin/portal/` |
 | 技能规则 | `/api/admin/skills/rules/` |

@@ -115,7 +115,7 @@ export default function PriceWithDiscount({
         </div>
 
         {showPromo ? (
-          <p className="text-sm text-navy-500">
+          <p className="text-sm text-navy-400">
             原价
             <span className="ml-1 line-through tabular-nums">¥{originalNum}</span>
           </p>
@@ -133,7 +133,7 @@ export default function PriceWithDiscount({
         {showPromo ? (
           <p className="text-xs text-navy-400">
             原价
-            <span className="mx-1 line-through text-navy-500">¥{originalNum}</span>
+            <span className="mx-1 line-through text-navy-400">¥{originalNum}</span>
             <span className="text-red-400 font-semibold">限时{label}</span>
           </p>
         ) : null}
@@ -143,7 +143,7 @@ export default function PriceWithDiscount({
   if (framed) {
     return (
       <div
-        className={`rounded-2xl border border-navy-700/40 bg-navy-900/35 px-4 py-4 ${className}`}
+        className={`rounded-2xl border border-white/10 bg-slate-900/40 px-4 py-4 ${className}`}
       >
         {content}
       </div>

@@ -5,6 +5,8 @@ export function useSubmitGuard({ minInterval = 800, onError, shouldThrow = false
   const [isSubmitting, setIsSubmitting] = useState(false)
   const isSubmittingRef = useRef(false)
   const lastSubmitAtRef = useRef(0)
+  const onErrorRef = useRef(onError)
+  onErrorRef.current = onError
 
   const runSubmit = useCallback(
     async (task) => {
@@ -18,7 +20,8 @@ export function useSubmitGuard({ minInterval = 800, onError, shouldThrow = false
       try {
         return await task()
       } catch (error) {
-        if (onError) onError(error)
+        const handler = onErrorRef.current
+        if (handler) handler(error)
         else toast.error(error.message || '提交失败，请稍后重试')
         if (shouldThrow) throw error
         return null
@@ -27,7 +30,7 @@ export function useSubmitGuard({ minInterval = 800, onError, shouldThrow = false
         setIsSubmitting(false)
       }
     },
-    [minInterval, onError, shouldThrow],
+    [minInterval, shouldThrow],
   )
 
   return { isSubmitting, runSubmit }

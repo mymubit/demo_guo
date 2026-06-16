@@ -79,7 +79,7 @@ export default function SystemConfigPanel({ onMessage }) {
 
   if (!filteredConfigs.length) {
     return (
-      <div className="glass-card rounded-2xl py-16 text-center text-navy-400">
+      <div className="sf-console-panel py-16 text-center text-navy-400">
         暂无系统配置，请联系管理员初始化数据
       </div>
     )
@@ -87,7 +87,7 @@ export default function SystemConfigPanel({ onMessage }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-      <div className="glass-card rounded-2xl p-5 border border-blue-500/15 bg-blue-500/5">
+      <div className="sf-console-panel p-5 border border-blue-500/15 bg-blue-500/5">
         <p className="text-sm text-navy-200 leading-relaxed">
           引擎内部开关与默认值。列表用中文说明，括号内为程序标识；大模型相关请用「模型中心」与「Agent 中心」。
         </p>
@@ -112,16 +112,16 @@ export default function SystemConfigPanel({ onMessage }) {
           <div className="space-y-4">
             <div>
               <h3 className="text-lg font-semibold text-white">{skillConfigLabel(config)}</h3>
-              <code className="text-xs text-navy-500 font-mono">{config.key}</code>
+              <code className="text-xs text-navy-300 font-mono">{config.key}</code>
               <p className="text-sm text-navy-300 mt-2">{config.description || '—'}</p>
             </div>
             <div>
-              <div className="text-xs text-navy-500 mb-2">当前值</div>
+              <div className="text-xs text-navy-400 mb-2">当前值</div>
               {config.type === 'select' ? (
                 <select
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
-                  className="w-full max-w-md px-3 py-2 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm"
+                  className="sf-control max-w-md"
                 >
                   {config.options.map((opt) => (
                     <option key={opt} value={opt}>
@@ -133,7 +133,7 @@ export default function SystemConfigPanel({ onMessage }) {
                 <select
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
-                  className="w-full max-w-md px-3 py-2 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm"
+                  className="sf-control max-w-md"
                 >
                   <option value="true">true</option>
                   <option value="false">false</option>
@@ -146,7 +146,7 @@ export default function SystemConfigPanel({ onMessage }) {
                   max={config.max}
                   step={config.step}
                   onChange={(e) => setEditValue(e.target.value)}
-                  className="w-full max-w-md px-3 py-2 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white text-sm font-mono"
+                  className="sf-control max-w-md font-mono"
                 />
               )}
             </div>
@@ -163,7 +163,7 @@ export default function SystemConfigPanel({ onMessage }) {
               <button
                 type="button"
                 onClick={cancelEdit}
-                className="px-4 py-2.5 rounded-xl bg-navy-800/60 text-navy-200 text-sm"
+                className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-navy-200 hover:bg-white/[0.06]"
               >
                 重置
               </button>

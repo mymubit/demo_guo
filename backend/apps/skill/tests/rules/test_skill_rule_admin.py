@@ -24,6 +24,31 @@ class SkillRuleTier1DbFirstTests(TestCase):
         tier1 = loader.get_tier1() or {}
         self.assertEqual((tier1.get("philosophy") or {}).get("core_formula"), "DB-TIER1-TEST")
 
+    def test_get_tier1_merges_section_records(self):
+        SkillRuleConfig.objects.create(
+            tier=1,
+            scope_type=SkillRuleConfig.SCOPE_GLOBAL,
+            scope_key="",
+            section="philosophy",
+            content={"core_formula": "SECTION-MERGE-TEST"},
+            status=SkillRuleConfig.STATUS_ACTIVE,
+            source=SkillRuleConfig.SOURCE_ADMIN,
+        )
+        SkillRuleConfig.objects.create(
+            tier=1,
+            scope_type=SkillRuleConfig.SCOPE_GLOBAL,
+            scope_key="",
+            section="scoring",
+            content={"grade_a": {"score_range": "80-89"}},
+            status=SkillRuleConfig.STATUS_ACTIVE,
+            source=SkillRuleConfig.SOURCE_ADMIN,
+        )
+        SkillRuleConfigService.clear_rule_caches()
+        loader = SkillRuleLoader()
+        tier1 = loader.get_tier1() or {}
+        self.assertEqual((tier1.get("philosophy") or {}).get("core_formula"), "SECTION-MERGE-TEST")
+        self.assertEqual((tier1.get("scoring") or {}).get("grade_a", {}).get("score_range"), "80-89")
+
 
 class SkillRuleAdminApiTests(TestCase):
     def setUp(self):

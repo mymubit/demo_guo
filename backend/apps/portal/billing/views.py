@@ -81,7 +81,7 @@ class BillingCatalogView(APIView):
             "pipeline_nodes": WorkflowPipelineService.public_nodes(),
             "pricing": BillingService.list_active_pricing(),
             "field_actions": BillingService.list_field_actions(),
-            "payment_method": PaymentProvider.resolve_method(None),
+            "payment_method": PaymentProvider.catalog_payment_method(),
         }
         return Response(
             {"code": 0, "message": "success", "data": data},

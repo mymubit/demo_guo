@@ -1,4 +1,4 @@
-import { Users } from 'lucide-react'
+﻿import { Users } from 'lucide-react'
 import { toast } from 'sonner'
 import AiGenerateButton from '@/components/creation/AiGenerateButton'
 import {
@@ -67,7 +67,7 @@ export default function AudienceProfileField({
                 className={`px-3 py-1.5 rounded-lg text-xs transition-all ${
                   active
                     ? 'bg-gold-400/20 text-gold-400 ring-1 ring-gold-400/40'
-                    : 'bg-navy-800/50 text-navy-300 hover:bg-navy-700/40'
+                    : 'border border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20'
                 }`}
               >
                 {age}
@@ -79,7 +79,7 @@ export default function AudienceProfileField({
           value={ageRange}
           onChange={(e) => emit({ ageRange: e.target.value.slice(0, 40), preferences, note })}
           placeholder="或自定义，如：25-45岁职场女性"
-          className="w-full px-3 py-2 rounded-lg bg-navy-900/50 border border-navy-700/40 text-white text-sm placeholder-navy-500 focus:border-gold-400/40 outline-none"
+          className="sf-control"
         />
       </div>
 
@@ -102,7 +102,7 @@ export default function AudienceProfileField({
                 className={`px-3 py-1.5 rounded-lg text-xs transition-all ${
                   active
                     ? 'bg-purple-500/20 text-purple-200 ring-1 ring-purple-400/40'
-                    : 'bg-navy-800/50 text-navy-300 hover:bg-navy-700/40'
+                    : 'border border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20'
                 }`}
               >
                 {tag}
@@ -115,7 +115,7 @@ export default function AudienceProfileField({
       <div>
         <div className="text-xs font-medium text-navy-300 mb-2">画像描述</div>
         {hasContent && !note ? (
-          <div className="rounded-xl border border-navy-700/40 bg-navy-900/30 px-4 py-3 text-xs text-navy-400">
+          <div className="rounded-xl border border-white/5 bg-slate-900/40 px-4 py-3 text-xs text-navy-400">
             已选标签，可补充一句观看动机（可选）
           </div>
         ) : null}
@@ -124,9 +124,9 @@ export default function AudienceProfileField({
           onChange={(e) => emit({ ageRange, preferences, note: e.target.value.slice(0, 400) })}
           placeholder="例：渴望情绪宣泄，偏好高智商大女主，不喜欢傻白甜人设…"
           rows={4}
-          className="w-full min-h-[96px] p-4 rounded-xl bg-navy-900/50 border border-navy-600/30 text-white text-sm leading-relaxed placeholder-navy-500 focus:border-gold-400/50 outline-none resize-y"
+          className="sf-control min-h-[96px] resize-y leading-relaxed"
         />
-        <p className="text-[11px] text-navy-500 mt-1 text-right">{note.length}/400</p>
+        <p className="text-[11px] text-navy-400 mt-1 text-right">{note.length}/400</p>
       </div>
     </div>
   )
@@ -142,7 +142,7 @@ export function AudienceProfileSummary({ profile, fallbackText }) {
   if (!p.ageRange && !p.preferences?.length && !p.note) return null
 
   return (
-    <div className="rounded-xl bg-navy-800/40 border border-navy-600/20 p-4 space-y-3">
+    <div className="rounded-xl border border-white/5 bg-slate-900/40 p-4 space-y-3">
       {p.ageRange ? (
         <div className="flex items-start gap-2 text-sm">
           <Users className="w-4 h-4 text-gold-400 shrink-0 mt-0.5" />

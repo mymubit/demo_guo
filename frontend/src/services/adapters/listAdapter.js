@@ -10,17 +10,47 @@ export function normalizePagination(raw, fallback = {}) {
   }
 }
 
+/**
+ * 从多种后端列表响应形态中提取数组。
+ * - 裸数组（unwrap 后 data 直接为数组）
+ * - { data: [...], pagination?, facets?, meta?, summary?, total? }
+ * - { items: [...], pagination?, summary?, total?, meta? }
+ */
+export function extractListItems(result) {
+  if (Array.isArray(result)) {
+    return result
+  }
+  if (!result || typeof result !== 'object') {
+    return []
+  }
+  if (Array.isArray(result.data)) {
+    return result.data
+  }
+  if (Array.isArray(result.items)) {
+    return result.items
+  }
+  return []
+}
+
 export function normalizeListResult(result, itemMapper = (item) => item) {
-  const items = Array.isArray(result?.data) ? result.data : []
+  const source = result && typeof result === 'object' && !Array.isArray(result) ? result : {}
+  const items = extractListItems(result)
   return {
     items: items.map(itemMapper).filter(Boolean),
-    pagination: normalizePagination(result?.pagination),
-    facets: result?.facets,
-    meta: result?.meta,
+    pagination: normalizePagination(source.pagination),
+    facets: source.facets,
+    meta: source.meta,
+    summary: source.summary,
+    total: source.total,
   }
 }
 
 export function normalizeArrayResult(result, itemMapper = (item) => item) {
-  const items = Array.isArray(result?.data) ? result.data : []
+  const items = extractListItems(result)
   return items.map(itemMapper).filter(Boolean)
+}
+
+/** http 层已解包为裸数组，或 { data/items: array } 信封 */
+export function coerceUnwrappedArray(result, itemMapper = (item) => item) {
+  return normalizeArrayResult(result, itemMapper)
 }

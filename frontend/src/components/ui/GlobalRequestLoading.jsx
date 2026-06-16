@@ -13,7 +13,7 @@ export default function GlobalRequestLoading() {
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
-          className="fixed left-1/2 top-5 z-[120] -translate-x-1/2 rounded-full border border-navy-700/50 bg-navy-900/95 px-4 py-2 text-sm text-navy-100 shadow-modal backdrop-blur-xl"
+          className="fixed left-1/2 top-5 z-[120] -translate-x-1/2 rounded-full border border-white/10 bg-slate-900/95 px-4 py-2 text-sm text-navy-100 shadow-modal"
         >
           <Loader2 className={`${ICON.md} mr-2 inline animate-spin text-gold-400`} />
           请求处理中…

@@ -392,6 +392,7 @@ SECURITY_RATE_LIMIT_SKIP_PATHS = (
     "/api/auth/",
     "/api/health/",
     "/api/admin/",
+    "/api/monitoring/",
     # 只读 SSOT 目录（创作页首屏单次加载，不应计入创作接口限频）
     "/api/creation/fusion/catalog/",
     "/api/creation/agents/catalog/",
@@ -428,6 +429,15 @@ MONITORING_SKIP_PATHS = (
     "/api/monitoring/",
     "/static/",
     "/media/",
+)
+MONITORING_BUSINESS_ERROR_LOG_ENABLED = os.getenv(
+    "MONITORING_BUSINESS_ERROR_LOG_ENABLED", "true"
+).lower() in ("1", "true", "yes")
+MONITORING_BUSINESS_ERROR_SAMPLE_RATE = float(
+    os.getenv("MONITORING_BUSINESS_ERROR_SAMPLE_RATE", "1") or 1
+)
+MONITORING_VALIDATION_ERROR_SAMPLE_RATE = float(
+    os.getenv("MONITORING_VALIDATION_ERROR_SAMPLE_RATE", "0.1") or 0.1
 )
 
 
@@ -493,6 +503,11 @@ LOGGING = {
             "level": os.getenv("MONITORING_LOG_LEVEL", "INFO"),
             "propagate": False,
         },
+        "apps.monitoring.business": {
+            "handlers": ["console", "file"],
+            "level": os.getenv("MONITORING_LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
     },
 }
 
@@ -504,4 +519,5 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "SCHEMA_PATH_PREFIX": r"/api/",
+    "DISABLE_ERRORS_AND_WARNINGS": True,
 }

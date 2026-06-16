@@ -52,7 +52,7 @@ export default function ScriptSkillPanel({
   }
 
   const inputClass =
-    'w-full rounded-xl bg-navy-950/50 border border-navy-600/30 text-white text-sm px-4 py-3 focus:border-gold-400/50 outline-none resize-y'
+    'sf-control resize-y'
 
   function renderEpisodeContent(ep) {
     if (!ep) return null
@@ -60,7 +60,7 @@ export default function ScriptSkillPanel({
     return editMode ? (
       <div className="space-y-3">
         <div>
-          <div className="text-xs text-navy-500 mb-1.5">集标题</div>
+          <div className="text-xs text-navy-400 mb-1.5">集标题</div>
           <input
             type="text"
             value={ep.title || ''}
@@ -69,7 +69,7 @@ export default function ScriptSkillPanel({
           />
         </div>
         <div>
-          <div className="text-xs text-navy-500 mb-1.5">剧本正文</div>
+          <div className="text-xs text-navy-400 mb-1.5">剧本正文</div>
           <textarea
             value={ep.scriptMarkdown || ''}
             onChange={(e) => updateEpisode(ep.episodeNumber, 'scriptMarkdown', e.target.value)}
@@ -159,7 +159,7 @@ export default function ScriptSkillPanel({
                 className={`px-2 py-1 rounded-lg text-[10px] border ${
                   !navFilter
                     ? 'border-gold-400/40 bg-gold-400/10 text-gold-200'
-                    : 'border-navy-600/30 text-navy-400 hover:text-navy-200'
+                    : 'border-white/10 text-navy-400 hover:text-navy-200'
                 }`}
               >
                 全部
@@ -175,7 +175,7 @@ export default function ScriptSkillPanel({
                   className={`px-2 py-1 rounded-lg text-[10px] border ${
                     navFilter?.from_episode === block.from_episode
                       ? 'border-gold-400/40 bg-gold-400/10 text-gold-200'
-                      : 'border-navy-600/30 text-navy-400 hover:text-navy-200'
+                      : 'border-white/10 text-navy-400 hover:text-navy-200'
                   }`}
                 >
                   {block.label}

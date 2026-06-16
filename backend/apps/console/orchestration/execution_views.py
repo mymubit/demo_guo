@@ -11,8 +11,9 @@ from apps.common.permissions import IsAdminUser
 from apps.creation.artifact_service import get_artifact, list_artifact_keys
 from apps.creation.monitoring.execution_run_service import AgentExecutionRunService
 from apps.creation.models import Project, ProjectFusionArtifact
-from apps.creation.workspace.workspace_service import _verify_summary
+from apps.creation.workspace.workspace_service import _verify_summary, reconcile_workspace_brief_status
 
+from apps.console.base_views import AdminAPIView
 from apps.console.responses import api_fail, api_ok
 
 
@@ -150,7 +151,7 @@ def aggregate_sub_skill_stats(*, limit: int = 300) -> Dict[str, Any]:
     }
 
 
-class AgentCatalogAdminView(APIView):
+class AgentCatalogAdminView(AdminAPIView):
     """GET /api/admin/agent/catalog/ — registry v2 SSOT。"""
 
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -165,7 +166,7 @@ class AgentCatalogAdminView(APIView):
         )
 
 
-class AgentProjectTraceView(APIView):
+class AgentProjectTraceView(AdminAPIView):
     """GET /api/admin/orchestration/projects/<project_id>/traces/ — 项目级 sub-skill 轨迹。"""
 
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -178,6 +179,8 @@ class AgentProjectTraceView(APIView):
 
         traces = get_artifact(project, "agent_execution_traces") or {}
         adaptation = get_artifact(project, "adaptation_meta") or {}
+        if reconcile_workspace_brief_status(project):
+            project.refresh_from_db()
         nodes = []
         for n in project.nodes.all().order_by("node_index"):
             nodes.append(
@@ -234,7 +237,7 @@ class AgentProjectTraceView(APIView):
         )
 
 
-class AgentSubSkillStatsView(APIView):
+class AgentSubSkillStatsView(AdminAPIView):
     """GET /api/admin/orchestration/stats/ — 近期 sub-skill 执行命中率。"""
 
     permission_classes = [IsAuthenticated, IsAdminUser]
@@ -252,7 +255,20 @@ class AgentSubSkillStatsView(APIView):
         )
 
 
-class AgentExecutionRunDetailView(APIView):
+class OrchestrationRecentRunsView(AdminAPIView):
+    """GET /api/admin/orchestration/recent-runs/ — 全站近期执行与节点态。"""
+
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        try:
+            limit = int(request.query_params.get("limit", 40))
+        except (TypeError, ValueError):
+            limit = 40
+        return api_ok(AgentExecutionRunService.list_recent_runs_global(limit=limit))
+
+
+class AgentExecutionRunDetailView(AdminAPIView):
     """GET /api/admin/orchestration/execution-runs/<run_id>/ — 单次执行详情 + LLM 用量。"""
 
     permission_classes = [IsAuthenticated, IsAdminUser]

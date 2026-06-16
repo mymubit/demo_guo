@@ -1597,6 +1597,61 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/admin/orchestration/flow/blueprint/:
+    get:
+      operationId: admin_orchestration_flow_blueprint_retrieve
+      description: GET /api/admin/orchestration/flow/blueprint/ — 流程编排蓝图。
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/admin/orchestration/flow/registry-meta/:
+    put:
+      operationId: admin_orchestration_flow_registry_meta_update
+      description: PUT /api/admin/orchestration/flow/registry-meta/ — 后处理链与画布元数据。
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/admin/orchestration/flow/steps/{step_id}/:
+    put:
+      operationId: admin_orchestration_flow_steps_update
+      description: PUT /api/admin/orchestration/flow/steps/<uuid>/ — 更新单步。
+      parameters:
+      - in: path
+        name: step_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/admin/orchestration/flow/steps/reorder/:
+    put:
+      operationId: admin_orchestration_flow_steps_reorder_update
+      description: PUT /api/admin/orchestration/flow/steps/reorder/ — 拖拽重排 chain_order。
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/admin/orchestration/projects/{project_id}/traces/:
     get:
       operationId: admin_orchestration_projects_traces_retrieve

@@ -160,6 +160,14 @@ class Project(models.Model):
         default=MODE_WORKSPACE,
         help_text="workspace=按技能模块；auto=一键跑完；step=每节点暂停待确认",
     )
+    pipeline_pack = models.ForeignKey(
+        "workflow.FusionPipelinePack",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="projects",
+        verbose_name="流水线模板",
+    )
     current_node_index = models.IntegerField(
         "当前节点索引", default=0, help_text="0 表示未开始，1-7 表示正在/已完成该节点"
     )

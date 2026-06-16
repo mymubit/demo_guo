@@ -20,8 +20,8 @@ export default function PlotFlowChart({ stageBlocks = [], episodes = [], height 
   }
 
   return (
-    <div className="rounded-xl bg-navy-950/40 border border-navy-700/30 p-3 mb-4">
-      <div className="text-xs text-navy-500 mb-2">剧情脉络 · 阶段与分集关联</div>
+    <div className="rounded-xl border border-white/5 bg-slate-900/40 p-3 mb-4">
+      <div className="text-xs text-navy-400 mb-2">剧情脉络 · 阶段与分集关联</div>
       <EChart option={option} height={height} />
     </div>
   )

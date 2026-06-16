@@ -11,12 +11,15 @@ from django.db import transaction
 from django.db.models import Q
 
 from apps.skill.models import SkillRuleConfig
-from .loader import _get_rules_root
+from apps.workflow.tier1_sections import tier1_section_label
+from apps.workflow.tier4_sections import TIER4_SECTION_KEYS, tier4_section_label
+from .loader import _get_rules_root, _TIER1_RENDERERS
 
 logger = logging.getLogger(__name__)
 
 TIER1_SECTION = "tier_full"
 TIER4_SECTION = "tier_full"
+BUNDLE_SECTION = "tier_full"
 
 
 class SkillRuleConfigService:
@@ -33,6 +36,15 @@ class SkillRuleConfigService:
             logger.debug("skill rule cache clear failed: %s", exc)
 
     @staticmethod
+    def _section_label(tier: int, section: str) -> str:
+        key = (section or "").strip()
+        if tier == 1:
+            return tier1_section_label(key)
+        if tier == 4:
+            return tier4_section_label(key)
+        return key
+
+    @staticmethod
     def serialize(row: SkillRuleConfig) -> Dict[str, Any]:
         return {
             "id": str(row.id),
@@ -40,6 +52,7 @@ class SkillRuleConfigService:
             "scope_type": row.scope_type,
             "scope_key": row.scope_key,
             "section": row.section,
+            "section_label": SkillRuleConfigService._section_label(row.tier, row.section),
             "content": row.content,
             "version_tag": row.version_tag,
             "status": row.status,
@@ -61,6 +74,7 @@ class SkillRuleConfigService:
         scope_type: Optional[str] = None,
         q: str = "",
         limit: int = 200,
+        exclude_bundle: bool = True,
     ) -> List[Dict[str, Any]]:
         qs = SkillRuleConfig.objects.all().order_by("tier", "scope_type", "scope_key", "section", "-updated_at")
         if tier is not None:
@@ -69,6 +83,8 @@ class SkillRuleConfigService:
             qs = qs.filter(status=status)
         if scope_type:
             qs = qs.filter(scope_type=scope_type)
+        if exclude_bundle:
+            qs = qs.exclude(section=BUNDLE_SECTION)
         if q:
             qs = qs.filter(
                 Q(scope_key__icontains=q) | Q(section__icontains=q) | Q(note__icontains=q)
@@ -182,6 +198,68 @@ class SkillRuleConfigService:
         return True
 
     @classmethod
+    def _archive_active_bundle(cls, *, tier: int, scope_type: str, scope_key: str, section: str) -> None:
+        SkillRuleConfig.objects.filter(
+            tier=tier,
+            scope_type=scope_type,
+            scope_key=scope_key,
+            section=section,
+            status=SkillRuleConfig.STATUS_ACTIVE,
+        ).update(status=SkillRuleConfig.STATUS_ARCHIVED)
+
+    @classmethod
+    def _import_global_sections(
+        cls,
+        *,
+        tier: int,
+        data: dict,
+        section_keys: List[str],
+        label_fn,
+        source_file: str,
+        overwrite: bool,
+    ) -> int:
+        meta = data.get("_meta") or {}
+        version_tag = str(meta.get("version") or "v5.0.0")
+        count = 0
+        if meta:
+            if cls._upsert_active(
+                tier=tier,
+                scope_type=SkillRuleConfig.SCOPE_GLOBAL,
+                scope_key="",
+                section="_meta",
+                content=meta,
+                version_tag=version_tag,
+                note=f"从 {source_file} 导入·元信息",
+                overwrite=overwrite,
+            ):
+                count += 1
+        for section_key in section_keys:
+            if section_key in ("_meta", "tier_full"):
+                continue
+            section_data = data.get(section_key)
+            if section_data is None:
+                continue
+            label = label_fn(section_key)
+            if cls._upsert_active(
+                tier=tier,
+                scope_type=SkillRuleConfig.SCOPE_GLOBAL,
+                scope_key="",
+                section=section_key,
+                content=section_data,
+                version_tag=version_tag,
+                note=f"从 {source_file} 导入·{label}",
+                overwrite=overwrite,
+            ):
+                count += 1
+        cls._archive_active_bundle(
+            tier=tier,
+            scope_type=SkillRuleConfig.SCOPE_GLOBAL,
+            scope_key="",
+            section=TIER1_SECTION if tier == 1 else TIER4_SECTION,
+        )
+        return count
+
+    @classmethod
     def import_from_files(cls, *, rules_dir: Optional[Path] = None, overwrite: bool = False) -> Dict[str, int]:
         root = rules_dir or _get_rules_root()
         counts = {"tier1": 0, "tier2": 0, "tier3": 0, "tier4": 0}
@@ -189,32 +267,28 @@ class SkillRuleConfigService:
         tier1_file = root / "tier1-iron-rules.json"
         if tier1_file.is_file():
             data = json.loads(tier1_file.read_text(encoding="utf-8"))
-            if cls._upsert_active(
+            tier1_sections = cls._import_global_sections(
                 tier=1,
-                scope_type=SkillRuleConfig.SCOPE_GLOBAL,
-                scope_key="",
-                section=TIER1_SECTION,
-                content=data,
-                version_tag=(data.get("_meta") or {}).get("version", "v5.0.0"),
-                note="从 tier1-iron-rules.json 导入",
+                data=data,
+                section_keys=sorted(_TIER1_RENDERERS.keys()),
+                label_fn=tier1_section_label,
+                source_file="tier1-iron-rules.json",
                 overwrite=overwrite,
-            ):
-                counts["tier1"] = 1
+            )
+            counts["tier1"] = tier1_sections
 
         tier4_file = root / "tier4-compliance-rules.json"
         if tier4_file.is_file():
             data = json.loads(tier4_file.read_text(encoding="utf-8"))
-            if cls._upsert_active(
+            tier4_sections = cls._import_global_sections(
                 tier=4,
-                scope_type=SkillRuleConfig.SCOPE_GLOBAL,
-                scope_key="",
-                section=TIER4_SECTION,
-                content=data,
-                version_tag=(data.get("_meta") or {}).get("version", "v5.0.0"),
-                note="从 tier4-compliance-rules.json 导入",
+                data=data,
+                section_keys=TIER4_SECTION_KEYS,
+                label_fn=tier4_section_label,
+                source_file="tier4-compliance-rules.json",
                 overwrite=overwrite,
-            ):
-                counts["tier4"] = 1
+            )
+            counts["tier4"] = tier4_sections
 
         tier2_file = root / "tier2-genre-rules.json"
         if tier2_file.is_file():

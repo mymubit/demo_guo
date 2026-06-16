@@ -6,8 +6,10 @@ from django.test import SimpleTestCase, TestCase
 from apps.creation.orchestration.pacing_heuristics import analyze_pacing
 from apps.agent.runtime import (
     agent_for_workspace_index,
+    agent_runner_path,
     get_agent_registry,
     post_script_chain,
+    resolve_agent_runner,
 )
 
 
@@ -67,6 +69,25 @@ class AgentRegistryTests(TestCase):
     def test_workspace_mapping(self):
         self.assertEqual(agent_for_workspace_index(2), "world")
         self.assertEqual(agent_for_workspace_index(5), "script")
+
+    def test_legacy_workspace_runner_path_is_mapped(self):
+        self.assertEqual(
+            agent_runner_path("world"),
+            "apps.creation.orchestration.world.run_world_agent",
+        )
+        self.assertTrue(callable(resolve_agent_runner("world")))
+
+    def test_all_configured_agent_runners_resolve(self):
+        failures = []
+        for agent in get_agent_registry().get("agents") or []:
+            if not isinstance(agent, dict):
+                continue
+            agent_id = agent.get("id")
+            if not agent_id or not (agent.get("runner") or agent.get("runner_path")):
+                continue
+            if not callable(resolve_agent_runner(agent_id)):
+                failures.append(f"{agent_id}: {agent_runner_path(agent_id)}")
+        self.assertEqual(failures, [], f"Agent runner 无法解析: {failures}")
 
     def test_post_script_chain(self):
         chain = post_script_chain()
@@ -178,6 +199,119 @@ class AgentEngineTests(SimpleTestCase):
         self.assertFalse(gate["passed"])
         self.assertTrue(any("主角" in i for i in gate.get("issues") or []))
 
+    def test_character_gate_detects_age_text_conflict(self):
+        from apps.creation.orchestration.agent_detection import run_character_gate
+
+        gate = run_character_gate(
+            {
+                "characters": [
+                    {
+                        "name": "林晚",
+                        "roleType": "protagonist-female",
+                        "age": 24,
+                        "oneLineSummary": "成年设计师，被迫回到家族企业。",
+                        "coreMotivation": "夺回设计主导权。",
+                        "background": "17岁那年被迫离家，后来一直以17岁身份示人。",
+                    },
+                    {
+                        "name": "顾沉",
+                        "roleType": "antagonist-male",
+                        "age": 28,
+                        "oneLineSummary": "冷面继承人。",
+                        "coreMotivation": "控制家族资产。",
+                    },
+                ],
+                "relationshipSummary": "林晚与顾沉互为对手。",
+            }
+        )
+        self.assertFalse(gate["passed"])
+        self.assertTrue(any("年龄字段" in i for i in gate.get("issues") or []))
+
+    def test_character_gate_detects_underage_marriage_conflict(self):
+        from apps.creation.orchestration.agent_detection import run_character_gate
+
+        gate = run_character_gate(
+            {
+                "characters": [
+                    {
+                        "name": "苏念",
+                        "roleType": "protagonist-female",
+                        "age": 17,
+                        "oneLineSummary": "被迫成为豪门前妻。",
+                        "coreMotivation": "保护自己。",
+                    },
+                    {
+                        "name": "陆野",
+                        "roleType": "antagonist-male",
+                        "age": 27,
+                        "oneLineSummary": "豪门掌权者。",
+                        "coreMotivation": "维持联姻利益。",
+                    },
+                ],
+                "relationshipSummary": "苏念与陆野有婚姻冲突。",
+            }
+        )
+        self.assertFalse(gate["passed"])
+        self.assertTrue(any("婚恋" in i or "婚姻" in i for i in gate.get("issues") or []))
+
+    def test_character_gate_detects_trauma_event_conflict(self):
+        from apps.creation.orchestration.agent_detection import run_character_gate
+
+        gate = run_character_gate(
+            {
+                "characters": [
+                    {
+                        "name": "林栀",
+                        "roleType": "protagonist-female",
+                        "age": 24,
+                        "oneLineSummary": "因一场车祸失去记忆。",
+                        "coreMotivation": "查清当年的真相。",
+                        "background": "五年前车祸后，她一直被家族隐瞒真相。",
+                        "secret": "真正的伤源来自被亲人推下悬崖。",
+                    },
+                    {
+                        "name": "沈砚",
+                        "roleType": "antagonist-male",
+                        "age": 29,
+                        "oneLineSummary": "掌控家族秘密。",
+                        "coreMotivation": "掩盖旧案。",
+                    },
+                ],
+                "relationshipSummary": "林栀与沈砚围绕旧案对抗。",
+            }
+        )
+        self.assertFalse(gate["passed"])
+        self.assertTrue(any("事故来源" in i or "关键经历" in i for i in gate.get("issues") or []))
+
+    def test_worldbuilder_patch_does_not_override_structure(self):
+        from apps.creation.orchestration.world_engine import _worldbuilder_patch_only
+
+        patch = _worldbuilder_patch_only(
+            {
+                "worldview": {"settingSummary": "造梦师全景"},
+                "workingTitle": "  逆光之城  ",
+                "sixStagePlan": [{"coreTask": "被改写的阶段"}],
+                "keyReversalPoints": [{"reversalCode": "REV-ID-99"}],
+                "rhythmCurve": [{"intensityLevel": 9}],
+            }
+        )
+
+        self.assertEqual(set(patch.keys()), {"worldview", "workingTitle"})
+        self.assertEqual(patch["workingTitle"], "逆光之城")
+
+    def test_ip_lock_trace_message_includes_first_issue(self):
+        from apps.creation.orchestration.character_engine import _ip_lock_trace_message
+
+        message = _ip_lock_trace_message(
+            {
+                "lockedCount": 0,
+                "issues": ["IP 续作须至少锁定 1 名主角"],
+            }
+        )
+
+        self.assertIn("锁定 0 角色", message)
+        self.assertIn("至少锁定 1 名主角", message)
+
     def test_creator_quality_guard_detects_ai_phrases(self):
         from apps.creation.orchestration.agent_detection import run_creator_quality_guard
 
@@ -236,6 +370,90 @@ class AgentEngineTests(SimpleTestCase):
             )
         self.assertEqual(alerts[0]["code"], "character-gate")
         self.assertEqual(alerts[0]["level"], "warning")
+
+    def test_world_compliance_alert_contains_actionable_details(self):
+        from apps.creation.models import CreationNode, Project
+        from apps.creation.orchestration.world_engine import _scan_world_compliance
+        from apps.creation.workspace.workspace_service import _quality_alerts_for_node
+
+        payload = {
+            "workingTitle": "测试项目",
+            "worldview": {
+                "settingSummary": "女主回到老宅后听见鬼魂低语，但结局会给出现实解释。",
+                "rootRules": ["所有异常现象最终必须回到现实动机"],
+            },
+        }
+        warnings = _scan_world_compliance(payload)
+        payload["worldValidationLog"] = {"complianceWarnings": warnings}
+
+        project = Project(id="00000000-0000-0000-0000-000000000096", title="t")
+        alerts = _quality_alerts_for_node(
+            project,
+            2,
+            adaptation_meta={},
+            node_status=CreationNode.STATUS_COMPLETED,
+            payload=payload,
+        )
+
+        self.assertEqual(alerts[0]["code"], "world-compliance-p1")
+        detail = alerts[0]["details"][0]
+        self.assertEqual(detail["category"], "灵异/超自然设定")
+        self.assertEqual(detail["matched_text"], "鬼魂")
+        self.assertIn("鬼魂低语", detail["excerpt"])
+        self.assertIn("科学/现实解释", detail["constraint"])
+
+    def test_world_history_rule_requires_specific_match(self):
+        from apps.creation.orchestration.world_engine import _scan_world_compliance
+
+        safe_payload = {
+            "worldview": {
+                "settingSummary": "女主复仇后重新经营家族企业。",
+                "rootRules": ["所有人物均为架空角色"],
+            },
+        }
+        self.assertEqual(_scan_world_compliance(safe_payload), [])
+
+        risky_payload = {
+            "worldview": {
+                "settingSummary": "反派直接借用慈禧姓名与真实历史事件制造噱头。",
+                "rootRules": [],
+            },
+        }
+        warnings = _scan_world_compliance(risky_payload)
+        self.assertEqual(warnings[0]["category"], "真实历史人物")
+        self.assertEqual(warnings[0]["matchedText"], "慈禧")
+
+    def test_world_compliance_alert_repairs_legacy_warning_without_match(self):
+        from apps.creation.models import CreationNode, Project
+        from apps.creation.workspace.workspace_service import _quality_alerts_for_node
+
+        payload = {
+            "worldview": {
+                "settingSummary": "故事里直接出现慈禧姓名，需要改成架空权贵。",
+                "rootRules": [],
+            },
+            "worldValidationLog": {
+                "complianceWarnings": [
+                    {
+                        "level": "P1",
+                        "category": "真实历史人物",
+                        "constraint": "须架空处理，禁止直接使用真实历史人物姓名及事件",
+                    }
+                ]
+            },
+        }
+        alerts = _quality_alerts_for_node(
+            Project(id="00000000-0000-0000-0000-000000000095", title="t"),
+            2,
+            adaptation_meta={},
+            node_status=CreationNode.STATUS_COMPLETED,
+            payload=payload,
+        )
+
+        detail = alerts[0]["details"][0]
+        self.assertEqual(detail["category"], "真实历史人物")
+        self.assertEqual(detail["matched_text"], "慈禧")
+        self.assertIn("慈禧姓名", detail["excerpt"])
 
     def test_episode_scripts_to_verify_markdown(self):
         from apps.creation.orchestration.verify_creation_support import episode_scripts_to_verify_markdown
@@ -431,6 +649,24 @@ class SubSkillOrchestratorTests(SimpleTestCase):
         self.assertIn("reversalCode", fixer)
         self.assertIn("suggestedHookCodes", fixer)
 
+    @patch("apps.skill.config.portal.reference_libs.ReferenceLibraryService.get_json")
+    def test_retrieve_references_filters_tags_and_compacts_nested_content(self, mock_get_json):
+        from apps.creation.orchestration.knowledge import retrieve_references
+
+        mock_get_json.side_effect = lambda _name: {
+            "root": {
+                "a": {"label": "A"},
+                "b": {"label": "B"},
+                "c": {"label": "C"},
+            },
+            "extra": ["x", "y", "z"],
+        }
+
+        refs = retrieve_references(tags=["character-archetypes.json"], limit=2)
+
+        self.assertEqual([b["file"] for b in refs["blocks"]], ["character-archetypes.json"])
+        self.assertEqual(len(refs["blocks"][0]["excerpt"]["root"]), 2)
+
 
 class OutlineEnrichmentTests(SimpleTestCase):
     def test_enrich_outline_payload_fills_creative_plan(self):
@@ -571,6 +807,41 @@ class StructureEnrichmentTests(SimpleTestCase):
             )
         self.assertEqual(pending_alerts, [])
         self.assertEqual(completed_alerts[0]["code"], "character-gate")
+
+    def test_character_gate_alert_suppressed_when_acknowledged(self):
+        from unittest.mock import patch
+
+        from apps.creation.models import Project
+        from apps.creation.workspace.workspace_service import _quality_alerts_for_node
+
+        project = Project(id="00000000-0000-0000-0000-000000000096", title="t")
+        payload = {
+            "protagonists": [
+                {
+                    "name": "王德顺",
+                    "roleType": "protagonist",
+                    "age": 62,
+                    "oneLineSummary": "老渔夫",
+                    "coreMotivation": "守住手艺",
+                    "personality": "固执",
+                    "background": "20岁离开渔村",
+                }
+            ],
+            "characterGateLog": {
+                "passed": False,
+                "issues": ["角色「王德顺」年龄字段为 62 岁，但文本中出现 20 岁"],
+                "userAcknowledgedAt": "2026-06-16T12:00:00+00:00",
+            },
+        }
+        with patch("apps.creation.artifact_service.get_artifact") as mock_ga:
+            mock_ga.return_value = {}
+            alerts = _quality_alerts_for_node(
+                project,
+                3,
+                node_status="completed",
+                payload=payload,
+            )
+        self.assertEqual(alerts, [])
 
     def test_export_work_zip_contains_node_files(self):
         from unittest.mock import MagicMock, patch

@@ -6,8 +6,9 @@ import { admin } from '@/services/api'
 import AdminShell from '@/components/admin/AdminShell'
 import AdminDashboardHints from '@/components/admin/AdminDashboardHints'
 import {
-  AdminToolbar,
-  AdminSearchInput,
+  AdminPageHeader,
+  AdminPanel,
+  ToolbarSearch,
   AdminTable,
   AdminPagination,
   AdminLoading,
@@ -87,41 +88,52 @@ export default function UsersAdmin() {
   }
 
   return (
-    <AdminShell actions={<AdminDashboardHints scope="users" />}>
+    <AdminShell hideDescription actions={<AdminDashboardHints scope="users" />}>
       <AdminMessage message={message} onClose={() => setMessage(null)} />
 
-      <AdminToolbar>
-        <AdminSearchInput
-          value={keyword}
-          onChange={(v) => {
-            setKeyword(v)
-            setPage(1)
-          }}
-          placeholder="搜索昵称、手机号…"
-        />
-        <select
-          value={filter}
-          onChange={(e) => {
-            setFilter(e.target.value)
-            setPage(1)
-          }}
-          className="px-4 py-3 rounded-xl bg-navy-800/60 border border-navy-700/40 text-white"
-        >
-          <option value="all">全部用户</option>
-          <option value="member">有效会员</option>
-          <option value="free">免费用户</option>
-          <option value="active">账号正常</option>
-          <option value="inactive">已禁用</option>
-        </select>
-        <button type="button" onClick={() => refreshUsers()} className="px-4 py-3 rounded-xl bg-navy-800/60 text-navy-200 hover:bg-navy-700/60">
-          刷新
-        </button>
-      </AdminToolbar>
+      <AdminPageHeader
+        crumbs={[{ label: 'Console' }, { label: '用户管理' }]}
+        title={`用户 · ${pagination?.total ?? 0}`}
+        subtitle="按最近活跃倒序 · 含付费 / 体验 / 企业三档"
+        toolbar={
+          <>
+            <ToolbarSearch
+              placeholder="搜索昵称、手机号…"
+              value={keyword}
+              onChange={(e) => {
+                setKeyword(e.target.value)
+                setPage(1)
+              }}
+            />
+            <select
+              value={filter}
+              onChange={(e) => {
+                setFilter(e.target.value)
+                setPage(1)
+              }}
+              className="px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-sm text-white"
+            >
+              <option value="all">全部用户</option>
+              <option value="member">有效会员</option>
+              <option value="free">免费用户</option>
+              <option value="active">账号正常</option>
+              <option value="inactive">已禁用</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => refreshUsers()}
+              className="px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-sm text-slate-200 hover:bg-white/10"
+            >
+              刷新
+            </button>
+          </>
+        }
+      />
 
       {loading ? (
         <AdminLoading />
       ) : (
-        <>
+        <AdminPanel>
           <AdminTable
             rowKey="user_id"
             rows={users}
@@ -133,7 +145,7 @@ export default function UsersAdmin() {
                 render: (r) => (
                   <div>
                     <div className="text-white font-medium">{r.nickname || '未设置昵称'}</div>
-                    <div className="text-xs text-navy-500 font-mono">{r.phone || r.email || '—'}</div>
+                    <div className="text-xs text-navy-300 font-mono">{r.phone || r.email || '—'}</div>
                   </div>
                 ),
               },
@@ -145,7 +157,7 @@ export default function UsersAdmin() {
                     <div>
                       <AdminBadge tone="gold">{r.current_plan}</AdminBadge>
                       {r.membership_expires_at && (
-                        <div className="text-[11px] text-navy-500 mt-1">
+                        <div className="text-[11px] text-navy-400 mt-1">
                           至 {formatDateTime(r.membership_expires_at)}
                         </div>
                       )}
@@ -186,7 +198,7 @@ export default function UsersAdmin() {
                           message: `确认${r.is_active ? '禁用' : '启用'}用户 ${r.nickname || r.phone}？`,
                         })
                       }
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-navy-800/60 hover:bg-navy-700/60 text-navy-200 disabled:opacity-40"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-navy-200 hover:bg-white/[0.06] disabled:opacity-40"
                     >
                       {r.is_active ? <ShieldOff className="w-3.5 h-3.5" /> : <Shield className="w-3.5 h-3.5" />}
                       {r.is_active ? '禁用' : '启用'}
@@ -201,7 +213,7 @@ export default function UsersAdmin() {
                           message: `将为 ${r.nickname || r.phone} 生成新的随机密码，请妥善告知用户。`,
                         })
                       }
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-navy-800/60 hover:bg-navy-700/60 text-gold-400"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-xs text-gold-400 hover:bg-white/[0.06]"
                     >
                       <KeyRound className="w-3.5 h-3.5" />
                       重置密码
@@ -211,13 +223,15 @@ export default function UsersAdmin() {
               },
             ]}
           />
-          <AdminPagination
-            page={pagination?.page || page}
-            totalPages={pagination?.total_pages || 1}
-            total={pagination?.total || 0}
-            onPageChange={setPage}
-          />
-        </>
+          <div className="mt-4">
+            <AdminPagination
+              page={pagination?.page || page}
+              totalPages={pagination?.total_pages || 1}
+              total={pagination?.total || 0}
+              onPageChange={setPage}
+            />
+          </div>
+        </AdminPanel>
       )}
 
       <AdminConfirmDialog

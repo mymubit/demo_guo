@@ -27,6 +27,18 @@ class StepModeRunnerTypeUnitTests(SimpleTestCase):
                 "apps.creation.step_mode.run_fusion_score_step",
             )
 
+    def test_runner_path_for_node_normalizes_agent_runner(self):
+        from apps.creation import step_mode
+
+        registry = MagicMock()
+        registry.runner_path_for_index.return_value = "apps.creation.agents.world.run_world_agent"
+        registry.runner_type_for_index.return_value = "fusion_node"
+        with patch("apps.creation.step_mode.FusionNodeRegistry", return_value=registry):
+            self.assertEqual(
+                step_mode.runner_path_for_node(2),
+                "apps.creation.step_mode.run_orchestrator_step",
+            )
+
     def test_resolve_step_runner_rejects_unsafe_path(self):
         from apps.creation import step_mode
 
