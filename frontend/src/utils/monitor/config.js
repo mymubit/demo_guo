@@ -1,4 +1,8 @@
-const DEFAULT_IGNORE_ERRORS = ['ResizeObserver loop limit exceeded', 'Network Error']
+const DEFAULT_IGNORE_ERRORS = [
+  'ResizeObserver loop limit exceeded',
+  'ResizeObserver loop completed with undelivered notifications',
+  'Network Error',
+]
 const DEFAULT_IGNORE_URLS = ['/api/monitoring/events/']
 const API_BASE_URL =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) ||
@@ -22,7 +26,7 @@ export const MONITOR_SESSION_KEY = 'scriptforge-monitor-session'
 export function buildDefaultMonitorConfig(overrides = {}) {
   const env = import.meta.env.MODE || 'development'
   const enabledFromEnv = String(import.meta.env.VITE_MONITORING_ENABLED || '').toLowerCase()
-  const enabled = enabledFromEnv ? ['1', 'true', 'yes'].includes(enabledFromEnv) : env === 'production'
+  const enabled = enabledFromEnv ? ['1', 'true', 'yes'].includes(enabledFromEnv) : true
   return {
     app: 'scriptforge-frontend',
     env,
@@ -37,6 +41,8 @@ export function buildDefaultMonitorConfig(overrides = {}) {
     maxPayloadSize: Number(import.meta.env.VITE_MONITORING_MAX_PAYLOAD_SIZE || 16 * 1024),
     ignoreErrors: DEFAULT_IGNORE_ERRORS,
     ignoreUrls: DEFAULT_IGNORE_URLS,
+    captureConsole: true,
+    consoleLevels: ['error', 'warn'],
     beforeSend: null,
     ...overrides,
   }

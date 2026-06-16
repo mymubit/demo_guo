@@ -1,8 +1,16 @@
 import { CheckCircle2, AlertCircle } from 'lucide-react'
 
-export function GateLogBadge({ passed, label = '质检' }) {
+export function GateLogBadge({ passed, label = '质检', acknowledged = false }) {
   if (passed === null || passed === undefined) return null
   const ok = !!passed
+  if (!ok && acknowledged) {
+    return (
+      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border bg-green-500/10 border-green-500/30 text-green-300">
+        <CheckCircle2 className="w-3 h-3" />
+        {label}已确认
+      </span>
+    )
+  }
   return (
     <span
       className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border ${
@@ -22,6 +30,7 @@ export default function GateLogSection({ gateLog, title = '质检' }) {
   if (!gateLog || Object.keys(gateLog).length === 0) return null
   if (gateLog.skipped) return null
   if (gateLog.passed) return null
+  if (gateLog.userAcknowledgedAt) return null
 
   const issues = gateLog.issues || []
 

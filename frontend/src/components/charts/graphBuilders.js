@@ -42,6 +42,33 @@ function isPlaceholderEndpoint(value) {
   return /-(unknown)$/.test(s)
 }
 
+function escapeTooltipHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function formatRhythmEventTooltipItem(event, index) {
+  const text = String(event || '').trim()
+  const matched = text.match(/^(Ep\d+|第\s*\d+\s*集)[:：\s-]+(.+)$/i)
+  const label = matched ? matched[1].replace(/\s+/g, '') : String(index + 1).padStart(2, '0')
+  const content = matched ? matched[2].trim() : text
+
+  return `
+    <div style="display:flex;gap:8px;margin-top:6px;line-height:1.45;">
+      <span style="flex:0 0 auto;min-width:28px;padding:1px 6px;border-radius:6px;background:rgba(244,183,25,.14);border:1px solid rgba(244,183,25,.28);color:#f4c95d;font-size:10px;font-weight:600;text-align:center;">
+        ${escapeTooltipHtml(label)}
+      </span>
+      <span style="color:#d9e6ff;white-space:normal;word-break:break-word;">
+        ${escapeTooltipHtml(content)}
+      </span>
+    </div>
+  `
+}
+
 function namesMentionedInText(text, nodes) {
   if (!text) return []
   const hits = []
@@ -378,25 +405,34 @@ export function buildRhythmCurveOption({ curve = [] }) {
   return {
     tooltip: {
       trigger: 'axis',
+      confine: true,
+      extraCssText: 'max-width:560px;white-space:normal;word-break:break-word;',
       formatter: (params) => {
         const p = params?.[0]
         if (!p) return ''
         const block = curve[p.dataIndex] || {}
         const parts = [
-          `<b>${formatRhythmEpisodeLabel(block)}</b>`,
+          `<b>${escapeTooltipHtml(formatRhythmEpisodeLabel(block))}</b>`,
           `强度 ${p.value ?? '—'}/10`,
         ]
         const hooks = (block.suggestedHooks || [])
           .map((h) => h.name || h.code)
           .filter(Boolean)
-        if (hooks.length) parts.push(`推荐钩子：${hooks.join('、')}`)
+        if (hooks.length) parts.push(`推荐钩子：${hooks.map(escapeTooltipHtml).join('、')}`)
         const revs = (block.linkedReversals || [])
           .map((r) => `E${r.episodeNumber}${r.patternName ? ` · ${r.patternName}` : ''}`)
           .filter(Boolean)
-        if (revs.length) parts.push(`段内反转：${revs.join('、')}`)
-        const events = (block.keyEvents || []).slice(0, 3)
-        if (events.length) parts.push(`关键事件：${events.join('；')}`)
-        if (block.notes) parts.push(String(block.notes).slice(0, 100))
+        if (revs.length) parts.push(`段内反转：${revs.map(escapeTooltipHtml).join('、')}`)
+        const events = (block.keyEvents || []).slice(0, 5)
+        if (events.length) {
+          parts.push(`
+            <div style="margin-top:8px;">
+              <div style="margin-bottom:2px;color:#8fa4c8;font-size:11px;">关键事件</div>
+              ${events.map(formatRhythmEventTooltipItem).join('')}
+            </div>
+          `)
+        }
+        if (block.notes) parts.push(escapeTooltipHtml(String(block.notes).slice(0, 100)))
         return parts.join('<br/>')
       },
     },

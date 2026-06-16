@@ -1,4 +1,4 @@
-import { adminRequest } from './http'
+import { adminRequest, unwrapAdminListData } from './http'
 
 export const adminModel = {
   getLlm: () => adminRequest('GET', '/api/admin/model/llm/'),
@@ -13,7 +13,8 @@ export const adminModel = {
   syncPresets: () => adminRequest('POST', '/api/admin/model/llm/presets/sync/'),
   getRoutingPlan: () => adminRequest('GET', '/api/admin/model/llm/routing-plan/'),
   setupFromEnv: (data = {}) => adminRequest('POST', '/api/admin/model/llm/env-setup/', { data }),
-  listCatalog: () => adminRequest('GET', '/api/admin/model/llm/catalog/'),
+  listCatalog: () =>
+    adminRequest('GET', '/api/admin/model/llm/catalog/').then(unwrapAdminListData),
   createCatalog: (data) => adminRequest('POST', '/api/admin/model/llm/catalog/', { data }),
   updateCatalog: (id, data) =>
     adminRequest('PUT', `/api/admin/model/llm/catalog/${id}/`, { data }),
