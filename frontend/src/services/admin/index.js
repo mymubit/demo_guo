@@ -16,11 +16,13 @@ import { adminSkill } from './skill'
 import { adminStats } from './stats'
 import { adminSystemConfig } from './systemConfig'
 import { adminTask } from './task'
+import { adminBatch, adminLibrary, adminEvolution } from './batch'
 
 export {
   adminMainChain, adminWorkflow, adminAgent, adminOrchestration,
   adminModel, adminMonitoring, adminSkill, adminTask,
   adminStats, adminSystemConfig,
+  adminBatch, adminLibrary, adminEvolution,
 }
 
 export const admin = {
@@ -222,4 +224,24 @@ export const admin = {
     adminRequest('DELETE', `/api/admin/members/feature-matrix/${id}/`),
   seedFeatureMatrix: () =>
     adminRequest('POST', '/api/admin/members/feature-matrix/seed/'),
+
+  // 批量创作
+  batchJobs: (params) => adminBatch.listJobs(params),
+  batchJobCreate: (data) => adminBatch.createJob(data),
+  batchJobDispatch: (id) => adminBatch.dispatchJob(id),
+  batchJobPause: (id) => adminBatch.pauseJob(id),
+  batchJobResume: (id) => adminBatch.resumeJob(id),
+  batchItemRetry: (batchId, itemId) => adminBatch.retryItem(batchId, itemId),
+
+  // 素材库
+  library: () => adminLibrary.list(),
+  libraryUpload: (formData) => adminLibrary.upload(formData),
+  libraryParse: (id) => adminLibrary.parse(id),
+
+  // 规则进化
+  evolutionProposals: (params) => adminEvolution.listProposals(params),
+  evolutionAnalyze: (data) => adminEvolution.analyze(data),
+  evolutionApprove: (id, comment) => adminEvolution.approve(id, comment),
+  evolutionReject: (id, comment) => adminEvolution.reject(id, comment),
+  evolutionApply: (id) => adminEvolution.apply(id),
 }

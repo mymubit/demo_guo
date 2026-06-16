@@ -579,6 +579,8 @@ class PipelineOrchestrator:
                 result = self._run_iterate_node(node, results)
             elif rt == FusionPipelineNode.RUNNER_HUMAN_GATE:
                 result = self._run_human_gate_node(node, results)
+            elif rt == "external_api":
+                result = self._run_external_api_node(node, results)
             else:
                 # SERIAL 分支：保持原 run_node 行为完全不变（向后兼容）
                 result = self._run_serial_node(node)
@@ -1110,6 +1112,110 @@ class PipelineOrchestrator:
         if completed < total:
             self.project.current_node_index = completed + 1
             self.project.save(update_fields=["current_node_index", "updated_at"])
+
+    def _run_external_api_node(self, node: "FusionPipelinePack", results: list) -> dict:
+        """
+        EXTERNAL 节点：调用外部 API（如视频生成 / 图像生成 / 第三方 AI 能力）。
+
+        配置来自 node.extra_config：
+        {
+            "external_api_url": "https://api.example.com/video/generate",
+            "external_api_method": "POST",
+            "external_api_headers": {"Authorization": "Bearer ..."},
+            "external_payload_template": {"prompt": "{{script_content}}"},
+            "external_timeout_seconds": 120,
+            "external_retry_attempts": 1,
+            "external_result_field": "video_url"
+        }
+        """
+        import re
+        import requests
+
+        config = node.extra_config or {}
+        url = config.get("external_api_url")
+        method = config.get("external_api_method", "POST").upper()
+        headers = config.get("external_api_headers", {})
+        timeout = config.get("external_timeout_seconds", 60)
+        retry_attempts = config.get("external_retry_attempts", 1)
+        result_field = config.get("external_result_field", "result")
+
+        if not url:
+            return {
+                "status": "error",
+                "error": "外部 API 节点缺少 external_api_url 配置",
+                "node_id": node.fusion_node_id,
+            }
+
+        # 从 artifact 或 upstream context 获取请求体
+        upstream_context = results[-1].get("data", {}) if results else {}
+        payload = self._render_template(
+            config.get("external_payload_template", {}),
+            upstream_context
+        )
+
+        # 重试逻辑
+        last_error = None
+        for attempt in range(retry_attempts + 1):
+            try:
+                if method == "POST":
+                    resp = requests.post(url, json=payload, headers=headers, timeout=timeout)
+                else:
+                    resp = requests.get(url, params=payload, headers=headers, timeout=timeout)
+                resp.raise_for_status()
+                result = resp.json()
+
+                return {
+                    "status": "completed",
+                    "external_result": result.get(result_field),
+                    "full_response": result,
+                    "node_id": node.fusion_node_id,
+                }
+            except requests.exceptions.Timeout:
+                last_error = f"请求超时（{timeout}s）"
+                logger.warning(
+                    "[PipelineOrchestrator] 外部 API 超时 node=%s attempt=%s/%s",
+                    node.fusion_node_id, attempt + 1, retry_attempts + 1,
+                )
+            except requests.exceptions.HTTPError as exc:
+                last_error = f"HTTP 错误：{exc.response.status_code}"
+                logger.warning(
+                    "[PipelineOrchestrator] 外部 API HTTP 错误 node=%s status=%s",
+                    node.fusion_node_id, exc.response.status_code,
+                )
+            except Exception as exc:
+                last_error = f"外部 API 调用失败：{exc}"
+                logger.warning(
+                    "[PipelineOrchestrator] 外部 API 异常 node=%s: %s",
+                    node.fusion_node_id, exc,
+                )
+
+            if attempt < retry_attempts:
+                import time
+                time.sleep(min(2 ** attempt, 8))  # 指数退避，最多 8 秒
+
+        return {
+            "status": "failed",
+            "error": last_error or "重试耗尽",
+            "node_id": node.fusion_node_id,
+        }
+
+    def _render_template(self, template: dict, context: dict) -> dict:
+        """
+        简单的模板渲染：将 {{ field_name }} 占位符替换为 context 中的值。
+        """
+        def replace_field(obj):
+            if isinstance(obj, str):
+                return re.sub(
+                    r'\{\{(\w+)\}\}',
+                    lambda m: str(context.get(m.group(1), "")),
+                    obj
+                )
+            elif isinstance(obj, dict):
+                return {k: replace_field(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [replace_field(item) for item in obj]
+            return obj
+        return replace_field(template)
 
 
 # =============================================================================

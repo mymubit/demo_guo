@@ -14,6 +14,8 @@ import {
   Bot,
   Cpu,
   Activity,
+  BookOpen,
+  Zap,
 } from 'lucide-react'
 
 /**
@@ -116,6 +118,27 @@ export const ADMIN_NAV_GROUPS = [
         label: '技能管理',
         icon: Wrench,
         description: 'Agent 技能定义 / 版本管理 / 调用统计',
+      },
+      {
+        id: 'engine.batch',
+        path: '/admin/batch',
+        label: '批量创作',
+        icon: Layers,
+        description: 'CSV 批量生成创作项目 / 进度追踪',
+      },
+      {
+        id: 'engine.library',
+        path: '/admin/library',
+        label: '素材库',
+        icon: BookOpen,
+        description: '参考作品结构化管理 / 创作时自动注入',
+      },
+      {
+        id: 'engine.evolution',
+        path: '/admin/evolution',
+        label: '规则进化',
+        icon: Zap,
+        description: 'AI 分析低评分项目 / 生成规则修改提案 / 审批流',
       },
     ],
   },

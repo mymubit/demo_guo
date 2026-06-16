@@ -149,6 +149,30 @@ from apps.console.system_config.extended_views import (
     SensitiveWordsView,
     ThresholdConfigView,
 )
+from apps.console.batch.views import (
+    BatchJobListView,
+    BatchJobCreateView,
+    BatchJobDetailView,
+    BatchJobDispatchView,
+    BatchJobPauseView,
+    BatchJobResumeView,
+    BatchProjectRetryView,
+)
+from apps.console.library.views import (
+    MaterialListView,
+    MaterialUploadView,
+    MaterialDetailView,
+    MaterialParseView,
+    MaterialDeleteView,
+)
+from apps.console.evolution.views import (
+    EvolutionProposalListView,
+    EvolutionAnalyzeView,
+    EvolutionProposalDetailView,
+    EvolutionApproveView,
+    EvolutionRejectView,
+    EvolutionApplyView,
+)
 from apps.console.main_chain.blueprint_views import (
     MainChainBlueprintView,
     MainChainRegistryMetaView,
@@ -345,27 +369,48 @@ urlpatterns = [
     *_model_routes,
     *_portal_routes,
     *_skills_routes,
+    *_stats_routes,
+    *_system_routes,
 ]
 
-# 数据统计中心扩展
-_stats_routes = [
-    path("stats/trend/", StatsTrendView.as_view(), name="admin-stats-trend"),
-    path("stats/skill-ranking/", SkillRankingView.as_view(), name="admin-stats-skill-ranking"),
-    path("stats/failure-ranking/", FailureRankingView.as_view(), name="admin-stats-failure-ranking"),
-    path("stats/llm-provider-usage/", LlmProviderUsageView.as_view(), name="admin-stats-llm-provider-usage"),
-    path("stats/node-duration/", NodeDurationDistributionView.as_view(), name="admin-stats-node-duration"),
-    path("stats/kpi/", StatsKpiView.as_view(), name="admin-stats-kpi"),
+# 批量创作中心
+_batch_routes = [
+    path("creation/batch/", BatchJobListView.as_view(), name="admin-creation-batch-list"),
+    path("creation/batch/create/", BatchJobCreateView.as_view(), name="admin-creation-batch-create"),
+    path("creation/batch/<uuid:job_id>/", BatchJobDetailView.as_view(), name="admin-creation-batch-detail"),
+    path("creation/batch/<uuid:job_id>/dispatch/", BatchJobDispatchView.as_view(), name="admin-creation-batch-dispatch"),
+    path("creation/batch/<uuid:job_id>/pause/", BatchJobPauseView.as_view(), name="admin-creation-batch-pause"),
+    path("creation/batch/<uuid:job_id>/resume/", BatchJobResumeView.as_view(), name="admin-creation-batch-resume"),
+    path(
+        "creation/batch/<uuid:batch_id>/projects/<uuid:item_id>/retry/",
+        BatchProjectRetryView.as_view(),
+        name="admin-creation-batch-item-retry",
+    ),
 ]
 
-# 系统配置中心扩展
-_system_routes = [
-    path("system/global-switch/", GlobalSwitchView.as_view(), name="admin-system-global-switch"),
-    path("system/thresholds/", ThresholdConfigView.as_view(), name="admin-system-thresholds"),
-    path("system/quota-rules/", QuotaRulesView.as_view(), name="admin-system-quota-rules"),
-    path("system/sensitive-words/", SensitiveWordsView.as_view(), name="admin-system-sensitive-words"),
+# 素材库
+_library_routes = [
+    path("creation/library/materials/", MaterialListView.as_view(), name="admin-library-materials-list"),
+    path("creation/library/materials/upload/", MaterialUploadView.as_view(), name="admin-library-materials-upload"),
+    path("creation/library/materials/<uuid:material_id>/", MaterialDetailView.as_view(), name="admin-library-material-detail"),
+    path("creation/library/materials/<uuid:material_id>/parse/", MaterialParseView.as_view(), name="admin-library-material-parse"),
+    path("creation/library/materials/<uuid:material_id>/", MaterialDeleteView.as_view(), name="admin-library-material-delete"),
+]
+
+# AI 规则进化
+_evolution_routes = [
+    path("skills/evolution/", EvolutionProposalListView.as_view(), name="admin-skills-evolution-list"),
+    path("skills/evolution/analyze/", EvolutionAnalyzeView.as_view(), name="admin-skills-evolution-analyze"),
+    path("skills/evolution/<uuid:proposal_id>/", EvolutionProposalDetailView.as_view(), name="admin-skills-evolution-detail"),
+    path("skills/evolution/<uuid:proposal_id>/approve/", EvolutionApproveView.as_view(), name="admin-skills-evolution-approve"),
+    path("skills/evolution/<uuid:proposal_id>/reject/", EvolutionRejectView.as_view(), name="admin-skills-evolution-reject"),
+    path("skills/evolution/<uuid:proposal_id>/apply/", EvolutionApplyView.as_view(), name="admin-skills-evolution-apply"),
 ]
 
 urlpatterns += [
+    *_batch_routes,
+    *_library_routes,
+    *_evolution_routes,
     *_stats_routes,
     *_system_routes,
 ]

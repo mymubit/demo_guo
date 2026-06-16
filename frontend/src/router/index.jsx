@@ -46,6 +46,9 @@ const CreationProjectsPage = lazy(() => import('@/pages/Admin/CreationProjects')
 const CreationProjectTracePage = lazy(() => import('@/pages/Admin/CreationProjectTrace'))
 const SkillCenterPage = lazy(() => import('@/pages/Admin/skills/SkillCenterPage'))
 const TaskCenterPage = lazy(() => import('@/pages/Admin/creation/TaskCenterPage'))
+const AdminBatchJobs = lazy(() => import('@/pages/Admin/batch/AdminBatchJobs'))
+const AdminLibrary = lazy(() => import('@/pages/Admin/library/AdminLibrary'))
+const AdminEvolution = lazy(() => import('@/pages/Admin/evolution/AdminEvolution'))
 
 // ---- 设计稿预览 (/preview) ----
 const DesignIndex = lazy(() => import('@/pages/_design'))
@@ -269,6 +272,10 @@ export default function AppRoutes() {
           <Route path="commerce/settings" element={<CommerceSettingsPage />} />
 
           <Route path="skills" element={<SkillCenterPage />} />
+
+          <Route path="batch" element={<AdminBatchJobs />} />
+          <Route path="library" element={<AdminLibrary />} />
+          <Route path="evolution" element={<AdminEvolution />} />
 
           <Route path="system" element={<SystemConfigPage />} />
           <Route path="system/maintenance" element={<SystemSettingsPage />} />
