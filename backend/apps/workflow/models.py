@@ -133,6 +133,27 @@ class FusionPipelinePack(models.Model):
         help_text="用于兼容性校验，低于此版本拒绝使用此流水线",
     )
 
+    # ━━━━ 新增（P0）：编排引擎元数据 ━━━━
+    engine_config = models.JSONField(
+        "引擎配置", default=dict, blank=True,
+        help_text="""编排引擎全局配置示例:
+{
+  "mode": "async_celery",                 // async_celery | async_thread | sync_debug
+  "timeout_seconds": 3600,                // 工作流整体超时
+  "max_retries": 3,                       // 默认节点重试次数
+  "failure_strategy": "fail_fast",        // fail_fast | continue_on_failure
+  "context_retention_days": 30,           // 上下文保留天数
+  "allow_parallel": true,                 // 是否允许并行组调度
+  "max_parallel_per_group": 5,            // 单并行组最大并发数
+  "heartbeat_interval_seconds": 60        // 心跳频率
+}""",
+    )
+
+    parent_version = models.CharField(
+        "父版本追踪", max_length=64, blank=True, default="",
+        help_text="记录此版本从哪个版本克隆/升级，支持版本间差异对比",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -219,6 +240,47 @@ class FusionPipelineNode(models.Model):
         "节点扩展配置", default=dict, blank=True,
         help_text="用于 PARALLEL/ITERATE/HUMAN 节点的差异化配置，结构见字段说明",
     )
+
+    # ━━━━ 新增（P0）：节点依赖与路由声明 ━━━━
+    upstream_deps = models.JSONField(
+        "上游依赖", default=list, blank=True,
+        help_text="依赖的上游 fusion_node_id 列表，例: ['node-brief', 'node-structure']。"
+                  "引擎将按依赖关系决定调度顺序，替代原有的 chain_order 硬编码依赖",
+    )
+    downstream_map = models.JSONField(
+        "下游路由映射", default=list, blank=True,
+        help_text="本节点成功后的可选中转目标，支持条件分支。结构:"
+                  "[{target: 'node_b_id', condition_expr: 'ctx.field > 70', weight: 100}]。"
+                  "空列表时由引擎按全局 DAG 选择下一节点。",
+    )
+
+    # ━━━━ 新增（P0）：运行时配置（重试/超时/检查点等）━━━━
+    runtime_config = models.JSONField(
+        "运行时配置", default=dict, blank=True,
+        help_text="""示例:
+{
+  "timeout_seconds": 600,
+  "retry_policy": {
+    "max_retries": 3,
+    "backoff": "exponential",       // exponential | fixed | linear
+    "base_seconds": 2
+  },
+  "coin_cost_override": null,
+  "allow_skip": true,
+  "is_checkpoint": true,
+  "human_gate_required": false,
+  "max_context_bytes": 2097152,
+  "idempotency_scope": "node"        // node | instance | global
+}""",
+    )
+
+    # ━━━━ 新增（P0）：执行条件表达式（决定该节点是否真正被执行）━━━━
+    condition_expr = models.TextField(
+        "执行条件表达式", blank=True, default="",
+        help_text="Python 安全表达式，返回 bool。可用变量：ctx（全局上下文）、"
+                  "prev（上一节点输出）、nodes（所有已完成节点输出 dict）。"
+                  "例：ctx.review_score < 70 或 nodes['node_brief']['is_ok']",
+    )
     schema = models.ForeignKey(
         FusionJsonSchema,
         on_delete=models.SET_NULL,
@@ -254,3 +316,14 @@ class FusionPipelineNode(models.Model):
 
     def __str__(self):
         return f"{self.website_index}. {self.name} ({self.fusion_node_id})"
+
+
+# ━━━━ 工作流执行时模型（运行期数据）━━━━
+# 说明：实体定义放置在 execution_models.py 中便于模块化维护；
+# 此处显式 re-export 确保 Django 能扫描到这些 model。
+from apps.workflow.execution_models import (
+    WorkflowInstance,
+    NodeExecution,
+    NodeExecutionEvent,
+)
+
