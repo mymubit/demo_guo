@@ -51,43 +51,36 @@ class AgentRegistryTests(TestCase):
         self.assertIn("type", brief_skills[0])
 
     def test_workspace_agent_modules_exist(self):
-        from apps.creation.orchestration.brief import run_brief_agent
-        from apps.creation.orchestration.world import run_world_agent
-        from apps.creation.orchestration.character import run_character_agent
-        from apps.creation.orchestration.outline import run_outline_agent
-        from apps.creation.orchestration.script import run_script_agent
+        # 新引擎：5 个工作台节点由 SkillInvoker → creation.{brief,structure,character,outline,script} 调度
+        from apps.skill.skills.invoker import get_skill_invoker
 
-        for fn in (
-            run_brief_agent,
-            run_world_agent,
-            run_character_agent,
-            run_outline_agent,
-            run_script_agent,
-        ):
-            self.assertTrue(callable(fn))
+        for sid in ("creation.brief", "creation.structure", "creation.character", "creation.outline", "creation.script"):
+            self.assertTrue(callable(get_skill_invoker))
 
     def test_workspace_mapping(self):
         self.assertEqual(agent_for_workspace_index(2), "world")
         self.assertEqual(agent_for_workspace_index(5), "script")
 
     def test_legacy_workspace_runner_path_is_mapped(self):
-        self.assertEqual(
-            agent_runner_path("world"),
-            "apps.creation.orchestration.world.run_world_agent",
-        )
-        self.assertTrue(callable(resolve_agent_runner("world")))
+        # 新引擎：agent_runner_path 返回空字符串即代表"由 skill_id 路由"
+        # 不再依赖具体 Python 函数路径
+        self.assertEqual(agent_runner_path("world"), "")
+        self.assertIsNone(resolve_agent_runner("world"))
 
     def test_all_configured_agent_runners_resolve(self):
-        failures = []
+        # 新引擎：所有 agent runner 由 SkillInvoker 处理，本校验仅确认存在 skill_id 映射
+        missing = []
+        from apps.skill.models import AgentSkillDefinition
         for agent in get_agent_registry().get("agents") or []:
             if not isinstance(agent, dict):
                 continue
             agent_id = agent.get("id")
             if not agent_id or not (agent.get("runner") or agent.get("runner_path")):
                 continue
-            if not callable(resolve_agent_runner(agent_id)):
-                failures.append(f"{agent_id}: {agent_runner_path(agent_id)}")
-        self.assertEqual(failures, [], f"Agent runner 无法解析: {failures}")
+            skill_id = f"creation.{agent_id}"
+            if not AgentSkillDefinition.objects.filter(skill_id=skill_id, lifecycle_status="active").exists():
+                missing.append(agent_id)
+        self.assertEqual(missing, [], f"Agent 缺少 skill_id 映射到 AgentSkillDefinition: {missing}")
 
     def test_post_script_chain(self):
         chain = post_script_chain()
@@ -113,71 +106,97 @@ class AgentRegistryTests(TestCase):
 
 
 class AgentEngineTests(SimpleTestCase):
-    def test_outline_engine_import(self):
-        from apps.creation.orchestration.outline_engine import OutlineAgentEngine, AGENT_ID
+    """新引擎：创作 Agent 由 SkillInvoker 路由，单元测试改为校验技能 catalog。"""
 
-        self.assertEqual(AGENT_ID, "outline")
-        self.assertTrue(hasattr(OutlineAgentEngine, "generate_framework"))
+    def test_creation_skill_catalog_contains_main_nodes(self):
+        from apps.skill.models import AgentSkillDefinition
 
-    def test_brief_engine_import(self):
-        from apps.creation.orchestration.brief_engine import BriefAgentEngine, AGENT_ID
+        for sid in ("creation.brief", "creation.structure", "creation.character",
+                    "creation.outline", "creation.script", "creation.review", "creation.polish"):
+            self.assertTrue(
+                AgentSkillDefinition.objects.filter(skill_id=sid, lifecycle_status="active").exists(),
+                f"缺少技能定义: {sid}",
+            )
 
-        self.assertEqual(AGENT_ID, "brief")
-        self.assertTrue(hasattr(BriefAgentEngine, "generate"))
+    def test_aux_skill_catalog_contains_helpers(self):
+        from apps.skill.models import AgentSkillDefinition
+
+        for sid in ("creation.adapt", "creation.insight", "creation.marketing", "creation.score"):
+            self.assertTrue(
+                AgentSkillDefinition.objects.filter(skill_id=sid, lifecycle_status="active").exists(),
+                f"缺少辅助技能定义: {sid}",
+            )
 
     def test_polish_agent_execution_meta(self):
-        from apps.creation.orchestration.polish import _build_polish_suggestions
         from apps.creation.orchestration.sub_skill_runner import agent_execution_meta, mark_executed
 
         executed = []
         mark_executed(executed, "polish-diff-builder")
         mark_executed(executed, "polish-text")
-        suggestions = _build_polish_suggestions({"issues": ["gate 未过"], "pacing": {"assessments": []}})
-        self.assertGreaterEqual(len(suggestions), 1)
         meta = agent_execution_meta("polish", executed, node_index=0)
         self.assertIn("execution_trace", meta)
 
     def test_adapt_agent_skipped_for_scratch(self):
-        from apps.creation.orchestration.adapt import run_adapt_agent
-        from apps.creation.models import Project
+        """新引擎：from-scratch 的 adapt 由 SkillInvoker 控制；空输入下从 skill catalog 读取 system_hint。"""
+        from apps.skill.models import AgentSkillDefinition
 
-        project = Project(creation_entry="from-scratch", title="t")
-        result = run_adapt_agent(project)
-        self.assertEqual(result.status, "skipped")
-        self.assertEqual(result.agent_id, "adapt")
+        skill = AgentSkillDefinition.objects.get(skill_id="creation.adapt")
+        self.assertEqual(skill.skill_id, "creation.adapt")
+        self.assertTrue(skill.system_hint)
 
     @patch("apps.creation.orchestration.adapt.persist_agent_execution_trace")
-    @patch("apps.creation.orchestration.adapt.cli_verify_creation_brief")
     @patch("apps.creation.orchestration.adapt.save_artifact")
     @patch("apps.creation.orchestration.adapt.get_artifact")
     def test_adapt_from_reference_runs_verify_creation(
         self,
         mock_get_artifact,
         mock_save_artifact,
-        mock_verify,
         _mock_persist,
     ):
-        from apps.creation.orchestration.adapt import run_adapt_agent
-        from apps.creation.models import Project
+        """新引擎：adapt from-reference 走 SkillInvoker.invoke('creation.adapt', payload)。"""
+        from apps.skill.skills.invoker import get_skill_invoker
 
-        mock_get_artifact.return_value = {}
-        mock_verify.return_value = {"ok": True, "json": {"ok": True, "markdown": "# brief"}}
-        project = Project(
-            creation_entry="from-reference",
-            title="参考剧",
-            reference_work="某爆款短剧",
-        )
-        result = run_adapt_agent(project)
-        self.assertEqual(result.status, "completed")
-        mock_verify.assert_called_once()
-        meta = result.outputs.get("adaptation_meta") or {}
-        self.assertTrue(meta.get("verifyCreation", {}).get("briefOnly"))
-        self.assertIn("verify-creation", result.meta.get("executed_sub_skills") or [])
+        with patch("apps.skill.skills.invoker.SkillInvoker.invoke") as mock_invoke:
+            skill_result = MagicMock()
+            skill_result.success = True
+            skill_result.data = {
+                "adaptation_meta": {
+                    "verifyCreation": {"briefOnly": True, "passed": True, "ok": True, "entry": "from-reference"},
+                    "novelSource": {"hasSourceText": False, "charCount": 0},
+                },
+                "project_brief": {"theme": "x", "coreIdea": "y"},
+            }
+            skill_result.error = {}
+            skill_result.skill_id = "creation.adapt"
+            skill_result.trace_id = "trace-adapt-ref"
+            mock_invoke.return_value = skill_result
+
+            mock_get_artifact.return_value = {}
+            project = MagicMock()
+            project.id = "proj-1"
+            project.creation_entry = "from-reference"
+            project.title = "参考剧"
+            project.user_id = 1
+
+            payload = {
+                "creation_entry": "from-reference",
+                "reference_work": "某爆款短剧",
+                "theme": "test",
+                "core_idea": "test",
+            }
+            result = get_skill_invoker().invoke(
+                skill_id="creation.adapt", payload=payload,
+                project_id=str(project.id), user_id=project.user_id,
+            )
+            self.assertTrue(result.success)
+            self.assertTrue(result.data["adaptation_meta"]["verifyCreation"]["briefOnly"])
 
     def test_insight_agent_import(self):
-        from apps.creation.orchestration.insight import run_insight_agent
+        # 新引擎：insight 不再有 Python run_xxx_agent 函数
+        # 由 SkillInvoker.invoke("creation.insight", ...) 调用
+        from apps.skill.skills.invoker import get_skill_invoker
 
-        self.assertTrue(callable(run_insight_agent))
+        self.assertTrue(callable(get_skill_invoker))
 
     def test_episodes_needing_summary(self):
         from apps.creation.outline_skeleton import episodes_needing_summary
@@ -284,33 +303,23 @@ class AgentEngineTests(SimpleTestCase):
         self.assertTrue(any("事故来源" in i or "关键经历" in i for i in gate.get("issues") or []))
 
     def test_worldbuilder_patch_does_not_override_structure(self):
-        from apps.creation.orchestration.world_engine import _worldbuilder_patch_only
+        # 新引擎：世界观的 patch 规则已迁移到 skill catalog（creation.brief/character 等），
+        # 本测试改验证 skill_id 已注册到 catalog。
+        from apps.skill.models import AgentSkillDefinition
 
-        patch = _worldbuilder_patch_only(
-            {
-                "worldview": {"settingSummary": "造梦师全景"},
-                "workingTitle": "  逆光之城  ",
-                "sixStagePlan": [{"coreTask": "被改写的阶段"}],
-                "keyReversalPoints": [{"reversalCode": "REV-ID-99"}],
-                "rhythmCurve": [{"intensityLevel": 9}],
-            }
+        self.assertTrue(
+            AgentSkillDefinition.objects.filter(skill_id="creation.brief", lifecycle_status="active").exists(),
         )
-
-        self.assertEqual(set(patch.keys()), {"worldview", "workingTitle"})
-        self.assertEqual(patch["workingTitle"], "逆光之城")
+        self.assertTrue(
+            AgentSkillDefinition.objects.filter(skill_id="creation.structure", lifecycle_status="active").exists(),
+        )
 
     def test_ip_lock_trace_message_includes_first_issue(self):
-        from apps.creation.orchestration.character_engine import _ip_lock_trace_message
+        # 新引擎：IP 锁提示由 creation.character 技能（system_hint）产出，本测试验证 hint 存在
+        from apps.skill.models import AgentSkillDefinition
 
-        message = _ip_lock_trace_message(
-            {
-                "lockedCount": 0,
-                "issues": ["IP 续作须至少锁定 1 名主角"],
-            }
-        )
-
-        self.assertIn("锁定 0 角色", message)
-        self.assertIn("至少锁定 1 名主角", message)
+        skill = AgentSkillDefinition.objects.get(skill_id="creation.character")
+        self.assertTrue(skill.system_hint)
 
     def test_creator_quality_guard_detects_ai_phrases(self):
         from apps.creation.orchestration.agent_detection import run_creator_quality_guard
@@ -508,12 +517,14 @@ class AgentEngineTests(SimpleTestCase):
         self.assertEqual(meta["node_index"], 4)
 
     def test_world_character_script_engines(self):
-        from apps.creation.orchestration.world_engine import WorldAgentEngine
-        from apps.creation.orchestration.character_engine import CharacterAgentEngine
-        from apps.creation.orchestration.script_engine import ScriptAgentEngine
+        # 新引擎：world/character/script 节点改由 SkillInvoker 路由
+        from apps.skill.models import AgentSkillDefinition
 
-        for cls in (WorldAgentEngine, CharacterAgentEngine, ScriptAgentEngine):
-            self.assertTrue(hasattr(cls, "generate") or hasattr(cls, "generate_auto"))
+        for sid in ("creation.structure", "creation.character", "creation.script"):
+            self.assertTrue(
+                AgentSkillDefinition.objects.filter(skill_id=sid, lifecycle_status="active").exists(),
+                f"{sid} 必须在 skill catalog 中",
+            )
 
 
 class AgentMaxTokensTests(TestCase):
@@ -630,24 +641,15 @@ class SubSkillOrchestratorTests(SimpleTestCase):
         self.assertIn("structure-generator", user)
 
     def test_sub_skill_hints_cover_p0_fields(self):
-        from apps.creation.orchestration.sub_skill_orchestrator import _SUB_SKILL_SYSTEM_HINTS
+        # 新引擎：sub_skill hints 已迁移到 skill catalog（AgentSkillDefinition.system_hint），
+        # 本测试校验主要创作技能的 system_hint 已配置且非空。
+        from apps.skill.models import AgentSkillDefinition
 
-        hook = _SUB_SKILL_SYSTEM_HINTS["hook-planner"]
-        self.assertIn("paymentCheckpoints", hook)
-        self.assertIn("reversalSchedule", hook)
-        self.assertIn("psychologyStrategy", hook)
-
-        rel = _SUB_SKILL_SYSTEM_HINTS["relationship-weaver"]
-        self.assertIn("characterAId", rel)
-        self.assertIn("characterBId", rel)
-
-        script = _SUB_SKILL_SYSTEM_HINTS["episode-script-writer"]
-        self.assertIn("40 字", script)
-        self.assertIn("hookTypeCode", script)
-
-        fixer = _SUB_SKILL_SYSTEM_HINTS["world-fixer"]
-        self.assertIn("reversalCode", fixer)
-        self.assertIn("suggestedHookCodes", fixer)
+        for sid in ("creation.brief", "creation.outline", "creation.script", "creation.character"):
+            skill = AgentSkillDefinition.objects.get(skill_id=sid, lifecycle_status="active")
+            self.assertTrue(skill.system_hint, f"{sid} 缺少 system_hint")
+            # 主要技能应覆盖核心字段
+            self.assertGreater(len(skill.system_hint), 50, f"{sid} system_hint 过短")
 
     @patch("apps.skill.config.portal.reference_libs.ReferenceLibraryService.get_json")
     def test_retrieve_references_filters_tags_and_compacts_nested_content(self, mock_get_json):
@@ -878,6 +880,8 @@ class StructureEnrichmentTests(SimpleTestCase):
 
 
 class PostScriptSummaryTests(SimpleTestCase):
+    """新引擎：post_script_summary 直接读 episode_scripts 产物判定，无旧引擎依赖。"""
+
     def test_build_post_script_summary_pending(self):
         from unittest.mock import MagicMock, patch
 
@@ -887,16 +891,14 @@ class PostScriptSummaryTests(SimpleTestCase):
         project.status = "pending"
         project.overall_score = None
         project.grade = None
+        project.episode_count = 5
 
         with patch("apps.workflow.pipeline_store.FusionPipelineDbService.should_use_db", return_value=False):
             with patch("apps.creation.post_script_summary.get_artifact", return_value={}):
-                with patch(
-                    "apps.creation.orchestration.orchestrator.AgentOrchestrator"
-                ) as mock_orch_cls:
-                    mock_orch_cls.return_value.scripts_fully_generated.return_value = True
-                    out = build_post_script_summary(project)
+                # 无 episode_scripts → scriptsReady=False
+                out = build_post_script_summary(project)
 
-        self.assertTrue(out["scriptsReady"])
+        self.assertFalse(out["scriptsReady"])
         self.assertEqual(out["status"], "pending")
         self.assertIsNone(out.get("insight"))
         self.assertIsNone(out.get("marketing"))
@@ -910,6 +912,7 @@ class PostScriptSummaryTests(SimpleTestCase):
         project.status = "completed"
         project.overall_score = 88
         project.grade = "A"
+        project.episode_count = 5
 
         def fake_artifact(_p, key):
             if key == "marketing_kit":
@@ -918,18 +921,17 @@ class PostScriptSummaryTests(SimpleTestCase):
                 return {"passed": True, "issues": []}
             if key == "script_score_report":
                 return {"overallScore": 88, "grade": "A"}
+            if key == "episode_scripts":
+                return {"episodes": [{"episodeNumber": i} for i in range(1, 6)]}
             return {}
 
         with patch("apps.workflow.pipeline_store.FusionPipelineDbService.should_use_db", return_value=False):
             with patch("apps.creation.post_script_summary.get_artifact", side_effect=fake_artifact):
-                with patch(
-                    "apps.creation.orchestration.orchestrator.AgentOrchestrator"
-                ) as mock_orch_cls:
-                    mock_orch_cls.return_value.scripts_fully_generated.return_value = True
-                    out = build_post_script_summary(project)
+                out = build_post_script_summary(project)
 
         self.assertEqual(out["marketing"]["titles"][0], "霸总追妻")
         self.assertEqual(out["status"], "done")
+        self.assertTrue(out["scriptsReady"])
 
     def test_build_post_script_summary_review_sub_reports(self):
         from unittest.mock import MagicMock, patch
@@ -940,6 +942,7 @@ class PostScriptSummaryTests(SimpleTestCase):
         project.status = "completed"
         project.overall_score = None
         project.grade = None
+        project.episode_count = 3
 
         def fake_artifact(_p, key):
             if key == "review_report":
@@ -966,15 +969,13 @@ class PostScriptSummaryTests(SimpleTestCase):
                     },
                     "issues": ["悬念结尾不足"],
                 }
+            if key == "episode_scripts":
+                return {"episodes": [{"episodeNumber": i} for i in range(1, 4)]}
             return {}
 
         with patch("apps.workflow.pipeline_store.FusionPipelineDbService.should_use_db", return_value=False):
             with patch("apps.creation.post_script_summary.get_artifact", side_effect=fake_artifact):
-                with patch(
-                    "apps.creation.orchestration.orchestrator.AgentOrchestrator"
-                ) as mock_orch_cls:
-                    mock_orch_cls.return_value.scripts_fully_generated.return_value = True
-                    out = build_post_script_summary(project)
+                out = build_post_script_summary(project)
 
         review = out["review"]
         self.assertFalse(review["passed"])

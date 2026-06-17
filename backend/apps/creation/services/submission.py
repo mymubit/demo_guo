@@ -1,9 +1,11 @@
 """创作任务提交。
 
-【P1】新引擎对接：
-  • 创建 Project 时同步创建 WorkflowInstance
-  • run_creation_pipeline 通过 WorkflowInstance → WorkflowEngine → SkillBridge
-  • 旧引擎 _execute_pipeline_for_project_legacy 仅在 WorkflowInstance 不存在时兜底
+新引擎全量上线后，本模块只负责：
+  ① 创建 Project
+  ② 创建 WorkflowInstance（工作流引擎唯一入口）
+  ③ 入队 run_creation_pipeline → WorkflowEngine → SkillBridge
+
+所有技能调用统一经 SkillInvoker，旧引擎仅作为 30 天观察期内的兜底（最终下线）。
 """
 
 import logging
@@ -150,15 +152,28 @@ def submit(user, data: dict) -> Tuple[Project, int]:
     # ── Adapt 预处理（保留）
     try:
         from apps.skill.config.portal.creation_form import CreationFormOverrideService
-        from ..orchestration.orchestrator import AgentOrchestrator
+        from apps.skill.skills.invoker import get_skill_invoker
 
         requires_adapt = CreationFormOverrideService.creation_entry_requires_adapt(
             project.creation_entry or "from-scratch"
         )
-        adapt_result = AgentOrchestrator(project).invoke_adapt_on_create(submit_data=data)
-        if requires_adapt and getattr(adapt_result, "status", "") == "error":
-            msg = "; ".join(getattr(adapt_result, "errors", []) or []) or "改编入场预处理失败"
+        # 新引擎：Adapt 通过 SkillInvoker 路由到 creation.adapt 技能
+        adapt_result = get_skill_invoker().invoke(
+            skill_id="creation.adapt",
+            payload={
+                "creation_entry": project.creation_entry or "from-scratch",
+                "reference_work": data.get("reference_work", ""),
+                "theme": data.get("theme", ""),
+                "core_idea": data.get("core_idea", ""),
+            },
+            project_id=str(project.id),
+            user_id=user.id,
+        )
+        if requires_adapt and not adapt_result.success:
+            msg = adapt_result.error.get("message") or "改编入场预处理失败"
             raise PermissionDenied(msg)
+    except PermissionDenied:
+        raise
     except Exception as exc:  # noqa: BLE001
         if requires_adapt:
             raise PermissionDenied(f"改编入场预处理失败：{exc}") from exc

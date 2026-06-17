@@ -131,17 +131,16 @@ def admin_delete_project(project_id: str) -> dict:
 
 
 def run_work_agent(project_id: str, user, agent_id: str) -> dict:
-    """作品页触发 post-script / 辅助 Agent。"""
+    """作品页触发 post-script / 辅助 Agent（新引擎：SkillInvoker 路由）。"""
     project = _get_user_project(project_id, user)
     aid = (agent_id or "").strip().lower()
     allowed = frozenset({"insight", "marketing", "knowledge", "review", "polish", "score"})
     if aid not in allowed:
         raise PermissionDenied("不支持的 Agent 类型")
 
-    from ..orchestration.orchestrator import AgentOrchestrator
     from ..artifact_service import get_artifact
+    from apps.skill.skills.invoker import get_skill_invoker
 
-    orch = AgentOrchestrator(project)
     if aid == "knowledge":
         insight = get_artifact(project, "insight_report") or {}
         if insight:
@@ -152,9 +151,22 @@ def run_work_agent(project_id: str, user, agent_id: str) -> dict:
             from ..orchestration.knowledge import run_knowledge_search
 
             result = run_knowledge_search(project)
-    else:
-        result = orch.invoke(aid)
-    return result.to_dict()
+        return result if isinstance(result, dict) else {"status": "ok", "data": result}
+
+    # 新引擎：辅助 Agent 统一走 SkillInvoker → creation.{aid} 技能
+    skill_result = get_skill_invoker().invoke(
+        skill_id=f"creation.{aid}",
+        payload={"project_id": str(project.id)},
+        project_id=str(project.id),
+        user_id=getattr(user, "id", None),
+    )
+    return {
+        "status": "completed" if skill_result.success else "error",
+        "errors": [skill_result.error.get("message", "")] if skill_result.error else [],
+        "data": skill_result.data or {},
+        "skill_id": skill_result.skill_id,
+        "trace_id": skill_result.trace_id,
+    }
 
 
 def apply_work_polish(

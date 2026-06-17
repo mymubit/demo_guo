@@ -7,20 +7,20 @@ WorkflowEngine 的节点执行通过 SkillBridge 接入实际技能运行层。
   ① 工作流引擎完全不感知"技能如何实现"，只调用 SkillBridge.run()
   ② SkillBridge 根据节点的 skill_id 或 runner_path 路由到具体实现
   ③ SkillBridge 兼容两种路径：
-      A. skill_id → SkillInvoker（LLM 型技能，有 schema）
-      B. runner_path → 任意 Python 函数（创作节点 / 质检 / 评分 等）
+      A. skill_id → SkillInvoker（LLM 型技能，有 schema）—— 优先
+      B. runner_path → 任意 Python 函数（兜底兼容层）—— 仅在 skill_id 为空时
 
 节点 skill_id 注册方式（FusionPipelineNode）：
   • skill_id 字段 → 直接作为 skill_id 传给 SkillInvoker.invoke()
-  • runner_path 字段 → 直接 import + 调用（保留旧创作节点的迁移路径）
+  • runner_path 字段 → import + 调用（兜底，节点无 skill_id 时使用）
 
 典型节点注册示例：
   FusionPipelineNode(
     fusion_node_id="node_brief",
     name="立项定义",
     runner_type="fusion_node",
-    skill_id="creation.brief",
-    # skill_id 存在 → 调用 SkillInvoker.invoke("creation.brief", ...)
+    skill_id="creation.brief",          # skill_id 优先 → SkillInvoker.invoke()
+    # runner_path 留空（fallback 兜底）
     coin_cost=30,
   )
 
@@ -28,8 +28,8 @@ WorkflowEngine 的节点执行通过 SkillBridge 接入实际技能运行层。
     fusion_node_id="node_review",
     name="质量审查",
     runner_type="fusion_review",
-    runner_path="apps.creation.orchestration.review.run_review_node",
-    # skill_id 不存在，按 runner_path 调用
+    skill_id="creation.review",          # 优先
+    runner_path="apps.creation.orchestration.review.run_review_node",  # 兜底
     coin_cost=10,
   )
 ========================================================
@@ -227,7 +227,7 @@ class SkillBridge:
             return None
 
     # ─────────────────────────────────────────
-    # 路由 B: Python 函数（创作节点 / 质检 / 评分等）
+    # 路由 B: Python 函数（兜底兼容层）
     # ─────────────────────────────────────────
     def _run_via_runner_path(
         self,
@@ -238,24 +238,14 @@ class SkillBridge:
     ) -> SkillBridgeResult:
         """按 runner_path 动态导入并调用 Python 函数。
 
-        对于旧创作节点（workspace_bridge 体系），runner_path 为：
-          "apps.creation.orchestration.workspace_bridge.run_workspace_node"
-        需要适配 WorkspaceInvokeOptions(node_index=chain_order, ...) 签名。
+        说明：默认 short-drama-v1 pack 的 7 个创作节点已统一通过 skill_id 路由到
+        SkillInvoker，本路径仅作为非默认 pack / 自定义节点的兜底。
         """
         import time
         t0 = time.time()
 
         try:
-            # ── 特殊路由：workspace_bridge（旧创作节点体系）────────
-            if runner_path.endswith("workspace_bridge.run_workspace_node"):
-                return self._run_workspace_bridge_node(
-                    node_id=node_id,
-                    extra_config=extra_config,
-                    coin_cost=coin_cost,
-                    t0=t0,
-                )
-
-            # ── 通用路由：直接 import + 调用 Python 函数 ─────────
+            # 通用路由：直接 import + 调用 Python 函数
             module_name, func_name = runner_path.rsplit(".", 1)
             module = importlib.import_module(module_name)
             func = getattr(module, func_name, None)
@@ -275,69 +265,6 @@ class SkillBridge:
         except Exception as exc:
             duration_ms = int((time.time() - t0) * 1000)
             logger.exception("[SkillBridge] runner_path 调用失败 path=%s", runner_path)
-            return SkillBridgeResult(
-                success=False,
-                errors=[f"{type(exc).__name__}:{exc}"],
-                coin_cost=coin_cost,
-                duration_ms=duration_ms,
-                retryable=True,
-            )
-
-    def _run_workspace_bridge_node(
-        self,
-        node_id: str,
-        extra_config: Dict[str, Any],
-        coin_cost: int,
-        t0: float,
-    ) -> SkillBridgeResult:
-        """适配旧创作节点（workspace_bridge）：
-
-        将 NodeConfig.chain_order（节点顺序）映射为 WorkspaceInvokeOptions.node_index，
-        通过旧 AgentOrchestrator 体系执行节点，返回统一 SkillBridgeResult。
-
-        这是迁移期的桥接层：SkillBridge 对外只暴露统一协议，
-        内部适配旧节点的 WorkspaceInvokeOptions 签名。
-        """
-        import time
-
-        try:
-            from apps.creation.orchestration.types import AgentResult, WorkspaceInvokeOptions
-
-            node_index = self.node_config.chain_order
-            if node_index <= 0:
-                node_index = 1
-
-            opts = WorkspaceInvokeOptions(
-                node_index=node_index,
-                script_from=extra_config.get("script_from"),
-                script_to=extra_config.get("script_to"),
-                outline_mode=extra_config.get("outline_mode"),
-                outline_from=extra_config.get("outline_from"),
-                outline_to=extra_config.get("outline_to"),
-                outline_stage_key=extra_config.get("outline_stage_key"),
-            )
-
-            from apps.creation.orchestration.workspace_bridge import run_workspace_node
-            agent_result: AgentResult = run_workspace_node(self.project, opts)
-
-            duration_ms = int((time.time() - t0) * 1000)
-            success = agent_result.status in ("completed", "success", "done")
-            outputs = agent_result.outputs or {}
-            return SkillBridgeResult(
-                success=success,
-                output=dict(outputs),
-                errors=list(agent_result.errors or []),
-                coin_cost=int(outputs.get("coin_cost", coin_cost) or coin_cost),
-                llm_token_in=int(outputs.get("llm_token_in", 0) or 0),
-                llm_token_out=int(outputs.get("llm_token_out", 0) or 0),
-                duration_ms=duration_ms,
-                run_ids=[str(getattr(agent_result, "run_id", ""))],
-                retryable=not success,
-            )
-
-        except Exception as exc:
-            duration_ms = int((time.time() - t0) * 1000)
-            logger.exception("[SkillBridge] workspace_bridge 调用失败 node_id=%s", node_id)
             return SkillBridgeResult(
                 success=False,
                 errors=[f"{type(exc).__name__}:{exc}"],

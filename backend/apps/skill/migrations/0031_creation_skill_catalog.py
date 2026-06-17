@@ -414,6 +414,177 @@ def _register_creation_skills(apps, schema_editor):
         )
 
 
+# =========================================================
+# 辅助 skill（Adapt / Insight / Marketing / Knowledge / Review / Polish / Score）
+# 这些是用户主动触发的"辅助型"技能，不再通过 AgentOrchestrator.invoke() 调用
+# =========================================================
+AUX_SKILL_CATALOG = [
+    {
+        "skill_id": "creation.adapt",
+        "name": "改编入场预处理",
+        "version": "1.0.0",
+        "category": "creator",
+        "skill_layer": "business",
+        "sub_category": "适配",
+        "lifecycle_status": "active",
+        "gray_weight": 100,
+        "quota_cost": 5,
+        "timeout_seconds": 120,
+        "system_hint": (
+            "你是改编入场专家。当用户基于已有作品改编时，"
+            "你需要分析原作品的核心设定、人物关系、剧情结构，"
+            "并基于用户输入生成新剧本的项目立项方案（Project Brief）。\n\n"
+            "输出 JSON：\n"
+            "{\n"
+            '  "positioning": "新剧本定位",\n'
+            '  "adapted_from": "原作品名称",\n'
+            '  "core_preservation": "需要保留的核心元素",\n'
+            '  "innovation": "创新点"\n'
+            "}"
+        ),
+        "input_schema": {"type": "object", "properties": {
+            "creation_entry": {"type": "string"},
+            "reference_work": {"type": "string"},
+            "theme": {"type": "string"},
+            "core_idea": {"type": "string"},
+        }, "required": ["creation_entry"]},
+        "output_schema": {"type": "object", "properties": {
+            "positioning": {"type": "string"},
+            "adapted_from": {"type": "string"},
+            "core_preservation": {"type": "array"},
+            "innovation": {"type": "array"},
+        }, "required": ["positioning"]},
+        "tags": ["改编", "适配"],
+    },
+    {
+        "skill_id": "creation.insight",
+        "name": "剧本洞察分析",
+        "version": "1.0.0",
+        "category": "creator",
+        "skill_layer": "business",
+        "sub_category": "洞察",
+        "lifecycle_status": "active",
+        "gray_weight": 100,
+        "quota_cost": 5,
+        "timeout_seconds": 120,
+        "system_hint": (
+            "你是剧本洞察分析专家。基于完整剧本输出深度洞察：\n"
+            "- 主题深度\n"
+            "- 人物弧光\n"
+            "- 叙事技巧\n"
+            "- 情感共鸣点\n"
+            "- 改进建议\n\n"
+            "输出 JSON。"
+        ),
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object", "properties": {
+            "themes": {"type": "array"},
+            "character_arcs": {"type": "array"},
+            "narrative_techniques": {"type": "array"},
+            "improvements": {"type": "array"},
+        }},
+        "tags": ["洞察", "分析"],
+    },
+    {
+        "skill_id": "creation.marketing",
+        "name": "营销文案",
+        "version": "1.0.0",
+        "category": "creator",
+        "skill_layer": "business",
+        "sub_category": "营销",
+        "lifecycle_status": "active",
+        "gray_weight": 100,
+        "quota_cost": 5,
+        "timeout_seconds": 120,
+        "system_hint": (
+            "你是短视频营销专家。基于完整剧本生成营销文案：\n"
+            "- 短视频标题（5 个备选）\n"
+            "- 30 秒视频脚本\n"
+            "- 封面文案\n"
+            "- 标签关键词\n"
+            "- 投放建议\n\n"
+            "输出 JSON。"
+        ),
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object", "properties": {
+            "titles": {"type": "array"},
+            "video_script": {"type": "string"},
+            "cover_text": {"type": "string"},
+            "tags": {"type": "array"},
+        }},
+        "tags": ["营销", "短视频"],
+    },
+    {
+        "skill_id": "creation.score",
+        "name": "剧本评分",
+        "version": "1.0.0",
+        "category": "quality",
+        "skill_layer": "business",
+        "sub_category": "评分",
+        "lifecycle_status": "active",
+        "gray_weight": 100,
+        "quota_cost": 8,
+        "timeout_seconds": 180,
+        "system_hint": (
+            "你是剧本评分专家。基于质检和成品剧本输出综合评分：\n"
+            "- 整体质量分（0-100）\n"
+            "- 商业潜力分\n"
+            "- 平台适配分\n"
+            "- 改进优先级建议\n"
+        ),
+        "input_schema": {"type": "object"},
+        "output_schema": {"type": "object", "properties": {
+            "overallScore": {"type": "number"},
+            "commercial_potential": {"type": "number"},
+            "platform_fit": {"type": "number"},
+            "priority_improvements": {"type": "array"},
+        }, "required": ["overallScore"]},
+        "tags": ["评分", "商业"],
+    },
+]
+
+
+def _register_aux_skills(apps, schema_editor):
+    AgentSkillDefinition = apps.get_model("skill", "AgentSkillDefinition")
+    from django.utils import timezone
+
+    now = timezone.now()
+    for skill in AUX_SKILL_CATALOG:
+        AgentSkillDefinition.objects.update_or_create(
+            skill_id=skill["skill_id"],
+            defaults={
+                "name": skill["name"],
+                "version": skill["version"],
+                "category": skill["category"],
+                "skill_layer": skill["skill_layer"],
+                "sub_category": skill.get("sub_category", ""),
+                "lifecycle_status": skill["lifecycle_status"],
+                "gray_weight": skill["gray_weight"],
+                "gray_traffic_salt": f"skill:{skill['skill_id']}",
+                "is_active": True,
+                "content": skill.get("system_hint", ""),
+                "system_hint": skill.get("system_hint", ""),
+                "input_schema": skill.get("input_schema", {}),
+                "output_schema": skill.get("output_schema", {}),
+                "quota_cost": skill.get("quota_cost", 10),
+                "timeout_seconds": skill.get("timeout_seconds", 300),
+                "retry_policy": {
+                    "max_attempts": 3,
+                    "backoff_seconds": 2.0,
+                },
+                "tags": skill.get("tags", []),
+                "published_at": now,
+            },
+        )
+
+
+def _rollback_aux_skills(apps, schema_editor):
+    AgentSkillDefinition = apps.get_model("skill", "AgentSkillDefinition")
+    AgentSkillDefinition.objects.filter(
+        skill_id__in=[s["skill_id"] for s in AUX_SKILL_CATALOG]
+    ).delete()
+
+
 def _rollback_creation_skills(apps, schema_editor):
     AgentSkillDefinition = apps.get_model("skill", "AgentSkillDefinition")
     AgentSkillDefinition.objects.filter(
@@ -429,4 +600,5 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(_register_creation_skills, _rollback_creation_skills),
+        migrations.RunPython(_register_aux_skills, _rollback_aux_skills),
     ]

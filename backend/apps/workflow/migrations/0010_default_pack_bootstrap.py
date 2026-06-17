@@ -1,11 +1,10 @@
 # P1-2 阶段：数据引导 —— 为短剧创作场景创建默认 FusionPipelinePack + Nodes
 # 覆盖创作全链路 7 节点：brief / structure / character / outline / script / review / polish
-# 每个节点通过 runner_path 路由到 workspace_bridge.run_workspace_node()
-#   → 由旧 AgentOrchestrator 体系执行具体 Agent
+# 每个节点通过 skill_id 路由到 SkillInvoker.invoke()
+#   → 由新引擎 SkillBridge 自动分发（创建对应的 creation.{id} 技能定义）
 # 新引擎（WorkflowEngine + SkillBridge）消费这些节点。
+# 注：runner_path 留空（fallback 兼容层），skill_id 命中后不再走 workspace_bridge。
 from django.db import migrations
-
-WORKFLOW_RUNNER_PATH = "apps.creation.orchestration.workspace_bridge.run_workspace_node"
 
 DEFAULT_NODES = [
     {
@@ -14,7 +13,7 @@ DEFAULT_NODES = [
         "description": "用户需求 → 项目立项 brief（脚本定位、主题、风格）",
         "chain_order": 1,
         "runner_type": "fusion_node",
-        "skill_id": "",
+        "skill_id": "creation.brief",
         "coin_cost": 10,
         "extra_config": {},
     },
@@ -24,7 +23,7 @@ DEFAULT_NODES = [
         "description": "集数、反转点、节奏分布、act 结构",
         "chain_order": 2,
         "runner_type": "fusion_node",
-        "skill_id": "",
+        "skill_id": "creation.structure",
         "coin_cost": 10,
         "extra_config": {},
     },
@@ -34,7 +33,7 @@ DEFAULT_NODES = [
         "description": "主角、配角、反派的人设/动机/目标，生成角色库",
         "chain_order": 3,
         "runner_type": "fusion_node",
-        "skill_id": "",
+        "skill_id": "creation.character",
         "coin_cost": 10,
         "extra_config": {},
     },
@@ -44,7 +43,7 @@ DEFAULT_NODES = [
         "description": "每集大纲 + 场景列表 + 对白骨架",
         "chain_order": 4,
         "runner_type": "fusion_node",
-        "skill_id": "",
+        "skill_id": "creation.outline",
         "coin_cost": 20,
         "extra_config": {},
     },
@@ -54,7 +53,7 @@ DEFAULT_NODES = [
         "description": "逐集完整剧本（对白 / 舞台提示 / 场景标题）",
         "chain_order": 5,
         "runner_type": "fusion_node",
-        "skill_id": "",
+        "skill_id": "creation.script",
         "coin_cost": 30,
         "extra_config": {},
     },
@@ -64,7 +63,7 @@ DEFAULT_NODES = [
         "description": "AI 驱动质检：一致性、逻辑、节奏、对白质量",
         "chain_order": 6,
         "runner_type": "fusion_review",
-        "skill_id": "",
+        "skill_id": "creation.review",
         "coin_cost": 15,
         "extra_config": {},
     },
@@ -74,7 +73,7 @@ DEFAULT_NODES = [
         "description": "依据质检报告进行剧本润色与重写",
         "chain_order": 7,
         "runner_type": "fusion_node",
-        "skill_id": "",
+        "skill_id": "creation.polish",
         "coin_cost": 20,
         "extra_config": {},
     },
@@ -122,7 +121,7 @@ def _create_default_pack(apps, schema_editor):
             chain_order=meta["chain_order"],
             website_index=meta["chain_order"],
             runner_type=meta["runner_type"],
-            runner_path=WORKFLOW_RUNNER_PATH,
+            runner_path="",  # 不再走 workspace_bridge，由 skill_id 路由
             skill_id=meta.get("skill_id", ""),
             coin_cost=meta["coin_cost"],
             extra_config=meta.get("extra_config", {}),

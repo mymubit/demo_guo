@@ -46,15 +46,30 @@ def _optional_node_status(run: Optional[dict], has_content: bool) -> str:
     return "not_run"
 
 
-def build_post_script_summary(project: Project) -> Dict[str, Any]:
-    from .orchestration.orchestrator import AgentOrchestrator
+def _scripts_fully_generated(project: Project) -> bool:
+    """直接读 episode_scripts 产物判断剧本是否完整生成（不依赖旧引擎）。"""
+    scripts = get_artifact(project, "episode_scripts") or {}
+    eps = scripts.get("episodes") or []
+    if not eps:
+        return False
+    nums = {
+        int(e.get("episodeNumber") or e.get("episode") or 0)
+        for e in eps
+        if isinstance(e, dict)
+    }
+    nums.discard(0)
+    target = int(project.episode_count or 0)
+    if target <= 0:
+        return len(nums) > 0
+    return len(nums) >= target
 
+
+def build_post_script_summary(project: Project) -> Dict[str, Any]:
     review = get_artifact(project, "review_report") or {}
     score_raw = get_artifact(project, "script_score_report") or {}
     polish = get_artifact(project, "polish_log") or {}
 
-    orch = AgentOrchestrator(project)
-    scripts_ready = orch.scripts_fully_generated()
+    scripts_ready = _scripts_fully_generated(project)
 
     status = "idle"
     if scripts_ready:
