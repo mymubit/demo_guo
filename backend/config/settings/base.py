@@ -58,6 +58,8 @@ INSTALLED_APPS = [
     "apps.system_config",
     "apps.portal",
     "apps.console",
+    # 运营中心（Operations）
+    "apps.operations",
 ]
 
 MIDDLEWARE = [

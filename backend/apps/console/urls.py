@@ -430,4 +430,13 @@ urlpatterns += [
     *_evolution_routes,
     *_stats_routes,
     *_system_routes,
+    # ── 运营中心（Operations）──
+    path("ops/", include("apps.operations.campaign.urls")),
+    path("ops/", include("apps.operations.ticket.urls")),
+    path("ops/", include("apps.operations.experiment.urls")),
+    path("ops/", include("apps.operations.template_promotion.urls")),
+    path("ops/", include("apps.operations.ugc.urls")),
+    path("ops/", include("apps.operations.creator.urls")),
+    path("ops/", include("apps.operations.compliance.urls")),
+    path("ops/", include("apps.operations.analytics.urls")),
 ]
