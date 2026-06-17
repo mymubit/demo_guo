@@ -33,6 +33,63 @@ _AGENT_HINTS = {
 }
 
 
+# ──────────────────────────────────────────────
+# 世界观合规扫描（原 world_engine._scan_world_compliance）
+# 新引擎：作为独立函数在 workspace_service 内暴露
+# ──────────────────────────────────────────────
+_WORLD_HISTORY_RISK_TERMS = {
+    "慈禧", "乾隆", "康熙", "雍正", "武则天", "李世民", "朱元璋", "秦始皇",
+}
+_WORLD_SUPERNATURAL_RISK_TERMS = {
+    "鬼魂", "驱魔", "还魂", "复活", "穿越到古代", "修真", "修仙", "法术",
+}
+
+
+def _scan_world_compliance(payload: dict) -> list:
+    """扫描世界观（payload.worldview）中的合规风险：
+    - 真实历史人物姓名
+    - 灵异/超自然设定
+    返回 [{level, category, matchedText, excerpt, constraint, actionHint}] 列表。
+    """
+    warnings: list = []
+    if not isinstance(payload, dict):
+        return warnings
+    worldview = payload.get("worldview") or {}
+    if not isinstance(worldview, dict):
+        return warnings
+    setting = str(worldview.get("settingSummary") or "")
+    root_rules = worldview.get("rootRules") or []
+    if not isinstance(root_rules, list):
+        root_rules = []
+
+    has_realistic_constraint = any(
+        isinstance(r, str) and ("现实" in r or "科学" in r or "架空" in r)
+        for r in root_rules
+    )
+
+    for term in _WORLD_HISTORY_RISK_TERMS:
+        if term in setting:
+            warnings.append({
+                "level": "P1",
+                "category": "真实历史人物",
+                "matchedText": term,
+                "excerpt": setting,
+                "constraint": "须架空处理，禁止直接使用真实历史人物姓名及事件",
+                "actionHint": "将真实人物姓名改为架空角色名",
+            })
+    for term in _WORLD_SUPERNATURAL_RISK_TERMS:
+        if term in setting and not has_realistic_constraint:
+            warnings.append({
+                "level": "P1",
+                "category": "灵异/超自然设定",
+                "matchedText": term,
+                "excerpt": setting,
+                "constraint": "如出现灵异/超自然元素，须在剧本中给出科学/现实解释",
+                "actionHint": "为灵异/超自然现象补充现实主义解释",
+            })
+    return warnings
+
+
 def _verify_summary(adaptation_meta: dict) -> Dict[str, Any]:
     """改编/参考创作复核摘要，供 C 端展示。"""
     reports = adaptation_meta.get("verifyReports") or {}
@@ -132,8 +189,6 @@ def _quality_alerts_for_node(
             isinstance(w, dict) and not (w.get("matchedText") or w.get("excerpt"))
             for w in compliance_warnings
         ):
-            from ..orchestration.world_engine import _scan_world_compliance
-
             compliance_warnings = _scan_world_compliance(payload)
         if compliance_warnings:
             details = []

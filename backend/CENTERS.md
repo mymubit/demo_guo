@@ -100,7 +100,10 @@ from apps.agent.binding import agent_id_for_fusion_node
 from apps.agent.catalog import portal_agent_catalog
 
 # 调度
-from apps.creation.orchestration.orchestrator import AgentOrchestrator
+# 新引擎全量上线：业务代码不再直接导入 AgentOrchestrator，统一走
+#   WorkflowInstance → WorkflowEngine → SkillBridge → SkillInvoker
+from apps.workflow.skill_bridge import SkillBridge
+from apps.workflow.workflow_scheduler import WorkflowScheduler
 
 # 技能规则
 from apps.skill.skills.loader import SkillRuleLoader

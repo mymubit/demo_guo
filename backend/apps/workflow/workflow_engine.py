@@ -9,13 +9,14 @@ WorkflowEngine：从 FusionPipelinePack + FusionPipelineNode 读取编排配置�
      保证新旧模板都能跑
   ② 节点执行：每个节点独立的 NodeExecution，含重试/超时/计费
   ③ 状态机：严格在 running/paused/failed/done 之间转移
-  ④ 可插拔 runner：当前默认使用 run_workspace_node 兼容层，
-     P1 阶段会扩展为基于 runner_type 的调度策略（串行/并行/循环/人工）
+  ④ 可插拔 runner：通过 SkillBridge 路由：
+       - skill_id 命中 → SkillInvoker.invoke()  （新引擎唯一主路径）
+       - runner_path 兜底 → Python 函数         （仅供非默认 pack 的自定义节点）
 
 节点 runner 类型与映射：
-  fusion_node     → 标准创作节点（run_workspace_node）
-  fusion_review   → 质检节点
-  fusion_score    → 评分节点
+  fusion_node     → 标准创作节点（SkillInvoker → creation.{brief,structure,...}）
+  fusion_review   → 质检节点（SkillInvoker → creation.review）
+  fusion_score    → 评分节点（SkillInvoker → creation.score）
   parallel_group  → 并行组（P1 扩展）
   iterate_loop    → 循环节点（P1 扩展）
   human_gate      → 人工门控（P1 扩展）

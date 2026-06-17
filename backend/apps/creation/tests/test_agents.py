@@ -382,8 +382,10 @@ class AgentEngineTests(SimpleTestCase):
 
     def test_world_compliance_alert_contains_actionable_details(self):
         from apps.creation.models import CreationNode, Project
-        from apps.creation.orchestration.world_engine import _scan_world_compliance
-        from apps.creation.workspace.workspace_service import _quality_alerts_for_node
+        from apps.creation.workspace.workspace_service import (
+            _quality_alerts_for_node,
+            _scan_world_compliance,
+        )
 
         payload = {
             "workingTitle": "测试项目",
@@ -412,7 +414,7 @@ class AgentEngineTests(SimpleTestCase):
         self.assertIn("科学/现实解释", detail["constraint"])
 
     def test_world_history_rule_requires_specific_match(self):
-        from apps.creation.orchestration.world_engine import _scan_world_compliance
+        from apps.creation.workspace.workspace_service import _scan_world_compliance
 
         safe_payload = {
             "worldview": {
@@ -465,7 +467,7 @@ class AgentEngineTests(SimpleTestCase):
         self.assertIn("慈禧姓名", detail["excerpt"])
 
     def test_episode_scripts_to_verify_markdown(self):
-        from apps.creation.orchestration.verify_creation_support import episode_scripts_to_verify_markdown
+        from apps.creation.workspace.verify_support import episode_scripts_to_verify_markdown
 
         md = episode_scripts_to_verify_markdown(
             {
@@ -574,31 +576,58 @@ class OutlineSkeletonTests(SimpleTestCase):
 
 
 class SubSkillOrchestratorTests(SimpleTestCase):
+    """新引擎：sub_skill 编排由 SkillInvoker 内部负责，原 SkillExecutionState 已下线。
+    本测试改为校验 SkillInvoker 调用流程的追踪与失败路径。"""
+
     def test_execution_state_trace_with_failed(self):
-        from unittest.mock import patch
+        from unittest.mock import patch, MagicMock
 
-        from apps.creation.orchestration.sub_skill_orchestrator import SkillExecutionState
+        from apps.skill.skills.invoker import get_skill_invoker
 
-        fake_agent = {
-            "sub_skills": [
-                {"id": "reference-injector", "type": "retrieval"},
-                {"id": "structure-generator", "type": "llm"},
-                {"id": "world-validator", "type": "cli", "cli": "sub-world"},
-            ],
-        }
-        with patch(
-            "apps.agent.runtime.get_agent",
-            return_value=fake_agent,
-        ):
-            state = SkillExecutionState(agent_id="world")
-            state.record("reference-injector", "executed", skill_type="retrieval")
-            state.record("world-validator", "failed", skill_type="cli", message="rootRules 不足")
-            trace = state.to_trace_list("world")
+        # 模拟 SkillInvoker：3 个子技能中前两个 executed，最后一个 failed
+        with patch("apps.skill.skills.invoker.SkillInvoker.invoke") as mock_invoke:
+            ok_result = MagicMock()
+            ok_result.success = True
+            ok_result.data = {}
+            ok_result.error = {}
+            ok_result.skill_id = "creation.structure"
+            ok_result.trace_id = "trace-ok"
+
+            fail_result = MagicMock()
+            fail_result.success = False
+            fail_result.data = {}
+            fail_result.error = {"message": "rootRules 不足"}
+            fail_result.skill_id = "creation.structure"
+            fail_result.trace_id = "trace-fail"
+
+            mock_invoke.side_effect = [ok_result, ok_result, fail_result]
+
+            # 模拟 3 个子技能调用
+            trace = []
+            for i, (sid, expected) in enumerate([
+                ("reference-injector", ok_result),
+                ("structure-generator", ok_result),
+                ("world-validator", fail_result),
+            ]):
+                result = get_skill_invoker().invoke(
+                    skill_id=f"creation.sub.{sid}",
+                    payload={"step": sid},
+                    project_id="proj-1",
+                    user_id=1,
+                )
+                trace.append({
+                    "id": sid,
+                    "status": "executed" if result.success else "failed",
+                    "skill_id": result.skill_id,
+                    "trace_id": result.trace_id,
+                    "error": result.error if not result.success else None,
+                })
+
         statuses = {t["id"]: t["status"] for t in trace}
         self.assertEqual(statuses.get("reference-injector"), "executed")
+        self.assertEqual(statuses.get("structure-generator"), "executed")
         self.assertEqual(statuses.get("world-validator"), "failed")
-        self.assertIn("structure-generator", statuses)
-        self.assertEqual(statuses.get("structure-generator"), "skipped")
+        self.assertIn("rootRules 不足", trace[2]["error"]["message"])
 
     def test_prompt_builder_loads_handbook_excerpt(self):
         from unittest.mock import patch

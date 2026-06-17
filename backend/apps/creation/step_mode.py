@@ -157,9 +157,52 @@ def mark_project_awaiting(project: Project, node_index: int) -> None:
 
 
 def run_orchestrator_step(project: Project, node_index: int) -> Dict[str, Any]:
-    from .orchestration.orchestrator import run_pipeline_step_by_index
+    """新引擎：分步模式下单节点执行走 SkillInvoker → creation.{node} 技能。
+    返回 dict 形如 {status, node_index, outputs, errors, ...}
+    """
+    from apps.skill.skills.invoker import get_skill_invoker
+    from .orchestration.types import AgentResult
 
-    return run_pipeline_step_by_index(project, node_index)
+    skill_id = _workspace_node_to_skill_id(int(node_index))
+    if not skill_id:
+        return {
+            "status": "error",
+            "node_index": int(node_index),
+            "errors": [f"节点 {node_index} 未映射到 creation.* 技能"],
+        }
+    skill_result = get_skill_invoker().invoke(
+        skill_id=skill_id,
+        payload={"project_id": str(project.id)},
+        project_id=str(project.id),
+        user_id=project.user_id,
+    )
+    if skill_result.success:
+        return AgentResult(
+            agent_id=skill_id,
+            status="completed",
+            outputs=skill_result.data or {},
+            meta={"skill_id": skill_id, "trace_id": skill_result.trace_id},
+        ).to_dict()
+    return AgentResult(
+        agent_id=skill_id,
+        status="error",
+        errors=[skill_result.error.get("message", "skill invoker failed")],
+        meta={"skill_id": skill_id, "trace_id": skill_result.trace_id},
+    ).to_dict()
+
+
+def _workspace_node_to_skill_id(node_index: int) -> str:
+    """工作台节点索引 → 创作技能 ID（与 WorkflowInstance 默认 pack 一致）。"""
+    mapping = {
+        1: "creation.brief",
+        2: "creation.structure",
+        3: "creation.character",
+        4: "creation.outline",
+        5: "creation.script",
+        6: "creation.review",
+        7: "creation.polish",
+    }
+    return mapping.get(int(node_index), "")
 
 
 def _invoke_post_skill(project: Project, agent_id: str) -> Dict[str, Any]:
