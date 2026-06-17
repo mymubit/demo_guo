@@ -226,6 +226,10 @@ class FusionPipelineNode(models.Model):
         default="",
     )
     runner_path = models.CharField("执行函数路径", max_length=255, blank=True, default="")
+    skill_id = models.CharField(
+        "技能 ID", max_length=128, blank=True, default="", db_index=True,
+        help_text="用于 SkillBridge 路由。例：creation.brief / fusion.skill.review",
+    )
     output_key = models.CharField("产物键 outputKey", max_length=64, blank=True, default="")
     artifact_key = models.CharField("存储 artifact_key", max_length=64, blank=True, default="")
     pipeline_result_key = models.CharField("pipeline_result 键", max_length=64, blank=True, default="")

@@ -49,6 +49,8 @@ class NodeConfig:
     name: str
     runner_type: str         # fusion_node / fusion_review / ...
     chain_order: int
+    skill_id: str = ""       # 技能 ID（SkillBridge 路由用）
+    runner_path: str = ""    # Python 函数路径（SkillBridge 路由用）
     upstream_deps: List[str] = field(default_factory=list)
     downstream_map: List[Dict[str, Any]] = field(default_factory=list)
     runtime_config: Dict[str, Any] = field(default_factory=dict)
@@ -212,6 +214,8 @@ class WorkflowEngine:
                 name=db_node.name,
                 runner_type=db_node.runner_type or "fusion_node",
                 chain_order=db_node.chain_order,
+                skill_id=db_node.skill_id or "",
+                runner_path=db_node.runner_path or "",
                 upstream_deps=list(db_node.upstream_deps or []),
                 downstream_map=list(db_node.downstream_map or []),
                 runtime_config=dict(db_node.runtime_config or {}),
@@ -611,7 +615,7 @@ class WorkflowEngine:
 
 
 # =========================================================
-# 默认依赖实现（与现有系统对接）
+# 默认依赖实现 —— 通过 SkillBridge 接入技能运行层
 # =========================================================
 def _default_agent_runner(
     *,
@@ -620,35 +624,41 @@ def _default_agent_runner(
     context: Dict[str, Any],
     dry_run: bool = False,
 ) -> Any:
-    """与现有系统的兼容层：调用 run_workspace_node 执行创作节点。
+    """工作流引擎调用节点技能的统一入口。
 
-    P0 阶段的关键简化：
-      - 把 NodeConfig.chain_order 作为 node_index 传入（旧系统按 index 寻址）
-      - 把 instance.context 传入，供下游读取已完成产物
+    通过 SkillBridge 路由到：
+      A. SkillInvoker（skill_id 已注册到 FusionPipelineNode）
+      B. Python 函数（runner_path 已注册）
 
-    P1 阶段将重构为按 runner_type 分派到真正的并行/循环/人工 runner。
+    不再直接依赖旧创作节点模块；所有技能通过 SkillBridge 解耦。
     """
-    if dry_run:
-        # 调试模式：不真正执行 agent，返回一个虚拟成功结果
-        class _DryResult:
-            status = "completed"
-            meta = {"fusion": {"ok": True, "skipped": False}}
-            outputs = {"content": f"(dry-run output for {node_config.node_id})"}
-            errors: List[str] = []
-            agent_id = "dry-run"
-        return _DryResult()
+    from apps.workflow.skill_bridge import run_workflow_node as _run_workflow_node
 
-    # 懒导入，避免循环依赖
-    from apps.creation.orchestration.types import WorkspaceInvokeOptions
-    from apps.creation.orchestration.workspace_bridge import run_workspace_node
-
-    opts = WorkspaceInvokeOptions(
-        node_index=node_config.chain_order,
-        node_id=node_config.node_id,
-        context=context,
-        extra=node_config.extra_config or {},
+    result = _run_workflow_node(
+        project=project,
+        node_config=node_config,
+        context=context or {},
+        dry_run=dry_run,
     )
-    return run_workspace_node(project, opts)
+
+    # 转换为 engine 内部 NodeRunResult 格式
+    if result.success:
+        class _OkResult:
+            status = "completed"
+            meta: Dict[str, Any] = {}
+            outputs: Dict[str, Any] = dict(result.output)
+            outputs.setdefault("coin_cost", result.coin_cost)
+            outputs.setdefault("llm_token_in", result.llm_token_in)
+            outputs.setdefault("llm_token_out", result.llm_token_out)
+            errors: List[str] = []
+        return _OkResult()
+    else:
+        class _FailResult:
+            status = "failed"
+            meta: Dict[str, Any] = {}
+            outputs: Dict[str, Any] = {}
+            errors: List[str] = list(result.errors)
+        return _FailResult()
 
 
 def _default_billing_ok(*args: Any, **kwargs: Any) -> bool:

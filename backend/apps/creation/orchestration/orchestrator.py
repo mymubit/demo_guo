@@ -1,4 +1,16 @@
 # -*- coding: utf-8 -*-
+# ⚠️ [legacy] AgentOrchestrator：统一调度入口
+# =========================================================
+# 【P0】本文件已下线（2026-06-17）。
+# 新引擎统一走：
+#   OrchestrationAdapter.run()
+#     → WorkflowScheduler.start_for_project()
+#       → WorkflowEngine.run()
+#         → SkillBridge.run()
+#
+# 旧 AgentOrchestrator 不再被任何入口调用。
+# 保留 30 天观察期后删除（预计 2026-07-17）。
+# =========================================================
 """AgentOrchestrator：统一调度入口。"""
 from __future__ import annotations
 

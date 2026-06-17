@@ -1,4 +1,24 @@
 # -*- coding: utf-8 -*-
+# ⚠️ [legacy] 旧引擎 —— FusionOrchestrator
+# =========================================================
+# 【P0】本文件已下线：所有创作请求已统一走新引擎 WorkflowEngine。
+#
+# 下线说明（2026-06-17）：
+#   • 新引擎通过 OrchestrationAdapter 统一入口
+#   • 旧 FusionOrchestrator 不再被任何代码路径调用
+#   • 保留本文件 30 天观察期后删除（预计 2026-07-17）
+#
+# 新调用路径：
+#   OrchestrationAdapter.run(project, user_id, ...)
+#     → WorkflowScheduler.start_for_project()
+#       → WorkflowInstance.objects.create(...)
+#         → run_workflow_instance.delay()
+#           → WorkflowEngine.run()
+#             → SkillBridge.run()
+#               → SkillInvoker.invoke() 或 Python 函数
+#
+# 如需查阅旧逻辑用于迁移参考，请保留此文件；否则请删除。
+# =========================================================
 """
 主链执行基础设施：进度、artifact 落库、CLI/配置桥接。
 

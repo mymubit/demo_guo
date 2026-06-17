@@ -180,10 +180,27 @@ from apps.console.main_chain.blueprint_views import (
 )
 from apps.system_config.urls import admin_urlpatterns as system_config_admin_urlpatterns
 
+# ── 【P0 新增】工作流编排引擎 API ──────────────────────────
+from apps.workflow.api import (
+    WorkflowInstanceViewSet,
+    WorkflowPackAdminViewSet,
+    WorkflowMetricsViewSet,
+    WorkflowLaunchViewSet,
+)
+
 router = DefaultRouter()
 router.register(r"users", UserManagementViewSet, basename="admin-user")
 router.register(r"members/plans", MembershipPlanViewSet, basename="admin-membership-plan")
 router.register(r"orders", OrderManagementViewSet, basename="admin-order")
+# 工作流引擎（实例 / Pack 管理 / 指标 / 发起创作）
+router.register(r"workflow/instances", WorkflowInstanceViewSet,
+                 basename="admin-wf-instance")
+router.register(r"workflow/packs", WorkflowPackAdminViewSet,
+                 basename="admin-wf-pack")
+router.register(r"workflow/metrics", WorkflowMetricsViewSet,
+                 basename="admin-wf-metrics")
+router.register(r"workflow/launch", WorkflowLaunchViewSet,
+                 basename="admin-wf-launch")
 
 app_name = "console"
 

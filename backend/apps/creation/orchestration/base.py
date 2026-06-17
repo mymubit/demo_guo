@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+# ⚠️ [legacy] Agent 执行基座
+# =========================================================
+# 【P0】本文件已下线（2026-06-17）。
+# 新引擎通过 apps.workflow.skill_bridge.SkillBridge 接入，
+# 不再走 AgentOrchestrator / run_workspace_node。
+# 保留 30 天观察期后删除（预计 2026-07-17）。
+# =========================================================
 """Agent 执行基座：registry 元数据 + FusionOrchestrator 引擎。"""
 from __future__ import annotations
 
