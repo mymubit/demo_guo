@@ -16,6 +16,10 @@ import {
   Activity,
   BookOpen,
   Zap,
+  ClipboardCheck,
+  TrendingUp,
+  Gauge,
+  MessageSquare,
 } from 'lucide-react'
 
 /**
@@ -55,6 +59,48 @@ export const ADMIN_NAV_GROUPS = [
         label: '业务监控',
         icon: Activity,
         description: '前端异常、接口性能、慢 SQL、告警与埋点',
+      },
+    ],
+  },
+  {
+    id: 'operations',
+    label: '运营',
+    collapsible: true,
+    items: [
+      {
+        id: 'operations.dashboard',
+        path: '/admin/operations/dashboard',
+        label: '运营 Dashboard',
+        icon: LayoutDashboard,
+        description: '5 个核心 SLO 卡片 + 子页面入口',
+      },
+      {
+        id: 'operations.checklist',
+        path: '/admin/operations/checklist',
+        label: '日常 Checklist',
+        icon: ClipboardCheck,
+        description: '5 分钟巡检 5 步',
+      },
+      {
+        id: 'operations.content-quality',
+        path: '/admin/operations/content-quality',
+        label: '内容质量',
+        icon: TrendingUp,
+        description: '保存率/导出率/弃用率/卡点人群',
+      },
+      {
+        id: 'operations.feedback',
+        path: '/admin/operations/feedback',
+        label: '用户反馈',
+        icon: MessageSquare,
+        description: 'P0 优先 + 抽样回访',
+      },
+      {
+        id: 'operations.config-hit',
+        path: '/admin/operations/config-hit',
+        label: '配置命中率',
+        icon: Gauge,
+        description: '死代码候选 & 24h 热点',
       },
     ],
   },

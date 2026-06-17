@@ -205,4 +205,23 @@ def submit(user, data: dict) -> Tuple[Project, int]:
         )
 
     estimated_minutes = _estimate_minutes(project.episode_count)
+
+    # 【运营 M6】埋点：创作提交（fire-and-forget；不影响主链路）
+    try:
+        from apps.operations.services import track_event
+        track_event(
+            event_name="creation_submitted",
+            user=user,
+            project_id=str(project.id),
+            page="/api/creation/submit",
+            payload={
+                "theme": (theme or "")[:120],
+                "episode_count": project.episode_count,
+                "pipeline_mode": project.pipeline_mode,
+            },
+            source="backend",
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
     return project, estimated_minutes

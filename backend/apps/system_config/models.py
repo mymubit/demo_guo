@@ -64,6 +64,19 @@ class SystemConfigItem(models.Model):
     is_public = models.BooleanField("公开读取", default=False, db_index=True)
     requires_restart = models.BooleanField("需要重启", default=False)
     version = models.PositiveIntegerField("版本号", default=1)
+    # ── 【运营 M3】命中率统计 ──────────────────────────────
+    hit_count = models.PositiveBigIntegerField(
+        "总命中次数", default=0,
+        help_text="C 端/后台读取该配置项的累计次数（含缓存命中与未命中）",
+    )
+    hit_24h = models.PositiveIntegerField(
+        "24h 命中次数", default=0,
+        help_text="过去 24h 的命中次数（每日零点重置，或在 track_hit 时自维护）",
+    )
+    last_hit_at = models.DateTimeField(
+        "最近命中时间", null=True, blank=True, db_index=True,
+    )
+    # ──────────────────────────────────────────────
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         null=True,

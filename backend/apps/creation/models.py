@@ -239,6 +239,29 @@ class Project(models.Model):
         "完成时间", null=True, blank=True
     )
 
+    # ── 【运营 M2】内容质量统计字段 ─────────────────────────────
+    # 用于运营 Dashboard：保存率/导出率/弃用率核心指标
+    user_edit_count = models.PositiveIntegerField(
+        "用户编辑次数", default=0,
+        help_text="用户在工作台内对 Project 的手动编辑次数（保存草稿节点+1）",
+    )
+    final_export_count = models.PositiveIntegerField(
+        "最终导出次数", default=0,
+        help_text="用户从工作台成功下载/导出最终剧本的次数",
+    )
+    last_edited_at = models.DateTimeField(
+        "最近编辑时间", null=True, blank=True,
+        help_text="用户最近一次编辑时间；超过 7 天未编辑+未完成=潜在弃用",
+    )
+    abandoned_at = models.DateTimeField(
+        "弃用时间", null=True, blank=True, db_index=True,
+        help_text="用户主动放弃或超过 7 天未活跃即视为弃用；用于运营漏斗/质量分析",
+    )
+    is_quality_sampled = models.BooleanField(
+        "已采样分析", default=False, db_index=True,
+        help_text="运营分析/反馈抽样的标记位，避免重复抽样",
+    )
+
     class Meta:
         verbose_name = "创作项目"
         verbose_name_plural = verbose_name
@@ -246,6 +269,8 @@ class Project(models.Model):
         indexes = [
             models.Index(fields=["user", "-created_at"]),
             models.Index(fields=["status"]),
+            models.Index(fields=["abandoned_at", "status"]),
+            models.Index(fields=["-created_at", "status"]),
         ]
 
     def save(self, *args, **kwargs):

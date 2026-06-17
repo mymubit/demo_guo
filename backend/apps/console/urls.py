@@ -431,3 +431,10 @@ urlpatterns += [
     *_stats_routes,
     *_system_routes,
 ]
+
+# ── 运营监控中心（apps.operations）──────────────────────────
+from apps.operations.urls import admin_urlpatterns as operations_admin_urlpatterns
+
+urlpatterns += [
+    path("operations/", include((operations_admin_urlpatterns, "operations"))),
+]

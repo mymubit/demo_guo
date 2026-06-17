@@ -59,6 +59,13 @@ const AdminSettings = lazy(() => import('@/pages/Admin/Settings.jsx'))
 const AdminSystem = lazy(() => import('@/pages/Admin/AdminSystemConfig.jsx'))
 const AdminLogin = lazy(() => import('@/pages/Admin/Login.jsx'))
 
+// ── 【运营 F8】运营监控中心 ───────────────────────────────────
+const OperationsDashboard = lazy(() => import('@/pages/Admin/operations/OperationsDashboardPage.jsx'))
+const ContentQuality = lazy(() => import('@/pages/Admin/operations/ContentQualityPage.jsx'))
+const OperationsFeedback = lazy(() => import('@/pages/Admin/operations/FeedbackPage.jsx'))
+const ConfigEffectiveness = lazy(() => import('@/pages/Admin/operations/ConfigEffectivenessPage.jsx'))
+const DailyChecklist = lazy(() => import('@/pages/Admin/operations/DailyChecklistPage.jsx'))
+
 // ── 404 兜底 ─────────────────────────────────────────────────
 const NotFound = lazy(() => import('@/pages/NotFound.jsx'))
 
@@ -170,6 +177,12 @@ const router = createBrowserRouter([
       { path: 'billing', element: <AdminBilling /> },
       { path: 'settings', element: <AdminSettings /> },
       { path: 'system', element: <AdminSystem /> },
+      // 【运营 F8】运营监控中心
+      { path: 'operations/dashboard', element: <OperationsDashboard /> },
+      { path: 'operations/content-quality', element: <ContentQuality /> },
+      { path: 'operations/feedback', element: <OperationsFeedback /> },
+      { path: 'operations/config-hit', element: <ConfigEffectiveness /> },
+      { path: 'operations/checklist', element: <DailyChecklist /> },
     ],
   },
 

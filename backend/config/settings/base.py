@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "apps.system_config",
     "apps.portal",
     "apps.console",
+    "apps.operations",
 ]
 
 MIDDLEWARE = [

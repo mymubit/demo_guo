@@ -68,6 +68,12 @@ def _project_ops_row(
         "execution_failed_count": exec_summary.get("failed_count", 0),
         "latest_execution_run": exec_summary.get("latest_run"),
         "latest_failed_run": exec_summary.get("latest_failed_run"),
+        # 【运营 M2】内容质量字段
+        "user_edit_count": getattr(project, "user_edit_count", 0) or 0,
+        "final_export_count": getattr(project, "final_export_count", 0) or 0,
+        "last_edited_at": project.last_edited_at.isoformat() if getattr(project, "last_edited_at", None) else "",
+        "abandoned_at": project.abandoned_at.isoformat() if getattr(project, "abandoned_at", None) else "",
+        "is_quality_sampled": getattr(project, "is_quality_sampled", False) or False,
     }
     return row
 

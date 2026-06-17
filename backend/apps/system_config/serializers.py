@@ -59,8 +59,15 @@ class SystemConfigItemSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "deleted_at",
+            # 【运营 M3】命中率字段
+            "hit_count",
+            "hit_24h",
+            "last_hit_at",
         ]
-        read_only_fields = ["id", "version", "created_at", "updated_at", "deleted_at"]
+        read_only_fields = [
+            "id", "version", "created_at", "updated_at", "deleted_at",
+            "hit_count", "hit_24h", "last_hit_at",
+        ]
 
     def get_display_value(self, obj):
         if obj.is_sensitive:

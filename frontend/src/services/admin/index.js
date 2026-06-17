@@ -17,12 +17,14 @@ import { adminStats } from './stats'
 import { adminSystemConfig } from './systemConfig'
 import { adminTask } from './task'
 import { adminBatch, adminLibrary, adminEvolution } from './batch'
+import { adminOperations } from './operations'
 
 export {
   adminMainChain, adminWorkflow, adminAgent, adminOrchestration,
   adminModel, adminMonitoring, adminSkill, adminTask,
   adminStats, adminSystemConfig,
   adminBatch, adminLibrary, adminEvolution,
+  adminOperations,
 }
 
 export const admin = {
@@ -30,6 +32,8 @@ export const admin = {
   getDashboard: () => adminRequest('GET', '/api/admin/dashboard/'),
   getStats: () => adminRequest('GET', '/api/admin/stats/summary/'),
   monitoring: adminMonitoring,
+  // 【运营 F2】运营监控中心
+  operations: adminOperations,
 
   // 用户
   listUsers: (params = {}) =>

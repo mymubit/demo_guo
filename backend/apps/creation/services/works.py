@@ -10,6 +10,7 @@ from django.db.models import Q
 from ..models import Project
 from ._helpers import _get_user_project
 from ._rendering import _render_progress_html, _render_result_html
+from .content_quality import record_user_edit
 
 logger = logging.getLogger(__name__)
 

@@ -15,6 +15,7 @@ from django.utils import timezone
 from ..models import DownloadToken, Project, ScriptWork, ShareLink
 from ._helpers import _get_user_project
 from ._rendering import _render_share_html
+from .content_quality import record_final_export
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +46,24 @@ def generate_share_link(
         allow_download=bool(allow_download),
         custom_title=custom_title or "",
     )
+
+    # 【运营 M6】埋点：生成分享链接
+    try:
+        from apps.operations.services import track_event
+        track_event(
+            event_name="share_link_generated",
+            user=user,
+            project_id=str(project.id),
+            page=f"/api/creation/{project.id}/share",
+            payload={
+                "valid_days": valid_days,
+                "view_limit": share.view_limit,
+                "allow_download": share.allow_download,
+            },
+            source="backend",
+        )
+    except Exception:  # noqa: BLE001
+        pass
 
     frontend_host = getattr(settings, "FRONTEND_HOST", "https://example.com")
     share_url = f"{frontend_host.rstrip('/')}/share/{share.token}"
@@ -157,6 +176,27 @@ def download_script(
             raise PermissionDenied(str(exc)) from exc
         raw = pkg["content"]
         file_bytes = raw if isinstance(raw, (bytes, bytearray)) else str(raw).encode("utf-8")
+        # 【运营 M2】记录最终导出
+        try:
+            record_final_export(project)
+        except Exception:  # noqa: BLE001
+            pass
+        # 【运营 M6】埋点：剧本导出
+        try:
+            from apps.operations.services import track_event
+            track_event(
+                event_name="script_exported",
+                user=user,
+                project_id=str(project.id),
+                page=f"/api/creation/{project.id}/download",
+                payload={
+                    "file_format": file_format,
+                    "exported_via": "authenticated",
+                },
+                source="backend",
+            )
+        except Exception:  # noqa: BLE001
+            pass
         return file_bytes, pkg.get("filename") or file_name, pkg.get("content_type") or content_type
 
     watermark = (
@@ -173,6 +213,27 @@ def download_script(
     else:
         content = (f"# {base_title}\n\n{watermark}\n").encode("utf-8")
 
+    # 【运营 M2】记录最终导出
+    try:
+        record_final_export(project)
+    except Exception:  # noqa: BLE001
+        pass
+    # 【运营 M6】埋点：剧本导出
+    try:
+        from apps.operations.services import track_event
+        track_event(
+            event_name="script_exported",
+            user=user,
+            project_id=str(project.id),
+            page=f"/api/creation/{project.id}/download",
+            payload={
+                "file_format": file_format,
+                "exported_via": "authenticated",
+            },
+            source="backend",
+        )
+    except Exception:  # noqa: BLE001
+        pass
     return content, file_name, content_type
 
 

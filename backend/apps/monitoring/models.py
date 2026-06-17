@@ -170,6 +170,9 @@ class AlertRule(models.Model):
         API_AVG_DURATION = "api_avg_duration", _("接口平均耗时")
         API_ERROR_RATE = "api_error_rate", _("接口错误率")
         SLOW_SQL_COUNT = "slow_sql_count", _("慢 SQL 数")
+        # SLO 扩展：一人运营场景的硬指标
+        ZOMBIE_WORKFLOW_INSTANCES = "zombie_workflow_instances", _("僵尸工作流实例")
+        COIN_SPEND_ANOMALY = "coin_spend_anomaly", _("创作币扣费异常")
 
     class Comparator(models.TextChoices):
         GT = "gt", _("大于")
