@@ -68,6 +68,10 @@ _ALLOWED_AST_NODES: Set[type] = {
     ast.Compare, ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE,
     ast.In, ast.NotIn,
 
+    # 三元表达式（条件表达式）: a if cond else b
+    # 允许典型业务场景: "ctx.score >= 60 if ctx.has_script else False"
+    ast.IfExp,
+
     # 二元算术运算 + - * / // % **
     ast.BinOp, ast.Add, ast.Sub, ast.Mult, ast.Div, ast.FloorDiv,
     ast.Mod, ast.Pow,

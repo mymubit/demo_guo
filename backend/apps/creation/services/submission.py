@@ -1,4 +1,10 @@
-"""创作任务提交。"""
+"""创作任务提交。
+
+【P1】新引擎对接：
+  • 创建 Project 时同步创建 WorkflowInstance
+  • run_creation_pipeline 通过 WorkflowInstance → WorkflowEngine → SkillBridge
+  • 旧引擎 _execute_pipeline_for_project_legacy 仅在 WorkflowInstance 不存在时兜底
+"""
 
 import logging
 from typing import Tuple
@@ -21,9 +27,34 @@ def _estimate_minutes(episode_count: int) -> int:
     return max(1, int(base + episode_count * per_episode))
 
 
+def _create_workflow_instance(project: Project, pack, user_id: str) -> None:
+    """为 Project 创建对应的 WorkflowInstance（新引擎唯一入口）。
+
+    在 Project 创建之后立即执行。如果项目已有 WorkflowInstance 则跳过。
+    该实例将由 run_creation_pipeline 中的 WorkflowEngine 消费。
+    """
+    from apps.workflow.execution_models import WorkflowInstance
+
+    if WorkflowInstance.objects.filter(project=project).exists():
+        logger.info("[Creation] Project %s 已有 WorkflowInstance，跳过", project.id)
+        return
+
+    instance = WorkflowInstance.objects.create(
+        pack=pack,
+        project=project,
+        user_id=user_id,
+        trigger_type=WorkflowInstance.TRIGGER_USER,
+        context={"submit_data": {"theme": project.theme}},
+    )
+    logger.info(
+        "[Creation] 为 Project %s 创建 WorkflowInstance=%s pack=%s",
+        project.id, instance.id, pack.id if pack else "default",
+    )
+
+
 @transaction.atomic
 def submit(user, data: dict) -> Tuple[Project, int]:
-    """提交创作任务。"""
+    """提交创作任务（新引擎全量切换）。"""
     from apps.billing.services import BillingService, InsufficientCoins
 
     BillingService.ensure_can_create(user)
@@ -103,6 +134,11 @@ def submit(user, data: dict) -> Tuple[Project, int]:
             for meta in pipeline_nodes
         ]
     )
+
+    # ──【P1 新增】为 Project 创建 WorkflowInstance（新引擎唯一入口）
+    if pack:
+        _create_workflow_instance(project, pack, str(user.id))
+
     project.fusion_status = Project.FUSION_DRAFT
     project.save(update_fields=["fusion_status", "updated_at"])
 
@@ -110,18 +146,17 @@ def submit(user, data: dict) -> Tuple[Project, int]:
     project.save(update_fields=["rendered_progress_html"])
 
     mode = project.pipeline_mode
-    from ..orchestration.orchestrator import AgentOrchestrator
-    from apps.skill.config.portal.creation_form import CreationFormOverrideService
 
-    requires_adapt = CreationFormOverrideService.creation_entry_requires_adapt(
-        project.creation_entry or "from-scratch"
-    )
+    # ── Adapt 预处理（保留）
     try:
+        from apps.skill.config.portal.creation_form import CreationFormOverrideService
+        from ..orchestration.orchestrator import AgentOrchestrator
+
+        requires_adapt = CreationFormOverrideService.creation_entry_requires_adapt(
+            project.creation_entry or "from-scratch"
+        )
         adapt_result = AgentOrchestrator(project).invoke_adapt_on_create(submit_data=data)
-        if (
-            requires_adapt
-            and getattr(adapt_result, "status", "") == "error"
-        ):
+        if requires_adapt and getattr(adapt_result, "status", "") == "error":
             msg = "; ".join(getattr(adapt_result, "errors", []) or []) or "改编入场预处理失败"
             raise PermissionDenied(msg)
     except Exception as exc:  # noqa: BLE001
