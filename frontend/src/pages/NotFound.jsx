@@ -1,14 +1,26 @@
 ﻿import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Home, ArrowLeft, Film, Compass, Search, AlertTriangle, Crown } from 'lucide-react'
+import { Home, ArrowLeft, Film, Compass, Search, AlertTriangle, Crown, BarChart3, Eye } from 'lucide-react'
 import { pageEnter } from '@/constants/motion'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
+import { CONSUMER_TOP_NAV } from '@/config/consumerNav'
 
-const SUGGESTIONS = [
-  { name: '首页', icon: Home, path: '/' },
-  { name: '开始创作', icon: Film, path: '/creation' },
-  { name: '我的作品', icon: Film, path: '/works' },
-  { name: '会员中心', icon: Crown, path: '/member' },
-]
+const SUGGESTION_ICONS = {
+  '/': Home,
+  '/creation': Film,
+  '/evaluate': BarChart3,
+  '/pull-sheet': Eye,
+  '/works': Film,
+  '/member': Crown,
+}
+
+const SUGGESTIONS = CONSUMER_TOP_NAV.filter((item) =>
+  ['/', '/creation', '/evaluate', '/pull-sheet', '/works', '/member'].includes(item.path),
+).map((item) => ({
+  name: item.label,
+  icon: SUGGESTION_ICONS[item.path] || Film,
+  path: item.path,
+}))
 
 export default function NotFound() {
   return (
@@ -54,14 +66,14 @@ export default function NotFound() {
             <Search className="h-4 w-4 text-gold-400" />
             你可能想访问
           </h3>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
             {SUGGESTIONS.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
                 className="group rounded-xl border border-white/5 bg-white/[0.02] p-4 transition-all hover:border-gold-400/40 hover:bg-gold-400/5"
               >
-                <item.icon className="mx-auto mb-2 h-5 w-5 text-navy-300 transition-colors group-hover:text-gold-400" />
+                {renderLucideIcon(item.icon, 'mx-auto mb-2 h-5 w-5 text-navy-300 transition-colors group-hover:text-gold-400')}
                 <span className="text-sm text-navy-200 transition-colors group-hover:text-white">
                   {item.name}
                 </span>

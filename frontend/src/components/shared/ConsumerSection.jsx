@@ -1,6 +1,7 @@
 /**
  * C 端章节标题与通用布局 primitive
  */
+import { Search } from 'lucide-react'
 import { cn } from '@/utils/cn'
 
 export function SectionEyebrow({ children, className }) {
@@ -111,6 +112,32 @@ export function SideSectionTitle({ children, className }) {
  *   - 内边距: py-10 sm:py-14
  *   - 动画: pageEnter from @/constants/motion
  */
+const PAGE_MAX_WIDTH = {
+  '4xl': 'max-w-4xl',
+  '5xl': 'max-w-5xl',
+  '6xl': 'max-w-6xl',
+  '7xl': 'max-w-7xl',
+  full: 'max-w-none',
+}
+
+/** C 端页面标准容器 — 居中 + 左右内边距 + 可选最大宽度 */
+export function PageContainer({
+  children,
+  className,
+  width = '7xl',
+  as: Component = 'div',
+  ...props
+}) {
+  return (
+    <Component
+      className={cn('sf-page-shell', PAGE_MAX_WIDTH[width] ?? PAGE_MAX_WIDTH['7xl'], className)}
+      {...props}
+    >
+      {children}
+    </Component>
+  )
+}
+
 export function ConsumerShell({
   eyebrow,
   title,
@@ -129,9 +156,9 @@ export function ConsumerShell({
       {/* 标题区 */}
       <div
         className={cn(
-          'mx-auto w-full',
+          'sf-page-shell',
           fullWidth ? 'max-w-none' : 'max-w-7xl',
-          'px-5 sm:px-8 pt-10 sm:pt-14',
+          'pt-10 sm:pt-14',
         )}
       >
         <div className={cn(centered ? 'mx-auto max-w-3xl text-center' : 'max-w-3xl', 'mb-10 sm:mb-12 animate-fade-in')}>
@@ -154,4 +181,34 @@ export function ConsumerShell({
       </div>
     </div>
   )
+}
+
+/** C 端列表页工具栏 — 搜索 + 排序/操作，避免 flex 挤压竖排 */
+export function ConsumerListToolbar({ children, className }) {
+  return <div className={cn('sf-toolbar', className)}>{children}</div>
+}
+
+export function ConsumerListToolbarSearch({
+  value,
+  onChange,
+  placeholder = '搜索…',
+  className,
+  inputClassName,
+}) {
+  return (
+    <div className={cn('sf-toolbar-search relative', className)}>
+      <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-navy-400" />
+      <input
+        type="search"
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className={cn('sf-control h-11 w-full pl-10', inputClassName)}
+      />
+    </div>
+  )
+}
+
+export function ConsumerListToolbarActions({ children, className }) {
+  return <div className={cn('sf-toolbar-actions', className)}>{children}</div>
 }

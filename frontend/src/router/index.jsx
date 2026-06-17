@@ -15,6 +15,10 @@
  *   - /member      → 会员中心（需登录）
  *   - /orders      → 我的订单（需登录）
  *   - /wallet      → 我的钱包（需登录）
+ *   - /evaluate    → 剧本评估（需登录）
+ *   - /pull-sheet  → 拉片分析（需登录）
+ *   - /share/:token → 作品分享预览（公开）
+ *   - /tools       → 重定向至 /evaluate
  *   - /login       → 登录页
  *   - /register    → 注册页
  *   - /admin       → 管理后台（需管理员权限）
@@ -26,8 +30,14 @@
  */
 
 import { lazy, Suspense } from 'react'
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Outlet, Navigate } from 'react-router-dom'
 import { PrivateRoute, AdminRoute } from './guards.jsx'
+import { MonitorRouteTracker } from '@/utils/monitor'
+
+/** 懒加载具名导出页面 */
+function lazyNamed(importFn, exportName) {
+  return lazy(() => importFn().then((mod) => ({ default: mod[exportName] })))
+}
 
 // ── 布局组件 ────────────────────────────────────────────────
 const MainLayout = lazy(() => import('@/components/layout/MainLayout.jsx'))
@@ -46,17 +56,35 @@ const Profile = lazy(() => import('@/pages/Profile/index.jsx'))
 const Member = lazy(() => import('@/pages/Member/index.jsx'))
 const Orders = lazy(() => import('@/pages/Orders/index.jsx'))
 const Wallet = lazy(() => import('@/pages/Wallet/index.jsx'))
+const ScriptEvaluate = lazy(() => import('@/pages/Tools/ScriptEvaluate.jsx'))
+const PullSheetAnalyze = lazy(() => import('@/pages/Tools/PullSheetAnalyze.jsx'))
+const ShareView = lazy(() => import('@/pages/Share/index.jsx'))
 
 // ── 管理后台 ─────────────────────────────────────────────────
 const AdminDashboard = lazy(() => import('@/pages/Admin/Dashboard.jsx'))
+const AdminStats = lazy(() => import('@/pages/Admin/AdminStats.jsx'))
+const AdminMonitoring = lazy(() => import('@/pages/Admin/monitoring/MonitoringDashboardPage.jsx'))
+const AdminCreationHub = lazyNamed(() => import('@/pages/Admin/CreationCenterPage.jsx'), 'CreationCenterPage')
 const AdminProjects = lazy(() => import('@/pages/Admin/CreationProjects.jsx'))
-const AdminSkills = lazy(() => import('@/pages/Admin/AdminSkills.jsx'))
+const AdminProjectTrace = lazy(() => import('@/pages/Admin/CreationProjectTrace.jsx'))
+const AdminModelHub = lazy(() => import('@/pages/Admin/model/ModelHubPage.jsx'))
+const AdminAgentHub = lazy(() => import('@/pages/Admin/agent/AgentHubPage.jsx'))
+const AdminOrchestrationHub = lazy(() => import('@/pages/Admin/orchestration/OrchestrationHubPage.jsx'))
+const SkillCenterPage = lazy(() => import('@/pages/Admin/skills/SkillCenterPage.jsx'))
+const AdminBatchJobs = lazy(() => import('@/pages/Admin/batch/AdminBatchJobs.jsx'))
+const AdminLibrary = lazy(() => import('@/pages/Admin/library/AdminLibrary.jsx'))
+const AdminEvolution = lazy(() => import('@/pages/Admin/evolution/AdminEvolution.jsx'))
 const AdminUsers = lazy(() => import('@/pages/Admin/Users.jsx'))
 const AdminOrders = lazy(() => import('@/pages/Admin/Orders.jsx'))
 const AdminMembers = lazy(() => import('@/pages/Admin/Members.jsx'))
+const MembersPlansPage = lazyNamed(() => import('@/pages/Admin/MemberSettingsRoute.jsx'), 'MembersPlansPage')
 const AdminBilling = lazy(() => import('@/pages/Admin/Billing.jsx'))
+const CommerceSettingsPage = lazyNamed(() => import('@/pages/Admin/CommerceSettingsRoute.jsx'), 'CommerceSettingsPage')
+const AdminPortal = lazy(() => import('@/pages/Admin/portal/PortalContentPage.jsx'))
 const AdminSettings = lazy(() => import('@/pages/Admin/Settings.jsx'))
 const AdminSystem = lazy(() => import('@/pages/Admin/AdminSystemConfig.jsx'))
+const SystemConfigCenter = lazy(() => import('@/pages/Admin/system/SystemConfigCenterPage.jsx'))
+const SystemAdvancedPage = lazyNamed(() => import('@/pages/Admin/SectionSettingsRoute.jsx'), 'SystemAdvancedPage')
 const AdminLogin = lazy(() => import('@/pages/Admin/Login.jsx'))
 
 // ── 【运营 F8】运营监控中心 ───────────────────────────────────
@@ -89,10 +117,19 @@ function PageLoading({ children }) {
   )
 }
 
+function RootLayout() {
+  return (
+    <>
+      <MonitorRouteTracker />
+      <Outlet />
+    </>
+  )
+}
+
 /* ============================================================
  * 路由表
  * ============================================================ */
-const router = createBrowserRouter([
+const appRoutes = [
   // ── C 端主路由（带 MainLayout） ─────────────
   {
     element: (
@@ -146,12 +183,36 @@ const router = createBrowserRouter([
           </PrivateRoute>
         ),
       },
+      {
+        path: '/evaluate',
+        element: (
+          <PrivateRoute>
+            <ScriptEvaluate />
+          </PrivateRoute>
+        ),
+      },
+      {
+        path: '/pull-sheet',
+        element: (
+          <PrivateRoute>
+            <PullSheetAnalyze />
+          </PrivateRoute>
+        ),
+      },
     ],
   },
 
   // ── Auth 路由（不带 MainLayout，避免重复嵌套） ──
   { path: '/login', element: <PageLoading><Login /></PageLoading> },
   { path: '/register', element: <PageLoading><Register /></PageLoading> },
+
+  // ── 公开分享（独立布局，无顶栏） ──
+  { path: '/share/:token', element: <PageLoading><ShareView /></PageLoading> },
+
+  // ── 兼容别名 ──
+  { path: '/tools', element: <Navigate to="/evaluate" replace /> },
+  { path: '/tools/evaluate', element: <Navigate to="/evaluate" replace /> },
+  { path: '/tools/pull-sheet', element: <Navigate to="/pull-sheet" replace /> },
 
   // ── 管理后台登录页（独立，避免重定向循环） ───
   { path: '/admin/login', element: <PageLoading><AdminLogin /></PageLoading> },
@@ -167,28 +228,67 @@ const router = createBrowserRouter([
       </AdminRoute>
     ),
     children: [
-      { index: true, element: <AdminDashboard /> },
+      { index: true, element: <Navigate to="dashboard" replace /> },
       { path: 'dashboard', element: <AdminDashboard /> },
+      // 概览
+      { path: 'stats', element: <AdminStats /> },
+      { path: 'monitoring', element: <AdminMonitoring /> },
+      // 创作
+      { path: 'creation', element: <AdminCreationHub /> },
+      { path: 'creation/projects', element: <AdminProjects /> },
+      { path: 'creation/projects/:projectId/trace', element: <AdminProjectTrace /> },
       { path: 'projects', element: <AdminProjects /> },
-      { path: 'skills', element: <AdminSkills /> },
+      // AI 引擎
+      { path: 'model', element: <AdminModelHub /> },
+      { path: 'agent', element: <AdminAgentHub /> },
+      { path: 'orchestration', element: <AdminOrchestrationHub /> },
+      { path: 'skills', element: <SkillCenterPage /> },
+      { path: 'batch', element: <AdminBatchJobs /> },
+      { path: 'library', element: <AdminLibrary /> },
+      { path: 'evolution', element: <AdminEvolution /> },
+      // 用户与商业
       { path: 'users', element: <AdminUsers /> },
       { path: 'orders', element: <AdminOrders /> },
       { path: 'members', element: <AdminMembers /> },
+      { path: 'members/plans', element: <MembersPlansPage /> },
       { path: 'billing', element: <AdminBilling /> },
+      { path: 'commerce/settings', element: <CommerceSettingsPage /> },
+      // 站点 / 系统
+      { path: 'portal', element: <AdminPortal /> },
       { path: 'settings', element: <AdminSettings /> },
       { path: 'system', element: <AdminSystem /> },
+      { path: 'system/maintenance', element: <AdminSettings /> },
+      { path: 'system/configs', element: <SystemConfigCenter /> },
+      { path: 'system/advanced', element: <SystemAdvancedPage /> },
       // 【运营 F8】运营监控中心
       { path: 'operations/dashboard', element: <OperationsDashboard /> },
       { path: 'operations/content-quality', element: <ContentQuality /> },
       { path: 'operations/feedback', element: <OperationsFeedback /> },
       { path: 'operations/config-hit', element: <ConfigEffectiveness /> },
       { path: 'operations/checklist', element: <DailyChecklist /> },
+      // 历史路径兼容
+      { path: 'mainchain', element: <Navigate to="/admin/orchestration?tab=flow" replace /> },
+      { path: 'mainchain/*', element: <Navigate to="/admin/orchestration?tab=flow" replace /> },
     ],
   },
 
   // ── 404 兜底 ─────────────────────────────────
   { path: '*', element: <PageLoading><NotFound /></PageLoading> },
-])
+]
+
+const router = createBrowserRouter(
+  [
+    {
+      element: <RootLayout />,
+      children: appRoutes,
+    },
+  ],
+  {
+    future: {
+      v7_startTransition: true,
+    },
+  },
+)
 
 export default function Router() {
   return <RouterProvider router={router} />

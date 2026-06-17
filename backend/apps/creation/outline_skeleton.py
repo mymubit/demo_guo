@@ -259,11 +259,26 @@ def stage_rough_outline_ready(payload: dict) -> bool:
 
 
 OUTLINE_SUMMARY_MIN = 100
-OUTLINE_SUMMARY_MAX = 200
+OUTLINE_SUMMARY_MAX = 400
+OUTLINE_EPISODE_BEAT_MAX = 500
+
+
+def clip_summary_text(text: str, max_len: int = OUTLINE_SUMMARY_MAX) -> str:
+    """截断梗概时在句号/逗号等边界切，避免句中硬切。"""
+    raw = (text or "").strip()
+    if len(raw) <= max_len:
+        return raw
+    chunk = raw[:max_len]
+    min_pos = int(max_len * 0.55)
+    for sep in ("。", "！", "？", "；", "，", ".", "!", "?", ";", ","):
+        idx = chunk.rfind(sep)
+        if idx >= min_pos:
+            return chunk[: idx + 1].strip()
+    return chunk.strip()
 
 
 def episodes_needing_summary(payload: Optional[dict]) -> List[int]:
-    """旧项目或短梗概：返回须补全至 100–200 字的集号。"""
+    """旧项目或短梗概：返回须补全至 100–400 字的集号。"""
     if not isinstance(payload, dict):
         return []
     gaps: List[int] = []
@@ -286,7 +301,7 @@ def episodes_needing_summary(payload: Optional[dict]) -> List[int]:
 def _expand_episode_summary(ep: dict) -> str:
     summary = (ep.get("oneLineSummary") or ep.get("summary") or "").strip()
     if len(summary) >= OUTLINE_SUMMARY_MIN:
-        return summary[:OUTLINE_SUMMARY_MAX]
+        return clip_summary_text(summary, OUTLINE_SUMMARY_MAX)
     parts: List[str] = []
     if summary:
         parts.append(summary)
@@ -309,11 +324,11 @@ def _expand_episode_summary(ep: dict) -> str:
         merged = f"{merged}。{pad}"
     while len(merged) < OUTLINE_SUMMARY_MIN and len(merged) < OUTLINE_SUMMARY_MAX:
         merged = f"{merged}主线持续升级，悬念与反转节奏对齐六阶段规划。"
-    return merged[:OUTLINE_SUMMARY_MAX]
+    return clip_summary_text(merged, OUTLINE_SUMMARY_MAX)
 
 
 def expand_legacy_episode_summaries(payload: Optional[dict]) -> tuple[dict, List[int]]:
-    """旧四段大纲等短梗概：合并字段扩写至 100–200 字，返回 (payload, 已修复集号)。"""
+    """旧四段大纲等短梗概：合并字段扩写至 100–400 字，返回 (payload, 已修复集号)。"""
     if not isinstance(payload, dict):
         return {}, []
     fixed: List[int] = []

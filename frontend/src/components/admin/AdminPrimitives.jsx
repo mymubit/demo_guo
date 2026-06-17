@@ -5,6 +5,7 @@
 import { Search } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { ICON } from '@/constants/iconSizes'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 export function AdminPageHeader({
   crumbs,
@@ -173,7 +174,6 @@ export function AdminPillTabs({ tabs, active, onChange, className }) {
       )}
     >
       {tabs.map((t) => {
-        const Icon = t.icon
         const isActive = active === t.key
         return (
           <button
@@ -185,7 +185,7 @@ export function AdminPillTabs({ tabs, active, onChange, className }) {
               isActive ? 'bg-white/10 text-white' : 'text-slate-300 hover:text-white',
             )}
           >
-            {Icon ? <Icon className={ICON.sm} /> : null}
+            {renderLucideIcon(t.icon, ICON.sm)}
             {t.label}
           </button>
         )

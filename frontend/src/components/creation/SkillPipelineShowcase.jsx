@@ -2,9 +2,9 @@
 import { nodeCoinCost } from '@/utils/number'
 import { filterCreationPipelineNodes, displayPipelineStepName } from '@/utils/pipelineNodes'
 import { cn } from '@/utils/cn'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 function PipelineStepCard({ node, index }) {
-  const Icon = node.icon
   const name = displayPipelineStepName(node.name)
 
   return (
@@ -18,7 +18,7 @@ function PipelineStepCard({ node, index }) {
         {index + 1}
       </div>
       <div className="min-w-0 flex-1 flex items-center gap-2">
-        {Icon ? <Icon className="w-4 h-4 text-gold-400 shrink-0" /> : null}
+        {renderLucideIcon(node.icon, 'w-4 h-4 text-gold-400 shrink-0')}
         <h4 className="text-sm font-semibold text-white leading-snug">{name}</h4>
       </div>
     </div>
@@ -42,7 +42,6 @@ function CompactPipelineStrip({ nodes, prefilledSteps = [], executionPlan = null
       <p className="text-[11px] text-navy-400 mb-2 tracking-wide">Agent 流水线 · {caption}</p>
       <div className="flex flex-wrap items-center gap-y-2 gap-x-1">
         {nodes.map((node, idx) => {
-          const Icon = node.icon
           const name = displayPipelineStepName(node.name)
           const stepNo = idx + 1
           const isPrefilled = prefilled.has(stepNo)
@@ -64,7 +63,7 @@ function CompactPipelineStrip({ nodes, prefilledSteps = [], executionPlan = null
                 >
                   {stepNo}
                 </span>
-                {Icon ? <Icon className={`w-3 h-3 ${isPrefilled ? 'text-emerald-300' : 'text-gold-400'}`} /> : null}
+                {renderLucideIcon(node.icon, `w-3 h-3 ${isPrefilled ? 'text-emerald-300' : 'text-gold-400'}`)}
                 <span className={`text-xs ${isPrefilled ? 'text-emerald-100' : 'text-navy-100'}`}>{name}</span>
                 {isPrefilled ? (
                   <span className="text-[10px] text-emerald-400/90">已预填</span>

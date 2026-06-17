@@ -37,7 +37,7 @@ function StatCard({ label, value, hint, tone = 'text-white' }) {
 
 function FilterBar({ filters, onChange, onRefresh }) {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/60 p-4 lg:flex-row lg:items-center">
+    <div className="sf-toolbar rounded-2xl border border-white/10 bg-slate-900/60 p-4">
       <select
         value={filters.days}
         onChange={(event) => onChange({ days: Number(event.target.value), page: 1 })}
@@ -51,7 +51,7 @@ function FilterBar({ filters, onChange, onRefresh }) {
         value={filters.keyword}
         onChange={(event) => onChange({ keyword: event.target.value, page: 1 })}
         placeholder="搜索 message / trace_id / hash"
-        className="sf-control flex-1"
+        className="sf-control h-11 min-w-0 flex-1"
       />
       <select
         value={filters.level}

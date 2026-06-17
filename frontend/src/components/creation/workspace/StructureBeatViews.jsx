@@ -1,5 +1,6 @@
 import { EChart, formatRhythmEpisodeLabel } from '@/components/charts'
 import { resolveThemeCodeLabel } from '@/utils/displayLabels'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 import { MetaChip } from './MasterDetailLayout'
 
 const ARC_LABELS = {
@@ -10,13 +11,13 @@ const ARC_LABELS = {
   resolution: '结局余味',
 }
 
-function PanelBlock({ title, icon: Icon, children, className = '' }) {
+function PanelBlock({ title, icon, children, className = '' }) {
   if (!children) return null
   return (
     <div className={`rounded-2xl border border-white/5 bg-slate-900/40 overflow-hidden ${className}`}>
       {title ? (
         <div className="border-b border-white/5 bg-slate-900/60 px-5 py-3 flex items-center gap-2">
-          {Icon ? <Icon className="w-3.5 h-3.5 text-gold-400/70" /> : null}
+          {renderLucideIcon(icon, 'w-3.5 h-3.5 text-gold-400/70')}
           <span className="text-xs font-medium text-gold-400/85">{title}</span>
         </div>
       ) : null}

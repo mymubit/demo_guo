@@ -19,6 +19,7 @@ import {
   isAutoChargePrice,
   syncChargeFromDiscount,
 } from '@/utils/adminEconomics'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const PLAN_FIELD_ROWS = [
   ['name', '套餐名称'],
@@ -619,7 +620,7 @@ export default function MembersAdmin({ forcedTab: forcedTabProp }) {
                 : 'text-navy-200 hover:bg-white/[0.06]'
             }`}
           >
-            <t.icon className="w-4 h-4" />
+            {renderLucideIcon(t.icon, 'w-4 h-4')}
             {t.label}
           </button>
         ))}

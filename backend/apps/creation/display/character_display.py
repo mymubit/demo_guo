@@ -373,19 +373,19 @@ def dedupe_relationships(rows: List[dict]) -> List[dict]:
 
 def _char_one_liner(char: dict) -> str:
     for key in ("oneLineSummary", "summary", "coreMotivation"):
-        val = (char.get(key) or "").strip()
+        val = _as_text(char.get(key))
         if val:
             return val[:200]
-    surface = (char.get("surfacePersonality") or "").strip()
+    surface = _as_text(char.get("surfacePersonality"))
     if surface:
         return surface[:200]
     return ""
 
 
 def _char_personality(char: dict) -> str:
-    surface = (char.get("surfacePersonality") or "").strip()
-    real = (char.get("realPersonality") or "").strip()
-    legacy = (char.get("personality") or char.get("traits") or "").strip()
+    surface = _as_text(char.get("surfacePersonality"))
+    real = _as_text(char.get("realPersonality"))
+    legacy = _as_text(char.get("personality")) or _as_text(char.get("traits"))
     if legacy:
         return legacy
     if surface and real:
@@ -408,6 +408,23 @@ def _as_joined_text(val: Any, sep: str = " · ") -> str:
     if isinstance(val, str):
         return val.strip()
     return ""
+
+
+def _as_text(val: Any, sep: str = " · ") -> str:
+    """LLM 可能把字段输出为 str / list / 嵌套 dict，统一转为展示用字符串。"""
+    if val is None:
+        return ""
+    if isinstance(val, str):
+        return val.strip()
+    if isinstance(val, list):
+        return _as_joined_text(val, sep=sep)
+    if isinstance(val, dict):
+        for key in ("text", "name", "label", "summary", "description", "value"):
+            hit = val.get(key)
+            if hit:
+                return _as_text(hit, sep=sep)
+        return ""
+    return str(val).strip()
 
 
 def _normalize_voice_profile(char: dict) -> dict:
@@ -520,8 +537,8 @@ def _archetype_label(code: str, archetype_index: Optional[dict] = None) -> str:
 
 def _normalize_contrast_relation(char: dict) -> dict:
     cr = char.get("contrastRelation") if isinstance(char.get("contrastRelation"), dict) else {}
-    contrast_type = (cr.get("contrastType") or char.get("contrastType") or "").strip()
-    contrast_desc = (cr.get("contrastDescription") or char.get("contrastDescription") or "").strip()
+    contrast_type = _as_text(cr.get("contrastType") or char.get("contrastType"))
+    contrast_desc = _as_text(cr.get("contrastDescription") or char.get("contrastDescription"))
     if not contrast_type and not contrast_desc:
         return {}
     return {"contrastType": contrast_type, "contrastDescription": contrast_desc}
@@ -543,23 +560,23 @@ def _normalize_character(char: dict, archetype_index: Optional[dict] = None) -> 
         "age": char.get("age"),
         "gender": char.get("gender") or "",
         "genderLabel": GENDER_LABELS.get(char.get("gender") or "", char.get("gender") or ""),
-        "appearance": (char.get("appearance") or "").strip(),
+        "appearance": _as_text(char.get("appearance")),
         "oneLineSummary": _char_one_liner(char),
         "personality": _char_personality(char),
-        "surfacePersonality": (char.get("surfacePersonality") or "").strip(),
-        "realPersonality": (char.get("realPersonality") or "").strip(),
-        "background": (char.get("background") or char.get("backstory") or "").strip(),
-        "coreMotivation": (char.get("coreMotivation") or "").strip(),
-        "shortTermGoal": (char.get("shortTermGoal") or "").strip(),
-        "longTermGoal": (char.get("longTermGoal") or "").strip(),
-        "secret": (char.get("secret") or "").strip(),
-        "weakness": (char.get("weakness") or "").strip(),
+        "surfacePersonality": _as_text(char.get("surfacePersonality")),
+        "realPersonality": _as_text(char.get("realPersonality")),
+        "background": _as_text(char.get("background") or char.get("backstory")),
+        "coreMotivation": _as_text(char.get("coreMotivation")),
+        "shortTermGoal": _as_text(char.get("shortTermGoal")),
+        "longTermGoal": _as_text(char.get("longTermGoal")),
+        "secret": _as_text(char.get("secret")),
+        "weakness": _as_text(char.get("weakness")),
         "characterArc": {
-            "startingState": (arc.get("startingState") or "").strip(),
+            "startingState": _as_text(arc.get("startingState")),
             "keyTurningPoints": [
                 str(p).strip() for p in (arc.get("keyTurningPoints") or []) if str(p).strip()
             ],
-            "finalState": (arc.get("finalState") or "").strip(),
+            "finalState": _as_text(arc.get("finalState")),
         },
         "signatureLines": [
             str(l).strip() for l in (char.get("signatureLines") or []) if str(l).strip()

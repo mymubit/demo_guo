@@ -1,6 +1,7 @@
 import { FileX, Search, Lock, WifiOff, PlusCircle } from 'lucide-react'
 import Button from '@/components/ui/Button'
 import { cn } from '@/utils/cn'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const presets = {
   'no-data': {
@@ -35,12 +36,21 @@ export default function EmptyState({
   title,
   description,
   action,
+  actionLabel,
+  onAction,
   icon,
   className,
   compact = false,
 }) {
   const preset = presets[type] || presets['no-data']
-  const Icon = icon || preset.icon
+  const iconSizeClass = cn(compact ? 'w-6 h-6' : 'w-8 h-8', 'text-slate-500')
+  const actionContent =
+    action ||
+    (actionLabel && onAction ? (
+      <Button variant="brand" size="sm" onClick={onAction}>
+        {actionLabel}
+      </Button>
+    ) : null)
 
   return (
     <div
@@ -56,7 +66,7 @@ export default function EmptyState({
           compact ? 'w-12 h-12' : 'w-16 h-16',
         )}
       >
-        <Icon className={cn(compact ? 'w-6 h-6' : 'w-8 h-8', 'text-slate-500')} />
+        {renderLucideIcon(icon || preset.icon, iconSizeClass)}
       </div>
       <h3 className={cn('font-semibold text-white mb-1', compact ? 'text-sm' : 'text-base')}>
         {title || preset.title}
@@ -64,7 +74,7 @@ export default function EmptyState({
       <p className={cn('text-slate-400 mb-4', compact ? 'text-xs' : 'text-sm')}>
         {description || preset.description}
       </p>
-      {action && <div className="mt-2">{action}</div>}
+      {actionContent ? <div className="mt-2">{actionContent}</div> : null}
     </div>
   )
 }

@@ -55,7 +55,7 @@ export default function CreationPipelineDiagram({ compact = false, linkTo, bluep
     <div className={`space-y-2 ${compact ? '' : 'p-4 rounded-2xl border border-white/5 bg-slate-900/40'}`}>
       <div className={`flex flex-wrap items-center gap-1.5`}>
       {workspaceSteps.map((s, i) => (
-        <span key={s.id || i} className="flex items-center gap-1.5">
+        <span key={`ws-${s.id}-${i}`} className="flex items-center gap-1.5">
           <span className={stepClass}>
             <span className="text-gold-400/90 mr-1">{s.index ?? i + 1}</span>
             {s.label}
@@ -86,7 +86,7 @@ export default function CreationPipelineDiagram({ compact = false, linkTo, bluep
         <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
           <span className="text-violet-400/80">分步尾部</span>
           {tailSteps.map((s, i) => (
-            <span key={s.id || i} className="flex items-center gap-1">
+            <span key={`tail-${s.id}-${i}`} className="flex items-center gap-1">
               <span className={`${stepClass} border-violet-700/40 text-violet-200`}>
                 <span className="opacity-70 mr-1">{s.index}</span>
                 {s.label}

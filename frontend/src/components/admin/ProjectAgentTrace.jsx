@@ -233,7 +233,7 @@ export function RunDetailModal({ runId, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60">
-      <div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-slate-900/95 p-5 shadow-2xl">
+      <div className="max-h-[85vh] w-full max-w-4xl overflow-y-auto rounded-2xl border border-white/10 bg-slate-900/95 p-5 shadow-2xl">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
             <h3 className="text-lg font-semibold text-white">执行详情</h3>
@@ -261,7 +261,7 @@ export function RunDetailModal({ runId, onClose }) {
           <>
             <ExecutionRunPanel run={detail} catalog={catalog} />
             <div className="mt-4 rounded-xl border border-white/5 bg-slate-900/40 p-4">
-              <p className="text-sm text-gold-400 mb-2">关联 LLM 调用</p>
+              <p className="text-sm text-gold-400 mb-2">LLM 用量汇总</p>
               <p className="text-xs text-navy-400 mb-3">
                 {detail.llm_summary?.call_count ?? 0} 次 ·{' '}
                 {(detail.llm_summary?.total_tokens ?? 0).toLocaleString()} Token ·{' '}
@@ -271,8 +271,11 @@ export function RunDetailModal({ runId, onClose }) {
                 {Number(detail.llm_summary?.estimated_output_cost_yuan || 0).toFixed(4)} · 合计 ¥
                 {Number(detail.llm_summary?.estimated_cost_yuan || 0).toFixed(4)}
               </p>
+              <p className="text-[10px] text-navy-500 mb-2">
+                完整 Prompt / 响应见上方「LLM 调用明细」各 sub_skill，此处仅 Token 与费用。
+              </p>
               {(detail.llm_usage || []).length ? (
-                <ul className="space-y-2 text-xs">
+                <ul className="space-y-1 text-xs">
                   {detail.llm_usage.map((row) => (
                     <li
                       key={row.id}

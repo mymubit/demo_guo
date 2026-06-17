@@ -3,6 +3,7 @@ import StructureSectionLayout from './StructureSectionLayout'
 import {
   blockRange,
   buildOutlineNavSections,
+  getStageGenerationState,
   OutlineMetaStrip,
   OutlineOverviewPanel,
   OutlinePlanningPanel,
@@ -109,11 +110,13 @@ export default function OutlineSkillPanel({
 
   function handleGenerateNextEpisode(block) {
     if (!block || !onGenerate) return
-    const { from, to } = blockRange(block)
+    const stageState = getStageGenerationState(block, eps)
+    const nextEp = stageState.nextEp
+    if (nextEp == null) return
     onGenerate({
       outline_mode: 'block',
-      from_episode: from,
-      to_episode: to,
+      from_episode: nextEp,
+      to_episode: nextEp,
       batch_size: 1,
     })
   }

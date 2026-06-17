@@ -26,6 +26,7 @@ import {
 import AdminShell from '@/components/admin/AdminShell'
 import { Button, EmptyState, Skeleton } from '@/components/ui'
 import { adminOperations } from '@/services/admin'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const SLO_ICONS = {
   submit_5xx: AlertCircle,
@@ -57,7 +58,6 @@ function formatValue(card) {
 }
 
 function SloCard({ card }) {
-  const Icon = SLO_ICONS[card.key] || Activity
   const ok = card.ok !== false
   return (
     <div
@@ -69,7 +69,7 @@ function SloCard({ card }) {
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-navy-400">
-          <Icon className="h-4 w-4" />
+          {renderLucideIcon(SLO_ICONS[card.key] || Activity, 'h-4 w-4')}
           <span>{card.level}</span>
         </div>
         <span
@@ -188,9 +188,7 @@ export default function OperationsDashboardPage() {
           <section className="mt-5">
             <h2 className="mb-3 text-sm font-semibold text-white">子页面入口</h2>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {SUBPAGE_LINKS.map((link) => {
-                const Icon = link.icon
-                return (
+              {SUBPAGE_LINKS.map((link) => (
                   <button
                     key={link.key}
                     type="button"
@@ -198,14 +196,13 @@ export default function OperationsDashboardPage() {
                     className="group rounded-2xl border border-white/10 bg-slate-900/60 p-5 text-left transition-all hover:border-gold-400/40 hover:bg-slate-900/80"
                   >
                     <div className="flex items-center justify-between">
-                      <Icon className="h-5 w-5 text-gold-400" />
+                      {renderLucideIcon(link.icon, 'h-5 w-5 text-gold-400')}
                       <ArrowRight className="h-4 w-4 text-navy-400 transition-transform group-hover:translate-x-1 group-hover:text-gold-400" />
                     </div>
                     <p className="mt-3 text-base font-semibold text-white">{link.label}</p>
                     <p className="mt-1 text-xs text-navy-400">{link.description}</p>
                   </button>
-                )
-              })}
+              ))}
             </div>
           </section>
 

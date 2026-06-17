@@ -4,6 +4,20 @@ import { ensureEchartsRegistered, echarts, SCRIPTFORGE_CHART_THEME } from './reg
 import { EmptyState, ErrorState, PageLoading } from '@/components/ui'
 import { cn } from '@/utils/cn'
 
+function isLiveChart(chart) {
+  return chart && typeof chart.isDisposed === 'function' && !chart.isDisposed()
+}
+
+function safeResize(chartRef) {
+  const chart = chartRef.current?.getEchartsInstance?.()
+  if (!isLiveChart(chart)) return
+  try {
+    chart.resize({ silent: true })
+  } catch {
+    // dispose 与 resize 竞态时忽略
+  }
+}
+
 /**
  * 通用 ECharts 容器：自动 resize、深色主题、notMerge 防止旧数据残留。
  */
@@ -28,34 +42,33 @@ export default function EChart({
   )
   const isChartMounted = Boolean(option) && !loading && !error
 
-  useEffect(() => {
-    ensureEchartsRegistered()
-  }, [])
-
   // ResizeObserver / 窗口监听仅在图表挂载时创建一次，不随 option 变化重建
   useEffect(() => {
     if (!isChartMounted) return undefined
 
     let observer = null
     let cancelled = false
-    let handleResize = null
+    let attachTimer = 0
     let resizeFrame = 0
 
+    const handleResize = () => {
+      if (cancelled) return
+      if (resizeFrame) window.cancelAnimationFrame(resizeFrame)
+      resizeFrame = window.requestAnimationFrame(() => {
+        resizeFrame = 0
+        if (!cancelled) safeResize(chartRef)
+      })
+    }
+
     const attach = () => {
+      if (cancelled) return
       const chart = chartRef.current?.getEchartsInstance?.()
       const container = containerRef.current
-      if (!chart || !container) {
-        if (!cancelled) window.setTimeout(attach, 0)
+      if (!isLiveChart(chart) || !container) {
+        attachTimer = window.setTimeout(attach, 16)
         return
       }
 
-      handleResize = () => {
-        if (resizeFrame) window.cancelAnimationFrame(resizeFrame)
-        resizeFrame = window.requestAnimationFrame(() => {
-          resizeFrame = 0
-          if (!cancelled) chart.resize({ silent: true })
-        })
-      }
       observer =
         typeof ResizeObserver !== 'undefined'
           ? new ResizeObserver(handleResize)
@@ -64,27 +77,25 @@ export default function EChart({
       observer?.observe(container)
       window.addEventListener('orientationchange', handleResize)
       window.addEventListener('resize', handleResize)
-      window.setTimeout(handleResize, 0)
+      handleResize()
     }
 
     attach()
 
     return () => {
       cancelled = true
+      if (attachTimer) window.clearTimeout(attachTimer)
       observer?.disconnect()
       if (resizeFrame) window.cancelAnimationFrame(resizeFrame)
-      if (handleResize) {
-        window.removeEventListener('orientationchange', handleResize)
-        window.removeEventListener('resize', handleResize)
-      }
+      window.removeEventListener('orientationchange', handleResize)
+      window.removeEventListener('resize', handleResize)
     }
   }, [isChartMounted])
 
   // Tab 切换等 visibility 变化时仅触发 resize，不重建 observer
   useEffect(() => {
-    if (!isChartMounted) return
-    const chart = chartRef.current?.getEchartsInstance?.()
-    const frame = window.requestAnimationFrame(() => chart?.resize({ silent: true }))
+    if (!isChartMounted) return undefined
+    const frame = window.requestAnimationFrame(() => safeResize(chartRef))
     return () => window.cancelAnimationFrame(frame)
   }, [visibilityKey, isChartMounted])
 
@@ -113,6 +124,7 @@ export default function EChart({
         lazyUpdate={lazyUpdate}
         showLoading={false}
         onEvents={onEvents}
+        autoResize={false}
         opts={{ renderer: 'canvas' }}
       />
     </div>

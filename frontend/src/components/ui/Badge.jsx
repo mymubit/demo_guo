@@ -49,7 +49,7 @@ const sizes = {
   md: 'px-3 py-1.5 text-sm',
 }
 
-export default function Badge({ tone = 'default', size = 'sm', icon, className, children }) {
+function Badge({ tone = 'default', size = 'sm', icon, className, children }) {
   const toneDef = tones[tone] || tones.default
   return (
     <span
@@ -84,3 +84,6 @@ export function StatusBadge({ status, children, className }) {
     </Badge>
   )
 }
+
+export default Badge
+export { Badge }

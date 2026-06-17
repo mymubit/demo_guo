@@ -22,11 +22,13 @@ import ScoreReport from '@/components/creation/ScoreReport'
 import GateReport from '@/components/creation/GateReport'
 import WorkVisualizationSection from '@/components/works/WorkVisualizationSection'
 import WorkMetaPanel from '@/components/works/WorkMetaPanel'
+import { PageContainer } from '@/components/shared/ConsumerSection'
 import { ExecutionDurationLabel } from '@/components/shared/ExecutionRunPanel'
 import { cn } from '@/utils/cn'
 
 import { getThemeMeta } from '@/constants/themeMeta'
 import ThemeBadge from '@/components/ui/ThemeBadge'
+import { Button } from '@/components/ui'
 
 import { getWorkStatusMeta } from '@/utils/workStatus'
 import { useWorkDetail } from '@/hooks/queries/useWorkDetail'
@@ -210,7 +212,7 @@ export default function WorksDetail() {
 
   return (
     <div className="relative min-h-screen py-12">
-      <div className="mx-auto max-w-7xl px-6">
+      <PageContainer width="7xl" className="py-8 md:py-12">
         {/* 返回导航 */}
         <motion.div
           initial={{ opacity: 0, y: -12 }}
@@ -605,23 +607,29 @@ export default function WorksDetail() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="mt-8 flex flex-col md:flex-row gap-3 justify-center"
+          className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center"
         >
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="lg"
+            iconLeft={ArrowLeft}
+            className="w-full sm:w-auto"
             onClick={() => navigate('/works')}
-            className="flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-8 py-4 font-semibold text-white transition-all hover:bg-white/[0.06]"
           >
-            <ArrowLeft className="w-5 h-5" />
             查看更多作品
-          </button>
-          <button
+          </Button>
+          <Button
+            type="button"
+            variant="gold"
+            size="lg"
+            iconLeft={Sparkles}
+            iconRight={ChevronRight}
+            className="w-full sm:w-auto"
             onClick={() => navigate('/creation')}
-            className="px-8 py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 btn-gold hover:shadow-lg hover:shadow-gold-500/30 transition-all"
           >
-            <Sparkles className="w-5 h-5" />
             创作新剧本
-            <ChevronRight className="w-5 h-5" />
-          </button>
+          </Button>
         </motion.div>
 
         {/* 分享弹窗 */}
@@ -678,7 +686,7 @@ export default function WorksDetail() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </PageContainer>
     </div>
   )
 }

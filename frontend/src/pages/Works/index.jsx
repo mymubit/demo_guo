@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
   FolderKanban,
-  Search,
   ArrowLeft,
   Clock,
   Calendar,
@@ -23,7 +22,8 @@ import { works as worksApi } from '@/services/api'
 import { getThemeMeta } from '@/constants/themeMeta'
 import ThemeBadge from '@/components/ui/ThemeBadge'
 import EmptyState from '@/components/ui/EmptyState'
-import { SectionEyebrow, PillFilterGroup } from '@/components/shared/ConsumerSection'
+import { Button } from '@/components/ui'
+import { SectionEyebrow, PillFilterGroup, ConsumerListToolbar, ConsumerListToolbarSearch, ConsumerListToolbarActions, PageContainer } from '@/components/shared/ConsumerSection'
 import { getWorkStatusMeta, WORK_FILTER_OPTIONS } from '@/utils/workStatus'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { useWorksList } from '@/hooks/queries/useWorksList'
@@ -93,26 +93,33 @@ export default function Works() {
 
   return (
     <div className="relative min-h-screen py-12">
-      <div className="mx-auto max-w-7xl px-6">
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-7">
+      <PageContainer width="7xl">
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <button
+            type="button"
             onClick={() => navigate('/')}
-            className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-navy-200 transition-all hover:bg-white/[0.06] hover:text-white"
+            className="mb-5 flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-navy-300 transition-colors hover:bg-white/[0.06] hover:text-white"
+            aria-label="返回首页"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
-          <header className="flex flex-wrap items-end justify-between gap-6">
-            <div>
+          <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="min-w-0">
               <SectionEyebrow>我的作品</SectionEyebrow>
               <h1 className="mt-3 text-3xl font-bold leading-tight tracking-tight text-white md:text-4xl">
                 {pagination.total} 部剧本
-                {generatingCount > 0 ? ` · ${generatingCount} 部正在生成` : ''}
+                {generatingCount > 0 ? (
+                  <span className="ml-2 text-lg font-medium text-gold-400/90 md:text-xl">
+                    · {generatingCount} 部生成中
+                  </span>
+                ) : null}
               </h1>
-              <p className="mt-2 max-w-[56ch] text-navy-200">
-                共 {pagination.total} 个项目 · 当前页已完成 {completedCount} 个 · 所有作品自动加密存档
+              <p className="mt-2 text-sm text-navy-300 md:text-base">
+                共 {pagination.total} 个项目 · 当前页已完成 {completedCount} 个 · 自动加密存档
               </p>
             </div>
             <PillFilterGroup
+              className="shrink-0"
               options={FILTER_OPTIONS}
               value={statusFilter}
               onChange={(key) => {
@@ -123,61 +130,60 @@ export default function Works() {
           </header>
         </motion.div>
 
-        {/* 搜索 + 筛选栏 */}
+        {/* 搜索与操作 */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-8 rounded-2xl border border-white/5 bg-slate-900/60 p-5"
+          transition={{ delay: 0.05 }}
+          className="mb-8"
         >
-          <div className="flex flex-col md:flex-row gap-3">
-            {/* 搜索框 */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-navy-400" />
-              <input
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value)
-                  setPage(1)
-                }}
-                placeholder="搜索作品标题或创意描述..."
-                className="sf-control pl-11"
-              />
-            </div>
-
-            {/* 排序 */}
-            <select
-              value={sortBy}
+          <ConsumerListToolbar>
+            <ConsumerListToolbarSearch
+              value={search}
               onChange={(e) => {
-                setSortBy(e.target.value)
+                setSearch(e.target.value)
                 setPage(1)
               }}
-              className="sf-control cursor-pointer text-sm"
-            >
-              <option value="newest">最新创建</option>
-              <option value="score">评分最高</option>
-              <option value="episodes">集数最多</option>
-            </select>
+              placeholder="搜索标题或创意描述…"
+            />
 
-            {/* 刷新 */}
-            <button
-              onClick={() => refetch()}
-              disabled={loading}
-              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-5 py-3 text-white transition-all hover:bg-white/[0.06] disabled:opacity-50"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              刷新
-            </button>
+            <ConsumerListToolbarActions>
+              <select
+                value={sortBy}
+                onChange={(e) => {
+                  setSortBy(e.target.value)
+                  setPage(1)
+                }}
+                className="sf-control h-11 w-[7.5rem] shrink-0 cursor-pointer whitespace-nowrap px-3 text-sm sm:w-32"
+                aria-label="排序方式"
+              >
+                <option value="newest">最新创建</option>
+                <option value="score">评分最高</option>
+                <option value="episodes">集数最多</option>
+              </select>
 
-            {/* 新建按钮 */}
-            <button
-              onClick={() => navigate('/creation')}
-              className="px-5 py-3 rounded-xl font-semibold flex items-center gap-2 btn-gold hover:shadow-lg hover:shadow-gold-500/30 transition-all"
-            >
-              <Sparkles className="w-4 h-4" />
-              新建创作
-            </button>
-          </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="md"
+                iconLeft={RefreshCw}
+                isLoading={loading}
+                onClick={() => refetch()}
+              >
+                刷新
+              </Button>
+
+              <Button
+                type="button"
+                variant="gold"
+                size="md"
+                iconLeft={Sparkles}
+                onClick={() => navigate('/creation')}
+              >
+                新建创作
+              </Button>
+            </ConsumerListToolbarActions>
+          </ConsumerListToolbar>
         </motion.div>
 
         {loadError && (
@@ -236,7 +242,7 @@ export default function Works() {
             </button>
           </div>
         )}
-      </div>
+      </PageContainer>
     </div>
   )
 }

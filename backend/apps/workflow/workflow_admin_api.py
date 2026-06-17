@@ -41,6 +41,20 @@ from apps.workflow.models import FusionPipelineNode, FusionPipelinePack
 logger = logging.getLogger(__name__)
 
 
+# Python dataclass 在部分环境中需要保护：
+def dataclass_fallback(cls):  # type: ignore
+    """为普通类添加一个轻量级的 __init__ 构造（兼容低版本 Python）。"""
+    try:
+        from dataclasses import dataclass as _dc
+        return _dc(cls)
+    except Exception:
+        def __init__(self, **kwargs):  # type: ignore
+            for k, v in kwargs.items():
+                setattr(self, k, v)
+        cls.__init__ = __init__
+        return cls
+
+
 # =========================================================
 # Issue 模型：校验结果的统一结构
 # =========================================================
@@ -61,20 +75,6 @@ class PackIssue:
             "node_id": self.node_id,
             "detail": self.detail or {},
         }
-
-
-# Python dataclass 在部分环境中需要保护：
-def dataclass_fallback(cls):  # type: ignore
-    """为普通类添加一个轻量级的 __init__ 构造（兼容低版本 Python）。"""
-    try:
-        from dataclasses import dataclass as _dc
-        return _dc(cls)
-    except Exception:
-        def __init__(self, **kwargs):  # type: ignore
-            for k, v in kwargs.items():
-                setattr(self, k, v)
-        cls.__init__ = __init__
-        return cls
 
 
 # =========================================================

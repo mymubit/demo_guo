@@ -37,6 +37,7 @@ import { adminStats } from '@/services/api'
 import { Button } from '@/components/ui'
 import { ICON } from '@/constants/iconSizes'
 import { cn } from '@/utils/cn'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const DAY_RANGES = [
   { value: 7, label: '近 7 天' },
@@ -74,7 +75,7 @@ function formatPercent(value, digits = 2) {
   return `${Number(value).toFixed(digits)}%`
 }
 
-function KpiCard({ label, value, hint, icon: Icon, tone = 'default', trend }) {
+function KpiCard({ label, value, hint, icon, tone = 'default', trend }) {
   const tones = {
     default: 'text-navy-300 bg-slate-800/60 border-white/10',
     gold: 'text-gold-300 bg-gold-400/12 border-gold-400/25',
@@ -90,9 +91,9 @@ function KpiCard({ label, value, hint, icon: Icon, tone = 'default', trend }) {
           <div className="mt-2 truncate text-3xl font-bold tracking-tight text-white">{value}</div>
           {hint ? <div className="mt-1 text-[11px] text-navy-400">{hint}</div> : null}
         </div>
-        {Icon ? (
+        {icon ? (
           <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border', tones[tone] || tones.default)}>
-            <Icon className={ICON.lg} />
+            {renderLucideIcon(icon, ICON.lg)}
           </div>
         ) : null}
       </div>
@@ -113,7 +114,7 @@ function KpiCard({ label, value, hint, icon: Icon, tone = 'default', trend }) {
 
 function FilterBar({ days, onChange, onRefresh, loading }) {
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900/60 p-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="sf-toolbar rounded-2xl border border-white/10 bg-slate-900/60 p-4 lg:justify-between">
       <div className="flex items-center gap-3">
         <Filter className={cn(ICON.md, 'text-navy-400')} />
         <span className="text-xs uppercase tracking-wider text-navy-400">时间范围</span>

@@ -253,6 +253,7 @@ export default function LlmConfigPanel({ onMessage }) {
   const [form, setForm] = useState({ ...EMPTY_LLM_PROVIDER })
   const [apiKeyTouched, setApiKeyTouched] = useState(false)
   const [busyId, setBusyId] = useState(null)
+  const [connectedProvidersOpen, setConnectedProvidersOpen] = useState(true)
 
   function notify(text, type = 'success') {
     const msg = formatAdminError(text, type)
@@ -570,7 +571,11 @@ export default function LlmConfigPanel({ onMessage }) {
 
           {/* 已接入 */}
           {providers.length > 0 ? (
-            <details className="rounded-xl border border-white/10 bg-slate-900/40 group" defaultOpen>
+            <details
+              className="rounded-xl border border-white/10 bg-slate-900/40 group"
+              open={connectedProvidersOpen}
+              onToggle={(event) => setConnectedProvidersOpen(event.currentTarget.open)}
+            >
               <summary className="cursor-pointer list-none px-4 py-3 flex items-center justify-between gap-2">
                 <span className="text-xs text-navy-400 font-medium">已接入（{providers.length}）</span>
                 <ChevronDown className="w-4 h-4 text-navy-400 transition group-open:rotate-180" />

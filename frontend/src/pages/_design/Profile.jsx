@@ -11,6 +11,7 @@ import { Badge, Button } from '@/components/ui'
 import { ICON } from '@/constants/iconSizes'
 import { pageEnter } from '@/constants/motion'
 import { cn } from '@/utils/cn'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const TABS = [
   { k: 'profile', n: '基本资料', icon: User },
@@ -61,7 +62,7 @@ export default function Profile() {
                   tab === t.k ? 'bg-gold-400/10 text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white',
                 )}
               >
-                <t.icon className={cn(ICON.md, tab === t.k ? 'text-gold-400' : 'text-slate-400')} />
+                {renderLucideIcon(t.icon, cn(ICON.md, tab === t.k ? 'text-gold-400' : 'text-slate-400'))}
                 {t.n}
               </button>
             ))}

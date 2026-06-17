@@ -54,12 +54,12 @@ def resolve_agent_id(data: Optional[Mapping[str, Any]]) -> str:
 
 
 def normalize_agent_runner_path(path: Any) -> str:
-    """新引擎：旧 Agent runner 包路径已下线。
-    - 旧路径 apps.creation.agents.X.Y → 映射到空（统一由 skill_id 路由）
-    - 其他路径保持原样
+    """规范化 Agent runner 路径。
+    - 旧路径 apps.creation.agents.* → 清空（已下线）
+    - apps.creation.orchestration.* → 保留（工作台 Agent 编排入口）
     """
     text = str(path or "").strip()
-    if text.startswith((LEGACY_AGENT_RUNNER_PREFIX, AGENT_RUNNER_PREFIX)):
+    if text.startswith(LEGACY_AGENT_RUNNER_PREFIX):
         return ""
     return text
 
@@ -68,7 +68,9 @@ def normalize_pipeline_runner_path(path: Any, runner_type: Any = "") -> str:
     """规范化 FusionPipelineNode.runner_path，避免把 Agent runner 挂到步骤 runner 上。"""
     text = str(path or "").strip()
     rtype = str(runner_type or "").strip()
-    if text.startswith((LEGACY_AGENT_RUNNER_PREFIX, AGENT_RUNNER_PREFIX)):
+    if text.startswith(LEGACY_AGENT_RUNNER_PREFIX):
+        return PIPELINE_RUNNER_BY_TYPE.get(rtype, "")
+    if text.startswith(AGENT_RUNNER_PREFIX):
         return PIPELINE_RUNNER_BY_TYPE.get(rtype, "")
     return text or PIPELINE_RUNNER_BY_TYPE.get(rtype, "")
 

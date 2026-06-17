@@ -11,6 +11,7 @@ import {
 } from '@/config/adminNav'
 import BrandLogo from '@/components/ui/BrandLogo'
 import AdminErrorBoundary from '@/components/admin/AdminErrorBoundary'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const COLLAPSE_STORAGE_KEY = 'admin-nav-collapsed-v2'
 
@@ -46,11 +47,12 @@ function NavItem({ item, active, onNavigate }) {
       {active ? (
         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-7 rounded-full bg-gradient-to-b from-gold-300 to-gold-500" />
       ) : null}
-      <item.icon
-        className={`w-[22px] h-[22px] shrink-0 transition-colors ${
+      {renderLucideIcon(
+        item.icon,
+        `w-[22px] h-[22px] shrink-0 transition-colors ${
           active ? 'text-gold-400' : 'text-navy-400 group-hover:text-navy-100'
-        }`}
-      />
+        }`,
+      )}
       <span className="truncate tracking-wide">{item.label}</span>
     </NavLink>
   )

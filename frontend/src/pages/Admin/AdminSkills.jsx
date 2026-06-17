@@ -19,9 +19,7 @@ import { Plus, Search, ChevronRight, Eye, Edit3, Trash2, Sparkles, TrendingUp, U
 
 import AdminShell from '@/components/admin/AdminShell.jsx'
 import { ToolbarSearch, KpiTile, AdminDataTable } from '@/components/admin/AdminPrimitives.jsx'
-import { Badge } from '@/components/ui/Badge.jsx'
-import Button from '@/components/ui/Button.jsx'
-import Pagination from '@/components/ui/Pagination.jsx'
+import { Badge, Button, Pagination } from '@/components/ui'
 import { useToast } from '@/hooks/useToast.js'
 
 // ─── 示例数据 ───────────────────────────────────────────────

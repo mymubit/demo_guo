@@ -201,30 +201,45 @@ def _check_lifecycle(ctx: SkillInvokeContext) -> Optional[SkillResult]:
 def _check_and_charge_quota(ctx: SkillInvokeContext) -> Optional[SkillResult]:
     """检查并预扣配额。返回 None 表示通过；返回 SkillResult.fail 表示配额不足。"""
     codes = _skill_error_codes()
-    cost = ctx.quota_cost
+    if ctx.payload.get("skip_skill_quota"):
+        return None
+
+    cost = int(ctx.quota_cost or 0)
     if cost <= 0:
         return None
 
     if ctx.user_id is None:
-        # 无用户上下文的内部调用，跳过配额检查
         return None
 
     try:
-        from apps.billing.services import check_and_charge_coins
-        ok, message = check_and_charge_coins(
-            user_id=ctx.user_id,
-            amount=cost,
-            description=f"技能调用：{ctx.skill_id}",
+        from django.contrib.auth import get_user_model
+        from django.core.exceptions import PermissionDenied
+
+        from apps.billing.services import BillingService, InsufficientCoins
+
+        user = get_user_model().objects.get(pk=ctx.user_id)
+        BillingService.charge(
+            user,
+            "skill.invoke",
             reference_id=f"skill_pre_{ctx.trace_id}",
+            remark=f"技能调用：{ctx.skill_id}",
+            coin_cost=cost,
         )
-        if not ok:
-            return SkillResult.fail(
-                ctx.skill_id,
-                code=codes["SKILL_QUOTA_EXCEEDED"],
-                message=message or "配额不足",
-                trace_id=ctx.trace_id,
-            )
         return None
+    except InsufficientCoins as exc:
+        return SkillResult.fail(
+            ctx.skill_id,
+            code=codes["SKILL_QUOTA_EXCEEDED"],
+            message=str(exc) or "配额不足",
+            trace_id=ctx.trace_id,
+        )
+    except PermissionDenied as exc:
+        return SkillResult.fail(
+            ctx.skill_id,
+            code=codes["SKILL_QUOTA_EXCEEDED"],
+            message=str(exc) or "配额不足",
+            trace_id=ctx.trace_id,
+        )
     except Exception as exc:
         logger.warning("[SkillInvoker] 配额检查失败: %s", exc)
         return SkillResult.fail(
@@ -237,15 +252,32 @@ def _check_and_charge_quota(ctx: SkillInvokeContext) -> Optional[SkillResult]:
 
 def _refund_quota(ctx: SkillInvokeContext) -> None:
     """配额回补（技能执行失败时调用）。"""
-    if ctx.quota_cost <= 0 or ctx.user_id is None:
+    if ctx.payload.get("skip_skill_quota"):
         return
+    cost = int(ctx.quota_cost or 0)
+    if cost <= 0 or ctx.user_id is None:
+        return
+    reference_id = f"skill_pre_{ctx.trace_id}"
     try:
-        from apps.billing.services import refund_coins
-        refund_coins(
-            user_id=ctx.user_id,
-            amount=ctx.quota_cost,
-            description=f"技能失败回补：{ctx.skill_id}",
-            reference_id=f"skill_pre_{ctx.trace_id}",
+        from django.contrib.auth import get_user_model
+
+        from apps.billing.models import CoinLedger
+        from apps.billing.services import BillingService
+
+        user = get_user_model().objects.get(pk=ctx.user_id)
+        if CoinLedger.objects.filter(
+            user=user,
+            reference_id=reference_id,
+            delta__gt=0,
+        ).exists():
+            return
+        BillingService.credit(
+            user,
+            cost,
+            action_key="ai.generate.refund",
+            reference_id=reference_id,
+            remark=f"技能失败回补：{ctx.skill_id}",
+            entry_type=CoinLedger.TYPE_REFUND,
         )
     except Exception as exc:
         logger.warning("[SkillInvoker] 配额回补失败: %s", exc)
@@ -255,6 +287,24 @@ def _refund_quota(ctx: SkillInvokeContext) -> None:
 # LLM 调用核心
 # ============================================================
 
+def _resolve_llm_route_key(skill_id: str) -> str:
+    """creation.* 技能 ID → AgentLlmRouteConfig.route_key。"""
+    mapping = {
+        "creation.brief": "brief",
+        "creation.structure": "world",
+        "creation.character": "character",
+        "creation.outline": "outline",
+        "creation.script": "script",
+        "creation.review": "review",
+        "creation.polish": "polish",
+    }
+    if skill_id in mapping:
+        return mapping[skill_id]
+    if skill_id.startswith("creation."):
+        return skill_id.split(".", 1)[1]
+    return skill_id
+
+
 def _call_llm_for_skill(ctx: SkillInvokeContext) -> Dict[str, Any]:
     """
     调用 LLM 执行技能。
@@ -262,33 +312,62 @@ def _call_llm_for_skill(ctx: SkillInvokeContext) -> Dict[str, Any]:
     流程：
     1. 从 AgentSkillDefinition 读取 system_hint
     2. 从 AgentLlmRouteConfig 读取 LLM Provider
-    3. 组装 prompt 并调用 LLM
+    3. 组装 prompt 并调用 LlmService.generate_json
     4. 解析输出并按 output_schema 校验
     """
     skill = ctx.skill_definition
     system_hint = skill.system_hint or ""
     user_prompt = _build_user_prompt(ctx)
 
-    # LLM 调用
-    from apps.skill.llm.chat import LlmService
+    from apps.agent.routes import AgentLlmRouteService
+    from apps.creation.monitoring.execution_run_service import get_active_run_id
+    from apps.skill.llm.chat import LlmService, LlmServiceError
+    from apps.skill.llm.usage_log import llm_usage_scope
+    from apps.skill.models import LlmUsageLog
 
-    llm_svc = LlmService()
-    llm_result = llm_svc.chat(
-        messages=[
-            {"role": "system", "content": system_hint},
-            {"role": "user", "content": user_prompt},
-        ],
-        model_name=None,  # 按 AgentLlmRouteConfig 自动路由
-        user_id=ctx.user_id,
-        project_id=ctx.project_id,
-    )
+    route_key = _resolve_llm_route_key(ctx.skill_id)
+    provider_id = AgentLlmRouteService.resolve_provider_id(route_key)
+    max_tokens = AgentLlmRouteService.resolve_max_tokens(route_key) or 8192
+    temperature = 0.7
 
-    if not llm_result.get("success"):
-        raise LlmCallError(llm_result.get("error", "LLM 调用失败"))
+    try:
+        with llm_usage_scope(
+            source_type=LlmUsageLog.SOURCE_AGENT,
+            source_key=ctx.skill_id[:64],
+            project_id=ctx.project_id,
+            user_id=ctx.user_id,
+            execution_run_id=get_active_run_id(),
+            sub_skill_id=ctx.skill_id[:64],
+        ):
+            data = LlmService.generate_json(
+                system_prompt=system_hint,
+                user_prompt=user_prompt,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                provider_id=provider_id,
+                upstream=ctx.payload if isinstance(ctx.payload, dict) else {"payload": ctx.payload},
+                trace_extra={"skill_id": ctx.skill_id},
+            )
+    except LlmServiceError as exc:
+        raise LlmCallError(str(exc)) from exc
 
-    raw_output = llm_result.get("content", "")
-    # 解析 JSON 输出
-    return _parse_skill_output(ctx, raw_output)
+    if not isinstance(data, dict):
+        return {"content": str(data), "raw": True}
+
+    schema = skill.output_schema
+    if schema:
+        import jsonschema
+
+        try:
+            jsonschema.validate(instance=data, schema=schema)
+        except jsonschema.ValidationError as exc:
+            logger.warning(
+                "[SkillInvoker] output_schema 校验失败 skill=%s: %s",
+                ctx.skill_id,
+                exc.message,
+            )
+
+    return data
 
 
 class LlmCallError(Exception):

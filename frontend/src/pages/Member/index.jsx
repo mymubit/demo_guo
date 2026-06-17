@@ -104,8 +104,9 @@ import {
 } from '@/utils/date'
 import PriceWithDiscount from '@/components/commerce/PriceWithDiscount'
 import { Button, PageLoading } from '@/components/ui'
-import { SectionHeader } from '@/components/shared/ConsumerSection'
+import { SectionHeader, PageContainer } from '@/components/shared/ConsumerSection'
 import { cn } from '@/utils/cn'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 import { useMyMembership } from '@/hooks/queries/useMyMembership'
 import OrdersListPanel from '@/components/orders/OrdersListPanel'
 
@@ -262,8 +263,8 @@ export default function Member() {
   }
 
   return (
-    <div className="min-h-screen pt-16 pb-20 px-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen pt-16 pb-20">
+      <PageContainer width="6xl">
         {/* 页面标题 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -505,7 +506,7 @@ export default function Member() {
                   : 'border border-white/10 bg-slate-800/50 text-navy-200 hover:border-white/20 hover:text-white',
               )}
             >
-              <t.icon className="w-4 h-4" />
+              {renderLucideIcon(t.icon, 'w-4 h-4')}
               {t.label}
             </button>
           ))}
@@ -768,7 +769,7 @@ export default function Member() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </PageContainer>
     </div>
   )
 }

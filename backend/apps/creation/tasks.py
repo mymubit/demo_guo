@@ -14,8 +14,6 @@ from __future__ import annotations
 import logging
 import os
 import time
-from dataclasses import dataclass, field
-
 from django.db import transaction
 from django.tasks import task
 from django.utils import timezone
@@ -68,17 +66,10 @@ def _mark_skill_node_failed_state(project: Project, node_index: int, error_msg: 
 
 
 def _workspace_node_to_skill_id(node_index: int) -> str:
-    """工作台节点索引 → 创作技能 ID。"""
-    mapping = {
-        1: "creation.brief",
-        2: "creation.structure",
-        3: "creation.character",
-        4: "creation.outline",
-        5: "creation.script",
-        6: "creation.review",
-        7: "creation.polish",
-    }
-    return mapping.get(int(node_index), "")
+    """工作台节点索引 → 创作技能 ID（兼容旧引用）。"""
+    from .workspace_skill_invoke import workspace_node_to_skill_id
+
+    return workspace_node_to_skill_id(node_index)
 
 
 def _invoke_workspace_skill(
@@ -89,51 +80,17 @@ def _invoke_workspace_skill(
     script_to: int | None = None,
     outline_mode: str | None = None,
     outline_stage_key: str | None = None,
-) -> "SkillAgentResult":
-    """新引擎：工作台单节点直接走 SkillInvoker → creation.{node} 技能。"""
-    from apps.skill.skills.invoker import get_skill_invoker
+) -> SkillAgentResult:
+    """工作台单节点：优先 registry Agent 编排，回退扁平 SkillInvoker。"""
+    from .orchestration.workspace_agent import invoke_workspace_agent
 
-    skill_id = _workspace_node_to_skill_id(node_index)
-    if not skill_id:
-        return SkillAgentResult(
-            status="error",
-            agent_id=f"node-{node_index}",
-            errors=[f"节点 {node_index} 未映射到 creation.* 技能"],
-        )
-
-    payload: dict = {
-        "project_id": str(project.id),
-        "script_from": script_from,
-        "script_to": script_to,
-        "outline_mode": outline_mode or "",
-        "outline_stage_key": outline_stage_key or "",
-    }
-    skill_result = get_skill_invoker().invoke(
-        skill_id=skill_id,
-        payload=payload,
-        project_id=str(project.id),
-        user_id=project.user_id,
-    )
-    if skill_result.success:
-        return SkillAgentResult(
-            status="completed",
-            agent_id=skill_id,
-            outputs=skill_result.data or {},
-            meta={
-                "skill_id": skill_id,
-                "trace_id": skill_result.trace_id,
-                "fusion": {"ok": True, "skipped": False},
-            },
-        )
-    return SkillAgentResult(
-        status="error",
-        agent_id=skill_id,
-        errors=[skill_result.error.get("message", "skill invoker failed")],
-        meta={
-            "skill_id": skill_id,
-            "trace_id": skill_result.trace_id,
-            "fusion": {"ok": False, "skipped": False, "error": skill_result.error.get("message", "")},
-        },
+    return invoke_workspace_agent(
+        project,
+        node_index,
+        script_from=script_from,
+        script_to=script_to,
+        outline_mode=outline_mode,
+        outline_stage_key=outline_stage_key,
     )
 
 
@@ -157,24 +114,7 @@ def _scripts_fully_generated_for_project(project: Project) -> bool:
     return len(nums) >= target
 
 
-@dataclass
-class SkillAgentResult:
-    """新引擎工作台单节点调用结果（轻量版 AgentResult）。"""
-
-    status: str = "completed"
-    agent_id: str = ""
-    outputs: dict = field(default_factory=dict)
-    errors: list = field(default_factory=list)
-    meta: dict = field(default_factory=dict)
-
-    def to_dict(self) -> dict:
-        return {
-            "status": self.status,
-            "agent_id": self.agent_id,
-            "outputs": self.outputs,
-            "errors": self.errors,
-            "meta": self.meta,
-        }
+from .workspace_skill_invoke import SkillAgentResult
 
 
 def _finalize_skill_node_failure(
@@ -941,8 +881,8 @@ def _run_skill_node_core(
             agent_result = _invoke_workspace_skill(
                 project,
                 node_index,
-                script_from=kwargs.get("script_from") or script_from,
-                script_to=kwargs.get("script_to") or script_to,
+                script_from=kwargs.get("script_from") or kwargs.get("outline_from") or script_from,
+                script_to=kwargs.get("script_to") or kwargs.get("outline_to") or script_to,
                 outline_mode=kwargs.get("outline_mode") or outline_mode,
                 outline_stage_key=kwargs.get("outline_stage_key") or outline_stage_key,
             )
@@ -1071,6 +1011,7 @@ def _run_post_script_chain_via_skill_invoker(project: Project) -> dict:
     """
     from apps.skill.skills.invoker import get_skill_invoker
     from apps.agent.runtime import post_script_effective_chain, polish_max_rounds
+    from .skill_invoke_payload import build_creation_skill_invoke_payload
 
     chain = list(post_script_effective_chain() or [])
     invoker = get_skill_invoker()
@@ -1085,7 +1026,7 @@ def _run_post_script_chain_via_skill_invoker(project: Project) -> dict:
         skill_id = f"creation.{step}"
         skill_result = invoker.invoke(
             skill_id=skill_id,
-            payload={"project_id": str(project.id)},
+            payload=build_creation_skill_invoke_payload(project, skill_id),
             project_id=str(project.id),
             user_id=project.user_id,
         )

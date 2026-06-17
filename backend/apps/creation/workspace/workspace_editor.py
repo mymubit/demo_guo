@@ -22,9 +22,11 @@ from ..display.portal_display import (
     portal_sanitize_script_episode,
 )
 from ..outline_skeleton import (
+    OUTLINE_EPISODE_BEAT_MAX,
     OUTLINE_SUMMARY_MIN,
     OUTLINE_SUMMARY_MAX,
     build_outline_skeleton,
+    clip_summary_text,
     episodes_needing_summary,
     expand_legacy_episode_summaries,
     outline_stage_blocks,
@@ -245,10 +247,13 @@ def _outline_episode_slot(episode_number: int, *, filled: bool = False, source: 
     return {
         "episodeNumber": int(episode_number),
         "title": (src.get("title") or "")[:30],
-        "oneLineSummary": (src.get("oneLineSummary") or src.get("summary") or "")[:OUTLINE_SUMMARY_MAX],
-        "hook": (src.get("hook") or "")[:200],
-        "reversal": (src.get("reversal") or "")[:200],
-        "cliffhanger": (src.get("cliffhanger") or "")[:200],
+        "oneLineSummary": clip_summary_text(
+            src.get("oneLineSummary") or src.get("summary") or "",
+            OUTLINE_SUMMARY_MAX,
+        ),
+        "hook": (src.get("hook") or "")[:OUTLINE_EPISODE_BEAT_MAX],
+        "reversal": (src.get("reversal") or "")[:OUTLINE_EPISODE_BEAT_MAX],
+        "cliffhanger": (src.get("cliffhanger") or "")[:OUTLINE_EPISODE_BEAT_MAX],
         "emotionalIntensity": src.get("emotionalIntensity"),
         "keyCharacters": [str(c) for c in chars if c][:5],
         "sceneCount": src.get("sceneCount"),
@@ -265,7 +270,7 @@ def _outline_episode_slot(episode_number: int, *, filled: bool = False, source: 
 
 def _outline_episode_to_artifact(ep: dict, *, prev: Optional[dict] = None) -> dict:
     base = dict(prev) if isinstance(prev, dict) else {}
-    summary = (ep.get("oneLineSummary") or "")[:OUTLINE_SUMMARY_MAX]
+    summary = clip_summary_text(ep.get("oneLineSummary") or "", OUTLINE_SUMMARY_MAX)
     if summary and len(summary) < OUTLINE_SUMMARY_MIN:
         raise ValueError(f"第 {ep.get('episodeNumber')} 集梗概须 {OUTLINE_SUMMARY_MIN}-{OUTLINE_SUMMARY_MAX} 字")
     chars = ep.get("keyCharacters") or base.get("keyCharacters") or []
@@ -286,9 +291,9 @@ def _outline_episode_to_artifact(ep: dict, *, prev: Optional[dict] = None) -> di
         "episodeNumber": int(ep.get("episodeNumber") or base.get("episodeNumber") or 1),
         "title": (ep.get("title") or base.get("title") or "")[:30],
         "oneLineSummary": summary,
-        "hook": (ep.get("hook") or base.get("hook") or "")[:200],
-        "reversal": (ep.get("reversal") or base.get("reversal") or "")[:200],
-        "cliffhanger": (ep.get("cliffhanger") or base.get("cliffhanger") or "")[:200],
+        "hook": (ep.get("hook") or base.get("hook") or "")[:OUTLINE_EPISODE_BEAT_MAX],
+        "reversal": (ep.get("reversal") or base.get("reversal") or "")[:OUTLINE_EPISODE_BEAT_MAX],
+        "cliffhanger": (ep.get("cliffhanger") or base.get("cliffhanger") or "")[:OUTLINE_EPISODE_BEAT_MAX],
         "emotionalIntensity": emotional_intensity,
         "keyCharacters": [str(c) for c in chars if c][:5],
         "sceneCount": scene_count,
@@ -927,6 +932,12 @@ def _outline_framework_ready(payload: dict) -> bool:
     return len(rough) >= 10
 
 
+def _outline_episode_has_content(ep: dict) -> bool:
+    if not isinstance(ep, dict):
+        return False
+    return bool((ep.get("oneLineSummary") or ep.get("summary") or "").strip())
+
+
 def compute_outline_batch_range(
     project: Project,
     *,
@@ -942,7 +953,7 @@ def compute_outline_batch_range(
     existing_nums = {
         int(e.get("episodeNumber"))
         for e in (outline.get("episodes") or [])
-        if isinstance(e, dict) and e.get("episodeNumber")
+        if isinstance(e, dict) and e.get("episodeNumber") and _outline_episode_has_content(e)
     }
     default_batch = max(1, int(getattr(settings, "FUSION_LLM_OUTLINE_BATCH", 1)))
     batch = max(1, int(batch_size or default_batch))
@@ -979,7 +990,7 @@ def compute_outline_fill_all_range(project: Project) -> Tuple[int, int, int]:
     existing_nums = {
         int(e.get("episodeNumber"))
         for e in (outline.get("episodes") or [])
-        if isinstance(e, dict) and e.get("episodeNumber")
+        if isinstance(e, dict) and e.get("episodeNumber") and _outline_episode_has_content(e)
     }
     start = 1
     while start in existing_nums and start <= total:

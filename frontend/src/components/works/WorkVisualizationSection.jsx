@@ -9,6 +9,7 @@ import RhythmCurveChart from '@/components/creation/workspace/RhythmCurveChart'
 import EmptyState from '@/components/ui/EmptyState'
 import { ErrorState } from '@/components/ui/AsyncState'
 import { ICON } from '@/constants/iconSizes'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const TABS = [
   { id: 'plot', label: '剧情脉络', icon: GitBranch },
@@ -166,7 +167,6 @@ export default function WorkVisualizationSection({ projectId }) {
         {expanded ? (
           <div className="flex flex-wrap gap-2">
             {availableTabs.map((tab) => {
-              const Icon = tab.icon
               const active = activeTab === tab.id
               return (
                 <button
@@ -179,7 +179,7 @@ export default function WorkVisualizationSection({ projectId }) {
                       : 'border border-white/10 bg-white/[0.03] text-navy-300 hover:text-white'
                   }`}
                 >
-                  <Icon className={ICON.md} />
+                  {renderLucideIcon(tab.icon, ICON.md)}
                   {tab.label}
                 </button>
               )

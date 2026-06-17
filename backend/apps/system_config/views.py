@@ -259,6 +259,7 @@ class AdminSystemConfigAuditLogView(APIView):
 
 
 class PublicSystemConfigView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -267,6 +268,7 @@ class PublicSystemConfigView(APIView):
 
 
 class PublicSystemConfigBatchView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -277,6 +279,7 @@ class PublicSystemConfigBatchView(APIView):
 
 
 class PublicSystemConfigDetailView(APIView):
+    authentication_classes = []
     permission_classes = [AllowAny]
 
     def get(self, request, config_key):

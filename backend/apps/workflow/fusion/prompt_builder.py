@@ -17,9 +17,12 @@ import json
 import re
 from typing import Any, Dict, Optional
 
+from django.conf import settings
+
 from .config_loader import FusionSkillConfig, get_fusion_config
 from .registry import FusionNodeRegistry
 from .ssot_catalog import FusionSsotCatalog
+from .upstream_context import dedupe_upstream_aliases, pick_upstream_for_sub_skill
 
 _HANDBOOK_MAX_CHARS = 8000
 _REFERENCE_MAX_CHARS = 4000
@@ -155,7 +158,10 @@ class FusionPromptBuilder:
             "请根据以下上游产物生成符合 Schema 的 JSON（只输出 JSON，无 markdown）：\n\n"
             "上游数据：\n{upstream_json}"
         )
-        user = user_tpl.replace("{upstream_json}", json.dumps(upstream, ensure_ascii=False, indent=2))
+        user = user_tpl.replace(
+            "{upstream_json}",
+            json.dumps(dedupe_upstream_aliases(upstream), ensure_ascii=False, indent=2),
+        )
         if node_cfg.get("constraints"):
             user += "\n\n附加约束：\n" + node_cfg["constraints"]
         return system, user
@@ -234,7 +240,15 @@ class FusionPromptBuilder:
             "请根据以下上游产物生成符合 Schema 的 JSON（只输出 JSON，无 markdown）：\n\n"
             "上游数据：\n{upstream_json}"
         )
-        user = user_tpl.replace("{upstream_json}", json.dumps(upstream, ensure_ascii=False, indent=2))
+        prompt_upstream = (
+            pick_upstream_for_sub_skill(upstream, skill_id, skill_meta)
+            if getattr(settings, "CREATION_LLM_UPSTREAM_SLIM_PROMPT", True)
+            else dedupe_upstream_aliases(upstream)
+        )
+        user = user_tpl.replace(
+            "{upstream_json}",
+            json.dumps(prompt_upstream, ensure_ascii=False, indent=2),
+        )
         if node_cfg.get("constraints"):
             user += "\n\n附加约束：\n" + node_cfg["constraints"]
         user += f"\n\n当前子技能：{skill_id}"

@@ -47,32 +47,26 @@ class StepModeRunnerTypeUnitTests(SimpleTestCase):
             self.assertIsNone(step_mode.resolve_step_runner(7))
 
     @patch("apps.agent.runtime.agent_for_pipeline_node_index", side_effect=["review", "score"])
-    @patch("apps.creation.step_mode.get_skill_invoker")
-    def test_run_fusion_step_dispatches_by_runner_type(self, mock_invoker_factory, _mock_agent):
-        """新引擎：post-script 步骤走 SkillInvoker → creation.{agent} 技能。"""
+    @patch("apps.creation.orchestration.score.run_score_agent")
+    @patch("apps.creation.orchestration.review.run_review_agent")
+    def test_run_fusion_step_dispatches_by_runner_type(self, mock_review, mock_score, _mock_agent):
+        """post-script 步骤走 orchestration Agent（review / score）。"""
         from apps.creation import step_mode
+        from apps.creation.orchestration.types import AgentResult
 
         project = MagicMock()
         project.user_id = 1
 
-        mock_invoker = MagicMock()
-        # 模拟 SkillResult：构造两个返回
-        success_result = MagicMock()
-        success_result.success = True
-        success_result.data = {"review_report": {"passed": True}}
-        success_result.error = {}
-        success_result.skill_id = "creation.review"
-        success_result.trace_id = "trace-1"
-
-        success_score = MagicMock()
-        success_score.success = True
-        success_score.data = {"script_score_report": {"overallScore": 88}}
-        success_score.error = {}
-        success_score.skill_id = "creation.score"
-        success_score.trace_id = "trace-2"
-
-        mock_invoker.invoke.side_effect = [success_result, success_score]
-        mock_invoker_factory.return_value = mock_invoker
+        mock_review.return_value = AgentResult(
+            agent_id="review",
+            status="completed",
+            outputs={"review_report": {"passed": True}},
+        )
+        mock_score.return_value = AgentResult(
+            agent_id="score",
+            status="completed",
+            outputs={"script_score_report": {"overallScore": 88}},
+        )
 
         self.assertEqual(
             step_mode.run_fusion_step(project, 6, runner_type="fusion_review")["ok"],
@@ -82,7 +76,8 @@ class StepModeRunnerTypeUnitTests(SimpleTestCase):
             step_mode.run_fusion_step(project, 7, runner_type="fusion_score")["ok"],
             True,
         )
-        self.assertEqual(mock_invoker.invoke.call_count, 2)
+        mock_review.assert_called_once()
+        mock_score.assert_called_once()
 
 
 class StepModeRunnerTypeExecutionTests(TestCase):

@@ -149,7 +149,7 @@ from apps.console.system_config.extended_views import (
     SensitiveWordsView,
     ThresholdConfigView,
 )
-from apps.console.batch.views import (
+from apps.creation.batch.views import (
     BatchJobListView,
     BatchJobCreateView,
     BatchJobDetailView,
@@ -158,14 +158,14 @@ from apps.console.batch.views import (
     BatchJobResumeView,
     BatchProjectRetryView,
 )
-from apps.console.library.views import (
+from apps.creation.library.views import (
     MaterialListView,
     MaterialUploadView,
     MaterialDetailView,
     MaterialParseView,
     MaterialDeleteView,
 )
-from apps.console.evolution.views import (
+from apps.skill.evolution.views import (
     EvolutionProposalListView,
     EvolutionAnalyzeView,
     EvolutionProposalDetailView,
@@ -351,6 +351,24 @@ _skills_routes = [
     path("creation/quality-defects/<int:pk>/", ScriptQualityDefectDetailView.as_view(), name="admin-creation-quality-defect-detail"),
 ]
 
+# 数据统计中心扩展
+_stats_routes = [
+    path("stats/kpi/", StatsKpiView.as_view(), name="admin-stats-kpi"),
+    path("stats/trend/", StatsTrendView.as_view(), name="admin-stats-trend"),
+    path("stats/skill-ranking/", SkillRankingView.as_view(), name="admin-stats-skill-ranking"),
+    path("stats/failure-ranking/", FailureRankingView.as_view(), name="admin-stats-failure-ranking"),
+    path("stats/llm-provider-usage/", LlmProviderUsageView.as_view(), name="admin-stats-llm-provider-usage"),
+    path("stats/node-duration/", NodeDurationDistributionView.as_view(), name="admin-stats-node-duration"),
+]
+
+# 系统配置中心扩展
+_system_routes = [
+    path("system/global-switch/", GlobalSwitchView.as_view(), name="admin-system-global-switch"),
+    path("system/thresholds/", ThresholdConfigView.as_view(), name="admin-system-thresholds"),
+    path("system/quota-rules/", QuotaRulesView.as_view(), name="admin-system-quota-rules"),
+    path("system/sensitive-words/", SensitiveWordsView.as_view(), name="admin-system-sensitive-words"),
+]
+
 urlpatterns = [
     path("", include(router.urls)),
     path("dashboard/", DashboardView.as_view(), name="admin-dashboard"),
@@ -428,8 +446,6 @@ urlpatterns += [
     *_batch_routes,
     *_library_routes,
     *_evolution_routes,
-    *_stats_routes,
-    *_system_routes,
 ]
 
 # ── 运营监控中心（apps.operations）──────────────────────────

@@ -180,6 +180,12 @@ class LlmUsageService:
                     sub_skill_id=cls._resolve_sub_skill_id(ctx, source_key=resolved_source_key),
                     success=success,
                 )
+                try:
+                    from apps.creation.monitoring.llm_trace import merge_request_into_usage_record
+
+                    merge_request_into_usage_record()
+                except Exception as trace_exc:  # noqa: BLE001
+                    logger.debug("LLM 轨迹 request 写入失败: %s", trace_exc)
         except Exception as exc:  # noqa: BLE001
             logger.warning("记录 LLM 用量失败: %s", exc)
 

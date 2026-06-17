@@ -19,6 +19,7 @@ import {
 import AdminShell from '@/components/admin/AdminShell'
 import { Button, EmptyState, Skeleton } from '@/components/ui'
 import { adminOperations } from '@/services/admin'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const STORAGE_KEY = 'ops:checklist:done'
 
@@ -152,7 +153,6 @@ export default function DailyChecklistPage() {
           {/* 5 步 Checklist */}
           <section className="space-y-3">
             {CHECKLIST.map((item) => {
-              const Icon = item.icon
               const done = !!checked[item.key]
               return (
                 <a
@@ -178,7 +178,7 @@ export default function DailyChecklistPage() {
                   >
                     {done ? <Check className="h-4 w-4" /> : <span className="text-xs">{item.sla}</span>}
                   </button>
-                  <Icon className={`h-5 w-5 ${done ? 'text-success-300' : 'text-gold-400'}`} />
+                  {renderLucideIcon(item.icon, `h-5 w-5 ${done ? 'text-success-300' : 'text-gold-400'}`)}
                   <div className="flex-1">
                     <p className={`text-sm font-semibold ${done ? 'text-success-200 line-through' : 'text-white'}`}>
                       {item.label}

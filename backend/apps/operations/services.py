@@ -58,7 +58,7 @@ def dashboard_slo_cards() -> dict:
     zombie_count = WorkflowInstance.objects.filter(
         status__in=[WorkflowInstance.STATUS_RUNNING, WorkflowInstance.STATUS_PENDING],
         created_at__lt=threshold_15min,
-        resolved_at__isnull=True,
+        finished_at__isnull=True,
     ).count()
 
     # 3. LLM 整体失败率（5min）

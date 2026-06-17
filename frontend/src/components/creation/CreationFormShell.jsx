@@ -22,7 +22,7 @@ export default function CreationFormShell({ sidebar, main, aside, className }) {
       {hasSidebar ? (
         <aside className="hidden border-r border-white/5 bg-slate-900/40 p-5 lg:block">{sidebar}</aside>
       ) : null}
-      <main className={cn('min-w-0 overflow-auto p-6 md:p-7 lg:p-9', !hasSidebar && !hasAside && 'mx-auto w-full max-w-5xl')}>
+      <main className={cn('min-w-0 overflow-auto p-6 md:p-7 lg:p-9', !hasSidebar && !hasAside && 'sf-page-shell max-w-5xl px-0')}>
         {main}
       </main>
       {hasAside ? (

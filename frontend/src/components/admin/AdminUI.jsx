@@ -3,6 +3,7 @@ import { Loader2, AlertTriangle, ChevronDown, Info } from 'lucide-react'
 import { Badge, Button, Card, EmptyState, MetricCard, Pagination } from '@/components/ui'
 import { cn } from '@/utils/cn'
 import { ICON } from '@/constants/iconSizes'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 import { cardEnter, modalOverlay, modalPanel } from '@/constants/motion'
 import { formatDateTime as formatDateTimeUtil } from '@/utils/date'
 import {
@@ -105,7 +106,6 @@ export function AdminTabBar({ tabs, active, onChange, className = '', stretch = 
       )}
     >
       {tabs.map((t) => {
-        const Icon = t.icon
         const isActive = active === t.key
         return (
           <button
@@ -120,7 +120,7 @@ export function AdminTabBar({ tabs, active, onChange, className = '', stretch = 
                 : 'text-navy-300 border-transparent hover:bg-white/[0.06] hover:text-white',
             )}
           >
-            {Icon ? <Icon className={ICON.md} /> : null}
+            {renderLucideIcon(t.icon, ICON.md)}
             {t.label}
           </button>
         )
@@ -195,8 +195,8 @@ export function AdminStatGrid({ items, columns }) {
 
 export function AdminToolbar({ children }) {
   return (
-    <Card padding="sm" className="flex flex-col gap-3 lg:flex-row lg:items-center">
-      {children}
+    <Card padding="sm">
+      <div className="sf-toolbar">{children}</div>
     </Card>
   )
 }
@@ -208,7 +208,7 @@ export function AdminSearchInput({ value, onChange, placeholder, className = '' 
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className={cn('sf-control min-w-[220px] flex-1', className)}
+      className={cn('sf-control h-11 min-w-0', className)}
     />
   )
 }

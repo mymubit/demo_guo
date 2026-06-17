@@ -1,5 +1,6 @@
 ﻿import { motion } from 'framer-motion'
 import { Check, FileText, Zap, Star, BookOpen, Clapperboard } from 'lucide-react'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const FORMAT_META = {
   A: { badge: '阅读友好', icon: BookOpen, accent: 'text-sky-300 bg-sky-500/15 border-sky-500/30' },
@@ -25,7 +26,6 @@ export default function FormatVariantPicker({ variants = [], value, onChange }) 
       {variants.map((f) => {
         const active = value === f.key
         const meta = FORMAT_META[f.key] || FORMAT_META.B
-        const Icon = meta.icon
         return (
           <motion.button
             key={f.key}
@@ -46,7 +46,7 @@ export default function FormatVariantPicker({ variants = [], value, onChange }) 
                     active ? 'bg-gold-400/20' : 'border border-white/10 bg-white/5'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 ${active ? 'text-gold-400' : 'text-navy-300'}`} />
+                  {renderLucideIcon(meta.icon, `w-5 h-5 ${active ? 'text-gold-400' : 'text-navy-300'}`)}
                 </div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">

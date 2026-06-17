@@ -6,6 +6,7 @@ import EmptyState from './EmptyState'
 import { cn } from '@/utils/cn'
 import { ICON } from '@/constants/iconSizes'
 import { cardEnter } from '@/constants/motion'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 export function PageLoading({ label = '加载中…', className }) {
   return (
@@ -34,12 +35,12 @@ export function PageSkeleton({ rows = 3 }) {
 }
 
 export function ErrorState({ title = '加载失败', description, type = 'error', onRetry, className }) {
-  const Icon = type === 'network' ? WifiOff : AlertTriangle
+  const icon = type === 'network' ? WifiOff : AlertTriangle
 
   return (
     <Card as={motion.div} {...cardEnter} className={cn('text-center', className)} padding="xl">
       <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-danger-500/30 bg-danger-500/10 text-danger-300">
-        <Icon className={ICON.xl} />
+        {renderLucideIcon(icon, ICON.xl)}
       </div>
       <h3 className="text-lg font-semibold text-white">{title}</h3>
       {description ? <p className="mx-auto mt-2 max-w-md text-sm text-navy-300">{description}</p> : null}

@@ -18,6 +18,7 @@ import { sanitizeHtml } from '@/utils/sanitizeHtml'
 import BrandLogo from '@/components/ui/BrandLogo'
 import UserAvatar from '@/components/ui/UserAvatar'
 import { ICON } from '@/constants/iconSizes'
+import { PageContainer } from '@/components/shared/ConsumerSection'
 
 export default function ShareView() {
   const { token } = useParams()
@@ -83,7 +84,7 @@ export default function ShareView() {
   return (
     <div className="min-h-screen bg-navy-950 text-white">
       <div className="border-b border-white/5 bg-slate-900/60">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-6 py-3 text-sm">
+        <PageContainer width="5xl" className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
           <div className="flex flex-wrap items-center gap-2 text-slate-300">
             <ShieldCheck className={ICON.md} />
             分享预览链接
@@ -96,16 +97,16 @@ export default function ShareView() {
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <Lock className={ICON.xs} /> 已植入数字水印 · 仅供预览
           </div>
-        </div>
+        </PageContainer>
       </div>
 
       <header className="border-b border-white/5 bg-navy-950/90">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+        <PageContainer width="5xl" className="flex items-center justify-between py-4">
           <BrandLogo variant="consumer" size="sm" to="/" />
-        </div>
+        </PageContainer>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-10">
+      <PageContainer as="main" width="5xl" className="py-10">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
           <div>
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
@@ -201,7 +202,7 @@ export default function ShareView() {
           <p className="mb-2">本作品由 ScriptForge AI 辅助创作，版权归原创作者所有</p>
           <p>© 2026 ScriptForge · 保留所有权利</p>
         </div>
-      </main>
+      </PageContainer>
     </div>
   )
 }

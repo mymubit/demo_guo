@@ -11,6 +11,7 @@ import { Badge, Button } from '@/components/ui'
 import { ICON } from '@/constants/iconSizes'
 import { pageEnter } from '@/constants/motion'
 import { cn } from '@/utils/cn'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 import { PageHeader, Panel, DataTable } from './components'
 
 const AGENTS = [
@@ -83,7 +84,7 @@ export default function AdminAgent() {
             onClick={() => setTab(t.k)}
             className={cn('inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 font-medium transition-colors', tab === t.k ? 'bg-white/10 text-white' : 'text-slate-300 hover:text-white')}
           >
-            <t.icon className={ICON.sm} /> {t.n}
+            {renderLucideIcon(t.icon, ICON.sm)} {t.n}
           </button>
         ))}
       </div>

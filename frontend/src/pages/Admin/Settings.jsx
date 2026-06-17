@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { Database, RefreshCw, Server, Mail, Clock, Shield } from 'lucide-react'
 import { admin } from '@/services/api'
 import { AdminMessage, AdminLoading, AdminBadge } from '@/components/admin/AdminUI'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 export default function AdminSettings() {
   const [loading, setLoading] = useState(true)
@@ -90,7 +91,7 @@ export default function AdminSettings() {
             className="flex items-center justify-between gap-4 py-3 border-b border-white/5 last:border-0"
           >
             <div className="flex items-center gap-3 text-navy-200">
-              <row.icon className="w-5 h-5 text-gold-400" />
+              {renderLucideIcon(row.icon, 'w-5 h-5 text-gold-400')}
               <span>{row.label}</span>
             </div>
             <div className="text-right">

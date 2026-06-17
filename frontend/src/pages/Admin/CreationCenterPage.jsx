@@ -13,6 +13,7 @@ import CreationPipelineDiagram from '@/components/admin/CreationPipelineDiagram'
 import AdminShell from '@/components/admin/AdminShell'
 import { AdminStatGrid, AdminLoading } from '@/components/admin/AdminUI'
 import { admin } from '@/services/api'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const HUB_CARDS = [
   {
@@ -164,7 +165,7 @@ export function CreationCenterPage() {
                   {alertCount}
                 </span>
               ) : null}
-              <card.icon className="w-5 h-5 text-gold-400 mb-3" />
+              {renderLucideIcon(card.icon, 'w-5 h-5 text-gold-400 mb-3')}
               <h3 className="text-white font-semibold mb-1">{card.title}</h3>
               <p className="text-xs text-navy-400 leading-relaxed">{card.desc}</p>
             </Link>

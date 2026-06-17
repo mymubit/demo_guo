@@ -504,12 +504,33 @@ class LlmService:
         max_tokens: Optional[int] = None,
         provider_id: Optional[str] = None,
         skip_enabled_check: bool = False,
+        upstream: Optional[Dict[str, Any]] = None,
+        trace_extra: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         if not skip_enabled_check and not cls.is_enabled():
             raise LlmServiceError("LLM 未启用（llm.enabled=false 或 FUSION_LLM_ENABLED=false）")
 
+        from apps.creation.monitoring.llm_trace import (
+            begin_llm_trace,
+            finish_llm_trace_error,
+            finish_llm_trace_success,
+            is_full_llm_trace_enabled,
+        )
+
+        if is_full_llm_trace_enabled():
+            begin_llm_trace(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                provider_id=provider_id,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                json_mode=True,
+                upstream=upstream,
+                extra=trace_extra,
+            )
+
+        content = ""
         try:
-            content = ""
             last_parse_exc: Optional[Exception] = None
             parse_rounds = max(2, int(getattr(settings, "LLM_JSON_PARSE_RETRIES", 3) or 3))
             cfg_token_cap = max(4096, int(getattr(settings, "LLM_JSON_MAX_TOKENS_CAP", 32768) or 32768))
@@ -538,7 +559,10 @@ class LlmService:
                     logger.warning("LLM JSON 返回空内容 attempt=%s", attempt + 1)
                     continue
                 try:
-                    return cls._parse_json_content(content)
+                    parsed = cls._parse_json_content(content)
+                    if is_full_llm_trace_enabled():
+                        finish_llm_trace_success(raw_content=content, parsed_output=parsed)
+                    return parsed
                 except json.JSONDecodeError as exc:
                     last_parse_exc = exc
                     logger.warning(
@@ -548,18 +572,29 @@ class LlmService:
                         exc,
                     )
             if not (content or "").strip():
+                if is_full_llm_trace_enabled():
+                    finish_llm_trace_error("模型返回空内容")
                 raise LlmServiceError("模型返回空内容，请重试或更换模型")
             if last_parse_exc is not None:
+                if is_full_llm_trace_enabled():
+                    finish_llm_trace_error(str(last_parse_exc), raw_content=content)
                 raise LlmServiceError(
                     humanize_user_message(
                         str(last_parse_exc),
                         default="模型输出过长被截断或 JSON 格式错误，请重试或换用输出容量更大的模型",
                     )
                 ) from last_parse_exc
-            return cls._parse_json_content(content)
-        except LlmServiceError:
+            parsed = cls._parse_json_content(content)
+            if is_full_llm_trace_enabled():
+                finish_llm_trace_success(raw_content=content, parsed_output=parsed)
+            return parsed
+        except LlmServiceError as exc:
+            if is_full_llm_trace_enabled():
+                finish_llm_trace_error(str(exc), raw_content=content)
             raise
         except Exception as exc:  # noqa: BLE001
+            if is_full_llm_trace_enabled():
+                finish_llm_trace_error(str(exc), raw_content=content)
             logger.exception("LLM JSON 生成失败")
             raise LlmServiceError(
                 humanize_user_message(str(exc), default="模型返回解析失败，请重试或更换模型")

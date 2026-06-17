@@ -14,7 +14,7 @@ import {
   ledgerRowDescription,
 } from '@/utils/ledger'
 import PriceWithDiscount from '@/components/commerce/PriceWithDiscount'
-import { SectionHeader, PillFilterGroup } from '@/components/shared/ConsumerSection'
+import { SectionHeader, PillFilterGroup, PageContainer } from '@/components/shared/ConsumerSection'
 import { cn } from '@/utils/cn'
 
 export default function WalletPage() {
@@ -84,8 +84,8 @@ export default function WalletPage() {
   const totalPages = ledger.pagination?.total_pages || 0
 
   return (
-    <div className="min-h-screen pt-16 pb-20 px-6">
-      <div className="mx-auto max-w-5xl space-y-8">
+    <div className="min-h-screen pt-16 pb-20">
+      <PageContainer width="5xl" className="space-y-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <SectionHeader
@@ -355,7 +355,7 @@ export default function WalletPage() {
             </div>
           )}
         </section>
-      </div>
+      </PageContainer>
     </div>
   )
 }

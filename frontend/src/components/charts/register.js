@@ -15,6 +15,7 @@ import {
   GraphicComponent,
 } from 'echarts/components'
 import { CanvasRenderer } from 'echarts/renderers'
+import { LegacyGridContainLabel } from 'echarts/features'
 import { SCRIPTFORGE_CHART_THEME, scriptforgeChartTheme } from './theme'
 
 let registered = false
@@ -35,9 +36,13 @@ export function ensureEchartsRegistered() {
     DatasetComponent,
     GraphicComponent,
     CanvasRenderer,
+    LegacyGridContainLabel,
   ])
   echarts.registerTheme(SCRIPTFORGE_CHART_THEME, scriptforgeChartTheme)
   registered = true
 }
+
+// 模块加载时同步注册，避免首屏渲染早于 useEffect 导致 renderer 未就绪
+ensureEchartsRegistered()
 
 export { echarts, SCRIPTFORGE_CHART_THEME }

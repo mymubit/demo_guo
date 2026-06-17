@@ -1,4 +1,5 @@
 import { BookMarked, Clock, Film, FileText, Sparkles, TrendingUp, Users } from 'lucide-react'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 import { StructureMetaStrip } from './StructureBeatViews'
 
 const STORY_FIELDS = [
@@ -8,13 +9,13 @@ const STORY_FIELDS = [
   { key: 'openingHooks', label: '前三集钩子', rows: 4, hooks: true },
 ]
 
-function PanelBlock({ title, icon: Icon, children, className = '' }) {
+function PanelBlock({ title, icon, children, className = '' }) {
   if (!children) return null
   return (
     <div className={`rounded-2xl border border-white/5 bg-slate-900/40 overflow-hidden ${className}`}>
       {title ? (
         <div className="border-b border-white/5 bg-slate-900/60 px-4 py-2.5 flex items-center gap-2">
-          {Icon ? <Icon className="w-3.5 h-3.5 text-gold-400/70" /> : null}
+          {renderLucideIcon(icon, 'w-3.5 h-3.5 text-gold-400/70')}
           <span className="text-xs font-medium text-gold-400/85">{title}</span>
         </div>
       ) : null}

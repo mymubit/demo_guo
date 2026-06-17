@@ -66,9 +66,11 @@ class PortalTrackEventView(APIView):
       • 失败必须返回 ok：埋点不能影响主流程。
       • 6 个核心事件 + 自定义 event_name 都被允许，但仅 6 个核心会被写入。
       • 用户可空（未登录访问 landing_view）。
+      • 忽略无效 JWT，避免携带过期 Token 的匿名请求被 401 拦截。
     """
 
-    permission_classes = []  # 允许匿名
+    authentication_classes = []
+    permission_classes = []
 
     def post(self, request):
         serializer = UserBehaviorEventCreateSerializer(data=request.data)

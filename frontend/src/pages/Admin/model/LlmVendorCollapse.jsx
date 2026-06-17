@@ -1,4 +1,5 @@
 import { ChevronDown } from 'lucide-react'
+import { useState } from 'react'
 
 /**
  * 按 vendor 分组 catalog / preset / provider 列表。
@@ -35,10 +36,13 @@ export function LlmVendorCollapse({
   children,
   className = '',
 }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen)
+
   return (
     <details
       className={`rounded-xl border border-white/10 bg-slate-900/40 group ${className}`}
-      defaultOpen={defaultOpen}
+      open={isOpen}
+      onToggle={(event) => setIsOpen(event.currentTarget.open)}
     >
       <summary className="cursor-pointer list-none px-4 py-3 flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">

@@ -198,7 +198,11 @@ class AgentExecutionRunService:
         node_id: str = "",
         upstream: Optional[Dict[str, Any]] = None,
         output_payload: Any = None,
+        input_payload: Optional[Dict[str, Any]] = None,
+        llm_io: Optional[Dict[str, Any]] = None,
     ) -> None:
+        from .llm_trace import _clip_json
+
         run_id = _active_run_id.get()
         if not run_id:
             return
@@ -211,10 +215,16 @@ class AgentExecutionRunService:
         mapped = status_map.get(status, SubSkillExecutionLog.STATUS_SKIPPED)
 
         in_summary = dict(input_summary or {})
-        if not in_summary and node_id and upstream is not None:
+        if input_payload is not None:
+            in_summary = {}
+        elif not in_summary and node_id and upstream is not None:
+            from ..pipeline_debug_log import summarize_upstream
+
             in_summary = summarize_upstream(node_id, upstream)
         out_summary = dict(output_summary or {})
-        if not out_summary and output_payload is not None:
+        if output_payload is not None and not out_summary:
+            out_summary = {}
+        elif not out_summary and output_payload is not None:
             out_summary = summarize_sub_skill_output(skill_id, output_payload)
 
         try:
@@ -236,15 +246,16 @@ class AgentExecutionRunService:
             "error_message": str(message or "")[:2000],
             "input_summary": in_summary,
             "output_summary": out_summary,
+            "input_payload": _clip_json(input_payload) if input_payload is not None else {},
+            "output_payload": _clip_json(output_payload) if output_payload is not None else {},
+            "llm_io": _clip_json(llm_io) if llm_io is not None else {},
             "duration_ms": duration_ms,
             "finished_at": timezone.now(),
             "order_index": order_index,
         }
         if existing:
             for key, val in defaults.items():
-                if key == "input_summary" and not val:
-                    continue
-                if key == "output_summary" and not val:
+                if key in {"input_summary", "output_summary", "input_payload", "output_payload", "llm_io"} and not val:
                     continue
                 setattr(existing, key, val)
             existing.save()
@@ -455,6 +466,9 @@ class AgentExecutionRunService:
             "duration_ms": log.duration_ms,
             "input_summary": log.input_summary or {},
             "output_summary": log.output_summary or {},
+            "input_payload": log.input_payload or {},
+            "output_payload": log.output_payload or {},
+            "llm_io": log.llm_io or {},
             "started_at": log.started_at.isoformat() if log.started_at else "",
             "finished_at": log.finished_at.isoformat() if log.finished_at else "",
         }
@@ -644,6 +658,8 @@ class AgentExecutionRunService:
             "estimated_output_cost_yuan": float(log.estimated_output_cost_yuan or 0),
             "estimated_cost_yuan": float(log.estimated_cost_yuan or 0),
             "success": log.success,
+            "request_payload": log.request_payload or {},
+            "response_payload": log.response_payload or {},
             "created_at": log.created_at.isoformat() if log.created_at else "",
         }
 

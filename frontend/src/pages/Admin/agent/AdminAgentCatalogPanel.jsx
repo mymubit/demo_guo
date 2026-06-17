@@ -68,10 +68,11 @@ export default function AdminAgentCatalogPanel({ onSelectFormAgent }) {
   const postAgents = useMemo(() => {
     const chain = blueprint?.post_script_chain || []
     const agents = blueprint?.agents || {}
-    return chain.map((agentId) => {
+    return chain.map((agentId, index) => {
       const def = agents[agentId] || {}
       return {
         id: agentId,
+        chainIndex: index,
         name: def.name_zh || def.name || agentId,
       }
     })
@@ -173,7 +174,7 @@ export default function AdminAgentCatalogPanel({ onSelectFormAgent }) {
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {postAgents.map((agent) => (
               <AgentCatalogCard
-                key={agent.id}
+                key={`post-${agent.id}-${agent.chainIndex}`}
                 kind="post"
                 title={agent.name}
                 subtitle={agent.id}

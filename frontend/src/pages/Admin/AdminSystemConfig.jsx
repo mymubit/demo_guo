@@ -35,6 +35,7 @@ import { Button } from '@/components/ui'
 import { adminSystemConfig } from '@/services/api'
 import { ICON } from '@/constants/iconSizes'
 import { cn } from '@/utils/cn'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const TABS = [
   { key: 'switch', label: '全局开关', icon: Power },
@@ -117,11 +118,11 @@ function FlashMessage({ tone = 'info', text, onClose }) {
     success: 'border-success-500/30 bg-success-500/10 text-success-200',
     error: 'border-danger-500/30 bg-danger-500/10 text-danger-200',
   }
-  const Icon = tone === 'success' ? CheckCircle2 : AlertCircle
+  const icon = tone === 'success' ? CheckCircle2 : AlertCircle
   return (
     <div className={cn('flex items-center justify-between gap-3 rounded-2xl border p-3 text-sm', tones[tone])}>
       <div className="inline-flex items-center gap-2">
-        <Icon className={ICON.md} />
+        {renderLucideIcon(icon, ICON.md)}
         {text}
       </div>
       {onClose ? (
@@ -288,14 +289,14 @@ function ThresholdPanel({ onMessage }) {
       }
     >
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-        {specs.map(({ key, icon: Icon, accent }) => {
+        {specs.map(({ key, icon, accent }) => {
           const item = items[key] || {}
           return (
             <NumberField
               key={key}
               label={
                 <span className="inline-flex items-center gap-2">
-                  <Icon className={cn(ICON.md, accent)} />
+                  {renderLucideIcon(icon, cn(ICON.md, accent))}
                   {item.name || key}
                 </span>
               }
@@ -382,14 +383,14 @@ function QuotaPanel({ onMessage }) {
       }
     >
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-        {specs.map(({ key, icon: Icon, accent }) => {
+        {specs.map(({ key, icon, accent }) => {
           const item = items[key] || {}
           return (
             <NumberField
               key={key}
               label={
                 <span className="inline-flex items-center gap-2">
-                  <Icon className={cn(ICON.md, accent)} />
+                  {renderLucideIcon(icon, cn(ICON.md, accent))}
                   {item.name || key}
                 </span>
               }
@@ -559,7 +560,7 @@ function SensitivePanel({ onMessage }) {
           </Button>
         }
       >
-        <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="mb-3 sf-toolbar">
           <input
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}

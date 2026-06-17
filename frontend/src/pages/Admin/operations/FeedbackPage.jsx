@@ -106,14 +106,14 @@ export default function FeedbackPage() {
       ) : null}
 
       {/* 筛选 */}
-      <section className="mb-4 flex flex-col gap-2 rounded-2xl border border-white/10 bg-slate-900/60 p-4 lg:flex-row lg:items-center">
-        <div className="flex items-center gap-2 flex-1">
-          <Search className="h-4 w-4 text-navy-400" />
+      <section className="sf-toolbar mb-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+        <div className="sf-toolbar-search flex items-center gap-2">
+          <Search className="h-4 w-4 shrink-0 text-navy-400" />
           <input
             value={filters.keyword}
             onChange={(e) => setFilters((f) => ({ ...f, keyword: e.target.value, page: 1 }))}
             placeholder="搜索标题/正文"
-            className="sf-control flex-1"
+            className="sf-control h-11 min-w-0 flex-1 border-0 bg-transparent p-0 focus:ring-0"
           />
         </div>
         <select

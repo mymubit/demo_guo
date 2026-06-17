@@ -444,4 +444,76 @@ class BillingService:
         )
 
 
+def _resolve_billing_user(user_id):
+    from django.contrib.auth import get_user_model
+
+    if user_id is None:
+        raise ValueError("user_id 不能为空")
+    return get_user_model().objects.get(pk=user_id)
+
+
+def check_and_charge_coins(
+    *,
+    user_id,
+    amount: float | int,
+    description: str = "",
+    reference_id: str = "",
+    action_key: str = "skill.invoke",
+) -> Tuple[bool, str]:
+    """技能调用配额预扣；供 SkillInvoker / WorkflowEngine 使用。"""
+    cost = int(amount)
+    if cost <= 0:
+        return True, ""
+
+    try:
+        user = _resolve_billing_user(user_id)
+        BillingService.charge(
+            user,
+            action_key,
+            reference_id=reference_id,
+            remark=description or BillingService.action_display_name(action_key),
+            coin_cost=cost,
+        )
+        return True, ""
+    except InsufficientCoins as exc:
+        return False, str(exc)
+    except PermissionDenied as exc:
+        return False, str(exc)
+
+
+def refund_coins(
+    *,
+    user_id,
+    amount: float | int,
+    description: str = "",
+    reference_id: str = "",
+) -> None:
+    """技能/节点失败时回补创作币。"""
+    cost = int(amount)
+    if cost <= 0 or not reference_id:
+        return
+
+    user = _resolve_billing_user(user_id)
+    if CoinLedger.objects.filter(
+        user=user,
+        reference_id=reference_id,
+        delta__gt=0,
+    ).exists():
+        logger.warning(
+            "忽略重复技能配额回补 user=%s reference=%s",
+            user_id,
+            reference_id,
+        )
+        return
+
+    BillingService.credit(
+        user,
+        cost,
+        action_key="ai.generate.refund",
+        reference_id=reference_id,
+        remark=description or "技能调用失败退还",
+        entry_type=CoinLedger.TYPE_REFUND,
+    )
+
+
 PipelineOrchestrationService = WorkflowPipelineService

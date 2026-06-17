@@ -1,8 +1,8 @@
 import { Toaster } from 'sonner'
+import 'sonner/dist/styles.css'
 import { useEffect } from 'react'
 import AppRoutes from '@/router'
 import { GlobalRequestLoading } from '@/components/ui'
-import { MonitorRouteTracker } from '@/utils/monitor'
 import { useConfigStore } from '@/services/config/configStore'
 import { installBehaviorTracker } from '@/utils/behaviorTracker'
 
@@ -30,6 +30,7 @@ export default function App() {
       <ConfigBootstrap />
       <BehaviorTrackerBootstrap />
       <Toaster
+        theme="dark"
         position="top-center"
         closeButton
         offset={20}
@@ -37,20 +38,19 @@ export default function App() {
           duration: 4200,
           classNames: {
             toast: 'sf-toast',
-            title: 'text-sm font-semibold text-white',
-            description: 'text-xs text-navy-300',
+            title: 'sf-toast-title',
+            description: 'sf-toast-description',
             actionButton: 'bg-gold-400 text-navy-950 hover:bg-gold-300',
             cancelButton: 'bg-slate-800 text-navy-200 hover:bg-slate-700',
-            closeButton: 'border-white/10 bg-slate-900 text-navy-300 hover:text-white',
-            success: 'border-success-500/35',
-            error: 'border-danger-500/35',
-            warning: 'border-warning-500/35',
-            info: 'border-info-500/35',
+            closeButton: 'sf-toast-close',
+            success: 'sf-toast-success',
+            error: 'sf-toast-error',
+            warning: 'sf-toast-warning',
+            info: 'sf-toast-info',
           },
         }}
       />
       <GlobalRequestLoading />
-      <MonitorRouteTracker />
       <AppRoutes />
     </>
   )

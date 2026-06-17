@@ -1,5 +1,6 @@
 import StepStatusMark from '@/components/ui/StepStatusMark'
 import SubSkillStepBar from '@/components/admin/SubSkillStepBar'
+import { hasDebugPayload, LlmRunTracePanel } from '@/components/shared/PayloadInspector'
 import {
   mergeSubSkillSteps,
   resolveAgentSubSkills,
@@ -118,6 +119,14 @@ export default function ExecutionRunPanel({
         <>
           <SummaryBlock title="输入摘要" data={run.input_summary} />
           <SummaryBlock title="输出摘要" data={run.output_summary} />
+          {(run.sub_skills || []).some(hasDebugPayload) ? (
+            <div className="mt-4">
+              <LlmRunTracePanel
+                subSkills={run.sub_skills}
+                executionTrace={run.execution_trace}
+              />
+            </div>
+          ) : null}
         </>
       ) : null}
     </div>

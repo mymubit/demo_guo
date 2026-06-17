@@ -2,13 +2,13 @@
 import { getEntryMeta } from '@/utils/creationEntryMeta'
 import { cn } from '@/utils/cn'
 import { trackCreationFormOpen } from '@/utils/behaviorTracker'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 /** 首屏主推：原创 / 大纲扩写 */
 const PRIMARY_ENTRY_KEYS = ['from-scratch', 'from-outline']
 
 function EntryCard({ entry, catalog, onSelectEntry }) {
   const meta = getEntryMeta(entry.key, entry, catalog)
-  const Icon = meta.icon
   return (
     <button
       type="button"
@@ -25,7 +25,7 @@ function EntryCard({ entry, catalog, onSelectEntry }) {
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-gold-400/20 to-purple-500/20 flex items-center justify-center border border-gold-500/20">
-            <Icon className="w-6 h-6 text-gold-400" />
+            {renderLucideIcon(meta.icon, 'w-6 h-6 text-gold-400')}
           </div>
           <div>
             <span className="text-[10px] uppercase tracking-wider text-purple-300 font-semibold">

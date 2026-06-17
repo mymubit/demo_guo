@@ -11,6 +11,7 @@ import { Badge, Button } from '@/components/ui'
 import { ICON } from '@/constants/iconSizes'
 import { pageEnter } from '@/constants/motion'
 import { cn } from '@/utils/cn'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const TOOLS = [
   { k: 'evaluate', n: '剧本评估', icon: BarChart3, desc: '上传剧本，AI 给出四维评分与改进建议' },
@@ -52,7 +53,7 @@ export default function Tools() {
                   : 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20',
               )}
             >
-              <t.icon className={cn(ICON.md, 'mt-0.5 shrink-0', tool === t.k ? 'text-gold-400' : 'text-slate-400')} />
+              {renderLucideIcon(t.icon, cn(ICON.md, 'mt-0.5 shrink-0', tool === t.k ? 'text-gold-400' : 'text-slate-400'))}
               <div>
                 <div className="text-sm font-semibold">{t.n}</div>
                 <div className="mt-0.5 text-[11px] text-slate-400">{t.desc}</div>

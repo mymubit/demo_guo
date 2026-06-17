@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import UserAvatar from '@/components/ui/UserAvatar'
 import { Badge } from '@/components/ui'
-import { SectionEyebrow } from '@/components/shared/ConsumerSection'
+import { SectionEyebrow, PageContainer } from '@/components/shared/ConsumerSection'
 import { pageEnter } from '@/constants/motion'
 import { cn } from '@/utils/cn'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 import {
   UserCircle2,
   Shield,
@@ -177,17 +178,17 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <PageContainer width="7xl" className="py-12">
         <div className="animate-pulse space-y-6">
           <div className="h-32 rounded-2xl border border-white/5 bg-slate-900/60 animate-pulse" />
           <div className="h-96 rounded-2xl border border-white/5 bg-slate-900/60 animate-pulse" />
         </div>
-      </div>
+      </PageContainer>
     )
   }
 
   return (
-    <motion.div {...pageEnter} className="mx-auto max-w-6xl px-6 py-10">
+    <PageContainer as={motion.div} {...pageEnter} width="6xl" className="py-10">
       <header className="mb-8">
         <SectionEyebrow>个人中心</SectionEyebrow>
         <h1 className="mt-3 text-3xl font-bold text-white">账号与创作概览</h1>
@@ -255,7 +256,7 @@ export default function Profile() {
                     : 'text-slate-300 hover:bg-white/5 hover:text-white',
                 )}
               >
-                <tab.icon className={cn('w-4 h-4', activeTab === tab.key ? 'text-gold-400' : 'text-slate-400')} />
+                {renderLucideIcon(tab.icon, cn('w-4 h-4', activeTab === tab.key ? 'text-gold-400' : 'text-slate-400'))}
                 {tab.label}
               </button>
             ))}
@@ -463,6 +464,6 @@ export default function Profile() {
           </AnimatePresence>
         </main>
       </div>
-    </motion.div>
+    </PageContainer>
   )
 }

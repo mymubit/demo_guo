@@ -18,7 +18,10 @@ import { useAuthStore } from '@/store/authStore'
 import WalletBadge from '@/components/billing/WalletBadge'
 import BrandLogo from '@/components/ui/BrandLogo'
 import UserAvatar from '@/components/ui/UserAvatar'
+import { CONSUMER_TOP_NAV } from '@/config/consumerNav'
+import { PageContainer } from '@/components/shared/ConsumerSection'
 import { ICON } from '@/constants/iconSizes'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 export default function MainLayout() {
   const [isScrolled, setIsScrolled] = useState(false)
@@ -44,16 +47,21 @@ export default function MainLayout() {
     navigate('/')
   }
 
-  const navItems = [
-    { path: '/', label: '首页', icon: null },
-    { path: '/creation', label: '开始创作', icon: Sparkles },
-    { path: '/evaluate', label: '剧本评估', icon: BarChart3 },
-    { path: '/pull-sheet', label: '拉片分析', icon: Eye },
-    { path: '/works', label: '我的作品', icon: FolderKanban },
-    { path: '/wallet', label: '创作币', icon: Coins },
-    { path: '/member', label: '会员中心', icon: Crown },
-    { path: '/orders', label: '我的订单', icon: ShoppingBag },
-  ]
+  const navIcons = {
+    '/': null,
+    '/creation': Sparkles,
+    '/evaluate': BarChart3,
+    '/pull-sheet': Eye,
+    '/works': FolderKanban,
+    '/wallet': Coins,
+    '/member': Crown,
+    '/orders': ShoppingBag,
+  }
+
+  const navItems = CONSUMER_TOP_NAV.map((item) => ({
+    ...item,
+    icon: navIcons[item.path] ?? null,
+  }))
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -67,7 +75,7 @@ export default function MainLayout() {
             : 'bg-transparent'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-6 py-4">
+        <PageContainer width="7xl" className="py-4">
           <div className="flex items-center justify-between">
             <BrandLogo variant="consumer" size="sm" to="/" />
 
@@ -187,7 +195,7 @@ export default function MainLayout() {
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
-        </div>
+        </PageContainer>
 
         {/* 移动端菜单 */}
         <AnimatePresence>
@@ -201,7 +209,6 @@ export default function MainLayout() {
               <div className="px-6 py-4 space-y-2">
                 {navItems.map((item) => {
                   const isActive = location.pathname === item.path
-                  const Icon = item.icon
                   return (
                     <Link
                       key={item.path}
@@ -212,7 +219,7 @@ export default function MainLayout() {
                           : 'text-navy-200 hover:text-white hover:bg-white/[0.06]'
                       }`}
                     >
-                      {Icon ? <Icon className={ICON.md} /> : null}
+                      {renderLucideIcon(item.icon, ICON.md)}
                       {item.label}
                     </Link>
                   )
@@ -272,12 +279,14 @@ export default function MainLayout() {
 
       {/* 页脚 */}
       <footer className="border-t border-white/5 bg-navy-950/80">
-        <div className="max-w-7xl mx-auto px-6 py-12">
+        <PageContainer width="7xl" className="py-12">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-8 mb-8">
             <div>
               <h4 className="font-semibold text-white mb-4">产品</h4>
               <ul className="space-y-2 text-sm text-navy-300">
                 <li><Link to="/creation" className="hover:text-white transition-colors">剧本创作</Link></li>
+                <li><Link to="/evaluate" className="hover:text-white transition-colors">剧本评估</Link></li>
+                <li><Link to="/pull-sheet" className="hover:text-white transition-colors">拉片分析</Link></li>
                 <li><Link to="/works" className="hover:text-white transition-colors">我的作品</Link></li>
                 <li><Link to="/member" className="hover:text-white transition-colors">会员套餐</Link></li>
                 <li><Link to="/wallet" className="hover:text-white transition-colors">创作币充值</Link></li>
@@ -312,7 +321,7 @@ export default function MainLayout() {
               <Link to="/admin" className="hover:text-white transition-colors">管理后台</Link>
             </div>
           </div>
-        </div>
+        </PageContainer>
       </footer>
     </div>
   )

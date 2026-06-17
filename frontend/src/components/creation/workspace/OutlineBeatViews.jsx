@@ -4,7 +4,48 @@ import PlotFlowChart from './PlotFlowChart'
 import { isEnglishSlug, resolveHookLabel, resolveReversalLabel } from '@/utils/displayLabels'
 
 export const SUMMARY_MIN = 100
-export const SUMMARY_MAX = 200
+export const SUMMARY_MAX = 400
+
+function dedupeEpisodeBeatParts(parts) {
+  const out = []
+  for (const raw of parts) {
+    const text = String(raw || '').trim()
+    if (!text) continue
+    const dupIdx = out.findIndex((o) => o.includes(text) || text.includes(o))
+    if (dupIdx >= 0) {
+      if (text.length > out[dupIdx].length) out[dupIdx] = text
+      continue
+    }
+    out.push(text)
+  }
+  return out.join('')
+}
+
+/** 只读展示：修复旧数据 200 字硬截断导致的「句中切断」 */
+export function resolveEpisodeSummaryDisplay(ep) {
+  const summary = String(ep?.oneLineSummary || '').trim()
+  const hook = String(ep?.hook || '').trim()
+  const reversal = String(ep?.reversal || '').trim()
+  const cliff = String(ep?.cliffhanger || '').trim()
+  const beats = dedupeEpisodeBeatParts([hook, reversal, cliff])
+
+  if (!summary) return beats
+  if (!beats) return summary
+
+  const looksHardCut =
+    summary.length >= 180 &&
+    /[，,、]$/.test(summary) &&
+    !/[。！？…]$/.test(summary)
+
+  if (looksHardCut && beats.length > summary.length) {
+    return beats
+  }
+  const summaryCore = summary.replace(/[，,、]+$/, '')
+  if (beats.includes(summaryCore) && beats.length > summary.length) {
+    return beats
+  }
+  return summary
+}
 
 export const KEY_EPISODE_TYPES = [
   { value: '', label: '非关键集' },
@@ -372,7 +413,7 @@ export function OutlineEpisodeCard({ ep, compact = false }) {
           <MetaChip title={ep.reversalPatternHint}>{resolveReversalLabel(ep)}</MetaChip>
         ) : null}
       </div>
-      <ReadonlyField label="本集梗概" value={ep.oneLineSummary} multiline />
+      <ReadonlyField label="本集梗概" value={resolveEpisodeSummaryDisplay(ep)} multiline />
       {!compact && (
         <>
           <ReadonlyField label="开头钩子" value={ep.hook} multiline />
@@ -593,7 +634,7 @@ export function OutlineEpisodeDetail({
         ) : null}
       </div>
       {ep.title && <p className="font-semibold text-white text-sm">{ep.title}</p>}
-      <ReadonlyField label="本集梗概" value={ep.oneLineSummary} multiline />
+      <ReadonlyField label="本集梗概" value={resolveEpisodeSummaryDisplay(ep)} multiline />
       <ReadonlyField label="开头钩子" value={ep.hook} multiline />
       <ReadonlyField label="本集反转" value={ep.reversal} multiline />
       <ReadonlyField label="结尾悬念" value={ep.cliffhanger} multiline />

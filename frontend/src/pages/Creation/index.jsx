@@ -42,10 +42,12 @@ import { getEntryMeta } from '@/utils/creationEntryMeta'
 import { mergeThemeWithCatalog } from '@/constants/themeMeta'
 import ThemeBadge from '@/components/ui/ThemeBadge'
 import { Badge, Button, Card, Textarea } from '@/components/ui'
+import { PageContainer } from '@/components/shared/ConsumerSection'
 import { storyBriefContext } from '@/utils/storyBrief'
 import { filterCreationPipelineNodes } from '@/utils/pipelineNodes'
 import { cn } from '@/utils/cn'
 import { ICON } from '@/constants/iconSizes'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 import { pageEnter } from '@/constants/motion'
 import { useSubmitGuard } from '@/hooks/useSubmitGuard'
 
@@ -314,7 +316,10 @@ export default function Creation() {
 
   return (
     <div className={cn('relative min-h-screen bg-navy-950', stage === 3 ? 'py-5 md:py-6' : 'py-10 md:py-12')}>
-      <div className={cn('sf-page-shell', stage === 3 ? 'max-w-none px-3 sm:px-4 lg:px-6' : 'max-w-5xl')}>
+      <PageContainer
+        width={stage === 3 ? 'full' : '5xl'}
+        className={cn(stage === 3 && 'px-3 sm:px-4 lg:px-6')}
+      >
         <motion.div {...pageEnter} className={cn('text-center', stage === 3 ? 'mb-4' : 'mb-12')}>
           <Badge tone="gold" size="md" className="mb-4">
             <Sparkles className={ICON.md} />
@@ -373,7 +378,7 @@ export default function Creation() {
             />
           )}
         </AnimatePresence>
-      </div>
+      </PageContainer>
     </div>
   )
 }
@@ -1113,7 +1118,7 @@ function StageBrief({
   )
 }
 
-function BriefRow({ icon: Icon, label, children }) {
+function BriefRow({ icon, label, children }) {
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -1122,7 +1127,7 @@ function BriefRow({ icon: Icon, label, children }) {
       className="flex items-start gap-4 py-4 border-b border-white/5 last:border-0"
     >
       <div className="w-10 h-10 rounded-xl flex flex-shrink-0 items-center justify-center bg-white/[0.05]">
-        <Icon className={`${ICON.lg} text-gold-400`} />
+        {renderLucideIcon(icon, `${ICON.lg} text-gold-400`)}
       </div>
       <div className="flex-1">
         <div className="text-xs text-navy-400 mb-1.5 uppercase tracking-wider">{label}</div>
@@ -1133,7 +1138,7 @@ function BriefRow({ icon: Icon, label, children }) {
 }
 
 // ============ 通用：分区卡片 ============
-function SectionCard({ title, subtitle, icon: Icon, children }) {
+function SectionCard({ title, subtitle, icon, children }) {
   return (
     <Card
       as={motion.div}
@@ -1144,11 +1149,11 @@ function SectionCard({ title, subtitle, icon: Icon, children }) {
       className="rounded-3xl md:p-7"
     >
       <div className="flex items-start gap-3 mb-5">
-        {Icon && (
+        {icon ? (
           <div className="w-10 h-10 rounded-xl bg-gold-400/15 flex items-center justify-center flex-shrink-0">
-            <Icon className={`${ICON.lg} text-gold-400`} />
+            {renderLucideIcon(icon, `${ICON.lg} text-gold-400`)}
           </div>
-        )}
+        ) : null}
         <div>
           <h3 className="text-lg font-bold text-white">{title}</h3>
           {subtitle && <p className="text-sm text-navy-300 mt-1">{subtitle}</p>}

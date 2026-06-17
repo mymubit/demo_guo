@@ -1,6 +1,7 @@
 import Card from './Card'
 import { cn } from '@/utils/cn'
 import { ICON } from '@/constants/iconSizes'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const tones = {
   default: 'text-navy-300 bg-slate-800/60 border-white/10',
@@ -15,7 +16,7 @@ export default function MetricCard({
   label,
   value,
   hint,
-  icon: Icon,
+  icon,
   tone = 'default',
   className,
 }) {
@@ -27,9 +28,9 @@ export default function MetricCard({
           <div className="mt-2 truncate text-3xl font-bold tracking-tight text-white">{value}</div>
           {hint ? <div className="mt-2 text-xs leading-relaxed text-navy-400">{hint}</div> : null}
         </div>
-        {Icon ? (
+        {icon ? (
           <div className={cn('flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border', tones[tone] || tones.default)}>
-            <Icon className={ICON.lg} />
+            {renderLucideIcon(icon, ICON.lg)}
           </div>
         ) : null}
       </div>

@@ -5,7 +5,7 @@ import { toast } from 'sonner'
 import { Link } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import { orders as ordersApi } from '@/services/api'
-import { SectionHeader, PillFilterGroup } from '@/components/shared/ConsumerSection'
+import { SectionHeader, PillFilterGroup, PageContainer } from '@/components/shared/ConsumerSection'
 import OrdersListPanel from '@/components/orders/OrdersListPanel'
 import { PageLoading } from '@/components/ui'
 import { pageEnter } from '@/constants/motion'
@@ -91,7 +91,7 @@ export default function OrdersPage() {
 
   return (
     <motion.div {...pageEnter} className="relative min-h-screen py-12">
-      <div className="mx-auto max-w-7xl px-6">
+      <PageContainer width="7xl" className="py-12">
         <SectionHeader
           eyebrow="订单"
           title="我的订单"
@@ -137,7 +137,7 @@ export default function OrdersPage() {
             }
           />
         </div>
-      </div>
+      </PageContainer>
     </motion.div>
   )
 }

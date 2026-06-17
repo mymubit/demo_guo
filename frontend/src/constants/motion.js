@@ -53,12 +53,18 @@ export const cardFadeIn = {
   ...motionTiming.base,
 }
 
+// 别名 — 与 cardFadeIn 相同，供 Card/Admin 页面统一引用
+export const cardEnter = cardFadeIn
+
 // 卡片悬浮效果 — 用于卡片 hover 微交互
+export const hoverLift = {
+  y: -2,
+  scale: 1.02,
+  transition: { duration: 0.15, ease: 'easeOut' },
+}
+
 export const cardHover = {
-  whileHover: {
-    scale: 1.02,
-    transition: { duration: 0.15, ease: 'easeOut' },
-  },
+  whileHover: hoverLift,
   whileTap: { scale: 0.98 },
 }
 
@@ -130,4 +136,16 @@ export const nodePulse = {
     ],
   },
   transition: { repeat: Infinity, duration: 2 },
+}
+
+// 布局级动效组合 — 供页面/面板/列表统一 spread
+export const motionLayout = {
+  page: pageEnter,
+  panel: cardFadeIn,
+  card: cardEnter,
+  list: listStagger,
+  listItem: listItemEnter,
+  modal: modalPanel,
+  drawer: drawerPanel,
+  dropdown: dropdownPanel,
 }

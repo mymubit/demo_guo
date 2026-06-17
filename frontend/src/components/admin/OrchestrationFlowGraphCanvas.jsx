@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from 'react'
 import {
   Background,
   Controls,
+  Handle,
   MiniMap,
   ReactFlow,
   MarkerType,
@@ -43,31 +44,43 @@ function layoutGraph(nodes, edges) {
 
 function FlowStepNode({ data, selected }) {
   return (
-    <div
-      className={cn(
-        'rounded-xl border px-3 py-2 w-[200px] bg-slate-900/90 backdrop-blur-sm transition-shadow',
-        selected ? 'border-gold-500/50 shadow-[0_0_16px_rgba(244,183,25,0.15)]' : 'border-white/10',
-        data.isPlaceholder && 'border-dashed opacity-75',
-        data.isSubFlow && !data.isPlaceholder && 'border-purple-500/35',
-        data.runState === 'running' && 'border-cyan-400/45',
-        data.runState === 'failed' && 'border-red-500/40',
-        data.runState === 'completed' && 'border-green-500/35',
-        data.highlighted && 'ring-2 ring-gold-400/40',
-      )}
-    >
-      <div className="flex items-center justify-between gap-2 mb-1">
-        <span className="text-[10px] text-navy-400">#{data.order}</span>
-        <OrchestrationNodeStateBadge state={data.runState} compact />
+    <>
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="!w-2 !h-2 !border-none !bg-slate-500 opacity-0"
+      />
+      <div
+        className={cn(
+          'rounded-xl border px-3 py-2 w-[200px] bg-slate-900/90 backdrop-blur-sm transition-shadow',
+          selected ? 'border-gold-500/50 shadow-[0_0_16px_rgba(244,183,25,0.15)]' : 'border-white/10',
+          data.isPlaceholder && 'border-dashed opacity-75',
+          data.isSubFlow && !data.isPlaceholder && 'border-purple-500/35',
+          data.runState === 'running' && 'border-cyan-400/45',
+          data.runState === 'failed' && 'border-red-500/40',
+          data.runState === 'completed' && 'border-green-500/35',
+          data.highlighted && 'ring-2 ring-gold-400/40',
+        )}
+      >
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <span className="text-[10px] text-navy-400">#{data.order}</span>
+          <OrchestrationNodeStateBadge state={data.runState} compact />
+        </div>
+        <div className="text-xs font-medium text-white truncate">{data.label}</div>
+        <div className="text-[10px] font-mono text-navy-300 truncate mt-0.5">{data.nodeId}</div>
+        {data.isPlaceholder ? (
+          <span className="text-[10px] text-amber-400/90 mt-1 inline-block">待同步 SSOT</span>
+        ) : null}
+        {data.parallel ? (
+          <span className="text-[10px] text-cyan-400/90 mt-1 inline-block">并行</span>
+        ) : null}
       </div>
-      <div className="text-xs font-medium text-white truncate">{data.label}</div>
-      <div className="text-[10px] font-mono text-navy-300 truncate mt-0.5">{data.nodeId}</div>
-      {data.isPlaceholder ? (
-        <span className="text-[10px] text-amber-400/90 mt-1 inline-block">待同步 SSOT</span>
-      ) : null}
-      {data.parallel ? (
-        <span className="text-[10px] text-cyan-400/90 mt-1 inline-block">并行</span>
-      ) : null}
-    </div>
+      <Handle
+        type="source"
+        position={Position.Right}
+        className="!w-2 !h-2 !border-none !bg-slate-500 opacity-0"
+      />
+    </>
   )
 }
 

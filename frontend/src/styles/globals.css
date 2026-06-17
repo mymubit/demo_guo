@@ -170,6 +170,34 @@ select {
   line-height: 1.7;
 }
 
+.sf-script-rendered .ws-section {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--sf-border);
+}
+
+.sf-script-rendered .ws-section:last-child {
+  border-bottom: none;
+}
+
+.sf-script-rendered .ws-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
+
+.sf-script-rendered .ws-section-body p {
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.7;
+}
+
+.sf-script-rendered .ws-section-body strong {
+  color: rgba(244, 183, 25, 0.9);
+  font-weight: 600;
+}
+
 .sf-script-rendered .ws-watermark,
 .sf-script-rendered .script-watermark {
   font-size: 0.75rem;
@@ -201,6 +229,159 @@ select {
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+  }
+
+  /* 遗留按钮 — 与 ui/Button variant 对齐；新代码优先用 <Button> */
+  .btn-gold {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    background-image: linear-gradient(to right, #f7cb54, #e0a008);
+    color: #0f172a;
+    box-shadow: 0 16px 42px -20px rgba(244, 183, 25, 0.55);
+  }
+
+  .btn-gold:hover:not(:disabled) {
+    background-image: linear-gradient(to right, #fae08f, #f7cb54);
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    background-image: linear-gradient(to right, #6366f1, #4338ca);
+    color: #fff;
+    box-shadow: 0 18px 60px -24px rgba(102, 126, 234, 0.55);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    box-shadow: 0 20px 52px -28px rgba(0, 0, 0, 0.65);
+    transform: translateY(-2px);
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(30, 41, 59, 0.7);
+    color: #f1f5f9;
+  }
+
+  .btn-ghost:hover:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(51, 65, 85, 0.7);
+  }
+
+  .btn-gold:disabled,
+  .btn-primary:disabled,
+  .btn-ghost:disabled {
+    pointer-events: none;
+    opacity: 0.55;
+  }
+
+  .btn-gold:focus-visible,
+  .btn-primary:focus-visible,
+  .btn-ghost:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #030d24, 0 0 0 4px rgba(244, 183, 25, 0.3);
+  }
+
+  /* 首页区块标题 — 与 SectionHeader centered 对齐 */
+  .section-title {
+    text-align: center;
+    font-size: 1.875rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+
+  @media (min-width: 768px) {
+    .section-title {
+      font-size: 2.25rem;
+    }
+  }
+
+  .section-subtitle {
+    margin-top: 0.75rem;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 3rem;
+    max-width: 42rem;
+    text-align: center;
+    font-size: 1.125rem;
+    line-height: 1.6;
+    color: #b3c5e1;
+  }
+
+  /* 可交互元素焦点环 — 与 --sf-focus-ring 变量对齐 */
+  .sf-focus-ring:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px #030d24, 0 0 0 4px var(--sf-focus-ring);
+  }
+
+  /* 作品创作历程 HTML 渲染 */
+  .sf-progress-rendered {
+    color: #b3c5e1;
+    font-size: 0.875rem;
+    line-height: 1.7;
+  }
+
+  .sf-progress-rendered ol,
+  .sf-progress-rendered ul {
+    margin: 0;
+    padding-left: 1.25rem;
+  }
+
+  .sf-progress-rendered li {
+    margin-bottom: 0.75rem;
+    padding-left: 0.25rem;
+  }
+
+  .sf-progress-rendered li::marker {
+    color: rgba(244, 183, 25, 0.75);
+  }
+
+  .sf-progress-rendered strong,
+  .sf-progress-rendered b {
+    color: #f1f5f9;
+    font-weight: 600;
+  }
+
+  /* Agent 工作台 Markdown 预览 */
+  .node-preview-content {
+    color: #e2e8f0;
+    line-height: 1.7;
+  }
+
+  .node-preview-content h1,
+  .node-preview-content h2,
+  .node-preview-content h3 {
+    color: #fff;
+    font-weight: 700;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .node-preview-content p {
+    margin-bottom: 0.75rem;
+  }
+
+  .node-preview-content strong {
+    color: rgba(244, 183, 25, 0.9);
   }
 
   /* 管理后台面板样式 — 新代码请使用 AdminPanel 组件 */
@@ -249,6 +430,79 @@ select {
     cursor: not-allowed;
   }
 
+  .sf-page-shell {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  /* 列表/后台工具栏 — 防止 flex 挤压导致中文竖排 */
+  .sf-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  @media (min-width: 640px) {
+    .sf-toolbar {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+  }
+
+  .sf-toolbar > input[type='text'],
+  .sf-toolbar-search {
+    min-width: 0;
+    width: 100%;
+    flex: 1 1 100%;
+  }
+
+  @media (min-width: 640px) {
+    .sf-toolbar > input[type='text'],
+    .sf-toolbar-search {
+      flex: 1 1 280px;
+      min-width: 220px;
+    }
+  }
+
+  .sf-toolbar > select,
+  .sf-toolbar > button,
+  .sf-toolbar > label,
+  .sf-toolbar-actions > select,
+  .sf-toolbar-actions > button,
+  .sf-toolbar-actions > a {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .sf-toolbar > select,
+  .sf-toolbar-actions > select {
+    height: 2.75rem;
+    width: auto;
+    min-width: 8rem;
+  }
+
+  .sf-toolbar-actions {
+    display: flex;
+    width: 100%;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .sf-toolbar-actions {
+      width: auto;
+      margin-left: auto;
+      flex-wrap: nowrap;
+    }
+  }
+
   .sf-label {
     display: block;
     font-size: 13px;
@@ -263,5 +517,52 @@ select {
     color: #64748b;
     margin-top: 8px;
     line-height: 1.5;
+  }
+
+  /* Sonner 全局提示 — 深色主题与站点视觉对齐 */
+  .sf-toast {
+    background: rgba(15, 23, 42, 0.96) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: var(--sf-text) !important;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+  }
+
+  .sf-toast-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #f8fafc !important;
+    line-height: 1.45;
+  }
+
+  .sf-toast-description {
+    font-size: 0.75rem;
+    color: #94a3b8 !important;
+    line-height: 1.5;
+  }
+
+  .sf-toast-close {
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    background: rgba(15, 23, 42, 0.95) !important;
+    color: #94a3b8 !important;
+  }
+
+  .sf-toast-close:hover {
+    color: #f8fafc !important;
+  }
+
+  .sf-toast-success {
+    border-color: rgba(34, 197, 94, 0.35) !important;
+  }
+
+  .sf-toast-error {
+    border-color: rgba(239, 68, 68, 0.35) !important;
+  }
+
+  .sf-toast-warning {
+    border-color: rgba(245, 158, 11, 0.35) !important;
+  }
+
+  .sf-toast-info {
+    border-color: rgba(6, 182, 212, 0.35) !important;
   }
 }

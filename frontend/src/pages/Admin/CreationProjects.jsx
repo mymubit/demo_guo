@@ -30,6 +30,7 @@ import {
   formatDateTime,
 } from '@/components/admin/AdminUI'
 import ProjectSpotlightCard from '@/components/admin/ProjectSpotlightCard'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const STATUS_OPTIONS = [
   { key: '', label: '全部状态' },
@@ -412,7 +413,6 @@ export default function CreationProjectsPage() {
         {QUICK_FILTERS.map((filter) => {
           const active = quickActive === filter.id
           const count = facets?.[filter.facetKey]
-          const Icon = filter.icon
           return (
             <button
               key={filter.id}
@@ -425,7 +425,7 @@ export default function CreationProjectsPage() {
               }`}
             >
               <div className="flex items-center justify-between gap-2 mb-1">
-                <Icon className={`w-4 h-4 ${active ? 'text-gold-400' : 'text-navy-400'}`} />
+                {renderLucideIcon(filter.icon, `w-4 h-4 ${active ? 'text-gold-400' : 'text-navy-400'}`)}
                 <span className={`text-xl font-bold ${active ? 'text-gold-300' : 'text-white'}`}>
                   {count != null ? count : '—'}
                 </span>

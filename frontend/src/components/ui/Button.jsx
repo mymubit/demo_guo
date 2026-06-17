@@ -2,6 +2,7 @@ import { forwardRef } from 'react'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { ICON } from '@/constants/iconSizes'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const variants = {
   brand:
@@ -41,6 +42,7 @@ const Button = forwardRef(function Button(
     variant = 'secondary',
     size = 'md',
     isLoading = false,
+    icon,
     iconLeft,
     iconRight,
     iconOnly = false,
@@ -52,6 +54,7 @@ const Button = forwardRef(function Button(
   ref,
 ) {
   const isDisabled = disabled || isLoading
+  const leadingIcon = iconLeft ?? icon
   const sizeClass = iconOnly ? iconOnlySizes[size] || iconOnlySizes.md : sizes[size] || sizes.md
   const variantClass = variants[variant] || variants.secondary
 
@@ -69,9 +72,9 @@ const Button = forwardRef(function Button(
       )}
       {...props}
     >
-      {isLoading ? <Loader2 className={cn(ICON.md, 'animate-spin')} /> : iconLeft}
+      {isLoading ? <Loader2 className={cn(ICON.md, 'animate-spin')} /> : renderLucideIcon(leadingIcon)}
       {iconOnly ? <span className="sr-only">{children}</span> : children}
-      {!isLoading && iconRight}
+      {!isLoading && renderLucideIcon(iconRight)}
     </button>
   )
 })

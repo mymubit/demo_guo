@@ -398,6 +398,8 @@ class LlmUsageLog(models.Model):
         verbose_name="Agent 执行记录",
     )
     sub_skill_id = models.CharField("子技能 ID", max_length=128, blank=True, default="", db_index=True)
+    request_payload = models.JSONField("请求体(调试)", default=dict, blank=True)
+    response_payload = models.JSONField("响应体(调试)", default=dict, blank=True)
     created_at = models.DateTimeField("创建时间", auto_now_add=True, db_index=True)
 
     class Meta:

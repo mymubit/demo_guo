@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { motion } from 'framer-motion'
 import { BookOpen, Upload, FileSearch } from 'lucide-react'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 /** 网文改编 — 独立首屏：上传/粘贴小说，而非与原创表单混在一起 */
 export default function NovelAdaptationPanel({ novelText, onChange, onFileLoaded, minLength = 200 }) {
@@ -95,12 +96,12 @@ export default function NovelAdaptationPanel({ novelText, onChange, onFileLoaded
   )
 }
 
-function SectionShell({ icon: Icon, title, subtitle, children }) {
+function SectionShell({ icon, title, subtitle, children }) {
   return (
     <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-6">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-xl bg-gold-400/10 flex items-center justify-center">
-          <Icon className="w-5 h-5 text-gold-400" />
+          {renderLucideIcon(icon, 'w-5 h-5 text-gold-400')}
         </div>
         <div>
           <h3 className="text-lg font-bold text-white">{title}</h3>

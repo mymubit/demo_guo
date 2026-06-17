@@ -16,11 +16,12 @@ import {
 import { THEME_META_LIST } from '@/constants/themeMeta'
 import ThemeBadge from '@/components/ui/ThemeBadge'
 import { Badge, Button } from '@/components/ui'
-import { SectionEyebrow } from '@/components/shared/ConsumerSection'
+import { SectionEyebrow, PageContainer } from '@/components/shared/ConsumerSection'
 import { useConfig } from '@/services/api'
 import { cn } from '@/utils/cn'
 import { ICON } from '@/constants/iconSizes'
 import { pageEnter } from '@/constants/motion'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const HERO_BG =
   'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=cinematic%20wide%20shot%20of%20a%20film%20director%20sitting%20in%20a%20dark%20luxurious%20editing%20room%20with%20glowing%20scripts%20and%20amber%20spotlights%2C%20anamorphic%20lens%2C%20deep%20navy%20and%20gold%20tones%2C%20moody%20atmosphere%2C%20photorealistic%2C%208k&image_size=landscape_16_9'
@@ -182,7 +183,7 @@ export default function Home() {
           aria-hidden
         />
 
-        <div className="relative z-10 mx-auto flex min-h-[calc(100svh-4rem)] max-w-7xl items-center px-6">
+        <PageContainer width="7xl" className="relative z-10 flex min-h-[calc(100svh-4rem)] items-center">
           <div className="grid w-full grid-cols-1 items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
             <motion.div {...pageEnter} className="max-w-[620px]">
               <div className="mb-5 flex flex-wrap gap-2">
@@ -238,12 +239,12 @@ export default function Home() {
               </motion.div>
             </div>
           </div>
-        </div>
+        </PageContainer>
       </section>
 
       {/* ========= 功能展示 ========= */}
       <section id="features" className="py-24 relative">
-        <div className="max-w-7xl mx-auto px-6">
+        <PageContainer width="7xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -273,19 +274,19 @@ export default function Home() {
                     boxShadow: `0 8px 24px -8px ${feature.color}60`,
                   }}
                 >
-                  <feature.icon className="w-7 h-7" style={{ color: feature.color }} />
+                  {renderLucideIcon(feature.icon, 'w-7 h-7', { style: { color: feature.color } })}
                 </div>
                 <h3 className="text-xl font-bold mb-3 text-white">{feature.title}</h3>
                 <p className="text-navy-200 leading-relaxed">{feature.description}</p>
               </motion.div>
             ))}
           </div>
-        </div>
+        </PageContainer>
       </section>
 
       {/* ========= 题材选择 ========= */}
       <section className="relative py-24">
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <PageContainer width="7xl" className="relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -314,12 +315,12 @@ export default function Home() {
               </motion.div>
             ))}
           </div>
-        </div>
+        </PageContainer>
       </section>
 
       {/* ========= 7 节点主链叙事 ========= */}
       <section className="py-24">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <PageContainer width="7xl" className="grid grid-cols-1 items-center gap-16 lg:grid-cols-[1.2fr_0.8fr]">
           <div>
             <SectionEyebrow>主链 7 节点</SectionEyebrow>
             <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl">
@@ -363,12 +364,12 @@ export default function Home() {
               <span>已耗时 03:12 · 预计剩余 04:48</span>
             </div>
           </div>
-        </div>
+        </PageContainer>
       </section>
 
       {/* ========= 用户评价 ========= */}
       <section className="relative overflow-hidden py-24">
-        <div className="mx-auto max-w-7xl px-6">
+        <PageContainer width="7xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -408,12 +409,12 @@ export default function Home() {
               </motion.div>
             ))}
           </div>
-        </div>
+        </PageContainer>
       </section>
 
       {/* ========= FAQ ========= */}
       <section className="py-24 relative">
-        <div className="max-w-4xl mx-auto px-6">
+        <PageContainer width="4xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -429,12 +430,12 @@ export default function Home() {
               <FAQItem key={idx} {...faq} />
             ))}
           </div>
-        </div>
+        </PageContainer>
       </section>
 
       {/* ========= CTA ========= */}
       <section className="py-24 relative">
-        <div className="max-w-4xl mx-auto px-6">
+        <PageContainer width="4xl">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -460,7 +461,7 @@ export default function Home() {
               </div>
             </div>
           </motion.div>
-        </div>
+        </PageContainer>
       </section>
     </div>
   )

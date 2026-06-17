@@ -4,7 +4,9 @@
 import { NavLink } from 'react-router-dom'
 import { BarChart3, Eye } from 'lucide-react'
 import { cn } from '@/utils/cn'
+import { PageContainer } from '@/components/shared/ConsumerSection'
 import { ICON } from '@/constants/iconSizes'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 import { pageEnter } from '@/constants/motion'
 import { motion } from 'framer-motion'
 
@@ -47,7 +49,7 @@ export default function ToolsShell({ active, title, subtitle, children }) {
                     : 'border-white/10 bg-white/[0.03] text-slate-300 hover:border-white/20',
                 )}
               >
-                <t.icon className={cn(ICON.md, 'mt-0.5 shrink-0', isActive ? 'text-gold-400' : 'text-slate-400')} />
+                {renderLucideIcon(t.icon, cn(ICON.md, 'mt-0.5 shrink-0', isActive ? 'text-gold-400' : 'text-slate-400'))}
                 <div>
                   <div className="text-sm font-semibold">{t.label}</div>
                   <div className="mt-0.5 text-[11px] text-slate-400">{t.desc}</div>
@@ -63,13 +65,15 @@ export default function ToolsShell({ active, title, subtitle, children }) {
       </aside>
 
       <main className="min-w-0 overflow-auto p-6 md:p-7 lg:p-9">
-        {(title || subtitle) && (
-          <header className="mb-6">
-            {title ? <h1 className="text-2xl font-bold text-white">{title}</h1> : null}
-            {subtitle ? <p className="mt-1 text-sm text-navy-300">{subtitle}</p> : null}
-          </header>
-        )}
-        {children}
+        <PageContainer width="5xl" className="px-0">
+          {(title || subtitle) && (
+            <header className="mb-6">
+              {title ? <h1 className="text-2xl font-bold text-white">{title}</h1> : null}
+              {subtitle ? <p className="mt-1 text-sm text-navy-300">{subtitle}</p> : null}
+            </header>
+          )}
+          {children}
+        </PageContainer>
       </main>
     </motion.div>
   )

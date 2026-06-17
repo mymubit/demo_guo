@@ -11,13 +11,14 @@ import {
 import { toast } from 'sonner'
 import { works as worksApi } from '@/services/api'
 import { ExecutionDurationLabel } from '@/components/shared/ExecutionRunPanel'
+import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
-function AgentCard({ title, icon: Icon, children, action, durationMs }) {
+function AgentCard({ title, icon, children, action, durationMs }) {
   return (
     <div className="flex min-h-[140px] flex-col rounded-xl border border-white/5 bg-slate-900/40 p-4">
       <div className="flex items-center justify-between gap-2 mb-2">
         <p className="text-xs text-gold-400/90 flex items-center gap-1">
-          {Icon && <Icon className="w-3.5 h-3.5" />}
+          {renderLucideIcon(icon, 'w-3.5 h-3.5')}
           {title}
         </p>
         <ExecutionDurationLabel durationMs={durationMs} className="text-[10px] shrink-0" />

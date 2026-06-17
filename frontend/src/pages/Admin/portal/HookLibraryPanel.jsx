@@ -295,8 +295,8 @@ export default function HookLibraryPanel({ onMessage, embedded = false }) {
         ))}
       </div>
 
-      <div className="sf-console-panel p-4 flex flex-col lg:flex-row lg:items-center gap-3">
-        <div className="relative flex-1 min-w-[200px]">
+      <div className="sf-toolbar sf-console-panel p-4">
+        <div className="sf-toolbar-search relative">
           <Search className="w-5 h-5 text-navy-400 absolute left-4 top-1/2 -translate-y-1/2" />
           <input
             type="text"
