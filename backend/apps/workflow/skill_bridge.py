@@ -236,20 +236,33 @@ class SkillBridge:
         extra_config: Dict[str, Any],
         coin_cost: int,
     ) -> SkillBridgeResult:
-        """按 runner_path 动态导入并调用 Python 函数。"""
+        """按 runner_path 动态导入并调用 Python 函数。
+
+        对于旧创作节点（workspace_bridge 体系），runner_path 为：
+          "apps.creation.orchestration.workspace_bridge.run_workspace_node"
+        需要适配 WorkspaceInvokeOptions(node_index=chain_order, ...) 签名。
+        """
         import time
         t0 = time.time()
 
         try:
+            # ── 特殊路由：workspace_bridge（旧创作节点体系）────────
+            if runner_path.endswith("workspace_bridge.run_workspace_node"):
+                return self._run_workspace_bridge_node(
+                    node_id=node_id,
+                    extra_config=extra_config,
+                    coin_cost=coin_cost,
+                    t0=t0,
+                )
+
+            # ── 通用路由：直接 import + 调用 Python 函数 ─────────
             module_name, func_name = runner_path.rsplit(".", 1)
             module = importlib.import_module(module_name)
             func = getattr(module, func_name, None)
             if func is None:
                 raise AttributeError(f"模块 {module_name} 中没有 {func_name}")
 
-            # 标准化调用签名（向后兼容旧创作节点）
-            # 旧签名: func(project, node_config, context)
-            # 新签名: func(project, node_config, context, extra_config)
+            # 兼容多种旧签名
             import inspect
             sig = inspect.signature(func)
             if len(sig.parameters) >= 3:
@@ -257,12 +270,74 @@ class SkillBridge:
             else:
                 raw_result = func(self.project, self.node_config, self.context, extra_config)
 
-            # 标准化结果 → SkillBridgeResult
             return self._normalize_result(raw_result, coin_cost, t0)
 
         except Exception as exc:
             duration_ms = int((time.time() - t0) * 1000)
             logger.exception("[SkillBridge] runner_path 调用失败 path=%s", runner_path)
+            return SkillBridgeResult(
+                success=False,
+                errors=[f"{type(exc).__name__}:{exc}"],
+                coin_cost=coin_cost,
+                duration_ms=duration_ms,
+                retryable=True,
+            )
+
+    def _run_workspace_bridge_node(
+        self,
+        node_id: str,
+        extra_config: Dict[str, Any],
+        coin_cost: int,
+        t0: float,
+    ) -> SkillBridgeResult:
+        """适配旧创作节点（workspace_bridge）：
+
+        将 NodeConfig.chain_order（节点顺序）映射为 WorkspaceInvokeOptions.node_index，
+        通过旧 AgentOrchestrator 体系执行节点，返回统一 SkillBridgeResult。
+
+        这是迁移期的桥接层：SkillBridge 对外只暴露统一协议，
+        内部适配旧节点的 WorkspaceInvokeOptions 签名。
+        """
+        import time
+
+        try:
+            from apps.creation.orchestration.types import AgentResult, WorkspaceInvokeOptions
+
+            node_index = self.node_config.chain_order
+            if node_index <= 0:
+                node_index = 1
+
+            opts = WorkspaceInvokeOptions(
+                node_index=node_index,
+                script_from=extra_config.get("script_from"),
+                script_to=extra_config.get("script_to"),
+                outline_mode=extra_config.get("outline_mode"),
+                outline_from=extra_config.get("outline_from"),
+                outline_to=extra_config.get("outline_to"),
+                outline_stage_key=extra_config.get("outline_stage_key"),
+            )
+
+            from apps.creation.orchestration.workspace_bridge import run_workspace_node
+            agent_result: AgentResult = run_workspace_node(self.project, opts)
+
+            duration_ms = int((time.time() - t0) * 1000)
+            success = agent_result.status in ("completed", "success", "done")
+            outputs = agent_result.outputs or {}
+            return SkillBridgeResult(
+                success=success,
+                output=dict(outputs),
+                errors=list(agent_result.errors or []),
+                coin_cost=int(outputs.get("coin_cost", coin_cost) or coin_cost),
+                llm_token_in=int(outputs.get("llm_token_in", 0) or 0),
+                llm_token_out=int(outputs.get("llm_token_out", 0) or 0),
+                duration_ms=duration_ms,
+                run_ids=[str(getattr(agent_result, "run_id", ""))],
+                retryable=not success,
+            )
+
+        except Exception as exc:
+            duration_ms = int((time.time() - t0) * 1000)
+            logger.exception("[SkillBridge] workspace_bridge 调用失败 node_id=%s", node_id)
             return SkillBridgeResult(
                 success=False,
                 errors=[f"{type(exc).__name__}:{exc}"],

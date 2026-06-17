@@ -127,11 +127,126 @@ def _record_task_result_if_failed(
 
 
 def _execute_pipeline_for_project(project: Project) -> dict:
-    """主链节点 1–5：SSOT 编排器（逐节点 LLM/CLI + Schema 落库）。"""
-    from .fusion.fusion_orchestrator import run_fusion_nodes_for_project
+    """主链节点 1–7：通过新 WorkflowEngine 执行 FusionPipelinePack。
 
-    logger.info("[Creation] 融合编排器 project=%s", project.id)
+    【P0 旧引擎下线】本函数不再调用旧 FusionOrchestrator，
+    改为创建 WorkflowInstance → 运行 WorkflowEngine → 同步结果回 Project。
+
+    调用路径：
+      _run_creation_pipeline_core()
+        → _execute_pipeline_for_project()          ← 本函数
+          → WorkflowInstance.objects.create()
+            → WorkflowEngine(project, instance).run()
+              → SkillBridge.run()
+                → workspace_bridge.run_workspace_node()
+                  → AgentOrchestrator (旧体系，临时复用)
+                    → 各节点 engine (brief / outline / character / ...)
+    """
+    from apps.workflow.execution_models import WorkflowInstance
+    from apps.workflow.workflow_engine import WorkflowEngine
+
+    try:
+        # 查找该 Project 对应的 WorkflowInstance
+        instance = WorkflowInstance.objects.filter(
+            project=project,
+        ).order_by("-created_at").first()
+
+        if instance is None or instance.status not in (
+            WorkflowInstance.STATUS_PENDING,
+            WorkflowInstance.STATUS_RUNNING,
+            WorkflowInstance.STATUS_PAUSED,
+        ):
+            # 兜底：没有实例时跳过新引擎（走旧链路，保持向后兼容）
+            logger.warning(
+                "[Creation] Project %s 没有 WorkflowInstance，跳过新引擎（使用旧链路）",
+                project.id,
+            )
+            return _execute_pipeline_for_project_legacy(project)
+
+        engine = WorkflowEngine(instance)
+        engine.run()
+
+        # 新引擎完成后，同步节点执行结果到 Project / CreationNode
+        _sync_workflow_instance_to_project(project, instance)
+
+        return _build_pipeline_result_from_instance(instance)
+
+    except Exception as exc:
+        logger.exception("[Creation] 新引擎执行失败 project=%s: %s", project.id, exc)
+        # 新引擎失败时降级走旧链路
+        return _execute_pipeline_for_project_legacy(project)
+
+
+def _execute_pipeline_for_project_legacy(project: Project) -> dict:
+    """【legacy 降级路径】直接调用旧 FusionOrchestrator。
+
+    仅在新引擎不可用（无 WorkflowInstance / 引擎异常）时触发。
+    此函数引用旧 fusion_orchestrator，请勿在此之外调用。
+    """
+    from apps.creation.fusion.fusion_orchestrator import run_fusion_nodes_for_project
+    logger.info("[Creation] 使用旧引擎 project=%s", project.id)
     return run_fusion_nodes_for_project(project)
+
+
+def _sync_workflow_instance_to_project(project: Project, instance) -> None:
+    """将 WorkflowInstance 的节点执行结果同步到 Project 的 CreationNode。"""
+    from apps.workflow.execution_models import NodeExecution
+    from apps.workflow.models import FusionPipelineNode
+    from django.utils import timezone as tz
+
+    nodes = NodeExecution.objects.filter(instance=instance).order_by("started_at")
+    node_map = {str(ne.node_id): ne for ne in nodes}
+
+    # 同步节点状态到 CreationNode
+    for db_node in FusionPipelineNode.objects.filter(pack=instance.pack).order_by("chain_order"):
+        ne: NodeExecution | None = node_map.get(db_node.fusion_node_id)
+        if ne is None:
+            continue
+
+        try:
+            cn = project.nodes.filter(
+                fusion_node_id=db_node.fusion_node_id
+            ).first()
+            if cn is None:
+                continue
+
+            if ne.status == NodeExecution.STATUS_SUCCEEDED:
+                cn.status = "completed"
+                cn.completed_at = ne.finished_at or tz.now()
+                cn.summary_text = db_node.display_name
+            elif ne.status == NodeExecution.STATUS_FAILED:
+                cn.status = "failed"
+                cn.error_message = (ne.error_info or "")[:500]
+            elif ne.status == NodeExecution.STATUS_RUNNING:
+                cn.status = "running"
+                cn.started_at = ne.started_at or tz.now()
+            cn.save(update_fields=["status", "completed_at", "started_at",
+                                   "summary_text", "error_message", "updated_at"])
+        except Exception as exc:
+            logger.warning("[Sync] 同步节点失败 node=%s: %s", db_node.fusion_node_id, exc)
+
+    # 同步 Project 整体进度
+    completed = nodes.filter(status=NodeExecution.STATUS_COMPLETED).count()
+    total = nodes.count()
+    project.progress_percent = min(100, int(completed / max(1, total) * 100))
+    project.current_node_index = total
+    project.updated_at = tz.now()
+
+
+def _build_pipeline_result_from_instance(instance) -> dict:
+    """将 WorkflowInstance 的上下文整理为 pipeline 兼容的 result dict。"""
+    ctx = instance.context or {}
+
+    return {
+        "project_brief": ctx.get("nodes", {}).get("node_brief", {}).get("output", {}),
+        "structure": ctx.get("nodes", {}).get("node_outline", {}).get("output", {}),
+        "characters": ctx.get("nodes", {}).get("node_character", {}).get("output", {}),
+        "outlines": ctx.get("nodes", {}).get("node_outline", {}).get("output", {}),
+        "scripts": ctx.get("nodes", {}).get("node_script", {}).get("output", {}),
+        "review": ctx.get("nodes", {}).get("node_review", {}).get("output", {}),
+        "status": "completed" if instance.status == instance.STATUS_DONE else "error",
+        "errors": [instance.failure_reason] if instance.failure_reason else [],
+    }
 
 
 def _update_nodes_from_result(project: Project, result: dict) -> None:
