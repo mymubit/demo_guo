@@ -4,6 +4,7 @@ import AppRoutes from '@/router'
 import { GlobalRequestLoading } from '@/components/ui'
 import { MonitorRouteTracker } from '@/utils/monitor'
 import { useConfigStore } from '@/services/config/configStore'
+import { installBehaviorTracker } from '@/utils/behaviorTracker'
 
 function ConfigBootstrap() {
   const fetchPublicConfigs = useConfigStore((state) => state.fetchPublicConfigs)
@@ -15,10 +16,19 @@ function ConfigBootstrap() {
   return null
 }
 
+function BehaviorTrackerBootstrap() {
+  useEffect(() => {
+    // 【运营 F1】自动挂载 6 个核心埋点（landing_view 在此触发）
+    installBehaviorTracker()
+  }, [])
+  return null
+}
+
 export default function App() {
   return (
     <>
       <ConfigBootstrap />
+      <BehaviorTrackerBootstrap />
       <Toaster
         position="top-center"
         closeButton

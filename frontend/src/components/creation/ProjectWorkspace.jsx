@@ -342,6 +342,17 @@ export default function ProjectWorkspace({
     setSaving(true)
     try {
       await creation.saveAgentContent(projectId, activeIndex, data)
+      // 【运营 F1】埋点：编辑节点
+      try {
+        const { trackNodeEdited } = await import('@/utils/behaviorTracker')
+        trackNodeEdited({
+          projectId,
+          nodeIndex: activeIndex,
+          nodeName: nodeMeta?.name || '',
+        })
+      } catch (_) {
+        /* ignore */
+      }
       toast.success('已保存')
       setEditMode(false)
       await loadWorkspace()
@@ -381,6 +392,13 @@ export default function ProjectWorkspace({
       a.download = `${workspace?.title || '剧本'}.${ext}`
       a.click()
       URL.revokeObjectURL(url)
+      // 【运营 F1】埋点：剧本导出
+      try {
+        const { trackScriptExported } = await import('@/utils/behaviorTracker')
+        trackScriptExported({ projectId, fileFormat: ext })
+      } catch (_) {
+        /* ignore */
+      }
     } catch (e) {
       toast.error(e.message || '下载失败')
     } finally {
@@ -401,6 +419,13 @@ export default function ProjectWorkspace({
         throw new Error('当前浏览器不支持自动复制，请手动复制分享链接')
       }
       await navigator.clipboard.writeText(url)
+      // 【运营 F1】埋点：生成分享链接
+      try {
+        const { trackShareLinkGenerated } = await import('@/utils/behaviorTracker')
+        trackShareLinkGenerated({ projectId, validDays: 7 })
+      } catch (_) {
+        /* ignore */
+      }
       toast.success('分享链接已复制')
     } catch (e) {
       toast.error(e.message || '分享失败')

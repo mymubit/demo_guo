@@ -1,6 +1,7 @@
 import logging
 from datetime import timedelta
 
+from django.db import models
 from django.db.models import Avg, Count, Q
 from django.utils import timezone
 
@@ -26,6 +27,52 @@ def _is_in_cooldown(rule: AlertRule) -> bool:
         return False
     cooldown_until = rule.last_triggered_at + timedelta(minutes=rule.cooldown_minutes)
     return cooldown_until > timezone.now()
+
+
+def _metric_zombie_workflow_instances(since) -> tuple[float, dict]:
+    """统计僵尸 WorkflowInstance（>15min 仍 running）。"""
+    try:
+        from apps.workflow.models import WorkflowInstance
+    except ImportError:
+        return 0.0, {"sample_count": 0, "reason": "workflow app unavailable"}
+    threshold = timezone.now() - timedelta(minutes=15)
+    qs = WorkflowInstance.objects.filter(
+        status__in=[WorkflowInstance.STATUS_RUNNING, "pending"],
+        created_at__lt=threshold,
+        resolved_at__isnull=True,
+    )
+    return float(qs.count()), {"sample_count": qs.count()}
+
+
+def _metric_coin_spend_anomaly(since) -> tuple[float, dict]:
+    """创作币扣费异常：与昨日同期比较的偏离百分比（绝对值）。"""
+    try:
+        from apps.billing.models import CoinLedger
+    except ImportError:
+        return 0.0, {"sample_count": 0, "reason": "billing app unavailable"}
+    now = timezone.now()
+    # 过去 60min 的扣费合计（delta < 0 表示扣费）
+    cur_window_start = now - timedelta(hours=1)
+    cur_total = CoinLedger.objects.filter(
+        created_at__gte=cur_window_start,
+        entry_type=CoinLedger.TYPE_SPEND,
+    ).aggregate(total=models.Sum("delta"))["total"] or 0
+    # 昨日同时段（昨天的 60min 窗口）
+    yesterday_start = cur_window_start - timedelta(days=1)
+    yesterday_end = cur_window_start - timedelta(days=1) + timedelta(hours=1)
+    yesterday_total = CoinLedger.objects.filter(
+        created_at__gte=yesterday_start,
+        created_at__lt=yesterday_end,
+        entry_type=CoinLedger.TYPE_SPEND,
+    ).aggregate(total=models.Sum("delta"))["total"] or 0
+    if yesterday_total == 0:
+        return 0.0, {"cur_total": float(cur_total), "yesterday_total": 0.0}
+    delta = abs(float(cur_total) - float(yesterday_total)) / abs(float(yesterday_total)) * 100
+    return round(delta, 2), {
+        "cur_total": float(cur_total),
+        "yesterday_total": float(yesterday_total),
+        "delta_pct": delta,
+    }
 
 
 def _metric_value(rule: AlertRule, since):
@@ -67,6 +114,12 @@ def _metric_value(rule: AlertRule, since):
     if rule.metric_type == AlertRule.MetricType.SLOW_SQL_COUNT:
         qs = SqlPerformanceLog.objects.filter(created_at__gte=since).filter(path_filter)
         return float(qs.count()), {"sample_count": qs.count()}
+
+    if rule.metric_type == AlertRule.MetricType.ZOMBIE_WORKFLOW_INSTANCES:
+        return _metric_zombie_workflow_instances(since)
+
+    if rule.metric_type == AlertRule.MetricType.COIN_SPEND_ANOMALY:
+        return _metric_coin_spend_anomaly(since)
 
     return 0.0, {"sample_count": 0}
 

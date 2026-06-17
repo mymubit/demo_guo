@@ -14,6 +14,7 @@ class AgentRegistryConfigServiceTests(TestCase):
         self.assertIn("agents", message)
 
     def test_save_registry_persists_active_row(self):
+        # 新引擎：runner 字段落库前归一化为空（统一由 skill_id 路由）
         registry = {
             "_meta": {"version": "test", "post_script_chain": ["review", "score"]},
             "agents": [{"id": "brief", "name": "Brief", "runner": "apps.creation.orchestration.brief.run_brief_agent"}],
@@ -23,6 +24,8 @@ class AgentRegistryConfigServiceTests(TestCase):
         payload = AgentRegistryConfigService.admin_payload()
         self.assertEqual(payload["source"], "db")
         self.assertEqual(payload["registry"]["_meta"]["post_script_chain"], ["review", "score"])
+        # 旧路径 normalize 后为空
+        self.assertEqual(row.registry["agents"][0]["runner"], "")
 
     def test_ensure_defaults_imports_from_disk(self):
         from apps.agent.runtime import get_agent_registry

@@ -157,27 +157,122 @@ def mark_project_awaiting(project: Project, node_index: int) -> None:
 
 
 def run_orchestrator_step(project: Project, node_index: int) -> Dict[str, Any]:
-    from .orchestration.orchestrator import run_pipeline_step_by_index
+    """新引擎：分步模式下单节点执行走 SkillInvoker → creation.{node} 技能。
+    返回 dict 形如 {status, node_index, outputs, errors, ...}
+    """
+    from apps.skill.skills.invoker import get_skill_invoker
+    from .orchestration.types import AgentResult
 
-    return run_pipeline_step_by_index(project, node_index)
+    skill_id = _workspace_node_to_skill_id(int(node_index))
+    if not skill_id:
+        return {
+            "status": "error",
+            "node_index": int(node_index),
+            "errors": [f"节点 {node_index} 未映射到 creation.* 技能"],
+        }
+    skill_result = get_skill_invoker().invoke(
+        skill_id=skill_id,
+        payload={"project_id": str(project.id)},
+        project_id=str(project.id),
+        user_id=project.user_id,
+    )
+    if skill_result.success:
+        return AgentResult(
+            agent_id=skill_id,
+            status="completed",
+            outputs=skill_result.data or {},
+            meta={"skill_id": skill_id, "trace_id": skill_result.trace_id},
+        ).to_dict()
+    return AgentResult(
+        agent_id=skill_id,
+        status="error",
+        errors=[skill_result.error.get("message", "skill invoker failed")],
+        meta={"skill_id": skill_id, "trace_id": skill_result.trace_id},
+    ).to_dict()
+
+
+def _workspace_node_to_skill_id(node_index: int) -> str:
+    """工作台节点索引 → 创作技能 ID（与 WorkflowInstance 默认 pack 一致）。"""
+    mapping = {
+        1: "creation.brief",
+        2: "creation.structure",
+        3: "creation.character",
+        4: "creation.outline",
+        5: "creation.script",
+        6: "creation.review",
+        7: "creation.polish",
+    }
+    return mapping.get(int(node_index), "")
+
+
+def _invoke_post_skill(project: Project, agent_id: str) -> Dict[str, Any]:
+    """新引擎：post-script 节点（review / score 等）统一走 SkillInvoker。
+    返回 dict 形如：
+      {status, agent_id, outputs, errors, meta:{fusion:{ok, skipped, error}}}
+    """
+    from apps.skill.skills.invoker import get_skill_invoker
+
+    skill_id = f"creation.{agent_id}"
+    skill_result = get_skill_invoker().invoke(
+        skill_id=skill_id,
+        payload={"project_id": str(project.id)},
+        project_id=str(project.id),
+        user_id=project.user_id,
+    )
+    if skill_result.success:
+        return {
+            "status": "completed",
+            "agent_id": agent_id,
+            "outputs": skill_result.data or {},
+            "errors": [],
+            "meta": {
+                "fusion": {"ok": True, "skipped": False, "error": ""},
+                "skill_id": skill_id,
+                "trace_id": skill_result.trace_id,
+            },
+        }
+    return {
+        "status": "error",
+        "agent_id": agent_id,
+        "outputs": {},
+        "errors": [skill_result.error.get("message", "skill invoker failed")],
+        "meta": {
+            "fusion": {"ok": False, "skipped": False, "error": skill_result.error.get("message", "")},
+            "skill_id": skill_id,
+            "trace_id": skill_result.trace_id,
+        },
+    }
+
+
+def _post_skill_to_fusion_step(result: Dict[str, Any], node_index: int) -> Dict[str, Any]:
+    """将 SkillInvoker 结果转 step_mode 期望的 fusion post-step 格式。"""
+    if result.get("status") == "error":
+        return {"status": "error", "errors": list(result.get("errors") or ["执行失败"])}
+    fusion = (result.get("meta") or {}).get("fusion") or {}
+    return {
+        "status": "completed",
+        "node_index": int(node_index),
+        "agent_id": result.get("agent_id", ""),
+        "ok": bool(fusion.get("ok", True)),
+        "skipped": bool(fusion.get("skipped")),
+        "error": fusion.get("error") or "",
+    }
 
 
 def run_fusion_review_step(project: Project, node_index: int) -> Dict[str, Any]:
-    from .orchestration.orchestrator import AgentOrchestrator, agent_result_to_fusion_post_step
     from apps.agent.runtime import agent_for_pipeline_node_index
 
     agent_id = agent_for_pipeline_node_index(int(node_index)) or "review"
-    result = AgentOrchestrator(project).invoke(agent_id)
-    return agent_result_to_fusion_post_step(result, int(node_index))
+    result = _invoke_post_skill(project, agent_id)
+    return _post_skill_to_fusion_step(result, int(node_index))
 
 
 def run_fusion_score_step(project: Project, node_index: int) -> Dict[str, Any]:
-    from .orchestration.orchestrator import AgentOrchestrator, agent_result_to_fusion_post_step
     from apps.agent.runtime import agent_for_pipeline_node_index
 
     agent_id = agent_for_pipeline_node_index(int(node_index)) or "score"
-    result = AgentOrchestrator(project).invoke(agent_id)
-    return agent_result_to_fusion_post_step(result, int(node_index))
+    result = _invoke_post_skill(project, agent_id)
+    return _post_skill_to_fusion_step(result, int(node_index))
 
 
 def run_fusion_step(project: Project, node_index: int, runner_type: Optional[str] = None) -> Dict[str, Any]:

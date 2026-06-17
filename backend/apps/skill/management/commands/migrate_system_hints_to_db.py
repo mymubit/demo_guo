@@ -17,10 +17,17 @@ import logging
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from apps.creation.orchestration.sub_skill_orchestrator import _SUB_SKILL_SYSTEM_HINTS
 from apps.skill.models import AgentSkillDefinition
 
 logger = logging.getLogger(__name__)
+
+# 旧引擎 sub_skill_orchestrator 已下线，迁移源仅以"如可用"形式读取
+try:
+    from apps.creation.orchestration.sub_skill_orchestrator import _SUB_SKILL_SYSTEM_HINTS  # noqa: F401
+    _HAS_LEGACY_SOURCE = True
+except ImportError:
+    _SUB_SKILL_SYSTEM_HINTS: dict[str, str] = {}
+    _HAS_LEGACY_SOURCE = False
 
 # skill_id → 技能元数据（名称、层级、子分类）
 _SKILL_META: dict[str, dict] = {
@@ -95,6 +102,13 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        if not _HAS_LEGACY_SOURCE:
+            self.stdout.write(self.style.WARNING(
+                "[SKIP] sub_skill_orchestrator 已下线，迁移源不可用，命令 no-op。\n"
+                "       新引擎的 system_hint 由 0031 creation_skill_catalog 迁移直接创建。\n"
+            ))
+            return
+
         is_apply   = options["apply"]
         overwrite  = options["overwrite"]
         mode_label = "[应用]" if is_apply else "[DRY-RUN]"

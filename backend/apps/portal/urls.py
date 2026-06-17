@@ -8,6 +8,8 @@ from django.urls import include, path
 
 from apps.portal.skills.urls import config_urlpatterns
 from apps.system_config.urls import public_urlpatterns as system_config_public_urlpatterns
+# 【运营 M4】C 端用户主动反馈 + 行为埋点上报
+from apps.operations.urls import portal_urlpatterns as operations_portal_urlpatterns
 
 app_name = "portal"
 
@@ -26,4 +28,6 @@ urlpatterns = [
     path("skills/", include("apps.portal.skills.urls")),
     path("configs/", include((config_urlpatterns, "portal-configs"))),
     path("system-configs/", include((system_config_public_urlpatterns, "system-configs"))),
+    # 【运营 M4】C 端用户主动反馈
+    path("operations/", include((operations_portal_urlpatterns, "operations"))),
 ]

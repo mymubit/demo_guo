@@ -29,7 +29,7 @@ CONFIG_KEY_THRESHOLDS = "convergence.thresholds"
 
 
 def _load_compliance_rules() -> dict:
-    """从代码中提取合规规则，转换为可存储的结构"""
+    """从代码中提取合规规则，转换为可存储的结构（兼容：旧引擎已下线时返回空 dict）"""
     try:
         from apps.creation.orchestration.brief_engine import (
             _BRIEF_P0_PATTERNS,
@@ -47,7 +47,9 @@ def _load_compliance_rules() -> dict:
             "_note": "P0 触发即熔断；P1 注入合规提示",
         }
     except ImportError as exc:
-        logger.warning("无法加载合规规则: %s", exc)
+        logger.warning(
+            "无法加载合规规则（旧引擎 brief_engine 已下线，规则已迁移到 DB / skill 层）: %s", exc,
+        )
         return {}
 
 

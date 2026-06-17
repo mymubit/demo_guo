@@ -46,11 +46,16 @@ from apps.console.orchestration.execution_views import (
     AgentProjectTraceView,
     AgentSubSkillStatsView,
     OrchestrationRecentRunsView,
+    TaskInterventionView,
+    TaskNodeJumpView,
 )
 from apps.console.orchestration.flow_views import (
     OrchestrationFlowBlueprintView,
+    OrchestrationFlowGraySwitchView,
+    OrchestrationFlowListView,
     OrchestrationFlowPublishView,
     OrchestrationFlowRegistryMetaView,
+    OrchestrationFlowRollbackView,
     OrchestrationFlowStepPatchView,
     OrchestrationFlowStepsReorderView,
 )
@@ -72,6 +77,8 @@ from apps.console.skills.definition_views import (
     SkillDefinitionPublishView,
     SkillDefinitionDeprecateView,
     SkillDefinitionRollbackView,
+    SkillDefinitionStatsView,
+    SkillDefinitionGrayPreviewView,
     SkillConfigEntryDetailView,
     SkillConfigEntryListView,
     SkillDefectDetailView,
@@ -128,6 +135,44 @@ from apps.console.monitor.stats_views import (
     StatsSummaryView,
     SystemSettingsView,
 )
+from apps.console.stats.extended_views import (
+    FailureRankingView,
+    LlmProviderUsageView,
+    NodeDurationDistributionView,
+    SkillRankingView,
+    StatsKpiView,
+    StatsTrendView,
+)
+from apps.console.system_config.extended_views import (
+    GlobalSwitchView,
+    QuotaRulesView,
+    SensitiveWordsView,
+    ThresholdConfigView,
+)
+from apps.console.batch.views import (
+    BatchJobListView,
+    BatchJobCreateView,
+    BatchJobDetailView,
+    BatchJobDispatchView,
+    BatchJobPauseView,
+    BatchJobResumeView,
+    BatchProjectRetryView,
+)
+from apps.console.library.views import (
+    MaterialListView,
+    MaterialUploadView,
+    MaterialDetailView,
+    MaterialParseView,
+    MaterialDeleteView,
+)
+from apps.console.evolution.views import (
+    EvolutionProposalListView,
+    EvolutionAnalyzeView,
+    EvolutionProposalDetailView,
+    EvolutionApproveView,
+    EvolutionRejectView,
+    EvolutionApplyView,
+)
 from apps.console.main_chain.blueprint_views import (
     MainChainBlueprintView,
     MainChainRegistryMetaView,
@@ -135,10 +180,27 @@ from apps.console.main_chain.blueprint_views import (
 )
 from apps.system_config.urls import admin_urlpatterns as system_config_admin_urlpatterns
 
+# ── 【P0 新增】工作流编排引擎 API ──────────────────────────
+from apps.workflow.api import (
+    WorkflowInstanceViewSet,
+    WorkflowPackAdminViewSet,
+    WorkflowMetricsViewSet,
+    WorkflowLaunchViewSet,
+)
+
 router = DefaultRouter()
 router.register(r"users", UserManagementViewSet, basename="admin-user")
 router.register(r"members/plans", MembershipPlanViewSet, basename="admin-membership-plan")
 router.register(r"orders", OrderManagementViewSet, basename="admin-order")
+# 工作流引擎（实例 / Pack 管理 / 指标 / 发起创作）
+router.register(r"workflow/instances", WorkflowInstanceViewSet,
+                 basename="admin-wf-instance")
+router.register(r"workflow/packs", WorkflowPackAdminViewSet,
+                 basename="admin-wf-pack")
+router.register(r"workflow/metrics", WorkflowMetricsViewSet,
+                 basename="admin-wf-metrics")
+router.register(r"workflow/launch", WorkflowLaunchViewSet,
+                 basename="admin-wf-launch")
 
 app_name = "console"
 
@@ -225,6 +287,13 @@ _orchestration_routes = [
         AgentExecutionRunDetailView.as_view(),
         name="admin-orchestration-execution-run-detail",
     ),
+    # 灰度切流
+    path("orchestration/flow/gray-switch/", OrchestrationFlowGraySwitchView.as_view(), name="admin-orchestration-flow-gray-switch"),
+    path("orchestration/flow/rollback/", OrchestrationFlowRollbackView.as_view(), name="admin-orchestration-flow-rollback"),
+    path("orchestration/flow/list/", OrchestrationFlowListView.as_view(), name="admin-orchestration-flow-list"),
+    # 任务干预
+    path("orchestration/tasks/<str:task_id>/intervene/", TaskInterventionView.as_view(), name="admin-orchestration-task-intervene"),
+    path("orchestration/tasks/<str:task_id>/jump/", TaskNodeJumpView.as_view(), name="admin-orchestration-task-jump"),
 ]
 
 # 模型中心
@@ -269,6 +338,8 @@ _skills_routes = [
     path("skills/definitions/<int:pk>/publish/", SkillDefinitionPublishView.as_view(), name="admin-skills-definitions-publish"),
     path("skills/definitions/<int:pk>/deprecate/", SkillDefinitionDeprecateView.as_view(), name="admin-skills-definitions-deprecate"),
     path("skills/definitions/<int:pk>/rollback/", SkillDefinitionRollbackView.as_view(), name="admin-skills-definitions-rollback"),
+    path("skills/definitions/stats/", SkillDefinitionStatsView.as_view(), name="admin-skills-definitions-stats"),
+    path("skills/definitions/gray-preview/", SkillDefinitionGrayPreviewView.as_view(), name="admin-skills-definitions-gray-preview"),
     # 技能配置项
     path("skills/configs/", SkillConfigEntryListView.as_view(), name="admin-skills-configs-list"),
     path("skills/configs/<str:config_key>/", SkillConfigEntryDetailView.as_view(), name="admin-skills-configs-detail"),
@@ -315,4 +386,55 @@ urlpatterns = [
     *_model_routes,
     *_portal_routes,
     *_skills_routes,
+    *_stats_routes,
+    *_system_routes,
+]
+
+# 批量创作中心
+_batch_routes = [
+    path("creation/batch/", BatchJobListView.as_view(), name="admin-creation-batch-list"),
+    path("creation/batch/create/", BatchJobCreateView.as_view(), name="admin-creation-batch-create"),
+    path("creation/batch/<uuid:job_id>/", BatchJobDetailView.as_view(), name="admin-creation-batch-detail"),
+    path("creation/batch/<uuid:job_id>/dispatch/", BatchJobDispatchView.as_view(), name="admin-creation-batch-dispatch"),
+    path("creation/batch/<uuid:job_id>/pause/", BatchJobPauseView.as_view(), name="admin-creation-batch-pause"),
+    path("creation/batch/<uuid:job_id>/resume/", BatchJobResumeView.as_view(), name="admin-creation-batch-resume"),
+    path(
+        "creation/batch/<uuid:batch_id>/projects/<uuid:item_id>/retry/",
+        BatchProjectRetryView.as_view(),
+        name="admin-creation-batch-item-retry",
+    ),
+]
+
+# 素材库
+_library_routes = [
+    path("creation/library/materials/", MaterialListView.as_view(), name="admin-library-materials-list"),
+    path("creation/library/materials/upload/", MaterialUploadView.as_view(), name="admin-library-materials-upload"),
+    path("creation/library/materials/<uuid:material_id>/", MaterialDetailView.as_view(), name="admin-library-material-detail"),
+    path("creation/library/materials/<uuid:material_id>/parse/", MaterialParseView.as_view(), name="admin-library-material-parse"),
+    path("creation/library/materials/<uuid:material_id>/", MaterialDeleteView.as_view(), name="admin-library-material-delete"),
+]
+
+# AI 规则进化
+_evolution_routes = [
+    path("skills/evolution/", EvolutionProposalListView.as_view(), name="admin-skills-evolution-list"),
+    path("skills/evolution/analyze/", EvolutionAnalyzeView.as_view(), name="admin-skills-evolution-analyze"),
+    path("skills/evolution/<uuid:proposal_id>/", EvolutionProposalDetailView.as_view(), name="admin-skills-evolution-detail"),
+    path("skills/evolution/<uuid:proposal_id>/approve/", EvolutionApproveView.as_view(), name="admin-skills-evolution-approve"),
+    path("skills/evolution/<uuid:proposal_id>/reject/", EvolutionRejectView.as_view(), name="admin-skills-evolution-reject"),
+    path("skills/evolution/<uuid:proposal_id>/apply/", EvolutionApplyView.as_view(), name="admin-skills-evolution-apply"),
+]
+
+urlpatterns += [
+    *_batch_routes,
+    *_library_routes,
+    *_evolution_routes,
+    *_stats_routes,
+    *_system_routes,
+]
+
+# ── 运营监控中心（apps.operations）──────────────────────────
+from apps.operations.urls import admin_urlpatterns as operations_admin_urlpatterns
+
+urlpatterns += [
+    path("operations/", include((operations_admin_urlpatterns, "operations"))),
 ]

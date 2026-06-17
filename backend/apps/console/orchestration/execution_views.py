@@ -278,3 +278,132 @@ class AgentExecutionRunDetailView(AdminAPIView):
         if not payload:
             return api_fail("执行记录不存在", code=404)
         return api_ok(payload)
+
+
+# ────────────────────────────────────────────────
+# 任务干预 / 节点跳转
+# ────────────────────────────────────────────────
+
+class TaskInterventionView(APIView):
+    """POST /api/admin/orchestration/tasks/<task_id>/intervene/ — 人工干预任务。"""
+
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request, task_id: str):
+        """action 可选值：retry_node / abort / force_next / adjust_pack。"""
+        from apps.creation.models import CreationTask
+
+        try:
+            task = CreationTask.objects.select_related("project").get(id=task_id)
+        except (CreationTask.DoesNotExist, ValueError):
+            return api_fail("任务不存在", code=404)
+
+        data = request.data or {}
+        action = str(data.get("action") or "").strip()
+        if action not in ("retry_node", "abort", "force_next", "adjust_pack"):
+            return api_fail("action 必须为 retry_node / abort / force_next / adjust_pack")
+
+        affected_nodes = []
+        new_status = task.state
+
+        if action == "retry_node":
+            # 重新执行当前节点
+            if task.state not in (CreationTask.STATE_RUNNING, CreationTask.STATE_FAILED):
+                return api_fail("仅 running 或 failed 状态的任务可以重试节点")
+            task.state = CreationTask.STATE_RUNNING
+            task.error_code = ""
+            task.error_message = ""
+            task.retry_count = task.retry_count + 1
+            task.save(update_fields=["state", "error_code", "error_message", "retry_count", "updated_at"])
+            affected_nodes = [task.current_node_index]
+            new_status = task.state
+
+        elif action == "abort":
+            # 强制终止任务
+            task.state = CreationTask.STATE_FAILED
+            task.error_code = "ADMIN_ABORT"
+            task.error_message = "管理员强制终止"
+            task.save(update_fields=["state", "error_code", "error_message", "updated_at"])
+            # 同时更新关联 project 状态
+            if task.project:
+                task.project.status = "failed"
+                task.project.save(update_fields=["status", "updated_at"])
+            affected_nodes = []
+            new_status = task.state
+
+        elif action == "force_next":
+            # 跳过当前节点进入下一节点（仅 step 模式）
+            if task.project and task.project.pipeline_mode != "step":
+                return api_fail("force_next 仅在 step 模式下可用")
+            next_index = task.current_node_index + 1
+            if next_index > task.project.total_nodes:
+                return api_fail("已无下一节点可跳转")
+            task.current_node_index = next_index
+            task.progress_percent = min(100, int(next_index / task.project.total_nodes * 100))
+            task.save(update_fields=["current_node_index", "progress_percent", "updated_at"])
+            affected_nodes = [task.current_node_index - 1, task.current_node_index]
+            new_status = task.state
+
+        elif action == "adjust_pack":
+            # 运行时切换工作流包（需确认）
+            pack_id = str(data.get("pack_id") or "").strip()
+            if not pack_id:
+                return api_fail("adjust_pack 需要 pack_id")
+            try:
+                from apps.workflow.models import FusionPipelinePack
+                pack = FusionPipelinePack.objects.get(pk=pack_id)
+            except FusionPipelinePack.DoesNotExist:
+                return api_fail("工作流包不存在")
+            if task.project:
+                task.project.workflow = pack
+                task.project.save(update_fields=["workflow", "updated_at"])
+            affected_nodes = []
+            new_status = task.state
+
+        return api_ok({
+            "message": f"干预 action={action} 已完成",
+            "new_status": new_status,
+            "affected_nodes": affected_nodes,
+        })
+
+
+class TaskNodeJumpView(APIView):
+    """POST /api/admin/orchestration/tasks/<task_id>/jump/ — 跳转节点。"""
+
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request, task_id: str):
+        """输入：{target_node_index: int}，将 project.current_node_index 设为 target（跳过中间节点）。"""
+        from apps.creation.models import CreationTask
+
+        try:
+            task = CreationTask.objects.select_related("project").get(id=task_id)
+        except (CreationTask.DoesNotExist, ValueError):
+            return api_fail("任务不存在", code=404)
+
+        data = request.data or {}
+        try:
+            target_node_index = int(data.get("target_node_index", 0))
+        except (TypeError, ValueError):
+            return api_fail("target_node_index 必须为整数")
+
+        if target_node_index < 0:
+            return api_fail("target_node_index 不能为负数")
+
+        old_node_index = task.current_node_index
+        total_nodes = task.project.total_nodes if task.project else 7
+
+        if target_node_index > total_nodes:
+            return api_fail(f"target_node_index 不能超过总节点数 {total_nodes}")
+
+        # 跳过中间节点
+        task.current_node_index = target_node_index
+        task.progress_percent = min(100, int(target_node_index / total_nodes * 100))
+        task.save(update_fields=["current_node_index", "progress_percent", "updated_at"])
+
+        return api_ok({
+            "message": f"已从节点 {old_node_index} 跳转到 {target_node_index}",
+            "old_node_index": old_node_index,
+            "new_node_index": target_node_index,
+            "progress_percent": task.progress_percent,
+        })

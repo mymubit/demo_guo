@@ -220,6 +220,18 @@ export default function Creation() {
         sessionStorage.removeItem(creationDraftKey(formData.creationEntry))
         setSearchParams({ project: tid }, { replace: true })
         setStage(3)
+        // 【运营 F1】埋点：创作提交成功（前端双保险，后端也会写）
+        try {
+          const { trackCreationSubmitted } = await import('@/utils/behaviorTracker')
+          trackCreationSubmitted({
+            projectId: tid,
+            theme: formData?.theme,
+            episodeCount: formData?.episodeCount,
+            pipelineMode,
+          })
+        } catch (_) {
+          /* ignore */
+        }
       })
     } catch (e) {
       const msg = e.message || '提交失败，请检查登录与会员状态'

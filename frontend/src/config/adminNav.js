@@ -14,6 +14,12 @@ import {
   Bot,
   Cpu,
   Activity,
+  BookOpen,
+  Zap,
+  ClipboardCheck,
+  TrendingUp,
+  Gauge,
+  MessageSquare,
 } from 'lucide-react'
 
 /**
@@ -41,11 +47,60 @@ export const ADMIN_NAV_GROUPS = [
         description: '今日速览；商业 / 创作 / 成本分区',
       },
       {
+        id: 'admin.stats',
+        path: '/admin/stats',
+        label: '数据统计',
+        icon: BarChart3,
+        description: '调用量 / 成功率 / 耗时 / 排行',
+      },
+      {
         id: 'monitoring.business',
         path: '/admin/monitoring',
         label: '业务监控',
         icon: Activity,
         description: '前端异常、接口性能、慢 SQL、告警与埋点',
+      },
+    ],
+  },
+  {
+    id: 'operations',
+    label: '运营',
+    collapsible: true,
+    items: [
+      {
+        id: 'operations.dashboard',
+        path: '/admin/operations/dashboard',
+        label: '运营 Dashboard',
+        icon: LayoutDashboard,
+        description: '5 个核心 SLO 卡片 + 子页面入口',
+      },
+      {
+        id: 'operations.checklist',
+        path: '/admin/operations/checklist',
+        label: '日常 Checklist',
+        icon: ClipboardCheck,
+        description: '5 分钟巡检 5 步',
+      },
+      {
+        id: 'operations.content-quality',
+        path: '/admin/operations/content-quality',
+        label: '内容质量',
+        icon: TrendingUp,
+        description: '保存率/导出率/弃用率/卡点人群',
+      },
+      {
+        id: 'operations.feedback',
+        path: '/admin/operations/feedback',
+        label: '用户反馈',
+        icon: MessageSquare,
+        description: 'P0 优先 + 抽样回访',
+      },
+      {
+        id: 'operations.config-hit',
+        path: '/admin/operations/config-hit',
+        label: '配置命中率',
+        icon: Gauge,
+        description: '死代码候选 & 24h 热点',
       },
     ],
   },
@@ -103,6 +158,34 @@ export const ADMIN_NAV_GROUPS = [
         icon: BarChart3,
         description: '子技能执行健康度与失败分布',
       },
+      {
+        id: 'engine.skills',
+        path: '/admin/skills',
+        label: '技能管理',
+        icon: Wrench,
+        description: 'Agent 技能定义 / 版本管理 / 调用统计',
+      },
+      {
+        id: 'engine.batch',
+        path: '/admin/batch',
+        label: '批量创作',
+        icon: Layers,
+        description: 'CSV 批量生成创作项目 / 进度追踪',
+      },
+      {
+        id: 'engine.library',
+        path: '/admin/library',
+        label: '素材库',
+        icon: BookOpen,
+        description: '参考作品结构化管理 / 创作时自动注入',
+      },
+      {
+        id: 'engine.evolution',
+        path: '/admin/evolution',
+        label: '规则进化',
+        icon: Zap,
+        description: 'AI 分析低评分项目 / 生成规则修改提案 / 审批流',
+      },
     ],
   },
   {
@@ -158,10 +241,17 @@ export const ADMIN_NAV_GROUPS = [
     collapsible: true,
     items: [
       {
-        id: 'system.maintenance',
+        id: 'admin.system',
         path: '/admin/system',
-        label: '系统维护',
+        label: '系统配置',
         icon: Settings2,
+        description: '全局开关 / 阈值 / 配额 / 敏感词',
+      },
+      {
+        id: 'system.maintenance',
+        path: '/admin/system/maintenance',
+        label: '系统维护',
+        icon: Wrench,
         description: '部署环境只读快照',
       },
       {

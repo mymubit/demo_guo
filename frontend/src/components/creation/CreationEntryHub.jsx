@@ -1,6 +1,7 @@
 ﻿import { ArrowRight } from 'lucide-react'
 import { getEntryMeta } from '@/utils/creationEntryMeta'
 import { cn } from '@/utils/cn'
+import { trackCreationFormOpen } from '@/utils/behaviorTracker'
 
 /** 首屏主推：原创 / 大纲扩写 */
 const PRIMARY_ENTRY_KEYS = ['from-scratch', 'from-outline']
@@ -11,7 +12,11 @@ function EntryCard({ entry, catalog, onSelectEntry }) {
   return (
     <button
       type="button"
-      onClick={() => onSelectEntry(entry.key)}
+      onClick={() => {
+        // 【运营 F1】埋点：打开创作表单
+        trackCreationFormOpen({ creationEntry: entry.key })
+        onSelectEntry(entry.key)
+      }}
       className={cn(
         'group rounded-2xl border border-white/10 bg-white/[0.03] p-6 text-left transition-all',
         'hover:border-gold-400/40 hover:bg-gold-400/10',

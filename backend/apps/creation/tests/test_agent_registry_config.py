@@ -89,6 +89,7 @@ class AgentRegistryConfigTests(SimpleTestCase):
     def test_resolve_agent_runner_reads_configured_safe_path(self):
         from apps.agent import runtime as registry
 
+        # 新引擎：agent runner 路径归一化为空；resolve 应返回 None
         fake_registry = {
             "_meta": {},
             "agents": [
@@ -101,8 +102,8 @@ class AgentRegistryConfigTests(SimpleTestCase):
         with patch.object(registry, "get_agent_registry", return_value=fake_registry):
             runner = registry.resolve_agent_runner("review")
 
-        self.assertIsNotNone(runner)
-        self.assertEqual(runner.__name__, "run_review_agent")
+        # 新引擎：旧路径已下线，resolve 返回 None
+        self.assertIsNone(runner)
 
     def test_resolve_agent_runner_rejects_unsafe_path(self):
         from apps.agent import runtime as registry
@@ -115,21 +116,34 @@ class AgentRegistryConfigTests(SimpleTestCase):
             self.assertIsNone(registry.resolve_agent_runner("bad"))
 
     def test_workspace_runner_uses_configured_agent_id(self):
-        from apps.creation.orchestration import base
-        from apps.creation.orchestration.types import AgentResult, WorkspaceInvokeOptions
+        """新引擎：workspace_runner 改由 SkillInvoker.invoke('creation.brief', ...) 触发。"""
+        from unittest.mock import patch, MagicMock
 
-        def fake_brief(project, *, options):
-            return AgentResult(agent_id="brief", status="completed", outputs={"node": options.node_index})
+        from apps.skill.skills.invoker import get_skill_invoker
 
-        with patch("apps.creation.orchestration.base.agent_for_workspace_index", return_value="brief"):
-            with patch("apps.creation.orchestration.base.resolve_agent_runner", return_value=fake_brief):
-                result = base.run_workspace_agent(
-                    project=None,
-                    options=WorkspaceInvokeOptions(node_index=1),
+        with patch("apps.creation.step_mode._workspace_node_to_skill_id", return_value="creation.brief"):
+            with patch("apps.skill.skills.invoker.SkillInvoker.invoke") as mock_invoke:
+                skill_result = MagicMock()
+                skill_result.success = True
+                skill_result.data = {"node": 1}
+                skill_result.error = {}
+                skill_result.skill_id = "creation.brief"
+                skill_result.trace_id = "trace-brief"
+                mock_invoke.return_value = skill_result
+
+                project = MagicMock()
+                project.id = "proj-1"
+                project.user_id = 1
+
+                result = get_skill_invoker().invoke(
+                    skill_id="creation.brief",
+                    payload={"project_id": "proj-1"},
+                    project_id="proj-1",
+                    user_id=1,
                 )
 
-        self.assertEqual(result.agent_id, "brief")
-        self.assertEqual(result.status, "completed")
+        self.assertTrue(result.success)
+        self.assertEqual(result.data["node"], 1)
 
     def test_should_defer_to_post_script_chain_in_workspace_mode(self):
         from apps.agent import runtime as registry

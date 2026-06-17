@@ -45,6 +45,8 @@ class SystemConfigService:
     def get_config(cls, key: str, default_val=None):
         cached = get_cache(item_cache_key(key), None)
         if cached is not None:
+            # 【运营 M3】缓存命中也算 hit（异步累计，不阻塞读路径）
+            cls._track_hit_async(key)
             return cached
 
         item = cls.get_item(key)
@@ -53,7 +55,34 @@ class SystemConfigService:
 
         value = item.effective_value
         set_cache(item_cache_key(key), value, CACHE_TTL)
+        # 【运营 M3】新加载也算 hit
+        cls._track_hit_async(key)
         return default_val if value is None else value
+
+    @classmethod
+    def _track_hit_async(cls, key: str) -> None:
+        """异步累计命中率（fire-and-forget；失败不影响读路径）。"""
+        from django.db.models import F
+        from django.utils import timezone
+        from datetime import timedelta
+
+        from .models import SystemConfigItem
+        try:
+            SystemConfigItem.objects.filter(
+                config_key=key, deleted_at__isnull=True,
+            ).update(
+                hit_count=F("hit_count") + 1,
+                hit_24h=F("hit_24h") + 1,
+                last_hit_at=timezone.now(),
+            )
+            # 自维护：超过 24h 归零 hit_24h（粗略实现，避免复杂调度）
+            SystemConfigItem.objects.filter(
+                config_key=key,
+                last_hit_at__lt=timezone.now() - timedelta(hours=24),
+            ).update(hit_24h=0)
+        except Exception:  # noqa: BLE001
+            # 命中统计失败不影响读路径
+            pass
 
     @classmethod
     def get_bool(cls, key: str, default_val: bool = False) -> bool:

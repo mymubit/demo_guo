@@ -122,6 +122,38 @@ class FusionPipelinePack(models.Model):
         help_text="标记此包为某次回滚操作的目标版本",
     )
 
+    # 新增：灰度分流稳定哈希种子
+    gray_traffic_salt = models.CharField(
+        "灰度分流种子", max_length=32, blank=True, default="",
+        help_text="用于 gray_traffic_salt + user_id % 100 < gray_weight 稳定分流",
+    )
+    # 新增：声明该流水线依赖的最低 LLM 配置版本
+    min_llm_provider_version = models.CharField(
+        "最低 LLM Provider 版本", max_length=64, blank=True, default="",
+        help_text="用于兼容性校验，低于此版本拒绝使用此流水线",
+    )
+
+    # ━━━━ 新增（P0）：编排引擎元数据 ━━━━
+    engine_config = models.JSONField(
+        "引擎配置", default=dict, blank=True,
+        help_text="""编排引擎全局配置示例:
+{
+  "mode": "async_celery",                 // async_celery | async_thread | sync_debug
+  "timeout_seconds": 3600,                // 工作流整体超时
+  "max_retries": 3,                       // 默认节点重试次数
+  "failure_strategy": "fail_fast",        // fail_fast | continue_on_failure
+  "context_retention_days": 30,           // 上下文保留天数
+  "allow_parallel": true,                 // 是否允许并行组调度
+  "max_parallel_per_group": 5,            // 单并行组最大并发数
+  "heartbeat_interval_seconds": 60        // 心跳频率
+}""",
+    )
+
+    parent_version = models.CharField(
+        "父版本追踪", max_length=64, blank=True, default="",
+        help_text="记录此版本从哪个版本克隆/升级，支持版本间差异对比",
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -130,6 +162,9 @@ class FusionPipelinePack(models.Model):
         verbose_name = "融合流水线配置包"
         verbose_name_plural = verbose_name
         ordering = ["-updated_at"]
+        indexes = [
+            models.Index(fields=["pack_status", "gray_weight"], name="pack_status_gray_idx"),
+        ]
 
     def __str__(self):
         label = self.display_name or self.version
@@ -157,11 +192,18 @@ class FusionPipelineNode(models.Model):
     RUNNER_FUSION_REVIEW = "fusion_review"
     RUNNER_FUSION_SCORE = "fusion_score"
     RUNNER_AGENT_CHAIN = "agent_chain"
+    # P1 阶段扩展：支持并行/迭代/人工门控三类编排节点
+    RUNNER_PARALLEL_GROUP = "parallel_group"
+    RUNNER_ITERATE_LOOP = "iterate_loop"
+    RUNNER_HUMAN_GATE = "human_gate"
     RUNNER_TYPE_CHOICES = [
         (RUNNER_FUSION_NODE, "融合主链节点"),
         (RUNNER_FUSION_REVIEW, "融合质检"),
         (RUNNER_FUSION_SCORE, "融合评分"),
         (RUNNER_AGENT_CHAIN, "Agent 后处理链"),
+        (RUNNER_PARALLEL_GROUP, "并行节点组（同级并发）"),
+        (RUNNER_ITERATE_LOOP, "迭代循环节点"),
+        (RUNNER_HUMAN_GATE, "人工门控节点（分步确认）"),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -184,10 +226,65 @@ class FusionPipelineNode(models.Model):
         default="",
     )
     runner_path = models.CharField("执行函数路径", max_length=255, blank=True, default="")
+    skill_id = models.CharField(
+        "技能 ID", max_length=128, blank=True, default="", db_index=True,
+        help_text="用于 SkillBridge 路由。例：creation.brief / fusion.skill.review",
+    )
     output_key = models.CharField("产物键 outputKey", max_length=64, blank=True, default="")
     artifact_key = models.CharField("存储 artifact_key", max_length=64, blank=True, default="")
     pipeline_result_key = models.CharField("pipeline_result 键", max_length=64, blank=True, default="")
     extra_artifact_keys = models.JSONField("额外 artifact_key 列表", default=list, blank=True)
+    # P1 阶段新增：节点扩展配置（用于 PARALLEL/ITERATE/HUMAN 等高级节点的配置）
+    # - parallel_group: {"parallel_group_key": "ep_outline_batch"}
+    # - iterate_loop:   {"iterate_max_attempts": 3,
+    #                    "iterate_until_condition": {"field": "overall_score", "operator": ">=", "value": 70},
+    #                    "iterate_target_node_id": "node-3-outline"}
+    # - human_gate:     {"human_gate_message": "请确认大纲后再继续"}
+    extra_config = models.JSONField(
+        "节点扩展配置", default=dict, blank=True,
+        help_text="用于 PARALLEL/ITERATE/HUMAN 节点的差异化配置，结构见字段说明",
+    )
+
+    # ━━━━ 新增（P0）：节点依赖与路由声明 ━━━━
+    upstream_deps = models.JSONField(
+        "上游依赖", default=list, blank=True,
+        help_text="依赖的上游 fusion_node_id 列表，例: ['node-brief', 'node-structure']。"
+                  "引擎将按依赖关系决定调度顺序，替代原有的 chain_order 硬编码依赖",
+    )
+    downstream_map = models.JSONField(
+        "下游路由映射", default=list, blank=True,
+        help_text="本节点成功后的可选中转目标，支持条件分支。结构:"
+                  "[{target: 'node_b_id', condition_expr: 'ctx.field > 70', weight: 100}]。"
+                  "空列表时由引擎按全局 DAG 选择下一节点。",
+    )
+
+    # ━━━━ 新增（P0）：运行时配置（重试/超时/检查点等）━━━━
+    runtime_config = models.JSONField(
+        "运行时配置", default=dict, blank=True,
+        help_text="""示例:
+{
+  "timeout_seconds": 600,
+  "retry_policy": {
+    "max_retries": 3,
+    "backoff": "exponential",       // exponential | fixed | linear
+    "base_seconds": 2
+  },
+  "coin_cost_override": null,
+  "allow_skip": true,
+  "is_checkpoint": true,
+  "human_gate_required": false,
+  "max_context_bytes": 2097152,
+  "idempotency_scope": "node"        // node | instance | global
+}""",
+    )
+
+    # ━━━━ 新增（P0）：执行条件表达式（决定该节点是否真正被执行）━━━━
+    condition_expr = models.TextField(
+        "执行条件表达式", blank=True, default="",
+        help_text="Python 安全表达式，返回 bool。可用变量：ctx（全局上下文）、"
+                  "prev（上一节点输出）、nodes（所有已完成节点输出 dict）。"
+                  "例：ctx.review_score < 70 或 nodes['node_brief']['is_ok']",
+    )
     schema = models.ForeignKey(
         FusionJsonSchema,
         on_delete=models.SET_NULL,
@@ -223,3 +320,14 @@ class FusionPipelineNode(models.Model):
 
     def __str__(self):
         return f"{self.website_index}. {self.name} ({self.fusion_node_id})"
+
+
+# ━━━━ 工作流执行时模型（运行期数据）━━━━
+# 说明：实体定义放置在 execution_models.py 中便于模块化维护；
+# 此处显式 re-export 确保 Django 能扫描到这些 model。
+from apps.workflow.execution_models import (
+    WorkflowInstance,
+    NodeExecution,
+    NodeExecutionEvent,
+)
+

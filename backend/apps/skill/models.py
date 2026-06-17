@@ -779,6 +779,20 @@ class AgentSkillDefinition(models.Model):
     published_at  = models.DateTimeField("发布时间", null=True, blank=True)
     deprecated_at = models.DateTimeField("废弃时间", null=True, blank=True)
 
+    # 新增：灰度分流稳定哈希种子（确保同一用户稳定命中同一灰度版本）
+    gray_traffic_salt = models.CharField(
+        "灰度分流种子", max_length=32, blank=True, default="",
+        help_text="用于 gray_traffic_salt + user_id % 100 < gray_weight 稳定分流",
+    )
+    # 新增：声明该技能依赖的最低 LLM 版本（兼容性校验）
+    min_llm_version = models.CharField(
+        "最低 LLM 版本", max_length=64, blank=True, default="",
+        help_text="如 gpt-4o-mini-2024-07-18，低于此版本拒绝调用",
+    )
+    # 新增：适用场景标签（用于技能推荐）
+    tags = models.JSONField("适用场景标签", default=list, blank=True,
+                            help_text='如 ["短剧", "逆袭题材", "1分钟"]')
+
     # 新增：调用协议规范
     input_schema  = models.JSONField(
         "入参 Schema（JSONSchema）", default=dict, blank=True,
@@ -822,6 +836,7 @@ class AgentSkillDefinition(models.Model):
         indexes = [
             models.Index(fields=["lifecycle_status", "skill_layer"], name="skill_def_status_layer_idx"),
             models.Index(fields=["skill_layer", "sub_category"], name="skill_def_layer_subcat_idx"),
+            models.Index(fields=["lifecycle_status", "gray_weight"], name="skill_def_status_gray_idx"),
         ]
 
     def __str__(self) -> str:

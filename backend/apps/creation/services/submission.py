@@ -1,4 +1,12 @@
-"""创作任务提交。"""
+"""创作任务提交。
+
+新引擎全量上线后，本模块只负责：
+  ① 创建 Project
+  ② 创建 WorkflowInstance（工作流引擎唯一入口）
+  ③ 入队 run_creation_pipeline → WorkflowEngine → SkillBridge
+
+所有技能调用统一经 SkillInvoker，旧引擎仅作为 30 天观察期内的兜底（最终下线）。
+"""
 
 import logging
 from typing import Tuple
@@ -21,9 +29,34 @@ def _estimate_minutes(episode_count: int) -> int:
     return max(1, int(base + episode_count * per_episode))
 
 
+def _create_workflow_instance(project: Project, pack, user_id: str) -> None:
+    """为 Project 创建对应的 WorkflowInstance（新引擎唯一入口）。
+
+    在 Project 创建之后立即执行。如果项目已有 WorkflowInstance 则跳过。
+    该实例将由 run_creation_pipeline 中的 WorkflowEngine 消费。
+    """
+    from apps.workflow.execution_models import WorkflowInstance
+
+    if WorkflowInstance.objects.filter(project=project).exists():
+        logger.info("[Creation] Project %s 已有 WorkflowInstance，跳过", project.id)
+        return
+
+    instance = WorkflowInstance.objects.create(
+        pack=pack,
+        project=project,
+        user_id=user_id,
+        trigger_type=WorkflowInstance.TRIGGER_USER,
+        context={"submit_data": {"theme": project.theme}},
+    )
+    logger.info(
+        "[Creation] 为 Project %s 创建 WorkflowInstance=%s pack=%s",
+        project.id, instance.id, pack.id if pack else "default",
+    )
+
+
 @transaction.atomic
 def submit(user, data: dict) -> Tuple[Project, int]:
-    """提交创作任务。"""
+    """提交创作任务（新引擎全量切换）。"""
     from apps.billing.services import BillingService, InsufficientCoins
 
     BillingService.ensure_can_create(user)
@@ -103,6 +136,11 @@ def submit(user, data: dict) -> Tuple[Project, int]:
             for meta in pipeline_nodes
         ]
     )
+
+    # ──【P1 新增】为 Project 创建 WorkflowInstance（新引擎唯一入口）
+    if pack:
+        _create_workflow_instance(project, pack, str(user.id))
+
     project.fusion_status = Project.FUSION_DRAFT
     project.save(update_fields=["fusion_status", "updated_at"])
 
@@ -110,20 +148,32 @@ def submit(user, data: dict) -> Tuple[Project, int]:
     project.save(update_fields=["rendered_progress_html"])
 
     mode = project.pipeline_mode
-    from ..orchestration.orchestrator import AgentOrchestrator
-    from apps.skill.config.portal.creation_form import CreationFormOverrideService
 
-    requires_adapt = CreationFormOverrideService.creation_entry_requires_adapt(
-        project.creation_entry or "from-scratch"
-    )
+    # ── Adapt 预处理（保留）
     try:
-        adapt_result = AgentOrchestrator(project).invoke_adapt_on_create(submit_data=data)
-        if (
-            requires_adapt
-            and getattr(adapt_result, "status", "") == "error"
-        ):
-            msg = "; ".join(getattr(adapt_result, "errors", []) or []) or "改编入场预处理失败"
+        from apps.skill.config.portal.creation_form import CreationFormOverrideService
+        from apps.skill.skills.invoker import get_skill_invoker
+
+        requires_adapt = CreationFormOverrideService.creation_entry_requires_adapt(
+            project.creation_entry or "from-scratch"
+        )
+        # 新引擎：Adapt 通过 SkillInvoker 路由到 creation.adapt 技能
+        adapt_result = get_skill_invoker().invoke(
+            skill_id="creation.adapt",
+            payload={
+                "creation_entry": project.creation_entry or "from-scratch",
+                "reference_work": data.get("reference_work", ""),
+                "theme": data.get("theme", ""),
+                "core_idea": data.get("core_idea", ""),
+            },
+            project_id=str(project.id),
+            user_id=user.id,
+        )
+        if requires_adapt and not adapt_result.success:
+            msg = adapt_result.error.get("message") or "改编入场预处理失败"
             raise PermissionDenied(msg)
+    except PermissionDenied:
+        raise
     except Exception as exc:  # noqa: BLE001
         if requires_adapt:
             raise PermissionDenied(f"改编入场预处理失败：{exc}") from exc
@@ -155,4 +205,23 @@ def submit(user, data: dict) -> Tuple[Project, int]:
         )
 
     estimated_minutes = _estimate_minutes(project.episode_count)
+
+    # 【运营 M6】埋点：创作提交（fire-and-forget；不影响主链路）
+    try:
+        from apps.operations.services import track_event
+        track_event(
+            event_name="creation_submitted",
+            user=user,
+            project_id=str(project.id),
+            page="/api/creation/submit",
+            payload={
+                "theme": (theme or "")[:120],
+                "episode_count": project.episode_count,
+                "pipeline_mode": project.pipeline_mode,
+            },
+            source="backend",
+        )
+    except Exception:  # noqa: BLE001
+        pass
+
     return project, estimated_minutes

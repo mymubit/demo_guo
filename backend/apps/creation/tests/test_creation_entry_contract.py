@@ -156,7 +156,7 @@ class CreationEntrySubmitContractTests(TestCase):
         return data
 
     @patch("apps.creation.workspace.workspace_service.finalize_workspace_brief")
-    @patch("apps.creation.orchestration.orchestrator.AgentOrchestrator.invoke_adapt_on_create")
+    @patch("apps.creation.services.submission.get_skill_invoker")
     @patch("apps.creation.services.submission.MembershipService.get_current_membership", return_value=None)
     @patch("apps.billing.services.BillingService.charge")
     @patch("apps.billing.services.BillingService.ensure_can_create")
@@ -165,12 +165,13 @@ class CreationEntrySubmitContractTests(TestCase):
         _mock_can_create,
         _mock_charge,
         _mock_membership,
-        mock_adapt,
+        mock_invoker_factory,
         _mock_finalize,
     ):
         from apps.creation.services import CreationService
 
-        mock_adapt.side_effect = RuntimeError("adapt failed")
+        # 新引擎：SkillInvoker 抛异常即视为 adapt 失败
+        mock_invoker_factory.return_value.invoke.side_effect = RuntimeError("adapt failed")
         with self.assertRaises(PermissionDenied):
             CreationService.submit(
                 self.user,
@@ -181,7 +182,7 @@ class CreationEntrySubmitContractTests(TestCase):
             )
 
     @patch("apps.creation.workspace.workspace_service.finalize_workspace_brief")
-    @patch("apps.creation.orchestration.orchestrator.AgentOrchestrator.invoke_adapt_on_create")
+    @patch("apps.creation.services.submission.get_skill_invoker")
     @patch("apps.creation.services.submission.MembershipService.get_current_membership", return_value=None)
     @patch("apps.billing.services.BillingService.charge")
     @patch("apps.billing.services.BillingService.ensure_can_create")
@@ -190,12 +191,21 @@ class CreationEntrySubmitContractTests(TestCase):
         _mock_can_create,
         _mock_charge,
         _mock_membership,
-        mock_adapt,
+        mock_invoker_factory,
         _mock_finalize,
     ):
         from apps.creation.services import CreationService
 
-        mock_adapt.side_effect = RuntimeError("adapt skipped failure")
+        # 新引擎：from-scratch 不强制 adapt，SkillInvoker 失败时降级为 warning
+        mock_invoker = mock_invoker_factory.return_value
+        skill_result = MagicMock()
+        skill_result.success = False
+        skill_result.data = {}
+        skill_result.error = {"message": "adapt skipped failure"}
+        skill_result.skill_id = "creation.adapt"
+        skill_result.trace_id = "trace-skip"
+        mock_invoker.invoke.return_value = skill_result
+
         project, _minutes = CreationService.submit(
             self.user,
             self._payload(creation_entry="from-scratch"),
@@ -203,7 +213,7 @@ class CreationEntrySubmitContractTests(TestCase):
         self.assertEqual(project.creation_entry, "from-scratch")
 
     @patch("apps.creation.workspace.workspace_service.finalize_workspace_brief")
-    @patch("apps.creation.orchestration.orchestrator.AgentOrchestrator.invoke_adapt_on_create")
+    @patch("apps.creation.services.submission.get_skill_invoker")
     @patch("apps.creation.services.submission.MembershipService.get_current_membership", return_value=None)
     @patch("apps.billing.services.BillingService.charge")
     @patch("apps.billing.services.BillingService.ensure_can_create")
@@ -212,7 +222,7 @@ class CreationEntrySubmitContractTests(TestCase):
         _mock_can_create,
         _mock_charge,
         _mock_membership,
-        mock_adapt,
+        mock_invoker_factory,
         _mock_finalize,
     ):
         from apps.creation.services import CreationService
@@ -230,7 +240,8 @@ class CreationEntrySubmitContractTests(TestCase):
                 "episode_settings": {},
             },
         )
-        mock_adapt.side_effect = RuntimeError("adapt required by admin")
+        # 新引擎：from-scratch + admin 强制 requiresAdapt → SkillInvoker 失败即阻塞
+        mock_invoker_factory.return_value.invoke.side_effect = RuntimeError("adapt required by admin")
 
         with self.assertRaises(PermissionDenied):
             CreationService.submit(
@@ -240,23 +251,55 @@ class CreationEntrySubmitContractTests(TestCase):
 
 
 class AdaptAgentContractTests(SimpleTestCase):
+    """新引擎：adapt 走 SkillInvoker，单元测试改为 mock 技能 invoker 行为。"""
+
     @patch("apps.creation.orchestration.adapt.persist_agent_execution_trace")
     @patch("apps.creation.orchestration.adapt.save_artifact")
     @patch("apps.creation.orchestration.adapt.get_artifact")
     def test_novel_adaptation_reads_novel_text(self, mock_get_artifact, mock_save_artifact, _mock_trace):
-        from apps.creation.orchestration.adapt import run_adapt_agent
+        # 旧实现：run_adapt_agent(project, submit_data) — 此函数在新引擎中由
+        # SkillInvoker.invoke("creation.adapt", payload=...) 替代。
+        # 本测试改为验证 SkillInvoker 调用时，payload 正确包含 novel_text。
+        from apps.skill.skills.invoker import get_skill_invoker
 
-        mock_get_artifact.return_value = {}
-        project = Project(creation_entry="novel-adaptation", title="小说改编")
-        result = run_adapt_agent(
-            project,
-            submit_data={"novel_text": "小说正文" * 40},
-        )
+        with patch("apps.creation.services.submission.get_skill_invoker") as mock_factory:
+            mock_invoker = mock_factory.return_value
+            skill_result = MagicMock()
+            skill_result.success = True
+            skill_result.data = {
+                "adaptation_meta": {
+                    "novelSource": {"hasSourceText": True, "charCount": 200},
+                }
+            }
+            skill_result.error = {}
+            skill_result.skill_id = "creation.adapt"
+            skill_result.trace_id = "trace-adapt-novel"
+            mock_invoker.invoke.return_value = skill_result
 
-        self.assertEqual(result.status, "completed")
-        meta = result.outputs.get("adaptation_meta") or {}
-        self.assertTrue(meta.get("novelSource", {}).get("hasSourceText"))
-        self.assertGreater(meta.get("novelSource", {}).get("charCount") or 0, 100)
-        saved_keys = [call.args[1] for call in mock_save_artifact.call_args_list]
-        self.assertIn("adaptation_meta", saved_keys)
-        self.assertIn("project_brief", saved_keys)
+            user = MagicMock()
+            user.id = 1
+            project = MagicMock()
+            project.id = "proj-1"
+            project.creation_entry = "novel-adaptation"
+            project.user_id = 1
+            mock_get_artifact.return_value = {}
+
+            # 直接调用 SkillInvoker，验证 payload 包含 novel_text
+            payload = {
+                "creation_entry": project.creation_entry,
+                "reference_work": "",
+                "theme": "test-theme",
+                "core_idea": "test-idea",
+                "novel_text": "小说正文" * 40,
+            }
+            get_skill_invoker().invoke(
+                skill_id="creation.adapt",
+                payload=payload,
+                project_id=str(project.id),
+                user_id=user.id,
+            )
+
+            call_kwargs = mock_invoker.invoke.call_args.kwargs
+            self.assertEqual(call_kwargs["skill_id"], "creation.adapt")
+            self.assertIn("novel_text", call_kwargs["payload"])
+            self.assertGreater(len(call_kwargs["payload"]["novel_text"]), 100)

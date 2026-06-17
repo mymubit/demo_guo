@@ -13,11 +13,18 @@ import { adminOrchestration } from './orchestration'
 import { adminModel } from './model'
 import { adminMonitoring } from './monitoring'
 import { adminSkill } from './skill'
+import { adminStats } from './stats'
+import { adminSystemConfig } from './systemConfig'
 import { adminTask } from './task'
+import { adminBatch, adminLibrary, adminEvolution } from './batch'
+import { adminOperations } from './operations'
 
 export {
   adminMainChain, adminWorkflow, adminAgent, adminOrchestration,
   adminModel, adminMonitoring, adminSkill, adminTask,
+  adminStats, adminSystemConfig,
+  adminBatch, adminLibrary, adminEvolution,
+  adminOperations,
 }
 
 export const admin = {
@@ -25,6 +32,8 @@ export const admin = {
   getDashboard: () => adminRequest('GET', '/api/admin/dashboard/'),
   getStats: () => adminRequest('GET', '/api/admin/stats/summary/'),
   monitoring: adminMonitoring,
+  // 【运营 F2】运营监控中心
+  operations: adminOperations,
 
   // 用户
   listUsers: (params = {}) =>
@@ -187,6 +196,10 @@ export const admin = {
   agentSubSkillStats: (limit = 300) => adminOrchestration.stats(limit),
   agentProjectTraces: (projectId) => adminOrchestration.projectTraces(projectId),
   agentExecutionRun: (runId) => adminOrchestration.executionRun(runId),
+  workflowGraySwitch: (data) => adminOrchestration.graySwitch(data),
+  workflowRollback: (data) => adminOrchestration.rollback(data),
+  taskIntervene: (taskId, data) => adminOrchestration.taskIntervene(taskId, data),
+  taskJump: (taskId, data) => adminOrchestration.taskJump(taskId, data),
 
   // 创作中心
   listCreationProjects: (params = {}) =>
@@ -215,4 +228,24 @@ export const admin = {
     adminRequest('DELETE', `/api/admin/members/feature-matrix/${id}/`),
   seedFeatureMatrix: () =>
     adminRequest('POST', '/api/admin/members/feature-matrix/seed/'),
+
+  // 批量创作
+  batchJobs: (params) => adminBatch.listJobs(params),
+  batchJobCreate: (data) => adminBatch.createJob(data),
+  batchJobDispatch: (id) => adminBatch.dispatchJob(id),
+  batchJobPause: (id) => adminBatch.pauseJob(id),
+  batchJobResume: (id) => adminBatch.resumeJob(id),
+  batchItemRetry: (batchId, itemId) => adminBatch.retryItem(batchId, itemId),
+
+  // 素材库
+  library: () => adminLibrary.list(),
+  libraryUpload: (formData) => adminLibrary.upload(formData),
+  libraryParse: (id) => adminLibrary.parse(id),
+
+  // 规则进化
+  evolutionProposals: (params) => adminEvolution.listProposals(params),
+  evolutionAnalyze: (data) => adminEvolution.analyze(data),
+  evolutionApprove: (id, comment) => adminEvolution.approve(id, comment),
+  evolutionReject: (id, comment) => adminEvolution.reject(id, comment),
+  evolutionApply: (id) => adminEvolution.apply(id),
 }

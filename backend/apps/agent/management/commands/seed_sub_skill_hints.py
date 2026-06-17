@@ -12,7 +12,14 @@ from __future__ import annotations
 from django.core.management.base import BaseCommand
 
 from apps.agent.registry import AgentRegistryConfigService
-from apps.creation.orchestration.sub_skill_orchestrator import _SUB_SKILL_SYSTEM_HINTS
+
+# 旧引擎 sub_skill_orchestrator 已下线
+try:
+    from apps.creation.orchestration.sub_skill_orchestrator import _SUB_SKILL_SYSTEM_HINTS  # noqa: F401
+    _HAS_LEGACY_SOURCE = True
+except ImportError:
+    _SUB_SKILL_SYSTEM_HINTS: dict = {}
+    _HAS_LEGACY_SOURCE = False
 
 
 class Command(BaseCommand):
@@ -31,6 +38,12 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        if not _HAS_LEGACY_SOURCE:
+            self.stderr.write(self.style.WARNING(
+                "[SKIP] sub_skill_orchestrator 已下线，迁移源不可用，命令 no-op。\n"
+                "       新引擎的子技能 system_hint 已由 0031 creation_skill_catalog 迁移直接落到 DB。\n"
+            ))
+            return
         overwrite: bool = options["overwrite"]
         dry_run: bool = options["dry_run"]
 

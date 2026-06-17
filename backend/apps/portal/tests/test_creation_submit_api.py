@@ -42,7 +42,7 @@ class PortalCreationSubmitApiTests(TestCase):
         self.assertEqual(resp.data["code"], 401)
 
     @patch("apps.creation.workspace.workspace_service.finalize_workspace_brief")
-    @patch("apps.creation.orchestration.orchestrator.AgentOrchestrator.invoke_adapt_on_create")
+    @patch("apps.creation.services.submission.get_skill_invoker")
     @patch("apps.creation.services.submission.MembershipService.get_current_membership", return_value=None)
     @patch("apps.billing.services.BillingService.charge")
     @patch("apps.billing.services.BillingService.ensure_can_create")
@@ -51,9 +51,19 @@ class PortalCreationSubmitApiTests(TestCase):
         _mock_can_create,
         _mock_charge,
         _mock_membership,
-        _mock_adapt,
+        mock_invoker_factory,
         _mock_finalize,
     ):
+        # 新引擎：SkillInvoker 成功即可通过 adapt 校验
+        mock_invoker = mock_invoker_factory.return_value
+        skill_result = MagicMock()
+        skill_result.success = True
+        skill_result.data = {"adapted": True}
+        skill_result.error = {}
+        skill_result.skill_id = "creation.adapt"
+        skill_result.trace_id = "trace-1"
+        mock_invoker.invoke.return_value = skill_result
+
         resp = self.client.post("/api/creation/submit/", self._payload(), format="json")
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data["code"], 0)
@@ -61,7 +71,7 @@ class PortalCreationSubmitApiTests(TestCase):
         self.assertIn("estimated_minutes", resp.data["data"])
 
     @patch("apps.creation.workspace.workspace_service.finalize_workspace_brief")
-    @patch("apps.creation.orchestration.orchestrator.AgentOrchestrator.invoke_adapt_on_create")
+    @patch("apps.creation.services.submission.get_skill_invoker")
     @patch("apps.creation.services.submission.MembershipService.get_current_membership", return_value=None)
     @patch("apps.billing.services.BillingService.charge")
     @patch("apps.billing.services.BillingService.ensure_can_create")
@@ -70,9 +80,18 @@ class PortalCreationSubmitApiTests(TestCase):
         _mock_can_create,
         mock_charge,
         _mock_membership,
-        _mock_adapt,
+        mock_invoker_factory,
         _mock_finalize,
     ):
+        mock_invoker = mock_invoker_factory.return_value
+        skill_result = MagicMock()
+        skill_result.success = True
+        skill_result.data = {"adapted": True}
+        skill_result.error = {}
+        skill_result.skill_id = "creation.adapt"
+        skill_result.trace_id = "trace-2"
+        mock_invoker.invoke.return_value = skill_result
+
         mock_charge.side_effect = InsufficientCoins("创作币不足")
         resp = self.client.post("/api/creation/submit/", self._payload(), format="json")
         self.assertEqual(resp.status_code, 200)

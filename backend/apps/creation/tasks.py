@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 import os
 import time
+from dataclasses import dataclass, field
 
 from django.db import transaction
 from django.tasks import task
@@ -64,6 +65,116 @@ def _mark_skill_node_failed_state(project: Project, node_index: int, error_msg: 
         summary_text="生成失败",
         completed_at=None,
     )
+
+
+def _workspace_node_to_skill_id(node_index: int) -> str:
+    """工作台节点索引 → 创作技能 ID。"""
+    mapping = {
+        1: "creation.brief",
+        2: "creation.structure",
+        3: "creation.character",
+        4: "creation.outline",
+        5: "creation.script",
+        6: "creation.review",
+        7: "creation.polish",
+    }
+    return mapping.get(int(node_index), "")
+
+
+def _invoke_workspace_skill(
+    project: Project,
+    node_index: int,
+    *,
+    script_from: int | None = None,
+    script_to: int | None = None,
+    outline_mode: str | None = None,
+    outline_stage_key: str | None = None,
+) -> "SkillAgentResult":
+    """新引擎：工作台单节点直接走 SkillInvoker → creation.{node} 技能。"""
+    from apps.skill.skills.invoker import get_skill_invoker
+
+    skill_id = _workspace_node_to_skill_id(node_index)
+    if not skill_id:
+        return SkillAgentResult(
+            status="error",
+            agent_id=f"node-{node_index}",
+            errors=[f"节点 {node_index} 未映射到 creation.* 技能"],
+        )
+
+    payload: dict = {
+        "project_id": str(project.id),
+        "script_from": script_from,
+        "script_to": script_to,
+        "outline_mode": outline_mode or "",
+        "outline_stage_key": outline_stage_key or "",
+    }
+    skill_result = get_skill_invoker().invoke(
+        skill_id=skill_id,
+        payload=payload,
+        project_id=str(project.id),
+        user_id=project.user_id,
+    )
+    if skill_result.success:
+        return SkillAgentResult(
+            status="completed",
+            agent_id=skill_id,
+            outputs=skill_result.data or {},
+            meta={
+                "skill_id": skill_id,
+                "trace_id": skill_result.trace_id,
+                "fusion": {"ok": True, "skipped": False},
+            },
+        )
+    return SkillAgentResult(
+        status="error",
+        agent_id=skill_id,
+        errors=[skill_result.error.get("message", "skill invoker failed")],
+        meta={
+            "skill_id": skill_id,
+            "trace_id": skill_result.trace_id,
+            "fusion": {"ok": False, "skipped": False, "error": skill_result.error.get("message", "")},
+        },
+    )
+
+
+def _scripts_fully_generated_for_project(project: Project) -> bool:
+    """直接读 episode_scripts 产物判断剧本是否完整生成（不依赖旧引擎）。"""
+    from .artifact_service import get_artifact as _get_artifact
+
+    scripts = _get_artifact(project, "episode_scripts") or {}
+    eps = scripts.get("episodes") or []
+    if not eps:
+        return False
+    nums = {
+        int(e.get("episodeNumber") or e.get("episode") or 0)
+        for e in eps
+        if isinstance(e, dict)
+    }
+    nums.discard(0)
+    target = int(project.episode_count or 0)
+    if target <= 0:
+        return len(nums) > 0
+    return len(nums) >= target
+
+
+@dataclass
+class SkillAgentResult:
+    """新引擎工作台单节点调用结果（轻量版 AgentResult）。"""
+
+    status: str = "completed"
+    agent_id: str = ""
+    outputs: dict = field(default_factory=dict)
+    errors: list = field(default_factory=list)
+    meta: dict = field(default_factory=dict)
+
+    def to_dict(self) -> dict:
+        return {
+            "status": self.status,
+            "agent_id": self.agent_id,
+            "outputs": self.outputs,
+            "errors": self.errors,
+            "meta": self.meta,
+        }
 
 
 def _finalize_skill_node_failure(
@@ -127,11 +238,118 @@ def _record_task_result_if_failed(
 
 
 def _execute_pipeline_for_project(project: Project) -> dict:
-    """主链节点 1–5：SSOT 编排器（逐节点 LLM/CLI + Schema 落库）。"""
-    from .fusion.fusion_orchestrator import run_fusion_nodes_for_project
+    """主链节点 1–7：通过新 WorkflowEngine 执行 FusionPipelinePack。
 
-    logger.info("[Creation] 融合编排器 project=%s", project.id)
-    return run_fusion_nodes_for_project(project)
+    【新引擎全量上线】所有节点统一经由 WorkflowInstance → WorkflowEngine → SkillBridge
+    （skill_id → SkillInvoker；runner_path → Python 函数）。旧 FusionOrchestrator /
+    AgentOrchestrator 体系已不再被任何业务路径调用。
+    单一链路：WorkflowInstance → WorkflowEngine → SkillBridge → skill_id/Python 函数。
+
+    调用路径：
+      _run_creation_pipeline_core()
+        → _execute_pipeline_for_project()          ← 本函数
+          → WorkflowEngine(instance).run()
+            → SkillBridge.run()
+              ├─ skill_id   → SkillInvoker.invoke() (创作 7 技能)
+              └─ runner_path → Python 函数
+    """
+    from apps.workflow.execution_models import WorkflowInstance
+    from apps.workflow.workflow_engine import WorkflowEngine
+
+    # 查找该 Project 对应的 WorkflowInstance（submission 时已创建）
+    instance = (
+        WorkflowInstance.objects
+        .filter(project=project)
+        .order_by("-created_at")
+        .first()
+    )
+
+    if instance is None:
+        raise RuntimeError(
+            f"Project {project.id} 没有 WorkflowInstance，"
+            f"无法走新引擎（应在 submission 时创建）",
+        )
+
+    if instance.status not in (
+        WorkflowInstance.STATUS_PENDING,
+        WorkflowInstance.STATUS_RUNNING,
+        WorkflowInstance.STATUS_PAUSED,
+    ):
+        # 已经是终态（done / failed / cancelled），不再重复执行
+        logger.info(
+            "[Creation] Project %s 实例已是终态 (%s)，跳过",
+            project.id, instance.status,
+        )
+        return _build_pipeline_result_from_instance(instance)
+
+    engine = WorkflowEngine(instance)
+    engine.run()
+
+    # 新引擎完成后，同步节点执行结果到 Project / CreationNode
+    _sync_workflow_instance_to_project(project, instance)
+
+    return _build_pipeline_result_from_instance(instance)
+
+
+def _sync_workflow_instance_to_project(project: Project, instance) -> None:
+    """将 WorkflowInstance 的节点执行结果同步到 Project 的 CreationNode。"""
+    from apps.workflow.execution_models import NodeExecution
+    from apps.workflow.models import FusionPipelineNode
+    from django.utils import timezone as tz
+
+    nodes = NodeExecution.objects.filter(instance=instance).order_by("started_at")
+    node_map = {str(ne.node_id): ne for ne in nodes}
+
+    # 同步节点状态到 CreationNode
+    for db_node in FusionPipelineNode.objects.filter(pack=instance.pack).order_by("chain_order"):
+        ne: NodeExecution | None = node_map.get(db_node.fusion_node_id)
+        if ne is None:
+            continue
+
+        try:
+            cn = project.nodes.filter(
+                fusion_node_id=db_node.fusion_node_id
+            ).first()
+            if cn is None:
+                continue
+
+            if ne.status == NodeExecution.STATUS_SUCCEEDED:
+                cn.status = "completed"
+                cn.completed_at = ne.finished_at or tz.now()
+                cn.summary_text = db_node.display_name
+            elif ne.status == NodeExecution.STATUS_FAILED:
+                cn.status = "failed"
+                cn.error_message = (ne.error_info or "")[:500]
+            elif ne.status == NodeExecution.STATUS_RUNNING:
+                cn.status = "running"
+                cn.started_at = ne.started_at or tz.now()
+            cn.save(update_fields=["status", "completed_at", "started_at",
+                                   "summary_text", "error_message", "updated_at"])
+        except Exception as exc:
+            logger.warning("[Sync] 同步节点失败 node=%s: %s", db_node.fusion_node_id, exc)
+
+    # 同步 Project 整体进度
+    completed = nodes.filter(status=NodeExecution.STATUS_COMPLETED).count()
+    total = nodes.count()
+    project.progress_percent = min(100, int(completed / max(1, total) * 100))
+    project.current_node_index = total
+    project.updated_at = tz.now()
+
+
+def _build_pipeline_result_from_instance(instance) -> dict:
+    """将 WorkflowInstance 的上下文整理为 pipeline 兼容的 result dict。"""
+    ctx = instance.context or {}
+
+    return {
+        "project_brief": ctx.get("nodes", {}).get("node_brief", {}).get("output", {}),
+        "structure": ctx.get("nodes", {}).get("node_outline", {}).get("output", {}),
+        "characters": ctx.get("nodes", {}).get("node_character", {}).get("output", {}),
+        "outlines": ctx.get("nodes", {}).get("node_outline", {}).get("output", {}),
+        "scripts": ctx.get("nodes", {}).get("node_script", {}).get("output", {}),
+        "review": ctx.get("nodes", {}).get("node_review", {}).get("output", {}),
+        "status": "completed" if instance.status == instance.STATUS_DONE else "error",
+        "errors": [instance.failure_reason] if instance.failure_reason else [],
+    }
 
 
 def _update_nodes_from_result(project: Project, result: dict) -> None:
@@ -637,7 +855,6 @@ def _run_skill_node_core(
         project.rendered_progress_html = _render_progress_html(project)
         project.save(update_fields=["rendered_progress_html", "updated_at"])
 
-    from .orchestration.orchestrator import AgentOrchestrator, run_workspace_node_by_index
     from apps.agent.runtime import agent_for_workspace_index
     from .monitoring.execution_run_service import AgentExecutionRunService
     from .models import AgentExecutionRun
@@ -721,7 +938,7 @@ def _run_skill_node_core(
                     "outline_from": script_from,
                     "outline_to": script_to,
                 }
-            agent_result = run_workspace_node_by_index(
+            agent_result = _invoke_workspace_skill(
                 project,
                 node_index,
                 script_from=kwargs.get("script_from") or script_from,
@@ -797,8 +1014,7 @@ def _run_skill_node_core(
                 except Exception as exc:  # noqa: BLE001
                     logger.warning("[Workspace] persist scripts failed project=%s: %s", project.id, exc)
 
-                orch = AgentOrchestrator(project)
-                if orch.scripts_fully_generated():
+                if _scripts_fully_generated_for_project(project):
                     from dj_queue.api import enqueue_on_commit
 
                     enqueue_on_commit(run_agent_post_chain, str(project.id))
@@ -849,9 +1065,66 @@ def _run_skill_node_core(
         )
 
 
+def _run_post_script_chain_via_skill_invoker(project: Project) -> dict:
+    """新引擎：post-script 链（review → polish → review → score → marketing）通过 SkillInvoker 调用。
+    返回 dict 形如 {status, chain, results, errors}。
+    """
+    from apps.skill.skills.invoker import get_skill_invoker
+    from apps.agent.runtime import post_script_effective_chain, polish_max_rounds
+
+    chain = list(post_script_effective_chain() or [])
+    invoker = get_skill_invoker()
+    results: list[dict] = []
+    polish_rounds = 0
+    review_passed = False
+    errors: list[str] = []
+    for step in chain:
+        if step == "polish" and polish_rounds >= polish_max_rounds():
+            results.append({"agent_id": "polish", "status": "skipped", "reason": "max_rounds"})
+            continue
+        skill_id = f"creation.{step}"
+        skill_result = invoker.invoke(
+            skill_id=skill_id,
+            payload={"project_id": str(project.id)},
+            project_id=str(project.id),
+            user_id=project.user_id,
+        )
+        if skill_result.success:
+            results.append({
+                "agent_id": step,
+                "status": "completed",
+                "outputs": skill_result.data or {},
+                "skill_id": skill_id,
+                "trace_id": skill_result.trace_id,
+            })
+            if step == "review":
+                review_passed = bool((skill_result.data or {}).get("passed"))
+        else:
+            err_msg = skill_result.error.get("message", "skill failed")
+            errors.append(err_msg)
+            results.append({
+                "agent_id": step,
+                "status": "error",
+                "errors": [err_msg],
+                "skill_id": skill_id,
+                "trace_id": skill_result.trace_id,
+            })
+        if step == "polish":
+            polish_rounds += 1
+
+    ok = all(r.get("status") in ("completed", "skipped") for r in results)
+    return {
+        "status": "completed" if ok else "partial",
+        "chain": chain,
+        "results": results,
+        "errors": errors,
+        "review_passed": review_passed,
+    }
+
+
 @task(queue_name="creation")
 def run_agent_post_chain(project_id: str) -> dict:
-    """剧本全量生成后：review → polish → review → score → marketing。"""
+    """剧本全量生成后：review → polish → review → score → marketing（新引擎：SkillInvoker 串联）。"""
     try:
         project = Project.objects.get(id=project_id)
     except Project.DoesNotExist:
@@ -862,16 +1135,13 @@ def run_agent_post_chain(project_id: str) -> dict:
             project_id=project_id,
         )
 
-    from .orchestration.orchestrator import AgentOrchestrator
-
-    orch = AgentOrchestrator(project)
-    if not orch.scripts_fully_generated():
+    if not _scripts_fully_generated_for_project(project):
         return {"status": "skipped", "reason": "scripts_incomplete"}
 
     project.status = Project.STATUS_RUNNING
     project.save(update_fields=["status", "updated_at"])
     try:
-        out = orch.run_post_script_chain()
+        out = _run_post_script_chain_via_skill_invoker(project)
         project.refresh_from_db()
         if out.get("status") == "completed" and project.pipeline_mode == Project.MODE_WORKSPACE:
             project.status = Project.STATUS_COMPLETED

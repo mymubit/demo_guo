@@ -32,9 +32,10 @@ class AgentTermTests(SimpleTestCase):
         self.assertEqual(out["_meta"]["workspace_modules"][0]["agent_id"], "brief")
 
     def test_normalize_legacy_agent_runner_path(self):
+        # 新引擎：旧路径 normalize 应统一映射为空（由 skill_id 路由），不再指向已删除模块
         self.assertEqual(
             normalize_agent_runner_path("apps.creation.agents.world.run_world_agent"),
-            "apps.creation.orchestration.world.run_world_agent",
+            "",
         )
 
     def test_normalize_registry_agent_runners(self):
@@ -47,10 +48,8 @@ class AgentTermTests(SimpleTestCase):
             ]
         }
         out = normalize_registry_for_save(registry)
-        self.assertEqual(
-            out["agents"][0]["runner"],
-            "apps.creation.orchestration.world.run_world_agent",
-        )
+        # 新引擎：runner 字段在落库前被清空，统一由 skill_id 路由
+        self.assertEqual(out["agents"][0]["runner"], "")
 
     def test_normalize_pipeline_runner_rejects_agent_runner(self):
         self.assertEqual(
@@ -60,6 +59,7 @@ class AgentTermTests(SimpleTestCase):
             ),
             "apps.creation.step_mode.run_orchestrator_step",
         )
+        # 新引擎：fusion_review 不再指向已删除的 review 模块，路径映射到 step_mode
         self.assertEqual(
             normalize_pipeline_runner_path(
                 "apps.creation.orchestration.review.run_review_agent",

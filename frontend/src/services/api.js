@@ -35,6 +35,8 @@ export {
   adminOrchestration,
   adminModel,
   adminMonitoring,
+  adminStats,
+  adminSystemConfig,
 } from './admin'
 export { API_BASE_URL as API_BASE } from './http'
 export * from './constants/errorCodes'
@@ -50,7 +52,7 @@ import { works } from './works'
 import { skill } from './skill'
 import { share } from './share'
 import { systemConfig } from './config/systemConfig'
-import { admin, adminMainChain, adminWorkflow, adminAgent, adminOrchestration, adminModel, adminMonitoring } from './admin'
+import { admin, adminMainChain, adminWorkflow, adminAgent, adminOrchestration, adminModel, adminMonitoring, adminStats, adminSystemConfig } from './admin'
 import { API_BASE_URL } from './http'
 
 export default {
@@ -71,5 +73,7 @@ export default {
   adminOrchestration,
   adminModel,
   adminMonitoring,
+  adminStats,
+  adminSystemConfig,
   API_BASE: API_BASE_URL,
 }

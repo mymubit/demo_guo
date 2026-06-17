@@ -84,12 +84,19 @@ class AgentExecutionRunServiceTests(TestCase):
         self.assertEqual(usage.source_key, "node-2-structure:structure-generator")
 
     def test_run_tracked_agent_persists_adapt(self):
-        from apps.creation.orchestration.adapt import run_adapt_agent
+        """新引擎：adapt 通过 SkillInvoker 路由，使用一个 mock 函数代理。"""
+        def mock_adapt_runner(*args, **kwargs):
+            from apps.creation.orchestration.types import AgentResult
+            return AgentResult(
+                agent_id="adapt",
+                status="skipped",
+                outputs={"reason": "from-scratch"},
+            )
 
         result = AgentExecutionRunService.run_tracked_agent(
             self.project,
             "adapt",
-            run_adapt_agent,
+            mock_adapt_runner,
             node_index=0,
             input_summary={"creation_entry": "from-scratch"},
         )
