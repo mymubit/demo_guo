@@ -38,8 +38,6 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple
 
 from apps.workflow.condition_evaluator import safe_eval
-from apps.workflow.models import FusionPipelineNode, FusionPipelinePack
-
 
 logger = logging.getLogger(__name__)
 
