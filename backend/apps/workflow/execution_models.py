@@ -299,6 +299,14 @@ class NodeExecution(models.Model):
     llm_token_in  = models.PositiveIntegerField("输入Token", default=0)
     llm_token_out = models.PositiveIntegerField("输出Token", default=0)
 
+    # ── 重试与降级（P2 新增）─────────────────
+    retry_count = models.PositiveSmallIntegerField(
+        "重试次数", default=0,
+        help_text="节点内部重试次数（含首次执行）。0=一次成功无重试",
+    )
+    fallback_used = models.BooleanField("是否触发降级", default=False)
+    quota_refunded = models.BooleanField("是否回补配额", default=False)
+
     # ── 时间 ───────────────────────────────────
     started_at   = models.DateTimeField(null=True, blank=True)
     finished_at  = models.DateTimeField(null=True, blank=True)

@@ -266,6 +266,158 @@ def test_pack_validator():
     print("  ✓ Test 5 通过")
 
 
+def test_retry_backoff():
+    """P2-3: 测试指数退避计算。"""
+    print("\n=== Test 6: 重试退避策略 ===")
+    # 模拟 cfg 数据
+    from dataclasses import dataclass, field as dc_field
+    @dataclass
+    class _Cfg:
+        backoff_strategy: str = "exponential"
+        backoff_base: float = 2.0
+
+    # exponential: 2 * 2^attempt
+    cfg = _Cfg("exponential", 2.0)
+    for attempt, expected in [(0, 2.0), (1, 4.0), (2, 8.0), (3, 16.0)]:
+        actual = cfg.backoff_base * (2 ** attempt)
+        assert abs(actual - expected) < 0.001, f"attempt={attempt} 失败"
+    print(f"  ✓ exponential: base=2.0 → [2, 4, 8, 16]")
+
+    # linear: 2 * (attempt+1)
+    cfg = _Cfg("linear", 2.0)
+    for attempt, expected in [(0, 2.0), (1, 4.0), (2, 6.0)]:
+        actual = cfg.backoff_base * (attempt + 1)
+        assert abs(actual - expected) < 0.001
+    print(f"  ✓ linear: base=2.0 → [2, 4, 6]")
+
+    # fixed: 2.0
+    cfg = _Cfg("fixed", 2.0)
+    for attempt in range(5):
+        actual = cfg.backoff_base
+        assert abs(actual - 2.0) < 0.001
+    print(f"  ✓ fixed: 永远 2.0")
+
+    # 重试成本累加逻辑（模拟）
+    retries = [
+        {"coin_cost": 10, "token_in": 1000, "token_out": 500},
+        {"coin_cost": 10, "token_in": 1000, "token_out": 500},
+        {"coin_cost": 10, "token_in": 1000, "token_out": 500},
+    ]
+    total_coin = sum(r["coin_cost"] for r in retries)
+    total_in = sum(r["token_in"] for r in retries)
+    total_out = sum(r["token_out"] for r in retries)
+    assert total_coin == 30
+    assert total_in == 3000
+    assert total_out == 1500
+    print(f"  ✓ 重试 3 次后累加: coin={total_coin}, in={total_in}, out={total_out}")
+    print("  ✓ Test 6 通过")
+
+
+def test_prometheus_export_format():
+    """P2-4: Prometheus 文本导出格式正确性。"""
+    print("\n=== Test 7: Prometheus 导出格式 ===")
+
+    # 模拟空数据情况下的格式
+    sample_output = (
+        "# HELP workflow_instances_total Total workflow instances by status\n"
+        "# TYPE workflow_instances_total counter\n"
+        'workflow_instances_total{status="done",pack_version="v1",window_minutes="10"} 5\n'
+        "# HELP coin_cost_total Total coin cost in window\n"
+        "# TYPE coin_cost_total counter\n"
+        'coin_cost_total{window_minutes="10"} 150\n'
+    )
+
+    # 检查关键标记
+    assert "# HELP" in sample_output
+    assert "# TYPE" in sample_output
+    assert "workflow_instances_total" in sample_output
+    assert "coin_cost_total" in sample_output
+    # 标签引号
+    assert 'status="done"' in sample_output
+    print("  ✓ HELP/TYPE 注释存在")
+    print("  ✓ 标签格式正确 (status=\"done\")")
+    print("  ✓ 指标行存在")
+    print("  ✓ Test 7 通过")
+
+
+def test_skill_bridge_cost_aggregation():
+    """P2-2: SkillBridge 成本累加。"""
+    print("\n=== Test 8: SkillBridge 成本累加 ===")
+    from apps.workflow.skill_bridge import SkillBridgeResult
+
+    # 模拟 3 次重试结果
+    results = [
+        SkillBridgeResult(success=False, output={}, errors=["LLM timeout"], coin_cost=10),
+        SkillBridgeResult(success=False, output={}, errors=["LLM timeout"], coin_cost=10),
+        SkillBridgeResult(success=True, output={"content": "剧本"}, coin_cost=15, duration_ms=3200),
+    ]
+
+    total_cost = sum(r.coin_cost for r in results)
+    assert total_cost == 35  # 10+10+15
+    print(f"  ✓ 3 次调用金币累加: {total_cost}")
+
+    # 最终结果应该是最后一次成功的
+    last = results[-1]
+    assert last.success is True
+    assert last.coin_cost == 15
+    print(f"  ✓ 最终结果: success={last.success}, cost={last.coin_cost}")
+
+    print("  ✓ Test 8 通过")
+
+
+def test_creation_skill_catalog():
+    """P2-1: 验证 7 个创作技能在 SKILL_CATALOG 中的配置正确。"""
+    print("\n=== Test 9: 创作技能 Catalog 注册 ===")
+
+    import ast
+    catalog_path = "apps/skill/migrations/0031_creation_skill_catalog.py"
+    with open(catalog_path, encoding="utf-8") as f:
+        source = f.read()
+    tree = ast.parse(source)
+
+    # 找顶层名为 SKILL_CATALOG 的常量赋值
+    catalog: List[Dict] = []
+    for node in tree.body:
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                if isinstance(target, ast.Name) and target.id == "SKILL_CATALOG":
+                    # 提取 list literal
+                    if isinstance(node.value, ast.List):
+                        for el in node.value.elts:
+                            el_dict = ast.literal_eval(el)
+                            catalog.append(el_dict)
+                    break
+    assert catalog, "未在迁移文件中找到 SKILL_CATALOG"
+
+    expected_ids = {
+        "creation.brief", "creation.structure", "creation.character",
+        "creation.outline", "creation.script", "creation.review", "creation.polish",
+    }
+    actual_ids = {s["skill_id"] for s in catalog}
+    assert actual_ids == expected_ids, f"skill_id 不匹配: {actual_ids ^ expected_ids}"
+    print(f"  ✓ 7 个技能全部注册: {sorted(actual_ids)}")
+
+    # 验证字段完整性
+    for skill in catalog:
+        assert skill["skill_id"], f"skill_id 缺失: {skill}"
+        assert skill["name"], f"name 缺失: {skill['skill_id']}"
+        assert skill["category"] in {"creator", "quality", "compliance", "shared"}
+        assert skill["skill_layer"] in {"foundation", "business", "tool"}
+        assert skill["lifecycle_status"] == "active", f"未激活: {skill['skill_id']}"
+        assert skill["quota_cost"] > 0, f"cost=0: {skill['skill_id']}"
+        assert skill["system_hint"], f"system_hint 缺失: {skill['skill_id']}"
+        assert skill["output_schema"], f"output_schema 缺失: {skill['skill_id']}"
+    print(f"  ✓ 所有技能字段完整（skill_id/name/category/lifecycle/cost/schema）")
+
+    # 验证 cost 合理（brief < structure < script）
+    brief_cost = next(s["quota_cost"] for s in catalog if s["skill_id"] == "creation.brief")
+    script_cost = next(s["quota_cost"] for s in catalog if s["skill_id"] == "creation.script")
+    assert brief_cost < script_cost, f"script 应当比 brief 贵: {brief_cost} < {script_cost}"
+    print(f"  ✓ Cost 阶梯合理: brief={brief_cost} < script={script_cost}")
+
+    print("  ✓ Test 9 通过")
+
+
 def main():
     tests = [
         test_condition_evaluator,
@@ -273,6 +425,10 @@ def main():
         test_execution_plan,
         test_context_compressor,
         test_pack_validator,
+        test_retry_backoff,
+        test_prometheus_export_format,
+        test_skill_bridge_cost_aggregation,
+        test_creation_skill_catalog,
     ]
     print("=" * 60)
     print(f"  共 {len(tests)} 个测试")

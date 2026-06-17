@@ -133,12 +133,120 @@ def collect_node_metrics(*, last_n_minutes: int = 10) -> Dict[str, object]:
     total = qs.count() or 1
     retry_rate = round(retried * 100.0 / total, 2)
 
+    # 节点成功率（按 runner_type 维度）
+    success_by_runner: Dict[str, float] = {}
+    for runner, stats in by_runner.items():
+        total_runner = sum(stats.values())
+        succeeded = stats.get("succeeded", 0)
+        if total_runner > 0:
+            success_by_runner[runner] = round(succeeded * 100.0 / total_runner, 2)
+
+    # 平均重试次数
+    avg_retry_count = qs.aggregate(avg=Sum("retry_count"))["avg"] or 0
+    avg_retry_count = round(avg_retry_count / max(1, total), 3)
+
+    # 配额回补统计
+    refunded_total = qs.filter(quota_refunded=True).count()
+    fallback_used_total = qs.filter(fallback_used=True).count()
+
+    # 节点平均耗时（按 runner_type）
+    durations = qs.values("runner_type").annotate(
+        n=Count("id"),
+        avg_ms=Sum("duration_ms"),
+    )
+    avg_duration_by_runner: Dict[str, Dict[str, float]] = {}
+    for d in durations:
+        runner = d["runner_type"] or "unknown"
+        n = d["n"] or 1
+        avg_ms = (d["avg_ms"] or 0) / n
+        avg_duration_by_runner[runner] = {
+            "n": d["n"] or 0,
+            "avg_ms": round(avg_ms, 1),
+        }
+
     return {
         "by_status": by_status,
         "by_runner_and_status": by_runner,
+        "success_rate_pct_by_runner": success_by_runner,
+        "avg_duration_ms_by_runner": avg_duration_by_runner,
         "retry_count_total": retried,
         "retry_rate_pct": retry_rate,
+        "avg_retry_count_per_node": avg_retry_count,
+        "quota_refunded_total": refunded_total,
+        "fallback_used_total": fallback_used_total,
     }
+
+
+# =========================================================
+# Prometheus 文本格式导出（用于 /metrics 端点）
+# =========================================================
+def export_prometheus_metrics(*, last_n_minutes: int = 10) -> str:
+    """返回 Prometheus exposition 格式的指标文本。
+
+    用法（management command 或 HTTP 端点）：
+        return HttpResponse(
+            export_prometheus_metrics(),
+            content_type="text/plain; version=0.0.4; charset=utf-8",
+        )
+    """
+    metrics = collect_pipeline_metrics(last_n_minutes=last_n_minutes)
+    node_stats = metrics.get("node_stats", {}) or {}
+
+    lines: List[str] = []
+    window = last_n_minutes
+
+    # workflow_instances_total
+    lines.append("# HELP workflow_instances_total Total workflow instances by status")
+    lines.append("# TYPE workflow_instances_total counter")
+    for key, count in (metrics.get("instances_total") or {}).items():
+        status, pack_version = key.split("|", 1) if "|" in key else (key, "unknown")
+        # Prometheus 标签值转义
+        pv = pack_version.replace('"', '\\"')
+        lines.append(
+            f'workflow_instances_total{{status="{status}",pack_version="{pv}",window_minutes="{window}"}} {count}'
+        )
+
+    # workflow_duration_seconds
+    duration_stats = metrics.get("duration_seconds") or {}
+    if duration_stats.get("count", 0) > 0:
+        lines.append("# HELP workflow_duration_seconds Workflow instance duration seconds")
+        lines.append("# TYPE workflow_duration_seconds summary")
+        for quantile, value in [
+            ("avg", duration_stats.get("avg_seconds", 0)),
+            ("p50", duration_stats.get("p50_seconds", 0)),
+            ("p95", duration_stats.get("p95_seconds", 0)),
+            ("max", duration_stats.get("max_seconds", 0)),
+        ]:
+            lines.append(f'workflow_duration_seconds{{quantile="{quantile}"}} {value}')
+
+    # node_execution_total
+    lines.append("# HELP node_execution_total Total node executions by status and runner")
+    lines.append("# TYPE node_execution_total counter")
+    for runner, stats in (node_stats.get("by_runner_and_status") or {}).items():
+        runner_esc = runner.replace('"', '\\"')
+        for status, n in stats.items():
+            status_esc = status.replace('"', '\\"')
+            lines.append(
+                f'node_execution_total{{runner_type="{runner_esc}",status="{status_esc}",window_minutes="{window}"}} {n}'
+            )
+
+    # node_retry_count
+    lines.append("# HELP node_retry_total Total node retries")
+    lines.append("# TYPE node_retry_total counter")
+    lines.append(f'node_retry_total{{window_minutes="{window}"}} {node_stats.get("retry_count_total", 0)}')
+
+    # coin_cost_total
+    lines.append("# HELP coin_cost_total Total coin cost in window")
+    lines.append("# TYPE coin_cost_total counter")
+    lines.append(f'coin_cost_total{{window_minutes="{window}"}} {metrics.get("coin_cost", 0)}')
+
+    # llm_tokens_total
+    lines.append("# HELP llm_tokens_total Total LLM tokens in window")
+    lines.append("# TYPE llm_tokens_total counter")
+    for direction, value in (metrics.get("llm_tokens") or {}).items():
+        lines.append(f'llm_tokens_total{{direction="{direction}",window_minutes="{window}"}} {value}')
+
+    return "\n".join(lines) + "\n"
 
 
 # =========================================================

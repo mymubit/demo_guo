@@ -458,10 +458,22 @@ class WorkflowEngine:
     def _run_node_with_retries(
         self, cfg: NodeConfig, exec_rec: NodeExecution
     ) -> NodeRunResult:
-        """封装重试/退避逻辑。"""
+        """封装重试/退避/累加/回补逻辑。
+
+        P2 阶段增强：
+          • 每轮重试都累计 coin_cost / llm_token_in / llm_token_out
+          • 最终失败时调用 refund_coins 回补失败前扣的金币
+          • 把 retry_count 写入 NodeExecution
+          • 退避策略由 cfg.backoff_strategy (exponential/linear/fixed) 控制
+        """
         last_error: Optional[Exception] = None
         last_result: Optional[NodeRunResult] = None
         attempts_done = 0
+
+        # 累加器：贯穿所有重试
+        total_coin_cost = 0
+        total_token_in = 0
+        total_token_out = 0
 
         for attempt in range(cfg.max_retries + 1):
             attempts_done = attempt
@@ -470,7 +482,7 @@ class WorkflowEngine:
 
             t0 = time.monotonic()
             try:
-                # 调用实际 agent runner（兼容层：调用 run_workspace_node）
+                # 调用实际 agent runner
                 agent_result = self._agent_runner(
                     project=self.project,
                     node_config=cfg,
@@ -484,20 +496,35 @@ class WorkflowEngine:
                     duration_ms=duration,
                     retry_count=attempt,
                 )
+
+                # 累加每次成本（成功或失败均累加）
+                total_coin_cost += result.coin_cost
+                total_token_in += result.llm_token_in
+                total_token_out += result.llm_token_out
+
                 if result.success:
                     logger.info(
-                        "[Engine] 节点 %s 成功（attempt=%d，耗时 %dms）",
-                        cfg.node_id, attempt, duration,
+                        "[Engine] 节点 %s 成功（attempt=%d/%d，耗时 %dms，累计金币 %d）",
+                        cfg.node_id, attempt + 1, cfg.max_retries + 1,
+                        duration, total_coin_cost,
                     )
+                    # 把累计成本回填到 result 以便持久化
+                    result.coin_cost = total_coin_cost
+                    result.llm_token_in = total_token_in
+                    result.llm_token_out = total_token_out
+                    # 同步写入 NodeExecution 的 retry_count
+                    exec_rec.retry_count = attempt
+                    exec_rec.save(update_fields=["retry_count", "updated_at"])
                     return result
-                last_result = result  # 记录最后一次失败结果
+
+                last_result = result
                 last_error = RuntimeError(result.errors[-1] if result.errors else "unknown")
 
             except Exception as exc:
                 duration = int((time.monotonic() - t0) * 1000)
                 logger.warning(
                     "[Engine] 节点 %s 第 %d 次尝试失败: %s",
-                    cfg.node_id, attempt, exc,
+                    cfg.node_id, attempt + 1, exc,
                 )
                 last_error = exc
 
@@ -506,20 +533,57 @@ class WorkflowEngine:
                 sleep_sec = self._compute_backoff(cfg, attempt)
                 logger.info(
                     "[Engine] 节点 %s %ds 后重试（%d/%d）",
-                    cfg.node_id, sleep_sec, attempt + 1, cfg.max_retries,
+                    cfg.node_id, sleep_sec, attempt + 2, cfg.max_retries + 1,
                 )
                 time.sleep(sleep_sec)
 
-        # 全部尝试失败
+        # 全部尝试失败 → 触发配额回补
+        exec_rec.retry_count = attempts_done
+        if total_coin_cost > 0 and self.instance.user_id:
+            self._refund_node_quota(
+                cfg=cfg, exec_rec=exec_rec, amount=total_coin_cost,
+            )
+        exec_rec.save(update_fields=["retry_count", "updated_at"])
+
         if last_result:
             last_result.retry_count = attempts_done
+            last_result.coin_cost = total_coin_cost
+            last_result.llm_token_in = total_token_in
+            last_result.llm_token_out = total_token_out
             return last_result
         return NodeRunResult(
             success=False,
             errors=[f"{type(last_error).__name__}:{last_error}" if last_error else "unknown"],
             retry_count=attempts_done,
+            coin_cost=total_coin_cost,
+            llm_token_in=total_token_in,
+            llm_token_out=total_token_out,
             error_code="max_retries_exceeded",
         )
+
+    def _refund_node_quota(
+        self, *, cfg: NodeConfig, exec_rec: NodeExecution, amount: int,
+    ) -> None:
+        """节点最终失败时回补已扣金币。"""
+        if amount <= 0:
+            return
+        try:
+            from apps.billing.services import refund_coins
+
+            refund_coins(
+                user_id=int(self.instance.user_id),
+                amount=amount,
+                description=f"节点 {cfg.node_id} 重试后失败，金币回补",
+                reference_id=f"wf_node_refund:{exec_rec.idempotency_key}",
+            )
+            exec_rec.quota_refunded = True
+            logger.info(
+                "[Engine] 节点 %s 金币 %d 已回补", cfg.node_id, amount,
+            )
+        except Exception as exc:
+            logger.warning(
+                "[Engine] 节点 %s 金币回补失败: %s", cfg.node_id, exc,
+            )
 
     @staticmethod
     def _compute_backoff(cfg: NodeConfig, attempt: int) -> float:

@@ -271,11 +271,23 @@ class WorkflowPackAdminViewSet(viewsets.ViewSet):
 # 全局监控指标接口
 # =========================================================
 class WorkflowMetricsViewSet(viewsets.ViewSet):
-    """监控指标（Prometheus / Grafana 可接入。"""
+    """监控指标（Prometheus / Grafana 可接入。
+
+    GET /api/admin/workflow/metrics/             → JSON 结构化指标
+    GET /api/admin/workflow/metrics/?format=prom  → Prometheus exposition 文本
+    """
     permission_classes = [IsAdminUser]
 
     def list(self, request):
         minutes = int(request.query_params.get("last_n_minutes", 10) or 10)
+        fmt = (request.query_params.get("format") or "json").lower()
+        if fmt in ("prom", "prometheus", "text"):
+            from apps.workflow.workflow_monitoring import export_prometheus_metrics
+            from django.http import HttpResponse
+            return HttpResponse(
+                export_prometheus_metrics(last_n_minutes=minutes),
+                content_type="text/plain; version=0.0.4; charset=utf-8",
+            )
         return Response(collect_pipeline_metrics(last_n_minutes=minutes))
 
 
