@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { AdminBadge, formatDateTime } from '@/components/admin/AdminUI'
 
 export function CreationVerifyBadge({ summary }) {
@@ -16,10 +17,17 @@ export function CreationVerifyBadge({ summary }) {
 }
 
 const STATUS_TONE = {
+  ready: 'success',
   completed: 'success',
+  blocked: 'danger',
   failed: 'danger',
+  writing: 'warning',
   running: 'warning',
+  reviewing: 'warning',
+  scoring: 'warning',
   awaiting: 'warning',
+  planning: 'default',
+  draft: 'default',
   pending: 'default',
 }
 
@@ -49,6 +57,24 @@ export default function ProjectOpsSummary({ data, compact = false }) {
           {data.status_text || data.status}
         </AdminBadge>
       </div>
+
+      {data.user_id ? (
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <Link
+            to={`/admin/users?q=${encodeURIComponent(data.user_phone || data.user_id)}`}
+            className="text-gold-400 hover:text-gold-300 underline-offset-2 hover:underline"
+          >
+            查看用户 {data.user_phone || data.user_id}
+          </Link>
+          <span className="text-navy-500">·</span>
+          <Link
+            to={`/admin/creation/projects/${data.project_id}/trace?tab=basic`}
+            className="text-navy-300 hover:text-white"
+          >
+            项目详情
+          </Link>
+        </div>
+      ) : null}
 
       <div className={`grid gap-3 ${compact ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4'}`}>
         {[

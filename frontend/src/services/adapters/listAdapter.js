@@ -11,10 +11,7 @@ export function normalizePagination(raw, fallback = {}) {
 }
 
 /**
- * 从多种后端列表响应形态中提取数组。
- * - 裸数组（unwrap 后 data 直接为数组）
- * - { data: [...], pagination?, facets?, meta?, summary?, total? }
- * - { items: [...], pagination?, summary?, total?, meta? }
+ * 从统一列表响应中提取数组（{ data: [] } 或 { items: [] }）。
  */
 export function extractListItems(result) {
   if (Array.isArray(result)) {

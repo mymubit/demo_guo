@@ -7,7 +7,7 @@ import { ProjectAgentTraceView } from '@/components/admin/ProjectAgentTrace'
 export default function CreationProjectTracePage() {
   const { projectId } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
-  const tab = searchParams.get('tab') || 'timeline'
+  const tab = searchParams.get('tab') || 'basic'
 
   const setTab = (key) => {
     setSearchParams({ tab: key }, { replace: true })
@@ -15,8 +15,8 @@ export default function CreationProjectTracePage() {
 
   return (
     <AdminShell
-      title="项目监察"
-      description="按流水线查看每个 Agent 的子技能步骤；失败原因与 LLM 用量可钻取"
+      title="项目详情"
+      description="基本信息、执行记录、AI 产物与质量缺陷一站式排查"
       actions={
         <div className="flex flex-wrap items-center gap-3 text-sm">
           <Link
@@ -26,13 +26,13 @@ export default function CreationProjectTracePage() {
             <ArrowLeft className="w-4 h-4" />
             项目列表
           </Link>
-          {tab !== 'timeline' ? (
+          {tab !== 'basic' ? (
             <button
               type="button"
-              onClick={() => setTab('timeline')}
+              onClick={() => setTab('basic')}
               className="text-navy-400 hover:text-navy-200"
             >
-              回到轨迹
+              回到概览
             </button>
           ) : null}
         </div>

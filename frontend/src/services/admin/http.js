@@ -21,34 +21,10 @@ export function unwrapAdminListData(result) {
   return coerceUnwrappedArray(result)
 }
 
-export function normalizeTier1Catalog(data) {
-  const detail = data?.tier1_section_catalog_detail
-  return detail.map((item) => ({
-    key: item.key,
-    label: item.label,
-  }))
-}
-
-export function normalizeWorkflowSteps(data) {
-  return {
-    items: data.items,
-    meta: data?.meta || {},
-    tier1SectionCatalog: normalizeTier1Catalog(data),
-  }
-}
-
 export function normalizeAgentRegistry(data) {
   return {
-    ...data,
-    tier1SectionCatalog: normalizeTier1Catalog(data),
+    ...(data || {}),
     defaultTier1SectionsByAgent: data?.default_tier1_sections_by_agent || {},
-  }
-}
-
-export function normalizeFusionPacks(data) {
-  return {
-    items: data.items,
-    meta: data?.meta || {},
   }
 }
 

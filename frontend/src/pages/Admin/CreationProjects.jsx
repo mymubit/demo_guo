@@ -34,11 +34,13 @@ import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const STATUS_OPTIONS = [
   { key: '', label: '全部状态' },
-  { key: 'pending', label: '排队中' },
-  { key: 'running', label: '创作中' },
-  { key: 'awaiting', label: '待确认' },
-  { key: 'completed', label: '已完成' },
-  { key: 'failed', label: '失败' },
+  { key: 'draft', label: '立项中' },
+  { key: 'planning', label: '策划中' },
+  { key: 'writing', label: '创作中' },
+  { key: 'reviewing', label: '质检中' },
+  { key: 'scoring', label: '评分中' },
+  { key: 'ready', label: '可发布' },
+  { key: 'blocked', label: '需修改' },
 ]
 
 const MODE_OPTIONS = [
@@ -50,9 +52,9 @@ const MODE_OPTIONS = [
 
 const QUICK_FILTERS = [
   { id: 'all', label: '全部项目', facetKey: 'all', icon: ListFilter },
-  { id: 'running', label: '创作中', facetKey: 'running', icon: Loader2, status: 'running' },
-  { id: 'failed', label: '失败', facetKey: 'failed', icon: XCircle, status: 'failed' },
-  { id: 'awaiting', label: '待确认', facetKey: 'awaiting', icon: Clock, status: 'awaiting' },
+  { id: 'running', label: '创作中', facetKey: 'running', icon: Loader2, status: 'writing' },
+  { id: 'failed', label: '需修改', facetKey: 'failed', icon: XCircle, status: 'blocked' },
+  { id: 'awaiting', label: '质检中', facetKey: 'awaiting', icon: Clock, status: 'reviewing' },
   {
     id: 'failed_run',
     label: '有失败 run',

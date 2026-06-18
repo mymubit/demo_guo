@@ -117,8 +117,35 @@ export default function ExecutionRunPanel({
 
       {!compact ? (
         <>
-          <SummaryBlock title="输入摘要" data={run.input_summary} />
-          <SummaryBlock title="输出摘要" data={run.output_summary} />
+          {run.readable_summary ? (
+            <div className="mt-3 space-y-2">
+              <SummaryBlock title="输入摘要" data={run.readable_summary.input_block?.summary} />
+              {run.readable_summary.input_block?.snapshot_keys?.length ? (
+                <p className="text-[10px] text-navy-500">
+                  快照字段：{run.readable_summary.input_block.snapshot_keys.join('、')}
+                </p>
+              ) : null}
+              <SummaryBlock title="输出摘要" data={run.readable_summary.output_block?.summary} />
+              {run.readable_summary.output_block?.artifact_keys?.length ? (
+                <p className="text-[10px] text-navy-500">
+                  产物：{run.readable_summary.output_block.artifact_keys.join('、')}
+                </p>
+              ) : null}
+              <details className="mt-2">
+                <summary className="text-xs text-navy-500 cursor-pointer hover:text-navy-300">
+                  调试参数（原始 JSON）
+                </summary>
+                <pre className="mt-1 overflow-x-auto whitespace-pre-wrap rounded-lg border border-white/5 bg-slate-900/40 p-2 text-[10px] text-navy-300">
+                  {JSON.stringify(run.readable_summary.debug_block?.run_params || {}, null, 2)}
+                </pre>
+              </details>
+            </div>
+          ) : (
+            <>
+              <SummaryBlock title="输入摘要" data={run.input_summary} />
+              <SummaryBlock title="输出摘要" data={run.output_summary} />
+            </>
+          )}
           {(run.sub_skills || []).some(hasDebugPayload) ? (
             <div className="mt-4">
               <LlmRunTracePanel
