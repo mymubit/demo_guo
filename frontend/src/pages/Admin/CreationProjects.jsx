@@ -1,22 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  GitBranch,
   Trash2,
   AlertTriangle,
   Loader2,
   Clock,
   XCircle,
   ListFilter,
-  Maximize2,
+  ChevronRight,
 } from 'lucide-react'
 import { admin } from '@/services/api'
 import AdminShell from '@/components/admin/AdminShell'
 import AdminDashboardHints from '@/components/admin/AdminDashboardHints'
 import { CreationVerifyBadge } from '@/components/admin/ProjectOpsSummary'
-import ProjectTraceDrawer from '@/components/admin/ProjectTraceDrawer'
 import { RunDetailModal } from '@/components/admin/ProjectAgentTrace'
 import { formatProjectExecutionSummary } from '@/utils/agentExecutionLabels'
+import { adminProjectDetailPath } from '@/utils/adminProjectRoutes'
 import {
   AdminToolbar,
   AdminSearchInput,
@@ -43,6 +42,16 @@ const STATUS_OPTIONS = [
   { key: 'blocked', label: '需修改' },
 ]
 
+const STATUS_TONE = {
+  ready: 'success',
+  blocked: 'danger',
+  writing: 'warning',
+  reviewing: 'warning',
+  scoring: 'warning',
+  planning: 'default',
+  draft: 'default',
+}
+
 const MODE_OPTIONS = [
   { key: '', label: '全部模式' },
   { key: 'workspace', label: '工作台' },
@@ -66,17 +75,20 @@ const QUICK_FILTERS = [
 
 function activeQuickFilterId(status, hasFailedRun) {
   if (hasFailedRun) return 'failed_run'
-  if (status === 'running') return 'running'
-  if (status === 'failed') return 'failed'
-  if (status === 'awaiting') return 'awaiting'
+  if (status === 'writing') return 'running'
+  if (status === 'blocked') return 'failed'
+  if (status === 'reviewing') return 'awaiting'
   if (!status) return 'all'
   return ''
+}
+
+function isProjectBusy(status) {
+  return ['writing', 'reviewing', 'scoring', 'planning'].includes(status)
 }
 
 export default function CreationProjectsPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [traceDrawerId, setTraceDrawerId] = useState(null)
   const [inspectRunId, setInspectRunId] = useState(null)
 
   const keyword = searchParams.get('q') || ''
@@ -92,6 +104,13 @@ export default function CreationProjectsPage() {
   const [message, setMessage] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
   const [agentCatalog, setAgentCatalog] = useState(null)
+
+  const openProject = useCallback(
+    (projectId, tab = 'basic') => {
+      navigate(adminProjectDetailPath(projectId, tab))
+    },
+    [navigate],
+  )
 
   useEffect(() => {
     admin.agentCatalog().then(setAgentCatalog).catch(() => null)
@@ -112,7 +131,7 @@ export default function CreationProjectsPage() {
       if (resetPage) next.delete('page')
       setSearchParams(next, { replace: true })
     },
-    [searchParams, setSearchParams]
+    [searchParams, setSearchParams],
   )
 
   const load = useCallback(async () => {
@@ -146,20 +165,19 @@ export default function CreationProjectsPage() {
 
   useEffect(() => {
     load()
-    // 自动轮询：每 10 秒刷新项目列表，便于感知进行中项目的状态变化
     const timer = setInterval(() => { load() }, 10_000)
     return () => clearInterval(timer)
   }, [load])
 
   const quickActive = useMemo(
     () => activeQuickFilterId(status, hasFailedRun),
-    [status, hasFailedRun]
+    [status, hasFailedRun],
   )
 
   const spotlightProjects = useMemo(() => {
     if (!items?.length) return []
-    const running = items.find((p) => p.status === 'running')
-    const completed = items.find((p) => p.status === 'completed')
+    const running = items.find((p) => p.status === 'writing')
+    const completed = items.find((p) => p.status === 'ready')
     const picked = []
     if (running) picked.push(running)
     if (completed && completed.project_id !== running?.project_id) picked.push(completed)
@@ -183,17 +201,14 @@ export default function CreationProjectsPage() {
     })
   }
 
-  const handleDelete = async (row) => {
+  const handleDelete = async (row, event) => {
+    event?.stopPropagation?.()
     const title = row.title || row.project_id
-    const warn =
-      row.status === 'running'
-        ? '该项目正在创作中，请等待完成或失败后再删除。'
-        : `确定删除「${title}」？\n将同时删除剧本、大纲、分享链接等全部数据，且无法恢复。`
-    if (row.status === 'running') {
-      setMessage({ type: 'error', text: warn })
+    if (isProjectBusy(row.status)) {
+      setMessage({ type: 'error', text: '该项目仍在进行中，请等待完成或进入需修改状态后再删除。' })
       return
     }
-    if (!window.confirm(warn)) return
+    if (!window.confirm(`确定删除「${title}」？\n将同时删除剧本、大纲、分享链接等全部数据，且无法恢复。`)) return
     setDeletingId(row.project_id)
     try {
       await admin.deleteCreationProject(row.project_id)
@@ -234,17 +249,7 @@ export default function CreationProjectsPage() {
       title: '状态',
       render: (row) => (
         <div className="space-y-1">
-          <AdminBadge
-            tone={
-              row.status === 'completed'
-                ? 'success'
-                : row.status === 'failed'
-                  ? 'danger'
-                  : row.status === 'running'
-                    ? 'warning'
-                    : 'default'
-            }
-          >
+          <AdminBadge tone={STATUS_TONE[row.status] || 'default'}>
             {row.status_text || row.status}
           </AdminBadge>
           <p className="text-[10px] text-navy-400">{row.pipeline_mode}</p>
@@ -283,22 +288,6 @@ export default function CreationProjectsPage() {
               {summary.primary}
             </p>
             <p className="text-navy-400 line-clamp-2">{summary.secondary}</p>
-            <div className="flex flex-wrap gap-2 pt-0.5">
-              <button
-                type="button"
-                onClick={() => navigate(`/admin/creation/projects/${row.project_id}/trace`)}
-                className="text-gold-400 hover:text-gold-300"
-              >
-                查看轨迹
-              </button>
-              <button
-                type="button"
-                onClick={() => setInspectRunId(summary.runId)}
-                className="text-navy-400 hover:text-navy-200"
-              >
-                LLM 用量
-              </button>
-            </div>
             {row.execution_failed_count > 0 ? (
               <p className="text-[10px] text-red-400/80">累计失败 {row.execution_failed_count} 次</p>
             ) : null}
@@ -342,39 +331,21 @@ export default function CreationProjectsPage() {
     },
     {
       key: 'actions',
-      title: '操作',
+      title: '',
       render: (row) => {
         const isDeleting = deletingId === row.project_id
-        const isRunning = row.status === 'running'
-        const shouldDisableDelete = isDeleting || isRunning
-
+        const busy = isProjectBusy(row.status)
         return (
           <div className="flex items-center gap-2">
+            <ChevronRight className="w-4 h-4 text-gold-400/80" />
             <button
               type="button"
-              onClick={() => setTraceDrawerId(row.project_id)}
-              className="inline-flex items-center gap-1 text-xs text-gold-400 hover:text-gold-300"
-            >
-              <GitBranch className="w-3.5 h-3.5" />
-              轨迹
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate(`/admin/creation/projects/${row.project_id}/trace`)}
-              className="inline-flex items-center gap-1 text-xs text-navy-400 hover:text-navy-300"
-              title="打开完整监察页"
-            >
-              <Maximize2 className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              disabled={shouldDisableDelete}
-              onClick={() => handleDelete(row)}
+              disabled={isDeleting || busy}
+              onClick={(e) => handleDelete(row, e)}
               className="inline-flex items-center gap-1 text-xs text-red-400 hover:text-red-300 disabled:opacity-40"
-              title={isRunning ? '创作进行中不可删除' : '删除项目'}
+              title={busy ? '进行中不可删除' : '删除项目'}
             >
               <Trash2 className="w-3.5 h-3.5" />
-              {isDeleting ? '删除中…' : '删除'}
             </button>
           </div>
         )
@@ -388,8 +359,8 @@ export default function CreationProjectsPage() {
 
       <AdminPageHeader
         crumbs={[{ label: 'Console' }, { label: '创作项目' }]}
-        title={`创作项目监控 · ${runningCount ?? 0} 在跑`}
-        subtitle="项目卡 + 7 节点状态条 + 全量列表"
+        title={`创作项目 · ${runningCount ?? 0} 进行中`}
+        subtitle="点击任意项目进入详情工作台（基本信息 / 执行记录 / AI 产物 / 质量缺陷）"
       />
 
       {spotlightProjects.length > 0 ? (
@@ -403,9 +374,9 @@ export default function CreationProjectsPage() {
                 elapsed: p.elapsed_text,
                 remain: p.remain_text,
               }}
-              onTrace={() => setTraceDrawerId(p.project_id)}
-              onFullTrace={() => navigate(`/admin/creation/projects/${p.project_id}/trace`)}
-              onIntervene={() => navigate(`/admin/creation/projects/${p.project_id}/trace`)}
+              onTrace={() => openProject(p.project_id, 'timeline')}
+              onFullTrace={() => openProject(p.project_id, 'basic')}
+              onIntervene={() => openProject(p.project_id, rowHasFailedRun(p) ? 'runs' : 'basic')}
             />
           ))}
         </div>
@@ -489,9 +460,15 @@ export default function CreationProjectsPage() {
       ) : (
         <AdminPanel
           title="全部项目"
-          sub={`按开始时间倒序 · 共 ${pagination?.total ?? 0}${keyword ? ` · 搜索「${keyword}」` : ''}${pipelineMode ? ` · 模式 ${pipelineMode}` : ''}`}
+          sub={`点击行进入详情 · 共 ${pagination?.total ?? 0}${keyword ? ` · 搜索「${keyword}」` : ''}`}
         >
-          <AdminTable columns={columns} rows={items} rowKey="project_id" emptyText="暂无创作项目" />
+          <AdminTable
+            columns={columns}
+            rows={items}
+            rowKey="project_id"
+            emptyText="暂无创作项目"
+            onRowClick={(row) => openProject(row.project_id, row.latest_failed_run ? 'runs' : 'basic')}
+          />
           <AdminPagination
             page={pagination?.page || 1}
             totalPages={pagination?.total_pages || 1}
@@ -501,11 +478,11 @@ export default function CreationProjectsPage() {
         </AdminPanel>
       )}
 
-      {traceDrawerId ? (
-        <ProjectTraceDrawer projectId={traceDrawerId} onClose={() => setTraceDrawerId(null)} />
-      ) : null}
-
       <RunDetailModal runId={inspectRunId} onClose={() => setInspectRunId(null)} />
     </AdminShell>
   )
+}
+
+function rowHasFailedRun(row) {
+  return (row.execution_failed_count ?? 0) > 0 || Boolean(row.latest_failed_run)
 }

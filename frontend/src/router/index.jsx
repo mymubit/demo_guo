@@ -30,7 +30,7 @@
  */
 
 import { lazy, Suspense } from 'react'
-import { createBrowserRouter, RouterProvider, Outlet, Navigate } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Outlet, Navigate, useParams, useLocation } from 'react-router-dom'
 import { PrivateRoute, AdminRoute } from './guards.jsx'
 import { MonitorRouteTracker } from '@/utils/monitor'
 
@@ -64,9 +64,14 @@ const ShareView = lazy(() => import('@/pages/Share/index.jsx'))
 const AdminDashboard = lazy(() => import('@/pages/Admin/Dashboard.jsx'))
 const AdminStats = lazy(() => import('@/pages/Admin/AdminStats.jsx'))
 const AdminMonitoring = lazy(() => import('@/pages/Admin/monitoring/MonitoringDashboardPage.jsx'))
-const AdminCreationHub = lazyNamed(() => import('@/pages/Admin/CreationCenterPage.jsx'), 'CreationCenterPage')
 const AdminProjects = lazy(() => import('@/pages/Admin/CreationProjects.jsx'))
 const AdminProjectTrace = lazy(() => import('@/pages/Admin/CreationProjectTrace.jsx'))
+
+function AdminProjectTraceLegacyRedirect() {
+  const { projectId } = useParams()
+  const { search } = useLocation()
+  return <Navigate to={`/admin/creation/projects/${projectId}${search || ''}`} replace />
+}
 const AdminModelHub = lazy(() => import('@/pages/Admin/model/ModelHubPage.jsx'))
 const AdminAgentHub = lazy(() => import('@/pages/Admin/agent/AgentHubPage.jsx'))
 const SkillCenterPage = lazy(() => import('@/pages/Admin/skills/SkillCenterPage.jsx'))
@@ -232,9 +237,10 @@ const appRoutes = [
       { path: 'stats', element: <AdminStats /> },
       { path: 'monitoring', element: <AdminMonitoring /> },
       // 创作
-      { path: 'creation', element: <AdminCreationHub /> },
+      { path: 'creation', element: <Navigate to="/admin/creation/projects" replace /> },
       { path: 'creation/projects', element: <AdminProjects /> },
-      { path: 'creation/projects/:projectId/trace', element: <AdminProjectTrace /> },
+      { path: 'creation/projects/:projectId', element: <AdminProjectTrace /> },
+      { path: 'creation/projects/:projectId/trace', element: <AdminProjectTraceLegacyRedirect /> },
       { path: 'projects', element: <AdminProjects /> },
       // AI 引擎
       { path: 'model', element: <AdminModelHub /> },
