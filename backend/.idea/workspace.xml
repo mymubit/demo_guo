@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="433975c9-3cd8-4893-870b-559e7229355b" name="更改" comment="全量逻辑优化1" />
+    <list default="true" id="433975c9-3cd8-4893-870b-559e7229355b" name="更改" comment="全量逻辑优化3">
+      <change beforePath="$PROJECT_DIR$/../README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../docs/CORE-CHAIN-REFACTOR-PLAN.md" beforeDir="false" afterPath="$PROJECT_DIR$/../docs/CORE-CHAIN-REFACTOR-PLAN.md" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -106,6 +111,7 @@
       <workItem from="1781415653387" duration="1217000" />
       <workItem from="1781483139272" duration="6181000" />
       <workItem from="1781571993484" duration="13495000" />
+      <workItem from="1781759363414" duration="1726000" />
     </task>
     <task id="LOCAL-00001" summary="全量逻辑更新">
       <option name="closed" value="true" />
@@ -123,7 +129,31 @@
       <option name="project" value="LOCAL" />
       <updated>1781682180940</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="全量逻辑优化2">
+      <option name="closed" value="true" />
+      <created>1781759392608</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1781759392608</updated>
+    </task>
+    <task id="LOCAL-00004" summary="全量逻辑优化2">
+      <option name="closed" value="true" />
+      <created>1781759414833</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1781759414833</updated>
+    </task>
+    <task id="LOCAL-00005" summary="全量逻辑优化3">
+      <option name="closed" value="true" />
+      <created>1781760653760</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1781760653760</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -132,6 +162,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="全量逻辑更新" />
     <MESSAGE value="全量逻辑优化1" />
-    <option name="LAST_COMMIT_MESSAGE" value="全量逻辑优化1" />
+    <MESSAGE value="全量逻辑优化2" />
+    <MESSAGE value="全量逻辑优化3" />
+    <option name="LAST_COMMIT_MESSAGE" value="全量逻辑优化3" />
   </component>
 </project>

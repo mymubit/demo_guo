@@ -319,6 +319,7 @@ ScriptForge/
 │
 ├── docs/                               # 项目文档
 │   ├── PRD.md                         # 产品需求文档
+│   ├── CREATION-BUSINESS-ARCHITECTURE.md  # 创作业务与流程架构（当前主链路）
 │   └── TECH-ARCHITECTURE.md           # 技术架构文档
 │
 └── package.json                        # 根目录 NPM 脚本（并发启动）
@@ -407,16 +408,18 @@ X-Device-Fingerprint: <设备指纹>
 
 ## 独立 Agent 创作流程（当前主链路）
 
-| 步骤 | Agent | 输出产物 |
-|------|-------|----------|
-| 1 | brief | project_brief |
-| 2 | structure | structure_plan |
-| 3 | character | character_bible |
-| 4 | outline | series_outline |
-| 5 | script | episode_scripts |
-| 6+ | review / score / marketing 等 | 对应报告类 artifact |
+| 步骤 | Agent | 输出产物 | 说明 |
+|------|-------|----------|------|
+| 0 | submit | project_brief | 提交时直接 seed，非 Agent 运行 |
+| 1 | structure | structure_plan | 推荐起点 |
+| 2 | character | character_bible | |
+| 3 | outline | series_outline | |
+| 4 | script | episode_scripts | 可分批 merge |
+| 5+ | review / score / marketing 等 | 报告类 artifact | |
 
 用户在工作台手动触发每个 Agent；同一项目同一时间仅允许一个 Agent 运行。运行前可调用 estimate API 查看 token 预估。
+
+> 完整业务流程与分阶段创作架构见 [docs/CREATION-BUSINESS-ARCHITECTURE.md](docs/CREATION-BUSINESS-ARCHITECTURE.md)。`submit` 已 seed `project_brief`，推荐 Agent 运行顺序从 `structure` 起；`brief` Agent 为可选重跑。
 
 ---
 
@@ -462,6 +465,7 @@ X-Device-Fingerprint: <设备指纹>
 
 ## 📖 文档
 
+- **[创作业务架构](docs/CREATION-BUSINESS-ARCHITECTURE.md)** - 独立 Agent 主链路、Artifact 依赖、分阶段创作与交付闭环
 - **[产品需求文档 (PRD)](docs/PRD.md)** - 完整的产品功能规格
 - **[技术架构文档](docs/TECH-ARCHITECTURE.md)** - 技术选型与架构设计详解
 

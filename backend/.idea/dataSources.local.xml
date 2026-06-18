@@ -2,7 +2,7 @@
 <project version="4">
   <component name="dataSourceStorageLocal" created-in="PY-261.24374.152">
     <data-source name="scriptforge@localhost" uuid="f618eef0-7f4c-4975-a0cc-3549db2530ac">
-      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" />
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" dbms="POSTGRES" />
       <schema-mapping />
     </data-source>
   </component>
