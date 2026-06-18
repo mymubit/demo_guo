@@ -81,13 +81,13 @@ export default function SkillCenterPage() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await adminSkill.listSkillDefinitions({
+      const data = await adminSkill.listDefinitions({
         skill_layer:      filterLayer || undefined,
         lifecycle_status: filterStatus || undefined,
         q:                filterQ || undefined,
       })
       setItems(data.items || [])
-      setTotal(data.total || 0)
+      setTotal(data.total ?? data.pagination?.total ?? data.items?.length ?? 0)
     } catch (err) {
       showMsg(err.message || '加载失败', 'error')
     } finally {
@@ -137,10 +137,10 @@ export default function SkillCenterPage() {
         quota_cost:      Number(form.quota_cost),
       }
       if (selected) {
-        await adminSkill.updateSkillDefinition(selected.id, payload)
+        await adminSkill.updateDefinition(selected.id, payload)
         showMsg('技能已更新')
       } else {
-        await adminSkill.createSkillDefinition(payload)
+        await adminSkill.createDefinition(payload)
         showMsg('技能已创建')
       }
       setShowForm(false)
@@ -155,7 +155,7 @@ export default function SkillCenterPage() {
   async function handlePublish() {
     if (!publishTarget) return
     try {
-      await adminSkill.publishSkillDefinition(publishTarget.id, grayWeight)
+      await adminSkill.publishDefinition(publishTarget.id, { gray_weight: grayWeight })
       showMsg(`技能已${grayWeight < 100 ? '灰度' : '全量'}发布`)
       setPublishTarget(null)
       load()
@@ -167,7 +167,7 @@ export default function SkillCenterPage() {
   async function handleDeprecate(item) {
     if (!confirm(`确定废弃技能「${item.skill_id}」？此操作不可逆。`)) return
     try {
-      await adminSkill.deprecateSkillDefinition(item.id)
+      await adminSkill.deprecateDefinition(item.id)
       showMsg('技能已废弃')
       load()
     } catch (err) {
@@ -178,7 +178,7 @@ export default function SkillCenterPage() {
   async function handleRollback(item) {
     if (!confirm(`确定回滚技能「${item.skill_id}」到上一版本？`)) return
     try {
-      await adminSkill.rollbackSkillDefinition(item.id)
+      await adminSkill.rollbackDefinition(item.id)
       showMsg('已回滚到上一版本')
       load()
     } catch (err) {

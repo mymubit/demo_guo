@@ -13,9 +13,8 @@ from apps.common.permissions import IsAdminUser
 from apps.creation.artifact_service import get_artifact
 from apps.creation.models import Project, ProjectFusionArtifact
 from apps.creation.services import CreationService
-from apps.creation.workspace.workspace_service import _verify_summary
+from apps.creation.workspace.verify_summary import verify_summary
 
-from apps.console.orchestration.execution_views import aggregate_sub_skill_stats
 from apps.console.responses import api_fail, api_ok
 
 
@@ -41,7 +40,7 @@ def _project_ops_row(
     artifacts = artifacts or {}
     adaptation = artifacts.get("adaptation_meta") or get_artifact(project, "adaptation_meta") or {}
     traces = artifacts.get("agent_execution_traces") or get_artifact(project, "agent_execution_traces") or {}
-    verify = _verify_summary(adaptation) if adaptation else {"hasReports": False, "allPassed": True, "stages": []}
+    verify = verify_summary(adaptation) if adaptation else {"hasReports": False, "allPassed": True, "stages": []}
     user = project.user
     exec_summary = execution_summary or {}
     row = {
@@ -100,16 +99,11 @@ def build_agent_ops_dashboard(*, stats_limit: int = 200) -> Dict[str, Any]:
     from apps.creation.monitoring.execution_run_service import AgentExecutionRunService
 
     registry = get_agent_registry()
-    stats = aggregate_sub_skill_stats(limit=stats_limit)
-    top_skills = (stats.get("skills") or [])[:6]
     execution = AgentExecutionRunService.dashboard_payload(days=30)
     return {
         "registry_version": (registry.get("_meta") or {}).get("version") or "",
-        "trace_sample_size": stats.get("sample_size") or 0,
-        "trace_project_count": stats.get("project_count") or 0,
         "workspace_projects": Project.objects.filter(pipeline_mode=Project.MODE_WORKSPACE).count(),
         "from_reference_projects": Project.objects.filter(creation_entry="from-reference").count(),
-        "top_sub_skills": top_skills,
         "execution": execution,
     }
 

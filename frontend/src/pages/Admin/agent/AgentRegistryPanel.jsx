@@ -219,8 +219,8 @@ export default function AgentRegistryPanel({ onMessage }) {
         </div>
         <p className="text-xs text-navy-400 leading-relaxed">
           日常步骤与 Prompt 请在
-          <Link to="/admin/orchestration?tab=flow" className="text-gold-400 hover:underline mx-1">
-            流程编排
+          <Link to="/admin/agent" className="text-gold-400 hover:underline mx-1">
+            Agent 中心
           </Link>
           维护；此页用于批量 Agent 定义与全量 JSON。
         </p>
@@ -232,8 +232,8 @@ export default function AgentRegistryPanel({ onMessage }) {
             <h3 className="text-sm font-semibold text-white">编排元数据</h3>
             <p className="text-xs text-navy-400">
               后处理链也可在
-              <Link to="/admin/orchestration?tab=flow" className="text-gold-400 hover:underline mx-1">
-                流程编排
+              <Link to="/admin/agent" className="text-gold-400 hover:underline mx-1">
+                Agent 中心
               </Link>
               编辑。
             </p>

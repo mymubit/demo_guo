@@ -12,7 +12,6 @@ from .works_views import (
     WorkShareCreateView,
     WorkStatsView,
     WorkExportView,
-    WorkAgentRunView,
     WorkPolishApplyView,
 )
 
@@ -32,11 +31,6 @@ urlpatterns = [
         "<str:project_id>/agents/polish/apply/",
         WorkPolishApplyView.as_view(),
         name="work-polish-apply",
-    ),
-    path(
-        "<str:project_id>/agents/<str:agent_id>/run/",
-        WorkAgentRunView.as_view(),
-        name="work-agent-run",
     ),
     # 作品详情
     path(

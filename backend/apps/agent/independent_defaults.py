@@ -6,6 +6,26 @@ from typing import Any, Dict, List
 
 AGENT_DEFAULTS: List[Dict[str, Any]] = [
     {
+        "agent_id": "adapt",
+        "name": "Adapt Agent",
+        "name_zh": "小说改编",
+        "description": "将小说原文改编为短剧创作简报与改编元数据，供后续 Agent 使用。",
+        "workspace_order": 0,
+        "default_output_artifact_key": "adaptation_meta",
+        "input_contract": {
+            "project_fields": ["novel_text", "theme", "episode_count", "target_platform"],
+            "required_artifacts": [],
+            "optional_artifacts": ["project_brief"],
+            "params": ["novel_text"],
+        },
+        "output_contract": {
+            "artifacts": ["adaptation_meta", "project_brief"],
+            "schema_version": "adaptation-meta.v1",
+        },
+        "runtime_policy": {"max_prompt_tokens": 40000, "max_completion_tokens": 12000, "overwrite_mode": "replace"},
+        "enabled": True,
+    },
+    {
         "agent_id": "brief",
         "name": "Brief Agent",
         "name_zh": "立项简报",

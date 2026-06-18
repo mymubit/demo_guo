@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.test import SimpleTestCase
 
-from apps.creation.orchestration.polish_apply import _normalize_suggestion
+from apps.creation.polish_apply import _normalize_suggestion
 
 
 class PolishApplyTests(SimpleTestCase):

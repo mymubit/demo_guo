@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Any, Dict, List
 
-from ..display.character_display import build_character_bible_view
+from .display.character_display import build_character_bible_view
 
 logger = logging.getLogger(__name__)
 

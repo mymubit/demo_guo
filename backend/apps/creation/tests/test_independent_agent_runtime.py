@@ -216,19 +216,15 @@ class CreationSubmitLegacyIsolationTests(TestCase):
     @patch("apps.billing.services.BillingService.charge")
     @patch("apps.billing.services.BillingService.ensure_can_create")
     @patch("apps.creation.services.submission.MembershipService.get_current_membership", return_value=None)
-    @patch("apps.creation.tasks.run_creation_pipeline")
     @patch("dj_queue.api.enqueue_on_commit")
     def test_submit_does_not_enqueue_legacy_pipeline(
         self,
         mock_enqueue,
-        mock_pipeline,
         _mock_membership,
         _mock_can_create,
         _mock_charge,
     ):
         project, _ = submit(self.user, self._payload())
-        mock_pipeline.delay.assert_not_called()
-        mock_pipeline.apply_async.assert_not_called()
         mock_enqueue.assert_not_called()
         self.assertEqual(WorkflowInstance.objects.filter(project_id=project.id).count(), 0)
         self.assertEqual(project.total_nodes, 0)

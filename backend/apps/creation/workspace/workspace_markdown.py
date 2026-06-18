@@ -9,7 +9,7 @@ from ..artifact_service import get_artifact
 from ..display.character_display import build_character_bible_view
 from ..models import Project
 from ..outline_skeleton import build_six_stage_blocks
-from ..step_mode import artifact_key_for_node
+from ..workspace.artifact_keys import artifact_key_for_node
 from ..display.structure_display import build_structure_plan_view, normalize_structure_payload
 
 

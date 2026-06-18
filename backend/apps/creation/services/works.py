@@ -96,11 +96,23 @@ def _reconcile_project_running_state(
         return project
     if project.status != Project.STATUS_RUNNING:
         return project
-    from ..workspace.workspace_service import recover_stale_workspace_running_state
+    from ..agent_runtime.independent_service import IndependentAgentService
+    from ..models import AgentExecutionRun
 
-    kwargs = {"stale_minutes_override": 0} if aggressive else {}
-    if recover_stale_workspace_running_state(project, **kwargs):
-        project.refresh_from_db()
+    stale_override = 0 if aggressive else None
+    running = AgentExecutionRun.objects.filter(
+        project=project,
+        status=AgentExecutionRun.STATUS_RUNNING,
+    )
+    for run in running:
+        if stale_override is not None:
+            run.status = AgentExecutionRun.STATUS_FAILED
+            run.error_message = "管理员操作前强制解除 running 锁"
+            run.save(update_fields=["status", "error_message", "updated_at"])
+        else:
+            IndependentAgentService.running_run(project)
+    IndependentAgentService.update_project_status(project)
+    project.refresh_from_db()
     return project
 
 
@@ -131,128 +143,6 @@ def admin_delete_project(project_id: str) -> dict:
     return {"project_id": str(project_id), "title": title, "deleted": True}
 
 
-def _legacy_run_work_agent(project_id: str, user, agent_id: str) -> dict:
-    """作品页触发 post-script / 辅助 Agent（新引擎：SkillInvoker 路由）。"""
-    project = _get_user_project(project_id, user)
-    aid = (agent_id or "").strip().lower()
-    allowed = frozenset({"insight", "marketing", "knowledge", "review", "polish", "score"})
-    if aid not in allowed:
-        raise PermissionDenied("不支持的 Agent 类型")
-
-    from ..artifact_service import get_artifact
-    from apps.skill.skills.invoker import get_skill_invoker
-
-    if aid == "knowledge":
-        insight = get_artifact(project, "insight_report") or {}
-        if insight:
-            from ..orchestration.knowledge import run_pipeline_writeback
-
-            result = run_pipeline_writeback(project, insight, dry_run=True)
-        else:
-            from ..orchestration.knowledge import run_knowledge_search
-
-            result = run_knowledge_search(project)
-        return result if isinstance(result, dict) else {"status": "ok", "data": result}
-
-    # 新引擎：辅助 Agent 统一走 SkillInvoker → creation.{aid} 技能
-    skill_result = get_skill_invoker().invoke(
-        skill_id=f"creation.{aid}",
-        payload={"project_id": str(project.id)},
-        project_id=str(project.id),
-        user_id=getattr(user, "id", None),
-    )
-    return {
-        "status": "completed" if skill_result.success else "error",
-        "errors": [skill_result.error.get("message", "")] if skill_result.error else [],
-        "data": skill_result.data or {},
-        "skill_id": skill_result.skill_id,
-        "trace_id": skill_result.trace_id,
-    }
-
-
-def run_work_agent(project_id: str, user, agent_id: str) -> dict:
-    """Run a user-triggered work agent. Post-processing is never automatic."""
-    project = _get_user_project(project_id, user)
-    aid = (agent_id or "").strip().lower()
-    allowed = frozenset({"insight", "marketing", "knowledge", "review", "polish", "score"})
-    if aid not in allowed:
-        raise PermissionDenied("Unsupported agent type")
-
-    from ..artifact_service import get_artifact, list_artifact_keys
-    from apps.skill.skills.invoker import get_skill_invoker
-
-    if aid == "knowledge":
-        insight = get_artifact(project, "insight_report") or {}
-        if insight:
-            from ..orchestration.knowledge import run_pipeline_writeback
-
-            result = run_pipeline_writeback(project, insight, dry_run=True)
-        else:
-            from ..orchestration.knowledge import run_knowledge_search
-
-            result = run_knowledge_search(project)
-        return result if isinstance(result, dict) else {"status": "ok", "data": result}
-
-    from ..monitoring.execution_run_service import AgentExecutionRunService
-    from ..models import AgentExecutionRun
-    from ..skill_invoke_payload import (
-        apply_creation_skill_output,
-        build_creation_skill_invoke_payload,
-    )
-
-    skill_id = f"creation.{aid}"
-    artifact_key = ""
-    error_message = ""
-    with AgentExecutionRunService.run_scope(
-        project,
-        agent_id=aid,
-        node_index=None,
-        input_summary={
-            "trigger": "work_agent_run",
-            "loaded_artifacts": list_artifact_keys(project),
-        },
-    ) as execution_run:
-        skill_result = get_skill_invoker().invoke(
-            skill_id=skill_id,
-            payload=build_creation_skill_invoke_payload(project, skill_id),
-            project_id=str(project.id),
-            user_id=getattr(user, "id", None),
-        )
-        if skill_result.success:
-            artifact_key = apply_creation_skill_output(
-                project,
-                0,
-                skill_id,
-                skill_result.data or {},
-            )
-            AgentExecutionRunService.finish_run(
-                execution_run,
-                AgentExecutionRun.STATUS_COMPLETED,
-                output_artifact_key=artifact_key,
-                output_summary=AgentExecutionRunService.build_output_summary(project, artifact_key),
-            )
-        else:
-            error_message = (
-                (skill_result.error or {}).get("message")
-                or (skill_result.error or {}).get("error")
-                or "skill failed"
-            )
-            AgentExecutionRunService.finish_run(
-                execution_run,
-                AgentExecutionRun.STATUS_FAILED,
-                error_message=error_message,
-            )
-    return {
-        "status": "completed" if skill_result.success else "error",
-        "errors": [error_message] if error_message else [],
-        "data": skill_result.data or {},
-        "skill_id": skill_result.skill_id,
-        "trace_id": skill_result.trace_id,
-        "artifact_key": artifact_key,
-        "execution_run_id": str(execution_run.id),
-    }
-
-
 def apply_work_polish(
     project_id: str,
     user,
@@ -263,7 +153,7 @@ def apply_work_polish(
 ) -> dict:
     """作品页：用户确认后应用润色建议。"""
     project = _get_user_project(project_id, user)
-    from ..orchestration.polish_apply import apply_polish_suggestions
+    from ..polish_apply import apply_polish_suggestions
 
     try:
         return apply_polish_suggestions(

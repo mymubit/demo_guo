@@ -16,7 +16,6 @@ from apps.common.user_messages import safe_api_message
 from apps.portal.creation.legacy_gone import legacy_workspace_gone_response
 from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
 
-from apps.creation.node_preview import build_node_preview
 from apps.creation.services import CreationService
 
 logger = logging.getLogger(__name__)
@@ -147,23 +146,7 @@ class FusionSnapshotView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, project_id: str):
-        try:
-            project = CreationService._get_user_project(project_id, request.user)
-        except PermissionDenied as exc:
-            return Response(
-                {"code": 403, "message": safe_api_message(exc, "无权限"), "data": None},
-                status=status.HTTP_200_OK,
-            )
-        from apps.creation.node_preview import build_portal_fusion_snapshot
-
-        return Response(
-            {
-                "code": 0,
-                "message": "success",
-                "data": build_portal_fusion_snapshot(project),
-            },
-            status=status.HTTP_200_OK,
-        )
+        return legacy_workspace_gone_response()
 
 
 class FusionArtifactView(APIView):

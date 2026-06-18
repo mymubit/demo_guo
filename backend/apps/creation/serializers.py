@@ -227,21 +227,16 @@ class ProjectProgressSerializer(serializers.Serializer):
 
     status = serializers.CharField(help_text="pending / running / awaiting / completed / failed")
     status_text = serializers.CharField(help_text="状态中文描述")
-    current_node = serializers.IntegerField(help_text="当前节点 1-7，未开始为 0")
-    total_nodes = serializers.IntegerField(help_text="总节点数，默认 7")
     progress_percent = serializers.IntegerField(help_text="进度百分比 0-100")
-    # 预渲染 HTML 片段，前端直接插入 DOM，不解析
     rendered_progress_html = serializers.CharField(
         help_text="预渲染的进度卡片 HTML 片段"
     )
-    # 仅在 status=completed 时返回
     rendered_result_html = serializers.CharField(
         required=False,
         allow_blank=True,
         default="",
         help_text="完成时返回：预渲染的剧本结果 HTML（含水印）",
     )
-    # 仅在 status=completed 时返回
     download_token = serializers.CharField(
         required=False,
         allow_blank=True,
@@ -265,13 +260,8 @@ class ProjectProgressSerializer(serializers.Serializer):
     ready_at = serializers.DateTimeField(required=False, allow_null=True)
     skill_version = serializers.CharField(required=False, allow_blank=True, default="")
     score_summary = serializers.DictField(required=False, allow_null=True)
-    gate_summary = serializers.DictField(required=False, allow_null=True)
     pipeline_mode = serializers.CharField(required=False, default="auto")
-    awaiting_confirm = serializers.BooleanField(required=False, default=False)
-    node_preview = serializers.DictField(required=False, allow_null=True)
-    nodes = serializers.ListField(
-        child=serializers.DictField(), required=False, default=list,
-    )
+    latest_execution_run = serializers.DictField(required=False, allow_null=True)
     created_at = serializers.DateTimeField(help_text="任务提交时间")
     updated_at = serializers.DateTimeField(help_text="最近更新时间")
 

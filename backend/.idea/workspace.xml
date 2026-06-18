@@ -2,10 +2,113 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="433975c9-3cd8-4893-870b-559e7229355b" name="更改" comment="全量逻辑优化3">
-      <change beforePath="$PROJECT_DIR$/../README.md" beforeDir="false" afterPath="$PROJECT_DIR$/../README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../docs/CORE-CHAIN-REFACTOR-PLAN.md" beforeDir="false" afterPath="$PROJECT_DIR$/../docs/CORE-CHAIN-REFACTOR-PLAN.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/agent/independent_defaults.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/agent/independent_defaults.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/console/creation/project_views.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/console/creation/project_views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/console/main_chain/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/console/main_chain/blueprint_service.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/console/main_chain/blueprint_views.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/console/orchestration/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/console/orchestration/execution_views.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/console/orchestration/flow_views.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/console/orchestration/publish_service.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/console/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/console/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/agent_runtime/independent_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/agent_runtime/independent_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/ai_field_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/ai_field_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/artifact_readiness.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/artifact_readiness.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/batch/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/batch/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/convergence_service.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/dispatch/service.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/dispatch/service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/engine/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/engine/base.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/engine/node1_input.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/engine/node2_structure.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/engine/node3_character.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/engine/node4_outline.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/engine/node5_script.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/engine/pipeline.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/legacy/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/legacy/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/management/commands/run_workspace_live_chain.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/management/commands/test_fusion_pipeline.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/node_preview.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/adapt.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/agent_common.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/agent_detection.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/agent_llm.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/agent_payload.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/brief.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/character.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/emotion_architect.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/insight.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/knowledge.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/llm_tokens.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/marketing.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/outline.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/pacing_heuristics.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/plot_structure_review.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/polish.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/polish_apply.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/quality_guard.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/review.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/score.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/score_quick.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/script.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/sub_skill_runner.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/types.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/workspace_agent.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/orchestration/world.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/serializers.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/serializers.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/services/facade.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/services/facade.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/services/progress.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/services/progress.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/services/works.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/services/works.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/services/workspace.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/skill_invoke_payload.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/step_mode.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/tasks.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/tasks.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/tests/test_agent_payload.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/tests/test_agents.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/tests/test_artifact_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/tests/test_artifact_config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/tests/test_artifact_readiness.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/tests/test_creation_entry_contract.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/tests/test_creation_entry_contract.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/tests/test_dialogue_shaper.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/tests/test_execution_run_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/tests/test_execution_run_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/tests/test_independent_agent_runtime.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/tests/test_independent_agent_runtime.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/tests/test_outline_episode_batch.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/tests/test_outline_episode_batch.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/tests/test_polish_apply.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/tests/test_polish_apply.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/tests/test_polish_apply_integration.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/tests/test_polish_apply_integration.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/tests/test_step_mode_runner_config.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/tests/test_workspace_editor_save.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/tests/test_workspace_editor_save.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/tests/test_workspace_service.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/tests/test_world_agent.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/workspace/workspace_content.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/workspace/workspace_content.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/workspace/workspace_editor.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/workspace/workspace_editor.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/workspace/workspace_markdown.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/workspace/workspace_markdown.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/workspace/workspace_service.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/workspace_service.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/creation/workspace_skill_invoke.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/portal/creation/fusion_views.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/portal/creation/fusion_views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/portal/creation/legacy_gone.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/portal/creation/legacy_gone.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/portal/creation/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/portal/creation/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/portal/creation/urls_works.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/portal/creation/urls_works.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/portal/creation/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/portal/creation/views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/portal/creation/works_views.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/portal/creation/works_views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/portal/tests/test_creation_workspace.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/portal/tests/test_creation_workspace.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/workflow/orchestration_adapter.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/workflow/orchestration_adapter.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/workflow/skill_bridge.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/workflow/skill_bridge.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/workflow/tasks.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/workflow/tasks.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/workflow/tests/test_engine_sanity.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/workflow/workflow_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/workflow/workflow_engine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/workflow/workflow_scheduler.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/workflow/workflow_scheduler.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/settings/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/config/settings/base.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../docs/CORE-CHAIN-REFACTOR-PLAN.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../docs/FUSION-ADAPTATION.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../docs/TECH-ARCHITECTURE.md" beforeDir="false" afterPath="$PROJECT_DIR$/../docs/TECH-ARCHITECTURE.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/agent/AgentRegistryPanel.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/agent/AgentRegistryPanel.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/skills/SkillCenterPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/skills/SkillCenterPage.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/services/admin/agent.js" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/services/admin/agent.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/services/admin/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/services/admin/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/services/creation.js" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/services/creation.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -111,7 +214,7 @@
       <workItem from="1781415653387" duration="1217000" />
       <workItem from="1781483139272" duration="6181000" />
       <workItem from="1781571993484" duration="13495000" />
-      <workItem from="1781759363414" duration="1726000" />
+      <workItem from="1781759363414" duration="2733000" />
     </task>
     <task id="LOCAL-00001" summary="全量逻辑更新">
       <option name="closed" value="true" />
@@ -153,7 +256,15 @@
       <option name="project" value="LOCAL" />
       <updated>1781760653760</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="全量逻辑优化3">
+      <option name="closed" value="true" />
+      <created>1781761820490</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1781761820490</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

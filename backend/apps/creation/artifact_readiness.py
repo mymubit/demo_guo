@@ -8,7 +8,7 @@ from .artifact_service import get_artifact
 from .display.character_display import build_character_bible_view
 from .models import Project
 from .outline_skeleton import stage_rough_outline_ready
-from .step_mode import artifact_key_for_node
+from .workspace.artifact_keys import artifact_key_for_node
 
 UPSTREAM_ARTIFACT_LABELS = {
     "project_brief": "立项策划",

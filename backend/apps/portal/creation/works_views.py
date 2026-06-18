@@ -303,25 +303,6 @@ class WorkPolishApplyView(APIView):
         )
 
 
-class WorkAgentRunView(APIView):
-    """POST /api/works/<project_id>/agents/<agent_id>/run/ — 触发 Agent。"""
-
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, project_id: str, agent_id: str):
-        try:
-            data = CreationService.run_work_agent(project_id, request.user, agent_id)
-        except PermissionDenied as exc:
-            return Response(
-                {"code": 403, "message": safe_api_message(exc, "无权限"), "data": None},
-                status=status.HTTP_200_OK,
-            )
-        return Response(
-            {"code": 0, "message": "success", "data": data},
-            status=status.HTTP_200_OK,
-        )
-
-
 class WorkStatsView(APIView):
     """我的作品统计摘要
 

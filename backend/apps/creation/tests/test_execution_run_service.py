@@ -86,12 +86,12 @@ class AgentExecutionRunServiceTests(TestCase):
     def test_run_tracked_agent_persists_adapt(self):
         """新引擎：adapt 通过 SkillInvoker 路由，使用一个 mock 函数代理。"""
         def mock_adapt_runner(*args, **kwargs):
-            from apps.creation.orchestration.types import AgentResult
-            return AgentResult(
-                agent_id="adapt",
-                status="skipped",
-                outputs={"reason": "from-scratch"},
-            )
+            class _Result:
+                agent_id = "adapt"
+                status = "skipped"
+                outputs = {"reason": "from-scratch"}
+
+            return _Result()
 
         result = AgentExecutionRunService.run_tracked_agent(
             self.project,

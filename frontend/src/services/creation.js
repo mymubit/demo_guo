@@ -48,9 +48,6 @@ export const creation = {
     const suffix = packId ? `?pack_id=${encodeURIComponent(packId)}` : ''
     return request('GET', `/api/creation/fusion/nodes/${suffix}`)
   },
-  fusionSnapshot(projectId) {
-    return request('GET', `/api/creation/fusion/${projectId}/`)
-  },
   aiGenerate(actionKey, context = {}) {
     return request('POST', '/api/creation/ai/generate/', {
       data: { action_key: actionKey, context },

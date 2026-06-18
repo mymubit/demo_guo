@@ -1,5 +1,7 @@
 # 短剧剧本创作平台 技术架构文档
 
+> **业务视角**（独立 Agent 主链路、Artifact 依赖、计费与交付）：见 [CREATION-BUSINESS-ARCHITECTURE.md](./CREATION-BUSINESS-ARCHITECTURE.md)。
+
 ---
 
 ## 1. 架构设计

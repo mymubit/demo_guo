@@ -6,19 +6,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from apps.console.workflow.fusion_views import (
-    FusionPipelineImportView,
-    FusionPipelineMetaView,
-    FusionPipelinePackActivateView,
-    FusionPipelinePackDetailView,
-    FusionPipelinePackListView,
-    FusionPipelinePackPublishView,
-    FusionPipelinePackSetDefaultView,
-)
-from apps.console.workflow.pipeline_views import (
-    PipelineStepListView,
-    PipelineStepSyncView,
-)
 from apps.console.agent.review_views import ReviewScoringConfigView
 from apps.console.config.catalog_views import (
     CreationFormCatalogView,
@@ -40,24 +27,10 @@ from apps.console.commerce.billing_views import (
     SiteCoinSettingsView,
 )
 from apps.console.commerce.order_views import OrderManagementViewSet
-from apps.console.orchestration.execution_views import (
+from apps.console.agent.execution_views import (
     AgentCatalogAdminView,
     AgentExecutionRunDetailView,
     AgentProjectTraceView,
-    AgentSubSkillStatsView,
-    OrchestrationRecentRunsView,
-    TaskInterventionView,
-    TaskNodeJumpView,
-)
-from apps.console.orchestration.flow_views import (
-    OrchestrationFlowBlueprintView,
-    OrchestrationFlowGraySwitchView,
-    OrchestrationFlowListView,
-    OrchestrationFlowPublishView,
-    OrchestrationFlowRegistryMetaView,
-    OrchestrationFlowRollbackView,
-    OrchestrationFlowStepPatchView,
-    OrchestrationFlowStepsReorderView,
 )
 from apps.console.agent.registry_views import (
     AgentRegistryConfigView,
@@ -92,12 +65,6 @@ from apps.console.skills.definition_views import (
     SkillConfigEntryListView,
     SkillDefectDetailView,
     SkillDefectListView,
-)
-from apps.console.creation.task_views import (
-    CreationTaskListView,
-    CreationTaskDetailView,
-    CreationTaskRetryView,
-    CreationTaskCancelView,
 )
 from apps.console.creation.quality_defect_views import (
     ScriptQualityDefectDetailView,
@@ -158,15 +125,6 @@ from apps.console.system_config.extended_views import (
     SensitiveWordsView,
     ThresholdConfigView,
 )
-from apps.creation.batch.views import (
-    BatchJobListView,
-    BatchJobCreateView,
-    BatchJobDetailView,
-    BatchJobDispatchView,
-    BatchJobPauseView,
-    BatchJobResumeView,
-    BatchProjectRetryView,
-)
 from apps.creation.library.views import (
     MaterialListView,
     MaterialUploadView,
@@ -182,68 +140,14 @@ from apps.skill.evolution.views import (
     EvolutionRejectView,
     EvolutionApplyView,
 )
-from apps.console.main_chain.blueprint_views import (
-    MainChainBlueprintView,
-    MainChainRegistryMetaView,
-    MainChainStepPatchView,
-)
 from apps.system_config.urls import admin_urlpatterns as system_config_admin_urlpatterns
-
-# ── 【P0 新增】工作流编排引擎 API ──────────────────────────
-from apps.workflow.api import (
-    WorkflowInstanceViewSet,
-    WorkflowPackAdminViewSet,
-    WorkflowMetricsViewSet,
-    WorkflowLaunchViewSet,
-)
 
 router = DefaultRouter()
 router.register(r"users", UserManagementViewSet, basename="admin-user")
 router.register(r"members/plans", MembershipPlanViewSet, basename="admin-membership-plan")
 router.register(r"orders", OrderManagementViewSet, basename="admin-order")
-# 工作流引擎（实例 / Pack 管理 / 指标 / 发起创作）
-router.register(r"workflow/instances", WorkflowInstanceViewSet,
-                 basename="admin-wf-instance")
-router.register(r"workflow/packs", WorkflowPackAdminViewSet,
-                 basename="admin-wf-pack")
-router.register(r"workflow/metrics", WorkflowMetricsViewSet,
-                 basename="admin-wf-metrics")
-router.register(r"workflow/launch", WorkflowLaunchViewSet,
-                 basename="admin-wf-launch")
 
 app_name = "console"
-
-# 主链工作室
-_main_chain_routes = [
-    path("main-chain/blueprint/", MainChainBlueprintView.as_view(), name="admin-main-chain-blueprint"),
-    path("main-chain/registry-meta/", MainChainRegistryMetaView.as_view(), name="admin-main-chain-registry-meta"),
-    path("main-chain/steps/<uuid:step_id>/", MainChainStepPatchView.as_view(), name="admin-main-chain-step-patch"),
-    path("main-chain/steps/", PipelineStepListView.as_view(), name="admin-main-chain-steps"),
-    path("main-chain/steps/sync/", PipelineStepSyncView.as_view(), name="admin-main-chain-steps-sync"),
-    path("main-chain/fusion/meta/", FusionPipelineMetaView.as_view(), name="admin-main-chain-fusion-meta"),
-    path("main-chain/fusion/import/", FusionPipelineImportView.as_view(), name="admin-main-chain-fusion-import"),
-    path("main-chain/fusion/packs/", FusionPipelinePackListView.as_view(), name="admin-main-chain-fusion-packs"),
-    path(
-        "main-chain/fusion/packs/<uuid:pack_id>/",
-        FusionPipelinePackDetailView.as_view(),
-        name="admin-main-chain-fusion-pack-detail",
-    ),
-    path(
-        "main-chain/fusion/packs/<uuid:pack_id>/activate/",
-        FusionPipelinePackActivateView.as_view(),
-        name="admin-main-chain-fusion-pack-activate",
-    ),
-    path(
-        "main-chain/fusion/packs/<uuid:pack_id>/set-default/",
-        FusionPipelinePackSetDefaultView.as_view(),
-        name="admin-main-chain-fusion-pack-set-default",
-    ),
-    path(
-        "main-chain/fusion/packs/<uuid:pack_id>/publish/",
-        FusionPipelinePackPublishView.as_view(),
-        name="admin-main-chain-fusion-pack-publish",
-    ),
-]
 
 # Agent 中心
 _agent_routes = [
@@ -265,6 +169,12 @@ _agent_routes = [
         name="admin-independent-knowledge-detail",
     ),
     path("agent/runs/", IndependentAgentRunsListView.as_view(), name="admin-independent-agent-runs"),
+    path("agent/runs/<str:run_id>/", AgentExecutionRunDetailView.as_view(), name="admin-agent-run-detail"),
+    path(
+        "agent/projects/<str:project_id>/traces/",
+        AgentProjectTraceView.as_view(),
+        name="admin-agent-project-traces",
+    ),
     path(
         "agent/definitions/<str:agent_id>/knowledge-bindings/",
         IndependentKnowledgeBindingView.as_view(),
@@ -280,54 +190,6 @@ _agent_routes = [
     path("agent/llm-routes/<uuid:route_id>/", AgentLlmRouteDetailView.as_view(), name="admin-agent-llm-routes-detail"),
     path("agent/review-scoring/", ReviewScoringConfigView.as_view(), name="admin-agent-review-scoring"),
     path("agent/catalog/", AgentCatalogAdminView.as_view(), name="admin-agent-catalog"),
-]
-
-# 调度监察 + 流程编排
-_orchestration_routes = [
-    path("orchestration/flow/blueprint/", OrchestrationFlowBlueprintView.as_view(), name="admin-orchestration-flow-blueprint"),
-    path(
-        "orchestration/flow/steps/reorder/",
-        OrchestrationFlowStepsReorderView.as_view(),
-        name="admin-orchestration-flow-steps-reorder",
-    ),
-    path(
-        "orchestration/flow/steps/<uuid:step_id>/",
-        OrchestrationFlowStepPatchView.as_view(),
-        name="admin-orchestration-flow-step-patch",
-    ),
-    path(
-        "orchestration/flow/registry-meta/",
-        OrchestrationFlowRegistryMetaView.as_view(),
-        name="admin-orchestration-flow-registry-meta",
-    ),
-    path(
-        "orchestration/flow/publish/",
-        OrchestrationFlowPublishView.as_view(),
-        name="admin-orchestration-flow-publish",
-    ),
-    path("orchestration/stats/", AgentSubSkillStatsView.as_view(), name="admin-orchestration-stats"),
-    path(
-        "orchestration/recent-runs/",
-        OrchestrationRecentRunsView.as_view(),
-        name="admin-orchestration-recent-runs",
-    ),
-    path(
-        "orchestration/projects/<str:project_id>/traces/",
-        AgentProjectTraceView.as_view(),
-        name="admin-orchestration-project-traces",
-    ),
-    path(
-        "orchestration/execution-runs/<str:run_id>/",
-        AgentExecutionRunDetailView.as_view(),
-        name="admin-orchestration-execution-run-detail",
-    ),
-    # 灰度切流
-    path("orchestration/flow/gray-switch/", OrchestrationFlowGraySwitchView.as_view(), name="admin-orchestration-flow-gray-switch"),
-    path("orchestration/flow/rollback/", OrchestrationFlowRollbackView.as_view(), name="admin-orchestration-flow-rollback"),
-    path("orchestration/flow/list/", OrchestrationFlowListView.as_view(), name="admin-orchestration-flow-list"),
-    # 任务干预
-    path("orchestration/tasks/<str:task_id>/intervene/", TaskInterventionView.as_view(), name="admin-orchestration-task-intervene"),
-    path("orchestration/tasks/<str:task_id>/jump/", TaskNodeJumpView.as_view(), name="admin-orchestration-task-jump"),
 ]
 
 # 模型中心
@@ -411,11 +273,6 @@ urlpatterns = [
     path("members/codes/generate/", PromoCodeGenerateView.as_view(), name="admin-promo-code-generate"),
     path("creation/projects/", AdminCreationProjectListView.as_view(), name="admin-creation-projects"),
     path("creation/projects/<str:project_id>/", AdminCreationProjectDetailView.as_view(), name="admin-creation-project-detail"),
-    # 任务管理中心
-    path("creation/tasks/", CreationTaskListView.as_view(), name="admin-creation-tasks"),
-    path("creation/tasks/<str:task_id>/", CreationTaskDetailView.as_view(), name="admin-creation-task-detail"),
-    path("creation/tasks/<str:task_id>/retry/", CreationTaskRetryView.as_view(), name="admin-creation-task-retry"),
-    path("creation/tasks/<str:task_id>/cancel/", CreationTaskCancelView.as_view(), name="admin-creation-task-cancel"),
     path("members/feature-matrix/", MembershipFeatureMatrixListView.as_view(), name="admin-members-feature-matrix"),
     path("members/feature-matrix/seed/", MembershipFeatureMatrixSeedView.as_view(), name="admin-members-feature-matrix-seed"),
     path("members/feature-matrix/<uuid:item_id>/", MembershipFeatureMatrixDetailView.as_view(), name="admin-members-feature-matrix-detail"),
@@ -432,29 +289,12 @@ urlpatterns = [
     path("billing/ai-prompts/seed/", AiFieldPromptSeedView.as_view(), name="admin-billing-ai-prompts-seed"),
     path("billing/ai-prompts/<uuid:prompt_id>/", AiFieldPromptDetailView.as_view(), name="admin-billing-ai-prompts-detail"),
     # 十大中心前缀
-    *_main_chain_routes,
     *_agent_routes,
-    *_orchestration_routes,
     *_model_routes,
     *_portal_routes,
     *_skills_routes,
     *_stats_routes,
     *_system_routes,
-]
-
-# 批量创作中心
-_batch_routes = [
-    path("creation/batch/", BatchJobListView.as_view(), name="admin-creation-batch-list"),
-    path("creation/batch/create/", BatchJobCreateView.as_view(), name="admin-creation-batch-create"),
-    path("creation/batch/<uuid:job_id>/", BatchJobDetailView.as_view(), name="admin-creation-batch-detail"),
-    path("creation/batch/<uuid:job_id>/dispatch/", BatchJobDispatchView.as_view(), name="admin-creation-batch-dispatch"),
-    path("creation/batch/<uuid:job_id>/pause/", BatchJobPauseView.as_view(), name="admin-creation-batch-pause"),
-    path("creation/batch/<uuid:job_id>/resume/", BatchJobResumeView.as_view(), name="admin-creation-batch-resume"),
-    path(
-        "creation/batch/<uuid:batch_id>/projects/<uuid:item_id>/retry/",
-        BatchProjectRetryView.as_view(),
-        name="admin-creation-batch-item-retry",
-    ),
 ]
 
 # 素材库
@@ -477,7 +317,6 @@ _evolution_routes = [
 ]
 
 urlpatterns += [
-    *_batch_routes,
     *_library_routes,
     *_evolution_routes,
 ]

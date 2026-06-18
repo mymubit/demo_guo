@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from apps.creation.models import Project
-from apps.creation.orchestration.agent_common import (
+from apps.creation.agent_runtime.episode_merge import (
     filter_episodes_by_range,
     merge_episodes_by_number,
 )

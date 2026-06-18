@@ -114,35 +114,3 @@ class WorkspaceEditorSaveTests(TestCase):
         self.assertIn("characterGateLog", bible)
         self.assertIn("passed", bible["characterGateLog"])
 
-    def test_character_gate_acknowledge(self):
-        from apps.creation.workspace.workspace_service import acknowledge_quality_alert
-
-        save_artifact(
-            self.project,
-            "character_bible",
-            {
-                "protagonists": [
-                    {
-                        "id": "hero-1",
-                        "name": "王德顺",
-                        "roleType": "protagonist",
-                        "age": 62,
-                        "oneLineSummary": "老渔夫",
-                        "coreMotivation": "守住手艺",
-                        "personality": "固执",
-                        "background": "20岁离开渔村",
-                    }
-                ],
-                "antagonists": [],
-                "supportingRoles": [],
-                "characterGateLog": {
-                    "passed": False,
-                    "issues": ["角色「王德顺」年龄字段为 62 岁，但文本中出现 20 岁"],
-                },
-            },
-        )
-        result = acknowledge_quality_alert(self.project, 3, "character-gate")
-        self.assertEqual(result["status"], "acknowledged")
-        bible = get_artifact(self.project, "character_bible") or {}
-        self.assertTrue(bible["characterGateLog"].get("userAcknowledgedAt"))
-

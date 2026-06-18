@@ -10,7 +10,7 @@ from django.core.exceptions import PermissionDenied
 from apps.billing.services import BillingService, InsufficientCoins
 from apps.billing.ai_field_prompt_service import AiFieldPromptService
 from apps.membership.services import MembershipService
-from apps.creation.orchestration.llm_tokens import resolve_agent_max_tokens
+from apps.creation.llm_tokens import resolve_agent_max_tokens
 from apps.agent.routes import AgentLlmRouteService
 from apps.skill.llm.chat import LlmService, LlmServiceError
 

@@ -14,7 +14,7 @@ from apps.billing.services import BillingService
 
 from ..artifact_service import get_artifact, save_artifact
 from ..models import CreationNode, Project
-from ..step_mode import artifact_key_for_node
+from ..workspace.artifact_keys import artifact_key_for_node
 from ..display.character_display import build_character_bible_view
 from ..display.portal_display import (
     portal_gate_log,
@@ -805,7 +805,7 @@ def apply_editor_save(project: Project, node_index: int, data: dict) -> dict:
             if isinstance(items, list):
                 payload[bucket] = [_patch_char(c) for c in items if isinstance(c, dict)]
 
-        from ..orchestration.agent_detection import run_character_gate
+        from ..character_gate import run_character_gate
 
         payload["characterGateLog"] = run_character_gate(payload)
         save_artifact(project, key, payload)
@@ -901,7 +901,7 @@ def apply_editor_save(project: Project, node_index: int, data: dict) -> dict:
         save_artifact(project, key, payload)
         _mark_skill_has_content(project, 5, f"{len(payload['episodes'])} 集剧本")
         from ..script_delivery import persist_script_works
-        from ..step_mode import build_pipeline_result_from_project
+        from ..pipeline_result import build_pipeline_result_from_project
 
         try:
             persist_script_works(project, build_pipeline_result_from_project(project))

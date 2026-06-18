@@ -67,7 +67,7 @@ class FusionArtifactConfigTests(TestCase):
     def test_build_pipeline_result_from_project_uses_registry(self):
         from apps.creation.artifact_service import save_artifact
         from apps.creation.models import Project
-        from apps.creation.step_mode import build_pipeline_result_from_project
+        from apps.creation.pipeline_result import build_pipeline_result_from_project
         from apps.users.models import User
 
         user = User.objects.create_user(phone="13900009901", password="TestPass123!")

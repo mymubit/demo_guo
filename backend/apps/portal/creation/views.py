@@ -38,7 +38,7 @@ from apps.creation.serializers import (
 )
 from apps.creation.models import Project
 from apps.creation.services import CreationService
-from apps.portal.creation.legacy_gone import legacy_workspace_gone_response
+from apps.portal.creation.legacy_gone import legacy_gone_response, legacy_workspace_gone_response
 
 logger = logging.getLogger(__name__)
 
@@ -293,62 +293,21 @@ class ShareView(APIView):
 # 分步模式：确认 / 重跑节点
 # ============================================================
 class CreationNodeConfirmView(APIView):
-    """POST /api/creation/projects/<project_id>/confirm/ — 确认当前节点并继续。"""
+    """POST /api/creation/projects/<project_id>/confirm/ — 已废弃。"""
 
     permission_classes = [IsAuthenticated]
 
     def post(self, request, project_id: str):
-        try:
-            project = CreationService.confirm_node(project_id, request.user)
-        except PermissionDenied as exc:
-            return Response(
-                {"code": 403, "message": safe_api_message(exc, "无法确认"), "data": None},
-                status=status.HTTP_200_OK,
-            )
-        return Response(
-            {
-                "code": 0,
-                "message": "success",
-                "data": {
-                    "project_id": str(project.id),
-                    "status": project.status,
-                    "current_node": project.current_node_index,
-                },
-            },
-            status=status.HTTP_200_OK,
-        )
+        return legacy_gone_response("分步确认节点接口已废弃，请使用独立 Agent 运行接口。")
 
 
 class CreationNodeRegenerateView(APIView):
-    """POST /api/creation/projects/<project_id>/regenerate/ — 重跑指定节点。"""
+    """POST /api/creation/projects/<project_id>/regenerate/ — 已废弃。"""
 
     permission_classes = [IsAuthenticated]
 
     def post(self, request, project_id: str):
-        node_index = request.data.get("node_index")
-        try:
-            if node_index is not None:
-                node_index = int(node_index)
-            project = CreationService.regenerate_node(
-                project_id, request.user, node_index=node_index
-            )
-        except (PermissionDenied, ValueError, TypeError) as exc:
-            return Response(
-                {"code": 403, "message": safe_api_message(exc, "无法重跑"), "data": None},
-                status=status.HTTP_200_OK,
-            )
-        return Response(
-            {
-                "code": 0,
-                "message": "success",
-                "data": {
-                    "project_id": str(project.id),
-                    "status": project.status,
-                    "current_node": project.current_node_index,
-                },
-            },
-            status=status.HTTP_200_OK,
-        )
+        return legacy_gone_response("节点重跑接口已废弃，请使用独立 Agent 运行接口。")
 
 
 class AiFieldGenerateView(APIView):

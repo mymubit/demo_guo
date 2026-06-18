@@ -5,7 +5,7 @@ from typing import Optional, Tuple
 from django.db import transaction
 
 from ..models import Project
-from . import progress, share_download, submission, workspace, works
+from . import progress, share_download, submission, works
 from ._helpers import _get_user_project as _get_user_project_impl
 
 
@@ -22,58 +22,8 @@ class CreationService:
         return submission.submit(user, data)
 
     @staticmethod
-    def get_workspace(project_id: str, user) -> dict:
-        return workspace.get_workspace(project_id, user)
-
-    @staticmethod
-    @transaction.atomic
-    def save_workspace_skill(project_id: str, user, node_index: int, data: dict) -> dict:
-        return workspace.save_workspace_skill(project_id, user, node_index, data)
-
-    @staticmethod
-    @transaction.atomic
-    def acknowledge_quality_alert(project_id: str, user, node_index: int, alert_code: str) -> dict:
-        return workspace.acknowledge_quality_alert(project_id, user, node_index, alert_code)
-
-    @staticmethod
-    @transaction.atomic
-    def trigger_skill_generation(
-        project_id: str,
-        user,
-        node_index: int,
-        *,
-        script_from: Optional[int] = None,
-        script_to: Optional[int] = None,
-        batch_size: Optional[int] = None,
-        regenerate: bool = False,
-        outline_mode: Optional[str] = None,
-        outline_stage_key: Optional[str] = None,
-    ) -> dict:
-        return workspace.trigger_skill_generation(
-            project_id,
-            user,
-            node_index,
-            script_from=script_from,
-            script_to=script_to,
-            batch_size=batch_size,
-            regenerate=regenerate,
-            outline_mode=outline_mode,
-            outline_stage_key=outline_stage_key,
-        )
-
-    @staticmethod
     def get_progress(project_id: str, user) -> dict:
         return progress.get_progress(project_id, user)
-
-    @staticmethod
-    @transaction.atomic
-    def confirm_node(project_id: str, user) -> Project:
-        return progress.confirm_node(project_id, user)
-
-    @staticmethod
-    @transaction.atomic
-    def regenerate_node(project_id: str, user, node_index: Optional[int] = None) -> Project:
-        return progress.regenerate_node(project_id, user, node_index)
 
     @staticmethod
     def get_project_detail(project_id: str, user) -> dict:
@@ -153,10 +103,6 @@ class CreationService:
     @staticmethod
     def _get_user_project(project_id: str, user) -> Project:
         return _get_user_project_impl(project_id, user)
-
-    @staticmethod
-    def run_work_agent(project_id: str, user, agent_id: str) -> dict:
-        return works.run_work_agent(project_id, user, agent_id)
 
     @staticmethod
     def apply_work_polish(

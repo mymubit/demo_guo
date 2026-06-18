@@ -8,7 +8,7 @@ from ..artifact_service import get_artifact, save_artifact
 from ..models import CreationNode, Project
 from ..schema_mappers import enrich_brief_from_form_seed
 from ..trend_formula import trend_formula_has_internal_refs
-from ..step_mode import artifact_key_for_node
+from ..workspace.artifact_keys import artifact_key_for_node
 
 CONTENT_EMPTY = "empty"
 CONTENT_USER_CONFIRMED = "user_confirmed"
@@ -167,7 +167,7 @@ def _same_gate_issues(left: Any, right: Any) -> bool:
 
 def resolve_character_gate_log(payload: Optional[dict]) -> dict:
     """实时人设 gate 与 artifact 中人工确认状态合并。"""
-    from ..orchestration.agent_detection import run_character_gate
+    from ..character_gate import run_character_gate
 
     data = payload if isinstance(payload, dict) else {}
     fresh = run_character_gate(data)

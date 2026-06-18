@@ -54,4 +54,8 @@ export const adminAgent = {
     const suffix = query.toString() ? `?${query.toString()}` : ''
     return adminRequest('GET', `/api/admin/agent/runs/${suffix}`).then((res) => unwrapData(res)?.runs || [])
   },
+  projectTraces: (projectId) =>
+    adminRequest('GET', `/api/admin/agent/projects/${projectId}/traces/`).then(unwrapData),
+  executionRun: (runId) =>
+    adminRequest('GET', `/api/admin/agent/runs/${runId}/`).then(unwrapData),
 }

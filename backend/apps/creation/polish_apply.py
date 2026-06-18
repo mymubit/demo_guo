@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""PolishAgent：将润色建议写回剧本产物（用户确认后）。"""
+"""将润色建议写回剧本产物（用户确认后）。"""
 from __future__ import annotations
 
 import logging
@@ -7,8 +7,8 @@ from typing import Any, Dict, List, Optional, Set
 
 from django.utils import timezone
 
-from ..artifact_service import get_artifact, save_artifact
-from ..models import Project
+from .artifact_service import get_artifact, save_artifact
+from .models import Project
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +113,7 @@ def apply_polish_suggestions(
     save_artifact(project, "polish_log", polish_log)
 
     logger.info(
-        "[PolishAgent] applied project=%s count=%s patch_fields=%s",
+        "[Polish] applied project=%s count=%s patch_fields=%s",
         project.id,
         len(applied_records),
         patch_script_fields,

@@ -2,7 +2,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from apps.creation.orchestration.polish_apply import apply_polish_suggestions
+from apps.creation.polish_apply import apply_polish_suggestions
 from apps.creation.artifact_service import get_artifact, save_artifact
 from apps.creation.models import Project
 

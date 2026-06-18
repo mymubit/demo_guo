@@ -313,10 +313,13 @@ CREATION_FUSION_WORK_DIR = os.getenv(
     "CREATION_FUSION_WORK_DIR",
     str(BASE_DIR / "tmp" / "fusion_work"),
 )
-# 主链 1–5：SSOT 编排器（逐节点 LLM + Schema 落库）
-FUSION_ORCHESTRATOR_ENABLED = os.getenv(
-    "FUSION_ORCHESTRATOR_ENABLED", "true"
-).lower() in ("1", "true", "yes")
+# Legacy 流水线已下线；默认拒绝旧 pipeline 入队（可通过环境变量临时开启回滚）
+LEGACY_PIPELINE_ENABLED = os.getenv("LEGACY_PIPELINE_ENABLED", "false").lower() in (
+    "1",
+    "true",
+    "yes",
+)
+FUSION_ORCHESTRATOR_ENABLED = False
 FUSION_LLM_ENABLED = os.getenv("FUSION_LLM_ENABLED", "true").lower() in ("1", "true", "yes")
 FUSION_LLM_EPISODE_BATCH = int(os.getenv("FUSION_LLM_EPISODE_BATCH", "5"))
 FUSION_LLM_OUTLINE_BATCH = int(os.getenv("FUSION_LLM_OUTLINE_BATCH", "1"))

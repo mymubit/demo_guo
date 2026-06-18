@@ -15,7 +15,7 @@ from apps.agent.models import AgentDefinition, AgentKnowledgeBinding
 from apps.creation.artifact_service import get_artifact, save_artifact
 from apps.creation.models import AgentExecutionRun, Project
 from apps.creation.monitoring.execution_run_service import AgentExecutionRunService
-from apps.creation.orchestration.agent_common import merge_episodes_by_number
+from apps.creation.agent_runtime.episode_merge import merge_episodes_by_number
 from apps.skill.llm.chat import LlmService
 from apps.skill.llm.usage_log import llm_usage_scope
 from apps.skill.models import LlmUsageLog

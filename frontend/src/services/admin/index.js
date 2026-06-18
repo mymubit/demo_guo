@@ -2,28 +2,26 @@
  * admin/index.js —— 后台管理 API 聚合
  *
  * 职责：
- *   - 聚合各中心模块（mainChain / workflow / agent / orchestration / model）
+ *   - 聚合各中心模块（workflow / agent / model）
  *   - 提供 admin 对象（保持与旧版 api.js 同名接口兼容）
  */
 import { adminRequest, unwrapAdminList, unwrapAdminListData } from './http'
-import { adminMainChain } from './mainChain'
 import { adminWorkflow } from './workflow'
 import { adminAgent } from './agent'
-import { adminOrchestration } from './orchestration'
 import { adminModel } from './model'
 import { adminMonitoring } from './monitoring'
 import { adminSkill } from './skill'
 import { adminStats } from './stats'
 import { adminSystemConfig } from './systemConfig'
-import { adminTask } from './task'
-import { adminBatch, adminLibrary, adminEvolution } from './batch'
+import { adminLibrary } from './library'
+import { adminEvolution } from './evolution'
 import { adminOperations } from './operations'
 
 export {
-  adminMainChain, adminWorkflow, adminAgent, adminOrchestration,
-  adminModel, adminMonitoring, adminSkill, adminTask,
+  adminWorkflow, adminAgent,
+  adminModel, adminMonitoring, adminSkill,
   adminStats, adminSystemConfig,
-  adminBatch, adminLibrary, adminEvolution,
+  adminLibrary, adminEvolution,
   adminOperations,
 }
 
@@ -157,7 +155,7 @@ export const admin = {
   updateLlmVendorCredential: (vendor, data) => adminModel.updateVendorCredential(vendor, data),
   deleteLlmCatalog: (id) => adminModel.deleteCatalog(id),
 
-  // 主链（委托给 adminMainChain / adminWorkflow）
+  // 工作流（委托给 adminWorkflow）
   listPipelineSteps: () => adminWorkflow.listSteps(),
   updatePipelineStep: (id, data) => adminWorkflow.updateStep(id, data),
   syncPipelineSteps: () => adminWorkflow.syncSteps(),
@@ -169,9 +167,6 @@ export const admin = {
   setDefaultFusionPack: (packId) => adminWorkflow.setDefaultFusionPack(packId),
   publishFusionPack: (packId, data) => adminWorkflow.publishFusionPack(packId, data),
   getFusionMeta: () => adminWorkflow.getFusionMeta(),
-  getMainChainBlueprint: () => adminMainChain.getBlueprint(),
-  patchMainChainStep: (id, data) => adminMainChain.patchStep(id, data),
-  patchMainChainRegistryMeta: (data) => adminMainChain.patchRegistryMeta(data),
 
   // Agent（委托给 adminAgent）
   getAgentRegistryConfig: () => adminAgent.getRegistry(),
@@ -199,21 +194,8 @@ export const admin = {
   getIndependentKnowledge: (knowledgeId) => adminAgent.getKnowledge(knowledgeId),
   deleteIndependentKnowledge: (knowledgeId) => adminAgent.deleteKnowledge(knowledgeId),
   listIndependentAgentRuns: (params) => adminAgent.listAgentRuns(params),
-
-  // 编排监察（委托给 adminOrchestration）
-  getOrchestrationFlowBlueprint: () => adminOrchestration.getFlowBlueprint(),
-  patchOrchestrationFlowStep: (id, data) => adminOrchestration.patchFlowStep(id, data),
-  reorderOrchestrationFlowSteps: (orderedIds) => adminOrchestration.reorderFlowSteps(orderedIds),
-  patchOrchestrationFlowRegistryMeta: (data) => adminOrchestration.patchFlowRegistryMeta(data),
-  publishOrchestrationFlowBlueprint: (data) => adminOrchestration.publishFlowBlueprint(data),
-  orchestrationRecentRuns: (limit = 40) => adminOrchestration.recentRuns(limit),
-  agentSubSkillStats: (limit = 300) => adminOrchestration.stats(limit),
-  agentProjectTraces: (projectId) => adminOrchestration.projectTraces(projectId),
-  agentExecutionRun: (runId) => adminOrchestration.executionRun(runId),
-  workflowGraySwitch: (data) => adminOrchestration.graySwitch(data),
-  workflowRollback: (data) => adminOrchestration.rollback(data),
-  taskIntervene: (taskId, data) => adminOrchestration.taskIntervene(taskId, data),
-  taskJump: (taskId, data) => adminOrchestration.taskJump(taskId, data),
+  agentProjectTraces: (projectId) => adminAgent.projectTraces(projectId),
+  agentExecutionRun: (runId) => adminAgent.executionRun(runId),
 
   // 创作中心
   listCreationProjects: (params = {}) =>
@@ -242,14 +224,6 @@ export const admin = {
     adminRequest('DELETE', `/api/admin/members/feature-matrix/${id}/`),
   seedFeatureMatrix: () =>
     adminRequest('POST', '/api/admin/members/feature-matrix/seed/'),
-
-  // 批量创作
-  batchJobs: (params) => adminBatch.listJobs(params),
-  batchJobCreate: (data) => adminBatch.createJob(data),
-  batchJobDispatch: (id) => adminBatch.dispatchJob(id),
-  batchJobPause: (id) => adminBatch.pauseJob(id),
-  batchJobResume: (id) => adminBatch.resumeJob(id),
-  batchItemRetry: (batchId, itemId) => adminBatch.retryItem(batchId, itemId),
 
   // 素材库
   library: () => adminLibrary.list(),

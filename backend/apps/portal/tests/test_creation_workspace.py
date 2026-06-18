@@ -67,14 +67,13 @@ class CreationWorkspaceApiTests(TestCase):
         self.assertIn("project_brief", artifact_keys)
         self.assertIn("episode_scripts", artifact_keys)
 
-    def test_legacy_agent_content_returns_410(self):
+    def test_legacy_agent_content_returns_404(self):
         put_res = self.client.put(
             f"/api/creation/projects/{self.project.id}/agents/1/content/",
             {"fields": [{"key": "themeDisplayName", "value": "甜宠 API"}]},
             format="json",
         )
-        self.assertEqual(put_res.status_code, 200)
-        self.assertEqual(put_res.json().get("code"), 410)
+        self.assertEqual(put_res.status_code, 404)
 
     def test_share_pending_project_forbidden(self):
         res = self.client.post(f"/api/creation/share/{self.project.id}/", {}, format="json")
@@ -90,10 +89,13 @@ class CreationWorkspaceApiTests(TestCase):
         self.assertEqual(body.get("code"), 0)
         self.assertTrue((body.get("data") or {}).get("share_token"))
 
-    def test_workspace_service_can_share_field(self):
-        payload = CreationService.get_workspace(str(self.project.id), self.user)
-        self.assertFalse(payload["can_share"])
+    def test_workspace_can_share_field_via_api(self):
+        res = self.client.get(f"/api/creation/projects/{self.project.id}/workspace/")
+        self.assertEqual(res.status_code, 200)
+        project = (res.json().get("data") or {}).get("project") or {}
+        self.assertFalse(project.get("can_share"))
         self.project.status = Project.STATUS_COMPLETED
         self.project.save(update_fields=["status"])
-        payload = CreationService.get_workspace(str(self.project.id), self.user)
-        self.assertTrue(payload["can_share"])
+        res = self.client.get(f"/api/creation/projects/{self.project.id}/workspace/")
+        project = (res.json().get("data") or {}).get("project") or {}
+        self.assertTrue(project.get("can_share"))
