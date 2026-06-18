@@ -588,6 +588,23 @@ class AgentExecutionRunService:
         return AgentExecutionRunService.serialize_run(run, include_sensitive=include_sensitive)
 
     @staticmethod
+    def latest_runs_by_agent(
+        project: Project,
+        *,
+        include_sensitive: bool = False,
+    ) -> Dict[str, Dict[str, Any]]:
+        """批量加载各 Agent 最近一次 run，避免工作台 N+1 查询。"""
+        rows = AgentExecutionRun.objects.filter(project=project).order_by("agent_id", "-started_at")
+        result: Dict[str, Dict[str, Any]] = {}
+        for run in rows:
+            if run.agent_id in result:
+                continue
+            serialized = AgentExecutionRunService.serialize_run(run, include_sensitive=include_sensitive)
+            if serialized:
+                result[run.agent_id] = serialized
+        return result
+
+    @staticmethod
     def compact_run_summary(run: AgentExecutionRun) -> Dict[str, Any]:
         duration_ms = None
         if run.started_at and run.finished_at:

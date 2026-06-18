@@ -43,7 +43,7 @@ class LlmServiceConnectivityTests(SimpleTestCase):
             ("OK", {"total_tokens": 5}),
         ]
 
-        result = LlmService._chat_completion(
+        result = LlmService.chat_completion(
             system_prompt="sys",
             user_prompt="user",
             temperature=None,
@@ -79,7 +79,7 @@ class LlmServiceConnectivityTests(SimpleTestCase):
             ("OK", {"total_tokens": 5}),
         ]
 
-        result = LlmService._chat_completion(
+        result = LlmService.chat_completion(
             system_prompt="sys",
             user_prompt="user",
             temperature=None,
@@ -160,7 +160,7 @@ class LlmServiceConnectivityTests(SimpleTestCase):
 
         with self.assertLogs("apps.skill.llm.chat", level="ERROR") as logs:
             with self.assertRaises(LlmServiceError):
-                LlmService._chat_completion(
+                LlmService.chat_completion(
                     system_prompt="sys",
                     user_prompt="user",
                     temperature=None,

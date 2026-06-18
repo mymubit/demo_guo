@@ -58,7 +58,8 @@ class BillingService:
     @staticmethod
     def get_wallet_summary(user) -> Dict[str, Any]:
         settings_obj = BillingService.site_settings()
-        balance = BillingService.get_balance(user)
+        wallet = BillingService.get_or_create_wallet(user)
+        balance = wallet.balance
         auto_cost = BillingService.estimate_auto_pipeline_cost()
         estimated = balance // auto_cost if auto_cost > 0 else 0
         return {

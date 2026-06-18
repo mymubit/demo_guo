@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
+import uuid
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any, Dict, List, Tuple
@@ -11,9 +13,10 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.agent.definition_service import AgentDefinitionService
+from apps.agent.runtime import workspace_index_for_agent
 from apps.agent.models import AgentDefinition, AgentKnowledgeBinding
 from apps.creation.artifact_service import get_artifact, save_artifact
-from apps.creation.models import AgentExecutionRun, Project
+from apps.creation.models import AgentExecutionRun, Project, ProjectFusionArtifact
 from apps.creation.monitoring.execution_run_service import AgentExecutionRunService
 from apps.creation.agent_runtime.episode_merge import merge_episodes_by_number
 from apps.skill.llm.chat import LlmService
@@ -22,6 +25,8 @@ from apps.skill.models import LlmUsageLog
 
 TEMPLATE_PATH_VAR_RE = re.compile(r"\{\{\s*([\w.]+)\s*\}\}")
 EPISODE_ARTIFACT_KEYS = frozenset({"episode_scripts", "series_outline"})
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -53,14 +58,17 @@ def extract_json_object(text: str) -> Dict[str, Any]:
         candidates.append(raw[start : end + 1])
     last_error = ""
     for candidate in candidates:
-        try:
-            parsed = json.loads(candidate)
-        except json.JSONDecodeError as exc:
-            last_error = str(exc)
-            continue
-        if not isinstance(parsed, dict):
-            raise AgentRuntimeError("模型输出 JSON 顶层必须是对象")
-        return parsed
+        # 先严格解析；失败后用 strict=False 兜底，容忍真实 LLM 偶发的
+        # 字符串内裸控制字符（如未转义的换行/制表符）。
+        for strict in (True, False):
+            try:
+                parsed = json.loads(candidate, strict=strict)
+            except json.JSONDecodeError as exc:
+                last_error = str(exc)
+                continue
+            if not isinstance(parsed, dict):
+                raise AgentRuntimeError("模型输出 JSON 顶层必须是对象")
+            return parsed
     raise AgentRuntimeError(f"模型输出不是合法 JSON：{last_error}")
 
 
@@ -72,7 +80,7 @@ class IndependentAgentService:
 
     @staticmethod
     def running_run(project: Project) -> AgentExecutionRun | None:
-        timeout_at = timezone.now() - timedelta(hours=2)
+        timeout_at = timezone.now() - timedelta(minutes=30)
         AgentExecutionRun.objects.filter(
             project=project,
             status=AgentExecutionRun.STATUS_RUNNING,
@@ -113,13 +121,69 @@ class IndependentAgentService:
                 artifacts[key] = payload
         if missing:
             raise AgentRuntimeError(f"缺少输入产物: {', '.join(missing)}")
-        return {
+        payload = {
             "project": project_payload,
             "artifacts": artifacts,
             "params": dict(params or {}),
             "required_artifacts": required_artifacts,
             "optional_artifacts": optional_artifacts,
         }
+        IndependentAgentService._attach_reference_materials(project, payload)
+        return payload
+
+    @staticmethod
+    def _attach_reference_materials(project: Project, input_payload: Dict[str, Any]) -> None:
+        """合并素材库注入内容；失败时降级，不阻断 Agent 运行。"""
+        try:
+            from apps.creation.library.models import ReferenceMaterial, ReferenceMaterialInjection
+            from apps.creation.library.services import MaterialInjectionService
+
+            fragments: List[Dict[str, Any]] = []
+            injections = (
+                ReferenceMaterialInjection.objects.filter(project=project)
+                .select_related("material")
+                .order_by("-injected_at")[:5]
+            )
+            for inj in injections:
+                material = inj.material
+                if material.parse_status != ReferenceMaterial.STATUS_READY:
+                    continue
+                parsed = material.parsed_content or {}
+                fragment: Dict[str, Any] = {
+                    "material_id": str(material.id),
+                    "material_name": material.name,
+                }
+                for field in inj.injected_fields or []:
+                    if field in parsed:
+                        fragment[field] = parsed[field]
+                if len(fragment) > 2:
+                    fragments.append(fragment)
+
+            run_params = input_payload.get("params") or {}
+            material_id = run_params.get("material_id")
+            if material_id:
+                material_fields = run_params.get("material_fields") or [
+                    "world",
+                    "characters",
+                    "plot_structure",
+                    "themes",
+                ]
+                inj_result = MaterialInjectionService().inject_to_context(
+                    project,
+                    uuid.UUID(str(material_id)),
+                    list(material_fields),
+                )
+                if inj_result.get("context_fragment") and not inj_result.get("error"):
+                    fragments.append({
+                        "material_id": inj_result.get("material_id"),
+                        "material_name": inj_result.get("material_name"),
+                        **inj_result.get("context_fragment", {}),
+                    })
+
+            if fragments:
+                input_payload["reference_materials"] = fragments
+        except Exception as exc:
+            logger.warning("[IndependentAgent] 素材注入降级: %s", exc)
 
     @staticmethod
     def load_knowledge(agent: AgentDefinition) -> List[Dict[str, Any]]:
@@ -185,6 +249,11 @@ class IndependentAgentService:
     @classmethod
     def _render_template(cls, template: str, context: Dict[str, Any]) -> str:
         roots = cls._template_roots(context)
+        # 仅校验模板自身是否残留无法解析的占位符：剥离所有合法变量后再检测，
+        # 避免注入的产物内容本身含有 {{ }} 时被误判为渲染失败。
+        template_skeleton = TEMPLATE_PATH_VAR_RE.sub("", template)
+        if "{{" in template_skeleton or "}}" in template_skeleton:
+            raise AgentRuntimeError("Prompt 模板变量渲染失败")
 
         def _replace_path_var(match: re.Match[str]) -> str:
             path = match.group(1).strip()
@@ -192,10 +261,7 @@ class IndependentAgentService:
                 return cls._format_template_value(roots[path])
             return cls._format_template_value(cls._resolve_template_path(roots, path))
 
-        rendered = TEMPLATE_PATH_VAR_RE.sub(_replace_path_var, template)
-        if "{{" in rendered or "}}" in rendered:
-            raise AgentRuntimeError("Prompt 模板变量渲染失败")
-        return rendered
+        return TEMPLATE_PATH_VAR_RE.sub(_replace_path_var, template)
 
     @classmethod
     def _prepare_prompt(
@@ -257,6 +323,7 @@ class IndependentAgentService:
         user_prompt = cls._render_template(prompt.user_prompt_template, ctx)
         sections = [
             prompt.output_format_prompt,
+            cls._artifact_key_hint(agent),
             prompt.constraints_prompt,
         ]
         suffix = "\n\n".join(s for s in sections if s)
@@ -265,15 +332,37 @@ class IndependentAgentService:
         return prompt.system_prompt, user_prompt, prompt.version
 
     @staticmethod
+    def _artifact_key_hint(agent: AgentDefinition) -> str:
+        """注入契约允许的 artifact_key 取值，防止 LLM 自创 key。"""
+        allowed = [str(k) for k in (agent.output_contract or {}).get("artifacts") or []]
+        if not allowed:
+            return ""
+        default_key = getattr(agent, "default_output_artifact_key", "") or allowed[0]
+        return (
+            "artifact_key 字段只能取以下契约值之一，禁止自行命名或拼接主题："
+            + " / ".join(allowed)
+            + f"；若只输出单个产物，artifact_key 必须使用 {default_key}。"
+        )
+
+    @staticmethod
     def validate_output(agent: AgentDefinition, output: Dict[str, Any]) -> Dict[str, Any]:
         contract = agent.output_contract or {}
         allowed = [str(k) for k in contract.get("artifacts") or []]
         if not allowed:
             raise AgentRuntimeError("Agent 缺少输出契约")
         if "payload" in output and isinstance(output.get("payload"), dict):
-            artifact_key = str(output.get("artifact_key") or allowed[0])
+            default_key = getattr(agent, "default_output_artifact_key", "") or allowed[0]
+            artifact_key = str(output.get("artifact_key") or default_key).strip()
             if artifact_key not in allowed:
-                raise AgentRuntimeError(f"输出 artifact_key 不在契约内: {artifact_key}")
+                # 真实 LLM 偶发自创 key（如用主题拼 slug），回退到契约默认 key；
+                # 产物结构正确性由后续 schema 校验把关，避免整链路因命名问题失败。
+                logger.warning(
+                    "[Agent] %s 输出 artifact_key 非法已回退: %s -> %s",
+                    agent.agent_id,
+                    artifact_key,
+                    default_key,
+                )
+                artifact_key = default_key
             matched = {artifact_key: output["payload"]}
             from .output_schema_validation import validate_matched_outputs
 
@@ -404,6 +493,13 @@ class IndependentAgentService:
             to_ep = None
         return from_ep, to_ep
 
+    @staticmethod
+    def _resolve_overwrite_mode(agent: AgentDefinition, params: Dict[str, Any]) -> str:
+        raw = (params or {}).get("overwrite")
+        if raw in ("replace", "merge", "append"):
+            return str(raw)
+        return (agent.runtime_policy or {}).get("overwrite_mode", "replace")
+
     @classmethod
     @transaction.atomic
     def enqueue_run(cls, project: Project, user, agent_id: str, params: Dict[str, Any]) -> EnqueueRunResult:
@@ -425,11 +521,13 @@ class IndependentAgentService:
         route = AgentDefinitionService.active_route(agent)
         output_keys = [str(k) for k in (agent.output_contract or {}).get("artifacts") or []]
         script_from, script_to = cls._script_batch_bounds(run_params)
+        node_index = workspace_index_for_agent(agent.agent_id)
         run = AgentExecutionRunService.begin_run(
             locked_project,
             agent_id=agent.agent_id,
             agent_version=agent.version,
             prompt_version=prompt_version,
+            node_index=node_index,
             script_from=script_from,
             script_to=script_to,
             input_artifact_keys=list(input_payload["artifacts"].keys()),
@@ -443,10 +541,11 @@ class IndependentAgentService:
             provider_name=route.llm_provider.name if route.llm_provider else "",
             started_by="user",
             run_params=run_params,
-            overwrite_mode=(agent.runtime_policy or {}).get("overwrite_mode", "replace"),
+            overwrite_mode=cls._resolve_overwrite_mode(agent, run_params),
         )
         locked_project.status = Project.STATUS_RUNNING
-        locked_project.save(update_fields=["status", "updated_at"])
+        locked_project.fusion_status = Project.FUSION_WRITING
+        locked_project.save(update_fields=["status", "fusion_status", "updated_at"])
         return EnqueueRunResult(run=run, created_new_run=True, should_enqueue=True)
 
     @classmethod
@@ -458,8 +557,6 @@ class IndependentAgentService:
         agent = AgentDefinitionService.get_runnable(run.agent_id)
         route = AgentDefinitionService.active_route(agent)
         provider_id = str(route.llm_provider_id)
-        system_prompt = ""
-        user_prompt = ""
         try:
             input_payload = run.input_snapshot or cls.build_agent_input(project, agent, run.run_params or {})
             knowledge = cls.load_knowledge(agent)
@@ -474,7 +571,7 @@ class IndependentAgentService:
                 user_id=project.user_id,
                 execution_run_id=run.id,
             ):
-                raw = LlmService._chat_completion(
+                raw = LlmService.chat_completion(
                     system_prompt=system_prompt,
                     user_prompt=user_prompt,
                     temperature=route.temperature,
@@ -484,25 +581,26 @@ class IndependentAgentService:
                 )
             parsed = extract_json_object(raw)
             outputs = cls.validate_output(agent, parsed)
-            saved_keys = cls.persist_agent_output(
-                project,
-                agent,
-                run,
-                outputs,
-                prompt_version=prompt_version,
-            )
-            usage = LlmUsageLog.objects.filter(execution_run_id=run.id).order_by("-created_at").first()
-            AgentExecutionRunService.finish_run(
-                run,
-                AgentExecutionRun.STATUS_COMPLETED,
-                output_artifact_key=saved_keys[0] if saved_keys else "",
-                output_summary={"outputKeys": saved_keys},
-                prompt_tokens=usage.prompt_tokens if usage else None,
-                completion_tokens=usage.completion_tokens if usage else None,
-                total_tokens=usage.total_tokens if usage else None,
-                model_name=usage.model_name if usage else "",
-                provider_name=usage.provider_name if usage else "",
-            )
+            with transaction.atomic():
+                saved_keys = cls.persist_agent_output(
+                    project,
+                    agent,
+                    run,
+                    outputs,
+                    prompt_version=prompt_version,
+                )
+                usage = LlmUsageLog.objects.filter(execution_run_id=run.id).order_by("-created_at").first()
+                AgentExecutionRunService.finish_run(
+                    run,
+                    AgentExecutionRun.STATUS_COMPLETED,
+                    output_artifact_key=saved_keys[0] if saved_keys else "",
+                    output_summary={"outputKeys": saved_keys},
+                    prompt_tokens=usage.prompt_tokens if usage else None,
+                    completion_tokens=usage.completion_tokens if usage else None,
+                    total_tokens=usage.total_tokens if usage else None,
+                    model_name=usage.model_name if usage else "",
+                    provider_name=usage.provider_name if usage else "",
+                )
             cls.update_project_status(project)
         except Exception as exc:  # noqa: BLE001
             AgentExecutionRunService.finish_run(run, AgentExecutionRun.STATUS_FAILED, error_message=str(exc)[:2000])
@@ -510,13 +608,82 @@ class IndependentAgentService:
         return run
 
     @staticmethod
-    def update_project_status(project: Project) -> None:
-        if AgentExecutionRun.objects.filter(project=project, status=AgentExecutionRun.STATUS_RUNNING).exists():
+    def _derive_fusion_status(project: Project, *, status: str) -> str:
+        """根据产物与运行态推导 fusion_status。"""
+        if status == Project.STATUS_FAILED:
+            return Project.FUSION_BLOCKED
+        if get_artifact(project, "episode_scripts"):
+            return Project.FUSION_READY
+        if status == Project.STATUS_RUNNING:
+            latest = (
+                AgentExecutionRun.objects.filter(project=project)
+                .order_by("-started_at")
+                .values_list("agent_id", flat=True)
+                .first()
+            )
+            if latest == "score":
+                return Project.FUSION_SCORING
+            if latest == "review":
+                return Project.FUSION_REVIEWING
+            if get_artifact(project, "series_outline"):
+                return Project.FUSION_WRITING
+            return Project.FUSION_PLANNING
+        if get_artifact(project, "series_outline") or get_artifact(project, "structure_plan"):
+            return Project.FUSION_PLANNING
+        return Project.FUSION_DRAFT
+
+    @staticmethod
+    def _compute_progress_percent(project: Project) -> int:
+        """按核心产物完成度估算进度（0-100）。"""
+        if get_artifact(project, "episode_scripts"):
+            return 100
+        milestones = [
+            "project_brief",
+            "structure_plan",
+            "character_bible",
+            "series_outline",
+        ]
+        done = sum(1 for key in milestones if get_artifact(project, key))
+        return min(99, int(done / len(milestones) * 100))
+
+    @classmethod
+    def update_project_status(cls, project: Project) -> None:
+        has_running = AgentExecutionRun.objects.filter(
+            project=project,
+            status=AgentExecutionRun.STATUS_RUNNING,
+        ).exists()
+        has_scripts = bool(get_artifact(project, "episode_scripts"))
+        latest_failed = (
+            AgentExecutionRun.objects.filter(
+                project=project,
+                status=AgentExecutionRun.STATUS_FAILED,
+            )
+            .order_by("-finished_at")
+            .first()
+        )
+        if has_running:
             status = Project.STATUS_RUNNING
-        elif get_artifact(project, "episode_scripts"):
+        elif has_scripts:
             status = Project.STATUS_COMPLETED
+        elif latest_failed and not has_scripts:
+            status = Project.STATUS_FAILED
         else:
             status = Project.STATUS_PENDING
-        if project.status != status:
-            project.status = status
-            project.save(update_fields=["status", "updated_at"])
+
+        fusion_status = cls._derive_fusion_status(project, status=status)
+        progress_percent = cls._compute_progress_percent(project)
+        fields = ["status", "fusion_status", "progress_percent", "updated_at"]
+        project.status = status
+        project.fusion_status = fusion_status
+        project.progress_percent = progress_percent
+        if status == Project.STATUS_COMPLETED and not project.completed_at:
+            project.completed_at = timezone.now()
+            fields.append("completed_at")
+        if status == Project.STATUS_FAILED and latest_failed:
+            project.error_message = (latest_failed.error_message or "")[:2000]
+            fields.append("error_message")
+        from apps.creation.services._rendering import render_progress_html
+
+        project.rendered_progress_html = render_progress_html(project)
+        fields.append("rendered_progress_html")
+        project.save(update_fields=fields)

@@ -16,7 +16,8 @@ import {
 } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { creation, billing, membership as membershipApi, useConfig } from '@/services/api'
+import { creation, membership as membershipApi, useConfig } from '@/services/api'
+import CreationStageIndicator from '@/components/creation/CreationStageIndicator'
 import CreationEntryHub from '@/components/creation/CreationEntryHub'
 import IndependentAgentWorkspace from '@/components/creation/IndependentAgentWorkspace'
 import CreationFormShell from '@/components/creation/CreationFormShell'
@@ -48,6 +49,7 @@ import { cn } from '@/utils/cn'
 import { ICON } from '@/constants/iconSizes'
 import { renderLucideIcon } from '@/utils/renderLucideIcon'
 import { pageEnter } from '@/constants/motion'
+import { useBillingCatalog } from '@/hooks/queries/useBillingCatalog'
 import { useSubmitGuard } from '@/hooks/useSubmitGuard'
 
 const INITIAL_EPISODE_COUNT = 80
@@ -101,9 +103,13 @@ export default function Creation() {
   const [pipelineMode] = useState('workspace')
   const [fieldActions, setFieldActions] = useState([])
   const [currencyName, setCurrencyName] = useState('创作币')
-  const [billingCatalog, setBillingCatalog] = useState(null)
-  const [billingError, setBillingError] = useState('')
-  const [billingLoaded, setBillingLoaded] = useState(false)
+  const {
+    data: billingCatalog,
+    isFetched: billingLoaded,
+    isError: billingQueryError,
+    error: billingQueryErr,
+  } = useBillingCatalog()
+  const billingError = billingQueryError ? (billingQueryErr?.message || '计费配置加载失败') : ''
   const [membershipActive, setMembershipActive] = useState(false)
   const [membershipLoaded, setMembershipLoaded] = useState(false)
   const [membershipError, setMembershipError] = useState('')
@@ -126,18 +132,18 @@ export default function Creation() {
   }, [selectedPipelineId])
 
   useEffect(() => {
-    billing.catalog().then((data) => {
-      setBillingCatalog(data)
-      setFieldActions(data?.field_actions || [])
-      setCurrencyName(data?.currency_name || '创作币')
-      setBillingError('')
-    }).catch((e) => {
-      const msg = e.message || '计费配置加载失败'
-      setBillingError(msg)
-      toast.error(msg)
-    }).finally(() => {
-      setBillingLoaded(true)
-    })
+    if (!billingCatalog) return
+    setFieldActions(billingCatalog.field_actions || [])
+    setCurrencyName(billingCatalog.currency_name || '创作币')
+  }, [billingCatalog])
+
+  useEffect(() => {
+    if (billingQueryError) {
+      toast.error(billingError)
+    }
+  }, [billingQueryError, billingError])
+
+  useEffect(() => {
     membershipApi.summary().then((data) => {
       setMembershipActive(!!data?.is_active)
       setMembershipError('')
@@ -238,7 +244,7 @@ export default function Creation() {
           trackCreationSubmitted({
             projectId: tid,
             theme: formData?.theme,
-            episodeCount: formData?.episodeCount,
+            episodeCount: formData?.episodes,
             pipelineMode,
           })
         } catch (_) {
@@ -271,7 +277,7 @@ export default function Creation() {
                   {billingError || membershipError}。计费或会员状态可能暂不可用，请刷新后重试。
                 </Card>
               )}
-              <StageIndicator stage={stage} />
+              <CreationStageIndicator stage={stage} />
               <AnimatePresence mode="wait">
                 {stage === 1 && (
                   <StageInputForm
@@ -339,7 +345,7 @@ export default function Creation() {
           </Badge>
           <h1 className={cn('font-bold tracking-tight text-white', stage === 3 ? 'text-2xl md:text-3xl mb-3' : 'text-4xl md:text-5xl mb-4')}>
             {stage === 0 ? (
-              <>5 个创作 Agent · 从<span className="gradient-text">创意到专业级剧本</span></>
+              <>多步创作 Agent · 从<span className="gradient-text">创意到专业级剧本</span></>
             ) : (
               <>
                 {entryMeta.name}
@@ -350,7 +356,7 @@ export default function Creation() {
           <p className={stage === 3 ? 'text-sm text-navy-400' : 'text-lg text-navy-200'}>
             {stage === 0
               ? '先选创作方式，再填写该方式专属信息；确认后进入 Agent 工作台'
-              : '五个创作 Agent 独立生成，随时切换查看与下载'}
+              : '各创作 Agent 独立生成，随时切换查看与下载'}
           </p>
         </motion.div>
 
@@ -391,55 +397,6 @@ export default function Creation() {
         </AnimatePresence>
       </PageContainer>
     </div>
-  )
-}
-
-// ============ 阶段指示器 ============
-function StageIndicator({ stage }) {
-  const stages = [
-    { id: 1, label: '创意输入' },
-    { id: 2, label: '项目确认' },
-    { id: 3, label: 'Agent 工作台' },
-  ]
-  return (
-    <Card className="mb-6" padding="md">
-      <div className="flex items-center justify-between">
-        {stages.map((s, idx) => {
-          const active = stage === s.id
-          const passed = stage > s.id
-          return (
-            <div key={s.id} className="flex items-center flex-1 last:flex-none">
-              <div className="flex flex-col items-center">
-                <motion.div
-                  animate={{ scale: active ? 1.1 : 1 }}
-                  className={cn(
-                    'w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all',
-                    passed && 'bg-gradient-to-br from-gold-400 to-gold-600 text-navy-950',
-                    active && 'bg-gradient-to-br from-gold-400 to-gold-600 text-navy-950 node-active',
-                    !active && !passed && 'bg-white/[0.05] text-navy-300 border border-white/10',
-                  )}
-                >
-                  {passed ? <Check className={ICON.lg} /> : s.id}
-                </motion.div>
-                <div className={cn('text-xs mt-2', active ? 'text-gold-400 font-semibold' : passed ? 'text-white' : 'text-navy-400')}>
-                  {s.label}
-                </div>
-              </div>
-              {idx < stages.length - 1 && (
-                <div className="flex-1 mx-2 h-0.5 relative overflow-hidden bg-white/10">
-                  <motion.div
-                    initial={{ width: '0%' }}
-                    animate={{ width: passed ? '100%' : active ? '50%' : '0%' }}
-                    transition={{ duration: 0.5 }}
-                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-gold-400 to-gold-600"
-                  />
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </Card>
   )
 }
 

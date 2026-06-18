@@ -106,6 +106,11 @@ class AgentLlmRouteService:
                     "sort_order": row.sort_order,
                     "llm_provider_id": str(row.llm_provider_id) if row.llm_provider_id else None,
                     "llm_provider_name": provider.name if provider else None,
+                    "temperature": row.temperature,
+                    "timeout_seconds": row.timeout_seconds,
+                    "cost_budget_soft": row.cost_budget_soft,
+                    "cost_budget_hard": row.cost_budget_hard,
+                    "routing_rules": row.routing_rules or {},
                     "updated_at": row.updated_at,
                 }
             )
@@ -142,5 +147,19 @@ class AgentLlmRouteService:
                 row.llm_provider = None
             else:
                 row.llm_provider = LlmProvider.objects.filter(pk=raw, is_enabled=True).first()
+        if "temperature" in data:
+            val = data["temperature"]
+            row.temperature = float(val) if val not in (None, "") else None
+        if "timeout_seconds" in data:
+            val = data["timeout_seconds"]
+            row.timeout_seconds = int(val) if val not in (None, "") else None
+        if "cost_budget_soft" in data:
+            val = data["cost_budget_soft"]
+            row.cost_budget_soft = int(val) if val not in (None, "") else None
+        if "cost_budget_hard" in data:
+            val = data["cost_budget_hard"]
+            row.cost_budget_hard = int(val) if val not in (None, "") else None
+        if "routing_rules" in data:
+            row.routing_rules = data.get("routing_rules") or {}
         row.save()
         return row

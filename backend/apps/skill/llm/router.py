@@ -175,8 +175,7 @@ class LlmRouter:
         except LlmProvider.DoesNotExist:
             return True  # Provider 不存在时放行
 
-        # 配额字段暂未实现，默认返回充足
-        # TODO: 实现配额检查逻辑
+        # Provider 上暂无配额字段，默认视为充足；后续可在 LlmProvider 增加 quota 字段后再启用检查。
         return True
 
     def _get_time_window_discount(self, provider_id: str) -> float:
@@ -185,7 +184,7 @@ class LlmRouter:
 
         目前返回固定值 1.0，后续可扩展为按时间段返回不同折扣。
         """
-        # TODO: 从数据库或配置读取各时段折扣
+        # 时段折扣暂未配置，固定 1.0；可在系统配置中扩展低价窗口。
         return 1.0
 
     def _select_best_candidate(self, candidates: list) -> Optional[Dict[str, str]]:

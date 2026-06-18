@@ -68,6 +68,9 @@ export default function SkillCenterPage() {
   const [filterLayer,  setFilterLayer]  = useState('')
   const [filterStatus, setFilterStatus] = useState('')
   const [filterQ,      setFilterQ]      = useState('')
+  const [page,         setPage]         = useState(1)
+  const [skillStats,   setSkillStats]   = useState(null)
+  const [skillVersions,setSkillVersions]= useState([])
 
   // 发布灰度弹窗
   const [publishTarget, setPublishTarget]   = useState(null)
@@ -85,6 +88,8 @@ export default function SkillCenterPage() {
         skill_layer:      filterLayer || undefined,
         lifecycle_status: filterStatus || undefined,
         q:                filterQ || undefined,
+        page,
+        page_size: 20,
       })
       setItems(data.items || [])
       setTotal(data.total ?? data.pagination?.total ?? data.items?.length ?? 0)
@@ -93,13 +98,36 @@ export default function SkillCenterPage() {
     } finally {
       setLoading(false)
     }
-  }, [filterLayer, filterStatus, filterQ, showMsg])
+  }, [filterLayer, filterStatus, filterQ, page, showMsg])
+
+  useEffect(() => { setPage(1) }, [filterLayer, filterStatus, filterQ])
 
   useEffect(() => { load() }, [load])
+
+  async function loadSkillMeta(item) {
+    if (!item?.id) {
+      setSkillStats(null)
+      setSkillVersions([])
+      return
+    }
+    try {
+      const [statsRes, versionsRes] = await Promise.all([
+        adminSkill.getDefinitionStats({ days: 7 }),
+        adminSkill.listDefinitionVersions(item.id),
+      ])
+      const statsRow = (statsRes?.items || []).find((row) => row.skill_id === item.skill_id)
+      setSkillStats(statsRow || null)
+      setSkillVersions(versionsRes?.items || versionsRes || [])
+    } catch {
+      setSkillStats(null)
+      setSkillVersions([])
+    }
+  }
 
   // 选中技能同步到表单
   function handleSelect(item) {
     setSelected(item)
+    loadSkillMeta(item)
     setForm({
       skill_id:          item.skill_id,
       name:              item.name,
@@ -183,6 +211,19 @@ export default function SkillCenterPage() {
       load()
     } catch (err) {
       showMsg(err.message || '回滚失败', 'error')
+    }
+  }
+
+  async function handleDelete(item) {
+    if (!confirm(`确定废弃并停用技能「${item.skill_id}」？`)) return
+    try {
+      await adminSkill.deleteDefinition(item.id)
+      showMsg('技能已废弃')
+      setShowForm(false)
+      setSelected(null)
+      load()
+    } catch (err) {
+      showMsg(err.message || '删除失败', 'error')
     }
   }
 
@@ -274,6 +315,25 @@ export default function SkillCenterPage() {
             </button>
           ))}
         </div>
+        <div className="border-t border-gray-100 p-2 flex items-center justify-between text-xs text-gray-500">
+          <button
+            type="button"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            className="disabled:opacity-40"
+          >
+            上一页
+          </button>
+          <span>第 {page} 页</span>
+          <button
+            type="button"
+            disabled={items.length < 20}
+            onClick={() => setPage((p) => p + 1)}
+            className="disabled:opacity-40"
+          >
+            下一页
+          </button>
+        </div>
       </div>
 
       {/* 右侧：编辑区 */}
@@ -301,10 +361,10 @@ export default function SkillCenterPage() {
                       回滚
                     </button>
                     <button
-                      onClick={() => handleDeprecate(selected)}
+                      onClick={() => handleDelete(selected)}
                       className="text-xs px-2 py-1 border border-red-200 text-red-500 rounded hover:bg-red-50"
                     >
-                      废弃
+                      删除
                     </button>
                   </>
                 )}
@@ -409,6 +469,44 @@ export default function SkillCenterPage() {
                 rows={3}
               />
             </section>
+
+            {/* 调用统计与版本历史 */}
+            {selected && (
+              <section className="grid gap-3 md:grid-cols-2">
+                <div className="rounded border border-gray-100 p-3 text-xs text-gray-600">
+                  <h3 className="mb-2 font-semibold text-gray-700">近 7 日调用统计</h3>
+                  {skillStats ? (
+                    <ul className="space-y-1">
+                      <li>调用量：{skillStats.total_calls ?? 0}</li>
+                      <li>成功率：{((skillStats.success_rate ?? 0) * 100).toFixed(1)}%</li>
+                      <li>开放缺陷：{skillStats.open_defects ?? 0}</li>
+                      <li>
+                        平均耗时：
+                        {skillStats.avg_duration_ms != null
+                          ? `${skillStats.avg_duration_ms} ms`
+                          : '—'}
+                      </li>
+                    </ul>
+                  ) : (
+                    <p>暂无统计数据</p>
+                  )}
+                </div>
+                <div className="rounded border border-gray-100 p-3 text-xs text-gray-600">
+                  <h3 className="mb-2 font-semibold text-gray-700">版本历史</h3>
+                  {skillVersions.length > 0 ? (
+                    <ul className="max-h-28 space-y-1 overflow-y-auto">
+                      {skillVersions.map((ver) => (
+                        <li key={ver.id}>
+                          v{ver.version} · {ver.lifecycle_status_label || ver.lifecycle_status}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>暂无其他版本</p>
+                  )}
+                </div>
+              </section>
+            )}
 
             {/* 技能内容（Markdown） */}
             <section>

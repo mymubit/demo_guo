@@ -183,7 +183,19 @@ def persist_script_works(project: Project, pipeline_result: Optional[dict] = Non
     watermark_token = f"u{project.user_id}-p{project.id.hex[:8]}-t{int(time.time())}"
     base_title = (project.title or "script").replace("/", "_").replace("\\", "_")
 
-    markdown = build_script_markdown(project, pipeline_result, watermark_token=watermark_token)
+    markdown_raw = build_script_markdown(project, pipeline_result, watermark_token=watermark_token)
+    try:
+        from apps.security.services import WatermarkService
+
+        markdown_raw = WatermarkService().embed_watermark(
+            markdown_raw,
+            user_id=project.user_id,
+            document_id=str(project.id),
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[Creation] 零宽水印植入失败，仅保留可见水印: %s", exc)
+
+    markdown = markdown_raw
     display_html = build_script_display_html(project, pipeline_result, watermark_token=watermark_token)
     download_html = build_download_html_document(project, display_html, watermark_token=watermark_token)
 

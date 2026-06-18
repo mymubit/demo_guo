@@ -27,12 +27,15 @@ class OrderSerializer(serializers.ModelSerializer):
     )
     membership_plan = MembershipPlanSerializer(read_only=True)
     display_amount = serializers.SerializerMethodField()
+    plan_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
         fields = [
             "id",
             "order_no",
+            "order_type",
+            "plan_name",
             "amount",
             "display_amount",
             "status",
@@ -40,9 +43,17 @@ class OrderSerializer(serializers.ModelSerializer):
             "payment_method",
             "payment_method_text",
             "membership_plan",
+            "coins_granted",
             "paid_at",
             "created_at",
         ]
+
+    def get_plan_name(self, obj) -> str:
+        if obj.membership_plan:
+            return obj.membership_plan.name
+        if obj.recharge_package:
+            return obj.recharge_package.name
+        return ""
 
     def get_display_amount(self, obj) -> str:
         return f"¥{obj.amount:.2f}"
@@ -81,12 +92,15 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     membership_plan = MembershipPlanSerializer(read_only=True)
     payments = PaymentSerializer(many=True, read_only=True)
     display_amount = serializers.SerializerMethodField()
+    plan_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
         fields = [
             "id",
             "order_no",
+            "order_type",
+            "plan_name",
             "amount",
             "display_amount",
             "status",
@@ -94,10 +108,18 @@ class OrderDetailSerializer(serializers.ModelSerializer):
             "payment_method",
             "payment_method_text",
             "membership_plan",
+            "coins_granted",
             "paid_at",
             "created_at",
             "payments",
         ]
+
+    def get_plan_name(self, obj) -> str:
+        if obj.membership_plan:
+            return obj.membership_plan.name
+        if obj.recharge_package:
+            return obj.recharge_package.name
+        return ""
 
     def get_display_amount(self, obj) -> str:
         return f"¥{obj.amount:.2f}"

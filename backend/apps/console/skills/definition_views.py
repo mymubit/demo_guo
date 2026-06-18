@@ -114,8 +114,29 @@ class SkillDefinitionListView(APIView):
         if q:
             qs = qs.filter(skill_id__icontains=q) | qs.filter(name__icontains=q)
 
-        items = [_serialize_definition(obj) for obj in qs.order_by("skill_layer", "category", "skill_id")]
-        return api_ok({"items": items, "total": len(items)})
+        qs = qs.order_by("skill_layer", "category", "skill_id")
+        total = qs.count()
+        try:
+            page = max(1, int(request.query_params.get("page", 1)))
+        except (TypeError, ValueError):
+            page = 1
+        try:
+            page_size = max(1, min(int(request.query_params.get("page_size", 20)), 100))
+        except (TypeError, ValueError):
+            page_size = 20
+        offset = (page - 1) * page_size
+        items = [_serialize_definition(obj) for obj in qs[offset : offset + page_size]]
+        total_pages = (total + page_size - 1) // page_size if page_size else 1
+        return api_ok({
+            "items": items,
+            "total": total,
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "total": total,
+                "total_pages": total_pages,
+            },
+        })
 
     def post(self, request):
         data = request.data or {}
@@ -256,12 +277,45 @@ class SkillDefinitionRollbackView(APIView):
             .first()
         )
         if not prev:
-            return api_fail("无可回滚的上一个 active 版本")
+            return api_fail(
+                f"技能 {current.skill_id} 无可回滚的上一个 active 版本（需存在另一条 active 记录）",
+                code=400,
+            )
 
         # 废弃当前版本，激活上一版本
         current.deprecate()
         prev.publish(gray_weight=100)
         return api_ok(_serialize_definition(prev), message=f"已回滚到版本 {prev.version}")
+
+
+class SkillDefinitionVersionsView(APIView):
+    """GET：同一 skill_id 的版本历史"""
+
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request, pk=None):
+        try:
+            current = AgentSkillDefinition.objects.get(pk=pk)
+        except AgentSkillDefinition.DoesNotExist:
+            return api_fail("技能定义不存在", code=404)
+
+        rows = AgentSkillDefinition.objects.filter(skill_id=current.skill_id).order_by(
+            "-published_at", "-created_at"
+        )
+        items = [
+            {
+                "id": row.pk,
+                "skill_id": row.skill_id,
+                "version": row.version,
+                "lifecycle_status": row.lifecycle_status,
+                "lifecycle_status_label": row.get_lifecycle_status_display(),
+                "is_active": row.is_active,
+                "published_at": row.published_at.isoformat() if row.published_at else None,
+                "created_at": row.created_at.isoformat(),
+            }
+            for row in rows
+        ]
+        return api_ok({"items": items, "total": len(items)})
 
 
 # ────────────────────────────────────────────────
@@ -467,19 +521,45 @@ class SkillDefinitionStatsView(APIView):
                     "success_count": row["success_count"],
                     "success_rate": round(row["success_count"] / row["total_calls"], 4) if row["total_calls"] else 0.0,
                     "open_defects": open_defects_map.get(key, 0),
+                    "avg_duration_ms": None,
                 }
+
+        # 按 execution_run 估算平均耗时
+        duration_map: dict = {}
+        for log in (
+            LlmUsageLog.objects.filter(created_at__gte=since, execution_run__finished_at__isnull=False)
+            .select_related("execution_run")
+            .only("source_key", "execution_run__started_at", "execution_run__finished_at")
+        ):
+            key = log.source_key or ""
+            if not key or not log.execution_run:
+                continue
+            run = log.execution_run
+            if run.started_at and run.finished_at:
+                ms = int((run.finished_at - run.started_at).total_seconds() * 1000)
+                duration_map.setdefault(key, []).append(ms)
+        for key, durations in duration_map.items():
+            if key in stats_map and durations:
+                stats_map[key]["avg_duration_ms"] = int(sum(durations) / len(durations))
 
         # 合并所有技能的统计数据
         items = []
         for skill in AgentSkillDefinition.objects.filter(is_active=True).order_by("skill_id"):
             key = skill.skill_id
-            stats = stats_map.get(key, {"total_calls": 0, "success_count": 0, "success_rate": 0.0, "open_defects": 0})
+            stats = stats_map.get(key, {
+                "total_calls": 0,
+                "success_count": 0,
+                "success_rate": 0.0,
+                "open_defects": 0,
+                "avg_duration_ms": None,
+            })
             items.append({
                 "skill_id": key,
                 "name": skill.name,
                 "total_calls": stats["total_calls"],
                 "success_rate": stats["success_rate"],
                 "open_defects": stats["open_defects"],
+                "avg_duration_ms": stats.get("avg_duration_ms"),
             })
 
         return api_ok({

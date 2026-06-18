@@ -79,20 +79,20 @@ ScriptForge AI 是一个商业化的短剧剧本创作平台，采用「前端 R
 - 技能模板和参数加密存储，仅后台可访问
 - AI API密钥 AES-256-CBC 加密，仅在内存解密使用
 
-### 2. 零数据结构返回
-- 剧本数据不在 API 响应中返回原始 JSON 结构
-- 前端仅接收预渲染的 HTML 片段，无法解析反向工程
+### 2. 数据暴露控制
+- 作品列表/详情/分享页返回预渲染 HTML，不返回完整剧本 JSON
+- 工作台 artifact 接口返回 JSON **仅限项目所有者**编辑使用
 - 下载接口返回二进制文件流，无 JSON 包装
 
 ### 3. 请求签名机制
-- 每个请求包含 Timestamp + Nonce + HMAC-SHA256 签名
-- 防重放：Nonce 5分钟内不重复，Timestamp ±5分钟窗口
-- 签名密钥在前端 WebAssembly 模块中执行
+- 每个 API 请求包含 Timestamp + Nonce + HMAC-SHA256 签名
+- 服务端**始终**基于 `request.body` 计算 body hash 验签，不信任客户端 `X-Body-Hash`
+- 防重放：Nonce 在时间窗口内不可重复；Redis 不可用时拒绝请求（fail-close）
+- 生产环境通过环境变量配置 `API_SIGN_SECRET`；**不应**将长期密钥编译进前端 bundle
 
 ### 4. 数字水印
-- 剧本文件植入不可见的唯一识别水印
-- 可追溯到创作者个人，防止非法传播
-- 水印信息与用户ID绑定
+- 导出 Markdown 植入零宽字符水印（`WatermarkService.embed_watermark`）
+- 导出 HTML 含可见水印 token，与用户/项目绑定，便于溯源
 
 ### 5. 操作审计
 - 所有写操作自动记录审计日志
@@ -156,8 +156,10 @@ cp .env.example .env
 ```env
 DB_HOST=localhost
 DB_PORT=5432
-REDIS_URL=redis://:redis_password_2024@127.0.0.1:6379/1
-CACHE_URL=redis://:redis_password_2024@127.0.0.1:6379/2
+REDIS_URL=redis://:dev_redis_change_me@127.0.0.1:6379/1
+CACHE_URL=redis://:dev_redis_change_me@127.0.0.1:6379/2
+POSTGRES_PASSWORD=dev_postgres_change_me
+REDIS_PASSWORD=dev_redis_change_me
 ```
 
 独立 Agent 模式下，创作知识/Prompt 已入库，**无需**配置外部技能根目录或挂载旧版资产目录。

@@ -55,6 +55,9 @@ def build_fusion_snapshot(project: Project) -> Dict[str, Any]:
     brief = get_artifact(project, "project_brief") or {}
     outline = get_artifact(project, "series_outline") or {}
     chars = get_artifact(project, "character_bible") or {}
+    review_raw = get_artifact(project, "review_report") or {}
+    marketing_raw = get_artifact(project, "marketing_kit") or {}
+    polish_raw = get_artifact(project, "polish_log") or {}
 
     scripts = get_artifact(project, "episode_scripts") or {}
     gate_summary = summarize_episode_gates(scripts) if scripts else None
@@ -111,6 +114,26 @@ def build_fusion_snapshot(project: Project) -> Dict[str, Any]:
             "complianceReport": quality.get("complianceReport"),
         },
         "scoreReport": normalize_score_report_for_api(score_raw),
+        "reviewReport": {
+            "passed": review_raw.get("passed"),
+            "issues": review_raw.get("issues") or [],
+            "pacingPassed": review_raw.get("pacingPassed"),
+        }
+        if review_raw
+        else None,
+        "marketingKit": {
+            "titles": marketing_raw.get("titles") or [],
+            "clipHooks": marketing_raw.get("clipHooks") or marketing_raw.get("clip_hooks") or [],
+            "posterSlogans": marketing_raw.get("posterSlogans") or marketing_raw.get("poster_slogans") or [],
+        }
+        if marketing_raw
+        else None,
+        "polishLog": {
+            "suggestions": polish_raw.get("suggestions") or [],
+            "applied": polish_raw.get("applied"),
+        }
+        if polish_raw
+        else None,
         "nodes": nodes,
         "artifactKeys": list_artifact_keys(project),
     }

@@ -41,11 +41,16 @@ def _render_progress_html(project: Project) -> str:
     )
 
 
+def render_progress_html(project: Project) -> str:
+    """生成进度卡片 HTML（不持久化）。"""
+    return _render_progress_html(project)
+
+
 def refresh_project_progress(project: Project, *, progress_percent: int | None = None) -> None:
     """刷新进度条与预渲染 HTML，供前端轮询增量展示。"""
     fields = ["updated_at"]
     if progress_percent is not None:
-        project.progress_percent = min(99, int(progress_percent))
+        project.progress_percent = min(100, max(0, int(progress_percent)))
         fields.append("progress_percent")
     project.rendered_progress_html = _render_progress_html(project)
     fields.append("rendered_progress_html")

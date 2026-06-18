@@ -174,6 +174,20 @@ function RunDetailDrawer({ run, loading, onClose }) {
   )
 }
 
+function formatTokenLimitLabel(agent, tokenEstimate, isActive) {
+  if (isActive && tokenEstimate?.estimated_prompt_tokens != null) {
+    const maxPrompt =
+      tokenEstimate.max_prompt_tokens || agent.token_policy?.max_prompt_tokens || '-'
+    return `预估 ${tokenEstimate.estimated_prompt_tokens} / ${maxPrompt} tokens`
+  }
+  const promptMax = agent.token_policy?.max_prompt_tokens
+  const completionMax = agent.token_policy?.max_completion_tokens
+  if (promptMax != null && completionMax != null) {
+    return `输入上限 ${promptMax} · 输出上限 ${completionMax} tokens`
+  }
+  return 'Token 上限未配置'
+}
+
 function formatCharCount(chars) {
   if (!chars) return '0'
   if (chars >= 1000) return `${(chars / 1000).toFixed(1)}k`
@@ -220,9 +234,7 @@ function AgentCard({ agent, active, busy, projectLocked, tokenEstimate, onSelect
             overLimit ? 'text-red-300' : 'text-navy-500',
           )}
         >
-          {active && tokenEstimate?.estimated_prompt_tokens != null
-            ? `预估 ${tokenEstimate.estimated_prompt_tokens} / ${tokenEstimate.max_prompt_tokens || agent.token_policy?.max_prompt_tokens || '-'} tokens`
-            : `${agent.token_policy?.max_prompt_tokens || '-'} / ${agent.token_policy?.max_completion_tokens || '-'} tokens 上限`}
+          {formatTokenLimitLabel(agent, tokenEstimate, active)}
         </span>
         <span
           role="button"
@@ -284,15 +296,13 @@ export default function IndependentAgentWorkspace({ projectId, onBack, onRestart
       const data = await creation.workspace(projectId)
       setWorkspace(data)
       setError('')
-      if (!activeAgentId && data?.agents?.[0]) {
-        setActiveAgentId(data.agents[0].agent_id)
-      }
+      setActiveAgentId((prev) => prev || data?.agents?.[0]?.agent_id || '')
     } catch (err) {
       setError(err.message || '加载工作台失败')
     } finally {
       setLoading(false)
     }
-  }, [activeAgentId, projectId])
+  }, [projectId])
 
   useEffect(() => {
     setLoading(true)
@@ -336,25 +346,32 @@ export default function IndependentAgentWorkspace({ projectId, onBack, onRestart
   }, [activeAgent?.agent_id, activeAgent?.can_run, agentParams, projectId])
 
   useEffect(() => {
+    let cancelled = false
     async function loadRuns() {
       if (!projectId || !activeAgent?.agent_id) {
-        setRunHistory([])
+        if (!cancelled) setRunHistory([])
         return
       }
       try {
         const rows = await creation.agentRuns(projectId, activeAgent.agent_id)
-        setRunHistory(Array.isArray(rows) ? rows : rows?.runs || [])
+        if (!cancelled) {
+          setRunHistory(Array.isArray(rows) ? rows : rows?.runs || [])
+        }
       } catch {
-        setRunHistory([])
+        if (!cancelled) setRunHistory([])
       }
     }
     loadRuns()
+    return () => {
+      cancelled = true
+    }
   }, [activeAgent?.agent_id, projectId, workspace])
 
   useEffect(() => {
+    let cancelled = false
     async function loadArtifacts() {
       if (!projectId || !activeAgent) {
-        setArtifactMap({})
+        if (!cancelled) setArtifactMap({})
         return
       }
       const keys = activeAgent.output_artifacts || []
@@ -368,6 +385,7 @@ export default function IndependentAgentWorkspace({ projectId, onBack, onRestart
           }
         }),
       )
+      if (cancelled) return
       const next = {}
       for (const [key, data] of entries) {
         if (data?.payload || data?.editor_view) next[key] = data
@@ -376,6 +394,9 @@ export default function IndependentAgentWorkspace({ projectId, onBack, onRestart
       if (!activeArtifactKey && keys[0]) setActiveArtifactKey(keys[0])
     }
     loadArtifacts()
+    return () => {
+      cancelled = true
+    }
   }, [activeAgent, projectId, workspace?.artifacts])
 
   async function handleRun(agent) {
@@ -624,7 +645,7 @@ export default function IndependentAgentWorkspace({ projectId, onBack, onRestart
                       tokenEstimate?.within_limit === false
                     }
                     onClick={() => handleRun(activeAgent)}
-                    className="mt-3 inline-flex items-center gap-2 rounded-lg bg-gold-400 px-4 py-2 text-sm font-medium text-navy-950 disabled:opacity-40"
+                    className="mt-3 inline-flex items-center gap-2 rounded-lg bg-gold-400 px-4 py-2 text-sm font-medium text-navy-950 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-slate-500"
                   >
                     {runningAgentId === activeAgent.agent_id ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

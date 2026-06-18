@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
+from apps.agent.independent_defaults import AGENT_NAME_ZH_BY_ID
 from apps.agent.models import AgentRegistryConfig
 
 from apps.common.agent_term import (
@@ -23,21 +24,30 @@ CONFIG_KEY = "default"
 
 class AgentRegistryConfigService:
     @staticmethod
+    def _builtin_agent(agent_id: str, name: str, **extra: Any) -> Dict[str, Any]:
+        row: Dict[str, Any] = {"id": agent_id, "name": name, **extra}
+        name_zh = AGENT_NAME_ZH_BY_ID.get(agent_id)
+        if name_zh:
+            row["name_zh"] = name_zh
+        return row
+
+    @staticmethod
     def builtin_registry() -> Dict[str, Any]:
+        cls = AgentRegistryConfigService
         return {
             "_meta": {"version": "scriptforge-runtime-v1"},
             "orchestrator": {"runtime": "scriptforge"},
             "agents": [
-                {"id": "brief", "name": "Brief Agent", "workspace_index": 1, "outputs": ["project_brief"]},
-                {"id": "structure", "name": "Structure Agent", "workspace_index": 2, "outputs": ["structure_plan"]},
-                {"id": "character", "name": "Character Agent", "workspace_index": 3, "outputs": ["character_bible"]},
-                {"id": "outline", "name": "Outline Agent", "workspace_index": 4, "outputs": ["series_outline"]},
-                {"id": "script", "name": "Script Agent", "workspace_index": 5, "outputs": ["episode_scripts"]},
-                {"id": "review", "name": "Review Agent", "outputs": ["review_report"]},
-                {"id": "score", "name": "Score Agent", "outputs": ["score_report"]},
-                {"id": "polish", "name": "Polish Agent", "outputs": ["episode_scripts", "polish_log"]},
-                {"id": "marketing", "name": "Marketing Agent", "outputs": ["marketing_kit"]},
-                {"id": "insight", "name": "Insight Agent", "outputs": ["insight_report"]},
+                cls._builtin_agent("brief", "Brief Agent", workspace_index=1, outputs=["project_brief"]),
+                cls._builtin_agent("structure", "Structure Agent", workspace_index=2, outputs=["structure_plan"]),
+                cls._builtin_agent("character", "Character Agent", workspace_index=3, outputs=["character_bible"]),
+                cls._builtin_agent("outline", "Outline Agent", workspace_index=4, outputs=["series_outline"]),
+                cls._builtin_agent("script", "Script Agent", workspace_index=5, outputs=["episode_scripts"]),
+                cls._builtin_agent("review", "Review Agent", outputs=["review_report"]),
+                cls._builtin_agent("score", "Score Agent", outputs=["score_report"]),
+                cls._builtin_agent("polish", "Polish Agent", outputs=["episode_scripts", "polish_log"]),
+                cls._builtin_agent("marketing", "Marketing Agent", outputs=["marketing_kit"]),
+                cls._builtin_agent("insight", "Insight Agent", outputs=["insight_report"]),
             ],
         }
 

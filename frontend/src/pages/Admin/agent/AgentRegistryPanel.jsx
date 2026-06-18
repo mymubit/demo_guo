@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { RefreshCw, Save, Upload } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { admin } from '@/services/api'
 import { SubSkillEditor, Tier1SectionPicker } from '@/components/admin/AgentConfigEditors'
 
@@ -26,9 +26,6 @@ const READONLY_LEGACY = true
 
 export default function AgentRegistryPanel({ onMessage }) {
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [importing, setImporting] = useState(false)
-  const [migrating, setMigrating] = useState(false)
   const [expandedAgentId, setExpandedAgentId] = useState(null)
   const [expandedSection, setExpandedSection] = useState('skill')
   const [tier1Catalog, setTier1Catalog] = useState([])
@@ -156,38 +153,6 @@ export default function AgentRegistryPanel({ onMessage }) {
     }
   }
 
-  async function migrateSkillConfig() {
-    setMigrating(true)
-    try {
-      const data = await admin.migrateAgentSkillConfig()
-      setRegistry(data?.registry || registry)
-      setJsonText(JSON.stringify(data?.registry || registry, null, 2))
-      onMessage(`已迁移 ${data?.migrated_count ?? 0} 个技能配置`)
-    } catch (err) {
-      onMessage(err.message || '迁移失败', 'error')
-    } finally {
-      setMigrating(false)
-    }
-  }
-
-  async function importFromFile() {
-    setImporting(true)
-    try {
-      const data = await admin.importAgentRegistryFromFile({ overwrite: true })
-      setRegistry(data?.registry || {})
-      setJsonText(JSON.stringify(data?.registry || {}, null, 2))
-      setMeta((prev) => ({
-        ...prev,
-        source: data?.source || 'db',
-        updated_at: data?.updated_at,
-      }))
-      onMessage('已从磁盘 registry.json 导入')
-    } catch (err) {
-      onMessage(err.message || '导入失败', 'error')
-    } finally {
-      setImporting(false)
-    }
-  }
 
   if (loading) {
     return <div className="text-center py-16 text-navy-400">加载技能注册表…</div>
@@ -470,60 +435,10 @@ export default function AgentRegistryPanel({ onMessage }) {
               className="sf-control rounded-2xl font-mono text-xs text-navy-100"
               spellCheck={false}
             />
-            <div className="flex justify-end">
-              <button
-                type="button"
-                disabled={saving}
-                onClick={saveFromJson}
-                className="rounded-xl border border-gold-500/25 bg-gold-400/5 px-4 py-2 text-sm text-gold-300 disabled:opacity-50"
-              >
-                从 JSON 保存
-              </button>
-            </div>
           </div>
         </details>
       </div>
       </div>
-
-      {!READONLY_LEGACY ? (
-      <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/5 bg-slate-950/90 px-6 py-4 backdrop-blur-md md:left-64 flex items-center justify-end gap-3">
-        <button
-          type="button"
-          disabled={migrating}
-          onClick={migrateSkillConfig}
-          className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-navy-100 hover:bg-white/[0.06] disabled:opacity-60"
-        >
-          {migrating ? '迁移中…' : '迁移流水线遗留配置'}
-        </button>
-        <button
-          type="button"
-          disabled={importing}
-          onClick={importFromFile}
-          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-navy-100 hover:bg-white/[0.06] disabled:opacity-60"
-        >
-          <Upload className="w-4 h-4" />
-          {importing ? '导入中…' : '从磁盘导入'}
-        </button>
-        <button
-          type="button"
-          disabled={saving}
-          onClick={load}
-          className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-navy-100 hover:bg-white/[0.06]"
-        >
-          <RefreshCw className="w-4 h-4" />
-          刷新
-        </button>
-        <button
-          type="button"
-          disabled={saving}
-          onClick={save}
-          className="px-8 py-3 rounded-xl bg-gradient-to-r from-gold-400 to-gold-600 text-navy-950 font-semibold flex items-center gap-2 disabled:opacity-60"
-        >
-          <Save className="w-4 h-4" />
-          {saving ? '保存中…' : '保存并生效'}
-        </button>
-      </div>
-      ) : null}
     </>
   )
 }

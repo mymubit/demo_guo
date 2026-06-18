@@ -417,28 +417,17 @@ export default function AdminLibrary() {
     formData.append('file', file)
     formData.append('name', file.name.replace(/\.[^.]+$/, ''))
 
-    // 使用 XHR 以追踪上传进度
     await new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest()
-      xhr.open('POST', '/api/admin/creation/library/materials/')
-      xhr.setRequestHeader('Authorization', `Bearer ${localStorage.getItem('token') || ''}`)
-
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
-          setUploadProgress(Math.round((e.loaded / e.total) * 100))
-        }
-      }
-
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve(JSON.parse(xhr.responseText))
-        } else {
-          reject(new Error(xhr.responseText || '上传失败'))
-        }
-      }
-
-      xhr.onerror = () => reject(new Error('网络错误'))
-      xhr.send(formData)
+      adminLibrary
+        .upload(formData, {
+          onUploadProgress: (event) => {
+            if (event.total) {
+              setUploadProgress(Math.round((event.loaded / event.total) * 100))
+            }
+          },
+        })
+        .then(resolve)
+        .catch(reject)
     })
       .then(() => {
         setMessage({ type: 'success', text: '上传成功，解析将在后台进行' })

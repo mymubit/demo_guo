@@ -10,6 +10,8 @@ from django.utils.module_loading import import_string
 
 from apps.common.agent_term import AGENT_RUNNER_PREFIX, normalize_agent_runner_path
 
+from apps.agent.independent_defaults import AGENT_NAME_ZH_BY_ID
+
 logger = logging.getLogger(__name__)
 
 _RUNNER_IMPORT_PREFIX = AGENT_RUNNER_PREFIX
@@ -22,17 +24,19 @@ _SCRIPT_FORGE_WORKSPACE_MAP: Dict[int, str] = {
     5: "script",
 }
 _SCRIPT_FORGE_AGENT_DEFS: Dict[str, Dict[str, Any]] = {
-    "brief": {"id": "brief", "name": "Brief Agent", "workspace_index": 1, "outputs": ["project_brief"]},
-    "structure": {"id": "structure", "name": "Structure Agent", "workspace_index": 2, "outputs": ["structure_plan"]},
-    "character": {"id": "character", "name": "Character Agent", "workspace_index": 3, "outputs": ["character_bible"]},
-    "outline": {"id": "outline", "name": "Outline Agent", "workspace_index": 4, "outputs": ["series_outline"]},
-    "script": {"id": "script", "name": "Script Agent", "workspace_index": 5, "outputs": ["episode_scripts"]},
-    "review": {"id": "review", "name": "Review Agent", "outputs": ["review_report"]},
-    "score": {"id": "score", "name": "Score Agent", "outputs": ["script_score_report"]},
-    "polish": {"id": "polish", "name": "Polish Agent", "outputs": ["episode_scripts", "polish_log"]},
-    "marketing": {"id": "marketing", "name": "Marketing Agent", "outputs": ["marketing_kit"]},
-    "insight": {"id": "insight", "name": "Insight Agent", "outputs": ["insight_report"]},
+    "brief": {"id": "brief", "name": "Brief Agent", "name_zh": "立项简报", "workspace_index": 1, "outputs": ["project_brief"]},
+    "structure": {"id": "structure", "name": "Structure Agent", "name_zh": "结构设定", "workspace_index": 2, "outputs": ["structure_plan"]},
+    "character": {"id": "character", "name": "Character Agent", "name_zh": "人物小传", "workspace_index": 3, "outputs": ["character_bible"]},
+    "outline": {"id": "outline", "name": "Outline Agent", "name_zh": "分集大纲", "workspace_index": 4, "outputs": ["series_outline"]},
+    "script": {"id": "script", "name": "Script Agent", "name_zh": "剧本正文", "workspace_index": 5, "outputs": ["episode_scripts"]},
+    "review": {"id": "review", "name": "Review Agent", "name_zh": "质量审查", "outputs": ["review_report"]},
+    "score": {"id": "score", "name": "Score Agent", "name_zh": "剧本评分", "outputs": ["script_score_report"]},
+    "polish": {"id": "polish", "name": "Polish Agent", "name_zh": "剧本润色", "outputs": ["episode_scripts", "polish_log"]},
+    "marketing": {"id": "marketing", "name": "Marketing Agent", "name_zh": "宣发物料", "outputs": ["marketing_kit"]},
+    "insight": {"id": "insight", "name": "Insight Agent", "name_zh": "洞察报告", "outputs": ["insight_report"]},
 }
+for _agent_id, _meta in _SCRIPT_FORGE_AGENT_DEFS.items():
+    _meta.setdefault("name_zh", AGENT_NAME_ZH_BY_ID.get(_agent_id, ""))
 
 
 def _parse_meta_index_list(items: Any) -> Dict[int, str]:
@@ -130,11 +134,34 @@ get_agent_registry.cache_clear = clear_agent_registry_cache  # type: ignore[attr
 
 def get_agent(agent_id: str) -> Optional[Dict[str, Any]]:
     reg = get_agent_registry()
-    for agent in reg.get("agents") or []:
-        if agent.get("id") == agent_id:
-            return agent
-    builtin = _SCRIPT_FORGE_AGENT_DEFS.get(str(agent_id or "").strip())
-    return dict(builtin) if builtin else None
+    agent: Optional[Dict[str, Any]] = None
+    for item in reg.get("agents") or []:
+        if item.get("id") == agent_id:
+            agent = dict(item)
+            break
+    if agent is None:
+        builtin = _SCRIPT_FORGE_AGENT_DEFS.get(str(agent_id or "").strip())
+        agent = dict(builtin) if builtin else None
+    if agent is None:
+        return None
+    if not agent.get("name_zh"):
+        try:
+            from django.db.utils import OperationalError, ProgrammingError
+
+            from apps.agent.models import AgentDefinition
+
+            row = AgentDefinition.objects.filter(agent_id=agent_id).only("name", "name_zh").first()
+            if row:
+                if row.name_zh:
+                    agent["name_zh"] = row.name_zh
+                if row.name:
+                    agent.setdefault("name", row.name)
+        except (OperationalError, ProgrammingError):
+            pass
+        except Exception as exc:  # noqa: BLE001
+            if type(exc).__name__ != "DatabaseOperationForbidden":
+                logger.debug("[AgentRegistry] enrich agent definition failed agent=%s err=%s", agent_id, exc)
+    return agent
 
 
 def primary_output_artifact(agent_id: str) -> str:

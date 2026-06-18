@@ -279,8 +279,14 @@ class SignatureService:
                 # 标记 nonce 已使用，过期时间稍大于时间窗口
                 self._cache.set(nonce_key, "1", timeout=self._time_window + 60)
         except Exception:
-            # 缓存不可用时降级为纯时间窗口校验
-            logger.warning("签名服务：缓存连接失败，降级为纯时间窗口校验")
+            logger.warning("签名服务：缓存连接失败，拒绝请求")
+            return SignatureResult(
+                False,
+                "签名服务暂不可用",
+                signature,
+                ts_int,
+                nonce,
+            )
 
         # 4. 签名校验（使用 compare_digest 防时序攻击）
         expected = self.sign(method, path, ts_int, nonce, body_hash)
@@ -656,9 +662,8 @@ class RateLimitService:
                 self._cache.add(key, 1, timeout=window + 10)
                 current = 1
             except Exception:
-                # 缓存不可用时直接放行
-                logger.warning("限流服务：缓存不可用，请求直接放行")
-                return RateLimitResult(True, limit, limit, window, 0, key)
+                logger.warning("限流服务：缓存不可用，拒绝请求")
+                return RateLimitResult(False, 0, limit, window, window, key)
 
         now = int(time.time())
         reset_after = (bucket + 1) * window - now

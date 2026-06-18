@@ -56,7 +56,7 @@ class AgentDefinitionService:
                     defaults={
                         "system_prompt": DEFAULT_SYSTEM_PROMPT,
                         "user_prompt_template": DEFAULT_USER_PROMPT_TEMPLATE,
-                        "output_format_prompt": "输出必须是 JSON 对象；顶层字段建议包含 artifact_key 与 payload。",
+                        "output_format_prompt": "输出必须是 JSON 对象；顶层可用 artifact_key 与 payload，artifact_key 只能取契约声明的产物键，禁止自创。",
                         "constraints_prompt": "不得触发其他 Agent；不得引用外部目录；不得输出非 JSON 文本。",
                         "few_shot_examples": [],
                         "is_active": True,
@@ -81,7 +81,24 @@ class AgentDefinitionService:
                 if route.agent_id is None:
                     route.agent = agent
                     route.save(update_fields=["agent"])
+            AgentDefinitionService.ensure_route_providers()
         return created
+
+    @staticmethod
+    def ensure_route_providers() -> int:
+        """为未绑定 Provider 的 Agent 路由自动挂上当前全局启用的 Provider。"""
+        from apps.skill.models import LlmProvider
+
+        provider = LlmProvider.objects.filter(is_active=True, is_enabled=True).first()
+        if not provider:
+            return 0
+        updated = 0
+        routes = AgentLlmRouteConfig.objects.filter(is_active=True, llm_provider__isnull=True)
+        for route in routes:
+            route.llm_provider = provider
+            route.save(update_fields=["llm_provider", "updated_at"])
+            updated += 1
+        return updated
 
     @staticmethod
     def active_agents() -> List[AgentDefinition]:
@@ -176,6 +193,7 @@ class AgentDefinitionService:
                 "input_contract": agent.input_contract or {},
                 "output_contract": agent.output_contract or {},
                 "runtime_policy": agent.runtime_policy or {},
+                "ui_schema": agent.ui_schema or {},
                 "health": AgentDefinitionService.health(agent),
             }
             for agent in agents

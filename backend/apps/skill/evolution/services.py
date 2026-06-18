@@ -26,7 +26,7 @@ class RuleEvolutionService:
     def analyze_low_score_projects(
         self,
         days: int = 7,
-        min_projects: int = 10,
+        min_projects: int = 3,
     ) -> List[Dict[str, Any]]:
         """
         分析过去 N 天低评分项目（overall_score < 70），提取共性缺陷。
@@ -127,40 +127,21 @@ class RuleEvolutionService:
 
     def _generate_pattern_description(self, dimension: str, stats: Dict) -> str:
         """根据缺陷维度生成模式描述。"""
+        from apps.creation.quality_dimensions import quality_dimension_label
+
         count = stats["count"]
         avg_score = stats["avg_score"]
-
-        dimension_labels = {
-            "character": "人物塑造",
-            "dialogue": "台词对话",
-            "plot": "剧情结构",
-            "pacing": "节奏把控",
-            "world": "世界观构建",
-            "emotion": "情感共鸣",
-            "theme": "主题表达",
-            "compliance": "合规性",
-        }
-
-        label = dimension_labels.get(dimension, dimension)
+        label = quality_dimension_label(dimension)
         score_str = f"{avg_score:.1f}分" if avg_score else "未知"
-
         return f"{label}维度持续偏低（{count}个项目，平均{score_str}）"
 
     def _generate_suggestion(self, dimension: str, stats: Dict) -> str:
         """根据缺陷维度生成修改建议。"""
-        suggestions = {
-            "character": "建议在 Tier2 品类规范中增加人物背景深度要求，或在 Tier3 节点中强化人物刻画检查点。",
-            "dialogue": "建议在台词模板库中增加更多情绪表达变体，并强化对话自然度检查。",
-            "plot": "建议优化剧情结构模板，增加反转密度要求。",
-            "pacing": "建议调整节奏分配算法，在关键节点增加节奏压迫感。",
-            "world": "建议完善世界观构建规范，增加规则一致性检查。",
-            "emotion": "建议增加情感曲线模板，强化情绪高点设置。",
-            "theme": "建议在主题表达检查中增加核心冲突明确度要求。",
-            "compliance": "建议强化合规扫描规则，增加敏感词拦截阈值。",
-        }
-        return suggestions.get(dimension, "建议深入分析该维度的评分标准，适当调整规则阈值。")
+        from apps.creation.quality_dimensions import quality_dimension_suggestion
 
-    def generate_proposal(self, defect_pattern: Dict[str, Any]) -> "RuleEvolutionProposal":
+        return quality_dimension_suggestion(dimension)
+
+    def generate_proposal(self, defect_pattern: Dict[str, Any]) -> Optional["RuleEvolutionProposal"]:
         """
         根据缺陷模式生成规则修改提案。
 
@@ -169,8 +150,9 @@ class RuleEvolutionService:
         参数：
         - defect_pattern: analyze_low_score_projects 返回的缺陷模式
 
-        返回创建的 RuleEvolutionProposal（status=draft）。
+        返回创建的 RuleEvolutionProposal（status=pending_approval）；LLM 失败时不落库，返回 None。
         """
+        from apps.creation.quality_dimensions import quality_dimension_skill_id
         from apps.skill.evolution.models import RuleEvolutionProposal
 
         # 提取关键信息
@@ -184,6 +166,13 @@ class RuleEvolutionService:
 
         # 调用 LLM 生成提案
         proposed_value = self._call_llm_propose(current_tier_rules, analysis_prompt)
+        if proposed_value.get("error"):
+            logger.warning(
+                "[RuleEvolution] LLM 提案生成失败，跳过落库 dimension=%s error=%s",
+                dimension,
+                proposed_value.get("error"),
+            )
+            return None
 
         # 解析 LLM 返回，确定 target_tier 和 target_scope_key
         target_tier, target_scope_key = self._parse_proposal_target(
@@ -194,12 +183,13 @@ class RuleEvolutionService:
         proposal = RuleEvolutionProposal.objects.create(
             trigger_project_id=uuid.UUID(affected_projects[0]) if affected_projects else None,
             trigger_reason=defect_pattern.get("pattern", ""),
+            target_skill_id=quality_dimension_skill_id(dimension),
             target_tier=target_tier,
             target_scope_key=target_scope_key,
             current_value=current_tier_rules,
             proposed_value=proposed_value,
             change_reason=suggestion,
-            status=RuleEvolutionProposal.STATUS_DRAFT,
+            status=RuleEvolutionProposal.STATUS_PENDING_APPROVAL,
             proposed_by=RuleEvolutionProposal.PROPOSED_BY_AI,
         )
 
@@ -324,7 +314,11 @@ class RuleEvolutionService:
 
         return target_tier, target_scope_key
 
-    def batch_analyze_and_propose(self, days: int = 7) -> List["RuleEvolutionProposal"]:
+    def batch_analyze_and_propose(
+        self,
+        days: int = 7,
+        min_projects: int = 3,
+    ) -> List["RuleEvolutionProposal"]:
         """
         批量执行：分析低评分项目 + 生成提案。
 
@@ -334,7 +328,7 @@ class RuleEvolutionService:
         返回生成的提案列表。
         """
         # 1. 分析低评分项目
-        patterns = self.analyze_low_score_projects(days=days)
+        patterns = self.analyze_low_score_projects(days=days, min_projects=min_projects)
         if not patterns:
             logger.info("[RuleEvolution] 未发现低分共性模式，跳过提案生成")
             return []
@@ -344,7 +338,8 @@ class RuleEvolutionService:
         for pattern in patterns:
             try:
                 proposal = self.generate_proposal(pattern)
-                proposals.append(proposal)
+                if proposal is not None:
+                    proposals.append(proposal)
             except Exception as exc:
                 logger.warning(
                     "[RuleEvolution] 提案生成失败 pattern=%s: %s",

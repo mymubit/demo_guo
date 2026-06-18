@@ -31,7 +31,8 @@ class BillingAgentLabelTests(TestCase):
 
     def test_pipeline_action_display_name(self):
         label = pipeline_action_display_name("pipeline.node.2")
-        self.assertIn("structure", label)
+        self.assertIn("结构设定", label)
+        self.assertIn("Structure Agent", label)
 
     def test_action_key_agent_meta(self):
         meta = action_key_agent_meta("pipeline.node.5")
@@ -41,8 +42,10 @@ class BillingAgentLabelTests(TestCase):
 
     def test_billing_action_display_name_prefers_agent_ssot(self):
         name = BillingService.action_display_name("pipeline.node.4")
-        self.assertIn("OutlineAgent", name)
+        self.assertIn("分集大纲", name)
+        self.assertIn("Outline Agent", name)
         self.assertIn("4.", name)
+        self.assertNotIn("大纲与创作规划", name)
 
     def test_billing_ledger_category_pipeline(self):
         cat = BillingService.ledger_category(delta=-10, action_key="pipeline.node.3")

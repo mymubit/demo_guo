@@ -23,7 +23,6 @@ import GateReport from '@/components/creation/GateReport'
 import WorkVisualizationSection from '@/components/works/WorkVisualizationSection'
 import WorkMetaPanel from '@/components/works/WorkMetaPanel'
 import { PageContainer } from '@/components/shared/ConsumerSection'
-import { ExecutionDurationLabel } from '@/components/shared/ExecutionRunPanel'
 import { cn } from '@/utils/cn'
 
 import { getThemeMeta } from '@/constants/themeMeta'
@@ -303,7 +302,11 @@ export default function WorksDetail() {
           </div>
         </motion.div>
 
-        {(work.status === 'completed' || work.fusionSnapshot?.agentArtifacts) && (
+        {(work.status === 'completed' ||
+          work.scoreReport ||
+          work.gateSummary ||
+          work.reviewReport ||
+          work.marketingKit) && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -317,65 +320,58 @@ export default function WorksDetail() {
               </h2>
             </div>
 
-            {work.fusionSnapshot?.agentArtifacts?.score?.overallScore != null && (
+            {work.projectBrief?.workingTitle && (
               <div className="mb-6 rounded-2xl border border-white/5 bg-slate-900/60 p-5">
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                  <h3 className="text-sm font-semibold text-gold-400">深度评分</h3>
-                  <ExecutionDurationLabel
-                    durationMs={work.fusionSnapshot.agentArtifacts.score.durationMs}
-                    className="text-[10px]"
-                  />
-                </div>
-                <p className="text-sm text-navy-200 mb-2">
-                  综合 {work.fusionSnapshot.agentArtifacts.score.overallScore ?? '—'} 分
-                  {work.fusionSnapshot.agentArtifacts.score.grade
-                    ? ` · ${work.fusionSnapshot.agentArtifacts.score.grade} 级`
-                    : ''}
+                <h3 className="text-sm font-semibold text-gold-400 mb-2">项目简报</h3>
+                <p className="text-sm text-navy-200">
+                  {work.projectBrief.workingTitle}
+                  {work.projectBrief.episodeCount != null && ` · ${work.projectBrief.episodeCount} 集`}
+                </p>
+                {work.projectBrief.writingBrief && (
+                  <p className="text-sm text-navy-300 mt-2 line-clamp-3">{work.projectBrief.writingBrief}</p>
+                )}
+              </div>
+            )}
+
+            {work.scoreReport?.overallScore != null && (
+              <div className="mb-6 rounded-2xl border border-white/5 bg-slate-900/60 p-5">
+                <h3 className="text-sm font-semibold text-gold-400 mb-2">深度评分</h3>
+                <p className="text-sm text-navy-200">
+                  综合 {work.scoreReport.overallScore ?? '—'} 分
+                  {work.scoreReport.grade ? ` · ${work.scoreReport.grade} 级` : ''}
                 </p>
               </div>
             )}
 
-            {work.fusionSnapshot?.agentArtifacts?.review && (
+            {work.reviewReport && (
               <div className="mb-6 rounded-2xl border border-white/5 bg-slate-900/60 p-5">
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                  <h3 className="text-sm font-semibold text-gold-400">质检报告</h3>
-                  <ExecutionDurationLabel
-                    durationMs={work.fusionSnapshot.agentArtifacts.review.durationMs}
-                    className="text-[10px]"
-                  />
-                </div>
+                <h3 className="text-sm font-semibold text-gold-400 mb-2">质检报告</h3>
                 <p className="text-sm text-navy-200 mb-2">
-                  状态：{work.fusionSnapshot.agentArtifacts.review.passed ? '通过' : '待优化'}
-                  {work.fusionSnapshot.agentArtifacts.review.pacingPassed === false && ' · 节奏需调整'}
+                  状态：{work.reviewReport.passed ? '通过' : '待优化'}
+                  {work.reviewReport.pacingPassed === false && ' · 节奏需调整'}
                 </p>
-                {(work.fusionSnapshot.agentArtifacts.review.issues || []).length > 0 && (
-                  <ul className="space-y-1 text-sm text-navy-300 mb-3">
-                    {work.fusionSnapshot.agentArtifacts.review.issues.map((issue, i) => (
-                      <li key={i}>· {issue}</li>
+                {(work.reviewReport.issues || []).length > 0 && (
+                  <ul className="space-y-1 text-sm text-navy-300">
+                    {work.reviewReport.issues.map((issue, i) => (
+                      <li key={i}>· {typeof issue === 'string' ? issue : issue.message || JSON.stringify(issue)}</li>
                     ))}
                   </ul>
                 )}
               </div>
             )}
 
-            {(work.fusionSnapshot?.agentArtifacts?.polish?.suggestions || []).length > 0 && (
+            {(work.polishLog?.suggestions || []).length > 0 && (
               <div className="mb-6 rounded-2xl border border-white/5 bg-slate-900/60 p-5">
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
                   <h3 className="text-sm font-semibold text-gold-400">润色建议</h3>
-                  <div className="flex items-center gap-3">
-                    <ExecutionDurationLabel
-                      durationMs={work.fusionSnapshot.agentArtifacts.polish.durationMs}
-                      className="text-[10px]"
-                    />
-                    {work.fusionSnapshot.agentArtifacts.polish.applied && (
-                      <span className="text-xs text-green-400">已应用部分建议</span>
-                    )}
-                  </div>
+                  {work.polishLog.applied && (
+                    <span className="text-xs text-green-400">已应用部分建议</span>
+                  )}
                 </div>
                 <ul className="space-y-2 mb-4">
-                  {work.fusionSnapshot.agentArtifacts.polish.suggestions.map((s) => (
+                  {work.polishLog.suggestions.map((s) => (
                     <li
-                      key={s.index}
+                      key={s.index ?? s.advice}
                       className="flex items-start gap-3 rounded-lg border border-white/5 bg-slate-900/40 p-3 text-sm text-navy-200"
                     >
                       <input
@@ -415,56 +411,21 @@ export default function WorksDetail() {
               </div>
             )}
 
-            {work.fusionSnapshot?.agentArtifacts?.insight?.lineCount > 0 && (
-              <div className="mb-6 rounded-2xl border border-white/5 bg-slate-900/60 p-5">
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                  <h3 className="text-sm font-semibold text-gold-400">拉片报告</h3>
-                  <ExecutionDurationLabel
-                    durationMs={work.fusionSnapshot.agentArtifacts.insight.durationMs}
-                    className="text-[10px]"
-                  />
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                  <AgentStat label="剧本行数" value={work.fusionSnapshot.agentArtifacts.insight.lineCount} />
-                  <AgentStat
-                    label="集标题数"
-                    value={work.fusionSnapshot.agentArtifacts.insight.episodeHeadings}
-                  />
-                </div>
-                {work.fusionSnapshot.agentArtifacts.insight.rhythmNotes && (
-                  <p className="text-sm text-navy-200 leading-relaxed">
-                    {work.fusionSnapshot.agentArtifacts.insight.rhythmNotes}
-                  </p>
-                )}
-                {(work.fusionSnapshot.agentArtifacts.insight.hookPoints || []).length > 0 && (
-                  <ul className="mt-3 space-y-1 text-sm text-navy-300">
-                    {work.fusionSnapshot.agentArtifacts.insight.hookPoints.map((h, i) => (
-                      <li key={i}>· {typeof h === 'string' ? h : JSON.stringify(h)}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-
-            {(work.fusionSnapshot?.agentArtifacts?.marketing?.titles || []).length > 0 && (
+            {(work.marketingKit?.titles || []).length > 0 && (
               <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-5">
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                  <h3 className="text-sm font-semibold text-gold-400">宣发物料</h3>
-                  <ExecutionDurationLabel
-                    durationMs={work.fusionSnapshot.agentArtifacts.marketing.durationMs}
-                    className="text-[10px]"
-                  />
-                </div>
+                <h3 className="text-sm font-semibold text-gold-400 mb-3">宣发物料</h3>
                 <div className="space-y-3">
-                  <AgentList label="推荐标题" items={work.fusionSnapshot.agentArtifacts.marketing.titles} />
-                  <AgentList label="切片钩子" items={work.fusionSnapshot.agentArtifacts.marketing.clipHooks} />
-                  <AgentList label="海报 Slogan" items={work.fusionSnapshot.agentArtifacts.marketing.posterSlogans} />
+                  <AgentList label="推荐标题" items={work.marketingKit.titles} />
+                  <AgentList label="切片钩子" items={work.marketingKit.clipHooks} />
+                  <AgentList label="海报 Slogan" items={work.marketingKit.posterSlogans} />
                 </div>
               </div>
             )}
 
-            {!work.fusionSnapshot?.agentArtifacts?.insight?.lineCount &&
-              !(work.fusionSnapshot?.agentArtifacts?.marketing?.titles || []).length && (
+            {!work.scoreReport?.overallScore &&
+              !work.reviewReport &&
+              !(work.marketingKit?.titles || []).length &&
+              !(work.polishLog?.suggestions || []).length && (
                 <p className="text-sm text-navy-400">
                   暂无智能分析结果，请在创作工作台运行独立 Agent。
                 </p>
@@ -635,15 +596,6 @@ export default function WorksDetail() {
           )}
         </AnimatePresence>
       </PageContainer>
-    </div>
-  )
-}
-
-function AgentStat({ label, value }) {
-  return (
-    <div className="rounded-xl border border-white/5 bg-slate-900/40 p-3">
-      <p className="text-[10px] text-navy-400 uppercase tracking-wider mb-1">{label}</p>
-      <p className="text-white font-semibold text-sm">{value ?? '—'}</p>
     </div>
   )
 }

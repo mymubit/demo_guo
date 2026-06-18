@@ -156,7 +156,7 @@ AGENT_DEFAULTS: List[Dict[str, Any]] = [
         "default_output_artifact_key": "marketing_kit",
         "input_contract": {
             "required_artifacts": ["project_brief", "episode_scripts"],
-            "optional_artifacts": ["score_report", "script_score_report"],
+            "optional_artifacts": ["script_score_report"],
         },
         "output_contract": {"artifacts": ["marketing_kit"], "schema_version": "marketing-kit.v1"},
         "runtime_policy": {"max_prompt_tokens": 25000, "max_completion_tokens": 8000, "overwrite_mode": "replace"},
@@ -208,3 +208,7 @@ DEFAULT_USER_PROMPT_TEMPLATE = """请执行 {{ agent.name_zh }}。
 运行参数：
 {{ params }}
 """
+
+AGENT_NAME_ZH_BY_ID: Dict[str, str] = {
+    item["agent_id"]: item["name_zh"] for item in AGENT_DEFAULTS if item.get("name_zh")
+}

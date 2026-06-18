@@ -43,9 +43,9 @@ def get_project_detail(project_id: str, user) -> dict:
         "fusion_snapshot": None,
     }
     try:
-        from ..node_preview import build_portal_fusion_snapshot
+        from ..artifact_service import build_fusion_snapshot
 
-        detail["fusion_snapshot"] = build_portal_fusion_snapshot(project)
+        detail["fusion_snapshot"] = build_fusion_snapshot(project)
     except Exception as exc:  # noqa: BLE001
         logger.warning("[Creation] fusion_snapshot 构建失败: %s", exc)
     return detail

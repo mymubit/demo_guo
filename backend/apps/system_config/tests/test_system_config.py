@@ -1,6 +1,7 @@
 from django.test import TestCase
 from rest_framework.exceptions import ValidationError
 
+from apps.system_config.cache import clear_all_config_cache
 from apps.system_config.models import SystemConfigCategory, SystemConfigItem
 from apps.system_config.services import SystemConfigService, get_config, get_int
 from apps.system_config.validators import normalize_value, validate_schema
@@ -19,6 +20,12 @@ class SystemConfigValidatorTests(TestCase):
 
 
 class SystemConfigServiceTests(TestCase):
+    def setUp(self):
+        # 动态配置使用进程级 LocMemCache，跨用例不会自动清理；
+        # 显式清空避免被其它用例预热的公开配置快照污染。
+        clear_all_config_cache()
+        self.addCleanup(clear_all_config_cache)
+
     def test_seed_defaults_and_read_config(self):
         result = SystemConfigService.seed_defaults()
 

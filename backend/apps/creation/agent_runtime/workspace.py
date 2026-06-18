@@ -21,13 +21,14 @@ def build_independent_workspace(project: Project) -> Dict[str, Any]:
     AgentDefinitionService.ensure_defaults()
     artifacts = list(ProjectFusionArtifact.objects.filter(project=project).order_by("artifact_key"))
     artifact_keys = {row.artifact_key for row in artifacts}
+    latest_runs = AgentExecutionRunService.latest_runs_by_agent(project)
     agent_items = []
     for agent in AgentDefinitionService.active_agents():
         contract = agent.input_contract or {}
         output_contract = agent.output_contract or {}
         outputs = [str(k) for k in output_contract.get("artifacts") or []]
         missing = _missing_inputs(project, contract)
-        latest = AgentExecutionRunService.latest_run_for_agent(project, agent_id=agent.agent_id)
+        latest = latest_runs.get(agent.agent_id)
         health = AgentDefinitionService.health(agent)
         policy = agent.runtime_policy or {}
         agent_items.append(

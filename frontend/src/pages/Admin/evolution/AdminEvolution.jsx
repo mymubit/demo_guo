@@ -32,21 +32,24 @@ import { cn } from '@/utils/cn'
 
 const STATUS_OPTIONS = [
   { key: '', label: '全部状态' },
-  { key: 'pending', label: '待审批' },
+  { key: 'draft', label: '草稿' },
+  { key: 'pending_approval', label: '待审批' },
   { key: 'approved', label: '已批准' },
   { key: 'rejected', label: '已拒绝' },
   { key: 'applied', label: '已应用' },
 ]
 
 const STATUS_TONE = {
-  pending: 'warning',
+  draft: 'default',
+  pending_approval: 'warning',
   approved: 'success',
   rejected: 'danger',
   applied: 'default',
 }
 
 const STATUS_LABEL = {
-  pending: '待审批',
+  draft: '草稿',
+  pending_approval: '待审批',
   approved: '已批准',
   rejected: '已拒绝',
   applied: '已应用',
@@ -563,9 +566,14 @@ export default function AdminEvolution() {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
 
-  function handleSelectProposal(proposal) {
-    setSelectedProposal(proposal)
-    setView('detail')
+  async function handleSelectProposal(proposal) {
+    try {
+      const detail = await adminEvolution.getProposal(proposal.id)
+      setSelectedProposal(detail)
+      setView('detail')
+    } catch (err) {
+      setMessage({ type: 'error', text: err.message || '加载提案详情失败' })
+    }
   }
 
   function handleBack() {

@@ -54,6 +54,34 @@ class AgentLlmRoutingDbTests(TestCase):
         polish_pid = AgentLlmRouteService.resolve_provider_id("polish")
         self.assertEqual(polish_pid, provider_map["doubao-seed-2.0-lite"])
 
+    def test_ensure_route_providers_binds_unbound_routes(self):
+        from apps.agent.definition_service import AgentDefinitionService
+        from apps.agent.models import AgentDefinition, AgentLlmRouteConfig
+        from apps.skill.llm.providers import LlmProviderService
+        from apps.skill.models import LlmProvider
+
+        AgentDefinitionService.ensure_defaults()
+        provider = LlmProvider.objects.filter(is_active=True, is_enabled=True).first()
+        if provider is None:
+            LlmProviderService.set_global_enabled(True)
+            provider = LlmProvider.objects.create(
+                name="测试 Provider",
+                model_name="test-model",
+                base_url="https://example.com/v1",
+                is_enabled=True,
+                is_active=True,
+            )
+        route = AgentLlmRouteConfig.objects.filter(route_key="adapt", is_active=True).first()
+        self.assertIsNotNone(route)
+        route.llm_provider = None
+        route.save(update_fields=["llm_provider", "updated_at"])
+        updated = AgentDefinitionService.ensure_route_providers()
+        self.assertGreaterEqual(updated, 1)
+        route.refresh_from_db()
+        self.assertEqual(route.llm_provider_id, provider.id)
+        agent = route.agent or AgentDefinition.objects.get(agent_id="adapt")
+        self.assertTrue(AgentDefinitionService.health(agent)["route_ok"])
+
     @override_settings(
         VOLCANO_ARK_API_KEY="test-volcano-key",
         ZHIPU_API_KEY="test-zhipu-key",

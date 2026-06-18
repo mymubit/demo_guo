@@ -46,6 +46,7 @@ def submit(user, data: dict) -> Tuple[Project, int]:
         format_variant=data["format_variant"],
         audience=data.get("audience", ""),
         reference_work=data.get("reference_work", ""),
+        novel_text=(data.get("novel_text") or "").strip(),
         target_platform=platform,
         episode_duration_minutes=data.get("episode_duration_minutes", 2.0),
         creation_entry=data.get("creation_entry", "from-scratch"),

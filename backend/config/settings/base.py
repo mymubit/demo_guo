@@ -320,8 +320,8 @@ FUSION_LLM_EPISODE_BATCH = int(os.getenv("FUSION_LLM_EPISODE_BATCH", "5"))
 FUSION_LLM_OUTLINE_BATCH = int(os.getenv("FUSION_LLM_OUTLINE_BATCH", "1"))
 FUSION_LLM_MAX_EPISODES = int(os.getenv("FUSION_LLM_MAX_EPISODES", "0"))  # 0=全部集数
 FUSION_LLM_MAX_TOKENS = int(os.getenv("FUSION_LLM_MAX_TOKENS", "6000"))
-# 链式调试：记录 LLM 完整 prompt / 响应到轨迹（默认开启，生产可通过 env 关闭）
-CREATION_LLM_TRACE_FULL = os.getenv("CREATION_LLM_TRACE_FULL", "true").lower() in ("1", "true", "yes")
+# CREATION_LLM_TRACE_FULL 默认关闭；生产环境务必保持 false，避免 prompt/剧本落库
+CREATION_LLM_TRACE_FULL = os.getenv("CREATION_LLM_TRACE_FULL", "false").lower() in ("1", "true", "yes")
 CREATION_LLM_TRACE_MAX_CHARS = int(os.getenv("CREATION_LLM_TRACE_MAX_CHARS", "262144"))
 # upstream 轨迹：summary=仅键名/规模摘要 | off=不存 | full=全量（调试用，体积大）
 CREATION_LLM_TRACE_UPSTREAM_MODE = os.getenv("CREATION_LLM_TRACE_UPSTREAM_MODE", "summary").lower()

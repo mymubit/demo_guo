@@ -153,16 +153,20 @@ class FeedbackListView(APIView):
         if facets is not None:
             response.data["facets"] = facets
         # 解包为统一格式
+        pagination_meta = response.data.get("pagination") or {}
+        total = pagination_meta.get("total", 0)
         return api_ok({
             "items": serializer.data,
             "pagination": {
-                "total": response.data.get("count", 0),
+                "total": total,
                 "page": int(request.query_params.get("page", "1")),
                 "page_size": paginator.page_size,
-                "total_pages": (
-                    (response.data.get("count", 0) + paginator.page_size - 1)
-                    // paginator.page_size
-                ) if paginator.page_size else 0,
+                "total_pages": pagination_meta.get(
+                    "total_pages",
+                    ((total + paginator.page_size - 1) // paginator.page_size)
+                    if paginator.page_size
+                    else 0,
+                ),
             },
             "facets": facets,
         })

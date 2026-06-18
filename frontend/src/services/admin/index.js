@@ -171,8 +171,6 @@ export const admin = {
   // Agent（委托给 adminAgent）
   getAgentRegistryConfig: () => adminAgent.getRegistry(),
   saveAgentRegistryConfig: (data) => adminAgent.saveRegistry(data),
-  importAgentRegistryFromFile: (data) => adminAgent.importRegistry(data),
-  migrateAgentSkillConfig: () => adminAgent.migrateRegistry(),
   listAgentLlmRoutes: () => adminAgent.listLlmRoutes(),
   saveAgentLlmRoute: (data) => adminAgent.saveLlmRoute(data),
   updateAgentLlmRoute: (id, data) => adminAgent.updateLlmRoute(id, data),

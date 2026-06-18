@@ -6,7 +6,9 @@ export const adminEvolution = {
   analyze: (data) =>
     adminRequest('POST', '/api/admin/skills/evolution/analyze/', { data }),
   getProposal: (id) =>
-    adminRequest('GET', `/api/admin/skills/evolution/${id}/`),
+    adminRequest('GET', `/api/admin/skills/evolution/${id}/`).then(
+      (res) => res?.data?.data ?? res?.data ?? res,
+    ),
   approve: (id, comment) =>
     adminRequest('POST', `/api/admin/skills/evolution/${id}/approve/`, { data: { comment } }),
   reject: (id, comment) =>

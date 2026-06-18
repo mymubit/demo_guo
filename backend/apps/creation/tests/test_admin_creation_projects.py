@@ -104,6 +104,17 @@ class AdminCreationProjectsTests(TestCase):
         self.assertIn("running", alerts)
 
     def test_build_agent_ops_dashboard(self):
+        from apps.agent.registry import AgentRegistryConfigService
+
+        AgentRegistryConfigService.save_registry(
+            {
+                "_meta": {"version": "2.0.0"},
+                "orchestrator": {"runtime": "scriptforge"},
+                "agents": [{"id": "brief", "name": "Brief", "workspace_index": 1}],
+            },
+            note="test",
+            activate=True,
+        )
         data = build_agent_ops_dashboard(stats_limit=50)
         self.assertEqual(data.get("registry_version"), "2.0.0")
         self.assertGreaterEqual(data.get("workspace_projects", 0), 1)

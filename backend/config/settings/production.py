@@ -69,3 +69,20 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT", "false").lower() in ("1", "true", "yes")
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
+
+# 生产环境关闭 LLM 全量轨迹，避免 prompt/剧本持久化
+CREATION_LLM_TRACE_FULL = os.getenv("CREATION_LLM_TRACE_FULL", "false").lower() in ("1", "true", "yes")
+
+_encrypt_keys = {
+    "SKILL_ENCRYPT_KEY": os.getenv("SKILL_ENCRYPT_KEY", ""),
+    "ENCRYPT_PHONE_KEY": os.getenv("ENCRYPT_PHONE_KEY", ""),
+    "ENCRYPT_EMAIL_KEY": os.getenv("ENCRYPT_EMAIL_KEY", ""),
+}
+for _key_name, _key_val in _encrypt_keys.items():
+    if not _key_val or "change" in _key_val.lower() or _key_val == "01234567890123456789012345678901":
+        raise ImproperlyConfigured(
+            f"生产环境必须设置安全的 {_key_name} 环境变量，禁止使用默认值或占位符。"
+        )
+SKILL_ENCRYPT_KEY = _encrypt_keys["SKILL_ENCRYPT_KEY"]
+ENCRYPT_PHONE_KEY = _encrypt_keys["ENCRYPT_PHONE_KEY"]
+ENCRYPT_EMAIL_KEY = _encrypt_keys["ENCRYPT_EMAIL_KEY"]

@@ -24,9 +24,12 @@ export const adminSkill = {
   deprecateDefinition: (pk) =>
     adminRequest('POST', `/api/admin/skills/definitions/${pk}/deprecate/`),
 
-  // 技能统计
-  getDefinitionStats: (pk) =>
-    adminRequest('GET', `/api/admin/skills/definitions/${pk}/stats/`),
+  // 技能统计（全局聚合，可按 skill_id 在前端筛选）
+  getDefinitionStats: (params = {}) =>
+    adminRequest('GET', '/api/admin/skills/definitions/stats/', { params }).then((res) => {
+      const data = res?.data?.data ?? res?.data ?? res
+      return data
+    }),
 
   // 技能版本历史
   listDefinitionVersions: (pk) =>

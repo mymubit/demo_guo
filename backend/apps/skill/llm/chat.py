@@ -495,6 +495,27 @@ class LlmService:
         ) from last_exc
 
     @classmethod
+    def chat_completion(
+        cls,
+        *,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: Optional[float],
+        max_tokens: Optional[int],
+        provider_id: Optional[str],
+        json_mode: bool,
+    ) -> str:
+        """公开 LLM 对话接口（Agent runtime 等调用方应使用此方法）。"""
+        return cls._chat_completion(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            provider_id=provider_id,
+            json_mode=json_mode,
+        )
+
+    @classmethod
     def generate_json(
         cls,
         *,

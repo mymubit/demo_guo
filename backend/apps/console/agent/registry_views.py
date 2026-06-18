@@ -44,39 +44,6 @@ class AgentRegistryConfigView(APIView):
         return api_ok(payload, message="技能注册表已保存并生效")
 
 
-class AgentRegistryMigrateView(APIView):
-    """POST /api/admin/agent/registry/migrate/"""
-
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def post(self, request):
-        from apps.agent.routes import AgentLlmRouteService
-
-        AgentRegistryConfigService.ensure_defaults()
-        seeded = AgentLlmRouteService.seed_defaults()
-        migrated = AgentRegistryConfigService.migrate_pipeline_skill_config()
-        payload = AgentRegistryConfigService.admin_payload()
-        payload["migrated_count"] = migrated
-        payload["seeded_routes"] = seeded
-        return api_ok(payload, message=f"已迁移 {migrated} 个技能配置")
-
-
-class AgentRegistryImportView(APIView):
-    """POST /api/admin/agent/registry/import/"""
-
-    permission_classes = [IsAuthenticated, IsAdminUser]
-
-    def post(self, request):
-        overwrite = (request.data or {}).get("overwrite", True) is not False
-        try:
-            AgentRegistryConfigService.import_from_file(overwrite=overwrite)
-        except ValueError as exc:
-            return api_fail(str(exc))
-        except FileNotFoundError as exc:
-            return api_fail(str(exc))
-        return api_ok(AgentRegistryConfigService.admin_payload(), message="已从磁盘 registry.json 导入")
-
-
 class IndependentAgentListView(APIView):
     """GET/POST /api/admin/agent/definitions/"""
 

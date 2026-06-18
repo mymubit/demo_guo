@@ -151,8 +151,6 @@ class PaymentService:
         """
         if not getattr(settings, "ALLOW_MOCK_PAYMENT", False) or not getattr(settings, "DEBUG", False):
             raise PermissionDenied("模拟支付已关闭")
-        if user is not None and not getattr(user, "is_staff", False):
-            raise PermissionDenied("模拟支付仅限管理员在调试环境使用")
 
         try:
             order = Order.objects.select_for_update().get(order_no=order_no)

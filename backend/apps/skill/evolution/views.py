@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import uuid
 
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from apps.common.permissions import IsAdminUser
@@ -20,7 +21,7 @@ from apps.skill.evolution.services import RuleEvolutionService
 class EvolutionProposalListView(APIView):
     """提案列表 — GET /api/admin/skills/evolution/"""
 
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         """
@@ -73,7 +74,7 @@ class EvolutionProposalListView(APIView):
 class EvolutionAnalyzeView(APIView):
     """触发分析 — POST /api/admin/skills/evolution/analyze/"""
 
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
         """
@@ -83,11 +84,14 @@ class EvolutionAnalyzeView(APIView):
         执行 batch_analyze_and_propose。
         """
         days = int(request.data.get("days", 7))
+        min_projects = int(request.data.get("min_projects", 3))
         if days < 1 or days > 90:
             return api_fail("分析天数必须在 1-90 之间", code=400)
+        if min_projects < 1 or min_projects > 50:
+            return api_fail("最少项目数必须在 1-50 之间", code=400)
 
         service = RuleEvolutionService()
-        proposals = service.batch_analyze_and_propose(days=days)
+        proposals = service.batch_analyze_and_propose(days=days, min_projects=min_projects)
 
         return api_ok({
             "proposals_created": len(proposals),
@@ -98,7 +102,7 @@ class EvolutionAnalyzeView(APIView):
 class EvolutionProposalDetailView(APIView):
     """提案详情 — GET /api/admin/skills/evolution/<id>/"""
 
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, proposal_id: str):
         """获取提案详情。"""
@@ -134,7 +138,7 @@ class EvolutionProposalDetailView(APIView):
 class EvolutionApproveView(APIView):
     """审批通过 — POST /api/admin/skills/evolution/<id>/approve/"""
 
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request, proposal_id: str):
         """
@@ -162,7 +166,7 @@ class EvolutionApproveView(APIView):
 class EvolutionRejectView(APIView):
     """审批拒绝 — POST /api/admin/skills/evolution/<id>/reject/"""
 
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request, proposal_id: str):
         """
@@ -190,7 +194,7 @@ class EvolutionRejectView(APIView):
 class EvolutionApplyView(APIView):
     """应用提案 — POST /api/admin/skills/evolution/<id>/apply/"""
 
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request, proposal_id: str):
         """

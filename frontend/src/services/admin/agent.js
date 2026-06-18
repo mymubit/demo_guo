@@ -8,9 +8,6 @@ export const adminAgent = {
   getRegistry: () =>
     adminRequest('GET', '/api/admin/agent/registry/').then((res) => normalizeAgentRegistry(unwrapData(res))),
   saveRegistry: (data) => adminRequest('PUT', '/api/admin/agent/registry/', { data }),
-  importRegistry: (data) =>
-    adminRequest('POST', '/api/admin/agent/registry/import/', { data: data || {} }),
-  migrateRegistry: () => adminRequest('POST', '/api/admin/agent/registry/migrate/'),
   catalog: () => adminRequest('GET', '/api/admin/agent/catalog/').then(unwrapData),
   listLlmRoutes: () =>
     adminRequest('GET', '/api/admin/agent/llm-routes/').then((res) => normalizeAgentLlmRoutes(unwrapData(res))),

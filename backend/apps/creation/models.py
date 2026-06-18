@@ -18,6 +18,7 @@ import secrets
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 
@@ -118,6 +119,12 @@ class Project(models.Model):
     )
     reference_work = models.CharField(
         "参考作品", max_length=2000, blank=True, default=""
+    )
+    novel_text = models.TextField(
+        "小说原文",
+        blank=True,
+        default="",
+        help_text="小说改编入口提交的完整原文，供 adapt Agent 使用",
     )
     # project-brief.schema 对齐字段
     target_platform = models.CharField(
@@ -273,24 +280,9 @@ class Project(models.Model):
             models.Index(fields=["-created_at", "status"]),
         ]
 
-    def save(self, *args, **kwargs):
-        """保存时自动将 fusion_status 同步到 status 字段（统一状态机过渡方案）"""
-        if self.fusion_status:
-            self.status = self._derive_status_from_fusion()
-        super().save(*args, **kwargs)
-
-    def _derive_status_from_fusion(self) -> str:
-        """根据 fusion_status 派生 legacy status 字段值"""
-        mapping = {
-            self.FUSION_DRAFT:     self.STATUS_PENDING,
-            self.FUSION_PLANNING:  self.STATUS_RUNNING,
-            self.FUSION_WRITING:   self.STATUS_RUNNING,
-            self.FUSION_REVIEWING: self.STATUS_RUNNING,
-            self.FUSION_SCORING:   self.STATUS_RUNNING,
-            self.FUSION_READY:     self.STATUS_COMPLETED,
-            self.FUSION_BLOCKED:   self.STATUS_FAILED,
-        }
-        return mapping.get(self.fusion_status, self.status)
+    # 说明：status 与 fusion_status 由服务层（IndependentAgentService.update_project_status /
+    # submission / enqueue_run）作为单一来源显式维护，不再在 save() 中自动派生覆盖，
+    # 否则会把独立 Agent 写入的 running/completed 错误回写为 pending。
 
     def __str__(self) -> str:
         return f"[{self.get_status_display()}] {self.id.hex[:8]} - {self.theme}"
@@ -619,6 +611,14 @@ class AgentExecutionRun(models.Model):
         indexes = [
             models.Index(fields=["project", "-started_at"]),
             models.Index(fields=["agent_id", "-started_at"]),
+            models.Index(fields=["project", "status"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project"],
+                condition=Q(status="running"),
+                name="uniq_running_agent_per_project",
+            ),
         ]
 
     def __str__(self) -> str:
@@ -628,6 +628,16 @@ class AgentExecutionRun(models.Model):
 # ============================================================
 # ScriptQualityDefect：剧本质量缺陷记录
 # ============================================================
+class ScriptQualityDimension(models.TextChoices):
+    """剧本质量维度 — 与 ScriptQualityDefect.dimension 及规则进化分析对齐。"""
+
+    HOOK = "hook", "钩子/开场"
+    EMOTION = "emotion", "情绪设计"
+    REVERSAL = "reversal", "反转"
+    STRUCTURE = "structure", "结构节奏"
+    COMPLIANCE = "compliance", "合规"
+
+
 class ScriptQualityDefect(models.Model):
     """剧本质量缺陷
 
@@ -665,6 +675,7 @@ class ScriptQualityDefect(models.Model):
     episode     = models.IntegerField("集数", null=True, blank=True,
                                       help_text="具体集数；null 表示整体性问题")
     dimension   = models.CharField("质量维度", max_length=50, db_index=True,
+                                   choices=ScriptQualityDimension.choices,
                                    help_text="hook/emotion/reversal/structure/compliance")
     defect_type = models.CharField("缺陷类型", max_length=100,
                                    help_text="如 hook_too_weak / qdn_mismatch / paywall_missing")

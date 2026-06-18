@@ -18,11 +18,16 @@ class PaymentProvider:
 
     @classmethod
     def catalog_payment_method(cls) -> str:
-        """计费目录等只读场景：返回配置的支付方式，不做支付权限校验。"""
+        """计费目录等只读场景：返回当前环境可用的支付方式。"""
         method = (default_payment_method() or "mock").strip().lower()
         allowed = {"mock"}
         if method not in allowed:
             return "mock"
+        if method == "mock" and (
+            not getattr(settings, "ALLOW_MOCK_PAYMENT", False)
+            or not getattr(settings, "DEBUG", False)
+        ):
+            return "none"
         return method
 
     @classmethod

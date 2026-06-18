@@ -34,8 +34,6 @@ from apps.console.agent.execution_views import (
 )
 from apps.console.agent.registry_views import (
     AgentRegistryConfigView,
-    AgentRegistryImportView,
-    AgentRegistryMigrateView,
     IndependentAgentDetailView,
     IndependentAgentListView,
     IndependentAgentRunsListView,
@@ -60,6 +58,7 @@ from apps.console.skills.definition_views import (
     SkillDefinitionDeprecateView,
     SkillDefinitionRollbackView,
     SkillDefinitionStatsView,
+    SkillDefinitionVersionsView,
     SkillDefinitionGrayPreviewView,
     SkillConfigEntryDetailView,
     SkillConfigEntryListView,
@@ -130,7 +129,6 @@ from apps.creation.library.views import (
     MaterialUploadView,
     MaterialDetailView,
     MaterialParseView,
-    MaterialDeleteView,
 )
 from apps.skill.evolution.views import (
     EvolutionProposalListView,
@@ -152,8 +150,6 @@ app_name = "console"
 # Agent 中心
 _agent_routes = [
     path("agent/registry/", AgentRegistryConfigView.as_view(), name="admin-agent-registry"),
-    path("agent/registry/import/", AgentRegistryImportView.as_view(), name="admin-agent-registry-import"),
-    path("agent/registry/migrate/", AgentRegistryMigrateView.as_view(), name="admin-agent-registry-migrate"),
     path("agent/definitions/", IndependentAgentListView.as_view(), name="admin-independent-agents"),
     path("agent/definitions/<str:agent_id>/", IndependentAgentDetailView.as_view(), name="admin-independent-agent-detail"),
     path("agent/definitions/<str:agent_id>/prompts/", IndependentPromptListView.as_view(), name="admin-independent-agent-prompts"),
@@ -234,6 +230,7 @@ _skills_routes = [
     path("skills/definitions/<int:pk>/publish/", SkillDefinitionPublishView.as_view(), name="admin-skills-definitions-publish"),
     path("skills/definitions/<int:pk>/deprecate/", SkillDefinitionDeprecateView.as_view(), name="admin-skills-definitions-deprecate"),
     path("skills/definitions/<int:pk>/rollback/", SkillDefinitionRollbackView.as_view(), name="admin-skills-definitions-rollback"),
+    path("skills/definitions/<int:pk>/versions/", SkillDefinitionVersionsView.as_view(), name="admin-skills-definitions-versions"),
     path("skills/definitions/stats/", SkillDefinitionStatsView.as_view(), name="admin-skills-definitions-stats"),
     path("skills/definitions/gray-preview/", SkillDefinitionGrayPreviewView.as_view(), name="admin-skills-definitions-gray-preview"),
     # 技能配置项
@@ -303,7 +300,6 @@ _library_routes = [
     path("creation/library/materials/upload/", MaterialUploadView.as_view(), name="admin-library-materials-upload"),
     path("creation/library/materials/<uuid:material_id>/", MaterialDetailView.as_view(), name="admin-library-material-detail"),
     path("creation/library/materials/<uuid:material_id>/parse/", MaterialParseView.as_view(), name="admin-library-material-parse"),
-    path("creation/library/materials/<uuid:material_id>/", MaterialDeleteView.as_view(), name="admin-library-material-delete"),
 ]
 
 # AI 规则进化

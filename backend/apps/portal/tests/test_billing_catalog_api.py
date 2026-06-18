@@ -13,9 +13,9 @@ class PortalBillingCatalogApiTests(TestCase):
         self.client.force_authenticate(user=self.user)
 
     @override_settings(ALLOW_MOCK_PAYMENT=False, DEBUG=True)
-    def test_catalog_returns_payment_method_when_mock_payment_disabled(self):
+    def test_catalog_returns_none_payment_method_when_mock_payment_disabled(self):
         resp = self.client.get("/api/billing/catalog/")
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data["code"], 0)
         self.assertIn("payment_method", resp.data["data"])
-        self.assertEqual(resp.data["data"]["payment_method"], "mock")
+        self.assertEqual(resp.data["data"]["payment_method"], "none")

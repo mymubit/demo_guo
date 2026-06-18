@@ -164,15 +164,13 @@ class RequestSignatureMiddleware(MiddlewareMixin):
         nonce = request.META.get("HTTP_X_NONCE")
         signature = request.META.get("HTTP_X_SIGNATURE")
 
-        # body_hash：优先使用头里的 X-Body-Hash（客户端提供），
-        # 否则在服务端计算请求体 hash
-        body_hash = request.META.get("HTTP_X_BODY_HASH")
-        if not body_hash:
-            try:
-                body_hash = self._get_body_hash(request)
-            except Exception as exc:
-                logger.exception("请求体哈希失败: %s", exc)
-                body_hash = ""
+        # body_hash：始终使用服务端计算的 request.body 哈希，不信任客户端 X-Body-Hash，
+        # 防止「签 hash A、发 body B」绕过完整性校验。
+        try:
+            body_hash = self._get_body_hash(request)
+        except Exception as exc:
+            logger.exception("请求体哈希失败: %s", exc)
+            body_hash = ""
 
         return self._signature.verify(
             method=request.method,

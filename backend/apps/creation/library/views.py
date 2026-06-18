@@ -140,15 +140,20 @@ class MaterialUploadView(APIView):
 
 
 class MaterialDetailView(APIView):
-    """素材详情 — GET /api/admin/library/materials/<id>/"""
+    """素材详情与删除 — GET/DELETE /api/admin/creation/library/materials/<id>/"""
 
     permission_classes = [IsAdminUser]
 
+    def _get_material(self, material_id: str):
+        try:
+            return ReferenceMaterial.objects.get(pk=material_id)
+        except ReferenceMaterial.DoesNotExist:
+            return None
+
     def get(self, request, material_id: str):
         """获取素材详情。"""
-        try:
-            material = ReferenceMaterial.objects.get(pk=material_id)
-        except ReferenceMaterial.DoesNotExist:
+        material = self._get_material(material_id)
+        if material is None:
             return api_fail("素材不存在", code=404)
 
         return api_ok({
@@ -166,6 +171,21 @@ class MaterialDetailView(APIView):
             "created_at": material.created_at.isoformat() if material.created_at else None,
             "updated_at": material.updated_at.isoformat() if material.updated_at else None,
         })
+
+    def delete(self, request, material_id: str):
+        """删除素材及其本地文件（不可恢复）。"""
+        material = self._get_material(material_id)
+        if material is None:
+            return api_fail("素材不存在", code=404)
+
+        if material.file_path and os.path.exists(material.file_path):
+            try:
+                os.remove(material.file_path)
+            except OSError:
+                pass
+
+        material.delete()
+        return api_ok(message="删除成功")
 
 
 class MaterialParseView(APIView):
@@ -199,27 +219,3 @@ class MaterialParseView(APIView):
             "parsed_content": material.parsed_content,
         }, message="解析完成")
 
-
-class MaterialDeleteView(APIView):
-    """素材删除 — DELETE /api/admin/library/materials/<id>/"""
-
-    permission_classes = [IsAdminUser]
-
-    def delete(self, request, material_id: str):
-        """删除素材及其文件。"""
-        try:
-            material = ReferenceMaterial.objects.get(pk=material_id)
-        except ReferenceMaterial.DoesNotExist:
-            return api_fail("素材不存在", code=404)
-
-        # 删除文件
-        if material.file_path and os.path.exists(material.file_path):
-            try:
-                os.remove(material.file_path)
-            except OSError:
-                pass
-
-        # 删除数据库记录（级联删除注入记录）
-        material.delete()
-
-        return api_ok(message="删除成功")
