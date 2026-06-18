@@ -82,8 +82,8 @@ class SkillRouter:
 
     @staticmethod
     def _get_fallback(skill_id: str) -> Optional[AgentSkillDefinition]:
-        """最终兜底：返回任意 is_active=True 版本（兼容旧数据）"""
+        """最终兜底：返回任意 active 版本。"""
         return AgentSkillDefinition.objects.filter(
             skill_id=skill_id,
-            is_active=True,
+            lifecycle_status=AgentSkillDefinition.LIFECYCLE_ACTIVE,
         ).order_by("-updated_at").first()

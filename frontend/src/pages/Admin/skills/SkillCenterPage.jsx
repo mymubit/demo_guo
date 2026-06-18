@@ -12,11 +12,11 @@ const LAYER_OPTIONS = [
   { value: 'tool',       label: '工具能力层' },
 ]
 
-const STATUS_OPTIONS = [
-  { value: '',           label: '全部状态' },
-  { value: 'draft',      label: '草稿' },
-  { value: 'active',     label: '上线' },
-  { value: 'gray',       label: '灰度' },
+const STATUS_TABS = [
+  { value: '', label: '全部' },
+  { value: 'draft', label: '草稿' },
+  { value: 'active', label: '上线' },
+  { value: 'gray', label: '灰度' },
   { value: 'deprecated', label: '废弃' },
 ]
 
@@ -47,7 +47,7 @@ function GrayWeightBadge({ weight }) {
 
 const EMPTY_FORM = {
   skill_id: '', name: '', version: '1.0.0',
-  skill_layer: '', sub_category: '', category: 'creator',
+  skill_layer: '', sub_category: '',
   system_hint: '', content: '',
   input_schema: '{}', output_schema: '{}',
   timeout_seconds: 60, quota_cost: 0, fallback_skill_id: '',
@@ -134,7 +134,6 @@ export default function SkillCenterPage() {
       version:           item.version,
       skill_layer:       item.skill_layer || '',
       sub_category:      item.sub_category || '',
-      category:          item.category,
       system_hint:       item.system_hint || '',
       content:           item.content || '',
       input_schema:      JSON.stringify(item.input_schema || {}, null, 2),
@@ -266,21 +265,28 @@ export default function SkillCenterPage() {
               新增
             </button>
           </div>
-          <div className="flex gap-1.5">
-            <select
-              className="flex-1 text-xs border border-gray-200 rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-blue-400"
-              value={filterLayer}
-              onChange={(e) => setFilterLayer(e.target.value)}
-            >
-              {LAYER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-            <select
-              className="flex-1 text-xs border border-gray-200 rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-blue-400"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              {STATUS_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+          <select
+            className="w-full text-xs border border-gray-200 rounded px-1.5 py-1 focus:outline-none focus:ring-1 focus:ring-blue-400"
+            value={filterLayer}
+            onChange={(e) => setFilterLayer(e.target.value)}
+          >
+            {LAYER_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <div className="flex flex-wrap gap-1.5">
+            {STATUS_TABS.map((tab) => (
+              <button
+                key={tab.value || 'all'}
+                type="button"
+                onClick={() => setFilterStatus(tab.value)}
+                className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                  filterStatus === tab.value
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
           <div className="text-xs text-gray-400">共 {total} 个技能</div>
         </div>
@@ -308,9 +314,29 @@ export default function SkillCenterPage() {
                 </div>
               </div>
               <div className="mt-1 flex items-center gap-2 text-xs text-gray-400">
-                <span>{item.skill_layer_label || item.category_label}</span>
+                <span>{item.skill_layer_label || item.skill_layer || '—'}</span>
                 {item.sub_category && <span>· {item.sub_category}</span>}
                 <span className="ml-auto">v{item.version}</span>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {item.lifecycle_status !== 'deprecated' ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setPublishTarget(item); setGrayWeight(100) }}
+                      className="text-[10px] px-2 py-0.5 rounded bg-green-600 text-white hover:bg-green-700"
+                    >
+                      发布
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleDeprecate(item) }}
+                      className="text-[10px] px-2 py-0.5 rounded border border-red-200 text-red-500 hover:bg-red-50"
+                    >
+                      废弃
+                    </button>
+                  </>
+                ) : null}
               </div>
             </button>
           ))}

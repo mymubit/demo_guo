@@ -6,7 +6,6 @@ import { useAdminPanelMessage } from '@/hooks/useAdminPanelMessage'
 import AdminAgentCatalogPanel from './AdminAgentCatalogPanel'
 import FormFieldAgentPanel from './FormFieldAgentPanel'
 import IndependentAgentPanel from './IndependentAgentPanel'
-import AgentRegistryPanel from './AgentRegistryPanel'
 import SkillRulesPanel from './SkillRulesPanel'
 import ReviewScoringPanel from './ReviewScoringPanel'
 import AgentLlmRoutePanel from './AgentLlmRoutePanel'
@@ -20,7 +19,6 @@ const AGENT_TABS = [
   { key: 'rules', label: '规则', icon: BookOpen },
   { key: 'review', label: '质检', icon: Gauge },
   { key: 'routes', label: '路由', icon: Route },
-  { key: 'registry', label: '历史注册表', icon: Bot },
 ]
 
 export default function AgentHubPage() {
@@ -58,7 +56,6 @@ export default function AgentHubPage() {
         />
       ) : null}
       {active.key === 'form' ? <FormFieldAgentPanel /> : null}
-      {active.key === 'registry' ? <AgentRegistryPanel onMessage={showMessage} /> : null}
       {active.key === 'rules' ? <SkillRulesPanel onMessage={showMessage} /> : null}
       {active.key === 'review' ? <ReviewScoringPanel onMessage={showMessage} /> : null}
       {active.key === 'routes' ? <AgentLlmRoutePanel onMessage={showMessage} /> : null}

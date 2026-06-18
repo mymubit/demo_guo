@@ -2,7 +2,34 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="0e5ae3e8-a74d-44b5-8554-1a949c89ede0" name="Changes" comment="Changes">
-      <change beforePath="$PROJECT_DIR$/src/utils/orchestrationFlowSteps.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/apps/console/agent/registry_views.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/console/agent/registry_views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/apps/console/creation/project_views.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/console/creation/project_views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/artifact_renderer.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/creation/artifact_renderer.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/artifact_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/creation/artifact_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/monitoring/execution_run_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/creation/monitoring/execution_run_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/script_delivery.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/creation/script_delivery.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../backend/apps/creation/tests/test_agent_output_validation_coverage.py" beforeDir="false" afterPath="$PROJECT_DIR$/../backend/apps/creation/tests/test_agent_output_validation_coverage.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/admin/OrchestrationAgentChainBuilder.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/admin/OrchestrationStepSearch.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/admin/ProjectAgentTrace.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/admin/ProjectAgentTrace.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/admin/ProjectOpsSummary.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/admin/ProjectOpsSummary.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/shared/ExecutionRunPanel.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/shared/ExecutionRunPanel.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/config/adminNav.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/config/adminNav.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/pages/Admin/CreationProjectTrace.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Admin/CreationProjectTrace.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/pages/Admin/CreationProjects.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Admin/CreationProjects.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/pages/Admin/agent/AgentHubPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Admin/agent/AgentHubPage.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/pages/Admin/agent/AgentRegistryPanel.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/pages/Admin/skills/SkillCenterPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/Admin/skills/SkillCenterPage.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/router/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/router/index.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/adapters/businessAdapters.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/services/adapters/businessAdapters.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/adapters/businessAdapters.test.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/services/adapters/businessAdapters.test.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/adapters/listAdapter.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/services/adapters/listAdapter.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/admin/http.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/services/admin/http.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/admin/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/services/admin/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/admin/workflow.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/services/api.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/services/api.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/orchestrationNodeStates.js" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -75,7 +102,7 @@
       <workItem from="1781483165320" duration="4085000" />
       <workItem from="1781572004320" duration="1947000" />
       <workItem from="1781658565766" duration="597000" />
-      <workItem from="1781760969300" duration="607000" />
+      <workItem from="1781760969300" duration="1205000" />
     </task>
     <task id="LOCAL-00001" summary="Changes">
       <option name="closed" value="true" />

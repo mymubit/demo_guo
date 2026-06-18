@@ -496,7 +496,37 @@ class AgentExecutionRunService:
             payload["rendered_prompt_preview"] = (run.rendered_prompt_preview or "")[:8000]
         if include_sub_skills:
             payload.update({"sub_skills": [], "execution_trace": []})
+        payload["readable_summary"] = AgentExecutionRunService.build_readable_summary(
+            run,
+            input_snapshot=input_snapshot,
+        )
         return alias_agent_id(payload)
+
+    @staticmethod
+    def build_readable_summary(
+        run: AgentExecutionRun,
+        *,
+        input_snapshot: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """运营可读三块摘要：输入 / 输出 / 调试参数。"""
+        snapshot = input_snapshot if input_snapshot is not None else (run.input_snapshot or {})
+        snapshot_keys = list(snapshot.keys())[:12] if isinstance(snapshot, dict) else []
+        input_summary = run.input_summary or {}
+        output_summary = run.output_summary or {}
+        return {
+            "input_block": {
+                "summary": input_summary,
+                "snapshot_keys": snapshot_keys,
+            },
+            "output_block": {
+                "summary": output_summary,
+                "artifact_keys": run.output_artifact_keys or [],
+                "primary_artifact_key": run.output_artifact_key or "",
+            },
+            "debug_block": {
+                "run_params": run.run_params or {},
+            },
+        }
 
     @staticmethod
     def list_recent_runs_global(*, limit: int = 40) -> Dict[str, Any]:

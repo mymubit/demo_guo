@@ -10,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from apps.common.permissions import IsAdminUser
+from apps.creation.admin_status import resolve_admin_status
 from apps.creation.artifact_service import get_artifact
 from apps.creation.models import Project, ProjectFusionArtifact
 from apps.creation.services import CreationService
@@ -43,15 +44,15 @@ def _project_ops_row(
     verify = verify_summary(adaptation) if adaptation else {"hasReports": False, "allPassed": True, "stages": []}
     user = project.user
     exec_summary = execution_summary or {}
+    status, status_text = resolve_admin_status(project)
     row = {
         "project_id": str(project.id),
         "title": (project.title or project.theme or "未命名")[:200],
         "theme": project.theme,
-        "status": project.status,
-        "status_text": project.get_status_display(),
+        "status": status,
+        "status_text": status_text,
         "pipeline_mode": project.pipeline_mode,
         "creation_entry": project.creation_entry or "from-scratch",
-        "fusion_status": project.fusion_status or "",
         "overall_score": project.overall_score,
         "grade": project.grade or "",
         "progress_percent": project.progress_percent,
@@ -133,7 +134,10 @@ class AdminCreationProjectListView(APIView):
             page_size = 20
 
         qs = Project.objects.select_related("user").order_by("-updated_at")
-        if status_filter in dict(Project.STATUS_CHOICES):
+        fusion_status_set = set(dict(Project.FUSION_STATUS_CHOICES))
+        if status_filter in fusion_status_set:
+            qs = qs.filter(fusion_status=status_filter)
+        elif status_filter in dict(Project.STATUS_CHOICES):
             qs = qs.filter(status=status_filter)
         if pipeline_mode in dict(Project.PIPELINE_MODE_CHOICES):
             qs = qs.filter(pipeline_mode=pipeline_mode)

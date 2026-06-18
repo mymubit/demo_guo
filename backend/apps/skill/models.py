@@ -691,13 +691,9 @@ class AgentSkillDefinition(models.Model):
     实现统一管理入口；Cursor Agent 通过 /api/skills/<skill_id>/definition/
     获取最新版本，不再依赖本地文件。
 
-    category 分类（原有，保持兼容）：
-    - creator     : 创作类技能
-    - quality     : 质检类技能
-    - compliance  : 合规类技能
-    - shared      : 通用共享技能
+    category 分类已由 skill_layer / sub_category 替代（2026-06 移除 category/is_active 兼容字段）。
 
-    skill_layer 分层（新增，三层架构）：
+    skill_layer 分层（三层架构）：
     - foundation  : 基础能力层（文本生成/润色/审核等）
     - business    : 业务技能层（人设/大纲/剧本等）
     - tool        : 工具能力层（格式转换/查重/敏感词等）
@@ -709,7 +705,7 @@ class AgentSkillDefinition(models.Model):
     - deprecated  : 废弃（不再使用）
     """
 
-    # 原有分类（保持兼容）
+    # 原有分类常量保留供迁移脚本引用
     CATEGORY_CREATOR    = "creator"
     CATEGORY_QUALITY    = "quality"
     CATEGORY_COMPLIANCE = "compliance"
@@ -722,7 +718,7 @@ class AgentSkillDefinition(models.Model):
         (CATEGORY_SHARED,     "通用共享"),
     ]
 
-    # 新三层分类
+    # 三层分类
     LAYER_FOUNDATION = "foundation"
     LAYER_BUSINESS   = "business"
     LAYER_TOOL       = "tool"
@@ -746,20 +742,16 @@ class AgentSkillDefinition(models.Model):
         (LIFECYCLE_DEPRECATED, "废弃"),
     ]
 
-    # 原有字段
     skill_id    = models.CharField("技能 ID", max_length=100, unique=True, db_index=True,
                                    help_text='如 drama-master-suite / brief.character_extract')
     name        = models.CharField("技能名称", max_length=200)
     version     = models.CharField("版本号", max_length=20, default="1.0.0")
-    category    = models.CharField("分类（兼容）", max_length=50, choices=CATEGORY_CHOICES,
-                                   default=CATEGORY_CREATOR, db_index=True)
     content     = models.TextField("技能内容（Markdown）",
                                    help_text="原始 SKILL.md 的完整 Markdown 内容")
-    is_active   = models.BooleanField("是否启用（兼容）", default=True, db_index=True)
     source_file = models.CharField("来源文件路径", max_length=300, blank=True,
                                    help_text="迁移前的本地相对路径，如 legacy-skills/drama-creator-core/SKILL.md")
 
-    # 新增：三层分类与子分类
+    # 三层分类与子分类
     skill_layer  = models.CharField(
         "技能层级", max_length=20, choices=LAYER_CHOICES, blank=True, default="", db_index=True,
         help_text="foundation=基础能力层；business=业务技能层；tool=工具能力层",
@@ -834,7 +826,7 @@ class AgentSkillDefinition(models.Model):
         db_table = "skill_agent_definition"
         verbose_name = "Agent 技能定义"
         verbose_name_plural = verbose_name
-        ordering = ["skill_layer", "category", "skill_id"]
+        ordering = ["skill_layer", "skill_id"]
         indexes = [
             models.Index(fields=["lifecycle_status", "skill_layer"], name="skill_def_status_layer_idx"),
             models.Index(fields=["skill_layer", "sub_category"], name="skill_def_layer_subcat_idx"),
@@ -842,7 +834,7 @@ class AgentSkillDefinition(models.Model):
         ]
 
     def __str__(self) -> str:
-        layer = self.skill_layer or self.get_category_display()
+        layer = self.skill_layer or self.sub_category or self.skill_id
         return f"[{layer}] {self.skill_id} v{self.version} ({self.get_lifecycle_status_display()})"
 
     # ── 生命周期操作 ──────────────────────────────────────
@@ -855,17 +847,15 @@ class AgentSkillDefinition(models.Model):
             self.lifecycle_status = target_status
             self.gray_weight = gray_weight
             self.published_at = timezone.now()
-            self.is_active = True
             self.save(update_fields=[
-                "lifecycle_status", "gray_weight", "published_at", "is_active", "updated_at",
+                "lifecycle_status", "gray_weight", "published_at", "updated_at",
             ])
 
     def deprecate(self) -> None:
         """废弃技能"""
         self.lifecycle_status = self.LIFECYCLE_DEPRECATED
         self.deprecated_at = timezone.now()
-        self.is_active = False
-        self.save(update_fields=["lifecycle_status", "deprecated_at", "is_active", "updated_at"])
+        self.save(update_fields=["lifecycle_status", "deprecated_at", "updated_at"])
 
 
 # ============================================================

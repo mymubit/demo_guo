@@ -262,11 +262,6 @@ const appRoutes = [
       { path: 'operations/feedback', element: <OperationsFeedback /> },
       { path: 'operations/config-hit', element: <ConfigEffectiveness /> },
       { path: 'operations/checklist', element: <DailyChecklist /> },
-      // 历史路径兼容
-      { path: 'mainchain', element: <Navigate to="/admin/agent" replace /> },
-      { path: 'mainchain/*', element: <Navigate to="/admin/agent" replace /> },
-      { path: 'orchestration', element: <Navigate to="/admin/agent" replace /> },
-      { path: 'orchestration/*', element: <Navigate to="/admin/agent" replace /> },
     ],
   },
 

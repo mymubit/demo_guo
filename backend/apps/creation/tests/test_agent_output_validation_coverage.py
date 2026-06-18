@@ -38,6 +38,70 @@ class AgentOutputValidationCoverageTests(TestCase):
                 result = IndependentAgentService.validate_output(agent, output)
                 self.assertTrue(result)
 
+    def test_review_report_coerces_boolean_like_passed(self):
+        """review_report.passed 为 LLM 常见布尔近似值时应归一化而非失败。"""
+        from apps.creation.agent_runtime.output_schema_validation import _validate_review_report
+
+        for raw, expected in [("通过", True), ("false", False), (1, True), ("否", False), (True, True)]:
+            body = {"passed": raw}
+            _validate_review_report(body)
+            self.assertIs(body["passed"], expected)
+
+    def test_review_report_rejects_unrecognized_passed(self):
+        from apps.creation.agent_runtime.independent_service import AgentRuntimeError
+        from apps.creation.agent_runtime.output_schema_validation import _validate_review_report
+
+        with self.assertRaises(AgentRuntimeError):
+            _validate_review_report({"summary": "无结论"})
+
+    def test_review_report_derives_passed_from_alternative_fields(self):
+        """真实 LLM 用 reviewResult / 逐项 status 表达结论时也能归一化。"""
+        from apps.creation.agent_runtime.output_schema_validation import _validate_review_report
+
+        body1 = {"reviewResult": "passed", "reviewItems": []}
+        _validate_review_report(body1)
+        self.assertIs(body1["passed"], True)
+
+        body2 = {"reviewItems": [{"status": "pass"}, {"status": "fail"}]}
+        _validate_review_report(body2)
+        self.assertIs(body2["passed"], False)
+
+        body3 = {"overallStatus": "PASS", "checkItems": [{"result": "通过"}]}
+        _validate_review_report(body3)
+        self.assertIs(body3["passed"], True)
+
+    def test_load_knowledge_respects_budget(self):
+        """绑定超大/过多知识时，注入总量受 max_prompt_tokens 预算约束。"""
+        from apps.agent.models import AgentKnowledgeBinding, AgentKnowledgeItem
+
+        agent = AgentDefinitionService.get_runnable("script")
+        budget = int((agent.runtime_policy or {}).get("max_prompt_tokens", 40000)) * 4 * 0.4
+        for i in range(5):
+            item = AgentKnowledgeItem.objects.create(
+                knowledge_id=f"budget-test-{i}",
+                title=f"t{i}",
+                category=AgentKnowledgeItem.Category.RULE,
+                content_text="字" * 50000,
+            )
+            AgentKnowledgeBinding.objects.create(
+                agent=agent,
+                knowledge=item,
+                binding_type=AgentKnowledgeBinding.BindingType.OPTIONAL,
+                inject_position=AgentKnowledgeBinding.InjectPosition.USER,
+                is_enabled=True,
+            )
+        rows = IndependentAgentService.load_knowledge(agent)
+        total = sum(len(r["content_text"]) for r in rows)
+        self.assertLessEqual(total, budget + 1)
+
+    def test_extract_json_tolerates_control_characters(self):
+        """真实 LLM 在字符串内输出裸换行/控制字符时仍能解析。"""
+        from apps.creation.agent_runtime.independent_service import extract_json_object
+
+        raw = '{"text": "第一行\n第二行\t制表"}'
+        parsed = extract_json_object(raw)
+        self.assertEqual(parsed["text"], "第一行\n第二行\t制表")
+
     def test_validate_output_falls_back_when_artifact_key_invalid(self):
         """真实 LLM 自创 artifact_key 时回退到契约默认 key，而非整链失败。"""
         agent = AgentDefinitionService.get_runnable("adapt")

@@ -24,7 +24,12 @@ class AgentRegistryConfigView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        return api_ok(AgentRegistryConfigService.admin_payload())
+        payload = AgentRegistryConfigService.admin_payload()
+        payload["_deprecated"] = True
+        payload["_deprecated_message"] = (
+            "历史 registry v2 只读归档，将于 2026-12 下线；请使用 /api/admin/agent/definitions/ 管理独立 Agent。"
+        )
+        return api_ok(payload)
 
     def put(self, request):
         data = request.data or {}
@@ -102,6 +107,7 @@ class IndependentAgentDetailView(APIView):
                 "output_contract": row.output_contract,
                 "runtime_policy": row.runtime_policy,
                 "ui_schema": row.ui_schema,
+                "knowledge_injection_policy": row.knowledge_injection_policy,
                 "health": AgentDefinitionService.health(row),
             }
         })
@@ -124,6 +130,7 @@ class IndependentAgentDetailView(APIView):
             "output_contract",
             "runtime_policy",
             "ui_schema",
+            "knowledge_injection_policy",
         ]:
             if field in data:
                 setattr(row, field, data[field])
@@ -210,6 +217,10 @@ class IndependentKnowledgeListView(APIView):
                     "category": row.category,
                     "source_origin": row.source_origin,
                     "tags": row.tags,
+                    "match_themes": row.match_themes,
+                    "match_platforms": row.match_platforms,
+                    "match_genres": row.match_genres,
+                    "is_prompt_injectable": row.is_prompt_injectable,
                     "is_enabled": row.is_enabled,
                     "checksum": row.checksum,
                 }
@@ -231,6 +242,10 @@ class IndependentKnowledgeListView(APIView):
                 "content_json": data.get("content_json") or {},
                 "tags": data.get("tags") or [],
                 "applies_to_agents": data.get("applies_to_agents") or [],
+                "match_themes": data.get("match_themes") or [],
+                "match_platforms": data.get("match_platforms") or [],
+                "match_genres": data.get("match_genres") or [],
+                "is_prompt_injectable": data.get("is_prompt_injectable", True) is not False,
                 "priority": int(data.get("priority") or 100),
                 "is_enabled": data.get("is_enabled", True) is not False,
             },
@@ -303,6 +318,10 @@ class IndependentKnowledgeDetailView(APIView):
                 "content_json": row.content_json or {},
                 "tags": row.tags,
                 "applies_to_agents": row.applies_to_agents,
+                "match_themes": row.match_themes,
+                "match_platforms": row.match_platforms,
+                "match_genres": row.match_genres,
+                "is_prompt_injectable": row.is_prompt_injectable,
                 "priority": row.priority,
                 "is_enabled": row.is_enabled,
                 "checksum": row.checksum,

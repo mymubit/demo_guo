@@ -37,6 +37,13 @@ class AgentDefinition(models.Model):
     output_contract = models.JSONField("输出契约", default=dict, blank=True)
     runtime_policy = models.JSONField("运行策略", default=dict, blank=True)
     ui_schema = models.JSONField("UI Schema", default=dict, blank=True)
+    knowledge_injection_policy = models.JSONField(
+        "知识注入策略", default=dict, blank=True,
+        help_text=(
+            "可配置 excluded_categories(排除类别)、category_caps(各类别 Top-N)、"
+            "max_total_chars(注入总字符预算)；留空使用全局默认策略"
+        ),
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -113,6 +120,14 @@ class AgentKnowledgeItem(models.Model):
     content_json = models.JSONField("JSON 内容", default=dict, blank=True)
     tags = models.JSONField("标签", default=list, blank=True)
     applies_to_agents = models.JSONField("适用 Agent", default=list, blank=True)
+    # 相关性匹配元数据：空列表表示「通用」，对所有项目生效；非空则仅命中对应维度的项目才注入
+    match_themes = models.JSONField("适配题材", default=list, blank=True)
+    match_platforms = models.JSONField("适配平台", default=list, blank=True)
+    match_genres = models.JSONField("适配类型", default=list, blank=True)
+    is_prompt_injectable = models.BooleanField(
+        "可注入 Prompt", default=True, db_index=True,
+        help_text="校验器/Schema 等仅供校验层使用的资产置 False，不进入 LLM 上下文",
+    )
     priority = models.IntegerField("优先级", default=100)
     is_enabled = models.BooleanField("启用", default=True, db_index=True)
     version = models.CharField("版本", max_length=32, default="v1")

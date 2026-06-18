@@ -253,22 +253,18 @@ class FusionJsonSchemaAdmin(admin.ModelAdmin):
 # ============================================================
 @admin.register(AgentSkillDefinition)
 class AgentSkillDefinitionAdmin(admin.ModelAdmin):
-    list_display = ["skill_id", "name", "category", "version", "is_active", "updated_at"]
-    list_filter = ["category", "is_active"]
+    list_display = ["skill_id", "name", "skill_layer", "lifecycle_status", "version", "updated_at"]
+    list_filter = ["skill_layer", "lifecycle_status"]
     search_fields = ["skill_id", "name", "source_file"]
     readonly_fields = ["created_at", "updated_at"]
-    ordering = ["category", "skill_id"]
+    ordering = ["skill_layer", "skill_id"]
 
     fieldsets = (
-        ("基础信息", {"fields": ("skill_id", "name", "category", "version", "is_active")}),
-        ("技能内容", {"fields": ("content",)}),
+        ("基础信息", {"fields": ("skill_id", "name", "skill_layer", "sub_category", "version", "lifecycle_status", "gray_weight")}),
+        ("技能内容", {"fields": ("content", "system_hint", "input_schema", "output_schema")}),
         ("来源追踪", {"fields": ("source_file",)}),
-        ("时间戳", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
+        ("时间戳", {"fields": ("created_at", "updated_at", "published_at", "deprecated_at"), "classes": ("collapse",)}),
     )
-
-    @admin.display(boolean=True, description="启用")
-    def is_active_display(self, obj):
-        return obj.is_active
 
 
 # ============================================================

@@ -1,12 +1,7 @@
 /**
  * admin/index.js —— 后台管理 API 聚合
- *
- * 职责：
- *   - 聚合各中心模块（workflow / agent / model）
- *   - 提供 admin 对象（保持与旧版 api.js 同名接口兼容）
  */
 import { adminRequest, unwrapAdminList, unwrapAdminListData } from './http'
-import { adminWorkflow } from './workflow'
 import { adminAgent } from './agent'
 import { adminModel } from './model'
 import { adminMonitoring } from './monitoring'
@@ -18,7 +13,7 @@ import { adminEvolution } from './evolution'
 import { adminOperations } from './operations'
 
 export {
-  adminWorkflow, adminAgent,
+  adminAgent,
   adminModel, adminMonitoring, adminSkill,
   adminStats, adminSystemConfig,
   adminLibrary, adminEvolution,
@@ -154,19 +149,6 @@ export const admin = {
   recalculateLlmUsageCosts: () => adminModel.recalculateUsageCosts(),
   updateLlmVendorCredential: (vendor, data) => adminModel.updateVendorCredential(vendor, data),
   deleteLlmCatalog: (id) => adminModel.deleteCatalog(id),
-
-  // 工作流（委托给 adminWorkflow）
-  listPipelineSteps: () => adminWorkflow.listSteps(),
-  updatePipelineStep: (id, data) => adminWorkflow.updateStep(id, data),
-  syncPipelineSteps: () => adminWorkflow.syncSteps(),
-  importFusionPipeline: (data) => adminWorkflow.importFusionPipeline(data),
-  listFusionPacks: () => adminWorkflow.listFusionPacks(),
-  duplicateFusionPack: (sourceId, name, opts) => adminWorkflow.duplicateFusionPack(sourceId, name, opts),
-  updateFusionPack: (id, data) => adminWorkflow.updateFusionPack(id, data),
-  activateFusionPack: (packId) => adminWorkflow.activateFusionPack(packId),
-  setDefaultFusionPack: (packId) => adminWorkflow.setDefaultFusionPack(packId),
-  publishFusionPack: (packId, data) => adminWorkflow.publishFusionPack(packId, data),
-  getFusionMeta: () => adminWorkflow.getFusionMeta(),
 
   // Agent（委托给 adminAgent）
   getAgentRegistryConfig: () => adminAgent.getRegistry(),

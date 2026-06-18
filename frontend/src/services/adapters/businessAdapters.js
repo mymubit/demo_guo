@@ -47,7 +47,7 @@ export function normalizeWorkItem(work) {
     progress_percent: work.progress_percent ?? 0,
     pipeline_mode: work.pipeline_mode,
     score: work.overall_score,
-    fusionStatus: work.fusion_status,
+    fusionStatus: work.status,
     grade: work.grade,
     createdAt,
     idea: (work.core_idea || '').trim(),
@@ -59,25 +59,25 @@ export function normalizeWorkDetail(work) {
   if (!work) return null
   const base = normalizeWorkItem(work)
   const fusionSnapshot = work.fusion_snapshot || {}
+  const scoreReport = fusionSnapshot.score_report || null
   return {
     ...work,
     ...base,
-    resultHtml: work.rendered_result_html || work.result_html || '',
-    progressHtml: work.rendered_progress_html || work.progress_html || '',
+    resultHtml: work.result_html || '',
+    progressHtml: work.progress_html || '',
     fusionSnapshot,
-    gateSummary: fusionSnapshot.gateSummary || fusionSnapshot.gate_summary || null,
-    scoreReport: fusionSnapshot.scoreReport || fusionSnapshot.score_report || work.overall_score != null
+    gateSummary: fusionSnapshot.gate_summary || null,
+    scoreReport: scoreReport || (work.overall_score != null
       ? {
           overallScore: work.overall_score,
           grade: work.grade,
-          ...(fusionSnapshot.scoreReport || fusionSnapshot.score_report || {}),
         }
-      : fusionSnapshot.scoreReport || fusionSnapshot.score_report || null,
-    reviewReport: fusionSnapshot.reviewReport || fusionSnapshot.review_report || null,
-    marketingKit: fusionSnapshot.marketingKit || fusionSnapshot.marketing_kit || null,
-    polishLog: fusionSnapshot.polishLog || fusionSnapshot.polish_log || null,
-    projectBrief: fusionSnapshot.projectBrief || fusionSnapshot.project_brief || null,
-    structureWarnings: fusionSnapshot.structureWarnings || fusionSnapshot.structure_warnings || [],
+      : null),
+    reviewReport: fusionSnapshot.review_report || null,
+    marketingKit: fusionSnapshot.marketing_kit || null,
+    polishLog: fusionSnapshot.polish_log || null,
+    projectBrief: fusionSnapshot.project_brief || null,
+    structureWarnings: fusionSnapshot.structure_warnings || [],
   }
 }
 

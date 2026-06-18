@@ -15,6 +15,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
 from apps.skill.models import AgentSkillDefinition, SkillConfigEntry
+from apps.skill.skills.router import SkillRouter
 from apps.console.responses import api_fail, api_ok
 
 
@@ -27,16 +28,16 @@ class AgentSkillDefinitionView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, skill_id: str = ""):
-        try:
-            obj = AgentSkillDefinition.objects.get(skill_id=skill_id, is_active=True)
-        except AgentSkillDefinition.DoesNotExist:
+        obj = SkillRouter.resolve(skill_id)
+        if not obj:
             return api_fail(f"技能 {skill_id!r} 不存在或已停用", code=404)
 
         return api_ok({
             "skill_id": obj.skill_id,
             "name": obj.name,
             "version": obj.version,
-            "category": obj.category,
+            "skill_layer": obj.skill_layer,
+            "lifecycle_status": obj.lifecycle_status,
             "content": obj.content,
             "updated_at": obj.updated_at.isoformat(),
         })

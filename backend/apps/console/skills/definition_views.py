@@ -31,15 +31,12 @@ def _serialize_definition(obj: AgentSkillDefinition) -> dict:
         "skill_id": obj.skill_id,
         "name": obj.name,
         "version": obj.version,
-        "category": obj.category,
-        "category_label": obj.get_category_display(),
         "skill_layer": obj.skill_layer,
         "skill_layer_label": obj.get_skill_layer_display() if obj.skill_layer else "",
         "sub_category": obj.sub_category,
         "lifecycle_status": obj.lifecycle_status,
         "lifecycle_status_label": obj.get_lifecycle_status_display(),
         "gray_weight": obj.gray_weight,
-        "is_active": obj.is_active,
         "source_file": obj.source_file,
         "content": obj.content,
         "system_hint": obj.system_hint,
@@ -91,30 +88,24 @@ def _serialize_defect(obj: SkillDefect) -> dict:
 # ────────────────────────────────────────────────
 
 class SkillDefinitionListView(APIView):
-    """GET 列表（支持 category/skill_layer/lifecycle_status/q 过滤）；POST 新建"""
+    """GET 列表（支持 skill_layer/lifecycle_status/q 过滤）；POST 新建"""
 
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         qs = AgentSkillDefinition.objects.all()
-        category         = request.query_params.get("category")
         skill_layer      = request.query_params.get("skill_layer")
         lifecycle_status = request.query_params.get("lifecycle_status")
-        is_active        = request.query_params.get("is_active")
         q                = request.query_params.get("q", "").strip()
 
-        if category:
-            qs = qs.filter(category=category)
         if skill_layer:
             qs = qs.filter(skill_layer=skill_layer)
         if lifecycle_status:
             qs = qs.filter(lifecycle_status=lifecycle_status)
-        if is_active is not None:
-            qs = qs.filter(is_active=(is_active.lower() not in ("false", "0")))
         if q:
             qs = qs.filter(skill_id__icontains=q) | qs.filter(name__icontains=q)
 
-        qs = qs.order_by("skill_layer", "category", "skill_id")
+        qs = qs.order_by("skill_layer", "skill_id")
         total = qs.count()
         try:
             page = max(1, int(request.query_params.get("page", 1)))
@@ -150,7 +141,6 @@ class SkillDefinitionListView(APIView):
             skill_id=skill_id,
             name=str(data.get("name") or skill_id),
             version=str(data.get("version") or "1.0.0"),
-            category=str(data.get("category") or AgentSkillDefinition.CATEGORY_CREATOR),
             skill_layer=str(data.get("skill_layer") or ""),
             sub_category=str(data.get("sub_category") or ""),
             lifecycle_status=str(data.get("lifecycle_status") or AgentSkillDefinition.LIFECYCLE_DRAFT),
@@ -162,14 +152,13 @@ class SkillDefinitionListView(APIView):
             quota_cost=float(data.get("quota_cost") or 0),
             retry_policy=data.get("retry_policy") or {},
             fallback_skill_id=str(data.get("fallback_skill_id") or ""),
-            is_active=data.get("is_active", True),
             source_file=str(data.get("source_file") or ""),
         )
         return api_ok(_serialize_definition(obj), message="技能定义已创建")
 
 
 class SkillDefinitionDetailView(APIView):
-    """GET 详情；PUT 更新；DELETE 软删除（is_active=False）"""
+    """GET 详情；PUT 更新；DELETE 废弃（lifecycle_status=deprecated）"""
 
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -192,7 +181,7 @@ class SkillDefinitionDetailView(APIView):
         data = request.data or {}
         fields = []
         for f in (
-            "name", "version", "category", "content", "source_file",
+            "name", "version", "content", "source_file",
             "skill_layer", "sub_category", "system_hint",
             "timeout_seconds", "fallback_skill_id",
         ):
@@ -206,9 +195,6 @@ class SkillDefinitionDetailView(APIView):
         if "quota_cost" in data:
             obj.quota_cost = float(data["quota_cost"])
             fields.append("quota_cost")
-        if "is_active" in data:
-            obj.is_active = bool(data["is_active"])
-            fields.append("is_active")
         if fields:
             obj.save(update_fields=fields + ["updated_at"])
         return api_ok(_serialize_definition(obj), message="技能定义已更新")
@@ -309,7 +295,6 @@ class SkillDefinitionVersionsView(APIView):
                 "version": row.version,
                 "lifecycle_status": row.lifecycle_status,
                 "lifecycle_status_label": row.get_lifecycle_status_display(),
-                "is_active": row.is_active,
                 "published_at": row.published_at.isoformat() if row.published_at else None,
                 "created_at": row.created_at.isoformat(),
             }
@@ -322,13 +307,17 @@ class SkillDefinitionVersionsView(APIView):
 # SkillConfigEntry 视图
 # ────────────────────────────────────────────────
 
+LEGACY_CONFIG_EDITIONS = frozenset({"legacy-demo", "legacy-skills"})
+
+
 class SkillConfigEntryListView(APIView):
     """GET 配置列表；POST 新建配置项"""
 
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        items = [_serialize_config(obj) for obj in SkillConfigEntry.objects.all()]
+        qs = SkillConfigEntry.objects.exclude(edition__in=LEGACY_CONFIG_EDITIONS)
+        items = [_serialize_config(obj) for obj in qs]
         return api_ok({"items": items, "total": len(items)})
 
     def post(self, request):
@@ -544,7 +533,9 @@ class SkillDefinitionStatsView(APIView):
 
         # 合并所有技能的统计数据
         items = []
-        for skill in AgentSkillDefinition.objects.filter(is_active=True).order_by("skill_id"):
+        for skill in AgentSkillDefinition.objects.exclude(
+            lifecycle_status=AgentSkillDefinition.LIFECYCLE_DEPRECATED,
+        ).order_by("skill_id"):
             key = skill.skill_id
             stats = stats_map.get(key, {
                 "total_calls": 0,

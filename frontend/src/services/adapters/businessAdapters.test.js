@@ -49,25 +49,25 @@ describe('normalizeWorkItem', () => {
 })
 
 describe('normalizeWorkDetail', () => {
-  it('maps fusion_snapshot fields to camelCase views', () => {
+  it('maps fusion_snapshot snake_case fields to view props', () => {
     const out = normalizeWorkDetail({
       project_id: 'p-2',
       title: '详情作品',
-      status: 'completed',
+      status: 'ready',
       overall_score: 90,
       grade: 'A',
       fusion_snapshot: {
-        scoreReport: { overallScore: 90, grade: 'A' },
-        gateSummary: { passed: 8, total: 10 },
-        reviewReport: { passed: true, issues: [] },
-        marketingKit: { titles: ['宣发标题'] },
-        projectBrief: { workingTitle: '测试剧' },
+        score_report: { overallScore: 90, grade: 'A' },
+        gate_summary: { passed: 8, total: 10 },
+        review_report: { passed: true, issues: [] },
+        marketing_kit: { titles: ['宣发标题'] },
+        project_brief: { working_title: '测试剧' },
       },
     })
     expect(out.scoreReport.overallScore).toBe(90)
     expect(out.gateSummary.passed).toBe(8)
     expect(out.reviewReport.passed).toBe(true)
     expect(out.marketingKit.titles).toEqual(['宣发标题'])
-    expect(out.projectBrief.workingTitle).toBe('测试剧')
+    expect(out.projectBrief.working_title).toBe('测试剧')
   })
 })

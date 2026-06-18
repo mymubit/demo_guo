@@ -8,7 +8,6 @@ import {
   Wallet,
   Settings2,
   Wrench,
-  LayoutGrid,
   BarChart3,
   Bot,
   Cpu,
@@ -21,18 +20,7 @@ import {
   MessageSquare,
 } from 'lucide-react'
 
-/**
- * 后台侧栏 IA
- *
- * 分组原则：按日常工作流，而非历史「十大中心」拆碎。
- * - 概览：运营数据与平台监控
- * - 创作：项目与流水线总览
- * - AI 引擎：大模型 → Agent → 技能管理（配置与运行一体）
- * - 用户与商业：账号、订单、会员、计费
- * - 站点 / 系统
- */
-
-/** 后台导航 IA */
+/** 后台侧栏 IA — 按运营工作流分组 */
 export const ADMIN_NAV_GROUPS = [
   {
     id: 'overview',
@@ -41,7 +29,7 @@ export const ADMIN_NAV_GROUPS = [
       {
         id: 'dashboard',
         path: '/admin/dashboard',
-        label: '数据概览',
+        label: '数据看板',
         icon: LayoutDashboard,
         description: '今日速览；商业 / 创作 / 成本分区',
       },
@@ -55,23 +43,71 @@ export const ADMIN_NAV_GROUPS = [
       {
         id: 'monitoring.business',
         path: '/admin/monitoring',
-        label: '业务监控',
+        label: '系统健康',
         icon: Activity,
         description: '前端异常、接口性能、慢 SQL、告警与埋点',
       },
     ],
   },
   {
-    id: 'operations',
-    label: '运营',
+    id: 'users-commerce',
+    label: '用户与商业',
+    items: [
+      {
+        id: 'users.list',
+        path: '/admin/users',
+        label: '用户管理',
+        icon: Users,
+        description: '账号查询、启用/禁用、重置密码',
+      },
+      {
+        id: 'members.plans',
+        path: '/admin/members/plans',
+        label: '会员与套餐',
+        icon: Crown,
+        description: '套餐定价、权益对比与兑换码',
+      },
+      {
+        id: 'orders',
+        path: '/admin/orders',
+        label: '订单',
+        icon: ShoppingCart,
+        description: '会员与充值订单、退款',
+      },
+      {
+        id: 'commerce.settings',
+        path: '/admin/commerce/settings',
+        label: '钱包与计费',
+        icon: Wallet,
+        description: '币种、注册赠币、充值档位与定价',
+      },
+    ],
+  },
+  {
+    id: 'content-quality',
+    label: '内容质量',
     collapsible: true,
     items: [
       {
-        id: 'operations.dashboard',
-        path: '/admin/operations/dashboard',
-        label: '运营 Dashboard',
-        icon: LayoutDashboard,
-        description: '5 个核心 SLO 卡片 + 子页面入口',
+        id: 'creation.projects',
+        path: '/admin/creation/projects',
+        label: '创作项目',
+        icon: FolderKanban,
+        description: '项目列表、执行轨迹与质量缺陷',
+      },
+      {
+        id: 'operations.feedback',
+        path: '/admin/operations/feedback',
+        label: '用户反馈',
+        icon: MessageSquare,
+        description: 'P0 优先 + 抽样回访',
+      },
+      {
+        id: 'operations.content-quality',
+        path: '/admin/operations/content-quality',
+        label: '内容质量评分',
+        icon: TrendingUp,
+        description: '保存率/导出率/弃用率/卡点人群',
       },
       {
         id: 'operations.checklist',
@@ -81,18 +117,11 @@ export const ADMIN_NAV_GROUPS = [
         description: '5 分钟巡检 5 步',
       },
       {
-        id: 'operations.content-quality',
-        path: '/admin/operations/content-quality',
-        label: '内容质量',
-        icon: TrendingUp,
-        description: '保存率/导出率/弃用率/卡点人群',
-      },
-      {
-        id: 'operations.feedback',
-        path: '/admin/operations/feedback',
-        label: '用户反馈',
-        icon: MessageSquare,
-        description: 'P0 优先 + 抽样回访',
+        id: 'operations.dashboard',
+        path: '/admin/operations/dashboard',
+        label: '运营 Dashboard',
+        icon: LayoutDashboard,
+        description: '5 个核心 SLO 卡片 + 子页面入口',
       },
       {
         id: 'operations.config-hit',
@@ -104,29 +133,8 @@ export const ADMIN_NAV_GROUPS = [
     ],
   },
   {
-    id: 'creation',
-    label: '创作',
-    collapsible: true,
-    items: [
-      {
-        id: 'creation.hub',
-        path: '/admin/creation',
-        label: '创作总览',
-        icon: LayoutGrid,
-        description: '流水线总览与项目概况',
-      },
-      {
-        id: 'creation.projects',
-        path: '/admin/creation/projects',
-        label: '创作项目',
-        icon: FolderKanban,
-        description: '项目列表与执行轨迹',
-      },
-    ],
-  },
-  {
-    id: 'engine',
-    label: 'AI 引擎',
+    id: 'ai-config',
+    label: 'AI 配置',
     collapsible: true,
     items: [
       {
@@ -139,9 +147,9 @@ export const ADMIN_NAV_GROUPS = [
       {
         id: 'agent.hub',
         path: '/admin/agent',
-        label: 'Agent 配置',
+        label: 'Agent 定义',
         icon: Bot,
-        description: 'Agent 全景、填表 Agent、注册表与 LLM 路由',
+        description: '独立 Agent、Prompt 版本与 Knowledge 绑定',
       },
       {
         id: 'agent.runs',
@@ -153,16 +161,9 @@ export const ADMIN_NAV_GROUPS = [
       {
         id: 'engine.skills',
         path: '/admin/skills',
-        label: '技能管理',
+        label: '技能规则',
         icon: Wrench,
-        description: 'Agent 技能定义 / 版本管理 / 调用统计',
-      },
-      {
-        id: 'engine.library',
-        path: '/admin/library',
-        label: '素材库',
-        icon: BookOpen,
-        description: '参考作品结构化管理 / 创作时自动注入',
+        description: '技能定义、版本管理与进化提案',
       },
       {
         id: 'engine.evolution',
@@ -174,42 +175,9 @@ export const ADMIN_NAV_GROUPS = [
     ],
   },
   {
-    id: 'users-commerce',
-    label: '用户与商业',
-    items: [
-      {
-        id: 'users.list',
-        path: '/admin/users',
-        label: '用户',
-        icon: Users,
-        description: '账号查询、启用/禁用、重置密码',
-      },
-      {
-        id: 'orders',
-        path: '/admin/orders',
-        label: '订单',
-        icon: ShoppingCart,
-        description: '会员与充值订单、退款',
-      },
-      {
-        id: 'members.plans',
-        path: '/admin/members/plans',
-        label: '会员与卡密',
-        icon: Crown,
-        description: '套餐定价、权益对比与兑换码',
-      },
-      {
-        id: 'commerce.settings',
-        path: '/admin/commerce/settings',
-        label: '商业设置',
-        icon: Wallet,
-        description: '币种、注册赠币、充值档位',
-      },
-    ],
-  },
-  {
-    id: 'portal',
-    label: '站点',
+    id: 'site-config',
+    label: '站点配置',
+    collapsible: true,
     items: [
       {
         id: 'portal.content',
@@ -217,6 +185,20 @@ export const ADMIN_NAV_GROUPS = [
         label: 'C 端配置',
         icon: SlidersHorizontal,
         description: '创作表单、题材与钩子库',
+      },
+      {
+        id: 'engine.library',
+        path: '/admin/library',
+        label: '素材库',
+        icon: BookOpen,
+        description: '参考作品结构化管理 / 创作时自动注入',
+      },
+      {
+        id: 'system.configs',
+        path: '/admin/system/configs',
+        label: '动态配置中心',
+        icon: SlidersHorizontal,
+        description: '数据库配置、在线调整与审计',
       },
     ],
   },
@@ -228,7 +210,7 @@ export const ADMIN_NAV_GROUPS = [
       {
         id: 'admin.system',
         path: '/admin/system',
-        label: '系统配置',
+        label: '系统参数',
         icon: Settings2,
         description: '全局开关 / 阈值 / 配额 / 敏感词',
       },
@@ -238,13 +220,6 @@ export const ADMIN_NAV_GROUPS = [
         label: '系统维护',
         icon: Wrench,
         description: '部署环境只读快照',
-      },
-      {
-        id: 'system.configs',
-        path: '/admin/system/configs',
-        label: '动态配置',
-        icon: SlidersHorizontal,
-        description: '数据库配置、在线调整与审计',
       },
       {
         id: 'system.advanced',
@@ -316,9 +291,9 @@ export function getAdminBreadcrumb(pathname, search = '') {
     const parent = findAdminNavItem('/admin/creation/projects')
     return [
       '管理后台',
-      parent?.groupLabel || '创作',
+      parent?.groupLabel || '内容质量',
       parent?.label || '创作项目',
-      '项目监察',
+      '项目详情',
     ]
   }
   const item = findAdminNavItem(normalized, search)

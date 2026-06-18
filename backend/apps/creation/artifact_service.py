@@ -63,13 +63,13 @@ def build_fusion_snapshot(project: Project) -> Dict[str, Any]:
     gate_summary = summarize_episode_gates(scripts) if scripts else None
     episode_summaries = []
     for ep in (scripts.get("episodes") or [])[:20]:
-        gl = ep.get("gateLog") or {}
+        gl = ep.get("gateLog") or ep.get("gate_log") or {}
         episode_summaries.append(
             {
-                "episodeNumber": ep.get("episodeNumber"),
+                "episode_number": ep.get("episodeNumber") or ep.get("episode_number"),
                 "title": ep.get("title"),
-                "gatePassed": gl.get("passed"),
-                "gateIssues": (gl.get("issues") or [])[:3],
+                "gate_passed": gl.get("passed"),
+                "gate_issues": (gl.get("issues") or [])[:3],
             }
         )
 
@@ -84,7 +84,7 @@ def build_fusion_snapshot(project: Project) -> Dict[str, Any]:
         nodes.append(
             {
                 "index": int(run.node_index),
-                "fusionNodeId": "",
+                "fusion_node_id": "",
                 "name": run.agent_id or "",
                 "status": run.status,
                 "summary": (run.output_summary or {}).get("summary", "") if isinstance(run.output_summary, dict) else "",
@@ -92,48 +92,48 @@ def build_fusion_snapshot(project: Project) -> Dict[str, Any]:
         )
 
     return {
-        "projectId": str(project.id),
-        "fusionStatus": project.fusion_status,
-        "overallScore": project.overall_score,
+        "project_id": str(project.id),
+        "fusion_status": project.fusion_status,
+        "overall_score": project.overall_score,
         "grade": project.grade,
-        "readyAt": project.ready_at.isoformat() if project.ready_at else None,
-        "skillVersion": project.skill_version,
-        "projectBrief": {
-            "workingTitle": brief.get("workingTitle") or project.title,
+        "ready_at": project.ready_at.isoformat() if project.ready_at else None,
+        "skill_version": project.skill_version,
+        "project_brief": {
+            "working_title": brief.get("workingTitle") or brief.get("working_title") or project.title,
             "theme": brief.get("theme") or project.theme,
-            "episodeCount": brief.get("episodeCount") or project.episode_count,
-            "trendFormula": brief.get("trendFormula"),
-            "writingBrief": brief.get("writingBrief"),
+            "episode_count": brief.get("episodeCount") or brief.get("episode_count") or project.episode_count,
+            "trend_formula": brief.get("trendFormula") or brief.get("trend_formula"),
+            "writing_brief": brief.get("writingBrief") or brief.get("writing_brief"),
         },
-        "characterCount": chars.get("characterCount"),
-        "outlineEpisodes": outline.get("totalEpisodes"),
-        "episodeSummaries": episode_summaries,
-        "gateSummary": gate_summary,
-        "qualityReport": {
-            "finalVerdict": quality.get("finalVerdict"),
-            "complianceReport": quality.get("complianceReport"),
+        "character_count": chars.get("characterCount") or chars.get("character_count"),
+        "outline_episodes": outline.get("totalEpisodes") or outline.get("total_episodes"),
+        "episode_summaries": episode_summaries,
+        "gate_summary": gate_summary,
+        "quality_report": {
+            "final_verdict": quality.get("finalVerdict") or quality.get("final_verdict"),
+            "compliance_report": quality.get("complianceReport") or quality.get("compliance_report"),
         },
-        "scoreReport": normalize_score_report_for_api(score_raw),
-        "reviewReport": {
+        "score_report": normalize_score_report_for_api(score_raw),
+        "review_report": {
             "passed": review_raw.get("passed"),
             "issues": review_raw.get("issues") or [],
-            "pacingPassed": review_raw.get("pacingPassed"),
+            "pacing_passed": review_raw.get("pacingPassed") or review_raw.get("pacing_passed"),
         }
         if review_raw
         else None,
-        "marketingKit": {
+        "marketing_kit": {
             "titles": marketing_raw.get("titles") or [],
-            "clipHooks": marketing_raw.get("clipHooks") or marketing_raw.get("clip_hooks") or [],
-            "posterSlogans": marketing_raw.get("posterSlogans") or marketing_raw.get("poster_slogans") or [],
+            "clip_hooks": marketing_raw.get("clipHooks") or marketing_raw.get("clip_hooks") or [],
+            "poster_slogans": marketing_raw.get("posterSlogans") or marketing_raw.get("poster_slogans") or [],
         }
         if marketing_raw
         else None,
-        "polishLog": {
+        "polish_log": {
             "suggestions": polish_raw.get("suggestions") or [],
             "applied": polish_raw.get("applied"),
         }
         if polish_raw
         else None,
         "nodes": nodes,
-        "artifactKeys": list_artifact_keys(project),
+        "artifact_keys": list_artifact_keys(project),
     }

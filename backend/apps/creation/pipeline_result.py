@@ -6,7 +6,7 @@ from typing import Any, Dict
 
 from apps.workflow.fusion import get_artifact_registry
 
-from .artifact_renderer import episode_scripts_to_legacy_scripts
+from .artifact_renderer import normalize_episode_scripts_for_delivery
 from .artifact_service import get_artifact
 from .models import Project
 
@@ -26,7 +26,7 @@ def build_pipeline_result_from_project(project: Project) -> Dict[str, Any]:
         artifacts[artifact_key] = payload
         if registry.uses_legacy_script_transform(pipeline_key):
             result[pipeline_key] = (
-                episode_scripts_to_legacy_scripts(payload) if payload else {}
+                normalize_episode_scripts_for_delivery(payload) if payload else {}
             )
         else:
             result[pipeline_key] = payload

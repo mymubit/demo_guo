@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
-import { GitBranch, Layers, ShieldCheck } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { GitBranch, Layers, ShieldCheck, Package, AlertTriangle, Info } from 'lucide-react'
 import ExecutionRunPanel from '@/components/shared/ExecutionRunPanel'
 import AgentTimelineCard from '@/components/admin/AgentTimelineCard'
 import { SubSkillLegend } from '@/components/admin/SubSkillStepBar'
 import { AdminTabBar } from '@/components/admin/AdminUI'
 import ProjectOpsSummary, {
-  ProjectFusionNodesPanel,
   ProjectVerifyPanel,
 } from '@/components/admin/ProjectOpsSummary'
 import { resolveAgentDisplayName } from '@/utils/agentExecutionLabels'
@@ -14,9 +14,117 @@ import { admin } from '@/services/api'
 
 const POST_CHAIN_ORDER = ['review', 'polish', 'score', 'marketing', 'insight']
 
+function ProjectBasicPanel({ traceData }) {
+  if (!traceData) return null
+  return (
+    <div className="sf-console-panel border border-white/5 p-5 space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+        {[
+          ['题材', traceData.theme],
+          ['创作入口', traceData.creation_entry],
+          ['流水线模式', traceData.pipeline_mode],
+          ['集数', traceData.episode_count],
+          ['进度', traceData.progress_percent != null ? `${traceData.progress_percent}%` : '—'],
+          ['评分', traceData.overall_score != null ? `${traceData.overall_score} · ${traceData.grade || ''}` : '—'],
+          ['创建时间', traceData.created_at ? new Date(traceData.created_at).toLocaleString() : '—'],
+          ['更新时间', traceData.updated_at ? new Date(traceData.updated_at).toLocaleString() : '—'],
+        ].map(([label, value]) => (
+          <div key={label} className="rounded-xl border border-white/5 bg-slate-900/40 px-3 py-2">
+            <p className="text-[10px] text-navy-400">{label}</p>
+            <p className="text-sm text-white mt-0.5">{value ?? '—'}</p>
+          </div>
+        ))}
+      </div>
+      {traceData.user_id ? (
+        <Link
+          to={`/admin/users?q=${encodeURIComponent(traceData.user_phone || traceData.user_id)}`}
+          className="inline-flex text-sm text-gold-400 hover:text-gold-300"
+        >
+          查看所属用户 →
+        </Link>
+      ) : null}
+    </div>
+  )
+}
+
+function ProjectRunsPanel({ runs = [], catalog, onInspectRun }) {
+  if (!runs.length) {
+    return <p className="text-sm text-navy-400 py-8 text-center">暂无执行记录</p>
+  }
+  return (
+    <div className="space-y-2">
+      {runs.map((run) => (
+        <button
+          key={run.id}
+          type="button"
+          onClick={() => onInspectRun?.(run.id)}
+          className="w-full text-left rounded-xl hover:ring-1 hover:ring-gold-500/30 transition"
+        >
+          <ExecutionRunPanel run={run} compact catalog={catalog} />
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function ProjectArtifactsPanel({ artifacts = [] }) {
+  if (!artifacts.length) {
+    return <p className="text-sm text-navy-400 py-8 text-center">暂无 AI 产物</p>
+  }
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      {artifacts.map((item) => (
+        <div key={item.artifact_key} className="rounded-xl border border-white/5 bg-slate-900/40 p-4">
+          <p className="text-sm font-medium text-white">{item.artifact_key}</p>
+          <dl className="mt-2 space-y-1 text-xs text-navy-300">
+            {Object.entries(item)
+              .filter(([key]) => key !== 'artifact_key')
+              .map(([key, value]) => (
+                <div key={key} className="flex gap-2">
+                  <dt className="text-navy-500 shrink-0">{key}</dt>
+                  <dd className="text-navy-200 break-all">
+                    {Array.isArray(value) ? value.join('、') : String(value ?? '—')}
+                  </dd>
+                </div>
+              ))}
+          </dl>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ProjectQualityPanel({ defects = [] }) {
+  if (!defects.length) {
+    return <p className="text-sm text-navy-400 py-8 text-center">暂无质量缺陷记录</p>
+  }
+  return (
+    <div className="space-y-2">
+      {defects.map((row) => (
+        <div key={row.id} className="rounded-xl border border-white/5 bg-slate-900/40 px-4 py-3 text-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-white font-medium">{row.dimension}</span>
+            <span className="text-navy-400">· {row.defect_type}</span>
+            {row.episode != null ? <span className="text-navy-500">第 {row.episode} 集</span> : null}
+            <span className="ml-auto text-xs text-navy-400">{row.status_label || row.status}</span>
+          </div>
+          {row.details && typeof row.details === 'object' ? (
+            <p className="text-xs text-navy-300 mt-2">
+              {(row.details.message || row.details.summary || JSON.stringify(row.details)).slice(0, 240)}
+            </p>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 const TRACE_TABS = [
-  { key: 'timeline', label: 'Agent 轨迹', icon: GitBranch },
-  { key: 'nodes', label: '融合节点', icon: Layers },
+  { key: 'basic', label: '基本信息', icon: Info },
+  { key: 'timeline', label: '执行轨迹', icon: GitBranch },
+  { key: 'runs', label: '执行记录', icon: Layers },
+  { key: 'artifacts', label: 'AI 产物', icon: Package },
+  { key: 'quality', label: '质量缺陷', icon: AlertTriangle },
   { key: 'verify', label: '原创复核', icon: ShieldCheck },
 ]
 
@@ -294,11 +402,11 @@ export function RunDetailModal({ runId, onClose }) {
   )
 }
 
-/** 完整项目监察视图：摘要 + Tab（轨迹 / 节点 / 复核） */
+/** 完整项目监察视图：摘要 + 多 Tab 穿透 */
 export function ProjectAgentTraceView({
   projectId,
   compact = false,
-  activeTab = 'timeline',
+  activeTab = 'basic',
   onTabChange,
   showSummary = true,
 }) {
@@ -333,6 +441,8 @@ export function ProjectAgentTraceView({
         <AdminTabBar tabs={TRACE_TABS} active={tab} onChange={onTabChange} />
       ) : null}
 
+      {tab === 'basic' && !compact ? <ProjectBasicPanel traceData={traceData} /> : null}
+
       {tab === 'timeline' || compact ? (
         <ProjectTracePanel
           traceData={traceData}
@@ -344,8 +454,20 @@ export function ProjectAgentTraceView({
         />
       ) : null}
 
-      {tab === 'nodes' && !compact ? (
-        <ProjectFusionNodesPanel nodes={traceData.nodes} />
+      {tab === 'runs' && !compact ? (
+        <ProjectRunsPanel
+          runs={traceData.execution_runs || []}
+          catalog={catalog}
+          onInspectRun={setInspectRunId}
+        />
+      ) : null}
+
+      {tab === 'artifacts' && !compact ? (
+        <ProjectArtifactsPanel artifacts={traceData.artifacts || []} />
+      ) : null}
+
+      {tab === 'quality' && !compact ? (
+        <ProjectQualityPanel defects={traceData.quality_defects || []} />
       ) : null}
 
       {tab === 'verify' && !compact ? (

@@ -19,6 +19,7 @@ class WorksFusionSnapshotTests(TestCase):
             theme="sweet-pet",
             episode_count=10,
             status=Project.STATUS_COMPLETED,
+            fusion_status=Project.FUSION_READY,
             overall_score=88,
             grade="A",
         )
@@ -42,10 +43,12 @@ class WorksFusionSnapshotTests(TestCase):
         detail = get_project_detail(str(self.project.id), self.user)
         snapshot = detail.get("fusion_snapshot")
         self.assertIsNotNone(snapshot)
-        self.assertEqual(snapshot["overallScore"], 88)
-        self.assertEqual(snapshot["scoreReport"]["overallScore"], 88)
-        self.assertTrue(snapshot["reviewReport"]["passed"])
-        self.assertEqual(snapshot["marketingKit"]["titles"], ["标题1"])
+        self.assertEqual(snapshot["overall_score"], 88)
+        self.assertEqual(snapshot["score_report"]["overallScore"], 88)
+        self.assertTrue(snapshot["review_report"]["passed"])
+        self.assertEqual(snapshot["marketing_kit"]["titles"], ["标题1"])
+        self.assertIn("result_html", detail)
+        self.assertNotIn("rendered_result_html", detail)
 
     def test_works_detail_api_returns_fusion_snapshot(self):
         client = APIClient()
@@ -55,4 +58,4 @@ class WorksFusionSnapshotTests(TestCase):
         self.assertEqual(resp.data["code"], 0)
         snapshot = resp.data["data"].get("fusion_snapshot")
         self.assertIsNotNone(snapshot)
-        self.assertIn("scoreReport", snapshot)
+        self.assertIn("score_report", snapshot)

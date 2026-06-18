@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: scriptforge_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: test_postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.development
+      SECRET_KEY: ci-test-secret-key-not-for-production-use
+      DB_NAME: scriptforge_test
+      DB_USER: postgres
+      DB_PASSWORD: test_postgres
+      DB_HOST: localhost
+      DB_PORT: 5432
+      REDIS_URL: redis://127.0.0.1:6379/1
+      CACHE_URL: redis://127.0.0.1:6379/2
+      API_SIGN_SECRET: ci-test-sign-secret-32bytes-min!!
+      SKILL_ENCRYPT_KEY: ci-test-skill-encrypt-key-32bytes!
+      ENCRYPT_PHONE_KEY: ci-test-phone-encrypt-key-here
+      ENCRYPT_EMAIL_KEY: ci-test-email-encrypt-key-here
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: ScriptForge/backend/requirements.txt
+      - name: Install backend dependencies
+        run: |
+          pip install -r ScriptForge/backend/requirements.txt
+          pip install pytest-cov
+      - name: Migrate
+        working-directory: ScriptForge/backend
+        run: python manage.py migrate --noinput
+      - name: Run backend tests with coverage
+        working-directory: ScriptForge/backend
+        run: |
+          coverage run --source=apps manage.py test --keepdb -v 1
+          coverage report --fail-under=20
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: ScriptForge/frontend/package-lock.json
+      - name: Install frontend dependencies
+        working-directory: ScriptForge/frontend
+        run: npm ci
+      - name: Run frontend tests
+        working-directory: ScriptForge/frontend
+        run: npm test

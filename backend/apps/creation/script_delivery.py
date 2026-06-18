@@ -12,7 +12,7 @@ from typing import Any, Dict, Optional
 from django.conf import settings
 from django.utils import timezone
 
-from .artifact_renderer import episode_scripts_to_legacy_scripts
+from .artifact_renderer import normalize_episode_scripts_for_delivery
 from .artifact_service import get_artifact
 from .fusion.fusion_pipeline import scripts_result_to_markdown
 from .models import Project, ScriptWork
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def resolve_scripts(project: Project, pipeline_result: Optional[dict] = None) -> dict:
-    """从 pipeline 结果或 fusion artifact 解析 legacy scripts 结构。"""
+    """从 pipeline 结果或 fusion artifact 解析可交付 scripts 结构。"""
     if pipeline_result:
         scripts = pipeline_result.get("scripts") or {}
         if scripts.get("episodes"):
@@ -29,11 +29,11 @@ def resolve_scripts(project: Project, pipeline_result: Optional[dict] = None) ->
         artifacts = pipeline_result.get("artifacts") or {}
         episode_scripts = artifacts.get("episode_scripts")
         if episode_scripts:
-            return episode_scripts_to_legacy_scripts(episode_scripts)
+            return normalize_episode_scripts_for_delivery(episode_scripts)
 
     episode_scripts = get_artifact(project, "episode_scripts")
     if episode_scripts:
-        return episode_scripts_to_legacy_scripts(episode_scripts)
+        return normalize_episode_scripts_for_delivery(episode_scripts)
 
     return {}
 

@@ -8,6 +8,7 @@ from django.db import transaction
 from django.db.models import Q
 
 from ..models import Project
+from ..admin_status import resolve_admin_status
 from ._helpers import _get_user_project
 from ._rendering import _render_progress_html, _render_result_html
 from .content_quality import record_user_edit
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 def get_project_detail(project_id: str, user) -> dict:
     """获取作品详情（与 progress 类似，仅用于作品详情页）。"""
     project = _get_user_project(project_id, user)
+    status, status_text = resolve_admin_status(project)
     detail = {
         "project_id": str(project.id),
         "title": project.title,
@@ -25,21 +27,20 @@ def get_project_detail(project_id: str, user) -> dict:
         "episode_count": project.episode_count,
         "format_variant": project.format_variant,
         "target_platform": project.target_platform,
-        "status": project.status,
-        "status_text": project.get_status_display(),
+        "status": status,
+        "status_text": status_text,
         "progress_percent": project.progress_percent,
         "audience": project.audience,
         "reference_work": project.reference_work,
         "created_at": project.created_at,
         "updated_at": project.updated_at,
         "completed_at": project.completed_at,
-        "fusion_status": project.fusion_status,
         "overall_score": project.overall_score,
         "grade": project.grade,
         "ready_at": project.ready_at,
         "skill_version": project.skill_version,
-        "rendered_result_html": _render_result_html(project),
-        "rendered_progress_html": _render_progress_html(project),
+        "result_html": _render_result_html(project),
+        "progress_html": _render_progress_html(project),
         "fusion_snapshot": None,
     }
     try:

@@ -185,16 +185,120 @@ class IndependentAgentService:
         except Exception as exc:
             logger.warning("[IndependentAgent] 素材注入降级: %s", exc)
 
+    # 单条知识未显式限长时的默认上限（字符）
+    DEFAULT_KNOWLEDGE_CHARS_PER_BINDING = 4000
+
+    # 知识注入默认策略：校验器/Schema 仅供校验层使用，不进入 prompt；
+    # 参考剧本/示例属于「按相关性精选」内容，每类限量；规则/限制类不限量（由预算兜底）。
+    DEFAULT_INJECTION_POLICY: Dict[str, Any] = {
+        "excluded_categories": ["validator", "schema"],
+        "category_caps": {"reference_script": 2, "example": 3, "knowledge": 8},
+    }
+
+    @classmethod
+    def _injection_policy(cls, agent: AgentDefinition) -> Dict[str, Any]:
+        """合并全局默认策略与 Agent 自定义注入策略（后台可配置）。"""
+        policy: Dict[str, Any] = {
+            "excluded_categories": list(cls.DEFAULT_INJECTION_POLICY["excluded_categories"]),
+            "category_caps": dict(cls.DEFAULT_INJECTION_POLICY["category_caps"]),
+        }
+        override = getattr(agent, "knowledge_injection_policy", None) or {}
+        if isinstance(override.get("excluded_categories"), list):
+            policy["excluded_categories"] = [str(c) for c in override["excluded_categories"]]
+        if isinstance(override.get("category_caps"), dict):
+            policy["category_caps"].update(override["category_caps"])
+        if override.get("max_total_chars"):
+            policy["max_total_chars"] = int(override["max_total_chars"])
+        return policy
+
     @staticmethod
-    def load_knowledge(agent: AgentDefinition) -> List[Dict[str, Any]]:
-        rows = []
+    def _knowledge_matches_project(knowledge: AgentKnowledgeItem, project: Project | None) -> bool:
+        """相关性匹配：维度白名单为空=通用；非空则需命中项目对应值。"""
+        if project is None:
+            return True
+
+        def _hit(whitelist, value) -> bool:
+            if not whitelist:
+                return True
+            normalized = str(value or "").strip().lower()
+            return any(str(item).strip().lower() == normalized for item in whitelist)
+
+        theme = getattr(project, "theme", "")
+        platform = getattr(project, "target_platform", "")
+        return (
+            _hit(getattr(knowledge, "match_themes", None), theme)
+            and _hit(getattr(knowledge, "match_platforms", None), platform)
+            and _hit(getattr(knowledge, "match_genres", None), theme)
+        )
+
+    @classmethod
+    def load_knowledge(
+        cls, agent: AgentDefinition, project: Project | None = None
+    ) -> List[Dict[str, Any]]:
+        policy = cls._injection_policy(agent)
+        excluded = {str(c).lower() for c in policy.get("excluded_categories") or []}
+        caps = policy.get("category_caps") or {}
+        runtime = agent.runtime_policy or {}
+        max_prompt_tokens = int(runtime.get("max_prompt_tokens") or 40000)
+        budget_chars = int(
+            policy.get("max_total_chars") or max(4000, int(max_prompt_tokens * 4 * 0.35))
+        )
+
+        # 1. 过滤：仅保留可作为 prompt 上下文、且与当前项目相关的知识
+        candidates = []
         for binding in AgentDefinitionService.enabled_bindings(agent):
-            if binding.binding_type == AgentKnowledgeBinding.BindingType.VALIDATOR:
+            if binding.binding_type in (
+                AgentKnowledgeBinding.BindingType.VALIDATOR,
+                AgentKnowledgeBinding.BindingType.OUTPUT_SCHEMA,
+            ):
+                continue
+            if binding.inject_position == AgentKnowledgeBinding.InjectPosition.VALIDATOR:
                 continue
             knowledge = binding.knowledge
-            text = knowledge.content_text or ""
-            if binding.max_chars:
-                text = text[: int(binding.max_chars)]
+            if not getattr(knowledge, "is_prompt_injectable", True):
+                continue
+            if str(knowledge.category).lower() in excluded:
+                continue
+            if not cls._knowledge_matches_project(knowledge, project):
+                continue
+            candidates.append(binding)
+
+        # 2. 跨源去重（同类同标题视为重复，保留排序靠前者）
+        seen_signatures = set()
+        per_category_count: Dict[str, int] = {}
+        selected = []
+        for binding in candidates:
+            knowledge = binding.knowledge
+            signature = (str(knowledge.category).lower(), str(knowledge.title).strip().lower())
+            if signature in seen_signatures:
+                continue
+            # 3. 每类别 Top-N（candidates 已按 order_index/priority 排序，靠前即更高优先）
+            category = str(knowledge.category)
+            cap = caps.get(category)
+            if cap is not None and per_category_count.get(category, 0) >= int(cap):
+                continue
+            seen_signatures.add(signature)
+            per_category_count[category] = per_category_count.get(category, 0) + 1
+            selected.append(binding)
+
+        # 4. 组装并按总预算兜底截断
+        rows = []
+        used_chars = 0
+        for binding in selected:
+            if used_chars >= budget_chars:
+                break
+            knowledge = binding.knowledge
+            per_cap = int(binding.max_chars) if binding.max_chars else cls.DEFAULT_KNOWLEDGE_CHARS_PER_BINDING
+            text = (knowledge.content_text or "")[:per_cap]
+            content_json = knowledge.content_json or {}
+            json_len = len(json.dumps(content_json, ensure_ascii=False)) if content_json else 0
+            if json_len > per_cap:
+                content_json = {}
+                json_len = 0
+            remaining = budget_chars - used_chars
+            if len(text) + json_len > remaining:
+                text = text[: max(0, remaining - json_len)]
+            used_chars += len(text) + json_len
             rows.append(
                 {
                     "knowledge_id": knowledge.knowledge_id,
@@ -202,7 +306,7 @@ class IndependentAgentService:
                     "category": knowledge.category,
                     "inject_position": binding.inject_position,
                     "content_text": text,
-                    "content_json": knowledge.content_json or {},
+                    "content_json": content_json,
                 }
             )
         return rows
@@ -271,7 +375,7 @@ class IndependentAgentService:
         params: Dict[str, Any],
     ) -> Dict[str, Any]:
         input_payload = cls.build_agent_input(project, agent, params)
-        knowledge = cls.load_knowledge(agent)
+        knowledge = cls.load_knowledge(agent, project)
         system_prompt, user_prompt, prompt_version = cls.render_agent_prompt(agent, input_payload, knowledge)
         estimated = estimate_tokens(system_prompt + "\n" + user_prompt)
         route = AgentDefinitionService.active_route(agent)
@@ -331,18 +435,44 @@ class IndependentAgentService:
             user_prompt = f"{user_prompt}\n\n{suffix}"
         return prompt.system_prompt, user_prompt, prompt.version
 
-    @staticmethod
-    def _artifact_key_hint(agent: AgentDefinition) -> str:
-        """注入契约允许的 artifact_key 取值，防止 LLM 自创 key。"""
-        allowed = [str(k) for k in (agent.output_contract or {}).get("artifacts") or []]
+    # 各产物 schema 的强制输出字段说明，防止 LLM 自由发挥字段名导致校验失败
+    SCHEMA_FIELD_HINTS: Dict[str, str] = {
+        "episode-scripts.v1": (
+            "payload 必须包含 episodes 数组，每个元素含 episodeNumber（数字）与剧本正文字段。"
+        ),
+        "review-report.v1": (
+            "payload 必须包含布尔字段 passed（true=通过，false=不通过），"
+            "可选 issues 数组与布尔 pacingPassed；不要用 reviewResult/overallStatus 等替代字段名。"
+        ),
+        "script-score-report.v1": (
+            "payload 必须包含 overallScore（数字）或 grade（等级字符串）。"
+        ),
+        "marketing-kit.v1": (
+            "payload 的 titles/clipHooks/posterSlogans 若提供必须为数组。"
+        ),
+        "insight-report.v1": (
+            "payload 至少包含 layer1_peel / layer2_mirror / layer3_invert 中的一个对象。"
+        ),
+        "polish-log.v1": "payload 的 suggestions 若提供必须为数组。",
+    }
+
+    @classmethod
+    def _artifact_key_hint(cls, agent: AgentDefinition) -> str:
+        """注入契约允许的 artifact_key 取值与产物字段规范，防止 LLM 自创结构。"""
+        contract = agent.output_contract or {}
+        allowed = [str(k) for k in contract.get("artifacts") or []]
         if not allowed:
             return ""
         default_key = getattr(agent, "default_output_artifact_key", "") or allowed[0]
-        return (
+        parts = [
             "artifact_key 字段只能取以下契约值之一，禁止自行命名或拼接主题："
             + " / ".join(allowed)
             + f"；若只输出单个产物，artifact_key 必须使用 {default_key}。"
-        )
+        ]
+        schema_hint = cls.SCHEMA_FIELD_HINTS.get(str(contract.get("schema_version") or ""))
+        if schema_hint:
+            parts.append(schema_hint)
+        return " ".join(parts)
 
     @staticmethod
     def validate_output(agent: AgentDefinition, output: Dict[str, Any]) -> Dict[str, Any]:
@@ -559,7 +689,7 @@ class IndependentAgentService:
         provider_id = str(route.llm_provider_id)
         try:
             input_payload = run.input_snapshot or cls.build_agent_input(project, agent, run.run_params or {})
-            knowledge = cls.load_knowledge(agent)
+            knowledge = cls.load_knowledge(agent, project)
             system_prompt, user_prompt, prompt_version = cls.render_agent_prompt(agent, input_payload, knowledge)
             max_completion = route.max_completion_tokens or route.max_tokens or (agent.runtime_policy or {}).get(
                 "max_completion_tokens"

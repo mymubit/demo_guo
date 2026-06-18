@@ -75,7 +75,7 @@ def episode_scripts_to_markdown(episode_scripts: dict) -> str:
     return "\n\n".join(parts)
 
 
-def episode_scripts_to_legacy_scripts(episode_scripts: dict) -> dict:
+def normalize_episode_scripts_for_delivery(episode_scripts: dict) -> dict:
     episodes = []
     total_words = 0
     total_scenes = 0
