@@ -38,6 +38,7 @@ from apps.creation.serializers import (
 )
 from apps.creation.models import Project
 from apps.creation.services import CreationService
+from apps.portal.creation.legacy_gone import legacy_workspace_gone_response
 
 logger = logging.getLogger(__name__)
 
@@ -83,23 +84,13 @@ class CreationSubmitView(APIView):
                 status=status.HTTP_200_OK,
             )
 
-        # 调试：CREATION_FORCE_SYNC_PIPELINE=true 时同步跑（阻塞 HTTP，勿用于生产）
-        from django.conf import settings as django_settings
-
-        if getattr(django_settings, "CREATION_FORCE_SYNC_PIPELINE", False):
-            from apps.creation.tasks import run_creation_pipeline_sync, run_creation_step_sync
-
-            logger.warning(
-                "[Creation] CREATION_FORCE_SYNC_PIPELINE 已开启，同步执行 project=%s",
-                project.id,
-            )
-            if project.pipeline_mode == Project.MODE_STEP:
-                run_creation_step_sync(str(project.id), 1)
-            else:
-                run_creation_pipeline_sync(str(project.id))
-
         result = CreationSubmitResultSerializer(
-            {"project_id": str(project.id), "estimated_minutes": estimated_minutes}
+            {
+                "project_id": str(project.id),
+                "estimated_minutes": estimated_minutes,
+                "status": project.status,
+                "workspace_url": f"/creation?project={project.id}",
+            }
         )
         return Response(
             {"code": 0, "message": "success", "data": result.data},
@@ -397,7 +388,10 @@ class CreationWorkspaceView(APIView):
 
     def get(self, request, project_id: str):
         try:
-            data = CreationService.get_workspace(project_id, request.user)
+            project = CreationService._get_user_project(project_id, request.user)
+            from apps.creation.agent_runtime.workspace import build_independent_workspace
+
+            data = build_independent_workspace(project)
         except PermissionDenied as exc:
             return Response(
                 {"code": 403, "message": safe_api_message(exc, "无权限"), "data": None},
@@ -409,28 +403,146 @@ class CreationWorkspaceView(APIView):
         )
 
 
-def _trigger_workspace_generation(request, project_id: str, node_index: int) -> dict:
-    body = request.data if isinstance(request.data, dict) else {}
-    return CreationService.trigger_skill_generation(
-        project_id,
-        request.user,
-        int(node_index),
-        script_from=body.get("from_episode"),
-        script_to=body.get("to_episode"),
-        batch_size=body.get("batch_size"),
-        regenerate=bool(body.get("regenerate")),
-        outline_mode=body.get("outline_mode"),
-        outline_stage_key=body.get("stage_key"),
-    )
+class IndependentAgentRunView(APIView):
+    """POST /api/creation/projects/<project_id>/agents/<agent_id>/run/"""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, project_id: str, agent_id: str):
+        body = request.data if isinstance(request.data, dict) else {}
+        params = body.get("params") if isinstance(body.get("params"), dict) else {}
+        try:
+            project = CreationService._get_user_project(project_id, request.user)
+            from apps.creation.agent_runtime.independent_service import IndependentAgentService
+            from apps.creation.tasks import run_independent_agent
+            from dj_queue.api import enqueue_on_commit
+
+            result = IndependentAgentService.enqueue_run(project, request.user, agent_id, params)
+            run = result.run
+            if result.should_enqueue:
+                enqueue_on_commit(run_independent_agent, str(project.id), agent_id, params, str(run.id))
+            data = {
+                "run_id": str(run.id),
+                "agent_id": run.agent_id,
+                "status": "queued" if result.created_new_run else run.status,
+                "project_id": str(project.id),
+                "created_new_run": result.created_new_run,
+                "already_running": not result.created_new_run,
+            }
+        except (PermissionDenied, ValueError) as exc:
+            return Response(
+                {"code": 403, "message": safe_api_message(exc, "无法运行 Agent"), "data": None},
+                status=status.HTTP_200_OK,
+            )
+        except Exception as exc:  # noqa: BLE001
+            return Response(
+                {"code": 400, "message": safe_api_message(exc, "无法运行 Agent"), "data": None},
+                status=status.HTTP_200_OK,
+            )
+        return Response({"code": 0, "message": "success", "data": data}, status=status.HTTP_200_OK)
 
 
-def _save_workspace_content(request, project_id: str, node_index: int) -> dict:
-    return CreationService.save_workspace_skill(
-        project_id,
-        request.user,
-        int(node_index),
-        request.data if isinstance(request.data, dict) else {},
-    )
+class IndependentAgentEstimateView(APIView):
+    """POST /api/creation/projects/<project_id>/agents/<agent_id>/estimate/"""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, project_id: str, agent_id: str):
+        body = request.data if isinstance(request.data, dict) else {}
+        params = body.get("params") if isinstance(body.get("params"), dict) else {}
+        try:
+            project = CreationService._get_user_project(project_id, request.user)
+            from apps.creation.agent_runtime.independent_service import IndependentAgentService
+
+            data = IndependentAgentService.preview_run(project, agent_id, params)
+        except PermissionDenied as exc:
+            return Response(
+                {"code": 403, "message": safe_api_message(exc, "无权限"), "data": None},
+                status=status.HTTP_200_OK,
+            )
+        except Exception as exc:  # noqa: BLE001
+            return Response(
+                {"code": 400, "message": safe_api_message(exc, "无法预估 tokens"), "data": None},
+                status=status.HTTP_200_OK,
+            )
+        return Response({"code": 0, "message": "success", "data": data}, status=status.HTTP_200_OK)
+
+
+class IndependentAgentRunListView(APIView):
+    """GET /api/creation/projects/<project_id>/agents/<agent_id>/runs/"""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id: str, agent_id: str):
+        try:
+            project = CreationService._get_user_project(project_id, request.user)
+            from apps.creation.monitoring.execution_run_service import AgentExecutionRunService
+
+            data = AgentExecutionRunService.list_runs_for_project(project, agent_id=agent_id)
+        except PermissionDenied as exc:
+            return Response(
+                {"code": 403, "message": safe_api_message(exc, "无权限"), "data": None},
+                status=status.HTTP_200_OK,
+            )
+        return Response({"code": 0, "message": "success", "data": data}, status=status.HTTP_200_OK)
+
+
+class IndependentAgentRunDetailView(APIView):
+    """GET /api/creation/projects/<project_id>/runs/<run_id>/"""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id: str, run_id: str):
+        try:
+            project = CreationService._get_user_project(project_id, request.user)
+            from apps.creation.monitoring.execution_run_service import AgentExecutionRunService
+
+            data = AgentExecutionRunService.get_run_detail(run_id, include_sensitive=False)
+            if not data or data.get("project_id") != str(project.id):
+                raise PermissionDenied("运行记录不存在")
+        except PermissionDenied as exc:
+            return Response(
+                {"code": 403, "message": safe_api_message(exc, "无权限"), "data": None},
+                status=status.HTTP_200_OK,
+            )
+        return Response({"code": 0, "message": "success", "data": data}, status=status.HTTP_200_OK)
+
+
+class ProjectArtifactView(APIView):
+    """GET /api/creation/projects/<project_id>/artifacts/<artifact_key>/"""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_id: str, artifact_key: str):
+        try:
+            project = CreationService._get_user_project(project_id, request.user)
+            from apps.creation.artifact_service import get_artifact
+            from apps.creation.workspace.workspace_editor import build_artifact_editor_view
+
+            payload = get_artifact(project, artifact_key)
+            if payload is None:
+                return Response(
+                    {"code": 404, "message": "artifact not found", "data": None},
+                    status=status.HTTP_200_OK,
+                )
+            editor_view = build_artifact_editor_view(project, artifact_key)
+        except PermissionDenied as exc:
+            return Response(
+                {"code": 403, "message": safe_api_message(exc, "无权限"), "data": None},
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {
+                "code": 0,
+                "message": "success",
+                "data": {
+                    "artifact_key": artifact_key,
+                    "payload": payload,
+                    "editor_view": editor_view,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class CreationAgentGenerateView(APIView):
@@ -439,17 +551,7 @@ class CreationAgentGenerateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, project_id: str, node_index: int):
-        try:
-            data = _trigger_workspace_generation(request, project_id, node_index)
-        except PermissionDenied as exc:
-            return Response(
-                {"code": 403, "message": safe_api_message(exc, "无法生成"), "data": None},
-                status=status.HTTP_200_OK,
-            )
-        return Response(
-            {"code": 0, "message": "success", "data": data},
-            status=status.HTTP_200_OK,
-        )
+        return legacy_workspace_gone_response()
 
 
 class CreationAgentContentView(APIView):
@@ -458,17 +560,7 @@ class CreationAgentContentView(APIView):
     permission_classes = [IsAuthenticated]
 
     def put(self, request, project_id: str, node_index: int):
-        try:
-            data = _save_workspace_content(request, project_id, node_index)
-        except PermissionDenied as exc:
-            return Response(
-                {"code": 403, "message": safe_api_message(exc, "无法保存"), "data": None},
-                status=status.HTTP_200_OK,
-            )
-        return Response(
-            {"code": 0, "message": "success", "data": data},
-            status=status.HTTP_200_OK,
-        )
+        return legacy_workspace_gone_response()
 
 
 class CreationAgentQualityAlertAckView(APIView):
@@ -477,23 +569,6 @@ class CreationAgentQualityAlertAckView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, project_id: str, node_index: int):
-        body = request.data if isinstance(request.data, dict) else {}
-        alert_code = str(body.get("alert_code") or "").strip()
-        try:
-            data = CreationService.acknowledge_quality_alert(
-                project_id,
-                request.user,
-                int(node_index),
-                alert_code,
-            )
-        except PermissionDenied as exc:
-            return Response(
-                {"code": 403, "message": safe_api_message(exc, "无法确认"), "data": None},
-                status=status.HTTP_200_OK,
-            )
-        return Response(
-            {"code": 0, "message": "success", "data": data},
-            status=status.HTTP_200_OK,
-        )
+        return legacy_workspace_gone_response()
 
 

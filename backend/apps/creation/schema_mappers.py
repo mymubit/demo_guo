@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Pipeline / 表单数据 → 技能库 Schema 形态（网站适配技能，不改 demo4book）。
+Pipeline / 表单数据 → 技能库 Schema 形态（网站侧适配，不修改外部 SSOT 源文件）。
 """
 from __future__ import annotations
 

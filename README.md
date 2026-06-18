@@ -113,7 +113,7 @@ Redis >= 7
 
 ```bash
 git clone <repository-url>
-cd demo4book
+cd ScriptForge
 ```
 
 ### 2. 安装依赖
@@ -156,8 +156,9 @@ DB_HOST=localhost
 DB_PORT=5432
 REDIS_URL=redis://:redis_password_2024@127.0.0.1:6379/1
 CACHE_URL=redis://:redis_password_2024@127.0.0.1:6379/2
-FUSION_SKILL_ROOT=<demo4book/short-drama-script-creator 绝对路径>
 ```
+
+独立 Agent 模式下，创作知识/Prompt 已入库，**无需**配置外部技能根目录或挂载旧版资产目录。
 
 ### 3.5 启动基础设施（Windows 推荐）
 
@@ -173,7 +174,12 @@ npm run docker:infra
 ```bash
 # 项目根目录（需先 npm run docker:infra）
 npm run dev:setup
-cd backend && python manage.py createsuperuser
+cd backend
+python manage.py seed_independent_agents
+# 首次从外部资产目录导入知识（仅需一次；导入后可删除仓库外的旧资产目录）
+# python manage.py inventory_external_assets --roots <legacy-asset-root-a> <legacy-asset-root-b> --output external_asset_inventory.json
+# python manage.py import_agent_assets --inventory external_asset_inventory.json --commit
+python manage.py createsuperuser
 ```
 
 ### 5. 启动开发服务器
@@ -215,7 +221,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ## 📂 项目结构
 
 ```
-demo4book/
+ScriptForge/
 ├── frontend/                           # React 前端应用
 │   ├── src/
 │   │   ├── main.jsx                   # 入口文件

@@ -46,37 +46,35 @@ class CreationWorkspaceApiTests(TestCase):
         self.client.force_authenticate(user=self.user)
 
     def test_get_workspace_payload(self):
+        from apps.agent.definition_service import AgentDefinitionService
+
+        AgentDefinitionService.ensure_defaults()
         res = self.client.get(f"/api/creation/projects/{self.project.id}/workspace/")
         self.assertEqual(res.status_code, 200)
         body = res.json()
         self.assertEqual(body.get("code"), 0)
         data = body.get("data") or {}
-        self.assertIn("post_script", data)
-        self.assertIn("can_export_zip", data)
-        self.assertIn("can_share", data)
-        self.assertFalse(data["can_share"])
+        project = data.get("project") or {}
+        self.assertIn("can_download", project)
+        self.assertIn("can_share", project)
+        self.assertFalse(project["can_share"])
         agents = data.get("agents") or []
-        self.assertEqual(len(agents), 5)
-        self.assertIn("readable_markdown", agents[0])
+        self.assertGreaterEqual(len(agents), 5)
+        self.assertIn("agent_id", agents[0])
+        self.assertIn("health", agents[0])
+        artifacts = data.get("artifacts") or []
+        artifact_keys = {row.get("artifact_key") for row in artifacts}
+        self.assertIn("project_brief", artifact_keys)
+        self.assertIn("episode_scripts", artifact_keys)
 
-    def test_save_agent_content_round_trip(self):
+    def test_legacy_agent_content_returns_410(self):
         put_res = self.client.put(
             f"/api/creation/projects/{self.project.id}/agents/1/content/",
-            {
-                "fields": [
-                    {"key": "themeDisplayName", "value": "甜宠 API"},
-                    {"key": "episodeCount", "value": "8"},
-                ]
-            },
+            {"fields": [{"key": "themeDisplayName", "value": "甜宠 API"}]},
             format="json",
         )
         self.assertEqual(put_res.status_code, 200)
-        self.assertEqual(put_res.json().get("code"), 0)
-
-        get_res = self.client.get(f"/api/creation/projects/{self.project.id}/workspace/")
-        data = get_res.json().get("data") or {}
-        self.project.refresh_from_db()
-        self.assertEqual(self.project.episode_count, 8)
+        self.assertEqual(put_res.json().get("code"), 410)
 
     def test_share_pending_project_forbidden(self):
         res = self.client.post(f"/api/creation/share/{self.project.id}/", {}, format="json")

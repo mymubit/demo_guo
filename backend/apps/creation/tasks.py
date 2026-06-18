@@ -26,6 +26,29 @@ from .services import PIPELINE_NODES, _render_progress_html, _render_result_html
 logger = logging.getLogger(__name__)
 
 
+@task(queue_name="creation")
+def run_independent_agent(project_id: str, agent_id: str, params: dict | None = None, run_id: str = "") -> dict:
+    """Run one independent Agent without WorkflowEngine or sub-skill orchestration."""
+    from .agent_runtime.independent_service import IndependentAgentService
+    from .models import AgentExecutionRun
+
+    run = None
+    if run_id:
+        run = AgentExecutionRun.objects.select_related("project").filter(id=run_id).first()
+    if run is None:
+        project = Project.objects.get(id=project_id)
+        result = IndependentAgentService.enqueue_run(project, project.user, agent_id, params or {})
+        run = result.run
+    IndependentAgentService.execute_run(run)
+    run.refresh_from_db()
+    return {
+        "run_id": str(run.id),
+        "project_id": str(run.project_id),
+        "agent_id": run.agent_id,
+        "status": run.status,
+    }
+
+
 def _refund_creation_submit_if_needed(project: Project, reason: str) -> None:
     """Refund creation submit charge when main creation fails."""
     from apps.billing.models import CoinLedger

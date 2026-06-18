@@ -2,10 +2,10 @@
 """LLM Provider 初始化预设 — 仅 setup_volcano_agent_llm 等命令使用。"""
 
 NODE_PRESET_KEYS: dict[str, str] = {
-    "node-2-structure": "ark-deepseek-v4-flash",
-    "node-3-character": "ark-deepseek-v4-flash",
-    "node-4-outline": "ark-deepseek-v4-flash",
-    "node-5-script": "glm-5",
+    "node_structure": "ark-deepseek-v4-flash",
+    "node_character": "ark-deepseek-v4-flash",
+    "node_outline": "ark-deepseek-v4-flash",
+    "node_script": "glm-5",
 }
 
 AGENT_PRESET_KEYS: dict[str, str] = {

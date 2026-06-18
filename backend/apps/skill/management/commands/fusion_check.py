@@ -8,5 +8,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         raise CommandError(
             "fusion_check has been removed. ScriptForge now uses DB-only assets; "
-            "run absorb_external_assets once if migration is needed."
+            "run verify_agent_assets_import and verify_external_asset_removal if needed."
         )

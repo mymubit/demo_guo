@@ -20,9 +20,15 @@ from .views import (
     CreationAgentGenerateView,
     CreationAgentContentView,
     CreationAgentQualityAlertAckView,
+    IndependentAgentRunDetailView,
+    IndependentAgentRunListView,
+    IndependentAgentRunView,
+    IndependentAgentEstimateView,
+    ProjectArtifactView,
 )
 from .fusion_views import (
     AgentCatalogView,
+    AgentWorkspaceCatalogView,
     CreationNodePreviewView,
     FusionArtifactView,
     FusionCatalogView,
@@ -35,6 +41,11 @@ app_name = "creation"
 
 urlpatterns = [
     path("agents/catalog/", AgentCatalogView.as_view(), name="creation-agent-catalog"),
+    path(
+        "agents/workspace-catalog/",
+        AgentWorkspaceCatalogView.as_view(),
+        name="creation-agent-workspace-catalog",
+    ),
     path("fusion/catalog/", FusionCatalogView.as_view(), name="creation-fusion-catalog"),
     path("fusion/nodes/", FusionNodesView.as_view(), name="creation-fusion-nodes"),
     path(
@@ -51,6 +62,31 @@ urlpatterns = [
         "projects/<str:project_id>/workspace/",
         CreationWorkspaceView.as_view(),
         name="creation-workspace",
+    ),
+    path(
+        "projects/<str:project_id>/agents/<str:agent_id>/run/",
+        IndependentAgentRunView.as_view(),
+        name="creation-independent-agent-run",
+    ),
+    path(
+        "projects/<str:project_id>/agents/<str:agent_id>/estimate/",
+        IndependentAgentEstimateView.as_view(),
+        name="creation-independent-agent-estimate",
+    ),
+    path(
+        "projects/<str:project_id>/agents/<str:agent_id>/runs/",
+        IndependentAgentRunListView.as_view(),
+        name="creation-independent-agent-runs",
+    ),
+    path(
+        "projects/<str:project_id>/runs/<str:run_id>/",
+        IndependentAgentRunDetailView.as_view(),
+        name="creation-independent-run-detail",
+    ),
+    path(
+        "projects/<str:project_id>/artifacts/<str:artifact_key>/",
+        ProjectArtifactView.as_view(),
+        name="creation-project-artifact",
     ),
     path(
         "projects/<str:project_id>/agents/<int:node_index>/quality-alert/ack/",

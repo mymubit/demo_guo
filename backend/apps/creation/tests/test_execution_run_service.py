@@ -156,3 +156,25 @@ class AgentExecutionRunServiceTests(TestCase):
         self.assertEqual(detail["llm_summary"]["call_count"], 1)
         self.assertEqual(detail["llm_summary"]["total_tokens"], 100)
         self.assertEqual(len(detail["llm_usage"]), 1)
+        self.assertIn("rendered_prompt_preview", detail)
+
+    def test_serialize_run_portal_strips_sensitive_fields(self):
+        run = AgentExecutionRun.objects.create(
+            project=self.project,
+            user=self.user,
+            agent_id="brief",
+            status=AgentExecutionRun.STATUS_COMPLETED,
+            rendered_prompt_preview="hidden prompt text",
+            input_snapshot={
+                "required_artifacts": ["project_brief"],
+                "artifacts": {"project_brief": {"secret": True}},
+                "params": {"episode_from": 2},
+            },
+        )
+        portal = AgentExecutionRunService.serialize_run(run, include_sensitive=False)
+        self.assertNotIn("rendered_prompt_preview", portal)
+        self.assertNotIn("artifacts", portal.get("input_snapshot") or {})
+
+        admin = AgentExecutionRunService.serialize_run(run, include_sensitive=True)
+        self.assertEqual(admin.get("rendered_prompt_preview"), "hidden prompt text")
+        self.assertIn("artifacts", admin.get("input_snapshot") or {})

@@ -26,7 +26,7 @@ Write-Host ""
 $envFile = Join-Path $root "backend\.env"
 if (-not (Test-Path $envFile)) {
     Copy-Item (Join-Path $root "backend\.env.example") $envFile
-    Write-Host "[提示] 已生成 backend\.env，请确认 FUSION_SKILL_ROOT 路径正确" -ForegroundColor Magenta
+    Write-Host "[提示] 已生成 backend\.env；独立 Agent 配置请在后台数据库中维护" -ForegroundColor Magenta
 }
 
 # 3) 依赖（仅首次需要，已装过会跳过很快）

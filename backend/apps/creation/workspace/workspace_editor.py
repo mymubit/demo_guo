@@ -306,7 +306,7 @@ def _outline_episode_to_artifact(ep: dict, *, prev: Optional[dict] = None) -> di
     }
 
 
-def build_editor_view(project: Project, node_index: int) -> Optional[dict]:
+def build_editor_view(project: Project, node_index: int, *, read_only: bool = False) -> Optional[dict]:
     key = artifact_key_for_node(node_index)
     if not key:
         return None
@@ -406,7 +406,7 @@ def build_editor_view(project: Project, node_index: int) -> Optional[dict]:
 
         structure_plan = get_artifact(project, "structure_plan") or {}
         payload, fixed_summaries = expand_legacy_episode_summaries(payload)
-        if fixed_summaries:
+        if fixed_summaries and not read_only:
             save_artifact(project, "series_outline", payload)
         if not payload.get("stageBlocks"):
             payload = build_outline_skeleton(
@@ -1041,3 +1041,26 @@ def compute_script_batch_range(
     unit = BillingService.get_node_coin_cost(5)
     cost = unit
     return from_episode, to_episode, cost
+
+
+ARTIFACT_KEY_TO_NODE_INDEX = {
+    "project_brief": 1,
+    "structure_plan": 2,
+    "character_bible": 3,
+    "series_outline": 4,
+    "episode_scripts": 5,
+}
+
+
+def build_artifact_editor_view(project: Project, artifact_key: str) -> Optional[dict]:
+    """将 artifact payload 转为 C 端结构化预览视图（只读，不写库）。"""
+    payload = get_artifact(project, artifact_key)
+    if payload is None:
+        return None
+    node_index = ARTIFACT_KEY_TO_NODE_INDEX.get(str(artifact_key))
+    if node_index is not None:
+        view = build_editor_view(project, node_index, read_only=True)
+        if view is not None:
+            view["editable"] = False
+            return view
+    return {"mode": "json", "payload": payload, "editable": False}

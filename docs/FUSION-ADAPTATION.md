@@ -1,5 +1,7 @@
 # ScriptForge 适配 demo4book 融合技能
 
+> **ARCHIVED（2026-06-18）**：外部 `demo4book` / `ai-drama-skills-v2` 已移除；C 端主链路为独立 Agent + DB 定义。本文档仅作历史资产迁移参考。
+
 ## 核心原则（不可颠倒）
 
 | 角色 | 职责 |

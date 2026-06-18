@@ -18,9 +18,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { creation, billing, membership as membershipApi, useConfig } from '@/services/api'
 import CreationEntryHub from '@/components/creation/CreationEntryHub'
-import ProjectWorkspace from '@/components/creation/ProjectWorkspace'
+import IndependentAgentWorkspace from '@/components/creation/IndependentAgentWorkspace'
 import CreationFormShell from '@/components/creation/CreationFormShell'
-import SkillPipelineShowcase from '@/components/creation/SkillPipelineShowcase'
+import AgentWorkspaceShowcase from '@/components/creation/AgentWorkspaceShowcase'
 import EntryFormHeader from '@/components/creation/EntryFormHeader'
 import NovelAdaptationPanel from '@/components/creation/NovelAdaptationPanel'
 import StoryBriefFields from '@/components/creation/StoryBriefFields'
@@ -34,7 +34,6 @@ import {
   resolveEntryProfile,
   validateEntryForm,
   buildSubmitPayload,
-  getEntryPipelineHints,
   getEntryFormStepIndex,
   getRequiredFieldMinLength,
 } from '@/utils/creationEntry'
@@ -108,6 +107,17 @@ export default function Creation() {
   const [membershipActive, setMembershipActive] = useState(false)
   const [membershipLoaded, setMembershipLoaded] = useState(false)
   const [membershipError, setMembershipError] = useState('')
+  const [workspaceAgents, setWorkspaceAgents] = useState([])
+  const [workspaceCatalogHint, setWorkspaceCatalogHint] = useState('')
+
+  useEffect(() => {
+    creation.workspaceCatalog().then((data) => {
+      setWorkspaceAgents(data?.agents || [])
+      setWorkspaceCatalogHint(data?.hint || '')
+    }).catch(() => {
+      setWorkspaceAgents([])
+    })
+  }, [])
 
   useEffect(() => {
     if (selectedPipelineId) {
@@ -301,6 +311,8 @@ export default function Creation() {
                     billingError={billingError}
                     pipelineNodes={visiblePipelineNodes}
                     executionPlan={executionPlan}
+                    workspaceAgents={workspaceAgents}
+                    workspaceCatalogHint={workspaceCatalogHint}
                     currencyName={currencyName}
                     onBack={() => setStage(1)}
                     onConfirm={handleConfirmStart}
@@ -365,10 +377,9 @@ export default function Creation() {
           )}
 
           {stage === 3 && projectId && (
-            <ProjectWorkspace
+            <IndependentAgentWorkspace
               key="workspace"
               projectId={projectId}
-              currencyName={currencyName}
               onBack={() => navigate('/works')}
               onRestart={() => {
                 setSearchParams({}, { replace: true })
@@ -880,16 +891,13 @@ function StageBrief({
   billingError = '',
   pipelineNodes: fusionPipelineNodes = [],
   executionPlan = null,
+  workspaceAgents = [],
+  workspaceCatalogHint = '',
   currencyName = '创作币',
 }) {
   const entryProfile = resolveEntryProfile(catalog, formData.creationEntry)
   const show = entryProfile.show || {}
-  const pipelineHints = getEntryPipelineHints(formData.creationEntry, entryProfile)
-  const autoCost = billingCatalog?.estimated_auto_cost ?? 0
   const submitCost = billingCatalog?.submit_cost ?? 0
-  const pipelineNodes = fusionPipelineNodes.length
-    ? fusionPipelineNodes
-    : filterCreationPipelineNodes(billingCatalog?.pipeline_nodes || [])
   const theme = themes?.find((t) => t.key === formData.theme)
   const budgetLevel = (catalog.budgetLevels || []).find((item) => {
     const key = item.key || item.value || item.name
@@ -1026,35 +1034,30 @@ function StageBrief({
 
         </div>
 
-        {pipelineNodes.length > 0 && (
+        {workspaceAgents.length > 0 ? (
           <div className="mb-8">
-            <SkillPipelineShowcase
-              nodes={filterCreationPipelineNodes(pipelineNodes)}
-              currencyName={currencyName}
+            <AgentWorkspaceShowcase
+              agents={workspaceAgents}
+              hint={workspaceCatalogHint}
               compact
-              prefilledSteps={pipelineHints.prefilledSteps}
-              executionPlan={executionPlan}
             />
-            {pipelineHints.caption ? (
-              <p className="text-xs text-navy-400 mt-2 px-1">{pipelineHints.caption}</p>
-            ) : null}
           </div>
-        )}
+        ) : null}
 
         {/* 预估信息 */}
         <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-5 mb-8 space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-navy-300">预估扣费</span>
             <span className="text-gold-400 font-semibold">
-              {autoCost ? `约 ${autoCost + submitCost} ${currencyName}` : `发起 ${submitCost} ${currencyName} + 各节点`}
+              发起 {submitCost} {currencyName}，各 Agent 运行按次另计
             </span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2 text-navy-300">
               <Clock className={ICON.md} />
-              <span>预计创作时间</span>
+              <span>进入工作台后</span>
             </div>
-            <span className="text-gold-400 font-semibold">约 3-5 分钟</span>
+            <span className="text-gold-400 font-semibold">手动运行各 Agent</span>
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-navy-300">当前余额</span>
@@ -1062,21 +1065,6 @@ function StageBrief({
               {billingLoaded && !billingError ? `${billingCatalog?.balance ?? 0} ${currencyName}` : '加载失败'}
             </span>
           </div>
-          {pipelineNodes.length > 0 && (
-            <div className="pt-2 border-t border-white/5">
-              <div className="text-xs text-navy-400 mb-2">主链节点币价（启用项）</div>
-              <div className="flex flex-wrap gap-2">
-                {pipelineNodes.map((node) => (
-                  <span
-                    key={node.step || node.index || node.name}
-                    className="text-xs px-2 py-1 rounded-lg rounded-lg border border-white/10 bg-white/[0.03] text-navy-200"
-                  >
-                    {node.name} · {node.coinCost ?? node.coin_cost ?? '—'} {currencyName}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {submitError && (

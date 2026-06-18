@@ -2,7 +2,6 @@
 from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
-from django.core.exceptions import PermissionDenied
 from django.test import SimpleTestCase, TestCase
 
 from apps.creation.models import Project
@@ -155,75 +154,54 @@ class CreationEntrySubmitContractTests(TestCase):
         data.update(overrides)
         return data
 
-    @patch("apps.creation.workspace.workspace_service.finalize_workspace_brief")
-    @patch("apps.creation.services.submission.get_skill_invoker")
     @patch("apps.creation.services.submission.MembershipService.get_current_membership", return_value=None)
     @patch("apps.billing.services.BillingService.charge")
     @patch("apps.billing.services.BillingService.ensure_can_create")
-    def test_special_entry_adapt_failure_blocks_submit(
+    def test_special_entry_submit_does_not_run_adapt(
         self,
         _mock_can_create,
         _mock_charge,
         _mock_membership,
-        mock_invoker_factory,
-        _mock_finalize,
     ):
         from apps.creation.services import CreationService
 
-        # 新引擎：SkillInvoker 抛异常即视为 adapt 失败
-        mock_invoker_factory.return_value.invoke.side_effect = RuntimeError("adapt failed")
-        with self.assertRaises(PermissionDenied):
-            CreationService.submit(
-                self.user,
-                self._payload(
-                    creation_entry="from-reference",
-                    reference_work="参考某爆款短剧的节奏和反转密度",
-                ),
-            )
+        project, _minutes = CreationService.submit(
+            self.user,
+            self._payload(
+                creation_entry="from-reference",
+                reference_work="参考某爆款短剧的节奏和反转密度",
+            ),
+        )
 
-    @patch("apps.creation.workspace.workspace_service.finalize_workspace_brief")
-    @patch("apps.creation.services.submission.get_skill_invoker")
+        self.assertEqual(project.status, Project.STATUS_PENDING)
+        self.assertEqual(project.pipeline_mode, Project.MODE_WORKSPACE)
+
     @patch("apps.creation.services.submission.MembershipService.get_current_membership", return_value=None)
     @patch("apps.billing.services.BillingService.charge")
     @patch("apps.billing.services.BillingService.ensure_can_create")
-    def test_scratch_entry_adapt_failure_does_not_block_submit(
+    def test_scratch_entry_submit_creates_project_only(
         self,
         _mock_can_create,
         _mock_charge,
         _mock_membership,
-        mock_invoker_factory,
-        _mock_finalize,
     ):
         from apps.creation.services import CreationService
-
-        # 新引擎：from-scratch 不强制 adapt，SkillInvoker 失败时降级为 warning
-        mock_invoker = mock_invoker_factory.return_value
-        skill_result = MagicMock()
-        skill_result.success = False
-        skill_result.data = {}
-        skill_result.error = {"message": "adapt skipped failure"}
-        skill_result.skill_id = "creation.adapt"
-        skill_result.trace_id = "trace-skip"
-        mock_invoker.invoke.return_value = skill_result
 
         project, _minutes = CreationService.submit(
             self.user,
             self._payload(creation_entry="from-scratch"),
         )
         self.assertEqual(project.creation_entry, "from-scratch")
+        self.assertEqual(project.nodes.count(), 0)
 
-    @patch("apps.creation.workspace.workspace_service.finalize_workspace_brief")
-    @patch("apps.creation.services.submission.get_skill_invoker")
     @patch("apps.creation.services.submission.MembershipService.get_current_membership", return_value=None)
     @patch("apps.billing.services.BillingService.charge")
     @patch("apps.billing.services.BillingService.ensure_can_create")
-    def test_requires_adapt_can_be_enabled_by_admin_config(
+    def test_requires_adapt_config_does_not_block_submit_in_independent_agent_mode(
         self,
         _mock_can_create,
         _mock_charge,
         _mock_membership,
-        mock_invoker_factory,
-        _mock_finalize,
     ):
         from apps.creation.services import CreationService
         from apps.skill.models import CreationFormOverrideConfig
@@ -240,14 +218,11 @@ class CreationEntrySubmitContractTests(TestCase):
                 "episode_settings": {},
             },
         )
-        # 新引擎：from-scratch + admin 强制 requiresAdapt → SkillInvoker 失败即阻塞
-        mock_invoker_factory.return_value.invoke.side_effect = RuntimeError("adapt required by admin")
-
-        with self.assertRaises(PermissionDenied):
-            CreationService.submit(
-                self.user,
-                self._payload(creation_entry="from-scratch"),
-            )
+        project, _minutes = CreationService.submit(
+            self.user,
+            self._payload(creation_entry="from-scratch"),
+        )
+        self.assertEqual(project.status, Project.STATUS_PENDING)
 
 
 class AdaptAgentContractTests(SimpleTestCase):

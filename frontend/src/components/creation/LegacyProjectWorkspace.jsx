@@ -165,7 +165,7 @@ function SkillStatusBadge({ skill }) {
   )
 }
 
-export default function ProjectWorkspace({
+function LegacyProjectWorkspace({
   projectId,
   currencyName = '创作币',
   onBack,
@@ -908,3 +908,5 @@ export default function ProjectWorkspace({
     </motion.div>
   )
 }
+
+export default LegacyProjectWorkspace

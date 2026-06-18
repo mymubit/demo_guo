@@ -13,6 +13,7 @@ from rest_framework.views import APIView
 from apps.billing.services import BillingService
 from apps.workflow.services.pipeline_service import WorkflowPipelineService
 from apps.common.user_messages import safe_api_message
+from apps.portal.creation.legacy_gone import legacy_workspace_gone_response
 from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
 
 from apps.creation.node_preview import build_node_preview
@@ -124,6 +125,22 @@ class AgentCatalogView(APIView):
         )
 
 
+class AgentWorkspaceCatalogView(APIView):
+    """GET /api/creation/agents/workspace-catalog/ — 独立 Agent 工作台能力目录。"""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        from apps.creation.agent_runtime.workspace import build_workspace_catalog
+
+        return _portal_response(
+            request,
+            build_workspace_catalog(),
+            legacy_marker="/agents/catalog",
+            canonical_path="/api/creation/agents/workspace-catalog/",
+        )
+
+
 class FusionSnapshotView(APIView):
     """GET /api/creation/fusion/<project_id>/ — C 端脱敏快照。"""
 
@@ -171,27 +188,4 @@ class CreationNodePreviewView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, project_id: str, node_index: int):
-        try:
-            project = CreationService._get_user_project(project_id, request.user)
-        except PermissionDenied as exc:
-            return Response(
-                {"code": 403, "message": safe_api_message(exc, "无权限"), "data": None},
-                status=status.HTTP_200_OK,
-            )
-        try:
-            idx = int(node_index)
-        except (TypeError, ValueError):
-            return Response(
-                {"code": 4001, "message": "无效节点", "data": None},
-                status=status.HTTP_200_OK,
-            )
-        if idx < 1 or idx > WorkflowPipelineService.creation_max_node_index():
-            return Response(
-                {"code": 4001, "message": "节点索引须在 1–7", "data": None},
-                status=status.HTTP_200_OK,
-            )
-        preview = build_node_preview(project, idx)
-        return Response(
-            {"code": 0, "message": "success", "data": preview},
-            status=status.HTTP_200_OK,
-        )
+        return legacy_workspace_gone_response()

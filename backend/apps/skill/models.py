@@ -757,7 +757,7 @@ class AgentSkillDefinition(models.Model):
                                    help_text="原始 SKILL.md 的完整 Markdown 内容")
     is_active   = models.BooleanField("是否启用（兼容）", default=True, db_index=True)
     source_file = models.CharField("来源文件路径", max_length=300, blank=True,
-                                   help_text="迁移前的本地相对路径，如 ai-drama-skills-v2/drama-creator-core/SKILL.md")
+                                   help_text="迁移前的本地相对路径，如 legacy-skills/drama-creator-core/SKILL.md")
 
     # 新增：三层分类与子分类
     skill_layer  = models.CharField(
@@ -881,7 +881,7 @@ class SkillConfigEntry(models.Model):
     config_key = models.CharField("配置键", max_length=100, unique=True, db_index=True,
                                    help_text='如 skill-thresholds / qdn-emotion-engine')
     edition    = models.CharField("版本/版型", max_length=20, default="unified",
-                                   help_text='如 unified / demo4book / ai-drama-skills-v2')
+                                   help_text='如 unified / legacy-demo / legacy-skills')
     content    = models.JSONField("配置内容")
     version    = models.CharField("版本号", max_length=20, default="1.0.0")
     note       = models.TextField("备注", blank=True)

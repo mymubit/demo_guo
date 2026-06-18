@@ -6,4 +6,7 @@ class Command(BaseCommand):
     help = "Deprecated: agent registry is seeded by ScriptForge defaults."
 
     def handle(self, *args, **options):
-        raise CommandError("import_agent_registry_to_db was removed. Use ScriptForge DB defaults and absorb_external_assets.")
+        raise CommandError(
+            "import_agent_registry_to_db was removed. Use AgentDefinitionService.ensure_defaults() "
+            "and seed_independent_agents."
+        )

@@ -11,8 +11,8 @@ from apps.skill.llm.setup_provisioning import (
 
 class AgentLlmRoutingUnitTests(SimpleTestCase):
     def test_node_preset_coverage(self):
-        self.assertEqual(NODE_PRESET_KEYS["node-5-script"], "glm-5")
-        self.assertEqual(NODE_PRESET_KEYS["node-2-structure"], "ark-deepseek-v4-flash")
+        self.assertEqual(NODE_PRESET_KEYS["node_script"], "glm-5")
+        self.assertEqual(NODE_PRESET_KEYS["node_structure"], "ark-deepseek-v4-flash")
 
     def test_glm5_is_native(self):
         self.assertTrue(AgentLlmRoutingService.is_native_preset("glm-5"))
@@ -31,9 +31,11 @@ class AgentLlmRoutingDbTests(TestCase):
         ZHIPU_GLM5_MODEL="glm-5",
     )
     def test_provision_and_bind(self):
-        from apps.workflow.step_admin import PipelineStepAdminService
+        from apps.workflow.pipeline_store import FusionPipelineDbService
         from apps.skill.llm.model_catalog import LlmCatalogService
 
+        FusionPipelineDbService.ensure_builtin_default_pack()
+        FusionPipelineDbService.clear_caches()
         LlmCatalogService.ensure_seed_catalog()
         provider_map = AgentLlmRoutingService.provision_all_providers()
         self.assertIn("ark-deepseek-v4-flash", provider_map)

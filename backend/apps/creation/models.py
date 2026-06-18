@@ -190,7 +190,7 @@ class Project(models.Model):
     ready_at = models.DateTimeField("可发布时间", null=True, blank=True)
     skill_version = models.CharField(
         "技能版本", max_length=32, blank=True, default="",
-        help_text="来自 demo4book project-config projectMeta.version",
+        help_text="来自历史 project-config projectMeta.version",
     )
     # 新增：记录创作命中了哪个工作流版本（用于灰度追踪）
     gray_flow_version = models.CharField(
@@ -757,6 +757,21 @@ class AgentExecutionRun(models.Model):
     input_summary = models.JSONField("输入摘要", default=dict, blank=True)
     output_summary = models.JSONField("输出摘要", default=dict, blank=True)
     output_artifact_key = models.CharField("产出键", max_length=64, blank=True, default="")
+    agent_version = models.CharField("Agent 版本", max_length=32, blank=True, default="")
+    prompt_version = models.CharField("Prompt 版本", max_length=32, blank=True, default="")
+    input_artifact_keys = models.JSONField("输入产物键", default=list, blank=True)
+    output_artifact_keys = models.JSONField("输出产物键", default=list, blank=True)
+    input_snapshot = models.JSONField("输入快照", default=dict, blank=True)
+    rendered_prompt_preview = models.TextField("Prompt 预览", blank=True, default="")
+    prompt_tokens = models.PositiveIntegerField("Prompt Tokens", null=True, blank=True)
+    completion_tokens = models.PositiveIntegerField("Completion Tokens", null=True, blank=True)
+    total_tokens = models.PositiveIntegerField("Total Tokens", null=True, blank=True)
+    estimated_prompt_tokens = models.PositiveIntegerField("预估 Prompt Tokens", null=True, blank=True)
+    model_name = models.CharField("模型", max_length=128, blank=True, default="")
+    provider_name = models.CharField("Provider", max_length=128, blank=True, default="")
+    started_by = models.CharField("触发方", max_length=16, blank=True, default="user")
+    run_params = models.JSONField("运行参数", default=dict, blank=True)
+    overwrite_mode = models.CharField("覆盖模式", max_length=16, blank=True, default="replace")
     error_message = models.TextField("错误信息", blank=True, default="")
     started_at = models.DateTimeField("开始时间", default=timezone.now, db_index=True)
     finished_at = models.DateTimeField("结束时间", null=True, blank=True)

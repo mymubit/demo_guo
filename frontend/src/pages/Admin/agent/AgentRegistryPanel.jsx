@@ -22,6 +22,8 @@ function cloneRegistry(registry) {
   return JSON.parse(JSON.stringify(registry || {}))
 }
 
+const READONLY_LEGACY = true
+
 export default function AgentRegistryPanel({ onMessage }) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -194,10 +196,17 @@ export default function AgentRegistryPanel({ onMessage }) {
   return (
     <>
       <div className="space-y-5 pb-8">
+      <div className="rounded-xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+        历史 registry v2 只读归档。独立 Agent 主配置已迁移至
+        <Link to="/admin/agent?tab=definitions" className="mx-1 text-gold-300 underline">
+          独立 Agent
+        </Link>
+        页；此处仅供查阅与对照，不再写入运行时。
+      </div>
       <div className="sf-console-panel p-5 space-y-3">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-base font-semibold text-white">Agent 注册表</h2>
+            <h2 className="text-base font-semibold text-white">历史 Agent 注册表（只读）</h2>
             <p className="text-xs text-navy-400 mt-1">高级 · 全量 JSON 与后处理元数据</p>
           </div>
           <div className="flex flex-wrap gap-3 text-xs text-navy-400">
@@ -217,6 +226,7 @@ export default function AgentRegistryPanel({ onMessage }) {
         </p>
       </div>
 
+      <div className={READONLY_LEGACY ? 'pointer-events-none opacity-80' : ''}>
       <div className="space-y-5">
           <section className="sf-console-panel p-5 space-y-4">
             <h3 className="text-sm font-semibold text-white">编排元数据</h3>
@@ -473,7 +483,9 @@ export default function AgentRegistryPanel({ onMessage }) {
           </div>
         </details>
       </div>
+      </div>
 
+      {!READONLY_LEGACY ? (
       <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/5 bg-slate-950/90 px-6 py-4 backdrop-blur-md md:left-64 flex items-center justify-end gap-3">
         <button
           type="button"
@@ -511,6 +523,7 @@ export default function AgentRegistryPanel({ onMessage }) {
           {saving ? '保存中…' : '保存并生效'}
         </button>
       </div>
+      ) : null}
     </>
   )
 }

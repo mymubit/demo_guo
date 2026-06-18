@@ -3,6 +3,7 @@ tmp/
 logs/
 media/
 *.log
+external_asset_inventory.json
 
 # Python / Django
 __pycache__/

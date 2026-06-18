@@ -12,39 +12,28 @@ export const creation = {
   workspace(projectId) {
     return request('GET', `/api/creation/projects/${projectId}/workspace/`)
   },
-  generateAgent(projectId, nodeIndex, options = {}) {
-    return request('POST', `/api/creation/projects/${projectId}/agents/${nodeIndex}/generate/`, {
-      data: {
-        from_episode: options.from_episode,
-        to_episode: options.to_episode,
-        batch_size: options.batch_size,
-        regenerate: options.regenerate,
-        outline_mode: options.outline_mode,
-        stage_key: options.stage_key,
-      },
+  estimateAgent(projectId, agentId, params = {}) {
+    return request('POST', `/api/creation/projects/${projectId}/agents/${agentId}/estimate/`, {
+      data: { params },
     })
   },
-  acknowledgeQualityAlert(projectId, nodeIndex, alertCode) {
-    return request('POST', `/api/creation/projects/${projectId}/agents/${nodeIndex}/quality-alert/ack/`, {
-      data: { alert_code: alertCode },
+  runAgent(projectId, agentId, params = {}) {
+    return request('POST', `/api/creation/projects/${projectId}/agents/${agentId}/run/`, {
+      data: { params },
     })
   },
-  saveAgentContent(projectId, nodeIndex, data) {
-    return request('PUT', `/api/creation/projects/${projectId}/agents/${nodeIndex}/content/`, {
-      data,
-    })
+  agentRuns(projectId, agentId) {
+    return request('GET', `/api/creation/projects/${projectId}/agents/${agentId}/runs/`)
+  },
+  runDetail(projectId, runId) {
+    return request('GET', `/api/creation/projects/${projectId}/runs/${runId}/`)
+  },
+  artifact(projectId, artifactKey) {
+    return request('GET', `/api/creation/projects/${projectId}/artifacts/${artifactKey}/`)
   },
   async progress(projectId) {
     const data = await request('GET', `/api/creation/progress/${projectId}/`)
     return normalizeCreationProgress(data)
-  },
-  confirmNode(projectId) {
-    return request('POST', `/api/creation/projects/${projectId}/confirm/`)
-  },
-  regenerateNode(projectId, nodeIndex) {
-    return request('POST', `/api/creation/projects/${projectId}/regenerate/`, {
-      data: nodeIndex != null ? { node_index: nodeIndex } : {},
-    })
   },
   fusionCatalog() {
     return request('GET', '/api/creation/fusion/catalog/')
@@ -52,15 +41,15 @@ export const creation = {
   agentCatalog() {
     return request('GET', '/api/creation/agents/catalog/')
   },
+  workspaceCatalog() {
+    return request('GET', '/api/creation/agents/workspace-catalog/')
+  },
   fusionNodes(packId) {
     const suffix = packId ? `?pack_id=${encodeURIComponent(packId)}` : ''
     return request('GET', `/api/creation/fusion/nodes/${suffix}`)
   },
   fusionSnapshot(projectId) {
     return request('GET', `/api/creation/fusion/${projectId}/`)
-  },
-  nodePreview(projectId, nodeIndex) {
-    return request('GET', `/api/creation/projects/${projectId}/nodes/${nodeIndex}/preview/`)
   },
   aiGenerate(actionKey, context = {}) {
     return request('POST', '/api/creation/ai/generate/', {

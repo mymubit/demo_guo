@@ -16,14 +16,52 @@ class ReferenceLibraryTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        from django.core.management import call_command
+        from apps.skill.models import ReferenceLibraryConfig
 
-        call_command(
-            "absorb_external_assets",
-            source=["demo4book", "ai-drama-skills-v2"],
-            write=True,
-            overwrite=True,
-            verbosity=0,
+        ReferenceLibraryConfig.objects.update_or_create(
+            config_key="default",
+            defaults={
+                "content": {
+                    "hook-types-library.json": {
+                        "categories": [
+                            {
+                                "category": "情绪冲突类",
+                                "types": [
+                                    {
+                                        "code": "HK-01",
+                                        "nameZh": "当众羞辱",
+                                        "effectiveness": 9,
+                                        "templateSentences": ["她被当众羞辱，反手拿出证据。"],
+                                    }
+                                ],
+                            },
+                            {
+                                "category": "身份反转类",
+                                "types": [
+                                    {
+                                        "code": "HK-02",
+                                        "nameZh": "身份揭晓",
+                                        "effectiveness": 10,
+                                        "templateSentences": ["所有人都没想到他才是真正继承人。"],
+                                    }
+                                ],
+                            },
+                        ]
+                    },
+                    "reversal-patterns-library.json": {
+                        "patternsByCategory": {
+                            "身份类反转": [
+                                {
+                                    "code": "REV-ID-01",
+                                    "patternName": "隐藏身份大揭秘",
+                                    "description": "主角真实身份在关键时刻曝光。",
+                                    "bestOccasion": "中段或高潮前",
+                                }
+                            ]
+                        }
+                    },
+                }
+            },
         )
         ReferenceLibraryService.clear_cache()
 

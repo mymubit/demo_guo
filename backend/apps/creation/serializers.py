@@ -209,6 +209,8 @@ class CreationSubmitResultSerializer(serializers.Serializer):
     estimated_minutes = serializers.IntegerField(
         help_text="预计完成时长（分钟）"
     )
+    status = serializers.CharField(help_text="项目状态", required=False)
+    workspace_url = serializers.CharField(help_text="工作台地址", required=False)
 
 
 # ============================================================

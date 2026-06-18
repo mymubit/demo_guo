@@ -623,12 +623,12 @@ class FusionPipelineDbService:
     @classmethod
     @transaction.atomic
     def removed_disk_sync(cls, *, root: Optional[str] = None) -> None:
-        raise RuntimeError("disk sync has been removed; run absorb_external_assets instead")
+        raise RuntimeError("disk sync has been removed; use DB defaults")
 
     @classmethod
     @transaction.atomic
     def removed_disk_import(cls, *, activate: bool = True, root: Optional[str] = None) -> str:
-        raise RuntimeError("disk import has been removed; run absorb_external_assets instead")
+        raise RuntimeError("disk import has been removed; use DB defaults")
 
     @classmethod
     def _hydrate_pack_from_registry_meta(cls, pack) -> None:

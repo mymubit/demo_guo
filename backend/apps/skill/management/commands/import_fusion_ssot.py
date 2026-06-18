@@ -5,7 +5,7 @@ from apps.workflow.pipeline_store import FusionPipelineDbService
 
 
 class Command(BaseCommand):
-    help = "Deprecated. Use absorb_external_assets and DB-only default pack."
+    help = "Deprecated. DB-only default pack."
 
     def add_arguments(self, parser):
         return None

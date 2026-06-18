@@ -44,7 +44,7 @@ MAX_PROJECTS_PER_AUDIT: int = int(os.environ.get("EVOLVE_MAX_PROJECTS_PER_AUDIT"
 MAX_AUDIT_TOKENS: int = int(os.environ.get("EVOLVE_MAX_AUDIT_TOKENS", "4096"))
 MONTHLY_EVOLVE_BUDGET_CNY: float = float(os.environ.get("EVOLVE_MONTHLY_BUDGET_CNY", "50.0"))
 
-# 技能规则根路径（demo4book 里的 skill-rules/）
+# 技能规则根路径（历史外部 skill-rules/ 目录，已迁移至 DB）
 _PROPOSALS_DIR: Path = Path(getattr(settings, "SCRIPT_FORGE_ASSET_ROOT", "")) / "evolve-proposals"
 
 # 只读层（禁止 AI 提案涉及）

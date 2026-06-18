@@ -3031,7 +3031,8 @@ paths:
   /api/creation/projects/{project_id}/agents/{node_index}/content/:
     put:
       operationId: creation_projects_agents_content_update
-      description: PUT /api/creation/projects/<project_id>/agents/<node_index>/content/
+      description: PUT /api/creation/projects/<project_id>/agents/<node_index>/content/ — **已废弃 (code=410)**，请改用独立 Agent run。
+      deprecated: true
       parameters:
       - in: path
         name: node_index
@@ -3054,7 +3055,8 @@ paths:
   /api/creation/projects/{project_id}/agents/{node_index}/generate/:
     post:
       operationId: creation_projects_agents_generate_create
-      description: POST /api/creation/projects/<project_id>/agents/<node_index>/generate/
+      description: POST /api/creation/projects/<project_id>/agents/<node_index>/generate/ — **已废弃 (code=410)**，请改用 `POST .../agents/{agent_id}/run/`。
+      deprecated: true
       parameters:
       - in: path
         name: node_index
@@ -3095,7 +3097,8 @@ paths:
   /api/creation/projects/{project_id}/nodes/{node_index}/preview/:
     get:
       operationId: creation_projects_nodes_preview_retrieve
-      description: GET /api/creation/projects/<project_id>/nodes/<node_index>/preview/
+      description: GET /api/creation/projects/<project_id>/nodes/<node_index>/preview/ — **已废弃 (code=410)**。
+      deprecated: true
       parameters:
       - in: path
         name: node_index
@@ -3133,10 +3136,137 @@ paths:
       responses:
         '200':
           description: No response body
+  /api/creation/agents/workspace-catalog/:
+    get:
+      operationId: creation_agents_workspace_catalog_retrieve
+      description: GET /api/creation/agents/workspace-catalog/ — 独立 Agent 能力目录（C 端展示）。
+      tags:
+      - creation
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/creation/projects/{project_id}/agents/{agent_id}/estimate/:
+    post:
+      operationId: creation_projects_agents_estimate_create
+      description: POST /api/creation/projects/<project_id>/agents/<agent_id>/estimate/ — 运行前 token 预估。
+      parameters:
+      - in: path
+        name: agent_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - creation
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/creation/projects/{project_id}/agents/{agent_id}/run/:
+    post:
+      operationId: creation_projects_agents_run_create
+      description: POST /api/creation/projects/<project_id>/agents/<agent_id>/run/ — 触发独立 Agent。
+      parameters:
+      - in: path
+        name: agent_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - creation
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/creation/projects/{project_id}/agents/{agent_id}/runs/:
+    get:
+      operationId: creation_projects_agents_runs_list
+      description: GET /api/creation/projects/<project_id>/agents/<agent_id>/runs/ — 运行历史（不含 prompt）。
+      parameters:
+      - in: path
+        name: agent_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - creation
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/creation/projects/{project_id}/runs/{run_id}/:
+    get:
+      operationId: creation_projects_runs_retrieve
+      description: GET /api/creation/projects/<project_id>/runs/<run_id>/ — 运行详情（Portal 不返回 rendered_prompt_preview）。
+      parameters:
+      - in: path
+        name: run_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - creation
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/creation/projects/{project_id}/artifacts/{artifact_key}/:
+    get:
+      operationId: creation_projects_artifacts_retrieve
+      description: GET /api/creation/projects/<project_id>/artifacts/<artifact_key>/ — 产物 payload + editor_view 结构化预览。
+      parameters:
+      - in: path
+        name: artifact_key
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: project_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - creation
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/creation/projects/{project_id}/workspace/:
     get:
       operationId: creation_projects_workspace_retrieve
-      description: GET /api/creation/projects/<project_id>/workspace/ — 技能工作台。
+      description: GET /api/creation/projects/<project_id>/workspace/ — 独立 Agent 工作台（independent mode）。
       parameters:
       - in: path
         name: project_id

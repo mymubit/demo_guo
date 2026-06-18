@@ -12,7 +12,7 @@
 | **技能中心** | Tier1–4 写作规则（原子能力） | `skill/skills/` |
 | **配置中心** | 创作表单、题材/参考库、hooks、系统 KV | `skill/config/portal/` |
 | **模型中心** | Provider、模型目录、Chat、全局 LLM 设置 | `skill/llm/` |
-| **创作中心** | 项目、作品、产物、Workspace、分享下载 | `creation/`（根层服务） |
+| **创作中心** | 项目、作品、产物、**独立 Agent 工作台**、分享下载 | `creation/`（`agent_runtime/`） |
 | **用户中心** | 账号、Profile、会员套餐权益 | `users/`、`membership/` |
 | **监控中心** | 审计日志、执行日志、LLM 用量、运营统计 | `security/`、`creation/execution_*` |
 | **商业中心** | 站点币、扣费、订单支付、充值定价 | `billing/`、`orders/` |

@@ -58,6 +58,18 @@ class AgentExecutionRunService:
         script_to: Optional[int] = None,
         outline_mode: Optional[str] = None,
         input_summary: Optional[Dict[str, Any]] = None,
+        agent_version: str = "",
+        prompt_version: str = "",
+        input_artifact_keys: Optional[List[str]] = None,
+        output_artifact_keys: Optional[List[str]] = None,
+        input_snapshot: Optional[Dict[str, Any]] = None,
+        rendered_prompt_preview: str = "",
+        estimated_prompt_tokens: Optional[int] = None,
+        model_name: str = "",
+        provider_name: str = "",
+        started_by: str = "user",
+        run_params: Optional[Dict[str, Any]] = None,
+        overwrite_mode: str = "replace",
     ) -> AgentExecutionRun:
         return AgentExecutionRun.objects.create(
             project=project,
@@ -69,6 +81,18 @@ class AgentExecutionRunService:
             batch_to=script_to,
             outline_mode=str(outline_mode or "")[:32],
             input_summary=dict(input_summary or {}),
+            agent_version=str(agent_version or "")[:32],
+            prompt_version=str(prompt_version or "")[:32],
+            input_artifact_keys=list(input_artifact_keys or []),
+            output_artifact_keys=list(output_artifact_keys or []),
+            input_snapshot=dict(input_snapshot or {}),
+            rendered_prompt_preview=str(rendered_prompt_preview or "")[:12000],
+            estimated_prompt_tokens=estimated_prompt_tokens,
+            model_name=str(model_name or "")[:128],
+            provider_name=str(provider_name or "")[:128],
+            started_by=str(started_by or "user")[:16],
+            run_params=dict(run_params or {}),
+            overwrite_mode=str(overwrite_mode or "replace")[:16],
         )
 
     @staticmethod
@@ -82,6 +106,18 @@ class AgentExecutionRunService:
         script_to: Optional[int] = None,
         outline_mode: Optional[str] = None,
         input_summary: Optional[Dict[str, Any]] = None,
+        agent_version: str = "",
+        prompt_version: str = "",
+        input_artifact_keys: Optional[List[str]] = None,
+        output_artifact_keys: Optional[List[str]] = None,
+        input_snapshot: Optional[Dict[str, Any]] = None,
+        rendered_prompt_preview: str = "",
+        estimated_prompt_tokens: Optional[int] = None,
+        model_name: str = "",
+        provider_name: str = "",
+        started_by: str = "user",
+        run_params: Optional[Dict[str, Any]] = None,
+        overwrite_mode: str = "replace",
     ) -> Iterator[AgentExecutionRun]:
         run = AgentExecutionRunService.begin_run(
             project,
@@ -91,6 +127,18 @@ class AgentExecutionRunService:
             script_to=script_to,
             outline_mode=outline_mode,
             input_summary=input_summary,
+            agent_version=agent_version,
+            prompt_version=prompt_version,
+            input_artifact_keys=input_artifact_keys,
+            output_artifact_keys=output_artifact_keys,
+            input_snapshot=input_snapshot,
+            rendered_prompt_preview=rendered_prompt_preview,
+            estimated_prompt_tokens=estimated_prompt_tokens,
+            model_name=model_name,
+            provider_name=provider_name,
+            started_by=started_by,
+            run_params=run_params,
+            overwrite_mode=overwrite_mode,
         )
         run_token = _active_run_id.set(str(run.id))
         order_token = _order_counter.set(0)
@@ -117,6 +165,11 @@ class AgentExecutionRunService:
         output_artifact_key: str = "",
         output_summary: Optional[Dict[str, Any]] = None,
         error_message: str = "",
+        prompt_tokens: Optional[int] = None,
+        completion_tokens: Optional[int] = None,
+        total_tokens: Optional[int] = None,
+        model_name: str = "",
+        provider_name: str = "",
     ) -> AgentExecutionRun:
         if run.status != AgentExecutionRun.STATUS_RUNNING:
             return run
@@ -139,6 +192,16 @@ class AgentExecutionRunService:
             updates["output_artifact_key"] = output_artifact_key[:64]
         if output_summary is not None:
             updates["output_summary"] = output_summary
+        if prompt_tokens is not None:
+            updates["prompt_tokens"] = prompt_tokens
+        if completion_tokens is not None:
+            updates["completion_tokens"] = completion_tokens
+        if total_tokens is not None:
+            updates["total_tokens"] = total_tokens
+        if model_name:
+            updates["model_name"] = str(model_name)[:128]
+        if provider_name:
+            updates["provider_name"] = str(provider_name)[:128]
 
         for field, value in updates.items():
             setattr(run, field, value)
@@ -474,10 +537,31 @@ class AgentExecutionRunService:
         }
 
     @staticmethod
-    def serialize_run(run: AgentExecutionRun, *, include_sub_skills: bool = True) -> Dict[str, Any]:
+    def sanitize_input_snapshot(snapshot: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Portal 用：仅保留输入键名与运行参数，不返回完整 artifact 内容。"""
+        raw = snapshot if isinstance(snapshot, dict) else {}
+        artifacts = raw.get("artifacts") if isinstance(raw.get("artifacts"), dict) else {}
+        return {
+            "required_artifacts": list(raw.get("required_artifacts") or []),
+            "input_artifact_keys": list(artifacts.keys()),
+            "params": dict(raw.get("params") or {}),
+        }
+
+    @staticmethod
+    def serialize_run(
+        run: AgentExecutionRun,
+        *,
+        include_sub_skills: bool = True,
+        include_sensitive: bool = False,
+    ) -> Dict[str, Any]:
         duration_ms = None
         if run.started_at and run.finished_at:
             duration_ms = int((run.finished_at - run.started_at).total_seconds() * 1000)
+        input_snapshot = (
+            run.input_snapshot or {}
+            if include_sensitive
+            else AgentExecutionRunService.sanitize_input_snapshot(run.input_snapshot)
+        )
         payload: Dict[str, Any] = {
             "id": str(run.id),
             "agent_id": run.agent_id,
@@ -489,11 +573,27 @@ class AgentExecutionRunService:
             "input_summary": run.input_summary or {},
             "output_summary": run.output_summary or {},
             "output_artifact_key": run.output_artifact_key,
+            "agent_version": run.agent_version,
+            "prompt_version": run.prompt_version,
+            "input_artifact_keys": run.input_artifact_keys or [],
+            "output_artifact_keys": run.output_artifact_keys or [],
+            "prompt_tokens": run.prompt_tokens,
+            "completion_tokens": run.completion_tokens,
+            "total_tokens": run.total_tokens,
+            "estimated_prompt_tokens": run.estimated_prompt_tokens,
+            "model_name": run.model_name,
+            "provider_name": run.provider_name,
+            "started_by": run.started_by,
+            "run_params": run.run_params or {},
+            "overwrite_mode": run.overwrite_mode,
             "error_message": run.error_message,
+            "input_snapshot": input_snapshot,
             "started_at": run.started_at.isoformat() if run.started_at else "",
             "finished_at": run.finished_at.isoformat() if run.finished_at else "",
             "duration_ms": duration_ms,
         }
+        if include_sensitive:
+            payload["rendered_prompt_preview"] = (run.rendered_prompt_preview or "")[:8000]
         if include_sub_skills:
             logs = run.sub_skill_logs.all().order_by("order_index", "started_at")
             payload["sub_skills"] = [
@@ -570,6 +670,7 @@ class AgentExecutionRunService:
         limit: int = 40,
         agent_id: Optional[str] = None,
         node_index: Optional[int] = None,
+        include_sensitive: bool = False,
     ) -> List[Dict[str, Any]]:
         qs = AgentExecutionRun.objects.filter(project=project).prefetch_related("sub_skill_logs")
         if agent_id:
@@ -577,7 +678,10 @@ class AgentExecutionRunService:
         if node_index is not None:
             qs = qs.filter(node_index=node_index)
         runs = qs.order_by("-started_at")[: max(1, min(limit, 200))]
-        return [AgentExecutionRunService.serialize_run(run) for run in runs]
+        return [
+            AgentExecutionRunService.serialize_run(run, include_sensitive=include_sensitive)
+            for run in runs
+        ]
 
     @staticmethod
     def latest_run_for_agent(
@@ -585,6 +689,7 @@ class AgentExecutionRunService:
         *,
         agent_id: Optional[str] = None,
         node_index: Optional[int] = None,
+        include_sensitive: bool = False,
     ) -> Optional[Dict[str, Any]]:
         qs = AgentExecutionRun.objects.filter(project=project).prefetch_related("sub_skill_logs")
         if agent_id:
@@ -592,7 +697,9 @@ class AgentExecutionRunService:
         if node_index is not None:
             qs = qs.filter(node_index=node_index)
         run = qs.order_by("-started_at").first()
-        return AgentExecutionRunService.serialize_run(run) if run else None
+        if not run:
+            return None
+        return AgentExecutionRunService.serialize_run(run, include_sensitive=include_sensitive)
 
     @staticmethod
     def compact_run_summary(run: AgentExecutionRun) -> Dict[str, Any]:
@@ -664,7 +771,7 @@ class AgentExecutionRunService:
         }
 
     @staticmethod
-    def get_run_detail(run_id: str) -> Optional[Dict[str, Any]]:
+    def get_run_detail(run_id: str, *, include_sensitive: bool = True) -> Optional[Dict[str, Any]]:
         from apps.skill.models import LlmUsageLog
 
         try:
@@ -674,7 +781,7 @@ class AgentExecutionRunService:
         except AgentExecutionRun.DoesNotExist:
             return None
 
-        payload = AgentExecutionRunService.serialize_run(run)
+        payload = AgentExecutionRunService.serialize_run(run, include_sensitive=include_sensitive)
         payload["project_id"] = str(run.project_id)
         payload["project_title"] = (run.project.title or run.project.theme or "")[:200]
         payload["user_phone"] = getattr(run.user, "phone", "") or ""

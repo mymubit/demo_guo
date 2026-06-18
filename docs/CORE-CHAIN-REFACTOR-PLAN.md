@@ -1,5 +1,7 @@
 # Core Chain Refactor Plan
 
+> **状态（2026-06-18）**：C 端主链路已切换为 **Project + 独立 Agent + DB 化**；`node_index` 旧工作台接口返回 410。本文档中 WorkflowEngine / demo4book 相关描述为历史重构背景，非当前运行路径。
+
 日期：2026-06-17
 
 ## 结论

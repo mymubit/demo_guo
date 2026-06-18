@@ -217,9 +217,9 @@ class CreationFormImportView(APIView):
                 },
                 "overrides": get_creation_form_overrides(),
                 "externalDiskImport": "removed",
-                "migrationCommand": "python manage.py absorb_external_assets --source demo4book --source ai-drama-skills-v2 --write",
+                "migrationCommand": "python manage.py import_agent_assets --inventory external_asset_inventory.json --commit",
             },
-            message="Disk catalog sync has been removed; use absorb_external_assets for one-time migration.",
+            message="Disk catalog sync has been removed.",
         )
 
 
