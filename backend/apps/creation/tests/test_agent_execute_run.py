@@ -60,7 +60,7 @@ class AgentExecuteRunTests(TestCase):
         result = IndependentAgentService.execute_run(self.run)
         self.project.refresh_from_db()
         self.assertEqual(result.status, AgentExecutionRun.STATUS_COMPLETED)
-        self.assertEqual(self.project.status, Project.STATUS_PENDING)
+        self.assertEqual(self.project.execution_status, Project.STATUS_PENDING)
         self.assertIn(self.project.fusion_status, {Project.FUSION_DRAFT, Project.FUSION_PLANNING})
 
     @patch("apps.creation.agent_runtime.independent_service.LlmService.chat_completion")
@@ -97,7 +97,6 @@ class ProjectStatusSyncTests(TestCase):
             episode_count=20,
             format_variant="B",
             fusion_status=Project.FUSION_DRAFT,
-            status=Project.STATUS_PENDING,
         )
 
     def test_update_project_status_sets_completed_when_scripts_exist(self):
@@ -108,7 +107,7 @@ class ProjectStatusSyncTests(TestCase):
         )
         IndependentAgentService.update_project_status(self.project)
         self.project.refresh_from_db()
-        self.assertEqual(self.project.status, Project.STATUS_COMPLETED)
+        self.assertEqual(self.project.execution_status, Project.STATUS_COMPLETED)
         self.assertEqual(self.project.fusion_status, Project.FUSION_READY)
         self.assertEqual(self.project.progress_percent, 100)
 
@@ -118,5 +117,5 @@ class ProjectStatusSyncTests(TestCase):
         result = IndependentAgentService.enqueue_run(self.project, self.user, "brief", {})
         self.project.refresh_from_db()
         self.assertTrue(result.created_new_run)
-        self.assertEqual(self.project.status, Project.STATUS_RUNNING)
+        self.assertEqual(self.project.execution_status, Project.STATUS_RUNNING)
         self.assertEqual(self.project.fusion_status, Project.FUSION_WRITING)

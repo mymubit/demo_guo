@@ -557,7 +557,7 @@ function ProposalList({ onSelect }) {
 }
 
 /** 主组件 */
-export default function AdminEvolution() {
+export default function AdminEvolution({ embedded = false }) {
   const [message, setMessage] = useState(null)
   const [view, setView] = useState('list') // 'list' | 'detail'
   const [selectedProposal, setSelectedProposal] = useState(null)
@@ -641,38 +641,51 @@ export default function AdminEvolution() {
     ...(view === 'detail' ? [{ label: `提案 #${selectedProposal?.id || ''}` }] : []),
   ]
 
-  return (
-    <AdminShell hideDescription>
+  const body = (
+    <>
       <AdminMessage message={message} onClose={() => setMessage(null)} />
 
-      <AdminPageHeader
-        crumbs={crumbs}
-        title="AI 规则进化"
-        description="AI 分析低评分项目 / 生成规则修改提案 / 审批流"
-        actions={
-          view === 'list' ? (
+      {!embedded ? (
+        <AdminPageHeader
+          crumbs={crumbs}
+          title="AI 规则进化"
+          description="AI 分析低评分项目 / 生成规则修改提案 / 审批流"
+          actions={
+            view === 'list' ? (
+              <button
+                type="button"
+                onClick={() => setAnalyzeDialogOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold-400/20 text-gold-300 text-sm hover:bg-gold-400/30"
+              >
+                <Zap className="w-4 h-4" />
+                触发分析
+              </button>
+            ) : null
+          }
+        />
+      ) : (
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <h3 className="text-sm font-semibold text-white">规则进化提案</h3>
+          {view === 'list' ? (
             <button
               type="button"
               onClick={() => setAnalyzeDialogOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold-400/20 text-gold-300 text-sm hover:bg-gold-400/30"
+              className="text-xs text-gold-400 hover:text-gold-300"
             >
-              <Zap className="w-4 h-4" />
               触发分析
             </button>
-          ) : null
-        }
-      />
-
-      {view === 'list' && (
-        <ProposalList onSelect={handleSelectProposal} />
+          ) : null}
+        </div>
       )}
+
+      {view === 'list' && <ProposalList onSelect={handleSelectProposal} />}
 
       {view === 'detail' && selectedProposal && (
         <ProposalDetailView
           proposal={selectedProposal}
           onBack={handleBack}
-          onApprove={(id) => setApproveDialogOpen(true)}
-          onReject={(id) => setRejectDialogOpen(true)}
+          onApprove={() => setApproveDialogOpen(true)}
+          onReject={() => setRejectDialogOpen(true)}
           onApply={handleApply}
           actionLoading={actionLoading}
         />
@@ -699,6 +712,12 @@ export default function AdminEvolution() {
         onClose={() => setRejectDialogOpen(false)}
         onConfirm={(comment) => handleReject(selectedProposal?.id, comment)}
       />
-    </AdminShell>
+    </>
   )
+
+  if (embedded) {
+    return <div className="space-y-4">{body}</div>
+  }
+
+  return <AdminShell hideDescription>{body}</AdminShell>
 }

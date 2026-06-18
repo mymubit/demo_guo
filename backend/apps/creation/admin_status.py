@@ -22,6 +22,8 @@ def resolve_admin_status(project: Project) -> Tuple[str, str]:
     """返回 (status, status_text) — 运营侧唯一状态字段。"""
     raw = (project.fusion_status or "").strip()
     if not raw:
-        raw = LEGACY_TO_FUSION_STATUS.get(project.status, project.status)
+        from .project_execution import derive_execution_status
+
+        raw = LEGACY_TO_FUSION_STATUS.get(derive_execution_status(project), Project.FUSION_DRAFT)
     label = _FUSION_LABELS.get(raw) or _EXEC_LABELS.get(raw, raw)
     return raw, label

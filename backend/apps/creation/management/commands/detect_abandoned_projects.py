@@ -44,13 +44,7 @@ class Command(BaseCommand):
             threshold_dt = timezone.now() - timedelta(days=days)
             cnt = Project.objects.filter(
                 abandoned_at__isnull=True,
-                status__in=[
-                    Project.STATUS_PENDING,
-                    Project.STATUS_RUNNING,
-                    Project.STATUS_AWAITING,
-                    Project.STATUS_FAILED,
-                ],
-            ).filter(
+            ).exclude(fusion_status=Project.FUSION_READY).filter(
                 Q(last_edited_at__isnull=True, created_at__lt=threshold_dt)
                 | Q(last_edited_at__lt=threshold_dt)
             ).count()

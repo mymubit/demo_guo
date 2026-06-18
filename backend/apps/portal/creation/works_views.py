@@ -101,7 +101,7 @@ class WorkListView(APIView):
         for project in items_qs:
             if (
                 project.pipeline_mode == Project.MODE_WORKSPACE
-                and project.status == Project.STATUS_RUNNING
+                and project.execution_status == Project.STATUS_RUNNING
             ):
                 CreationService._reconcile_project_running_state(project)
 
@@ -252,7 +252,7 @@ class WorkExportView(APIView):
                 {"code": 404, "message": "作品不存在", "data": None},
                 status=status.HTTP_200_OK,
             )
-        if project.status not in {Project.STATUS_COMPLETED, Project.STATUS_AWAITING}:
+        if project.execution_status not in {Project.STATUS_COMPLETED, Project.STATUS_AWAITING}:
             return Response(
                 {"code": 4001, "message": "作品尚未完成，暂不可导出", "data": None},
                 status=status.HTTP_200_OK,
@@ -325,12 +325,14 @@ class WorkStatsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        from apps.creation.project_execution import filter_projects_by_execution_status
+
         qs = CreationService.list_user_projects(request.user)
         total = qs.count()
-        pending = qs.filter(status=Project.STATUS_PENDING).count()
-        running = qs.filter(status=Project.STATUS_RUNNING).count()
-        completed = qs.filter(status=Project.STATUS_COMPLETED).count()
-        failed = qs.filter(status=Project.STATUS_FAILED).count()
+        pending = filter_projects_by_execution_status(qs, Project.STATUS_PENDING).count()
+        running = filter_projects_by_execution_status(qs, Project.STATUS_RUNNING).count()
+        completed = filter_projects_by_execution_status(qs, Project.STATUS_COMPLETED).count()
+        failed = filter_projects_by_execution_status(qs, Project.STATUS_FAILED).count()
 
         return Response(
             {

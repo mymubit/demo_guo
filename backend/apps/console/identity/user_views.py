@@ -132,6 +132,31 @@ class UserManagementViewSet(viewsets.GenericViewSet):
         cache.delete(CACHE_KEY_DASHBOARD)
         return api_ok(serializer.validated_data)
 
+    @action(detail=True, methods=["get"], url_path="recent_projects")
+    def recent_projects(self, request, pk=None):
+        """用户最近创作项目摘要（运营穿透）。"""
+        from apps.creation.admin_status import resolve_admin_status
+        from apps.creation.models import Project
+
+        try:
+            user = User.objects.get(pk=pk)
+        except User.DoesNotExist:
+            return api_fail("用户不存在")
+        rows = []
+        for project in Project.objects.filter(user=user).order_by("-updated_at")[:12]:
+            status, status_text = resolve_admin_status(project)
+            rows.append(
+                {
+                    "project_id": str(project.id),
+                    "title": (project.title or project.theme or "未命名")[:200],
+                    "status": status,
+                    "status_text": status_text,
+                    "pipeline_mode": project.pipeline_mode,
+                    "updated_at": project.updated_at.isoformat() if project.updated_at else "",
+                }
+            )
+        return api_ok({"items": rows})
+
     @action(detail=True, methods=["post"], url_path="reset_password")
     def reset_password(self, request, pk=None):
         """重置密码：接受 new_password；为空则由后端自动生成 12 位随机密码"""

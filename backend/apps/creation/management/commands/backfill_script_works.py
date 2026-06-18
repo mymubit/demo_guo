@@ -13,7 +13,7 @@ class Command(BaseCommand):
         parser.add_argument("--limit", type=int, default=50, help="最多处理条数")
 
     def handle(self, *args, **options):
-        qs = Project.objects.filter(status=Project.STATUS_COMPLETED).order_by("-completed_at")
+        qs = Project.objects.filter(fusion_status=Project.FUSION_READY).order_by("-completed_at")
         if options["project_id"]:
             qs = qs.filter(id=options["project_id"])
         qs = qs[: options["limit"]]

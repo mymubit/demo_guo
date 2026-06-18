@@ -31,7 +31,7 @@ def generate_share_link(
 ) -> dict:
     """为作品生成分享链接。"""
     project = _get_user_project(project_id, user)
-    if project.status != Project.STATUS_COMPLETED:
+    if project.fusion_status != Project.FUSION_READY:
         raise PermissionDenied("仅已完成的作品可分享")
 
     token = ShareLink.generate_token()
@@ -104,7 +104,7 @@ def get_share_view(share_token: str) -> dict:
         share.refresh_from_db()
 
     project = share.project
-    if project.status != Project.STATUS_COMPLETED:
+    if project.fusion_status != Project.FUSION_READY:
         raise PermissionDenied("该作品尚未完成")
 
     user = share.user
@@ -143,7 +143,7 @@ def download_script(
     )
     if file_format in {"md", "zip", "html"} and workspace_export:
         pass
-    elif project.status != Project.STATUS_COMPLETED:
+    elif project.fusion_status != Project.FUSION_READY:
         raise PermissionDenied("未完成的作品不可下载")
 
     try:

@@ -286,7 +286,7 @@ export function isAdminNavItemActive(pathname, navItem, search = '') {
 /** 顶栏面包屑（含创作项目监察子页） */
 export function getAdminBreadcrumb(pathname, search = '') {
   const normalized = normalizeAdminPathname(pathname)
-  const projectTrace = normalized.match(/^\/admin\/creation\/projects\/([^/]+)\/trace\/?$/)
+  const projectTrace = normalized.match(/^\/admin\/creation\/projects\/([^/]+)(?:\/trace)?\/?$/)
   if (projectTrace) {
     const parent = findAdminNavItem('/admin/creation/projects')
     return [

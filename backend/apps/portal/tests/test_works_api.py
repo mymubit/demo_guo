@@ -19,21 +19,21 @@ class PortalWorksApiTests(TestCase):
             title="已完成作品",
             theme="sweet-pet",
             episode_count=10,
-            status=Project.STATUS_COMPLETED,
+            fusion_status=Project.FUSION_READY,
         )
         Project.objects.create(
             user=self.user,
             title="进行中作品",
             theme="overbearing-ceo",
             episode_count=20,
-            status=Project.STATUS_RUNNING,
+            fusion_status=Project.FUSION_WRITING,
         )
         Project.objects.create(
             user=self.other,
             title="他人作品",
             theme="sweet-pet",
             episode_count=5,
-            status=Project.STATUS_COMPLETED,
+            fusion_status=Project.FUSION_READY,
         )
 
     def test_works_list_paginated_with_data_and_pagination(self):

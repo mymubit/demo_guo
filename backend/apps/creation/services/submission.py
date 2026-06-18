@@ -55,7 +55,7 @@ def submit(user, data: dict) -> Tuple[Project, int]:
         user_membership=current_membership,
         pipeline_mode=Project.MODE_WORKSPACE,
         pipeline_pack=None,
-        status=Project.STATUS_PENDING,
+        fusion_status=Project.FUSION_DRAFT,
         current_node_index=0,
         total_nodes=0,
         progress_percent=0,

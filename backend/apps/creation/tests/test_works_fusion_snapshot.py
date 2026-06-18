@@ -18,7 +18,6 @@ class WorksFusionSnapshotTests(TestCase):
             title="快照测试",
             theme="sweet-pet",
             episode_count=10,
-            status=Project.STATUS_COMPLETED,
             fusion_status=Project.FUSION_READY,
             overall_score=88,
             grade="A",

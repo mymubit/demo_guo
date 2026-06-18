@@ -67,7 +67,7 @@ class FullChainE2ETests(TestCase):
             format_variant="B",
             novel_text="小说正文" * 50,
             creation_entry="novel-adaptation",
-            status=Project.STATUS_PENDING,
+            fusion_status=Project.FUSION_DRAFT,
         )
 
     def _mock_side_effect(self, agent_id: str):
@@ -93,7 +93,7 @@ class FullChainE2ETests(TestCase):
 
         self.assertIsNotNone(get_artifact(self.project, "episode_scripts"))
         self.assertIsNotNone(get_artifact(self.project, "marketing_kit"))
-        self.assertEqual(self.project.status, Project.STATUS_COMPLETED)
+        self.assertEqual(self.project.execution_status, Project.STATUS_COMPLETED)
 
         workspace = build_independent_workspace(self.project)
         self.assertTrue(workspace["project"]["can_download"])
@@ -127,7 +127,7 @@ class FullChainPortalApiTests(TestCase):
             core_idea="测试",
             episode_count=8,
             format_variant="B",
-            status=Project.STATUS_COMPLETED,
+            fusion_status=Project.FUSION_READY,
         )
         from apps.creation.artifact_service import save_artifact
 

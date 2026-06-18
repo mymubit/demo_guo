@@ -31,6 +31,8 @@ export const admin = {
   // 用户
   listUsers: (params = {}) =>
     adminRequest('GET', '/api/admin/users/', { params }).then(unwrapAdminList),
+  userRecentProjects: (userId) =>
+    adminRequest('GET', `/api/admin/users/${userId}/recent_projects/`).then((res) => res?.data?.items ?? res?.items ?? []),
   toggleUserActive: (id) => adminRequest('POST', `/api/admin/users/${id}/toggle_active/`),
   resetUserPassword: (id, newPassword) =>
     adminRequest('POST', `/api/admin/users/${id}/reset_password/`, {

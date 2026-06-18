@@ -54,7 +54,7 @@ class NovelTextAdaptInputTests(TestCase):
             format_variant="B",
             novel_text=NOVEL_BODY,
             creation_entry="novel-adaptation",
-            status=Project.STATUS_PENDING,
+            fusion_status=Project.FUSION_DRAFT,
         )
         agent = AgentDefinitionService.get_runnable("adapt")
         payload = IndependentAgentService.build_agent_input(project, agent, {})

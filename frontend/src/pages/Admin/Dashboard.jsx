@@ -15,6 +15,7 @@ import { admin } from '@/services/api'
 import { resolveAgentId } from '@/utils/agentTerm'
 import { formatLlmSourceLabel } from '@/utils/adminAgentLabels'
 import ExecutionRunPanel from '@/components/shared/ExecutionRunPanel'
+import DashboardOpsActionCards from '@/components/admin/DashboardOpsActionCards'
 import { AdminPageHeader, AdminLoading, AdminMessage, AdminStatGrid, AdminTabBar } from '@/components/admin/AdminUI'
 import { findAdminNavItem } from '@/config/adminNav'
 import { Button, Card } from '@/components/ui'
@@ -469,6 +470,7 @@ export default function Dashboard() {
   const [runDetail, setRunDetail] = useState(null)
   const [runLoading, setRunLoading] = useState(false)
   const [llmRecalcBusy, setLlmRecalcBusy] = useState(false)
+  const [failedProjects, setFailedProjects] = useState([])
 
   const reloadDashboard = () =>
     admin
@@ -479,6 +481,13 @@ export default function Dashboard() {
   useEffect(() => {
     reloadDashboard().finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    admin
+      .listCreationProjects({ page: 1, page_size: 8, has_failed_run: 'true', facets: '0' })
+      .then((res) => setFailedProjects(res.items || []))
+      .catch(() => setFailedProjects([]))
+  }, [dashboard?.date])
 
   useEffect(() => {
     if (!runFilterId) {
@@ -506,6 +515,7 @@ export default function Dashboard() {
   const summary = dashboard?.summary || {}
   const compare = dashboard?.compare || {}
   const commerceAlerts = dashboard?.commerce_alerts || {}
+  const opsAlerts = dashboard?.ops_alerts || {}
   const charts = useDashboardCharts(dashboard)
 
   const setTab = (key) => {
@@ -555,6 +565,8 @@ export default function Dashboard() {
         runDetail={runDetail}
         onClear={clearRunFilter}
       />
+
+      <DashboardOpsActionCards opsAlerts={opsAlerts} failedProjects={failedProjects} />
 
       <AdminTabBar tabs={DASHBOARD_TABS} active={tab} onChange={setTab} stretch />
 
@@ -700,12 +712,8 @@ export default function Dashboard() {
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 text-sm">
-                <Link to="/admin/creation" className="text-gold-400 hover:text-gold-300 inline-flex items-center gap-1">
-                  <LayoutGrid className={ICON.md} />
-                  创作中心
-                </Link>
                 <Link to="/admin/creation/projects" className="text-gold-400 hover:text-gold-300 inline-flex items-center gap-1">
-                  <FolderKanban className={ICON.md} />
+                  <LayoutGrid className={ICON.md} />
                   创作项目
                 </Link>
                 <Link to="/admin/agent?tab=definitions" className="text-gold-400 hover:text-gold-300">

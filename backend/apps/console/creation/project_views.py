@@ -79,18 +79,42 @@ def _project_ops_row(
 
 
 def build_creation_ops_alerts() -> Dict[str, int]:
-    """Dashboard / 创作中心待办计数。"""
+    """Dashboard / 创作中心待办计数（fusion_status SSOT）。"""
     from apps.creation.models import AgentExecutionRun
 
     failed_project_ids = AgentExecutionRun.objects.filter(
         status=AgentExecutionRun.STATUS_FAILED
     ).values("project_id")
+    feedback_open = 0
+    try:
+        from apps.operations.services import feedback_summary
+
+        feedback_open = int(feedback_summary(days=30).get("open") or 0)
+    except Exception:  # noqa: BLE001
+        feedback_open = 0
+    alert_open = 0
+    try:
+        from apps.operations.models import AlertEvent
+
+        alert_open = AlertEvent.objects.filter(status=AlertEvent.Status.OPEN).count()
+    except Exception:  # noqa: BLE001
+        alert_open = 0
     return {
-        "running": Project.objects.filter(status=Project.STATUS_RUNNING).count(),
-        "failed": Project.objects.filter(status=Project.STATUS_FAILED).count(),
-        "awaiting": Project.objects.filter(status=Project.STATUS_AWAITING).count(),
-        "pending": Project.objects.filter(status=Project.STATUS_PENDING).count(),
+        "running": Project.objects.filter(
+            fusion_status__in=(
+                Project.FUSION_WRITING,
+                Project.FUSION_PLANNING,
+                Project.FUSION_SCORING,
+            )
+        ).count(),
+        "failed": Project.objects.filter(fusion_status=Project.FUSION_BLOCKED).count(),
+        "awaiting": Project.objects.filter(fusion_status=Project.FUSION_REVIEWING).count(),
+        "pending": Project.objects.filter(
+            fusion_status__in=(Project.FUSION_DRAFT, "")
+        ).count(),
         "has_failed_run": Project.objects.filter(id__in=failed_project_ids).count(),
+        "feedback_open": feedback_open,
+        "alert_open": alert_open,
     }
 
 
@@ -138,7 +162,9 @@ class AdminCreationProjectListView(APIView):
         if status_filter in fusion_status_set:
             qs = qs.filter(fusion_status=status_filter)
         elif status_filter in dict(Project.STATUS_CHOICES):
-            qs = qs.filter(status=status_filter)
+            from apps.creation.project_execution import filter_projects_by_execution_status
+
+            qs = filter_projects_by_execution_status(qs, status_filter)
         if pipeline_mode in dict(Project.PIPELINE_MODE_CHOICES):
             qs = qs.filter(pipeline_mode=pipeline_mode)
         if creation_entry:
@@ -193,10 +219,18 @@ class AdminCreationProjectListView(APIView):
             ).values("project_id")
             facets = {
                 "all": Project.objects.count(),
-                "running": Project.objects.filter(status=Project.STATUS_RUNNING).count(),
-                "failed": Project.objects.filter(status=Project.STATUS_FAILED).count(),
-                "pending": Project.objects.filter(status=Project.STATUS_PENDING).count(),
-                "awaiting": Project.objects.filter(status=Project.STATUS_AWAITING).count(),
+                "running": Project.objects.filter(
+                    fusion_status__in=(
+                        Project.FUSION_WRITING,
+                        Project.FUSION_PLANNING,
+                        Project.FUSION_SCORING,
+                    )
+                ).count(),
+                "failed": Project.objects.filter(fusion_status=Project.FUSION_BLOCKED).count(),
+                "pending": Project.objects.filter(
+                    fusion_status__in=(Project.FUSION_DRAFT, "")
+                ).count(),
+                "awaiting": Project.objects.filter(fusion_status=Project.FUSION_REVIEWING).count(),
                 "workspace": Project.objects.filter(pipeline_mode=Project.MODE_WORKSPACE).count(),
                 "has_failed_run": Project.objects.filter(id__in=failed_project_ids).count(),
             }

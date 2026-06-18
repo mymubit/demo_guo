@@ -31,8 +31,8 @@ const STATUS_TONE = {
   pending: 'default',
 }
 
-/** 创作项目运营摘要卡 — 用于轨迹页 / 侧滑抽屉 */
-export default function ProjectOpsSummary({ data, compact = false }) {
+/** 创作项目运营摘要卡 — 用于轨迹页顶栏 */
+export default function ProjectOpsSummary({ data, compact = false, onTabChange, onInspectRun }) {
   if (!data) return null
 
   const score =
@@ -66,13 +66,32 @@ export default function ProjectOpsSummary({ data, compact = false }) {
           >
             查看用户 {data.user_phone || data.user_id}
           </Link>
-          <span className="text-navy-500">·</span>
-          <Link
-            to={`/admin/creation/projects/${data.project_id}/trace?tab=basic`}
-            className="text-navy-300 hover:text-white"
-          >
-            项目详情
-          </Link>
+        </div>
+      ) : null}
+
+      {(data.execution_failed_count ?? 0) > 0 && !compact ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-red-300/90">
+            最近有 {data.execution_failed_count} 次失败 run
+          </span>
+          {onTabChange ? (
+            <button
+              type="button"
+              onClick={() => onTabChange('runs')}
+              className="text-xs text-gold-400 hover:text-gold-300 underline"
+            >
+              查看执行记录 →
+            </button>
+          ) : null}
+          {data.latest_failed_run?.id && onInspectRun ? (
+            <button
+              type="button"
+              onClick={() => onInspectRun(data.latest_failed_run.id)}
+              className="text-xs text-red-300 hover:text-red-200 underline"
+            >
+              打开最近失败 run
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -107,9 +126,6 @@ export default function ProjectOpsSummary({ data, compact = false }) {
       {!compact && (
         <div className="flex flex-wrap items-center gap-3 text-xs">
           <CreationVerifyBadge summary={data.verify_summary} />
-          {data.fusion_status ? (
-            <span className="text-navy-400">融合状态 {data.fusion_status}</span>
-          ) : null}
           {data.updated_at ? (
             <span className="text-navy-400">更新 {formatDateTime(data.updated_at)}</span>
           ) : null}

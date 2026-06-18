@@ -71,7 +71,7 @@ def build_post_script_summary(project: Project) -> Dict[str, Any]:
 
     status = "idle"
     if scripts_ready:
-        if project.status == Project.STATUS_RUNNING:
+        if project.execution_status == Project.STATUS_RUNNING:
             status = "running"
         elif review or score_raw.get("overallScore") is not None or project.overall_score is not None:
             status = "done"

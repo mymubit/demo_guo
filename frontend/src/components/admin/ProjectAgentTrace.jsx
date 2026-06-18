@@ -67,29 +67,101 @@ function ProjectRunsPanel({ runs = [], catalog, onInspectRun }) {
   )
 }
 
+const ARTIFACT_LABELS = {
+  project_brief: '项目 Brief',
+  episode_scripts: '分集剧本',
+  series_outline: '系列大纲',
+  character_bible: '人物小传',
+  structure_plan: '结构策划',
+  adaptation_meta: '改编元数据',
+}
+
+function BriefArtifactCard({ item }) {
+  return (
+    <div className="rounded-xl border border-gold-500/20 bg-gold-500/5 p-4">
+      <p className="text-sm font-medium text-gold-200">{ARTIFACT_LABELS.project_brief}</p>
+      <dl className="mt-3 space-y-2 text-sm">
+        <div>
+          <dt className="text-[10px] text-navy-400">工作标题</dt>
+          <dd className="text-white">{item.working_title || '—'}</dd>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <dt className="text-[10px] text-navy-400">题材</dt>
+            <dd className="text-navy-200">{item.theme || '—'}</dd>
+          </div>
+          <div>
+            <dt className="text-[10px] text-navy-400">集数</dt>
+            <dd className="text-navy-200">{item.episode_count ?? '—'}</dd>
+          </div>
+        </div>
+      </dl>
+    </div>
+  )
+}
+
+function ScriptsArtifactCard({ item }) {
+  const titles = item.sample_titles || []
+  return (
+    <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4 md:col-span-2">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-medium text-cyan-200">{ARTIFACT_LABELS.episode_scripts}</p>
+        <span className="text-xs text-navy-400">共 {item.episode_count ?? 0} 集</span>
+      </div>
+      {titles.length ? (
+        <ul className="mt-3 space-y-1.5 text-sm text-navy-200">
+          {titles.map((title, idx) => (
+            <li key={`${title}-${idx}`} className="flex items-center gap-2">
+              <span className="text-[10px] text-navy-500 w-5">{idx + 1}</span>
+              <span className="truncate">{title}</span>
+            </li>
+          ))}
+          {(item.episode_count ?? 0) > titles.length ? (
+            <li className="text-xs text-navy-500 pl-7">… 另有 {item.episode_count - titles.length} 集</li>
+          ) : null}
+        </ul>
+      ) : (
+        <p className="mt-3 text-xs text-navy-400">暂无集标题摘要</p>
+      )}
+    </div>
+  )
+}
+
+function GenericArtifactCard({ item }) {
+  const label = ARTIFACT_LABELS[item.artifact_key] || item.artifact_key
+  const entries = Object.entries(item).filter(([key]) => key !== 'artifact_key')
+  return (
+    <div className="rounded-xl border border-white/5 bg-slate-900/40 p-4">
+      <p className="text-sm font-medium text-white">{label}</p>
+      <dl className="mt-2 space-y-1 text-xs text-navy-300">
+        {entries.map(([key, value]) => (
+          <div key={key} className="flex gap-2">
+            <dt className="text-navy-500 shrink-0">{key}</dt>
+            <dd className="text-navy-200 break-all">
+              {Array.isArray(value) ? value.join('、') : String(value ?? '—')}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  )
+}
+
 function ProjectArtifactsPanel({ artifacts = [] }) {
   if (!artifacts.length) {
     return <p className="text-sm text-navy-400 py-8 text-center">暂无 AI 产物</p>
   }
   return (
     <div className="grid gap-3 md:grid-cols-2">
-      {artifacts.map((item) => (
-        <div key={item.artifact_key} className="rounded-xl border border-white/5 bg-slate-900/40 p-4">
-          <p className="text-sm font-medium text-white">{item.artifact_key}</p>
-          <dl className="mt-2 space-y-1 text-xs text-navy-300">
-            {Object.entries(item)
-              .filter(([key]) => key !== 'artifact_key')
-              .map(([key, value]) => (
-                <div key={key} className="flex gap-2">
-                  <dt className="text-navy-500 shrink-0">{key}</dt>
-                  <dd className="text-navy-200 break-all">
-                    {Array.isArray(value) ? value.join('、') : String(value ?? '—')}
-                  </dd>
-                </div>
-              ))}
-          </dl>
-        </div>
-      ))}
+      {artifacts.map((item) => {
+        if (item.artifact_key === 'project_brief') {
+          return <BriefArtifactCard key={item.artifact_key} item={item} />
+        }
+        if (item.artifact_key === 'episode_scripts') {
+          return <ScriptsArtifactCard key={item.artifact_key} item={item} />
+        }
+        return <GenericArtifactCard key={item.artifact_key} item={item} />
+      })}
     </div>
   )
 }
@@ -121,10 +193,10 @@ function ProjectQualityPanel({ defects = [] }) {
 
 const TRACE_TABS = [
   { key: 'basic', label: '基本信息', icon: Info },
-  { key: 'timeline', label: '执行轨迹', icon: GitBranch },
   { key: 'runs', label: '执行记录', icon: Layers },
   { key: 'artifacts', label: 'AI 产物', icon: Package },
   { key: 'quality', label: '质量缺陷', icon: AlertTriangle },
+  { key: 'timeline', label: '执行轨迹', icon: GitBranch },
   { key: 'verify', label: '原创复核', icon: ShieldCheck },
 ]
 
@@ -435,7 +507,14 @@ export function ProjectAgentTraceView({
   return (
     <div className="space-y-4">
       <RunDetailModal runId={inspectRunId} onClose={() => setInspectRunId('')} />
-      {showSummary ? <ProjectOpsSummary data={traceData} compact={compact} /> : null}
+      {showSummary ? (
+        <ProjectOpsSummary
+          data={traceData}
+          compact={compact}
+          onTabChange={onTabChange}
+          onInspectRun={setInspectRunId}
+        />
+      ) : null}
 
       {!compact && onTabChange ? (
         <AdminTabBar tabs={TRACE_TABS} active={tab} onChange={onTabChange} />

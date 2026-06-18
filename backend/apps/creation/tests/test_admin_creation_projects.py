@@ -23,7 +23,7 @@ class AdminCreationProjectsTests(TestCase):
             title="运营测试项目",
             theme="sweet-pet",
             episode_count=80,
-            status=Project.STATUS_COMPLETED,
+            fusion_status=Project.FUSION_READY,
             pipeline_mode=Project.MODE_WORKSPACE,
             creation_entry="from-reference",
         )
@@ -87,7 +87,7 @@ class AdminCreationProjectsTests(TestCase):
             title="无失败",
             theme="test",
             episode_count=10,
-            status=Project.STATUS_COMPLETED,
+            fusion_status=Project.FUSION_READY,
         )
         self.client.force_authenticate(user=self.admin)
         res = self.client.get("/api/admin/creation/projects/", {"has_failed_run": "true"})
@@ -166,9 +166,18 @@ class AdminCreationProjectsTests(TestCase):
         self.assertFalse(Project.objects.filter(id=pid).exists())
 
     def test_admin_delete_running_blocked(self):
+        from apps.creation.models import AgentExecutionRun
+
         self.project.pipeline_mode = Project.MODE_STEP
-        self.project.status = Project.STATUS_RUNNING
-        self.project.save(update_fields=["pipeline_mode", "status"])
+        self.project.fusion_status = Project.FUSION_WRITING
+        self.project.save(update_fields=["pipeline_mode", "fusion_status"])
+        AgentExecutionRun.objects.create(
+            project=self.project,
+            user=self.user,
+            agent_id="brief",
+            node_index=1,
+            status=AgentExecutionRun.STATUS_RUNNING,
+        )
         self.client.force_authenticate(user=self.admin)
         res = self.client.delete(f"/api/admin/creation/projects/{self.project.id}/")
         self.assertEqual(res.json().get("code"), 403)

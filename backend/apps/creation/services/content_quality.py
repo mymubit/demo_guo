@@ -51,7 +51,7 @@ def record_final_export(project: Project) -> Project:
 @transaction.atomic
 def mark_abandoned(project: Project) -> Project:
     """用户主动弃用（或系统判定）。"""
-    if project.status in {Project.STATUS_COMPLETED}:
+    if project.execution_status in {Project.STATUS_COMPLETED}:
         return project
     if project.abandoned_at:
         return project
@@ -71,13 +71,7 @@ def detect_and_mark_abandoned(*, days: int = ABANDON_DAYS, limit: int = 500) -> 
     threshold_dt = timezone.now() - timedelta(days=days)
     qs = Project.objects.filter(
         abandoned_at__isnull=True,
-        status__in=[
-            Project.STATUS_PENDING,
-            Project.STATUS_RUNNING,
-            Project.STATUS_AWAITING,
-            Project.STATUS_FAILED,
-        ],
-    ).filter(
+    ).exclude(fusion_status=Project.FUSION_READY).filter(
         Q(last_edited_at__isnull=True, created_at__lt=threshold_dt)
         | Q(last_edited_at__lt=threshold_dt)
     ).order_by("created_at")[:limit]
@@ -104,8 +98,8 @@ def content_quality_summary(days: int = 30) -> dict:
     exported = base.filter(final_export_count__gt=0).count()
     edited = base.filter(user_edit_count__gt=0).count()
     abandoned = base.filter(abandoned_at__isnull=False).count()
-    completed = base.filter(status=Project.STATUS_COMPLETED).count()
-    failed = base.filter(status=Project.STATUS_FAILED).count()
+    completed = base.filter(fusion_status=Project.FUSION_READY).count()
+    failed = base.filter(fusion_status=Project.FUSION_BLOCKED).count()
 
     return {
         "window_days": days,
@@ -137,7 +131,7 @@ def content_quality_funnel(days: int = 30) -> dict:
     total_projects = period_projects.count()
     submitted = total_projects  # 提交即创建
     saved = period_projects.filter(user_edit_count__gt=0).count()
-    completed = period_projects.filter(status=Project.STATUS_COMPLETED).count()
+    completed = period_projects.filter(fusion_status=Project.FUSION_READY).count()
     exported = period_projects.filter(final_export_count__gt=0).count()
     abandoned = period_projects.filter(abandoned_at__isnull=False).count()
 
@@ -167,7 +161,13 @@ def stuck_projects(days: int = 3, limit: int = 50) -> list[dict]:
 
     threshold_dt = timezone.now() - timedelta(days=days)
     qs = Project.objects.filter(
-        status__in=[Project.STATUS_PENDING, Project.STATUS_RUNNING, Project.STATUS_AWAITING],
+        fusion_status__in=[
+            Project.FUSION_DRAFT,
+            Project.FUSION_PLANNING,
+            Project.FUSION_WRITING,
+            Project.FUSION_REVIEWING,
+            Project.FUSION_SCORING,
+        ],
         abandoned_at__isnull=True,
         created_at__lt=threshold_dt,
     ).order_by("created_at")[:limit]
@@ -179,7 +179,7 @@ def stuck_projects(days: int = 3, limit: int = 50) -> list[dict]:
             "user_id": str(p.user_id) if p.user_id else "",
             "title": (p.title or p.theme or "未命名")[:200],
             "theme": p.theme,
-            "status": p.status,
+            "status": p.execution_status,
             "status_text": p.get_status_display(),
             "progress_percent": p.progress_percent,
             "user_edit_count": p.user_edit_count,

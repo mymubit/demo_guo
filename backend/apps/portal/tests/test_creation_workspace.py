@@ -22,7 +22,7 @@ class CreationWorkspaceApiTests(TestCase):
             core_idea="API 测试",
             episode_count=10,
             pipeline_mode=Project.MODE_WORKSPACE,
-            status=Project.STATUS_PENDING,
+            fusion_status=Project.FUSION_DRAFT,
         )
         save_artifact(
             self.project,
@@ -81,8 +81,11 @@ class CreationWorkspaceApiTests(TestCase):
         self.assertEqual(res.json().get("code"), 403)
 
     def test_share_completed_project_ok(self):
-        self.project.status = Project.STATUS_COMPLETED
-        self.project.save(update_fields=["status"])
+        from apps.creation.artifact_service import save_artifact
+
+        self.project.fusion_status = Project.FUSION_READY
+        save_artifact(self.project, "episode_scripts", {"episodes": [{"episodeNumber": 1, "title": "第1集"}]})
+        self.project.save(update_fields=["fusion_status"])
         res = self.client.post(f"/api/creation/share/{self.project.id}/", {}, format="json")
         self.assertEqual(res.status_code, 200)
         body = res.json()
@@ -94,8 +97,11 @@ class CreationWorkspaceApiTests(TestCase):
         self.assertEqual(res.status_code, 200)
         project = (res.json().get("data") or {}).get("project") or {}
         self.assertFalse(project.get("can_share"))
-        self.project.status = Project.STATUS_COMPLETED
-        self.project.save(update_fields=["status"])
+        from apps.creation.artifact_service import save_artifact
+
+        self.project.fusion_status = Project.FUSION_READY
+        save_artifact(self.project, "episode_scripts", {"episodes": [{"episodeNumber": 1, "title": "第1集"}]})
+        self.project.save(update_fields=["fusion_status"])
         res = self.client.get(f"/api/creation/projects/{self.project.id}/workspace/")
         project = (res.json().get("data") or {}).get("project") or {}
         self.assertTrue(project.get("can_share"))

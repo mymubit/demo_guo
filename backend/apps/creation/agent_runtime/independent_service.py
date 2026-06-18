@@ -673,9 +673,8 @@ class IndependentAgentService:
             run_params=run_params,
             overwrite_mode=cls._resolve_overwrite_mode(agent, run_params),
         )
-        locked_project.status = Project.STATUS_RUNNING
         locked_project.fusion_status = Project.FUSION_WRITING
-        locked_project.save(update_fields=["status", "fusion_status", "updated_at"])
+        locked_project.save(update_fields=["fusion_status", "updated_at"])
         return EnqueueRunResult(run=run, created_new_run=True, should_enqueue=True)
 
     @classmethod
@@ -738,8 +737,11 @@ class IndependentAgentService:
         return run
 
     @staticmethod
-    def _derive_fusion_status(project: Project, *, status: str) -> str:
+    def _derive_fusion_status(project: Project) -> str:
         """根据产物与运行态推导 fusion_status。"""
+        from apps.creation.project_execution import derive_execution_status
+
+        status = derive_execution_status(project)
         if status == Project.STATUS_FAILED:
             return Project.FUSION_BLOCKED
         if get_artifact(project, "episode_scripts"):
@@ -778,40 +780,29 @@ class IndependentAgentService:
 
     @classmethod
     def update_project_status(cls, project: Project) -> None:
-        has_running = AgentExecutionRun.objects.filter(
-            project=project,
-            status=AgentExecutionRun.STATUS_RUNNING,
-        ).exists()
-        has_scripts = bool(get_artifact(project, "episode_scripts"))
-        latest_failed = (
-            AgentExecutionRun.objects.filter(
-                project=project,
-                status=AgentExecutionRun.STATUS_FAILED,
-            )
-            .order_by("-finished_at")
-            .first()
-        )
-        if has_running:
-            status = Project.STATUS_RUNNING
-        elif has_scripts:
-            status = Project.STATUS_COMPLETED
-        elif latest_failed and not has_scripts:
-            status = Project.STATUS_FAILED
-        else:
-            status = Project.STATUS_PENDING
+        from apps.creation.project_execution import derive_execution_status
 
-        fusion_status = cls._derive_fusion_status(project, status=status)
+        exec_status = derive_execution_status(project)
+        fusion_status = cls._derive_fusion_status(project)
         progress_percent = cls._compute_progress_percent(project)
-        fields = ["status", "fusion_status", "progress_percent", "updated_at"]
-        project.status = status
+        fields = ["fusion_status", "progress_percent", "updated_at"]
         project.fusion_status = fusion_status
         project.progress_percent = progress_percent
-        if status == Project.STATUS_COMPLETED and not project.completed_at:
+        if exec_status == Project.STATUS_COMPLETED and not project.completed_at:
             project.completed_at = timezone.now()
             fields.append("completed_at")
-        if status == Project.STATUS_FAILED and latest_failed:
-            project.error_message = (latest_failed.error_message or "")[:2000]
-            fields.append("error_message")
+        if exec_status == Project.STATUS_FAILED:
+            latest_failed = (
+                AgentExecutionRun.objects.filter(
+                    project=project,
+                    status=AgentExecutionRun.STATUS_FAILED,
+                )
+                .order_by("-finished_at")
+                .first()
+            )
+            if latest_failed:
+                project.error_message = (latest_failed.error_message or "")[:2000]
+                fields.append("error_message")
         from apps.creation.services._rendering import render_progress_html
 
         project.rendered_progress_html = render_progress_html(project)

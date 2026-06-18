@@ -88,7 +88,7 @@ class CreationSubmitView(APIView):
             {
                 "project_id": str(project.id),
                 "estimated_minutes": estimated_minutes,
-                "status": project.status,
+                "status": project.execution_status,
                 "workspace_url": f"/creation?project={project.id}",
             }
         )

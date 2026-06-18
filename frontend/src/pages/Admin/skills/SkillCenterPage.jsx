@@ -54,6 +54,13 @@ const EMPTY_FORM = {
   retry_policy: '{"max_attempts": 2, "backoff_seconds": 5}',
 }
 
+import AdminEvolution from '@/pages/Admin/evolution/AdminEvolution'
+
+const SKILL_PAGE_TABS = [
+  { key: 'skills', label: '技能定义' },
+  { key: 'evolution', label: '进化提案' },
+]
+
 export default function SkillCenterPage() {
   const [items, setItems]           = useState([])
   const [total, setTotal]           = useState(0)
@@ -75,6 +82,7 @@ export default function SkillCenterPage() {
   // 发布灰度弹窗
   const [publishTarget, setPublishTarget]   = useState(null)
   const [grayWeight,    setGrayWeight]      = useState(100)
+  const [pageTab,         setPageTab]         = useState('skills')
 
   const showMsg = useCallback((msg, type = 'success') => {
     setToast({ msg, type })
@@ -227,6 +235,25 @@ export default function SkillCenterPage() {
   }
 
   return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
+        {SKILL_PAGE_TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setPageTab(tab.key)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${
+              pageTab === tab.key ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {pageTab === 'evolution' ? (
+        <AdminEvolution embedded />
+      ) : (
     <div className="flex h-full gap-4">
       {/* Toast */}
       {toast && (
@@ -606,6 +633,8 @@ export default function SkillCenterPage() {
             </div>
           </div>
         </div>
+      )}
+    </div>
       )}
     </div>
   )

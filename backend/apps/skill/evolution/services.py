@@ -54,7 +54,7 @@ class RuleEvolutionService:
             overall_score__isnull=False,
             overall_score__lt=70,
             updated_at__gte=cutoff_date,
-        ).exclude(status=Project.STATUS_FAILED)
+        ).exclude(fusion_status=Project.FUSION_BLOCKED)
 
         project_count = low_score_projects.count()
         if project_count < min_projects:

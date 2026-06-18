@@ -62,7 +62,7 @@ def list_user_projects(
     """获取用户的创作作品列表。"""
     qs = Project.objects.filter(user=user).only(
         "id", "title", "theme", "episode_count", "format_variant",
-        "status", "progress_percent", "fusion_status", "overall_score",
+        "progress_percent", "fusion_status", "overall_score",
         "grade", "ready_at", "created_at", "updated_at", "core_idea",
         "pipeline_mode", "creation_entry",
     )
@@ -73,7 +73,9 @@ def list_user_projects(
         Project.STATUS_COMPLETED,
         Project.STATUS_FAILED,
     }:
-        qs = qs.filter(status=status_filter)
+        from ..project_execution import filter_projects_by_execution_status
+
+        qs = filter_projects_by_execution_status(qs, status_filter)
     keyword = (keyword or "").strip()
     if keyword:
         qs = qs.filter(Q(title__icontains=keyword) | Q(core_idea__icontains=keyword))
@@ -95,7 +97,7 @@ def _reconcile_project_running_state(
     """解除工作台遗留 running 锁（Worker 异常退出或事务污染后）。"""
     if project.pipeline_mode != Project.MODE_WORKSPACE:
         return project
-    if project.status != Project.STATUS_RUNNING:
+    if project.execution_status != Project.STATUS_RUNNING:
         return project
     from ..agent_runtime.independent_service import IndependentAgentService
     from ..models import AgentExecutionRun
@@ -122,7 +124,7 @@ def delete_user_project(project_id: str, user) -> dict:
     """删除用户作品（级联移除节点、产物、剧本文件与分享链接，不可恢复）。"""
     project = _get_user_project(project_id, user)
     project = _reconcile_project_running_state(project, aggressive=True)
-    if project.status == Project.STATUS_RUNNING:
+    if project.execution_status == Project.STATUS_RUNNING:
         raise PermissionDenied("创作进行中，请等待完成或失败后再删除")
     title = (project.title or "")[:200]
     project.delete()
@@ -137,7 +139,7 @@ def admin_delete_project(project_id: str) -> dict:
     except Project.DoesNotExist:
         raise PermissionDenied("项目不存在")
     project = _reconcile_project_running_state(project, aggressive=True)
-    if project.status == Project.STATUS_RUNNING:
+    if project.execution_status == Project.STATUS_RUNNING:
         raise PermissionDenied("创作进行中，请等待完成或失败后再删除")
     title = (project.title or project.theme or "未命名")[:200]
     project.delete()

@@ -32,7 +32,8 @@ def get_progress(project_id: str, user) -> dict:
     rendered_progress_html = _render_progress_html(project)
 
     download_token_str = ""
-    if project.status == Project.STATUS_COMPLETED:
+    exec_status = project.execution_status
+    if exec_status == Project.STATUS_COMPLETED:
         try:
             dl = (
                 DownloadToken.objects.filter(
@@ -65,8 +66,8 @@ def get_progress(project_id: str, user) -> dict:
         }
 
     return {
-        "status": project.status,
-        "status_text": project.get_status_display(),
+        "status": exec_status,
+        "status_text": dict(Project.STATUS_CHOICES).get(exec_status, exec_status),
         "fusion_status": project.fusion_status or "",
         "fusion_status_text": (
             dict(Project.FUSION_STATUS_CHOICES).get(project.fusion_status, "")
@@ -83,11 +84,11 @@ def get_progress(project_id: str, user) -> dict:
         "rendered_progress_html": rendered_progress_html,
         "rendered_result_html": (
             _render_result_html(project)
-            if project.status == Project.STATUS_COMPLETED
+            if exec_status == Project.STATUS_COMPLETED
             else ""
         ),
         "download_token": download_token_str,
-        "error_message": project.error_message if project.status == Project.STATUS_FAILED else "",
+        "error_message": project.error_message if exec_status == Project.STATUS_FAILED else "",
         "created_at": project.created_at,
         "updated_at": project.updated_at,
         "latest_execution_run": _latest_execution_run_summary(project),

@@ -213,7 +213,7 @@ export function AdminSearchInput({ value, onChange, placeholder, className = '' 
   )
 }
 
-export function AdminTable({ columns, rows, rowKey = 'id', emptyText = '暂无数据', mobileCardRender }) {
+export function AdminTable({ columns, rows, rowKey = 'id', emptyText = '暂无数据', mobileCardRender, onRowClick }) {
   if (!rows?.length) {
     return <AdminEmpty title={emptyText} />
   }
@@ -247,7 +247,11 @@ export function AdminTable({ columns, rows, rowKey = 'id', emptyText = '暂无�
             {rows.map((row) => (
               <tr
                 key={getRowKey(row)}
-                className="border-b border-white/5 hover:bg-white/[0.03] transition-colors"
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
+                className={cn(
+                  'border-b border-white/5 hover:bg-white/[0.03] transition-colors',
+                  onRowClick && 'cursor-pointer',
+                )}
               >
                 {columns.map((col) => (
                   <td key={col.key} className={cn('px-5 py-4 align-middle', col.className)}>

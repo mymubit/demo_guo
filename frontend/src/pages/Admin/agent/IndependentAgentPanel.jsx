@@ -57,6 +57,75 @@ const emptyBindingForm = () => ({
   order_index: 0,
 })
 
+function lineDiff(leftText = '', rightText = '') {
+  const leftLines = String(leftText || '').split('\n')
+  const rightLines = String(rightText || '').split('\n')
+  const max = Math.max(leftLines.length, rightLines.length)
+  const rows = []
+  for (let i = 0; i < max; i += 1) {
+    const l = leftLines[i] ?? ''
+    const r = rightLines[i] ?? ''
+    if (l === r) {
+      rows.push({ type: 'same', left: l, right: r })
+    } else {
+      rows.push({ type: 'diff', left: l, right: r })
+    }
+  }
+  return rows
+}
+
+function PromptVersionDiff({ prompts = [] }) {
+  const [leftVersion, setLeftVersion] = useState('')
+  const [rightVersion, setRightVersion] = useState('')
+
+  useEffect(() => {
+    if (prompts.length >= 2 && !leftVersion && !rightVersion) {
+      setLeftVersion(prompts[1]?.version || '')
+      setRightVersion(prompts[0]?.version || '')
+    }
+  }, [prompts, leftVersion, rightVersion])
+
+  const left = prompts.find((p) => p.version === leftVersion)
+  const right = prompts.find((p) => p.version === rightVersion)
+  const fields = ['system_prompt', 'user_prompt_template', 'output_format_prompt', 'constraints_prompt']
+
+  if (prompts.length < 2) {
+    return <p className="text-xs text-navy-400">至少两个 Prompt 版本才可对比</p>
+  }
+
+  return (
+    <div className="mt-4 space-y-3 rounded-xl border border-white/10 bg-black/20 p-4">
+      <h4 className="text-sm font-medium text-white">Prompt 版本对比</h4>
+      <div className="grid grid-cols-2 gap-2">
+        <select className={inputCls} value={leftVersion} onChange={(e) => setLeftVersion(e.target.value)}>
+          {prompts.map((p) => (
+            <option key={p.id} value={p.version}>{p.version}</option>
+          ))}
+        </select>
+        <select className={inputCls} value={rightVersion} onChange={(e) => setRightVersion(e.target.value)}>
+          {prompts.map((p) => (
+            <option key={p.id} value={p.version}>{p.version}</option>
+          ))}
+        </select>
+      </div>
+      {fields.map((field) => {
+        const rows = lineDiff(left?.[field], right?.[field])
+        const hasDiff = rows.some((row) => row.type === 'diff')
+        if (!hasDiff && !left?.[field] && !right?.[field]) return null
+        return (
+          <details key={field} open={hasDiff} className="rounded-lg border border-white/5">
+            <summary className="cursor-pointer px-3 py-2 text-xs text-gold-300">{field}{hasDiff ? ' · 有差异' : ''}</summary>
+            <div className="grid grid-cols-2 gap-2 px-3 pb-3 text-[11px] font-mono">
+              <pre className="whitespace-pre-wrap text-navy-300 max-h-48 overflow-y-auto">{left?.[field] || '—'}</pre>
+              <pre className="whitespace-pre-wrap text-navy-200 max-h-48 overflow-y-auto">{right?.[field] || '—'}</pre>
+            </div>
+          </details>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function IndependentAgentPanel({ onMessage }) {
   const [loading, setLoading] = useState(true)
   const [agents, setAgents] = useState([])
@@ -430,6 +499,7 @@ export default function IndependentAgentPanel({ onMessage }) {
                 </div>
               ))}
             </div>
+            <PromptVersionDiff prompts={prompts} />
             {editingPromptVersion !== '' || promptForm.version ? (
               <div className="mt-4 space-y-3 rounded-xl border border-white/10 bg-black/20 p-4">
                 <h4 className="text-sm font-medium text-white">编辑 Prompt：{promptForm.version || '新版本'}</h4>

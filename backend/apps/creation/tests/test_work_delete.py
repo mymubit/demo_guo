@@ -21,7 +21,7 @@ class WorkDeleteTests(TestCase):
             title="待删作品",
             theme="sweet-pet",
             episode_count=80,
-            status=Project.STATUS_COMPLETED,
+            fusion_status=Project.FUSION_READY,
         )
 
     def test_delete_user_project(self):
@@ -32,8 +32,15 @@ class WorkDeleteTests(TestCase):
 
     def test_delete_running_blocked(self):
         self.project.pipeline_mode = Project.MODE_STEP
-        self.project.status = Project.STATUS_RUNNING
-        self.project.save(update_fields=["pipeline_mode", "status"])
+        self.project.fusion_status = Project.FUSION_WRITING
+        self.project.save(update_fields=["pipeline_mode", "fusion_status"])
+        AgentExecutionRun.objects.create(
+            project=self.project,
+            user=self.user,
+            agent_id="brief",
+            node_index=1,
+            status=AgentExecutionRun.STATUS_RUNNING,
+        )
         with self.assertRaises(PermissionDenied):
             CreationService.delete_user_project(str(self.project.id), self.user)
 
@@ -41,8 +48,8 @@ class WorkDeleteTests(TestCase):
         from apps.creation.models import AgentExecutionRun
 
         self.project.pipeline_mode = Project.MODE_WORKSPACE
-        self.project.status = Project.STATUS_RUNNING
-        self.project.save(update_fields=["pipeline_mode", "status"])
+        self.project.fusion_status = Project.FUSION_WRITING
+        self.project.save(update_fields=["pipeline_mode", "fusion_status"])
         AgentExecutionRun.objects.create(
             project=self.project,
             user=self.user,

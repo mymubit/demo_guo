@@ -54,7 +54,7 @@ def build_independent_workspace(project: Project) -> Dict[str, Any]:
             }
         )
     can_download = "episode_scripts" in artifact_keys
-    can_share = project.status == Project.STATUS_COMPLETED and can_download
+    can_share = project.fusion_status == Project.FUSION_READY and can_download
     has_running_agent = AgentExecutionRun.objects.filter(
         project=project,
         status=AgentExecutionRun.STATUS_RUNNING,
@@ -63,7 +63,7 @@ def build_independent_workspace(project: Project) -> Dict[str, Any]:
         "project": {
             "id": str(project.id),
             "title": project.title or project.theme,
-            "status": project.status,
+            "status": project.execution_status,
             "episode_count": project.episode_count,
             "can_download": can_download,
             "can_share": can_share,

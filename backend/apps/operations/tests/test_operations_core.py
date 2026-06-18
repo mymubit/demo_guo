@@ -39,7 +39,7 @@ class CreationFeedbackTests(TestCase):
             title="运营测试项目",
             theme="sweet-pet",
             episode_count=20,
-            status=Project.STATUS_RUNNING,
+            fusion_status=Project.FUSION_WRITING,
             pipeline_mode=Project.MODE_WORKSPACE,
             creation_entry="from-scratch",
         )
@@ -110,21 +110,21 @@ class ContentQualityTests(TestCase):
         # 已完成 + 导出了 2 次
         self.p1 = Project.objects.create(
             user=self.user, title="p1", theme="t1", episode_count=10,
-            status=Project.STATUS_COMPLETED, pipeline_mode=Project.MODE_WORKSPACE,
+            fusion_status=Project.FUSION_READY, pipeline_mode=Project.MODE_WORKSPACE,
             creation_entry="from-scratch", user_edit_count=5, final_export_count=2,
             created_at=now - timedelta(days=2),
         )
         # 进行中 + 编辑过 3 次
         self.p2 = Project.objects.create(
             user=self.user, title="p2", theme="t2", episode_count=8,
-            status=Project.STATUS_RUNNING, pipeline_mode=Project.MODE_WORKSPACE,
+            fusion_status=Project.FUSION_WRITING, pipeline_mode=Project.MODE_WORKSPACE,
             creation_entry="from-outline", user_edit_count=3, final_export_count=0,
             created_at=now - timedelta(days=1),
         )
         # 失败 + 弃用
         self.p3 = Project.objects.create(
             user=self.user, title="p3", theme="t3", episode_count=5,
-            status=Project.STATUS_FAILED, pipeline_mode=Project.MODE_WORKSPACE,
+            fusion_status=Project.FUSION_BLOCKED, pipeline_mode=Project.MODE_WORKSPACE,
             creation_entry="from-scratch", user_edit_count=0, final_export_count=0,
             abandoned_at=now - timedelta(days=1), created_at=now - timedelta(days=3),
         )
@@ -167,7 +167,7 @@ class ContentQualityTests(TestCase):
     def test_detect_and_mark_abandoned_marks_7d_old(self):
         old = Project.objects.create(
             user=self.user, title="old", theme="t", episode_count=5,
-            status=Project.STATUS_RUNNING, pipeline_mode=Project.MODE_WORKSPACE,
+            fusion_status=Project.FUSION_WRITING, pipeline_mode=Project.MODE_WORKSPACE,
             creation_entry="from-scratch",
             created_at=timezone.now() - timedelta(days=20),
         )

@@ -40,7 +40,7 @@ class IndependentAgentEnqueueTests(TestCase):
             core_idea="测试并发入队",
             episode_count=20,
             format_variant="B",
-            status=Project.STATUS_PENDING,
+            fusion_status=Project.FUSION_DRAFT,
         )
 
     def test_enqueue_returns_existing_running_without_creating_duplicate(self):
@@ -88,7 +88,7 @@ class IndependentAgentMergePersistTests(TestCase):
             core_idea="测试 merge 写入",
             episode_count=20,
             format_variant="B",
-            status=Project.STATUS_PENDING,
+            fusion_status=Project.FUSION_DRAFT,
         )
         save_artifact(
             self.project,
@@ -172,7 +172,7 @@ class IndependentAgentPreviewTests(TestCase):
             core_idea="测试预估",
             episode_count=20,
             format_variant="B",
-            status=Project.STATUS_PENDING,
+            fusion_status=Project.FUSION_DRAFT,
         )
 
     def test_preview_run_does_not_create_execution_run(self):
@@ -226,7 +226,7 @@ class CreationSubmitLegacyIsolationTests(TestCase):
         project, _ = submit(self.user, self._payload())
         mock_enqueue.assert_not_called()
         self.assertEqual(project.total_nodes, 0)
-        self.assertEqual(project.status, Project.STATUS_PENDING)
+        self.assertEqual(project.execution_status, Project.STATUS_PENDING)
 
 
 class IndependentAgentOutputValidationTests(TestCase):
@@ -277,7 +277,7 @@ class ReportArtifactEditorViewTests(TestCase):
             core_idea="测试报告预览",
             episode_count=20,
             format_variant="B",
-            status=Project.STATUS_PENDING,
+            fusion_status=Project.FUSION_DRAFT,
         )
 
     def test_build_artifact_editor_view_routes_review_report(self):

@@ -28,7 +28,9 @@ def _render_progress_html(project: Project) -> str:
             f"</div>"
         )
 
-    status_text = project.get_status_display()
+    status_text = dict(Project.STATUS_CHOICES).get(
+        project.execution_status, project.execution_status
+    )
     return (
         f'<div class="creation-progress-card" data-project-id="{project.id}">'
         f'<div class="progress-header">'

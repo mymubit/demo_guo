@@ -156,10 +156,7 @@ class Project(models.Model):
         verbose_name="消耗的会员",
     )
 
-    # 状态 & 流程进度
-    status = models.CharField(
-        "状态", max_length=16, choices=STATUS_CHOICES, default=STATUS_PENDING
-    )
+    # 状态 & 流程进度（fusion_status 为运营 SSOT；执行态由 project_execution 推导）
     pipeline_mode = models.CharField(
         "流水线模式",
         max_length=16,
@@ -275,17 +272,20 @@ class Project(models.Model):
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["user", "-created_at"]),
-            models.Index(fields=["status"]),
-            models.Index(fields=["abandoned_at", "status"]),
-            models.Index(fields=["-created_at", "status"]),
+            models.Index(fields=["fusion_status"]),
+            models.Index(fields=["abandoned_at", "fusion_status"]),
+            models.Index(fields=["-created_at", "fusion_status"]),
         ]
 
-    # 说明：status 与 fusion_status 由服务层（IndependentAgentService.update_project_status /
-    # submission / enqueue_run）作为单一来源显式维护，不再在 save() 中自动派生覆盖，
-    # 否则会把独立 Agent 写入的 running/completed 错误回写为 pending。
+    @property
+    def execution_status(self) -> str:
+        from .project_execution import derive_execution_status
+
+        return derive_execution_status(self)
 
     def __str__(self) -> str:
-        return f"[{self.get_status_display()}] {self.id.hex[:8]} - {self.theme}"
+        label = dict(self.FUSION_STATUS_CHOICES).get(self.fusion_status, self.fusion_status or "—")
+        return f"[{label}] {self.id.hex[:8]} - {self.theme}"
 
 
 # ============================================================

@@ -50,7 +50,7 @@ def _serialize_project_state(project: Project) -> dict:
     """提取客户端需要的进度字段"""
     return {
         "project_id":         str(project.id),
-        "status":             project.status,
+        "status":             project.execution_status,
         "fusion_status":      project.fusion_status,
         "progress_percent":   project.progress_percent,
         "current_node_index": project.current_node_index,
@@ -75,10 +75,10 @@ def _progress_stream(project_id: str, user) -> Generator[str, None, None]:
             return
 
         state_data = _serialize_project_state(project)
-        is_terminal = project.status in (Project.STATUS_COMPLETED, Project.STATUS_FAILED)
+        is_terminal = project.execution_status in (Project.STATUS_COMPLETED, Project.STATUS_FAILED)
 
         if is_terminal:
-            event_type = "done" if project.status == Project.STATUS_COMPLETED else "error"
+            event_type = "done" if project.execution_status == Project.STATUS_COMPLETED else "error"
             yield _build_event(event_type, state_data)
             return
 

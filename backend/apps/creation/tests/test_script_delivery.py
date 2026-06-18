@@ -26,7 +26,7 @@ class ScriptDeliveryTests(TestCase):
             core_idea="逆袭故事",
             episode_count=2,
             format_variant="B",
-            status=Project.STATUS_COMPLETED,
+            fusion_status=Project.FUSION_READY,
         )
 
     def test_resolve_scripts_from_pipeline_result(self):

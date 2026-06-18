@@ -151,8 +151,14 @@ def dashboard_slo_cards() -> dict:
         # 简版 dashboard 摘要（供首页快速预览）
         "snapshot": {
             "today_projects": Project.objects.filter(created_at__gte=today_start).count(),
-            "running_projects": Project.objects.filter(status=Project.STATUS_RUNNING).count(),
-            "failed_projects": Project.objects.filter(status=Project.STATUS_FAILED).count(),
+            "running_projects": Project.objects.filter(
+                fusion_status__in=(
+                    Project.FUSION_WRITING,
+                    Project.FUSION_PLANNING,
+                    Project.FUSION_SCORING,
+                )
+            ).count(),
+            "failed_projects": Project.objects.filter(fusion_status=Project.FUSION_BLOCKED).count(),
         },
     }
     cache.set(cache_key, data, CACHE_TTL)
@@ -381,8 +387,8 @@ def sample_projects_for_feedback(*, days: int = 7, limit: int = 20) -> list[dict
         is_quality_sampled=False,
     ).filter(
         Q(abandoned_at__isnull=False)
-        | Q(status=Project.STATUS_FAILED)
-        | (Q(final_export_count=0) & Q(status=Project.STATUS_COMPLETED))
+        | Q(fusion_status=Project.FUSION_BLOCKED)
+        | (Q(final_export_count=0) & Q(fusion_status=Project.FUSION_READY))
     ).select_related("user").order_by("-created_at")[:limit]
 
     return [
@@ -390,8 +396,8 @@ def sample_projects_for_feedback(*, days: int = 7, limit: int = 20) -> list[dict
             "project_id": str(p.id),
             "title": (p.title or p.theme or "未命名")[:200],
             "theme": p.theme,
-            "status": p.status,
-            "status_text": p.get_status_display(),
+            "status": p.execution_status,
+            "status_text": dict(Project.STATUS_CHOICES).get(p.execution_status, p.execution_status),
             "user_edit_count": p.user_edit_count,
             "final_export_count": p.final_export_count,
             "abandoned_at": p.abandoned_at.isoformat() if p.abandoned_at else "",

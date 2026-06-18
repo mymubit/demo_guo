@@ -173,7 +173,7 @@ class CreationEntrySubmitContractTests(TestCase):
             ),
         )
 
-        self.assertEqual(project.status, Project.STATUS_PENDING)
+        self.assertEqual(project.execution_status, Project.STATUS_PENDING)
         self.assertEqual(project.pipeline_mode, Project.MODE_WORKSPACE)
 
     @patch("apps.creation.services.submission.MembershipService.get_current_membership", return_value=None)
@@ -221,4 +221,4 @@ class CreationEntrySubmitContractTests(TestCase):
             self.user,
             self._payload(creation_entry="from-scratch"),
         )
-        self.assertEqual(project.status, Project.STATUS_PENDING)
+        self.assertEqual(project.execution_status, Project.STATUS_PENDING)
