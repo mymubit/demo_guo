@@ -28,7 +28,8 @@ import {
   formatDateTime,
 } from '@/components/admin/AdminUI'
 import { cardEnter, modalOverlay, modalPanel } from '@/constants/motion'
-import { cn } from '@/utils/cn'
+import { adminProjectDetailPath } from '@/utils/adminProjectRoutes'
+import { AdminPenetrationLink } from '@/components/admin/workbench/AdminWorkbenchKit'
 
 const STATUS_OPTIONS = [
   { key: '', label: '全部状态' },
@@ -268,6 +269,17 @@ function ProposalDetailView({ proposal, onBack, onApprove, onReject, onApply, ac
         <AdminPanel title="提案信息">
           <div className="space-y-3 text-sm">
             <div className="flex items-center justify-between">
+              <span className="text-navy-400">触发项目</span>
+              {proposal.trigger_project_id ? (
+                <AdminPenetrationLink
+                  to={adminProjectDetailPath(proposal.trigger_project_id, 'quality')}
+                  label="查看项目"
+                />
+              ) : (
+                <span className="text-navy-500">—</span>
+              )}
+            </div>
+            <div className="flex items-center justify-between">
               <span className="text-navy-400">目标技能</span>
               <span className="text-white">{proposal.target_skill || proposal.skill_name || '—'}</span>
             </div>
@@ -380,7 +392,7 @@ function ProposalDetailView({ proposal, onBack, onApprove, onReject, onApply, ac
 }
 
 /** 提案列表 */
-function ProposalList({ onSelect }) {
+function ProposalList({ onSelect, filterSkillId }) {
   const [searchParams, setSearchParams] = useSearchParams()
   const [message, setMessage] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -415,7 +427,13 @@ function ProposalList({ onSelect }) {
         page_size: 20,
         status: status || undefined,
       })
-      setItems(res.items || [])
+      setItems(
+        (res.items || []).filter((row) => {
+          if (!filterSkillId) return true
+          const skill = row.target_skill || row.skill_name || ''
+          return skill === filterSkillId
+        }),
+      )
       setPagination({
         page: res.pagination?.page || 1,
         total_pages: res.pagination?.total_pages || 1,
@@ -428,7 +446,7 @@ function ProposalList({ onSelect }) {
     } finally {
       setLoading(false)
     }
-  }, [page, status])
+  }, [page, status, filterSkillId])
 
   useEffect(() => {
     load()
@@ -557,7 +575,7 @@ function ProposalList({ onSelect }) {
 }
 
 /** 主组件 */
-export default function AdminEvolution({ embedded = false }) {
+export default function AdminEvolution({ embedded = false, filterSkillId }) {
   const [message, setMessage] = useState(null)
   const [view, setView] = useState('list') // 'list' | 'detail'
   const [selectedProposal, setSelectedProposal] = useState(null)
@@ -678,7 +696,7 @@ export default function AdminEvolution({ embedded = false }) {
         </div>
       )}
 
-      {view === 'list' && <ProposalList onSelect={handleSelectProposal} />}
+      {view === 'list' && <ProposalList onSelect={handleSelectProposal} filterSkillId={filterSkillId} />}
 
       {view === 'detail' && selectedProposal && (
         <ProposalDetailView

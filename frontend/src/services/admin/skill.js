@@ -1,12 +1,16 @@
 import { adminRequest, unwrapAdminList, unwrapAdminListData } from './http'
 
+function unwrapDetail(res) {
+  return res?.data?.data ?? res?.data ?? res
+}
+
 export const adminSkill = {
   // 技能定义列表
   listDefinitions: (params = {}) =>
     adminRequest('GET', '/api/admin/skills/definitions/', { params }).then(unwrapAdminList),
   // 技能定义详情
   getDefinition: (pk) =>
-    adminRequest('GET', `/api/admin/skills/definitions/${pk}/`),
+    adminRequest('GET', `/api/admin/skills/definitions/${pk}/`).then(unwrapDetail),
   // 更新技能定义
   updateDefinition: (pk, data) =>
     adminRequest('PUT', `/api/admin/skills/definitions/${pk}/`, { data }),

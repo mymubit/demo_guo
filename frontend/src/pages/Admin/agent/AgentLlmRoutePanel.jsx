@@ -6,6 +6,7 @@ import AdminMasterDetail, {
   AdminMasterDetailListButton,
   useAdminSelection,
 } from '@/components/admin/AdminMasterDetail'
+import { AdminPenetrationLink } from '@/components/admin/workbench/AdminWorkbenchKit'
 
 const ROUTE_HINTS = {
   brief: 'BriefAgent 立项整理',
@@ -166,6 +167,12 @@ export default function AgentLlmRoutePanel({ onMessage }) {
                 {row.display_name || row.route_key}
               </div>
               <div className="text-xs text-navy-400 mt-1">{ROUTE_HINTS[row.route_key] || row.route_key}</div>
+            </div>
+
+            <div className="flex flex-wrap gap-3 text-xs">
+              <AdminPenetrationLink to="/admin/model" label="大模型配置" />
+              <AdminPenetrationLink to="/admin/agent?tab=definitions" label="Agent 定义" />
+              <AdminPenetrationLink to="/admin/agent?tab=runs" label="运行记录" />
             </div>
 
             <label className="block text-sm text-navy-300">

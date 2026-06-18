@@ -2,35 +2,26 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CheckCircle2, Plus, RefreshCw, Save, Trash2 } from 'lucide-react'
 import { admin } from '@/services/api'
-import { AdminEmpty, AdminLoading } from '@/components/admin/AdminUI'
+import { AdminEmpty, AdminLoading, AdminTabBar } from '@/components/admin/AdminUI'
+import {
+  AdminHealthBadges,
+  AdminPenetrationLink,
+  adminBtnPrimary,
+  adminBtnSecondary,
+} from '@/components/admin/workbench/AdminWorkbenchKit'
+import { adminProjectDetailPath } from '@/utils/adminProjectRoutes'
 import { cn } from '@/utils/cn'
 
 const inputCls = 'sf-control text-sm w-full'
 const labelCls = 'sf-label text-xs'
 
-function HealthBadges({ health }) {
-  if (!health) return null
-  const items = [
-    ['Prompt', health.prompt_ok],
-    ['Route', health.route_ok],
-    ['Contract', health.contract_ok],
-  ]
-  return (
-    <div className="flex flex-wrap gap-2">
-      {items.map(([label, ok]) => (
-        <span
-          key={label}
-          className={cn(
-            'rounded-full px-2 py-0.5 text-[11px]',
-            ok ? 'bg-green-500/15 text-green-300' : 'bg-red-500/15 text-red-300',
-          )}
-        >
-          {label}: {ok ? 'OK' : '缺失'}
-        </span>
-      ))}
-    </div>
-  )
-}
+const AGENT_DETAIL_TABS = [
+  { key: 'overview', label: '概览' },
+  { key: 'prompt', label: 'Prompt' },
+  { key: 'knowledge', label: 'Knowledge' },
+  { key: 'contracts', label: '契约' },
+  { key: 'runs', label: '最近运行' },
+]
 
 const emptyPromptForm = () => ({
   version: '',
@@ -145,6 +136,7 @@ export default function IndependentAgentPanel({ onMessage }) {
   const [editingKnowledgeId, setEditingKnowledgeId] = useState('')
   const [knowledgeForm, setKnowledgeForm] = useState(emptyKnowledgeForm())
   const [bindingForm, setBindingForm] = useState(emptyBindingForm())
+  const [detailTab, setDetailTab] = useState('overview')
 
   const filteredKnowledge = useMemo(() => {
     const q = knowledgeQuery.trim().toLowerCase()
@@ -383,7 +375,7 @@ export default function IndependentAgentPanel({ onMessage }) {
               <div className="text-sm font-medium text-white">{agent.name_zh || agent.name}</div>
               <div className="mt-1 text-xs text-navy-400">{agent.agent_id}</div>
               <div className="mt-2">
-                <HealthBadges health={agent.health} />
+                <AdminHealthBadges health={agent.health} />
               </div>
             </button>
           ))
@@ -399,7 +391,7 @@ export default function IndependentAgentPanel({ onMessage }) {
               <h2 className="text-xl font-semibold text-white">{detail.name_zh || detail.name}</h2>
               <p className="mt-1 text-sm text-navy-300">{detail.description}</p>
               <div className="mt-3">
-                <HealthBadges health={detail.health} />
+                <AdminHealthBadges health={detail.health} />
               </div>
               {!detail.health?.route_ok ? (
                 <p className="mt-2 text-xs text-amber-200">
@@ -415,13 +407,17 @@ export default function IndependentAgentPanel({ onMessage }) {
               type="button"
               disabled={saving}
               onClick={handleSave}
-              className="inline-flex items-center gap-2 rounded-lg bg-gold-400 px-4 py-2 text-sm font-medium text-navy-950 disabled:opacity-50"
+              className={adminBtnPrimary()}
             >
               <Save className="h-4 w-4" />
               保存
             </button>
           </div>
 
+          <AdminTabBar tabs={AGENT_DETAIL_TABS} active={detailTab} onChange={setDetailTab} stretch />
+
+          {detailTab === 'overview' ? (
+          <>
           <div className="grid gap-4 md:grid-cols-2">
             <label className={labelCls}>
               中文名
@@ -452,7 +448,10 @@ export default function IndependentAgentPanel({ onMessage }) {
               onChange={(e) => setDetail({ ...detail, description: e.target.value })}
             />
           </label>
+          </>
+          ) : null}
 
+          {detailTab === 'contracts' ? (
           <div className="grid gap-4 lg:grid-cols-3">
             <label className={labelCls}>
               input_contract
@@ -467,7 +466,9 @@ export default function IndependentAgentPanel({ onMessage }) {
               <textarea className={cn(inputCls, 'min-h-[160px] font-mono text-xs')} value={runtimePolicyText} onChange={(e) => setRuntimePolicyText(e.target.value)} />
             </label>
           </div>
+          ) : null}
 
+          {detailTab === 'prompt' ? (
           <div>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-white">Prompt 版本</h3>
@@ -533,7 +534,10 @@ export default function IndependentAgentPanel({ onMessage }) {
               </div>
             ) : null}
           </div>
+          ) : null}
 
+          {detailTab === 'knowledge' ? (
+          <>
           <div>
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-white">Knowledge 库</h3>
@@ -641,7 +645,10 @@ export default function IndependentAgentPanel({ onMessage }) {
               </button>
             </div>
           </div>
+          </>
+          ) : null}
 
+          {detailTab === 'runs' ? (
           <div>
             <h3 className="mb-3 text-sm font-semibold text-white">最近运行</h3>
             {recentRuns.length ? (
@@ -663,7 +670,16 @@ export default function IndependentAgentPanel({ onMessage }) {
                         <td className="py-2 pr-3">{run.status}</td>
                         <td className="py-2 pr-3">{run.total_tokens ?? run.estimated_prompt_tokens ?? '-'}</td>
                         <td className="py-2 pr-3">{(run.estimated_cost_yuan ?? 0).toFixed(4)}</td>
-                        <td className="py-2">{run.project_title || run.project_id}</td>
+                        <td className="py-2">
+                          {run.project_id ? (
+                            <AdminPenetrationLink
+                              to={adminProjectDetailPath(run.project_id, 'runs')}
+                              label={run.project_title || String(run.project_id).slice(0, 8)}
+                            />
+                          ) : (
+                            '—'
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -673,6 +689,7 @@ export default function IndependentAgentPanel({ onMessage }) {
               <p className="text-xs text-navy-400">暂无运行记录</p>
             )}
           </div>
+          ) : null}
         </div>
       ) : (
         <AdminEmpty title="选择左侧 Agent 查看详情" />
