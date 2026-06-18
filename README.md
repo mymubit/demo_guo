@@ -4,7 +4,9 @@
 
 ## ✨ 项目概述
 
-ScriptForge AI 是一个商业化的短剧剧本创作平台，采用"前端 React SPA + 后端 Django 6.0.5"的现代化技术架构。平台核心价值在于 **7节点智能创作流水线**，用户只需输入一句话创意，系统将自动完成：信息收集 → 结构规划 → 人设开发 → 大纲撰写 → 剧本创作 → 质量审查 → 输出交付 的完整创作流程。
+ScriptForge AI 是一个商业化的短剧剧本创作平台，采用「前端 React SPA + 后端 Django 6.0.5」架构。当前 C 端主链路为 **独立 Agent 手动工作台**：用户提交创意后生成初始 `project_brief`，再按需逐个运行 DB 化 Agent（brief → structure → character → outline → script → review/score 等），产物写入 `ProjectFusionArtifact`，支持预览、下载与分享。
+
+主 API 入口：`POST /api/creation/submit/` → `GET /api/creation/projects/<id>/workspace/` → `POST .../agents/<agent_id>/run/`。
 
 ---
 
@@ -73,7 +75,7 @@ ScriptForge AI 是一个商业化的短剧剧本创作平台，采用"前端 Rea
 ## 🔐 安全设计（核心竞争力）
 
 ### 1. 技能引擎隔离
-- 7节点流水线引擎在独立进程中执行
+- 独立 Agent runtime 在 dj_queue worker 中异步执行，Prompt/Knowledge 存 DB
 - 技能模板和参数加密存储，仅后台可访问
 - AI API密钥 AES-256-CBC 加密，仅在内存解密使用
 
@@ -178,7 +180,9 @@ cd backend
 python manage.py seed_independent_agents
 # 首次从外部资产目录导入知识（仅需一次；导入后可删除仓库外的旧资产目录）
 # python manage.py inventory_external_assets --roots <legacy-asset-root-a> <legacy-asset-root-b> --output external_asset_inventory.json
-# python manage.py import_agent_assets --inventory external_asset_inventory.json --commit
+# python manage.py import_agent_assets --inventory tmp/external_asset_inventory.json --commit
+# python manage.py verify_agent_assets_import --inventory tmp/external_asset_inventory.json
+# python manage.py verify_external_asset_removal --workspace-root ..
 python manage.py createsuperuser
 ```
 
@@ -284,24 +288,12 @@ ScriptForge/
 │   │   │   ├── views.py               # 创建订单/模拟支付/订单列表
 │   │   │   ├── urls.py                # /api/orders/
 │   │   │   └── admin.py
-│   │   ├── creation/                  # 创作模块（核心）
-│   │   │   ├── models.py              # Project + CreationNode + ScriptWork
-│   │   │   ├── engine/                # 7节点流水线引擎
-│   │   │   │   ├── node1_input.py     # 1. 信息收集
-│   │   │   │   ├── node2_structure.py # 2. 结构规划
-│   │   │   │   ├── node3_character.py # 3. 人设开发
-│   │   │   │   ├── node4_outline.py   # 4. 大纲撰写
-│   │   │   │   ├── node5_script.py    # 5. 剧本创作
-│   │   │   │   ├── node6_review.py    # 6. 质量审查
-│   │   │   │   └── node7_export.py    # 7. 输出交付
-│   │   │   ├── services.py            # 创作服务（结果HTML预渲染）
-│   │   │   ├── tasks.py               # Django 6 @task + dj_queue
-│   │   │   ├── serializers.py
-│   │   │   ├── views.py               # 提交创作/进度查询/下载
-│   │   │   ├── works_views.py         # 作品列表/详情
-│   │   │   ├── urls.py                # /api/creation/
-│   │   │   ├── urls_works.py          # /api/works/
-│   │   │   └── admin.py
+│   │   ├── creation/                  # 创作模块（独立 Agent 主链路）
+│   │   │   ├── models.py              # Project + ProjectFusionArtifact + AgentExecutionRun
+│   │   │   ├── agent_runtime/         # 独立 Agent workspace / enqueue / execute
+│   │   │   ├── services/submission.py # 提交（仅建项目 + seed brief）
+│   │   │   ├── tasks.py               # run_independent_agent（主任务）
+│   │   │   └── ...
 │   │   ├── skill/                     # 技能配置模块（加密隔离）
 │   │   │   ├── models.py              # SkillConfig + ThemeTemplate + HookLibrary
 │   │   │   ├── services.py            # 技能配置服务（AES-256加密读/写）
@@ -371,7 +363,9 @@ GET  /api/members/plans/       # 套餐列表
 POST /api/members/redeem/      # 卡密兑换
 POST /api/orders/create/       # 创建订单
 POST /api/creation/submit/     # 提交创作
-GET  /api/creation/progress/<id>/   # 进度查询
+GET  /api/creation/projects/<id>/workspace/  # 独立 Agent 工作台
+POST /api/creation/projects/<id>/agents/<agent_id>/run/  # 运行 Agent
+GET  /api/creation/progress/<id>/   # 进度查询（部分工具页仍用）
 GET  /api/works/               # 作品列表
 GET  /api/admin/dashboard/     # 管理仪表盘
 ...
@@ -411,9 +405,26 @@ X-Device-Fingerprint: <设备指纹>
 
 ---
 
-## 📊 创作流水线详解
+## 独立 Agent 创作流程（当前主链路）
 
-### 7节点创作流程
+| 步骤 | Agent | 输出产物 |
+|------|-------|----------|
+| 1 | brief | project_brief |
+| 2 | structure | structure_plan |
+| 3 | character | character_bible |
+| 4 | outline | series_outline |
+| 5 | script | episode_scripts |
+| 6+ | review / score / marketing 等 | 对应报告类 artifact |
+
+用户在工作台手动触发每个 Agent；同一项目同一时间仅允许一个 Agent 运行。运行前可调用 estimate API 查看 token 预估。
+
+---
+
+## 历史架构（Legacy，已非 C 端主路径）
+
+> 以下 7 节点自动流水线、`WorkflowEngine`、`node_index` 工作台接口已废弃或返回 410，代码仍保留供参考，勿在新功能中接入。
+
+### 7 节点创作流程（归档）
 
 | 节点 | 名称 | 功能 | 耗时 |
 |------|------|------|------|

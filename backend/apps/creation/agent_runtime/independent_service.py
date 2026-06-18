@@ -274,11 +274,31 @@ class IndependentAgentService:
             artifact_key = str(output.get("artifact_key") or allowed[0])
             if artifact_key not in allowed:
                 raise AgentRuntimeError(f"输出 artifact_key 不在契约内: {artifact_key}")
-            return {artifact_key: output["payload"]}
+            matched = {artifact_key: output["payload"]}
+            from .output_schema_validation import validate_matched_outputs
+
+            validate_matched_outputs(
+                matched,
+                schema_version=str(contract.get("schema_version") or ""),
+            )
+            return matched
         matched = {key: output[key] for key in allowed if key in output and isinstance(output[key], dict)}
         if matched:
+            from .output_schema_validation import validate_matched_outputs
+
+            validate_matched_outputs(
+                matched,
+                schema_version=str(contract.get("schema_version") or ""),
+            )
             return matched
-        return {allowed[0]: output}
+        normalized = {allowed[0]: output}
+        from .output_schema_validation import validate_matched_outputs
+
+        validate_matched_outputs(
+            normalized,
+            schema_version=str(contract.get("schema_version") or ""),
+        )
+        return normalized
 
     @staticmethod
     def _episode_range_from_run(run: AgentExecutionRun) -> Tuple[int | None, int | None]:

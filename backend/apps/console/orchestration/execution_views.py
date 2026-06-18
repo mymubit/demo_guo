@@ -274,7 +274,7 @@ class AgentExecutionRunDetailView(AdminAPIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request, run_id: str):
-        payload = AgentExecutionRunService.get_run_detail(run_id)
+        payload = AgentExecutionRunService.get_run_detail(run_id, include_sub_skills=True)
         if not payload:
             return api_fail("执行记录不存在", code=404)
         return api_ok(payload)

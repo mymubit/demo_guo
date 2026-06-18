@@ -174,7 +174,11 @@ class AgentExecutionRunServiceTests(TestCase):
         portal = AgentExecutionRunService.serialize_run(run, include_sensitive=False)
         self.assertNotIn("rendered_prompt_preview", portal)
         self.assertNotIn("artifacts", portal.get("input_snapshot") or {})
+        self.assertNotIn("sub_skills", portal)
+        self.assertNotIn("execution_trace", portal)
 
-        admin = AgentExecutionRunService.serialize_run(run, include_sensitive=True)
+        admin = AgentExecutionRunService.serialize_run(
+            run, include_sensitive=True, include_sub_skills=True
+        )
         self.assertEqual(admin.get("rendered_prompt_preview"), "hidden prompt text")
         self.assertIn("artifacts", admin.get("input_snapshot") or {})

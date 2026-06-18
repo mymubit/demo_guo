@@ -518,23 +518,9 @@ class AgentExecutionRunService:
 
     @staticmethod
     def serialize_sub_skill(log: SubSkillExecutionLog) -> Dict[str, Any]:
-        return {
-            "id": log.skill_id,
-            "skill_id": log.skill_id,
-            "type": log.skill_type,
-            "cli": log.cli,
-            "script": log.script,
-            "status": log.status,
-            "message": log.error_message,
-            "duration_ms": log.duration_ms,
-            "input_summary": log.input_summary or {},
-            "output_summary": log.output_summary or {},
-            "input_payload": log.input_payload or {},
-            "output_payload": log.output_payload or {},
-            "llm_io": log.llm_io or {},
-            "started_at": log.started_at.isoformat() if log.started_at else "",
-            "finished_at": log.finished_at.isoformat() if log.finished_at else "",
-        }
+        from .run_serialization import serialize_sub_skill
+
+        return serialize_sub_skill(log)
 
     @staticmethod
     def sanitize_input_snapshot(snapshot: Optional[Dict[str, Any]]) -> Dict[str, Any]:
@@ -551,7 +537,7 @@ class AgentExecutionRunService:
     def serialize_run(
         run: AgentExecutionRun,
         *,
-        include_sub_skills: bool = True,
+        include_sub_skills: bool = False,
         include_sensitive: bool = False,
     ) -> Dict[str, Any]:
         duration_ms = None
@@ -595,21 +581,9 @@ class AgentExecutionRunService:
         if include_sensitive:
             payload["rendered_prompt_preview"] = (run.rendered_prompt_preview or "")[:8000]
         if include_sub_skills:
-            logs = run.sub_skill_logs.all().order_by("order_index", "started_at")
-            payload["sub_skills"] = [
-                AgentExecutionRunService.serialize_sub_skill(log) for log in logs
-            ]
-            payload["execution_trace"] = [
-                {
-                    "id": item["id"],
-                    "type": item["type"],
-                    "cli": item["cli"],
-                    "script": item["script"],
-                    "status": item["status"],
-                    "message": item["message"],
-                }
-                for item in payload["sub_skills"]
-            ]
+            from .run_serialization import serialize_legacy_sub_skills
+
+            payload.update(serialize_legacy_sub_skills(run))
         return alias_agent_id(payload)
 
     @staticmethod
@@ -771,7 +745,12 @@ class AgentExecutionRunService:
         }
 
     @staticmethod
-    def get_run_detail(run_id: str, *, include_sensitive: bool = True) -> Optional[Dict[str, Any]]:
+    def get_run_detail(
+        run_id: str,
+        *,
+        include_sensitive: bool = True,
+        include_sub_skills: bool = False,
+    ) -> Optional[Dict[str, Any]]:
         from apps.skill.models import LlmUsageLog
 
         try:
@@ -781,7 +760,11 @@ class AgentExecutionRunService:
         except AgentExecutionRun.DoesNotExist:
             return None
 
-        payload = AgentExecutionRunService.serialize_run(run, include_sensitive=include_sensitive)
+        payload = AgentExecutionRunService.serialize_run(
+            run,
+            include_sensitive=include_sensitive,
+            include_sub_skills=include_sub_skills,
+        )
         payload["project_id"] = str(run.project_id)
         payload["project_title"] = (run.project.title or run.project.theme or "")[:200]
         payload["user_phone"] = getattr(run.user, "phone", "") or ""

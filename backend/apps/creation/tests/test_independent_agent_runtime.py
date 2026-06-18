@@ -233,3 +233,79 @@ class CreationSubmitLegacyIsolationTests(TestCase):
         self.assertEqual(WorkflowInstance.objects.filter(project_id=project.id).count(), 0)
         self.assertEqual(project.total_nodes, 0)
         self.assertEqual(project.status, Project.STATUS_PENDING)
+
+
+class IndependentAgentOutputValidationTests(TestCase):
+    def setUp(self):
+        AgentDefinitionService.ensure_defaults()
+        self.script_agent = AgentDefinitionService.get_runnable("script")
+        self.review_agent = AgentDefinitionService.get_runnable("review")
+
+    def test_validate_output_rejects_episode_without_number(self):
+        with self.assertRaises(Exception) as ctx:
+            IndependentAgentService.validate_output(
+                self.script_agent,
+                {
+                    "episode_scripts": {
+                        "episodes": [{"title": "缺集号"}],
+                    }
+                },
+            )
+        self.assertIn("episodeNumber", str(ctx.exception))
+
+    def test_validate_output_accepts_valid_episode_scripts(self):
+        result = IndependentAgentService.validate_output(
+            self.script_agent,
+            {
+                "episode_scripts": {
+                    "episodes": [{"episodeNumber": 1, "title": "第1集"}],
+                }
+            },
+        )
+        self.assertIn("episode_scripts", result)
+
+    def test_validate_output_rejects_review_report_without_passed(self):
+        with self.assertRaises(Exception) as ctx:
+            IndependentAgentService.validate_output(
+                self.review_agent,
+                {"review_report": {"issues": []}},
+            )
+        self.assertIn("passed", str(ctx.exception))
+
+
+class ReportArtifactEditorViewTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(phone="13900007705", password="test-pass-123")
+        self.project = Project.objects.create(
+            user=self.user,
+            title="report-view-test",
+            theme="overbearing-ceo",
+            core_idea="测试报告预览",
+            episode_count=20,
+            format_variant="B",
+            status=Project.STATUS_PENDING,
+        )
+
+    def test_build_artifact_editor_view_routes_review_report(self):
+        from apps.creation.workspace.workspace_editor import build_artifact_editor_view
+
+        save_artifact(
+            self.project,
+            "review_report",
+            {"agentId": "review", "passed": True, "issues": []},
+        )
+        view = build_artifact_editor_view(self.project, "review_report")
+        self.assertEqual(view["mode"], "review_report")
+        self.assertTrue(view["payload"]["passed"])
+
+    def test_build_artifact_editor_view_routes_script_score_report(self):
+        from apps.creation.workspace.workspace_editor import build_artifact_editor_view
+
+        save_artifact(
+            self.project,
+            "script_score_report",
+            {"agentId": "score", "overallScore": 88, "grade": "A"},
+        )
+        view = build_artifact_editor_view(self.project, "script_score_report")
+        self.assertEqual(view["mode"], "score_report")
+        self.assertEqual(view["payload"]["overallScore"], 88)

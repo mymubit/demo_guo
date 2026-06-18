@@ -1,13 +1,10 @@
 ﻿"""
-鍒涗綔鍚庡彴浠诲姟锛圖jango 6 @task + dj_queue / Postgres锛?
+创作后台任务（Django 6 @task + dj_queue / Postgres）
 
-鏍稿績锛歳un_creation_pipeline(project_id)
-  - 涓茶鎵ц铻嶅悎缂栨帓鍣ㄨ妭鐐?1鈥? + fusion 鍚庡鐞?
-  - 鏇存柊鑺傜偣鐘舵€併€佽繘搴?HTML銆丼criptWork 涓嬭浇鏂囦欢
+主链路：run_independent_agent(project_id, agent_id) — 独立 Agent 工作台异步执行。
 
-鍚姩 worker锛?
-  python manage.py dj_queue --mode async   # Windows 鎺ㄨ崘
-  python manage.py dj_queue                # Linux 鍙敤 fork
+LEGACY（非 C 端主路径，勿在新功能中接入）：
+  run_creation_pipeline / run_creation_step — 旧 7 节点流水线与子技能编排
 """
 from __future__ import annotations
 
@@ -516,7 +513,7 @@ def _run_creation_pipeline_core(project_id: str) -> dict:
 
 @task(queue_name="creation")
 def run_creation_pipeline(project_id: str) -> dict:
-    """Run the 5-step creation pipeline asynchronously."""
+    """LEGACY — 旧自动流水线，独立 Agent 工作台不使用。"""
     result = _run_creation_pipeline_core(project_id)
     return _record_task_result_if_failed(
         task_name="creation.pipeline",
@@ -631,7 +628,7 @@ def run_creation_step(
     outline_mode: str | None = None,
     outline_stage_key: str | None = None,
 ) -> dict:
-    """Run one main-chain node in step/workspace mode."""
+    """LEGACY — 旧工作台单步执行，独立 Agent 工作台不使用。"""
     try:
         mode = (
             Project.objects.filter(id=project_id)

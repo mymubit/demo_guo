@@ -396,7 +396,7 @@ class IndependentAgentRunsListView(APIView):
         }
         items = []
         for run in runs:
-            payload = AgentExecutionRunService.serialize_run(run, include_sensitive=True)
+            payload = AgentExecutionRunService.serialize_run(run, include_sensitive=True, include_sub_skills=True)
             payload.update({
                 "project_id": str(run.project_id),
                 "project_title": (run.project.title or run.project.theme or "")[:120],

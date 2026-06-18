@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""工作台节点 → Agent 编排入口（优先 registry Agent，回退扁平 SkillInvoker）。"""
+"""LEGACY — 工作台节点 → 子技能编排入口，独立 Agent 工作台不使用。"""
 from __future__ import annotations
 
 from typing import Any, Callable, Dict, Optional

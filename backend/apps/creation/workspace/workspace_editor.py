@@ -1051,12 +1051,24 @@ ARTIFACT_KEY_TO_NODE_INDEX = {
     "episode_scripts": 5,
 }
 
+REPORT_ARTIFACT_MODES = {
+    "review_report": "review_report",
+    "script_score_report": "score_report",
+    "score_report": "score_report",
+    "marketing_kit": "marketing_kit",
+    "insight_report": "insight_report",
+    "polish_log": "polish_log",
+}
+
 
 def build_artifact_editor_view(project: Project, artifact_key: str) -> Optional[dict]:
     """将 artifact payload 转为 C 端结构化预览视图（只读，不写库）。"""
     payload = get_artifact(project, artifact_key)
     if payload is None:
         return None
+    report_mode = REPORT_ARTIFACT_MODES.get(str(artifact_key))
+    if report_mode:
+        return {"mode": report_mode, "payload": payload, "editable": False}
     node_index = ARTIFACT_KEY_TO_NODE_INDEX.get(str(artifact_key))
     if node_index is not None:
         view = build_editor_view(project, node_index, read_only=True)

@@ -162,7 +162,7 @@ class NodeRunResult:
 # WorkflowEngine 核心
 # =========================================================
 class WorkflowEngine:
-    """工作流执行引擎。
+    """LEGACY — Fusion 工作流执行引擎，独立 Agent 工作台不使用。
 
     典型用法（Celery 任务中）：
         instance = WorkflowInstance.objects.get(id=instance_id)

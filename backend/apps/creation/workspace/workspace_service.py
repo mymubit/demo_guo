@@ -606,7 +606,9 @@ def build_workspace_payload(project: Project) -> Dict[str, Any]:
         agent_def = get_agent(agent_id) if agent_id else {}
         latest_run = latest_run_by_node.get(idx)
         serialized_run = (
-            AgentExecutionRunService.serialize_run(latest_run) if latest_run else None
+            AgentExecutionRunService.serialize_run(latest_run, include_sub_skills=True)
+            if latest_run
+            else None
         )
         module = alias_agent_id({
             "index": idx,
