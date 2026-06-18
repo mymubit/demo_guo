@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
-import { Shield, ShieldOff, KeyRound } from 'lucide-react'
+import { Shield, ShieldOff, KeyRound, X, FolderKanban } from 'lucide-react'
 import { admin } from '@/services/api'
+import { adminProjectDetailPath } from '@/utils/adminProjectRoutes'
 import AdminShell from '@/components/admin/AdminShell'
 import AdminDashboardHints from '@/components/admin/AdminDashboardHints'
 import {
@@ -28,6 +30,10 @@ export default function UsersAdmin() {
   const [message, setMessage] = useState(null)
   const [confirm, setConfirm] = useState(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [selectedUser, setSelectedUser] = useState(null)
+  const [userProjects, setUserProjects] = useState([])
+  const [projectsLoading, setProjectsLoading] = useState(false)
+  const navigate = useNavigate()
 
   const { data, isLoading, error, refetch } = useAdminUsers({ page, keyword, filter })
   const users = data?.items ?? []
@@ -52,6 +58,24 @@ export default function UsersAdmin() {
       setMessage({ type: 'error', text: error.message || '加载用户失败' })
     }
   }, [error])
+
+  async function openUserDrawer(user) {
+    setSelectedUser(user)
+    setProjectsLoading(true)
+    try {
+      const rows = await admin.userRecentProjects(user.user_id)
+      setUserProjects(rows)
+    } catch {
+      setUserProjects([])
+    } finally {
+      setProjectsLoading(false)
+    }
+  }
+
+  function closeUserDrawer() {
+    setSelectedUser(null)
+    setUserProjects([])
+  }
 
   async function handleConfirm() {
     if (!confirm) return
@@ -138,6 +162,7 @@ export default function UsersAdmin() {
             rowKey="user_id"
             rows={users}
             emptyText="没有匹配的用户"
+            onRowClick={openUserDrawer}
             columns={[
               {
                 key: 'user',
@@ -242,6 +267,53 @@ export default function UsersAdmin() {
         onCancel={() => setConfirm(null)}
         onConfirm={handleConfirm}
       />
+
+      {selectedUser ? (
+        <div className="fixed inset-0 z-[80] flex justify-end bg-black/50">
+          <div className="w-full max-w-md h-full sf-console-panel border-l border-white/10 p-5 overflow-y-auto shadow-2xl">
+            <div className="flex items-start justify-between gap-3 mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-white">{selectedUser.nickname || '用户'}</h3>
+                <p className="text-xs text-navy-400 font-mono mt-1">{selectedUser.phone || selectedUser.email}</p>
+              </div>
+              <button type="button" onClick={closeUserDrawer} className="text-navy-400 hover:text-white p-1">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="rounded-xl border border-white/5 bg-slate-900/40 p-4 mb-4 text-sm space-y-2">
+              <p className="text-navy-400">创作币 <span className="text-gold-300">{selectedUser.wallet_balance ?? 0}</span></p>
+              <p className="text-navy-400">订单 {selectedUser.order_count ?? 0} · 注册 {formatDateTime(selectedUser.created_at)}</p>
+            </div>
+            <h4 className="text-sm font-medium text-white flex items-center gap-2 mb-3">
+              <FolderKanban className="w-4 h-4 text-gold-400" />
+              该用户的创作项目
+            </h4>
+            {projectsLoading ? (
+              <p className="text-sm text-navy-400">加载中…</p>
+            ) : userProjects.length ? (
+              <ul className="space-y-2">
+                {userProjects.map((row) => (
+                  <li key={row.project_id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        closeUserDrawer()
+                        navigate(adminProjectDetailPath(row.project_id, 'basic'))
+                      }}
+                      className="w-full text-left rounded-xl border border-white/5 bg-slate-900/40 px-3 py-2.5 hover:bg-white/[0.04]"
+                    >
+                      <p className="text-sm text-white truncate">{row.title}</p>
+                      <p className="text-xs text-navy-400 mt-0.5">{row.status_text || row.status}</p>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-navy-400">暂无创作项目</p>
+            )}
+          </div>
+        </div>
+      ) : null}
     </AdminShell>
   )
 }

@@ -139,7 +139,40 @@ export default function OrdersAdmin() {
             emptyText="暂无订单"
             columns={[
               { key: 'order_no', title: '订单号' },
-              { key: 'user_nickname', title: '用户', render: (r) => r.user_nickname || r.user_phone },
+              {
+                key: 'user_nickname',
+                title: '用户',
+                render: (r) => (
+                  <div className="space-y-1">
+                    <div>{r.user_nickname || r.user_phone}</div>
+                    {r.user_id ? (
+                      <Link
+                        to={`/admin/users?q=${encodeURIComponent(r.user_phone || r.user_id)}`}
+                        className="text-xs text-gold-400 hover:text-gold-300"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        用户详情
+                      </Link>
+                    ) : null}
+                  </div>
+                ),
+              },
+              {
+                key: 'projects',
+                title: '创作项目',
+                render: (r) =>
+                  r.user_id ? (
+                    <Link
+                      to={`/admin/creation/projects?q=${encodeURIComponent(r.user_phone || '')}`}
+                      className="text-xs text-navy-300 hover:text-white"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      按用户筛选 →
+                    </Link>
+                  ) : (
+                    '—'
+                  ),
+              },
               { key: 'plan_name', title: '套餐' },
               { key: 'amount', title: '人民币', render: (r) => r.display_amount || `¥${r.amount}` },
               {
