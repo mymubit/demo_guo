@@ -19,7 +19,8 @@ class MainChainBlueprintApiTests(TestCase):
         data = resp.data["data"]
         self.assertIn("steps", data)
         self.assertIn("catalog", data)
-        self.assertIn("post_script_chain", data)
+        self.assertNotIn("post_script_chain", data)
+        self.assertEqual(data.get("explicit_post_agents"), ["review", "score", "polish", "marketing", "insight"])
         self.assertIn("meta", data)
         self.assertIn("execution_modes", data)
         self.assertIn("step", data["execution_modes"])
@@ -48,12 +49,11 @@ class MainChainBlueprintApiTests(TestCase):
         resp = self.client.put(
             "/api/admin/main-chain/registry-meta/",
             {
-                "post_script_chain": ["review", "score"],
-                "post_script_append_agents": ["marketing"],
                 "polish_max_rounds": 3,
             },
             format="json",
         )
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.data["data"]["post_script_chain"], ["review", "score"])
+        self.assertNotIn("post_script_chain", resp.data["data"])
+        self.assertEqual(resp.data["data"]["explicit_post_agents"], ["review", "score", "polish", "marketing", "insight"])
         self.assertEqual(resp.data["data"]["polish_max_rounds"], 3)

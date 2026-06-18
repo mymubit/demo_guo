@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-"""分步模式 runner 配置单元测试（新引擎：post-script 步骤走 SkillInvoker）。"""
 from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
@@ -9,34 +8,23 @@ from apps.creation.models import Project
 
 
 class StepModeRunnerTypeUnitTests(SimpleTestCase):
-    def test_runner_type_for_node_reads_registry(self):
+    def test_runner_type_for_node_reads_registry_for_main_chain(self):
         from apps.creation import step_mode
 
         registry = MagicMock()
-        registry.runner_type_for_index.return_value = "fusion_score"
+        registry.runner_type_for_index.return_value = "fusion_node"
         with patch("apps.creation.step_mode.FusionNodeRegistry", return_value=registry):
-            self.assertEqual(step_mode.runner_type_for_node(7), "fusion_score")
+            self.assertEqual(step_mode.runner_type_for_node(5), "fusion_node")
 
-    def test_runner_path_for_node_reads_registry(self):
+    def test_runner_path_for_node_normalizes_main_chain_runner(self):
         from apps.creation import step_mode
 
         registry = MagicMock()
-        registry.runner_path_for_index.return_value = "apps.creation.step_mode.run_fusion_score_step"
-        with patch("apps.creation.step_mode.FusionNodeRegistry", return_value=registry):
-            self.assertEqual(
-                step_mode.runner_path_for_node(7),
-                "apps.creation.step_mode.run_fusion_score_step",
-            )
-
-    def test_runner_path_for_node_normalizes_agent_runner(self):
-        from apps.creation import step_mode
-
-        registry = MagicMock()
-        registry.runner_path_for_index.return_value = "apps.creation.agents.world.run_world_agent"
+        registry.runner_path_for_index.return_value = "apps.creation.agents.script.run_script_agent"
         registry.runner_type_for_index.return_value = "fusion_node"
         with patch("apps.creation.step_mode.FusionNodeRegistry", return_value=registry):
             self.assertEqual(
-                step_mode.runner_path_for_node(2),
+                step_mode.runner_path_for_node(5),
                 "apps.creation.step_mode.run_orchestrator_step",
             )
 
@@ -44,40 +32,13 @@ class StepModeRunnerTypeUnitTests(SimpleTestCase):
         from apps.creation import step_mode
 
         with patch("apps.creation.step_mode.runner_path_for_node", return_value="os.system"):
-            self.assertIsNone(step_mode.resolve_step_runner(7))
+            self.assertIsNone(step_mode.resolve_step_runner(5))
 
-    @patch("apps.agent.runtime.agent_for_pipeline_node_index", side_effect=["review", "score"])
-    @patch("apps.creation.orchestration.score.run_score_agent")
-    @patch("apps.creation.orchestration.review.run_review_agent")
-    def test_run_fusion_step_dispatches_by_runner_type(self, mock_review, mock_score, _mock_agent):
-        """post-script 步骤走 orchestration Agent（review / score）。"""
+    def test_post_runner_entry_is_removed(self):
         from apps.creation import step_mode
-        from apps.creation.orchestration.types import AgentResult
 
-        project = MagicMock()
-        project.user_id = 1
-
-        mock_review.return_value = AgentResult(
-            agent_id="review",
-            status="completed",
-            outputs={"review_report": {"passed": True}},
-        )
-        mock_score.return_value = AgentResult(
-            agent_id="score",
-            status="completed",
-            outputs={"script_score_report": {"overallScore": 88}},
-        )
-
-        self.assertEqual(
-            step_mode.run_fusion_step(project, 6, runner_type="fusion_review")["ok"],
-            True,
-        )
-        self.assertEqual(
-            step_mode.run_fusion_step(project, 7, runner_type="fusion_score")["ok"],
-            True,
-        )
-        mock_review.assert_called_once()
-        mock_score.assert_called_once()
+        with self.assertRaisesMessage(ValueError, "post-processing runners have been removed"):
+            step_mode.run_fusion_step(MagicMock(), 6, runner_type="review")
 
 
 class StepModeRunnerTypeExecutionTests(TestCase):
@@ -85,7 +46,7 @@ class StepModeRunnerTypeExecutionTests(TestCase):
         self.user = get_user_model().objects.create_user(phone="13900005505", password="test-pass-123")
         self.project = Project.objects.create(
             user=self.user,
-            title="runner type 测试",
+            title="runner type test",
             theme="sweet-pet",
             episode_count=2,
             pipeline_mode=Project.MODE_STEP,
@@ -99,7 +60,7 @@ class StepModeRunnerTypeExecutionTests(TestCase):
     @patch("apps.creation.step_mode.runner_type_for_node", return_value="fusion_node")
     @patch("apps.workflow.services.pipeline_service.WorkflowPipelineService.creation_max_node_index", return_value=1)
     @patch("apps.workflow.services.pipeline_service.WorkflowPipelineService.is_node_enabled", return_value=True)
-    def test_execute_step_uses_fusion_node_runner_type(
+    def test_execute_step_uses_main_chain_runner(
         self,
         _mock_enabled,
         _mock_max,

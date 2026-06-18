@@ -20,15 +20,6 @@ function buildIndexAgentMap(catalog) {
       map[agent.workspace_index] = agent
     }
   }
-  let nextIndex =
-    Object.keys(map).length > 0 ? Math.max(...Object.keys(map).map(Number)) + 1 : 1
-  for (const agentId of catalog?.post_script_chain || []) {
-    const agent = buildAgentLookup(catalog)[agentId]
-    if (agent && !Object.values(map).some((a) => a.id === agentId)) {
-      map[nextIndex] = agent
-      nextIndex += 1
-    }
-  }
   return map
 }
 
@@ -130,7 +121,7 @@ export function formatLlmSourceLabel(sourceType, sourceKey, catalog = null) {
 export function formatSkillRootDisplay(skillRoot) {
   if (!skillRoot) return ''
   const normalized = String(skillRoot).replace(/\\/g, '/')
-  const marker = 'short-drama-script-creator'
+  const marker = 'backend/apps/skill/assets'
   const idx = normalized.indexOf(marker)
   if (idx >= 0) return normalized.slice(idx)
   const parts = normalized.split('/').filter(Boolean)

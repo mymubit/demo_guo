@@ -45,13 +45,7 @@ MAX_AUDIT_TOKENS: int = int(os.environ.get("EVOLVE_MAX_AUDIT_TOKENS", "4096"))
 MONTHLY_EVOLVE_BUDGET_CNY: float = float(os.environ.get("EVOLVE_MONTHLY_BUDGET_CNY", "50.0"))
 
 # 技能规则根路径（demo4book 里的 skill-rules/）
-_SKILL_RULES_ROOT: Path = (
-    Path(getattr(settings, "FUSION_SKILL_ROOT", "demo4book"))
-    / "short-drama-script-creator"
-    / "config"
-    / "skill-rules"
-)
-_PROPOSALS_DIR: Path = _SKILL_RULES_ROOT / "pending-proposals"
+_PROPOSALS_DIR: Path = Path(getattr(settings, "SCRIPT_FORGE_ASSET_ROOT", "")) / "evolve-proposals"
 
 # 只读层（禁止 AI 提案涉及）
 _READONLY_TIERS = {1, 4}
@@ -567,7 +561,7 @@ def run_daily_evolve_audit() -> Dict[str, Any]:
 def trigger_audit_after_score(project_id: str) -> None:
     """
     ScoreAgent 完成后可调用此函数，根据分数决定触发低分追溯还是高分提炼。
-    此函数应在 tasks.py 的 run_agent_post_chain 中异步调用（enqueue_on_commit）。
+    ScoreAgent can call this explicitly after a user-triggered score run.
     """
     from .models import Project
 

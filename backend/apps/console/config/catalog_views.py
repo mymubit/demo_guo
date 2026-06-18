@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
-"""后台 API — 配置中心 — 系统配置与题材钩子"""
+﻿# -*- coding: utf-8 -*-
+"""Admin config center APIs."""
 import secrets
 from datetime import timedelta
 from decimal import Decimal
@@ -39,31 +39,26 @@ from apps.console.serializers import (
 
 
 # ============================================================
-# 技能配置管理（对接 apps.skill.models.SkillConfig）
+# 鎶€鑳介厤缃鐞嗭紙瀵规帴 apps.skill.models.SkillConfig锛?
 # ============================================================
 
 class SkillConfigView(APIView):
-    """技能配置管理（对接 apps.skill.models.SkillConfig 表）
-
-    - GET  /api/admin/portal/configs/           列出全部配置（含默认列表；敏感项 value 显示为 ******）
-    - GET  /api/admin/portal/configs/<key>/     查询单条配置（明文，仅超级管理员可用）
-    - PUT  /api/admin/portal/configs/<key>/     更新/新增某条配置（明文 -> set_encrypted_value 加密存储）
-    """
+    """Skill config management."""
 
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def _get_default_configs(self):
-        """返回 skill 模块默认配置的 key 集合（用于补充 DB 中尚无记录的 key）"""
+        """Return default skill config keys."""
         return set(DEFAULT_CONFIG_KEYS)
 
     def get(self, request, key=None):
-        # 单条查询
+        # 鍗曟潯鏌ヨ
         if key:
             obj = SkillConfig.objects.filter(config_key=key).first()
             if obj is None:
-                return api_fail(f"配置项 {key} 不存在")
+                return api_fail(f"config key {key} not found")
             plain = obj.get_decrypted_value() or ""
-            # 单条查询不做脱敏，保证管理员能看到完整明文（前端可按需自行遮盖）
+            # 鍗曟潯鏌ヨ涓嶅仛鑴辨晱锛屼繚璇佺鐞嗗憳鑳界湅鍒板畬鏁存槑鏂囷紙鍓嶇鍙寜闇€鑷閬洊锛?
             data = {
                 "key": obj.config_key,
                 "value": plain,
@@ -74,7 +69,7 @@ class SkillConfigView(APIView):
             serializer.is_valid(raise_exception=True)
             return api_ok(serializer.validated_data)
 
-        # 列表查询：DB 记录 + 默认列表中尚未落库的 key，合并后统一返回
+        # 鍒楄〃鏌ヨ锛欴B 璁板綍 + 榛樿鍒楄〃涓皻鏈惤搴撶殑 key锛屽悎骞跺悗缁熶竴杩斿洖
         db_map = {}
         for sc in SkillConfig.objects.all():
             plain = sc.get_decrypted_value() or ""
@@ -94,7 +89,7 @@ class SkillConfigView(APIView):
                 "description": "",
                 "updated_at": None,
             })
-            # 敏感项：列表显示时遮盖为 ******
+            # 鏁忔劅椤癸細鍒楄〃鏄剧ず鏃堕伄鐩栦负 ******
             display_value = "******" if _is_sensitive_key(k) else base.get("value", "")
             items.append({
                 "key": base["key"],
@@ -108,13 +103,13 @@ class SkillConfigView(APIView):
 
     def put(self, request, key=None):
         if not key:
-            return api_fail("请在 URL 中提供配置 key")
+            return api_fail("璇峰湪 URL 涓彁渚涢厤缃?key")
         input_ser = SkillConfigUpdateSerializer(data=request.data or {})
         input_ser.is_valid(raise_exception=True)
         new_value = input_ser.validated_data.get("value", "")
         new_description = input_ser.validated_data.get("description", "")
 
-        # 通过 SkillConfig.set_encrypted_value 加密存储（与 skill 模块加密实现一致）
+        # 閫氳繃 SkillConfig.set_encrypted_value 鍔犲瘑瀛樺偍锛堜笌 skill 妯″潡鍔犲瘑瀹炵幇涓€鑷达級
         obj, created = SkillConfig.objects.update_or_create(
             config_key=key,
             defaults={
@@ -124,7 +119,7 @@ class SkillConfigView(APIView):
         obj.set_encrypted_value(str(new_value))
         obj.save()
 
-        # 清除 skill 模块相关的缓存前缀，让下游读取生效
+        # 娓呴櫎 skill 妯″潡鐩稿叧鐨勭紦瀛樺墠缂€锛岃涓嬫父璇诲彇鐢熸晥
         try:
             cache.delete_pattern("skill:config:*")
         except Exception:
@@ -138,11 +133,11 @@ class SkillConfigView(APIView):
             "description": obj.description,
             "updated_at": obj.updated_at,
         }
-        return api_ok(data, message="配置已更新")
+        return api_ok(data, message="config updated")
 
 
 class CreationFormCatalogView(APIView):
-    """C 端创作表单 catalog：读取 SSOT + 运营覆盖，PUT 保存覆盖到 SkillConfig。"""
+    """Portal creation form catalog."""
 
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -177,7 +172,7 @@ class CreationFormCatalogView(APIView):
             overrides = payload
 
         if not isinstance(overrides, dict):
-            return api_fail("overrides 必须是 JSON 对象")
+            return api_fail("overrides 蹇呴』鏄?JSON 瀵硅薄")
 
         allowed_keys = {
             "budgetLevels",
@@ -191,7 +186,7 @@ class CreationFormCatalogView(APIView):
         }
         cleaned = {k: v for k, v in overrides.items() if k in allowed_keys}
         if not cleaned and overrides:
-            return api_fail(f"仅允许覆盖字段：{', '.join(sorted(allowed_keys))}")
+            return api_fail(f"浠呭厑璁歌鐩栧瓧娈碉細{', '.join(sorted(allowed_keys))}")
 
         from apps.skill.config.portal.creation_form import CreationFormOverrideService
 
@@ -202,37 +197,16 @@ class CreationFormCatalogView(APIView):
             pass
 
         merged = get_creation_form_overrides()
-        return api_ok({"overrides": merged}, message="创作表单配置已保存")
+        return api_ok({"overrides": merged}, message="creation form config saved")
 
 
 class CreationFormImportView(APIView):
-    """POST /api/admin/portal/creation-form/import/ — 从磁盘 project-config 同步入口 profile。"""
+    """Disk import endpoint removed."""
 
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        from apps.skill.config.portal.creation_form import CreationFormOverrideService
         from apps.workflow.fusion.ssot_catalog import FusionSsotCatalog, get_creation_form_overrides
-
-        payload = request.data if isinstance(request.data, dict) else {}
-        mode = str(payload.get("mode") or "sync").strip().lower()
-        overwrite = bool(payload.get("overwrite", False))
-
-        if mode == "import":
-            ok = CreationFormOverrideService.import_catalog_from_disk(overwrite=overwrite)
-        else:
-            ok = CreationFormOverrideService.sync_catalog_from_disk()
-
-        if not ok:
-            return api_fail("磁盘 catalog 为空或导入被跳过")
-
-        from apps.skill.config.portal.reference_libs import ReferenceLibraryService
-        from apps.skill.config.portal.review_scoring import ReviewScoringService
-        from apps.skill.config.portal.theme_templates import ThemeTemplateCatalogService
-
-        ref_count = ReferenceLibraryService.import_from_disk(overwrite=overwrite)
-        theme_count = ThemeTemplateCatalogService.import_from_disk(merge=True)
-        ReviewScoringService.import_thresholds_from_disk()
 
         base = FusionSsotCatalog().public_catalog()
         return api_ok(
@@ -242,19 +216,19 @@ class CreationFormImportView(APIView):
                     "creationEntryProfiles": base.get("creationEntryProfiles") or {},
                 },
                 "overrides": get_creation_form_overrides(),
-                "referenceFilesImported": ref_count,
-                "themeTemplatesMerged": theme_count,
+                "externalDiskImport": "removed",
+                "migrationCommand": "python manage.py absorb_external_assets --source demo4book --source ai-drama-skills-v2 --write",
             },
-            message="已从磁盘同步创作表单 catalog",
+            message="Disk catalog sync has been removed; use absorb_external_assets for one-time migration.",
         )
 
 
 # ============================================================
-# 题材模板管理（对接 apps.skill.models.ThemeTemplate）
+# 棰樻潗妯℃澘绠＄悊锛堝鎺?apps.skill.models.ThemeTemplate锛?
 # ============================================================
 
 class ThemeTemplateView(APIView):
-    """题材模板：列表 / 新增（对接 apps.skill.models.ThemeTemplate 表）"""
+    """Theme template list/create."""
 
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -262,7 +236,7 @@ class ThemeTemplateView(APIView):
         qs = ThemeTemplate.objects.all().order_by("sort_order", "-created_at")
         items = []
         for t in qs:
-            # 字段映射：将 ThemeTemplate 表字段映射为前端期望的字段
+            # 瀛楁鏄犲皠锛氬皢 ThemeTemplate 琛ㄥ瓧娈垫槧灏勪负鍓嶇鏈熸湜鐨勫瓧娈?
             prompt = ""
             try:
                 params = t.params or {}
@@ -293,7 +267,7 @@ class ThemeTemplateView(APIView):
         theme_code = v.get("category") or f"custom-{secrets.token_hex(6)}"
         theme_name = v.get("name")
         if not theme_name:
-            return api_fail("题材名称不能为空")
+            return api_fail("棰樻潗鍚嶇О涓嶈兘涓虹┖")
 
         obj = ThemeTemplate.objects.create(
             theme_code=theme_code,
@@ -314,11 +288,11 @@ class ThemeTemplateView(APIView):
             "created_at": obj.created_at,
             "updated_at": obj.updated_at,
         }
-        return api_ok(data, message="题材已创建", http_status=status.HTTP_201_CREATED)
+        return api_ok(data, message="theme created", http_status=status.HTTP_201_CREATED)
 
 
 class ThemeTemplateDetailView(APIView):
-    """题材模板更新（对接 apps.skill.models.ThemeTemplate 表）"""
+    """Theme template update."""
 
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -326,7 +300,7 @@ class ThemeTemplateDetailView(APIView):
         try:
             obj = ThemeTemplate.objects.get(pk=theme_id)
         except ThemeTemplate.DoesNotExist:
-            return api_fail("题材不存在")
+            return api_fail("theme not found")
 
         serializer = ThemeTemplateSerializer(data=request.data or {})
         serializer.is_valid(raise_exception=True)
@@ -348,15 +322,15 @@ class ThemeTemplateDetailView(APIView):
             "created_at": obj.created_at,
             "updated_at": obj.updated_at,
         }
-        return api_ok(data, message="题材已更新")
+        return api_ok(data, message="theme updated")
 
 
 # ============================================================
-# 钩子库管理（对接 apps.skill.models.HookLibrary）
+# 閽╁瓙搴撶鐞嗭紙瀵规帴 apps.skill.models.HookLibrary锛?
 # ============================================================
 
 class HookView(APIView):
-    """钩子库：列表 / 新增（对接 apps.skill.models.HookLibrary 表）"""
+    """Hook library list/create."""
 
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -384,7 +358,7 @@ class HookView(APIView):
 
         content = v.get("content")
         if not content:
-            return api_fail("钩子内容不能为空")
+            return api_fail("hook content cannot be empty")
 
         obj = HookLibrary.objects.create(
             hook_type=v.get("hook_type", "opening"),
@@ -402,11 +376,11 @@ class HookView(APIView):
             "is_active": bool(obj.is_active),
             "created_at": obj.created_at,
         }
-        return api_ok(data, message="钩子已创建", http_status=status.HTTP_201_CREATED)
+        return api_ok(data, message="hook created", http_status=status.HTTP_201_CREATED)
 
 
 class HookDetailView(APIView):
-    """钩子库：更新 / 删除"""
+    """Hook library update/delete."""
 
     permission_classes = [IsAuthenticated, IsAdminUser]
 
@@ -414,7 +388,7 @@ class HookDetailView(APIView):
         try:
             obj = HookLibrary.objects.get(pk=hook_id)
         except HookLibrary.DoesNotExist:
-            return api_fail("钩子不存在")
+            return api_fail("hook not found")
 
         serializer = HookSerializer(data=request.data or {})
         serializer.is_valid(raise_exception=True)
@@ -438,12 +412,12 @@ class HookDetailView(APIView):
             "use_count": obj.use_count,
             "created_at": obj.created_at,
         }
-        return api_ok(data, message="钩子已更新")
+        return api_ok(data, message="hook updated")
 
     def delete(self, request, hook_id=None):
         try:
             obj = HookLibrary.objects.get(pk=hook_id)
         except HookLibrary.DoesNotExist:
-            return api_fail("钩子不存在")
+            return api_fail("hook not found")
         obj.delete()
-        return api_ok(None, message="钩子已删除")
+        return api_ok(None, message="hook deleted")

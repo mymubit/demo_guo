@@ -276,8 +276,6 @@ export default function OrchestrationFlowPage() {
         prev
           ? {
               ...prev,
-              post_script_chain: meta.post_script_chain || prev.post_script_chain,
-              post_script_append_agents: meta.post_script_append_agents || prev.post_script_append_agents,
               polish_max_rounds: meta.polish_max_rounds ?? prev.polish_max_rounds,
               flow_graph: meta.flow_graph || prev.flow_graph,
               publish_state: { ...(prev.publish_state || {}), is_dirty: true },
@@ -372,7 +370,7 @@ export default function OrchestrationFlowPage() {
   const sortedSteps = sortStepsByChainOrder(steps)
   const hasAdvanced =
     (blueprint?.execution_plan?.edges?.length || 0) > 0 ||
-    (blueprint?.post_script_chain?.length || 0) > 0 ||
+    (blueprint?.explicit_post_agents?.length || blueprint?.catalog?.explicitPostAgents?.length || 0) > 0 ||
     (blueprint?.flow_graph?.parallel_groups?.length || 0) > 0
   const activePackId = blueprint?.pipeline_pack?.id || fusionPacks.find((p) => p.is_active)?.id || ''
 
@@ -680,7 +678,7 @@ export default function OrchestrationFlowPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(260px,300px)_minmax(0,1fr)] gap-4 items-start">
         <OrchestrationPipelineRail
           steps={sortedSteps}
-          postScriptChain={blueprint.post_script_chain || []}
+          explicitPostAgents={blueprint.explicit_post_agents || blueprint?.catalog?.explicitPostAgents || []}
           agentsById={agentsById}
           executionPlan={blueprint?.execution_plan}
           selectedNodeId={selectedNodeId}

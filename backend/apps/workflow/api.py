@@ -321,9 +321,18 @@ class WorkflowLaunchViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        from apps.creation.models import Project
+        try:
+            project = Project.objects.get(id=project_id, user=request.user)
+        except Project.DoesNotExist:
+            return Response(
+                {"error": "项目不存在或无权访问"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
         from apps.workflow.orchestration_adapter import OrchestrationAdapter
         result = OrchestrationAdapter.run(
-            project=project_id,
+            project=project,
             user_id=str(getattr(request.user, "id", "anonymous")),
             pack_id=pack_id,
         )

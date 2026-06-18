@@ -1,39 +1,5 @@
-# -*- coding: utf-8 -*-
-"""工作流引擎 → 技能运行层桥接
-========================================================
-WorkflowEngine 的节点执行通过 SkillBridge 接入实际技能运行层。
-
-设计原则：
-  ① 工作流引擎完全不感知"技能如何实现"，只调用 SkillBridge.run()
-  ② SkillBridge 根据节点的 skill_id 或 runner_path 路由到具体实现
-  ③ SkillBridge 兼容两种路径：
-      A. skill_id → SkillInvoker（LLM 型技能，有 schema）—— 优先
-      B. runner_path → 任意 Python 函数（兜底兼容层）—— 仅在 skill_id 为空时
-
-节点 skill_id 注册方式（FusionPipelineNode）：
-  • skill_id 字段 → 直接作为 skill_id 传给 SkillInvoker.invoke()
-  • runner_path 字段 → import + 调用（兜底，节点无 skill_id 时使用）
-
-典型节点注册示例：
-  FusionPipelineNode(
-    fusion_node_id="node_brief",
-    name="立项定义",
-    runner_type="fusion_node",
-    skill_id="creation.brief",          # skill_id 优先 → SkillInvoker.invoke()
-    # runner_path 留空（fallback 兜底）
-    coin_cost=30,
-  )
-
-  FusionPipelineNode(
-    fusion_node_id="node_review",
-    name="质量审查",
-    runner_type="fusion_review",
-    skill_id="creation.review",          # 优先
-    runner_path="apps.creation.orchestration.review.run_review_node",  # 兜底
-    coin_cost=10,
-  )
-========================================================
-"""
+﻿# -*- coding: utf-8 -*-
+"""Bridge WorkflowEngine nodes to ScriptForge SkillInvoker/runtime functions."""
 from __future__ import annotations
 
 import importlib
@@ -41,15 +7,21 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
+from apps.workflow.runtime_contract import (
+    RuntimeBudgetExceeded,
+    enforce_input_budget,
+    project_seed_context,
+)
+
 logger = logging.getLogger(__name__)
 
 
 # =========================================================
-# SkillBridgeResult — 节点执行结果的统一格式
+# SkillBridgeResult 鈥?鑺傜偣鎵ц缁撴灉鐨勭粺涓€鏍煎紡
 # =========================================================
 @dataclass
 class SkillBridgeResult:
-    """SkillBridge 对 workflow_engine 返回的统一结果。"""
+    """Normalized result returned by SkillBridge."""
     success: bool
     output: Dict[str, Any] = field(default_factory=dict)
     errors: list = field(default_factory=list)
@@ -57,15 +29,15 @@ class SkillBridgeResult:
     llm_token_in: int = 0
     llm_token_out: int = 0
     duration_ms: int = 0
-    run_ids: list = field(default_factory=list)   # 审计用（AgentExecutionRun IDs）
-    retryable: bool = False                       # 告知引擎是否可重试
+    run_ids: list = field(default_factory=list)   # 瀹¤鐢紙AgentExecutionRun IDs锛?
+    retryable: bool = False                       # 鍛婄煡寮曟搸鏄惁鍙噸璇?
 
 
 # =========================================================
-# SkillBridge — 统一入口
+# SkillBridge 鈥?缁熶竴鍏ュ彛
 # =========================================================
 class SkillBridge:
-    """工作流节点 → 技能运行层的唯一桥梁。"""
+    """Bridge one workflow node to runtime execution."""
 
     def __init__(self, project: Any, node_config: Any, context: Dict[str, Any]):
         self.project = project
@@ -73,17 +45,11 @@ class SkillBridge:
         self.context = context
         self._invoker = None
 
-    # ─────────────────────────────────────────
-    # 统一入口（引擎唯一调用点）
-    # ─────────────────────────────────────────
+    # 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+    # 缁熶竴鍏ュ彛锛堝紩鎿庡敮涓€璋冪敤鐐癸級
+    # 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
     def run(self, dry_run: bool = False) -> SkillBridgeResult:
-        """执行节点技能，返回统一结果。
-
-        路由逻辑：
-          1. 有 skill_id → SkillInvoker.invoke()
-          2. 无 skill_id 但有 runner_path → 按路径调用 Python 函数
-          3. 两者都没有 → 返回失败
-        """
+        """Run a node skill and return a normalized result."""
         skill_id = getattr(self.node_config, "skill_id", None) or ""
         runner_path = getattr(self.node_config, "runner_path", None) or ""
         node_id = getattr(self.node_config, "node_id", "?")
@@ -98,7 +64,7 @@ class SkillBridge:
                 duration_ms=0,
             )
 
-        # 路由 A: skill_id → LLM 型技能（通过 SkillInvoker）
+        # 璺敱 A: skill_id 鈫?LLM 鍨嬫妧鑳斤紙閫氳繃 SkillInvoker锛?
         if skill_id:
             return self._run_via_skill_invoker(
                 skill_id=skill_id,
@@ -107,7 +73,7 @@ class SkillBridge:
                 coin_cost=coin_cost,
             )
 
-        # 路由 B: runner_path → 直接 Python 函数
+        # 璺敱 B: runner_path 鈫?鐩存帴 Python 鍑芥暟
         if runner_path:
             return self._run_via_runner_path(
                 runner_path=runner_path,
@@ -116,17 +82,17 @@ class SkillBridge:
                 coin_cost=coin_cost,
             )
 
-        # 兜底：两者都没有
-        logger.error("[SkillBridge] 节点 %s 既无 skill_id 也无 runner_path", node_id)
+        # 鍏滃簳锛氫袱鑰呴兘娌℃湁
+        logger.error("[SkillBridge] 鑺傜偣 %s 鏃㈡棤 skill_id 涔熸棤 runner_path", node_id)
         return SkillBridgeResult(
             success=False,
-            errors=[f"节点 {node_id} 未注册 skill_id 或 runner_path"],
+            errors=[f"鑺傜偣 {node_id} 鏈敞鍐?skill_id 鎴?runner_path"],
             retryable=False,
         )
 
-    # ─────────────────────────────────────────
-    # 路由 A: SkillInvoker（LLM 型技能）
-    # ─────────────────────────────────────────
+    # 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+    # 璺敱 A: SkillInvoker锛圠LM 鍨嬫妧鑳斤級
+    # 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
     def _run_via_skill_invoker(
         self,
         skill_id: str,
@@ -134,7 +100,7 @@ class SkillBridge:
         extra_config: Dict[str, Any],
         coin_cost: int,
     ) -> SkillBridgeResult:
-        """通过 SkillInvoker 调用 LLM 型技能。"""
+        """Invoke an LLM-backed skill through SkillInvoker."""
         import time
         t0 = time.time()
 
@@ -143,8 +109,9 @@ class SkillBridge:
 
             invoker = get_skill_invoker()
 
-            # 构建 payload：从 context 中提取相关上下文 + extra_config
+            # 鏋勫缓 payload锛氫粠 context 涓彁鍙栫浉鍏充笂涓嬫枃 + extra_config
             payload = self._build_skill_payload(skill_id, extra_config)
+            input_snapshot = enforce_input_budget(payload, self.node_config)
 
             result = invoker.invoke(
                 skill_id=skill_id,
@@ -156,11 +123,19 @@ class SkillBridge:
             duration_ms = int((time.time() - t0) * 1000)
             llm_in = result.meta.get("llm_token_in", 0)
             llm_out = result.meta.get("llm_token_out", 0)
-            actual_cost = int(result.meta.get("quota_cost", coin_cost) or coin_cost)
+            actual_cost = coin_cost
+            output = dict(result.data or {})
+            if result.success:
+                artifact_key = self._persist_creation_skill_output(skill_id, output)
+                if artifact_key:
+                    output["artifact_key"] = artifact_key
+            output.setdefault("skill_id", skill_id)
+            output.setdefault("trace_id", result.trace_id)
+            output.setdefault("input_snapshot", input_snapshot)
 
             return SkillBridgeResult(
                 success=result.success,
-                output=result.data or {},
+                output=output,
                 errors=[result.error.get("message", "")] if result.error else [],
                 coin_cost=actual_cost,
                 llm_token_in=llm_in,
@@ -179,9 +154,18 @@ class SkillBridge:
                 ),
             )
 
+        except RuntimeBudgetExceeded as exc:
+            duration_ms = int((time.time() - t0) * 1000)
+            return SkillBridgeResult(
+                success=False,
+                errors=[str(exc)],
+                coin_cost=0,
+                duration_ms=duration_ms,
+                retryable=False,
+            )
         except Exception as exc:
             duration_ms = int((time.time() - t0) * 1000)
-            logger.exception("[SkillBridge] SkillInvoker 调用失败 skill=%s", skill_id)
+            logger.exception("[SkillBridge] SkillInvoker 璋冪敤澶辫触 skill=%s", skill_id)
             return SkillBridgeResult(
                 success=False,
                 errors=[f"{type(exc).__name__}:{exc}"],
@@ -195,40 +179,68 @@ class SkillBridge:
         skill_id: str,
         extra_config: Dict[str, Any],
     ) -> Dict[str, Any]:
-        """从 instance.context 提取技能所需上下文，构建 payload。"""
+        """Build a skill payload from project/context data."""
         ctx = self.context or {}
 
-        # 基础 payload：从 extra_config 合并
-        payload = dict(extra_config)
+        if skill_id.startswith("creation.") and self.project is not None:
+            try:
+                from apps.creation.skill_invoke_payload import build_creation_skill_invoke_payload
 
-        # 注入全局上下文（key 映射：简化版）
-        for key in ("theme", "topic", "format", "duration"):
+                payload = build_creation_skill_invoke_payload(self.project, skill_id)
+                payload.update(dict(extra_config or {}))
+                return payload
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("[SkillBridge] creation payload builder fallback skill=%s: %s", skill_id, exc)
+
+        # 鍩虹 payload锛氫粠 extra_config 鍚堝苟
+        payload = dict(extra_config)
+        payload.update({k: v for k, v in project_seed_context(self.project).items() if v not in (None, "")})
+
+        for key in ("theme", "topic", "format", "duration", "episode_count", "core_idea"):
             if key in ctx:
                 payload[key] = ctx[key]
 
-        # 注入前一节点输出
+        # 娉ㄥ叆鍓嶄竴鑺傜偣杈撳嚭
         prev_output = ctx.get("prev", {})
         if prev_output:
             payload["prev_output"] = prev_output
 
-        # 注入已完成的节点输出
+        # 娉ㄥ叆宸插畬鎴愮殑鑺傜偣杈撳嚭
         nodes_output = ctx.get("nodes", {})
         if nodes_output:
             payload["completed_nodes"] = nodes_output
 
         return payload
 
+    def _persist_creation_skill_output(self, skill_id: str, skill_data: Dict[str, Any]) -> str:
+        if not skill_id.startswith("creation.") or self.project is None:
+            return ""
+        try:
+            from apps.creation.skill_invoke_payload import apply_creation_skill_output
+
+            node_index = int(
+                getattr(self.node_config, "website_index", None)
+                or getattr(self.node_config, "chain_order", 0)
+                or 0
+            )
+            if node_index <= 0:
+                return ""
+            return apply_creation_skill_output(self.project, node_index, skill_id, skill_data)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("[SkillBridge] persist creation output skipped skill=%s: %s", skill_id, exc)
+            return ""
+
     def _extract_user_id(self) -> Optional[int]:
-        """从 project 中提取 user_id。"""
+        """Extract project user id."""
         try:
             return int(getattr(self.project, "user_id", None)
                       or getattr(self.project, "user", None))
         except Exception:
             return None
 
-    # ─────────────────────────────────────────
-    # 路由 B: Python 函数（兜底兼容层）
-    # ─────────────────────────────────────────
+    # 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+    # 璺敱 B: Python 鍑芥暟锛堝厹搴曞吋瀹瑰眰锛?
+    # 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
     def _run_via_runner_path(
         self,
         runner_path: str,
@@ -236,35 +248,33 @@ class SkillBridge:
         extra_config: Dict[str, Any],
         coin_cost: int,
     ) -> SkillBridgeResult:
-        """按 runner_path 动态导入并调用 Python 函数。
-
-        说明：默认 short-drama-v1 pack 的 7 个创作节点已统一通过 skill_id 路由到
-        SkillInvoker，本路径仅作为非默认 pack / 自定义节点的兜底。
-        """
+        """Run a Python function runner path."""
         import time
         t0 = time.time()
 
         try:
-            # 通用路由：直接 import + 调用 Python 函数
+            # 閫氱敤璺敱锛氱洿鎺?import + 璋冪敤 Python 鍑芥暟
             module_name, func_name = runner_path.rsplit(".", 1)
             module = importlib.import_module(module_name)
             func = getattr(module, func_name, None)
             if func is None:
-                raise AttributeError(f"模块 {module_name} 中没有 {func_name}")
+                raise AttributeError(f"妯″潡 {module_name} 涓病鏈?{func_name}")
 
-            # 兼容多种旧签名
+            # 鍏煎澶氱鏃х鍚?
             import inspect
             sig = inspect.signature(func)
-            if len(sig.parameters) >= 3:
+            if len(sig.parameters) >= 4:
+                raw_result = func(self.project, self.node_config, self.context, extra_config)
+            elif len(sig.parameters) >= 3:
                 raw_result = func(self.project, self.node_config, self.context)
             else:
-                raw_result = func(self.project, self.node_config, self.context, extra_config)
+                raw_result = func(self.project)
 
             return self._normalize_result(raw_result, coin_cost, t0)
 
         except Exception as exc:
             duration_ms = int((time.time() - t0) * 1000)
-            logger.exception("[SkillBridge] runner_path 调用失败 path=%s", runner_path)
+            logger.exception("[SkillBridge] runner_path 璋冪敤澶辫触 path=%s", runner_path)
             return SkillBridgeResult(
                 success=False,
                 errors=[f"{type(exc).__name__}:{exc}"],
@@ -279,26 +289,27 @@ class SkillBridge:
         coin_cost: int,
         t0: float,
     ) -> SkillBridgeResult:
-        """将各种旧格式结果标准化为 SkillBridgeResult。"""
+        """Normalize legacy runner results."""
         import time
-        duration_ms = int((time.time() - t0) * 1000)
 
-        # 情况 1: 已经是 SkillBridgeResult
+        # 鎯呭喌 1: 宸茬粡鏄?SkillBridgeResult
         if isinstance(raw, SkillBridgeResult):
             return raw
 
-        # 情况 2: 字典（节点输出）
+        # 鎯呭喌 2: 瀛楀吀锛堣妭鐐硅緭鍑猴級
         if isinstance(raw, dict):
+            status = str(raw.get("status") or "").lower()
             return SkillBridgeResult(
-                success=bool(raw.get("ok") or raw.get("success")),
+                success=bool(raw.get("ok") or raw.get("success") or status in {"completed", "success", "done"}),
                 output=raw,
+                errors=list(raw.get("errors") or ([raw.get("error")] if raw.get("error") else [])),
                 coin_cost=int(raw.get("coin_cost", coin_cost) or coin_cost),
                 llm_token_in=int(raw.get("llm_token_in", 0) or 0),
                 llm_token_out=int(raw.get("llm_token_out", 0) or 0),
                 duration_ms=int(raw.get("duration_ms", duration_ms) or duration_ms),
             )
 
-        # 情况 3: 有 status 属性的对象（兼容旧 AgentResult）
+        # 鎯呭喌 3: 鏈?status 灞炴€х殑瀵硅薄锛堝吋瀹规棫 AgentResult锛?
         if hasattr(raw, "status"):
             status = getattr(raw, "status", "")
             success = status in ("completed", "success", "done")
@@ -313,7 +324,7 @@ class SkillBridge:
                 duration_ms=duration_ms,
             )
 
-        # 兜底
+        # 鍏滃簳
         return SkillBridgeResult(
             success=True,
             output={"content": str(raw)},
@@ -323,7 +334,7 @@ class SkillBridge:
 
 
 # =========================================================
-# 工具函数
+# 宸ュ叿鍑芥暟
 # =========================================================
 _code_cache: Dict[str, int] = {}
 
@@ -339,7 +350,7 @@ def _get_code(name: str) -> int:
 
 
 # =========================================================
-# 便捷入口（供 workflow_engine._default_agent_runner 调用）
+# 渚挎嵎鍏ュ彛锛堜緵 workflow_engine._default_agent_runner 璋冪敤锛?
 # =========================================================
 def run_workflow_node(
     project: Any,
@@ -347,15 +358,8 @@ def run_workflow_node(
     context: Dict[str, Any],
     dry_run: bool = False,
 ) -> SkillBridgeResult:
-    """工作流引擎调用节点技能的唯一入口。
-
-    等价于:
-        bridge = SkillBridge(project, node_config, context)
-        return bridge.run(dry_run=dry_run)
-    """
+    """Convenience entry point for WorkflowEngine."""
     return SkillBridge(project, node_config, context).run(dry_run=dry_run)
-
-
 __all__ = [
     "SkillBridge",
     "SkillBridgeResult",

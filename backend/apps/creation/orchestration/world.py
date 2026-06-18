@@ -2,12 +2,8 @@
 """WorldAgent：节点 2 结构与世界观（registry sub_skills 编排）。"""
 from __future__ import annotations
 
-import json
 import logging
-from pathlib import Path
 from typing import Any, Dict, List
-
-from django.conf import settings
 
 from ..artifact_service import get_artifact, save_artifact
 from ..display.structure_display import (
@@ -23,11 +19,9 @@ from .agent_llm import run_sub_skill_llm
 from .agent_payload import extract_fixer_patch, fixer_patch_meaningful, unwrap_llm_payload
 from .sub_skill_runner import (
     agent_execution_meta,
-    cli_world_validate,
     inject_knowledge_upstream,
     mark_executed,
     persist_execution_trace,
-    unwrap_fusion_cli_result,
 )
 from .types import AgentResult
 
@@ -59,7 +53,6 @@ def _deep_merge(base: dict, patch: dict) -> dict:
 def _build_upstream(project: Project, brief: dict) -> Dict[str, Any]:
     return {
         "projectBrief": brief,
-        "project_brief": brief,
         "theme": project.theme or brief.get("theme") or "",
         "episodeCount": project.episode_count or brief.get("episodeCount"),
     }
@@ -96,21 +89,11 @@ def _merge_sub_skill_output(plan: dict, sub_skill_id: str, raw: Any) -> dict:
     return _deep_merge(plan, chunk)
 
 
-def _fusion_work_dir(project: Project) -> Path:
-    root = Path(getattr(settings, "CREATION_FUSION_WORK_DIR", "/tmp/scriptforge_fusion"))
-    work_dir = root / str(project.id)
-    work_dir.mkdir(parents=True, exist_ok=True)
-    return work_dir
-
-
 def _run_world_validator(project: Project, plan: dict) -> dict:
-    from apps.workflow.fusion import FusionCliRunner, get_fusion_config
+    from apps.creation.validators import validate_world
 
-    input_path = _fusion_work_dir(project) / "structure-plan.validate.json"
-    input_path.write_text(json.dumps(plan, ensure_ascii=False, indent=2), encoding="utf-8")
-    runner = FusionCliRunner(get_fusion_config())
-    cli_raw = cli_world_validate(runner, input_path, strict=False)
-    return unwrap_fusion_cli_result(cli_raw)
+    result = validate_world(plan)
+    return result.to_dict()
 
 
 def _finalize_structure_plan(project: Project, plan: dict) -> dict:
@@ -156,16 +139,14 @@ def run_world_agent(project: Project, *, node_index: int = NODE_INDEX, **_kwargs
                 agent_id=AGENT_ID,
                 fusion_node_id=FUSION_NODE_ID,
                 sub_skill_id=sub_skill_id,
-                upstream={**upstream, "structurePlan": plan, "structure_plan": plan},
+                upstream={**upstream, "structurePlan": plan},
             )
             plan = _merge_sub_skill_output(plan, sub_skill_id, raw)
-            upstream = {**upstream, "structurePlan": plan, "structure_plan": plan}
+            upstream = {**upstream, "structurePlan": plan}
             mark_executed(executed, sub_skill_id)
         except Exception as exc:  # noqa: BLE001
             logger.exception("[WorldAgent] sub_skill=%s failed", sub_skill_id)
             errors.append(f"{sub_skill_id}: {exc}")
-
-    mark_executed(executed, "rhythm-calibrator")
 
     validation: dict = {}
     try:

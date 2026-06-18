@@ -77,6 +77,7 @@ class AgentLlmRouteService:
                 defaults={
                     "display_name": item.get("display_name") or item["route_key"],
                     "max_tokens": item.get("max_tokens"),
+                    "routing_rules": item.get("routing_rules") or {},
                     "sort_order": int(item.get("sort_order") or 0),
                     "is_active": True,
                 },

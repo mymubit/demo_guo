@@ -8,9 +8,6 @@ from apps.agent.runtime import (
     agent_for_workspace_index,
     get_agent,
     get_agent_registry,
-    post_script_append_agents,
-    post_script_chain,
-    post_script_effective_chain,
     polish_max_rounds,
 )
 
@@ -54,6 +51,15 @@ def portal_agent_catalog() -> Dict[str, Any]:
     for agent in reg.get("agents") or []:
         if not isinstance(agent, dict):
             continue
+        agent_id = agent.get("id")
+        workspace_index = agent.get("workspace_index")
+        if workspace_index:
+            try:
+                idx = int(workspace_index)
+            except (TypeError, ValueError):
+                idx = 0
+            if agent_for_workspace_index(idx) != agent_id:
+                continue
         sub_skills = []
         for skill in agent.get("sub_skills") or []:
             if not isinstance(skill, dict):
@@ -67,7 +73,7 @@ def portal_agent_catalog() -> Dict[str, Any]:
                 }
             )
         entry = {
-            "id": agent.get("id"),
+            "id": agent_id,
             "name": agent.get("name"),
             "name_zh": agent.get("name_zh"),
             "description": agent.get("description"),
@@ -83,10 +89,32 @@ def portal_agent_catalog() -> Dict[str, Any]:
         }
         if agent.get("workspace_index"):
             workspace.append(entry)
-        elif agent.get("id") in post_script_effective_chain():
+        elif agent.get("id") in {"review", "score", "polish", "marketing", "insight"}:
             post_script.append(entry)
         else:
             auxiliary.append(entry)
+
+    seen = {item.get("id") for item in workspace + post_script + auxiliary}
+    for idx in range(1, 6):
+        aid = agent_for_workspace_index(idx)
+        if not aid or aid in seen:
+            continue
+        agent = get_agent(aid) or {}
+        workspace.append(
+            {
+                "id": aid,
+                "name": agent.get("name") or aid,
+                "name_zh": agent.get("name_zh") or agent.get("name") or aid,
+                "description": agent.get("description") or "",
+                "workspace_index": idx,
+                "inputs": agent.get("inputs") or [],
+                "outputs": agent.get("outputs") or [],
+                "sub_skill_count": len(agent.get("sub_skills") or []),
+                "sub_skills": agent.get("sub_skills") or [],
+                "absorbs_legacy": [],
+            }
+        )
+        seen.add(aid)
 
     workspace.sort(key=lambda x: int(x.get("workspace_index") or 0))
     return {
@@ -95,8 +123,7 @@ def portal_agent_catalog() -> Dict[str, Any]:
         "workspaceAgents": workspace,
         "postScriptAgents": post_script,
         "auxiliaryAgents": auxiliary,
-        "post_script_chain": post_script_chain(),
-        "post_script_append_agents": post_script_append_agents(),
+        "explicitPostAgents": ["review", "score", "polish", "marketing", "insight"],
         "polish_max_rounds": polish_max_rounds(),
         "decisions": reg.get("decisions") or {},
     }

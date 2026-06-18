@@ -1,5 +1,5 @@
 # P1-2 阶段：数据引导 —— 为短剧创作场景创建默认 FusionPipelinePack + Nodes
-# 覆盖创作全链路 7 节点：brief / structure / character / outline / script / review / polish
+# 覆盖创作主链 5 节点：brief / structure / character / outline / script
 # 每个节点通过 skill_id 路由到 SkillInvoker.invoke()
 #   → 由新引擎 SkillBridge 自动分发（创建对应的 creation.{id} 技能定义）
 # 新引擎（WorkflowEngine + SkillBridge）消费这些节点。
@@ -57,26 +57,6 @@ DEFAULT_NODES = [
         "coin_cost": 30,
         "extra_config": {},
     },
-    {
-        "fusion_node_id": "node_review",
-        "name": "AI 质检",
-        "description": "AI 驱动质检：一致性、逻辑、节奏、对白质量",
-        "chain_order": 6,
-        "runner_type": "fusion_review",
-        "skill_id": "creation.review",
-        "coin_cost": 15,
-        "extra_config": {},
-    },
-    {
-        "fusion_node_id": "node_polish",
-        "name": "润色优化",
-        "description": "依据质检报告进行剧本润色与重写",
-        "chain_order": 7,
-        "runner_type": "fusion_node",
-        "skill_id": "creation.polish",
-        "coin_cost": 20,
-        "extra_config": {},
-    },
 ]
 
 
@@ -90,7 +70,7 @@ def _create_default_pack(apps, schema_editor):
         defaults={
             "version": "short-drama-v1.0",
             "display_name": "短剧创作标准流程 v1",
-            "description": "短剧剧本创作标准工作流：立项 → 结构 → 角色 → 大纲 → 剧本 → 质检 → 润色",
+            "description": "短剧剧本创作标准工作流：立项 → 结构 → 角色 → 大纲 → 剧本",
             "is_active": True,
             "is_published_to_portal": True,
             "is_default_for_creation": True,
@@ -104,7 +84,7 @@ def _create_default_pack(apps, schema_editor):
                 "timeout_seconds": 1800,
                 "heartbeat_interval_seconds": 60,
             },
-            "terminal_node_ids": ["node_polish"],
+            "terminal_node_ids": ["node_script"],
         },
     )
 

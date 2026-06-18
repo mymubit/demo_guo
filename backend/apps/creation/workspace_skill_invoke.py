@@ -16,8 +16,6 @@ def workspace_node_to_skill_id(node_index: int) -> str:
         3: "creation.character",
         4: "creation.outline",
         5: "creation.script",
-        6: "creation.review",
-        7: "creation.polish",
     }
     return mapping.get(int(node_index), "")
 

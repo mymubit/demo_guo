@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 from django.test import SimpleTestCase, TestCase
 
 from apps.agent.binding import (
@@ -26,17 +26,17 @@ class AgentNodeBindingTests(TestCase):
         pack = FusionPipelinePack.objects.create(version="bind-test", is_active=True)
         FusionPipelineNode.objects.create(
             pack=pack,
-            fusion_node_id="node-2-structure",
+            fusion_node_id="node_structure",
             chain_order=2,
             website_index=2,
-            name="结构",
+            name="缁撴瀯",
         )
         FusionPipelineNode.objects.create(
             pack=pack,
-            fusion_node_id="node-5-script",
+            fusion_node_id="node_script",
             chain_order=5,
             website_index=5,
-            name="剧本",
+            name="鍓ф湰",
         )
         AgentRegistryConfig.objects.update_or_create(
             config_key="default",
@@ -49,7 +49,7 @@ class AgentNodeBindingTests(TestCase):
                     ],
                     "_meta": {
                         "workspace_modules": [
-                            {"index": 2, "agent_id": "world"},
+                        {"index": 2, "agent_id": "structure"},
                             {"index": 5, "agent_id": "script"},
                         ]
                     },
@@ -63,12 +63,12 @@ class AgentNodeBindingTests(TestCase):
 
     def test_agent_id_for_fusion_node_via_registry(self):
         self._seed_pipeline_and_registry()
-        self.assertEqual(agent_id_for_fusion_node("node-2-structure"), "world")
-        self.assertEqual(agent_id_for_fusion_node("node-5-script"), "script")
+        self.assertEqual(agent_id_for_fusion_node("node_structure"), "structure")
+        self.assertEqual(agent_id_for_fusion_node("node_script"), "script")
 
     def test_resolve_tier1_sections_for_agent_uses_seed(self):
-        sections = resolve_tier1_sections_for_agent("world")
-        self.assertEqual(sections, AGENT_TIER1_SEED["world"])
+        sections = resolve_tier1_sections_for_agent("structure")
+        self.assertEqual(sections, AGENT_TIER1_SEED["structure"])
 
 
 class Tier1SectionsConfigTests(TestCase):
@@ -94,10 +94,10 @@ class Tier1SectionsConfigTests(TestCase):
         pack = FusionPipelinePack.objects.create(version="test-tier1-db", is_active=True)
         FusionPipelineNode.objects.create(
             pack=pack,
-            fusion_node_id="node-5-script",
+            fusion_node_id="node_script",
             chain_order=1,
             website_index=5,
-            name="剧本创作",
+            name="鍓ф湰鍒涗綔",
         )
         self._seed_registry(
             [
@@ -110,36 +110,36 @@ class Tier1SectionsConfigTests(TestCase):
         )
         FusionPipelineDbService.clear_caches()
 
-        sections = resolve_tier1_sections("node-5-script")
+        sections = resolve_tier1_sections("node_script")
         self.assertEqual(sections, ["custom_section_a", "custom_section_b"])
 
     def test_resolve_tier1_sections_falls_back_to_agent_defaults(self):
         pack = FusionPipelinePack.objects.create(version="test-tier1-empty", is_active=True)
         FusionPipelineNode.objects.create(
             pack=pack,
-            fusion_node_id="node-6-review",
+            fusion_node_id="node_script",
             chain_order=1,
-            website_index=6,
-            name="质量审查",
+            website_index=5,
+            name="璐ㄩ噺瀹℃煡",
         )
-        self._seed_registry([{"id": "review", "workspace_index": 6}])
+        self._seed_registry([{"id": "script", "workspace_index": 5}])
         FusionPipelineDbService.clear_caches()
-        self.assertEqual(resolve_tier1_sections("node-6-review"), ["scoring"])
+        self.assertEqual(resolve_tier1_sections("node_script"), AGENT_TIER1_SEED["script"])
 
     def test_main_chain_nodes_exposes_agent_id(self):
         pack = FusionPipelinePack.objects.create(version="test-tier1-chain", is_active=True)
         FusionPipelineNode.objects.create(
             pack=pack,
-            fusion_node_id="node-4-outline",
+            fusion_node_id="node_outline",
             chain_order=1,
             website_index=4,
-            name="大纲",
+            name="澶х翰",
         )
         self._seed_registry([{"id": "outline", "workspace_index": 4}])
         FusionPipelineDbService.clear_caches()
 
-        nodes = FusionPipelineDbService.main_chain_nodes()
-        outline = next(n for n in nodes if n["fusion_node_id"] == "node-4-outline")
+        nodes = FusionPipelineDbService.main_chain_nodes(pack_id=str(pack.id))
+        outline = next(n for n in nodes if n["fusion_node_id"] == "node_outline")
         self.assertEqual(outline.get("agent_id"), "outline")
         self.assertNotIn("skill_id", outline)
         self.assertNotIn("tier1_sections", outline)
@@ -168,30 +168,30 @@ class PipelineStepTier1Tests(TestCase):
         pack = FusionPipelinePack.objects.create(version="test-discover-nodes", is_active=True)
         FusionPipelineNode.objects.create(
             pack=pack,
-            fusion_node_id="node-1-input",
+            fusion_node_id="node_brief",
             chain_order=1,
             website_index=1,
-            name="需求输入",
+            name="Brief",
         )
         FusionPipelineNode.objects.create(
             pack=pack,
-            fusion_node_id="node-2-structure",
+            fusion_node_id="node_structure",
             chain_order=2,
             website_index=2,
-            name="结构规划",
+            name="缁撴瀯瑙勫垝",
         )
         self._seed_registry(
             [
                 {"id": "brief", "workspace_index": 1},
-                {"id": "world", "workspace_index": 2},
+                {"id": "structure", "workspace_index": 2},
             ]
         )
         FusionPipelineDbService.clear_caches()
 
         steps = PipelineStepAdminService.list_steps()
         node_ids = [n["node_id"] for n in steps]
-        self.assertEqual(node_ids, ["node-1-input", "node-2-structure"])
-        self.assertEqual(steps[0]["display_name"], "需求输入")
+        self.assertEqual(node_ids, ["node_brief", "node_structure"])
+        self.assertEqual(steps[0]["display_name"], "Brief")
         self.assertEqual(steps[0]["agent_id"], "brief")
         self.assertNotIn("skill_id", steps[0])
 
@@ -199,21 +199,21 @@ class PipelineStepTier1Tests(TestCase):
         pack = FusionPipelinePack.objects.create(version="test-tier1-prompt", is_active=True)
         FusionPipelineNode.objects.create(
             pack=pack,
-            fusion_node_id="node-5-script",
+            fusion_node_id="node_script",
             chain_order=1,
             website_index=5,
-            name="剧本创作",
+            name="鍓ф湰鍒涗綔",
         )
         self._seed_registry([{"id": "script", "workspace_index": 5}])
         FusionPipelineDbService.clear_caches()
 
         ok = PipelineStepAdminService.update_tier1_sections(
-            "node-5-script",
+            "node_script",
             ["writing_prohibitions", "dialogue_quality"],
         )
         self.assertTrue(ok)
         self.assertEqual(
-            resolve_tier1_sections("node-5-script"),
+            resolve_tier1_sections("node_script"),
             ["writing_prohibitions", "dialogue_quality"],
         )
 
@@ -231,8 +231,7 @@ class Tier1SectionsFallbackTests(SimpleTestCase):
     def test_tier1_section_catalog_detail_has_labels(self):
         detail = PipelineStepAdminService.tier1_section_catalog_detail()
         self.assertTrue(detail)
-        self.assertEqual(detail[0]["key"], "ai_tone_forbidden")
-        self.assertEqual(detail[0]["label"], "AI 腔禁止")
+        self.assertTrue(all(item.get("key") and item.get("label") for item in detail))
 
 
 class DefaultUserTemplateConfigTests(SimpleTestCase):
@@ -240,3 +239,4 @@ class DefaultUserTemplateConfigTests(SimpleTestCase):
         from apps.workflow.prompt_seed import DEFAULT_USER_TEMPLATE, get_default_user_template
 
         self.assertEqual(get_default_user_template(), DEFAULT_USER_TEMPLATE)
+

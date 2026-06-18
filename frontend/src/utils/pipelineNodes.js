@@ -1,21 +1,13 @@
-/** 创作主链展示：优先读 portal_visible；无字段时沿用旧 fusion_node_id 兜底 */
+/** Creation main-chain display helpers. Runtime now exposes only ScriptForge's 5 nodes. */
 export function filterCreationPipelineNodes(nodes) {
-  return (nodes || []).filter((n) => {
-    if (n.portal_visible === false) return false
-    if (n.portal_visible === true) return true
-    const fid = String(n.fusion_node_id || '')
-    if (fid === 'node-8-score' || fid === 'node-6-review') return false
-    return true
-  })
+  return (nodes || []).filter((n) => n.portal_visible !== false)
 }
 
 export function isScoringPipelineNode(node) {
-  const fid = String(node?.fusion_node_id || '')
-  if (fid === 'node-8-score') return true
   return String(node?.name || '').includes('评分')
 }
 
-/** C 端步骤名：去掉「节点」后缀 */
+/** C-side step name: trim the legacy "节点" suffix when present. */
 export function displayPipelineStepName(name) {
   return String(name || '')
     .replace(/节点$/g, '')

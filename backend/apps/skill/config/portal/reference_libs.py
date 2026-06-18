@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
-"""参考库 JSON — DB SSOT；磁盘 references/ 仅 import/sync。"""
+"""参考库 JSON — DB-only SSOT."""
 from __future__ import annotations
 
-import json
 import logging
 from functools import lru_cache
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List
 
 from apps.skill.models import ReferenceLibraryConfig
 
@@ -73,57 +71,7 @@ class ReferenceLibraryService:
             return []
 
     @classmethod
-    def _disk_refs_dir(cls) -> Optional[Path]:
-        try:
-            from apps.workflow.fusion.config_loader import get_fusion_config
-
-            return get_fusion_config().root / "references"
-        except Exception:  # noqa: BLE001
-            return None
-
-    @classmethod
-    def _read_disk_file(cls, filename: str) -> Optional[dict]:
-        refs_dir = cls._disk_refs_dir()
-        if refs_dir is None:
-            return None
-        path = refs_dir / filename
-        if not path.is_file():
-            return None
-        try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-            return data if isinstance(data, dict) else None
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("读取磁盘参考库失败 %s: %s", filename, exc)
-            return None
-
-    @classmethod
-    def import_from_disk(cls, *, overwrite: bool = False) -> int:
-        """从磁盘 references/ 导入全部参考 JSON 到 DB。"""
-        row = cls._get_row()
-        content = dict(row.content) if isinstance(row.content, dict) else {}
-        imported = 0
-        for filename in REFERENCE_FILES:
-            if not overwrite and filename in content:
-                continue
-            data = cls._read_disk_file(filename)
-            if data is None:
-                continue
-            content[filename] = data
-            imported += 1
-        if imported:
-            row.content = content
-            row.save(update_fields=["content", "updated_at"])
-            cls.clear_cache()
-        logger.info("[ReferenceLibrary] import_from_disk imported=%s total=%s", imported, len(content))
-        return imported
-
     @classmethod
     def ensure_defaults(cls) -> bool:
-        """DB 无内容时从磁盘 seed。"""
-        try:
-            row = cls._get_row()
-            if isinstance(row.content, dict) and row.content:
-                return False
-        except Exception:  # noqa: BLE001
-            return False
-        return cls.import_from_disk(overwrite=False) > 0
+        """Runtime never imports external files; use absorb_external_assets."""
+        return False

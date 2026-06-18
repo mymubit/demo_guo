@@ -20,6 +20,7 @@ class AgentLlmRouteConfig(models.Model):
         verbose_name="指定大模型",
     )
     max_tokens = models.PositiveIntegerField("Max Tokens", null=True, blank=True)
+    routing_rules = models.JSONField("routing rules", default=dict, blank=True)
     is_active = models.BooleanField("启用", default=True)
     sort_order = models.IntegerField("排序", default=0)
     updated_at = models.DateTimeField(auto_now=True)

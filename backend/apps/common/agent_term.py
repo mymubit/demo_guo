@@ -17,8 +17,6 @@ AGENT_RUNNER_PREFIX = "apps.creation.orchestration."
 
 PIPELINE_RUNNER_BY_TYPE: Dict[str, str] = {
     "fusion_node": "apps.creation.step_mode.run_orchestrator_step",
-    "fusion_review": "apps.creation.step_mode.run_fusion_review_step",
-    "fusion_score": "apps.creation.step_mode.run_fusion_score_step",
 }
 
 
@@ -104,7 +102,7 @@ def enrich_registry_for_api(registry: JsonDict) -> JsonDict:
     meta = out.get("_meta")
     if isinstance(meta, dict):
         meta_out = dict(meta)
-        for key in ("workspace_modules", "post_script_pipeline_index"):
+        for key in ("workspace_modules",):
             if key in meta_out and isinstance(meta_out[key], list):
                 meta_out[key] = alias_agent_id_list(meta_out[key])
         out["_meta"] = meta_out
@@ -142,9 +140,12 @@ def normalize_registry_for_save(registry: JsonDict) -> JsonDict:
 
     if isinstance(meta, dict):
         meta_out = dict(meta)
-        for key in ("workspace_modules", "post_script_pipeline_index"):
+        for key in ("workspace_modules",):
             if key in meta_out:
                 meta_out[key] = _normalize_modules(meta_out[key])
+        meta_out.pop("post_script_pipeline_index", None)
+        meta_out.pop("post_script_chain", None)
+        meta_out.pop("post_script_append_agents", None)
         out["_meta"] = meta_out
 
     agents = out.get("agents")

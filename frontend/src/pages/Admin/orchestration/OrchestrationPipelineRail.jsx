@@ -1,15 +1,13 @@
 import { useMemo } from 'react'
-import { Bot, ChevronRight, Sparkles } from 'lucide-react'
+import { ChevronRight, MousePointerClick, Sparkles } from 'lucide-react'
 import OrchestrationDraggableList from '@/components/admin/OrchestrationDraggableList'
 import OrchestrationNodeStateBadge from '@/components/admin/OrchestrationNodeStateBadge'
 import { cn } from '@/utils/cn'
 import { resolveNodeRunState } from '@/utils/orchestrationNodeStates'
-import { OrchestrationChainPreview } from '@/components/admin/OrchestrationAgentChainBuilder'
 
-/** 左侧流水线导轨：纵向时间轴 + 拖拽排序 */
 export default function OrchestrationPipelineRail({
   steps = [],
-  postScriptChain = [],
+  explicitPostAgents = [],
   agentsById = {},
   executionPlan = null,
   selectedNodeId,
@@ -22,7 +20,7 @@ export default function OrchestrationPipelineRail({
   const parallelMetaByNodeId = useMemo(() => {
     const map = {}
     const indexToNodeId = Object.fromEntries(
-      steps.map((step) => [step.node_index, step.node_id]).filter(([idx]) => idx != null)
+      steps.map((step) => [step.node_index, step.node_id]).filter(([idx]) => idx != null),
     )
     for (const stage of executionPlan?.stages || []) {
       if (stage.type !== 'parallel') continue
@@ -36,16 +34,15 @@ export default function OrchestrationPipelineRail({
 
   const orderedSteps = useMemo(
     () => [...steps].sort((a, b) => (a.chain_order || 0) - (b.chain_order || 0)),
-    [steps]
+    [steps],
   )
 
   return (
     <div className="sf-console-panel flex flex-col h-full min-h-[520px] overflow-hidden">
       <div className="px-4 py-3 border-b shrink-0 border-white/5">
-        <h3 className="text-sm font-semibold text-white">流水线步骤</h3>
+        <h3 className="text-sm font-semibold text-white">主链 5 步</h3>
         <p className="text-xs text-navy-400 mt-0.5">
-          拖拽排序 · 点击编辑
-          {reordering ? ' · 保存中…' : ''}
+          拖拽排序 · 点击编辑{reordering ? ' · 保存中' : ''}
         </p>
       </div>
 
@@ -85,7 +82,7 @@ export default function OrchestrationPipelineRail({
                   <div
                     className={cn(
                       'w-8 h-8 rounded-lg text-xs font-bold flex items-center justify-center shrink-0',
-                      active ? 'bg-gold-500/25 text-gold-100' : 'bg-slate-800 text-slate-400'
+                      active ? 'bg-gold-500/25 text-gold-100' : 'bg-slate-800 text-slate-400',
                     )}
                   >
                     {step.chain_order ?? index + 1}
@@ -94,24 +91,22 @@ export default function OrchestrationPipelineRail({
                     <div className="text-sm font-medium text-white truncate">{agentName}</div>
                     <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                       <OrchestrationNodeStateBadge state={runState} compact />
-                        {step.coin_cost != null ? (
-                          <span className="text-[11px] text-navy-400">{step.coin_cost} 币</span>
-                        ) : null}
-                        {subCount > 0 ? (
-                          <span className="text-[11px] text-navy-400 inline-flex items-center gap-0.5">
+                      {step.coin_cost != null ? (
+                        <span className="text-[11px] text-navy-400">{step.coin_cost}</span>
+                      ) : null}
+                      {subCount > 0 ? (
+                        <span className="text-[11px] text-navy-400 inline-flex items-center gap-0.5">
                           <Sparkles className="w-2.5 h-2.5" />
                           {subCount} 技能
                         </span>
                       ) : null}
-                      {parallel ? (
-                        <span className="text-[10px] text-cyan-400/80">并行</span>
-                      ) : null}
+                      {parallel ? <span className="text-[10px] text-cyan-400/80">并行</span> : null}
                     </div>
                   </div>
                   <ChevronRight
                     className={cn(
                       'w-3.5 h-3.5 shrink-0',
-                      active ? 'text-gold-400' : 'text-navy-500 group-hover:text-navy-300'
+                      active ? 'text-gold-400' : 'text-navy-500 group-hover:text-navy-300',
                     )}
                   />
                 </div>
@@ -121,13 +116,25 @@ export default function OrchestrationPipelineRail({
         />
       </div>
 
-      {postScriptChain.length > 0 ? (
+      {explicitPostAgents.length > 0 ? (
         <div className="shrink-0 border-t border-white/5 bg-slate-900/40 px-4 py-3">
           <div className="flex items-center gap-1.5 text-[10px] text-navy-400 mb-2">
-            <Bot className="w-3 h-3" />
-            后处理链
+            <MousePointerClick className="w-3 h-3" />
+            显式后处理
           </div>
-          <OrchestrationChainPreview chain={postScriptChain} agentsById={agentsById} />
+          <div className="flex flex-wrap gap-1.5">
+            {explicitPostAgents.map((agentId) => {
+              const agent = agentsById[agentId] || {}
+              return (
+                <span
+                  key={agentId}
+                  className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1 text-[11px] text-navy-200"
+                >
+                  {agent.name_zh || agent.name || agentId}
+                </span>
+              )
+            })}
+          </div>
         </div>
       ) : null}
     </div>

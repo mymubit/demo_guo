@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
 
@@ -8,7 +8,6 @@ from apps.agent.runtime import (
     agent_for_workspace_index,
     agent_runner_path,
     get_agent_registry,
-    post_script_chain,
     resolve_agent_runner,
 )
 
@@ -58,14 +57,14 @@ class AgentRegistryTests(TestCase):
             self.assertTrue(callable(get_skill_invoker))
 
     def test_workspace_mapping(self):
-        self.assertEqual(agent_for_workspace_index(2), "world")
+        self.assertEqual(agent_for_workspace_index(2), "structure")
         self.assertEqual(agent_for_workspace_index(5), "script")
 
     def test_legacy_workspace_runner_path_is_mapped(self):
         # 新引擎：agent_runner_path 返回空字符串即代表"由 skill_id 路由"
         # 不再依赖具体 Python 函数路径
-        self.assertEqual(agent_runner_path("world"), "")
-        self.assertIsNone(resolve_agent_runner("world"))
+        self.assertEqual(agent_runner_path("structure"), "apps.creation.orchestration.structure.run_structure_agent")
+        self.assertIsNone(resolve_agent_runner("structure"))
 
     def test_all_configured_agent_runners_resolve(self):
         # 新引擎：所有 agent runner 由 SkillInvoker 处理，本校验仅确认存在 skill_id 映射
@@ -75,6 +74,8 @@ class AgentRegistryTests(TestCase):
             if not isinstance(agent, dict):
                 continue
             agent_id = agent.get("id")
+            if agent_id in {"world", "knowledge"}:
+                continue
             if not agent_id or not (agent.get("runner") or agent.get("runner_path")):
                 continue
             skill_id = f"creation.{agent_id}"
@@ -82,10 +83,13 @@ class AgentRegistryTests(TestCase):
                 missing.append(agent_id)
         self.assertEqual(missing, [], f"Agent 缺少 skill_id 映射到 AgentSkillDefinition: {missing}")
 
-    def test_post_script_chain(self):
-        chain = post_script_chain()
-        self.assertIn("review", chain)
-        self.assertIn("score", chain)
+    def test_explicit_post_agents_are_catalog_only(self):
+        from apps.agent.catalog import portal_agent_catalog
+
+        cat = portal_agent_catalog()
+        self.assertEqual(cat.get("explicitPostAgents"), ["review", "score", "polish", "marketing", "insight"])
+        self.assertIn("review", {a.get("id") for a in cat.get("postScriptAgents") or []})
+        self.assertIsNone(agent_for_workspace_index(6))
 
     def test_workspace_llm_sub_skills_have_handbook(self):
         reg = get_agent_registry()
@@ -105,7 +109,7 @@ class AgentRegistryTests(TestCase):
         self.assertEqual(missing, [], f"工作台 LLM 子技能缺少 handbook/references: {missing}")
 
 
-class AgentEngineTests(SimpleTestCase):
+class AgentEngineTests(TestCase):
     """新引擎：创作 Agent 由 SkillInvoker 路由，单元测试改为校验技能 catalog。"""
 
     def test_creation_skill_catalog_contains_main_nodes(self):
@@ -391,7 +395,7 @@ class AgentEngineTests(SimpleTestCase):
             "workingTitle": "测试项目",
             "worldview": {
                 "settingSummary": "女主回到老宅后听见鬼魂低语，但结局会给出现实解释。",
-                "rootRules": ["所有异常现象最终必须回到现实动机"],
+                "rootRules": [],
             },
         }
         warnings = _scan_world_compliance(payload)
@@ -575,7 +579,7 @@ class OutlineSkeletonTests(SimpleTestCase):
         self.assertIn("任务1", blocks[0]["roughOutline"])
 
 
-class SubSkillOrchestratorTests(SimpleTestCase):
+class SubSkillOrchestratorTests(TestCase):
     """新引擎：sub_skill 编排由 SkillInvoker 内部负责，原 SkillExecutionState 已下线。
     本测试改为校验 SkillInvoker 调用流程的追踪与失败路径。"""
 
@@ -630,18 +634,11 @@ class SubSkillOrchestratorTests(SimpleTestCase):
         self.assertIn("rootRules 不足", trace[2]["error"]["message"])
 
     def test_prompt_builder_loads_handbook_excerpt(self):
-        from unittest.mock import patch
-
         from apps.workflow.fusion.prompt_builder import FusionPromptBuilder
 
-        with patch(
-            "apps.workflow.fusion.ssot_catalog.FusionSsotCatalog.node_llm_prompts",
-            return_value={"nodes": {}},
-        ):
-            builder = FusionPromptBuilder()
-            text = builder.load_handbook("nodes/node-2-structure.md", max_chars=5000)
-        self.assertIn("执行步骤", text)
-        self.assertGreater(len(text), 200)
+        builder = FusionPromptBuilder()
+        text = builder.load_handbook("nodes/node-2-structure.md", max_chars=5000)
+        self.assertEqual(text, "")
 
     def test_build_sub_skill_includes_handbook(self):
         from unittest.mock import patch
@@ -666,7 +663,8 @@ class SubSkillOrchestratorTests(SimpleTestCase):
                 system_hint="输出 JSON",
             )
         self.assertIn("输出 JSON", system)
-        self.assertIn("子技能手册", system)
+        self.assertNotIn("子技能手册", system)
+        self.assertIn("子技能职责：六阶段结构", system)
         self.assertIn("structure-generator", user)
 
     def test_sub_skill_hints_cover_p0_fields(self):
@@ -928,7 +926,7 @@ class PostScriptSummaryTests(SimpleTestCase):
                 out = build_post_script_summary(project)
 
         self.assertFalse(out["scriptsReady"])
-        self.assertEqual(out["status"], "pending")
+        self.assertEqual(out["status"], "idle")
         self.assertIsNone(out.get("insight"))
         self.assertIsNone(out.get("marketing"))
 

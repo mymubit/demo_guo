@@ -70,8 +70,6 @@ def run_character_agent(project: Project, *, node_index: int = NODE_INDEX, **_kw
     except Exception as exc:  # noqa: BLE001
         logger.warning("[CharacterAgent] reference-injector skipped: %s", exc)
 
-    mark_executed(executed, "archetype-matcher")
-
     for sub_skill_id in _LLM_SUB_SKILLS:
         try:
             raw = run_sub_skill_llm(
@@ -79,16 +77,14 @@ def run_character_agent(project: Project, *, node_index: int = NODE_INDEX, **_kw
                 agent_id=AGENT_ID,
                 fusion_node_id=FUSION_NODE_ID,
                 sub_skill_id=sub_skill_id,
-                upstream={**upstream, "characterBible": bible, "character_bible": bible},
+                upstream={**upstream, "characterBible": bible},
             )
             bible = _merge_character_output(bible, sub_skill_id, raw)
-            upstream = {**upstream, "characterBible": bible, "character_bible": bible}
+            upstream = {**upstream, "characterBible": bible}
             mark_executed(executed, sub_skill_id)
         except Exception as exc:  # noqa: BLE001
             logger.exception("[CharacterAgent] sub_skill=%s failed", sub_skill_id)
             errors.append(f"{sub_skill_id}: {exc}")
-
-    mark_executed(executed, "character-consistency")
 
     gate = run_character_gate(bible)
     bible["characterGateLog"] = gate

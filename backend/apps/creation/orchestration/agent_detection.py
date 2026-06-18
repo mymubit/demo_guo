@@ -2,12 +2,10 @@
 """registry type=detection 的轻量 Python 实现（不复制 Node 检测全量逻辑）。"""
 from __future__ import annotations
 
-import json
 import logging
 import re
 from datetime import datetime, timezone
 from functools import lru_cache
-from pathlib import Path
 from typing import Any, Dict, List
 
 from ..display.character_display import build_character_bible_view
@@ -122,23 +120,21 @@ def _character_trauma_event_issues(char: dict) -> List[str]:
 
 @lru_cache(maxsize=1)
 def _ai_blacklist_phrases() -> tuple[str, ...]:
+    fallback = ("首先", "综上所述", "日子一天天过去", "非常开心", "眼神复杂")
     try:
-        from apps.workflow.fusion.config_loader import resolve_skill_root
+        from apps.skill.config.portal.reference_libs import ReferenceLibraryService
 
-        path = resolve_skill_root() / "config" / "ai-keywords-blacklist.json"
-        if not path.is_file():
-            return ()
-        data = json.loads(path.read_text(encoding="utf-8"))
+        data = ReferenceLibraryService.get_json("ai-keywords-blacklist.json")
         phrases: List[str] = []
         block = data.get("套话黑名单") or {}
         if isinstance(block, dict):
             for arr in block.values():
                 if isinstance(arr, list):
                     phrases.extend(str(p).strip() for p in arr if str(p).strip())
-        return tuple(dict.fromkeys(phrases))
+        return tuple(dict.fromkeys(phrases or list(fallback)))
     except Exception as exc:  # noqa: BLE001
         logger.warning("[AgentDetection] ai blacklist load failed: %s", exc)
-        return ()
+        return fallback
 
 
 def run_character_gate(payload: dict) -> Dict[str, Any]:

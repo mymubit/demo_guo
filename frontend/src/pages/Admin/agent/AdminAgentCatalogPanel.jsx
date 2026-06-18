@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Bot, RefreshCw, Sparkles } from 'lucide-react'
+import { Bot, MousePointerClick, RefreshCw, Sparkles } from 'lucide-react'
 import { admin } from '@/services/api'
 import { AdminEmpty, AdminLoading } from '@/components/admin/AdminUI'
 import AdminAgentKindBadge from '@/components/admin/AdminAgentKindBadge'
@@ -23,17 +23,20 @@ function AgentCatalogCard({ kind, title, subtitle, meta, onClick }) {
         <AdminAgentKindBadge kind={kind} />
       </div>
       <h4 className="text-sm font-semibold text-white truncate">{title}</h4>
-      {subtitle ? (
-        <p className="text-xs font-mono text-navy-300 mt-1.5 truncate">{subtitle}</p>
-      ) : null}
+      {subtitle ? <p className="text-xs font-mono text-navy-300 mt-1.5 truncate">{subtitle}</p> : null}
       {meta ? <p className="text-xs text-navy-300 mt-2">{meta}</p> : null}
     </Tag>
   )
 }
 
-/**
- * Agent 全景目录：流水线 + 填表 + 后处理，统一心智模型。
- */
+function normalizeExplicitPostAgents(blueprint) {
+  const explicit = blueprint?.explicit_post_agents || blueprint?.catalog?.explicitPostAgents
+  if (Array.isArray(explicit) && explicit.length) return explicit
+  const catalogAgents = blueprint?.catalog?.postScriptAgents
+  if (Array.isArray(catalogAgents) && catalogAgents.length) return catalogAgents
+  return []
+}
+
 export default function AdminAgentCatalogPanel({ onSelectFormAgent }) {
   const { showMessage, MessageBanner } = useAdminPanelMessage()
   const [loading, setLoading] = useState(true)
@@ -61,22 +64,21 @@ export default function AdminAgentCatalogPanel({ onSelectFormAgent }) {
   }, [load])
 
   const pipelineSteps = useMemo(() => {
-    const steps = blueprint?.steps || []
-    return [...steps].sort((a, b) => (a.chain_order || 0) - (b.chain_order || 0))
+    const steps = blueprint?.steps || blueprint?.workspace_steps || []
+    return [...steps].sort(
+      (a, b) => (a.chain_order ?? a.node_index ?? 0) - (b.chain_order ?? b.node_index ?? 0),
+    )
   }, [blueprint])
 
-  const postAgents = useMemo(() => {
-    const chain = blueprint?.post_script_chain || []
-    const agents = blueprint?.agents || {}
-    return chain.map((agentId, index) => {
-      const def = agents[agentId] || {}
-      return {
-        id: agentId,
+  const postAgents = useMemo(
+    () =>
+      normalizeExplicitPostAgents(blueprint).map((agent, index) => ({
+        id: agent.id || agent.agent_id || String(agent),
         chainIndex: index,
-        name: def.name_zh || def.name || agentId,
-      }
-    })
-  }, [blueprint])
+        name: agent.name_zh || agent.name || agent.label || agent.id || agent.agent_id || String(agent),
+      })),
+    [blueprint],
+  )
 
   const stats = useMemo(
     () => ({
@@ -88,7 +90,7 @@ export default function AdminAgentCatalogPanel({ onSelectFormAgent }) {
   )
 
   if (loading && !blueprint) {
-    return <AdminLoading label="加载 Agent 全景…" />
+    return <AdminLoading label="加载 Agent 目录..." />
   }
 
   return (
@@ -114,7 +116,7 @@ export default function AdminAgentCatalogPanel({ onSelectFormAgent }) {
       <div className="grid grid-cols-3 gap-2">
         <div className="sf-console-panel-subtle px-3 py-2.5 text-center">
           <div className="text-xl font-bold text-purple-200">{stats.pipeline}</div>
-          <div className="text-[11px] text-navy-400">流水线</div>
+          <div className="text-[11px] text-navy-400">主链</div>
         </div>
         <div className="sf-console-panel-subtle px-3 py-2.5 text-center">
           <div className="text-xl font-bold text-cyan-200">{stats.form}</div>
@@ -122,23 +124,23 @@ export default function AdminAgentCatalogPanel({ onSelectFormAgent }) {
         </div>
         <div className="sf-console-panel-subtle px-3 py-2.5 text-center">
           <div className="text-xl font-bold text-amber-200">{stats.post}</div>
-          <div className="text-[11px] text-navy-400">后处理</div>
+          <div className="text-[11px] text-navy-400">显式后处理</div>
         </div>
       </div>
 
       <section className="space-y-3">
-        <h3 className="text-sm font-medium text-navy-200">流水线 Agent</h3>
+        <h3 className="text-sm font-medium text-navy-200">ScriptForge 主链 Agent</h3>
         {pipelineSteps.length === 0 ? (
-          <AdminEmpty title="暂无流水线步骤" description="请在调度中心 · 流程编排同步 SSOT" />
+          <AdminEmpty title="暂无主链步骤" description="请检查 ScriptForge 默认编排是否已经写入数据库。" />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {pipelineSteps.map((step) => (
               <AgentCatalogCard
-                key={step.node_id}
+                key={step.node_id || step.id}
                 kind="pipeline"
                 title={step.agent_name_zh || step.display_name || step.node_id}
-                subtitle={step.agent_id || step.fusion_node_id}
-                meta={`步骤 ${step.chain_order ?? step.node_index} · ${step.coin_cost ?? 0} 币`}
+                subtitle={step.agent_id || step.fusion_node_id || step.node_id}
+                meta={`步骤 ${step.chain_order ?? step.node_index} / ${step.coin_cost ?? 0} 币`}
               />
             ))}
           </div>
@@ -151,7 +153,7 @@ export default function AdminAgentCatalogPanel({ onSelectFormAgent }) {
           填表 Agent
         </h3>
         {formAgents.length === 0 ? (
-          <AdminEmpty title="暂无填表 Agent" description="请切换至「填表 Agent」Tab 导入默认值" />
+          <AdminEmpty title="暂无填表 Agent" description="可在填表 Agent 页签中导入或配置。" />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {formAgents.map((row) => (
@@ -160,7 +162,7 @@ export default function AdminAgentCatalogPanel({ onSelectFormAgent }) {
                 kind="form"
                 title={row.display_name || row.action_key}
                 subtitle={row.action_key}
-                meta={row.is_active === false ? '已停用' : '创作页字段按钮'}
+                meta={row.is_active === false ? '已停用' : '用户填表时主动触发'}
                 onClick={() => onSelectFormAgent?.(row.action_key)}
               />
             ))}
@@ -170,7 +172,10 @@ export default function AdminAgentCatalogPanel({ onSelectFormAgent }) {
 
       {postAgents.length > 0 ? (
         <section className="space-y-3">
-          <h3 className="text-sm font-medium text-navy-200">后处理 Agent</h3>
+          <h3 className="text-sm font-medium text-navy-200 flex items-center gap-2">
+            <MousePointerClick className="w-3.5 h-3.5 text-amber-300" />
+            显式后处理 Agent
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {postAgents.map((agent) => (
               <AgentCatalogCard
@@ -178,7 +183,7 @@ export default function AdminAgentCatalogPanel({ onSelectFormAgent }) {
                 kind="post"
                 title={agent.name}
                 subtitle={agent.id}
-                meta="剧本完成后的可选链"
+                meta="仅由用户在作品页主动触发，不参与主链完成态。"
               />
             ))}
           </div>

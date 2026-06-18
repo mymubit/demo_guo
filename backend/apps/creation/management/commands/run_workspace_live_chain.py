@@ -14,7 +14,7 @@ from apps.billing.services import BillingService
 from apps.creation.artifact_service import get_artifact, save_artifact
 from apps.creation.models import CreationNode, Project
 from apps.creation.services import CreationService
-from apps.creation.tasks import _run_skill_node_core, run_agent_post_chain
+from apps.creation.tasks import _run_skill_node_core
 from apps.creation.workspace.workspace_service import build_workspace_payload
 from apps.skill.llm.chat import LlmService
 
@@ -73,11 +73,8 @@ class Command(BaseCommand):
                 self._emit(report, started)
                 raise CommandError(f"节点 {node} 失败: {step.get('error')}")
 
-        if 5 in nodes and not options["skip_post"]:
-            post = run_agent_post_chain.call(str(project.id))
-            project.refresh_from_db()
-            report["post_chain"] = post
-            report["project_status_after_post"] = project.status
+        report["post_chain"] = {"skipped": True, "reason": "post agents are user-triggered only"}
+        report["project_status_after_post"] = project.status
 
         payload = build_workspace_payload(project)
         report["workspace"] = {

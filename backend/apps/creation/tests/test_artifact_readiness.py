@@ -27,12 +27,12 @@ class ArtifactReadinessTests(TestCase):
 
     def test_humanize_upstream_message(self):
         self.assertEqual(
-            humanize_upstream_artifact_message("缺少上游产物: character_bible"),
-            "请先生成「角色设计」",
+            humanize_upstream_artifact_message("missing upstream artifact: character_bible"),
+            "Please complete Character first.",
         )
         self.assertEqual(
-            humanize_user_message("缺少上游产物: character_bible"),
-            "请先生成「角色设计」",
+            humanize_user_message("missing upstream artifact: character_bible"),
+            "Please complete Character first.",
         )
 
     def test_character_node_requires_real_characters(self):

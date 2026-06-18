@@ -1,94 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="433975c9-3cd8-4893-870b-559e7229355b" name="更改" comment="全量逻辑更新">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/billing/services.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/billing/services.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/common/agent_term.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/common/agent_term.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/common/tests/test_agent_term.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/common/tests/test_agent_term.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/console/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/console/urls.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/creation/display/character_display.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/display/character_display.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/creation/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/creation/monitoring/execution_run_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/monitoring/execution_run_service.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/creation/outline_skeleton.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/outline_skeleton.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/creation/step_mode.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/step_mode.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/creation/tasks.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/tasks.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/creation/tests/test_step_mode_runner_config.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/tests/test_step_mode_runner_config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/creation/workspace/workspace_editor.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/creation/workspace/workspace_editor.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/operations/portal_views.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/operations/portal_views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/operations/services.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/operations/services.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/skill/llm/chat.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/skill/llm/chat.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/skill/llm/usage_log.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/skill/llm/usage_log.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/skill/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/skill/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/skill/skills/invoker.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/skill/skills/invoker.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/system_config/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/system_config/views.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/workflow/fusion/prompt_builder.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/workflow/fusion/prompt_builder.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/apps/workflow/workflow_admin_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/workflow/workflow_admin_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/settings/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/config/settings/base.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/scripts/scan-missing-imports.mjs" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/scripts/scan-missing-imports.mjs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/App.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/admin/AdminPrimitives.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/admin/AdminPrimitives.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/admin/AdminUI.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/admin/AdminUI.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/admin/CreationPipelineDiagram.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/admin/CreationPipelineDiagram.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/admin/OrchestrationFlowGraphCanvas.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/admin/OrchestrationFlowGraphCanvas.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/admin/ProjectAgentTrace.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/admin/ProjectAgentTrace.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/charts/EChart.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/charts/EChart.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/charts/register.js" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/charts/register.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/creation/CreationEntryHub.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/creation/CreationEntryHub.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/creation/CreationFormShell.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/creation/CreationFormShell.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/creation/FormatVariantPicker.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/creation/FormatVariantPicker.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/creation/NovelAdaptationPanel.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/creation/NovelAdaptationPanel.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/creation/SkillPipelineShowcase.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/creation/SkillPipelineShowcase.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/creation/workspace/BriefBeatViews.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/creation/workspace/BriefBeatViews.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/creation/workspace/OutlineBeatViews.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/creation/workspace/OutlineBeatViews.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/creation/workspace/OutlineSkillPanel.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/creation/workspace/OutlineSkillPanel.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/creation/workspace/PostScriptPanel.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/creation/workspace/PostScriptPanel.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/creation/workspace/StructureBeatViews.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/creation/workspace/StructureBeatViews.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/layout/AdminLayout.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/layout/AdminLayout.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/layout/MainLayout.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/layout/MainLayout.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/shared/ConsumerSection.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/shared/ConsumerSection.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/shared/ExecutionRunPanel.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/shared/ExecutionRunPanel.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/tools/ToolsShell.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/tools/ToolsShell.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/ui/AsyncState.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/ui/AsyncState.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/ui/Badge.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/ui/Badge.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/ui/Button.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/ui/Button.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/ui/EmptyState.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/ui/EmptyState.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/ui/MetricCard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/ui/MetricCard.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/components/works/WorkVisualizationSection.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/works/WorkVisualizationSection.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/constants/motion.js" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/constants/motion.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/main.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/main.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/AdminSkills.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/AdminSkills.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/AdminStats.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/AdminStats.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/AdminSystemConfig.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/AdminSystemConfig.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/CreationCenterPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/CreationCenterPage.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/CreationProjects.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/CreationProjects.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/Members.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/Members.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/Settings.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/Settings.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/agent/AdminAgentCatalogPanel.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/agent/AdminAgentCatalogPanel.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/model/LlmConfigPanel.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/model/LlmConfigPanel.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/model/LlmVendorCollapse.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/model/LlmVendorCollapse.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/monitoring/MonitoringDashboardPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/monitoring/MonitoringDashboardPage.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/operations/DailyChecklistPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/operations/DailyChecklistPage.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/operations/FeedbackPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/operations/FeedbackPage.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/operations/OperationsDashboardPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/operations/OperationsDashboardPage.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/portal/HookLibraryPanel.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/portal/HookLibraryPanel.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Creation/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Creation/index.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Home/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Home/index.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Member/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Member/index.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/NotFound.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/NotFound.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Orders/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Orders/index.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Profile/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Profile/index.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Share/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Share/index.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Wallet/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Wallet/index.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Works/Detail.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Works/Detail.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Works/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Works/index.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/_design/AdminAgent.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/_design/AdminAgent.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/_design/Profile.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/_design/Profile.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/_design/Tools.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/_design/Tools.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/router/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/router/index.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/styles/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/styles/globals.css" afterDir="false" />
-    </list>
+    <list default="true" id="433975c9-3cd8-4893-870b-559e7229355b" name="更改" comment="全量逻辑优化1" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -202,7 +115,15 @@
       <option name="project" value="LOCAL" />
       <updated>1781519401735</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="全量逻辑优化1">
+      <option name="closed" value="true" />
+      <created>1781682180940</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1781682180940</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -210,6 +131,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="全量逻辑更新" />
-    <option name="LAST_COMMIT_MESSAGE" value="全量逻辑更新" />
+    <MESSAGE value="全量逻辑优化1" />
+    <option name="LAST_COMMIT_MESSAGE" value="全量逻辑优化1" />
   </component>
 </project>

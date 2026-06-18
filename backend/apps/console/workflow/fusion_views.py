@@ -19,23 +19,17 @@ class FusionPipelineMetaView(APIView):
 
 
 class FusionPipelineImportView(APIView):
-    """POST — 从技能包磁盘导入主链 + Schema 到 DB 并激活。"""
+    """POST — ensure the DB-only built-in 5-step pack."""
 
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        data = request.data or {}
-        root = (data.get("root") or "").strip() or None
-        activate = data.get("activate", True)
         try:
-            pack_id = FusionPipelineDbService.import_from_disk(
-                activate=bool(activate),
-                root=root,
-            )
+            pack = FusionPipelineDbService.ensure_builtin_default_pack()
             meta = FusionPipelineDbService.meta_payload()
             return api_ok(
-                {"pack_id": pack_id, **meta},
-                message="主链与 Schema 已导入数据库",
+                {"pack_id": str(pack.id), **meta},
+                message="DB-only 5 步主链已初始化",
             )
         except Exception as exc:  # noqa: BLE001
             return api_fail(str(exc))

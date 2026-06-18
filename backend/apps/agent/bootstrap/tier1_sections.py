@@ -3,7 +3,7 @@
 
 AGENT_TIER1_SEED: dict[str, list[str]] = {
     "brief": ["philosophy"],
-    "world": [
+    "structure": [
         "philosophy",
         "rhythm_rules",
         "episode_structure",
@@ -56,17 +56,11 @@ AGENT_TIER1_SEED: dict[str, list[str]] = {
 }
 
 NODE_TIER1_SEED: dict[str, list[str]] = {
-    "node-1-input": AGENT_TIER1_SEED["brief"],
-    "node-2-structure": AGENT_TIER1_SEED["world"],
-    "node-3-character": AGENT_TIER1_SEED["character"],
-    "node-4-outline": AGENT_TIER1_SEED["outline"],
-    "node-5-script": AGENT_TIER1_SEED["script"],
-    "node-6-review": AGENT_TIER1_SEED["review"],
-    "node-7-polish": AGENT_TIER1_SEED["polish"],
-    "node-8-score": AGENT_TIER1_SEED["score"],
-    "node-9-adapt": AGENT_TIER1_SEED["adapt"],
-    "node-10-insight": AGENT_TIER1_SEED["insight"],
-    "node-11-marketing": AGENT_TIER1_SEED["marketing"],
+    "node_brief": AGENT_TIER1_SEED["brief"],
+    "node_structure": AGENT_TIER1_SEED["structure"],
+    "node_character": AGENT_TIER1_SEED["character"],
+    "node_outline": AGENT_TIER1_SEED["outline"],
+    "node_script": AGENT_TIER1_SEED["script"],
 }
 
 DEFAULT_TIER1_SECTIONS_BY_NODE = NODE_TIER1_SEED

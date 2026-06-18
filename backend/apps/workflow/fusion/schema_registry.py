@@ -38,24 +38,9 @@ MAIN_CHAIN_ARTIFACTS = {
         "schema": "episode-scripts.schema.json",
         "node_id": "node-5-script",
     },
-    "quality_report": {
-        "output_key": "qualityReport",
-        "pipeline_result_key": "",
-        "schema": "quality-report.schema.json",
-        "node_id": "node-6-review",
-    },
-    "script_score_report": {
-        "output_key": "scriptScoreReport",
-        "pipeline_result_key": "",
-        "schema": "script-score-report.schema.json",
-        "node_id": "node-8-score",
-    },
 }
 
-GATE_ARTIFACTS = {
-    "gate_full": {"node_id": "node-6-review", "schema": None},
-    "compliance": {"node_id": "node-6-review", "schema": None},
-}
+GATE_ARTIFACTS: Dict[str, Dict[str, Any]] = {}
 
 
 def _effective_main_chain_artifacts() -> Dict[str, Dict[str, Any]]:

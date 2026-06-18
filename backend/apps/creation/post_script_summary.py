@@ -11,9 +11,7 @@ from .display.portal_display import portal_sanitize_review_block, portal_strip_a
 
 
 def _build_post_script_chain_display() -> List[str]:
-    from apps.agent.runtime import post_script_effective_chain
-
-    return list(post_script_effective_chain() or [])
+    return ["review", "score", "polish", "marketing", "insight"]
 
 
 def _latest_run_block(project: Project, agent_id: str) -> Optional[dict]:

@@ -189,18 +189,12 @@ class FusionPipelinePack(models.Model):
 
 class FusionPipelineNode(models.Model):
     RUNNER_FUSION_NODE = "fusion_node"
-    RUNNER_FUSION_REVIEW = "fusion_review"
-    RUNNER_FUSION_SCORE = "fusion_score"
-    RUNNER_AGENT_CHAIN = "agent_chain"
     # P1 阶段扩展：支持并行/迭代/人工门控三类编排节点
     RUNNER_PARALLEL_GROUP = "parallel_group"
     RUNNER_ITERATE_LOOP = "iterate_loop"
     RUNNER_HUMAN_GATE = "human_gate"
     RUNNER_TYPE_CHOICES = [
         (RUNNER_FUSION_NODE, "融合主链节点"),
-        (RUNNER_FUSION_REVIEW, "融合质检"),
-        (RUNNER_FUSION_SCORE, "融合评分"),
-        (RUNNER_AGENT_CHAIN, "Agent 后处理链"),
         (RUNNER_PARALLEL_GROUP, "并行节点组（同级并发）"),
         (RUNNER_ITERATE_LOOP, "迭代循环节点"),
         (RUNNER_HUMAN_GATE, "人工门控节点（分步确认）"),

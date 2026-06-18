@@ -56,6 +56,14 @@ def run_sub_skill_llm(
         or resolve_agent_max_tokens(agent_id)
     )
     source_key = f"{fusion_node_id}:{sub_skill_id}"[:64]
+
+    upstream_keys = list(upstream.keys())
+    upstream_size_kb = len(__import__("json").dumps(upstream, ensure_ascii=False)) / 1024
+    logger.info(
+        "[LLM→] node=%s skill=%s provider=%s max_tokens=%s upstream_keys=%s upstream_size=%.1fkb",
+        fusion_node_id, sub_skill_id, provider_id, max_tokens, upstream_keys, upstream_size_kb,
+    )
+
     with llm_usage_scope(
         source_type=LlmUsageLog.SOURCE_AGENT,
         source_key=source_key,
@@ -64,7 +72,7 @@ def run_sub_skill_llm(
         execution_run_id=get_active_run_id(),
         sub_skill_id=sub_skill_id[:64],
     ):
-        return LlmService.generate_json(
+        result = LlmService.generate_json(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             provider_id=provider_id,
@@ -77,3 +85,8 @@ def run_sub_skill_llm(
                 "system_hint": hint[:2000] if hint else "",
             },
         )
+        logger.info(
+            "[LLM←] node=%s skill=%s result_keys=%s",
+            fusion_node_id, sub_skill_id, list(result.keys()) if isinstance(result, dict) else type(result).__name__,
+        )
+        return result

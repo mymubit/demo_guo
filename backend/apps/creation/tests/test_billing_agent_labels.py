@@ -23,22 +23,20 @@ class BillingAgentLabelTests(TestCase):
 
     def tearDown(self):
         get_agent_registry.cache_clear()
+
     def test_pipeline_node_agent_mapping(self):
         self.assertEqual(agent_for_pipeline_node_index(1), "brief")
         self.assertEqual(agent_for_pipeline_node_index(5), "script")
-        self.assertEqual(agent_for_pipeline_node_index(6), "review")
-        self.assertEqual(agent_for_pipeline_node_index(7), "score")
+        self.assertIsNone(agent_for_pipeline_node_index(6))
 
     def test_pipeline_action_display_name(self):
         label = pipeline_action_display_name("pipeline.node.2")
-        self.assertIn("WorldAgent", label)
-        self.assertIn("结构", label)
+        self.assertIn("structure", label)
 
     def test_action_key_agent_meta(self):
-        meta = action_key_agent_meta("pipeline.node.6")
-        self.assertEqual(meta.get("agent_id"), "review")
-        self.assertEqual(meta.get("agent_name"), "ReviewAgent")
-        self.assertEqual(meta.get("pipeline_step"), "6")
+        meta = action_key_agent_meta("pipeline.node.5")
+        self.assertEqual(meta.get("agent_id"), "script")
+        self.assertEqual(meta.get("pipeline_step"), "5")
         self.assertEqual(action_key_agent_meta("creation.submit"), {})
 
     def test_billing_action_display_name_prefers_agent_ssot(self):

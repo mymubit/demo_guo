@@ -2,38 +2,39 @@
 """smart-search：站内参考库关键词/标签检索（规则层）。"""
 from __future__ import annotations
 
-import json
 import re
 from functools import lru_cache
-from pathlib import Path
 from typing import Any, Dict, List, Optional
-
-from django.conf import settings
 
 from .theme_recommender import _theme_templates
 
 
-def _data_dir() -> Path:
-    try:
-        from apps.workflow.fusion import get_fusion_config
-
-        return get_fusion_config().root / "data"
-    except Exception:  # noqa: BLE001
-        root = getattr(settings, "FUSION_SKILL_ROOT", "") or ""
-        if root:
-            return Path(root) / "data"
-        return Path(__file__).resolve().parents[4] / "demo4book" / "short-drama-script-creator" / "data"
+_BUILTIN_S_GRADE_CATALOG: dict[str, list[dict[str, Any]]] = {
+    "scripts": [
+        {
+            "id": "builtin-wrong-marriage",
+            "title": "错嫁后我逆风翻盘",
+            "grade": "S",
+            "genre": "错嫁 甜宠 逆袭",
+            "platform": "builtin",
+            "path": "",
+            "enabled": True,
+        }
+    ]
+}
 
 
 @lru_cache(maxsize=1)
 def _s_grade_catalog() -> dict:
-    path = _data_dir() / "s-grade-catalog.json"
-    if not path.is_file():
-        return {}
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        from apps.skill.config.portal.reference_libs import ReferenceLibraryService
+
+        data = ReferenceLibraryService.get_json("s-grade-catalog.json")
+        if data:
+            return data
     except Exception:  # noqa: BLE001
-        return {}
+        pass
+    return _BUILTIN_S_GRADE_CATALOG
 
 
 def _tokens(query: str) -> List[str]:

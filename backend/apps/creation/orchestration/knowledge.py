@@ -2,14 +2,9 @@
 """KnowledgeAgent：参考检索与拉片回写。"""
 from __future__ import annotations
 
-import json
 import logging
-from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from django.conf import settings
-
-from apps.workflow.fusion import FusionCliRunner, get_fusion_config
 from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
 
 from ..artifact_service import get_artifact, save_artifact
@@ -18,7 +13,6 @@ from ..smart_search import run_smart_search
 from ..theme_recommender import recommend_themes
 from .sub_skill_runner import (
     agent_execution_meta,
-    cli_pipeline_writeback,
     mark_executed,
     persist_agent_execution_trace,
 )
@@ -112,24 +106,14 @@ def run_pipeline_writeback(
 ) -> AgentResult:
     """sub-pipeline：拉片结果回写 references（默认 dry_run，待运营审核）。"""
     executed: list = []
-    try:
-        runner = FusionCliRunner(get_fusion_config())
-        work = Path(getattr(settings, "CREATION_FUSION_WORK_DIR", "/tmp/scriptforge_fusion"))
-        work.mkdir(parents=True, exist_ok=True)
-        inp = work / f"{project.id.hex}_pipeline_analysis.json"
-        inp.write_text(json.dumps(insight_report, ensure_ascii=False), encoding="utf-8")
-        mark_executed(executed, "pipeline-writeback")
-        cli = cli_pipeline_writeback(runner, inp, dry_run=dry_run)
-        payload = cli.get("json") or {"ok": cli.get("ok"), "dryRun": dry_run}
-        mark_executed(executed, "writeback-review")
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("[KnowledgeAgent] pipeline writeback skipped: %s", exc)
-        payload = {
-            "dryRun": dry_run,
-            "ok": False,
-            "error": str(exc),
-            "pendingReview": True,
-        }
+    mark_executed(executed, "pipeline-writeback")
+    payload = {
+        "dryRun": dry_run,
+        "ok": False,
+        "disabled": True,
+        "pendingReview": True,
+        "reason": "external writeback runtime removed",
+    }
 
     save_artifact(
         project,

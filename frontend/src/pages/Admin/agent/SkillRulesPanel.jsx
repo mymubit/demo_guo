@@ -173,7 +173,7 @@ export default function SkillRulesPanel({ onMessage }) {
           <div className="px-3 py-6 text-sm text-navy-400 space-y-3">
             <p>当前分类暂无已生效规则。</p>
             <p className="text-xs text-navy-400 leading-relaxed">
-              首次使用请点击右下角「从磁盘导入」，将 demo4book 下 tier1–4 JSON 写入数据库。
+              首次使用请点击右下角「从资产导入」，将 ScriptForge 内部规则资产写入数据库。
             </p>
             <button
               type="button"

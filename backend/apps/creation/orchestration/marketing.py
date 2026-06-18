@@ -2,12 +2,7 @@
 """MarketingAgent：宣发物料。"""
 from __future__ import annotations
 
-import logging
 from typing import Any, Dict
-
-from django.conf import settings
-
-from apps.workflow.fusion import FusionCliRunner, get_fusion_config
 
 from ..artifact_service import get_artifact, save_artifact
 from ..marketing_hooks import enrich_marketing_kit
@@ -15,13 +10,10 @@ from ..marketing_title_risk import review_title_risk
 from ..models import Project
 from .sub_skill_runner import (
     agent_execution_meta,
-    cli_marketing_kit,
     mark_executed,
     persist_agent_execution_trace,
 )
 from .types import AgentResult
-
-logger = logging.getLogger(__name__)
 
 
 def _fallback_marketing_kit(project: Project, brief: dict, score: dict) -> Dict[str, Any]:
@@ -48,24 +40,8 @@ def run_marketing_agent(project: Project) -> AgentResult:
     episodes = int(outline.get("totalEpisodes") or project.episode_count or 60)
 
     executed: list = []
-    kit: Dict[str, Any] = {}
-    try:
-        runner = FusionCliRunner(get_fusion_config())
-        mark_executed(executed, "marketing-kit")
-        cli = cli_marketing_kit(
-            runner,
-            title=title,
-            logline=logline,
-            theme=theme,
-            episodes=episodes,
-        )
-        kit = cli.get("json") or {}
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("[MarketingAgent] sub-marketing CLI skipped: %s", exc)
-        kit = _fallback_marketing_kit(project, brief, score)
-
-    if not kit:
-        kit = _fallback_marketing_kit(project, brief, score)
+    kit: Dict[str, Any] = _fallback_marketing_kit(project, brief, score)
+    mark_executed(executed, "marketing-kit")
 
     kit = enrich_marketing_kit(kit, brief=brief, outline=outline, structure_plan=structure)
     mark_executed(executed, "clip-hook-generator")

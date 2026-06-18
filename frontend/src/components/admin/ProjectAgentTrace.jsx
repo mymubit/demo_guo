@@ -108,12 +108,12 @@ export function ProjectTracePanel({
           {traceData.pipeline_mode === 'workspace' ? (
             <>
               <span className="font-medium text-navy-200">技能工作台</span>
-              ：质检/评分等后处理在剧本全量生成后由 post_script_chain 统一执行，轨迹中可能以 review / score 等 agent 键出现。
+              ：主链只执行 brief / structure / character / outline / script。质检、评分、润色、营销、洞察仅在用户主动触发后出现在轨迹中。
             </>
           ) : (
             <>
               <span className="font-medium text-violet-100">分步掌控</span>
-              ：节点 6/7 为管线尾部（fusion_review / fusion_score），与调度中心「流程编排」配置一致。
+              ：分步模式同样只覆盖 5 个主链节点，后处理不会自动接入主链。
             </>
           )}
         </div>

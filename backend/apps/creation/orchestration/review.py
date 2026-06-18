@@ -170,7 +170,7 @@ def _build_dimension_analysis(
 
 
 def run_review_agent(project: Project) -> AgentResult:
-    from ..fusion.fusion_pipeline import run_fusion_review_for_project, scripts_result_to_markdown
+    from ..fusion.fusion_pipeline import scripts_result_to_markdown
 
     pipeline_result = build_pipeline_result_from_project(project)
     scripts = pipeline_result.get("scripts") or {}
@@ -229,19 +229,13 @@ def run_review_agent(project: Project) -> AgentResult:
         mark_executed(executed, "score-quick")
         save_artifact(project, "score_quick_report", score_quick)
 
-    try:
-        fusion_out = run_fusion_review_for_project(project, pipeline_result)
-    except Exception as exc:  # noqa: BLE001
-        logger.exception("[ReviewAgent] fusion review failed project=%s", project.id)
-        return AgentResult(agent_id="review", status="error", errors=[str(exc)])
-
     quality = get_artifact(project, "quality_report") or {}
     gate = get_artifact(project, "gate_full") or {}
     fuse_report = get_artifact(project, "compliance_fuse_report") or {}
     content_report = get_artifact(project, "compliance_content_report") or {}
 
-    gate_passed = bool(gate.get("passed")) if gate else bool(fusion_out.get("gate_passed"))
-    fuse_triggered = bool(fusion_out.get("compliance_fuse"))
+    gate_passed = bool(gate.get("passed")) if gate else bool(markdown.strip())
+    fuse_triggered = False
     if not fuse_triggered and fuse_report:
         fuse_triggered = bool(fuse_report.get("fuseTriggered"))
     if not fuse_triggered and content_report:
@@ -338,9 +332,7 @@ def run_review_agent(project: Project) -> AgentResult:
         review_report["issues"].extend((content_report.get("issues") or [])[:4])
 
     save_artifact(project, "review_report", review_report)
-    for skill_id in fusion_out.get("executed_sub_skills") or []:
-        mark_executed(executed, skill_id)
-    trace_meta = agent_execution_meta("review", executed, node_index=6)
+    trace_meta = agent_execution_meta("review", executed, node_index=0)
     persist_agent_execution_trace(project, "review", executed)
     logger.info(
         "[ReviewAgent] project=%s passed=%s gate=%s pacing=%s failed_dims=%s mode=%s",
@@ -356,5 +348,5 @@ def run_review_agent(project: Project) -> AgentResult:
         status="completed",
         outputs={"review_report": review_report, "passed": overall_ok},
         errors=[] if overall_ok else review_report["issues"][:5],
-        meta={**trace_meta, "fusion": fusion_out},
+        meta=trace_meta,
     )

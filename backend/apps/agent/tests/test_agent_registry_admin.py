@@ -3,8 +3,8 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from apps.agent.registry import AgentRegistryConfigService
 from apps.agent.models import AgentRegistryConfig
+from apps.agent.registry import AgentRegistryConfigService
 
 
 class AgentRegistryConfigServiceTests(TestCase):
@@ -13,47 +13,49 @@ class AgentRegistryConfigServiceTests(TestCase):
         self.assertFalse(ok)
         self.assertIn("agents", message)
 
-    def test_save_registry_persists_active_row(self):
-        # 新引擎：runner 字段落库前归一化为空，统一由 skill_id 路由
+    def test_save_registry_strips_removed_post_chain_meta(self):
         registry = {
-            "_meta": {"version": "test", "post_script_chain": ["review", "score"]},
-            "agents": [{"id": "brief", "name": "Brief", "runner": "apps.creation.orchestration.brief.run_brief_agent"}],
+            "_meta": {
+                "version": "test",
+                "post_script_chain": ["review", "score"],
+                "post_script_append_agents": ["marketing"],
+                "post_script_pipeline_index": [{"index": 6, "agent_id": "review"}],
+            },
+            "agents": [
+                {
+                    "id": "brief",
+                    "name": "Brief",
+                    "runner": "apps.creation.orchestration.brief.run_brief_agent",
+                }
+            ],
         }
         row = AgentRegistryConfigService.save_registry(registry)
         self.assertTrue(row.is_active)
         payload = AgentRegistryConfigService.admin_payload()
+        meta = payload["registry"]["_meta"]
         self.assertEqual(payload["source"], "db")
-        self.assertEqual(payload["registry"]["_meta"]["post_script_chain"], ["review", "score"])
-        # 旧路径 normalize 后为空
-        self.assertEqual(row.registry["agents"][0]["runner"], "")
+        self.assertNotIn("post_script_chain", meta)
+        self.assertNotIn("post_script_append_agents", meta)
+        self.assertNotIn("post_script_pipeline_index", meta)
+        self.assertEqual(
+            row.registry["agents"][0]["runner"],
+            "apps.creation.orchestration.brief.run_brief_agent",
+        )
 
     def test_save_registry_normalizes_legacy_runner_path(self):
         registry = {
             "agents": [
                 {
-                    "id": "world",
-                    "name": "World",
+                    "id": "structure",
+                    "name": "Structure",
                     "runner": "apps.creation.agents.world.run_world_agent",
                 }
             ]
         }
         row = AgentRegistryConfigService.save_registry(registry)
-        # 新引擎：legacy path 归一化为空
         self.assertEqual(row.registry["agents"][0]["runner"], "")
 
-    def test_patch_agent_normalizes_legacy_runner_path(self):
-        AgentRegistryConfigService.save_registry(
-            {"agents": [{"id": "world", "name": "World"}]},
-        )
-        AgentRegistryConfigService.patch_agent(
-            "world",
-            {"runner": "apps.creation.agents.world.run_world_agent"},
-        )
-        row = AgentRegistryConfigService.get_active_row()
-        # 新引擎：legacy path 归一化为空
-        self.assertEqual(row.registry["agents"][0]["runner"], "")
-
-    def test_ensure_defaults_imports_from_disk(self):
+    def test_ensure_defaults_seeds_db_registry(self):
         from apps.agent.runtime import get_agent_registry
 
         get_agent_registry.cache_clear()
@@ -94,10 +96,13 @@ class AgentRegistryAdminApiTests(TestCase):
         self.assertIsInstance(resp.data["data"].get("tier1_section_catalog_detail"), list)
         self.assertIn("brief", resp.data["data"].get("default_tier1_sections_by_agent", {}))
 
-    def test_put_agent_registry_saves(self):
+    def test_put_agent_registry_strips_removed_post_chain_meta(self):
         body = {
             "registry": {
-                "_meta": {"post_script_append_agents": ["marketing"]},
+                "_meta": {
+                    "post_script_append_agents": ["marketing"],
+                    "post_script_pipeline_index": [{"index": 6, "agent_id": "review"}],
+                },
                 "agents": [
                     {
                         "id": "marketing",
@@ -112,3 +117,6 @@ class AgentRegistryAdminApiTests(TestCase):
         row = AgentRegistryConfig.objects.filter(config_key="default", is_active=True).first()
         self.assertIsNotNone(row)
         self.assertEqual(row.registry["agents"][0]["id"], "marketing")
+        meta = row.registry.get("_meta") or {}
+        self.assertNotIn("post_script_append_agents", meta)
+        self.assertNotIn("post_script_pipeline_index", meta)

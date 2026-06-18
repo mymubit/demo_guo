@@ -186,12 +186,37 @@ def build_creation_skill_invoke_payload(
                 "brief": brief,
             }
         )
+    elif skill_id == "creation.score":
+        payload.update(
+            {
+                "scripts": _scripts_for_skill(project),
+                "brief": brief,
+                "review": get_artifact(project, "review_report") or {},
+            }
+        )
     elif skill_id == "creation.polish":
         review = get_artifact(project, "review_report") or {}
         payload.update(
             {
                 "scripts": _scripts_for_skill(project),
                 "review": review,
+            }
+        )
+    elif skill_id == "creation.marketing":
+        payload.update(
+            {
+                "brief": brief,
+                "structure": get_artifact(project, "structure_plan") or {},
+                "outline": get_artifact(project, "series_outline") or {},
+                "score": get_artifact(project, "score_report") or get_artifact(project, "script_score_report") or {},
+            }
+        )
+    elif skill_id == "creation.insight":
+        payload.update(
+            {
+                "brief": brief,
+                "scripts": _scripts_for_skill(project),
+                "outline": get_artifact(project, "series_outline") or {},
             }
         )
 
@@ -356,6 +381,26 @@ def apply_creation_skill_output(
             f"质检评分 {score}" if score is not None else "质检完成",
         )
 
+    elif skill_id == "creation.score":
+        save_artifact(project, "score_report", skill_data)
+        save_artifact(project, "script_score_report", skill_data)
+        artifact_key = "score_report"
+        overall = skill_data.get("overallScore")
+        if overall is None:
+            overall = skill_data.get("overall_score") or skill_data.get("finalScore")
+        grade = skill_data.get("grade") or ""
+        update_fields = ["updated_at"]
+        if overall is not None:
+            try:
+                project.overall_score = float(overall)
+                update_fields.append("overall_score")
+            except (TypeError, ValueError):
+                pass
+        if grade:
+            project.grade = str(grade)[:16]
+            update_fields.append("grade")
+        project.save(update_fields=update_fields)
+
     elif skill_id == "creation.polish":
         existing = get_artifact(project, "episode_scripts") or {}
         merged = dict(existing)
@@ -386,5 +431,13 @@ def apply_creation_skill_output(
         )
         artifact_key = "episode_scripts"
         _mark_skill_has_content(project, node_index, "润色完成")
+
+    elif skill_id == "creation.marketing":
+        save_artifact(project, "marketing_kit", skill_data)
+        artifact_key = "marketing_kit"
+
+    elif skill_id == "creation.insight":
+        save_artifact(project, "insight_report", skill_data)
+        artifact_key = "insight_report"
 
     return artifact_key

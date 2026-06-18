@@ -15,8 +15,6 @@ WorkflowEngine：从 FusionPipelinePack + FusionPipelineNode 读取编排配置�
 
 节点 runner 类型与映射：
   fusion_node     → 标准创作节点（SkillInvoker → creation.{brief,structure,...}）
-  fusion_review   → 质检节点（SkillInvoker → creation.review）
-  fusion_score    → 评分节点（SkillInvoker → creation.score）
   parallel_group  → 并行组（P1 扩展）
   iterate_loop    → 循环节点（P1 扩展）
   human_gate      → 人工门控（P1 扩展）
@@ -35,6 +33,12 @@ from django.utils import timezone
 
 from apps.workflow.condition_evaluator import eval_node_condition
 from apps.workflow.execution_models import NodeExecution, WorkflowInstance
+from apps.workflow.runtime_contract import (
+    compress_context_for_storage,
+    node_input_snapshot,
+    project_seed_context,
+    record_execution_event,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -48,8 +52,9 @@ class NodeConfig:
     """引擎内部的节点配置快照（从 FusionPipelineNode 解包）。"""
     node_id: str             # fusion_node_id
     name: str
-    runner_type: str         # fusion_node / fusion_review / ...
+    runner_type: str         # fusion_node / parallel_group / ...
     chain_order: int
+    website_index: int = 0
     skill_id: str = ""       # 技能 ID（SkillBridge 路由用）
     runner_path: str = ""    # Python 函数路径（SkillBridge 路由用）
     upstream_deps: List[str] = field(default_factory=list)
@@ -215,6 +220,7 @@ class WorkflowEngine:
                 name=db_node.name,
                 runner_type=db_node.runner_type or "fusion_node",
                 chain_order=db_node.chain_order,
+                website_index=db_node.website_index,
                 skill_id=db_node.skill_id or "",
                 runner_path=db_node.runner_path or "",
                 upstream_deps=list(db_node.upstream_deps or []),
@@ -311,6 +317,7 @@ class WorkflowEngine:
                 reason="engine_start",
                 node_id=effective_start or "",
             )
+            self._seed_initial_context()
 
             plan = self.build_execution_plan(start_node_id=effective_start)
             logger.info(
@@ -333,6 +340,8 @@ class WorkflowEngine:
                     idx, total, node_id, reason,
                 )
                 self._execute_node(node_id, progress=(idx, total))
+                if self.instance.status != "running":
+                    break
 
                 # 节点之后：若下游条件路由显式指定了其它节点，则打断默认顺序
                 # （由 _decide_next_node 动态覆盖默认 plan，简化实现这里保持顺序）
@@ -354,6 +363,21 @@ class WorkflowEngine:
             self._aggregate_instance_stats()
 
         return self.instance
+
+    def _seed_initial_context(self) -> None:
+        """Seed project request fields into instance.context once."""
+        seed = project_seed_context(self.project)
+        if not seed:
+            return
+        ctx = dict(self.instance.context or {})
+        changed = False
+        for key, value in seed.items():
+            if key not in ctx and value not in (None, ""):
+                ctx[key] = value
+                changed = True
+        if changed:
+            self.instance.context = ctx
+            self.instance.save(update_fields=["context"])
 
     # ─────────────────────────────────────────
     # 步骤 3：单节点执行
@@ -381,6 +405,19 @@ class WorkflowEngine:
             node_name=cfg.name,
             runner_type=cfg.runner_type,
             idempotency_key=f"{self.instance.id}:{node_id}:{uuid.uuid4().hex[:8]}",
+        )
+        exec_rec.mark_running(
+            input_context=node_input_snapshot(self.instance.context or {}, cfg)
+        )
+        record_execution_event(
+            exec_rec,
+            "node_start",
+            message=f"start {node_id}",
+            extra={
+                "progress": {"index": progress[0], "total": progress[1]},
+                "skill_id": cfg.skill_id,
+                "runner_type": cfg.runner_type,
+            },
         )
         self.instance.current_node_id = node_id
         self.instance.save(update_fields=["current_node_id"])
@@ -450,6 +487,24 @@ class WorkflowEngine:
             self._completed_outputs[node_id] = result.output
         elif result.was_skipped:
             exec_rec.mark_skipped(reason="upstream_or_runtime_skip")
+        else:
+            error_msg = "; ".join(result.errors or ["node failed"])
+            exec_rec.mark_failed(
+                error=error_msg,
+                error_code=result.error_code or "node_failed",
+                coin_cost=result.coin_cost,
+            )
+            record_execution_event(
+                exec_rec,
+                "node_failed",
+                level="error",
+                message=error_msg[:500],
+                extra={"errors": result.errors, "retry_count": result.retry_count},
+            )
+            if not cfg.allow_skip_on_failure:
+                self.instance.transition_to(
+                    "failed", reason=f"node_failed:{node_id}:{error_msg[:200]}", node_id=node_id,
+                )
 
         return exec_rec
 
@@ -516,10 +571,29 @@ class WorkflowEngine:
                     # 同步写入 NodeExecution 的 retry_count
                     exec_rec.retry_count = attempt
                     exec_rec.save(update_fields=["retry_count", "updated_at"])
+                    record_execution_event(
+                        exec_rec,
+                        "attempt_success",
+                        duration_ms=duration,
+                        extra={
+                            "attempt": attempt + 1,
+                            "coin_cost": result.coin_cost,
+                            "llm_token_in": result.llm_token_in,
+                            "llm_token_out": result.llm_token_out,
+                        },
+                    )
                     return result
 
                 last_result = result
                 last_error = RuntimeError(result.errors[-1] if result.errors else "unknown")
+                record_execution_event(
+                    exec_rec,
+                    "attempt_failed",
+                    level="warn",
+                    duration_ms=duration,
+                    message=str(last_error)[:500],
+                    extra={"attempt": attempt + 1, "errors": result.errors},
+                )
 
             except Exception as exc:
                 duration = int((time.monotonic() - t0) * 1000)
@@ -528,6 +602,14 @@ class WorkflowEngine:
                     cfg.node_id, attempt + 1, exc,
                 )
                 last_error = exc
+                record_execution_event(
+                    exec_rec,
+                    "attempt_exception",
+                    level="warn",
+                    duration_ms=duration,
+                    message=str(exc)[:500],
+                    extra={"attempt": attempt + 1, "exception_type": type(exc).__name__},
+                )
 
             # 失败重试退避
             if attempt < cfg.max_retries:
@@ -612,23 +694,12 @@ class WorkflowEngine:
         # 3) 如有 artifact_key，顶层级联
         if artifact_key:
             ctx[artifact_key] = output.get("content") or output
-        # 容量简易保护
-        try:
-            import json
-            size = len(json.dumps(ctx))
-            if size > cfg.max_context_bytes:
-                logger.warning(
-                    "[Engine] instance.context 已达 %d bytes (>%d)，"
-                    "仅保留节点摘要以避免膨胀。",
-                    size, cfg.max_context_bytes,
-                )
-                # 降级：只保留 summary 字段
-                ctx = {
-                    k: ({"summary": str(v)[:500]} if isinstance(v, dict) else v)
-                    for k, v in ctx.items()
-                }
-        except Exception:
-            pass
+        ctx, stats = compress_context_for_storage(ctx, cfg)
+        if stats.get("level", 0) > 0:
+            logger.warning(
+                "[Engine] instance.context compressed node=%s from=%s to=%s",
+                cfg.node_id, stats.get("bytes_before"), stats.get("bytes_after"),
+            )
         self.instance.context = ctx
         self.instance.save(update_fields=["context"])
 

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
@@ -260,9 +260,7 @@ class AdaptAgentContractTests(SimpleTestCase):
         # 旧实现：run_adapt_agent(project, submit_data) — 此函数在新引擎中由
         # SkillInvoker.invoke("creation.adapt", payload=...) 替代。
         # 本测试改为验证 SkillInvoker 调用时，payload 正确包含 novel_text。
-        from apps.skill.skills.invoker import get_skill_invoker
-
-        with patch("apps.creation.services.submission.get_skill_invoker") as mock_factory:
+        with patch("apps.skill.skills.invoker.get_skill_invoker") as mock_factory:
             mock_invoker = mock_factory.return_value
             skill_result = MagicMock()
             skill_result.success = True
@@ -292,6 +290,8 @@ class AdaptAgentContractTests(SimpleTestCase):
                 "core_idea": "test-idea",
                 "novel_text": "小说正文" * 40,
             }
+            from apps.skill.skills.invoker import get_skill_invoker
+
             get_skill_invoker().invoke(
                 skill_id="creation.adapt",
                 payload=payload,

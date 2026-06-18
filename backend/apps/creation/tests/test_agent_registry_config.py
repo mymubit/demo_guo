@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.test import SimpleTestCase, TestCase
 
@@ -12,7 +12,7 @@ class AgentRegistryConfigTests(SimpleTestCase):
             "_meta": {
                 "workspace_modules": [
                     {"index": 1, "agent_id": "brief"},
-                    {"index": 2, "agent_id": "world"},
+                    {"index": 2, "agent_id": "structure"},
                     {"index": 3, "agent_id": "character"},
                     {"index": 4, "agent_id": "outline"},
                     {"index": 5, "agent_id": "script"},
@@ -23,13 +23,14 @@ class AgentRegistryConfigTests(SimpleTestCase):
         with patch.object(registry, "get_agent_registry", return_value=fake_registry):
             self.assertEqual(registry.agent_for_workspace_index(4), "outline")
             self.assertEqual(registry.workspace_index_for_agent("script"), 5)
+            self.assertIsNone(registry.agent_for_pipeline_node_index(6))
 
     def test_workspace_mapping_returns_none_when_unconfigured(self):
         from apps.agent import runtime as registry
 
         fake_registry = {"_meta": {}, "agents": []}
         with patch.object(registry, "get_agent_registry", return_value=fake_registry):
-            self.assertIsNone(registry.agent_for_workspace_index(1))
+            self.assertEqual(registry.agent_for_workspace_index(1), "brief")
             self.assertIsNone(registry.agent_for_pipeline_node_index(6))
 
     def test_workspace_mapping_reads_agents_workspace_index(self):
@@ -39,57 +40,47 @@ class AgentRegistryConfigTests(SimpleTestCase):
             "_meta": {},
             "agents": [
                 {"id": "brief", "workspace_index": 1},
-                {"id": "world", "workspace_index": 2},
+                {"id": "structure", "workspace_index": 2},
             ],
         }
         with patch.object(registry, "get_agent_registry", return_value=fake_registry):
-            self.assertEqual(registry.agent_for_workspace_index(2), "world")
+            self.assertEqual(registry.agent_for_workspace_index(2), "structure")
 
-    def test_post_script_pipeline_index_reads_registry_meta(self):
+    def test_removed_post_chain_runtime_api(self):
         from apps.agent import runtime as registry
+
+        self.assertFalse(hasattr(registry, "post_script_chain"))
+        self.assertFalse(hasattr(registry, "post_script_effective_chain"))
+        self.assertFalse(hasattr(registry, "should_defer_to_post_script_chain"))
+
+    def test_explicit_post_agents_are_catalog_only(self):
+        from apps.agent.catalog import portal_agent_catalog
+        from apps.agent import catalog
 
         fake_registry = {
-            "_meta": {
-                "workspace_modules": [{"index": 1, "agent_id": "brief"}],
-                "post_script_pipeline_index": [
-                    {"index": 6, "agent_id": "review"},
-                    {"index": 7, "agent_id": "score"},
-                ],
-            },
-            "agents": [],
+            "_meta": {"version": "2.0.0"},
+            "agents": [
+                {"id": "brief", "workspace_index": 1},
+                {"id": "structure", "workspace_index": 2},
+                {"id": "character", "workspace_index": 3},
+                {"id": "outline", "workspace_index": 4},
+                {"id": "script", "workspace_index": 5},
+                {"id": "review"},
+                {"id": "score"},
+                {"id": "polish"},
+                {"id": "marketing"},
+                {"id": "insight"},
+            ],
         }
-        with patch.object(registry, "get_agent_registry", return_value=fake_registry):
-            self.assertEqual(registry.agent_for_pipeline_node_index(6), "review")
-            self.assertEqual(registry.agent_for_pipeline_node_index(7), "score")
+        with patch.object(catalog, "get_agent_registry", return_value=fake_registry):
+            out = portal_agent_catalog()
 
-    def test_post_script_chain_reads_registry_meta_first(self):
+        self.assertEqual(len(out["workspaceAgents"]), 5)
+        self.assertEqual(out["explicitPostAgents"], ["review", "score", "polish", "marketing", "insight"])
+
+    def test_resolve_agent_runner_rejects_removed_python_runner_path(self):
         from apps.agent import runtime as registry
 
-        fake_registry = {
-            "_meta": {"post_script_chain": ["review", "score"]},
-            "post_script_chain": ["review", "polish", "review", "score"],
-            "agents": [],
-        }
-        with patch.object(registry, "get_agent_registry", return_value=fake_registry):
-            self.assertEqual(registry.post_script_chain(), ["review", "score"])
-
-    def test_post_script_effective_chain_appends_configured_agents(self):
-        from apps.agent import runtime as registry
-
-        fake_registry = {
-            "_meta": {
-                "post_script_chain": ["review", "score"],
-                "post_script_append_agents": ["marketing"],
-            },
-            "agents": [],
-        }
-        with patch.object(registry, "get_agent_registry", return_value=fake_registry):
-            self.assertEqual(registry.post_script_effective_chain(), ["review", "score", "marketing"])
-
-    def test_resolve_agent_runner_reads_configured_safe_path(self):
-        from apps.agent import runtime as registry
-
-        # 新引擎：agent runner 路径归一化为空；resolve 应返回 None
         fake_registry = {
             "_meta": {},
             "agents": [
@@ -100,10 +91,7 @@ class AgentRegistryConfigTests(SimpleTestCase):
             ],
         }
         with patch.object(registry, "get_agent_registry", return_value=fake_registry):
-            runner = registry.resolve_agent_runner("review")
-
-        # 新引擎：旧路径已下线，resolve 返回 None
-        self.assertIsNone(runner)
+            self.assertIsNotNone(registry.resolve_agent_runner("review"))
 
     def test_resolve_agent_runner_rejects_unsafe_path(self):
         from apps.agent import runtime as registry
@@ -115,57 +103,27 @@ class AgentRegistryConfigTests(SimpleTestCase):
         with patch.object(registry, "get_agent_registry", return_value=fake_registry):
             self.assertIsNone(registry.resolve_agent_runner("bad"))
 
-    def test_workspace_runner_uses_configured_agent_id(self):
-        """新引擎：workspace_runner 改由 SkillInvoker.invoke('creation.brief', ...) 触发。"""
-        from unittest.mock import patch, MagicMock
-
+    def test_workspace_runner_uses_skill_invoker(self):
         from apps.skill.skills.invoker import get_skill_invoker
 
-        with patch("apps.creation.step_mode._workspace_node_to_skill_id", return_value="creation.brief"):
-            with patch("apps.skill.skills.invoker.SkillInvoker.invoke") as mock_invoke:
-                skill_result = MagicMock()
-                skill_result.success = True
-                skill_result.data = {"node": 1}
-                skill_result.error = {}
-                skill_result.skill_id = "creation.brief"
-                skill_result.trace_id = "trace-brief"
-                mock_invoke.return_value = skill_result
+        with patch("apps.skill.skills.invoker.SkillInvoker.invoke") as mock_invoke:
+            skill_result = MagicMock()
+            skill_result.success = True
+            skill_result.data = {"node": 1}
+            skill_result.error = {}
+            skill_result.skill_id = "creation.brief"
+            skill_result.trace_id = "trace-brief"
+            mock_invoke.return_value = skill_result
 
-                project = MagicMock()
-                project.id = "proj-1"
-                project.user_id = 1
-
-                result = get_skill_invoker().invoke(
-                    skill_id="creation.brief",
-                    payload={"project_id": "proj-1"},
-                    project_id="proj-1",
-                    user_id=1,
-                )
+            result = get_skill_invoker().invoke(
+                skill_id="creation.brief",
+                payload={"project_id": "proj-1"},
+                project_id="proj-1",
+                user_id=1,
+            )
 
         self.assertTrue(result.success)
         self.assertEqual(result.data["node"], 1)
-
-    def test_should_defer_to_post_script_chain_in_workspace_mode(self):
-        from apps.agent import runtime as registry
-        from apps.creation.models import Project
-
-        fake_registry = {
-            "_meta": {
-                "post_script_pipeline_index": [
-                    {"index": 6, "agent_id": "review"},
-                    {"index": 7, "agent_id": "score"},
-                ],
-            },
-            "agents": [],
-        }
-        project = Project(pipeline_mode=Project.MODE_WORKSPACE)
-        with patch.object(registry, "get_agent_registry", return_value=fake_registry):
-            self.assertTrue(registry.should_defer_to_post_script_chain(project, 6))
-            self.assertFalse(registry.should_defer_to_post_script_chain(project, 5))
-
-        project_step = Project(pipeline_mode=Project.MODE_STEP)
-        with patch.object(registry, "get_agent_registry", return_value=fake_registry):
-            self.assertFalse(registry.should_defer_to_post_script_chain(project_step, 6))
 
 
 class AgentRegistryDbConfigTests(TestCase):
@@ -175,29 +133,30 @@ class AgentRegistryDbConfigTests(TestCase):
         get_agent_registry.cache_clear()
 
     def test_active_db_registry_is_runtime_source(self):
-        from apps.agent.runtime import agent_for_workspace_index, get_agent_registry
+        from apps.agent.runtime import agent_for_pipeline_node_index, agent_for_workspace_index, get_agent_registry
         from apps.agent.models import AgentRegistryConfig
 
         AgentRegistryConfig.objects.create(
             config_key="test-active",
-            display_name="测试 Agent 注册表",
+            display_name="Test Agent Registry",
             is_active=True,
             registry={
                 "_meta": {
                     "workspace_modules": [
                         {"index": 1, "agent_id": "brief"},
-                        {"index": 2, "agent_id": "world"},
+                        {"index": 2, "agent_id": "structure"},
+                        {"index": 3, "agent_id": "character"},
+                        {"index": 4, "agent_id": "outline"},
+                        {"index": 5, "agent_id": "script"},
                     ],
                     "post_script_pipeline_index": [
                         {"index": 6, "agent_id": "review"},
                         {"index": 7, "agent_id": "score"},
                     ],
-                    "post_script_chain": ["review", "score"],
                 },
-                "post_script_chain": ["review", "score"],
                 "agents": [
-                    {"id": "brief", "name": "BriefAgent", "name_zh": "立项"},
-                    {"id": "world", "name": "WorldAgent", "name_zh": "世界观"},
+                    {"id": "brief", "name": "BriefAgent", "name_zh": "Brief"},
+                    {"id": "structure", "name": "StructureAgent", "name_zh": "Structure"},
                 ],
             },
         )
@@ -205,4 +164,5 @@ class AgentRegistryDbConfigTests(TestCase):
 
         registry = get_agent_registry()
         self.assertEqual(registry.get("_registry_source"), "db")
-        self.assertEqual(agent_for_workspace_index(2), "world")
+        self.assertEqual(agent_for_workspace_index(2), "structure")
+        self.assertIsNone(agent_for_pipeline_node_index(6))

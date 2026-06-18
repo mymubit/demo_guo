@@ -4,8 +4,6 @@ from django.test import SimpleTestCase, TestCase
 from apps.creation.episode_gate import summarize_episode_gates
 from apps.workflow.fusion import evaluate_project_readiness, get_artifact_registry
 from apps.workflow.pipeline_store import FusionPipelineDbService
-from apps.workflow.bootstrap.workflow_disk import DISK_ARTIFACT_BY_NODE, DISK_INDEX_BY_NODE
-from apps.workflow.models import FusionPipelineNode, FusionPipelinePack
 
 
 class EpisodeGateSummaryTests(SimpleTestCase):
@@ -101,31 +99,19 @@ class ReadinessTests(TestCase):
 
 class ArtifactRegistryTests(TestCase):
     def setUp(self):
-        pack = FusionPipelinePack.objects.create(version="test-artifact-reg", is_active=True)
-        order = 0
-        for node_id, website_index in sorted(DISK_INDEX_BY_NODE.items(), key=lambda x: x[1]):
-            order += 1
-            FusionPipelineNode.objects.create(
-                pack=pack,
-                fusion_node_id=node_id,
-                chain_order=order,
-                website_index=website_index,
-                name=node_id,
-                artifact_key=DISK_ARTIFACT_BY_NODE.get(node_id, ""),
-            )
+        FusionPipelineDbService.ensure_builtin_default_pack()
         FusionPipelineDbService.clear_caches()
 
     def tearDown(self):
         FusionPipelineDbService.clear_caches()
 
-    def test_main_chain_has_seven_steps(self):
+    def test_main_chain_has_five_steps(self):
         reg = get_artifact_registry()
-        self.assertEqual(reg.total_main_nodes(), 7)
+        self.assertEqual(reg.total_main_nodes(), 5)
         self.assertEqual(reg.artifact_key_for_index(1), "project_brief")
-        self.assertEqual(reg.artifact_key_for_index(6), "quality_report")
-        self.assertIn("quality_report", reg.artifacts_for_node(6))
+        self.assertEqual(reg.artifact_key_for_index(5), "episode_scripts")
 
     def test_progress_percent_uses_total_nodes(self):
         reg = get_artifact_registry()
-        self.assertEqual(reg.progress_percent_for_node(7), 100)
+        self.assertEqual(reg.progress_percent_for_node(5), 100)
         self.assertLess(reg.progress_percent_for_node(3, awaiting=True), 99)

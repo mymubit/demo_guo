@@ -303,13 +303,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # Security settings - 安全开关由各环境配置文件覆盖（development.py / production.py）
 SKILL_ENCRYPT_KEY = os.getenv("SKILL_ENCRYPT_KEY", "01234567890123456789012345678901")
 
-# 融合技能 SSOT 根目录，指向 demo4book/short-drama-script-creator（与 resolve_skill_root() 约定一致）
-# 示例：C:\Users\99193\Desktop\flickplay\demo4book\short-drama-script-creator
-FUSION_SKILL_ROOT = os.getenv(
-    "FUSION_SKILL_ROOT",
-    str(BASE_DIR.parent.parent / "demo4book" / "short-drama-script-creator"),
+# External skill folders are one-time migration sources only. Runtime is DB-only.
+SCRIPT_FORGE_ASSET_ROOT = os.getenv(
+    "SCRIPT_FORGE_ASSET_ROOT",
+    str(BASE_DIR / "apps" / "skill" / "assets"),
 )
-FUSION_SKILL_ENABLED = os.getenv("FUSION_SKILL_ENABLED", "true").lower() in ("1", "true", "yes")
+FUSION_SKILL_ENABLED = False
 CREATION_FUSION_WORK_DIR = os.getenv(
     "CREATION_FUSION_WORK_DIR",
     str(BASE_DIR / "tmp" / "fusion_work"),

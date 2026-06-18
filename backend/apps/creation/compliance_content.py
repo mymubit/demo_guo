@@ -2,40 +2,44 @@
 """compliance-content：内容合规细检（规则层，补充 compliance-check CLI）。"""
 from __future__ import annotations
 
-import json
 from datetime import datetime, timezone
 from functools import lru_cache
-from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
-
-from django.conf import settings
 
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def _config_dir() -> Path:
-    try:
-        from apps.workflow.fusion import get_fusion_config
-
-        return get_fusion_config().root / "config"
-    except Exception:  # noqa: BLE001
-        root = getattr(settings, "FUSION_SKILL_ROOT", "") or ""
-        if root:
-            return Path(root) / "config"
-        return Path(__file__).resolve().parents[4] / "demo4book" / "short-drama-script-creator" / "config"
+_BUILTIN_COMPLIANCE_CONFIGS: dict[str, dict] = {
+    "合规检测-虚假宣传关键词.json": {
+        "风险等级": "warning",
+        "虚假宣传风险关键词": ["最有效", "100%根治", "央视推荐", "包治", "永久治愈"],
+    },
+    "合规检测-社会热点敏感.json": {
+        "风险等级": "fuse",
+        "社会事件敏感关键词": ["唐山打人", "社会热点事件", "真实案件"],
+    },
+    "合规检测-版权风险.json": {
+        "风险等级": "warning",
+        "版权风险关键词": ["原著照搬", "同名改编"],
+        "知名IP片段": [],
+        "改编融梗熔断组合": [],
+    },
+}
 
 
 @lru_cache(maxsize=4)
 def _load_compliance_config(filename: str) -> dict:
-    path = _config_dir() / filename
-    if not path.is_file():
-        return {}
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        from apps.skill.config.portal.reference_libs import ReferenceLibraryService
+
+        data = ReferenceLibraryService.get_json(filename)
+        if data:
+            return data
     except Exception:  # noqa: BLE001
-        return {}
+        pass
+    return dict(_BUILTIN_COMPLIANCE_CONFIGS.get(filename) or {})
 
 
 _VILLAIN_WHITEWASH = (

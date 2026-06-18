@@ -58,12 +58,10 @@ class ThemeTemplateCatalogService:
         return out
 
     @classmethod
-    def _load_disk_templates(cls) -> Dict[str, Dict[str, Any]]:
+    def _load_db_reference_templates(cls) -> Dict[str, Dict[str, Any]]:
         from apps.skill.config.portal.reference_libs import ReferenceLibraryService
 
         raw = ReferenceLibraryService.get_json("theme-templates.json")
-        if not raw:
-            raw = ReferenceLibraryService._read_disk_file("theme-templates.json") or {}
         templates = raw.get("themeTemplates") if isinstance(raw, dict) else None
         if not isinstance(templates, dict):
             return {}
@@ -103,7 +101,7 @@ class ThemeTemplateCatalogService:
                 **params,
             }
         if not out:
-            out = cls._load_disk_templates()
+            out = cls._load_db_reference_templates()
         if not out:
             out = cls._builtin_templates_map()
         return out
@@ -129,9 +127,6 @@ class ThemeTemplateCatalogService:
         from apps.skill.config.portal.skill_settings import ThemeTemplateService
 
         raw = ReferenceLibraryService.get_json("theme-templates.json")
-        if not raw:
-            data = ReferenceLibraryService._read_disk_file("theme-templates.json")
-            raw = data or {}
         templates = raw.get("themeTemplates") if isinstance(raw, dict) else None
         if not isinstance(templates, dict):
             return 0
@@ -159,7 +154,7 @@ class ThemeTemplateCatalogService:
             )
             imported += 1
         cls.clear_cache()
-        logger.info("[ThemeTemplateCatalog] import_from_disk themes=%s", imported)
+        logger.info("[ThemeTemplateCatalog] import_from_db_reference themes=%s", imported)
         return imported
 
     @classmethod

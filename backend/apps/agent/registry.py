@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
-"""Agent Registry 后台读写 — DB SSOT；磁盘 JSON 仅 import/sync 引导。"""
+﻿# -*- coding: utf-8 -*-
+"""DB-backed Agent Registry service."""
 from __future__ import annotations
 
 import json
@@ -23,20 +23,27 @@ CONFIG_KEY = "default"
 
 class AgentRegistryConfigService:
     @staticmethod
-    def _resolve_registry_path() -> Path:
-        from apps.workflow.fusion.config_loader import get_fusion_config
+    def builtin_registry() -> Dict[str, Any]:
+        return {
+            "_meta": {"version": "scriptforge-runtime-v1"},
+            "orchestrator": {"runtime": "scriptforge"},
+            "agents": [
+                {"id": "brief", "name": "Brief Agent", "workspace_index": 1, "outputs": ["project_brief"]},
+                {"id": "structure", "name": "Structure Agent", "workspace_index": 2, "outputs": ["structure_plan"]},
+                {"id": "character", "name": "Character Agent", "workspace_index": 3, "outputs": ["character_bible"]},
+                {"id": "outline", "name": "Outline Agent", "workspace_index": 4, "outputs": ["series_outline"]},
+                {"id": "script", "name": "Script Agent", "workspace_index": 5, "outputs": ["episode_scripts"]},
+                {"id": "review", "name": "Review Agent", "outputs": ["review_report"]},
+                {"id": "score", "name": "Score Agent", "outputs": ["score_report"]},
+                {"id": "polish", "name": "Polish Agent", "outputs": ["episode_scripts", "polish_log"]},
+                {"id": "marketing", "name": "Marketing Agent", "outputs": ["marketing_kit"]},
+                {"id": "insight", "name": "Insight Agent", "outputs": ["insight_report"]},
+            ],
+        }
 
-        cfg = get_fusion_config()
-        candidates = [
-            cfg.demo4book_root / "agents" / "registry.json",
-            cfg.root.parent / "agents" / "registry.json",
-        ]
-        for path in candidates:
-            if path.is_file():
-                return path.resolve()
-        raise FileNotFoundError(
-            "未找到 agents/registry.json，请确认 demo4book/agents/registry.json 存在"
-        )
+    @staticmethod
+    def _resolve_registry_path() -> Path:
+        raise FileNotFoundError("external agent registry import has been removed")
 
     @classmethod
     def _load_file_registry(cls) -> Dict[str, Any]:
@@ -69,23 +76,23 @@ class AgentRegistryConfigService:
     @staticmethod
     def validate_registry(registry: Any) -> Tuple[bool, str]:
         if not isinstance(registry, dict):
-            return False, "registry 必须是 JSON 对象"
+            return False, "registry must be a JSON object"
         agents = registry.get("agents")
         if not isinstance(agents, list) or not agents:
-            return False, "registry.agents 不能为空"
+            return False, "registry.agents cannot be empty"
         seen = set()
         for agent in agents:
             if not isinstance(agent, dict):
-                return False, "agents 项必须是对象"
+                return False, "agent entries must be objects"
             agent_id = str(agent.get("id") or "").strip()
             if not agent_id:
-                return False, "每个 agent 必须包含 id"
+                return False, "agent id is required"
             if agent_id in seen:
-                return False, f"重复的 agent id: {agent_id}"
+                return False, f"duplicate agent id: {agent_id}"
             seen.add(agent_id)
         meta = registry.get("_meta")
         if meta is not None and not isinstance(meta, dict):
-            return False, "_meta 必须是对象"
+            return False, "_meta must be an object"
         return True, ""
 
     @classmethod
@@ -101,12 +108,11 @@ class AgentRegistryConfigService:
         row = cls.get_active_row()
         if row and cls._registry_has_agents(row.registry):
             return
-        try:
-            cls.import_from_file(overwrite=True)
-        except FileNotFoundError as exc:
-            logger.warning("[AgentRegistry] ensure_defaults skipped: %s", exc)
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("[AgentRegistry] ensure_defaults failed: %s", exc)
+        cls.save_registry(
+            cls.builtin_registry(),
+            note="built-in ScriptForge runtime",
+            activate=True,
+        )
 
     @classmethod
     def admin_payload(cls) -> Dict[str, Any]:
@@ -126,7 +132,7 @@ class AgentRegistryConfigService:
             "config_id": str(row.id) if row else None,
             "source": "db" if row and cls._registry_has_agents(row.registry) else "none",
             "is_active_db": bool(row and row.is_active),
-            "display_name": row.display_name if row else "默认技能注册表",
+            "display_name": row.display_name if row else "榛樿鎶€鑳芥敞鍐岃〃",
             "note": row.note if row else "",
             "updated_at": row.updated_at.isoformat() if row and row.updated_at else None,
             "file_path": file_registry.get("_registry_path") if file_registry else None,
@@ -158,10 +164,10 @@ class AgentRegistryConfigService:
         row, _ = AgentRegistryConfig.objects.update_or_create(
             config_key=CONFIG_KEY,
             defaults={
-                "display_name": "默认 Agent 注册表",
+                "display_name": "Default Agent Registry",
                 "registry": clean,
                 "is_active": activate,
-                "note": note or "后台保存",
+                "note": note or "admin save",
             },
         )
         cls._clear_runtime_cache()
@@ -169,16 +175,16 @@ class AgentRegistryConfigService:
 
     @classmethod
     def patch_agent(cls, agent_id: str, patch: Dict[str, Any]) -> None:
-        """更新 registry 中单个 Agent 的配置字段（tier1_sections / prompt 等）。"""
+        """Patch one agent in the active registry."""
         aid = (agent_id or "").strip()
         if not aid:
-            raise ValueError("agent_id 不能为空")
+            raise ValueError("agent_id 涓嶈兘涓虹┖")
         row = cls.get_active_row()
         if not row or not isinstance(row.registry, dict):
             cls.ensure_defaults()
             row = cls.get_active_row()
         if not row:
-            raise ValueError("Agent Registry 未初始化")
+            raise ValueError("Agent Registry 鏈垵濮嬪寲")
 
         registry = dict(row.registry or {})
         agents = list(registry.get("agents") or [])
@@ -200,7 +206,7 @@ class AgentRegistryConfigService:
             updated = True
             break
         if not updated:
-            raise ValueError(f"未找到 Agent: {aid}")
+            raise ValueError(f"鏈壘鍒?Agent: {aid}")
         registry["agents"] = agents
         row.registry = registry
         row.save(update_fields=["registry", "updated_at"])
@@ -208,17 +214,17 @@ class AgentRegistryConfigService:
 
     @classmethod
     def patch_sub_skill_hint(cls, agent_id: str, skill_id: str, system_hint: str) -> None:
-        """更新 registry 中单个子技能的 system_hint 字段（运营后台直接调整提示词）。"""
+        """Patch a sub-skill system hint in the active registry."""
         aid = (agent_id or "").strip()
         sid = (skill_id or "").strip()
         if not aid or not sid:
-            raise ValueError("agent_id 和 skill_id 不能为空")
+            raise ValueError("agent_id 鍜?skill_id 涓嶈兘涓虹┖")
         row = cls.get_active_row()
         if not row or not isinstance(row.registry, dict):
             cls.ensure_defaults()
             row = cls.get_active_row()
         if not row:
-            raise ValueError("Agent Registry 未初始化")
+            raise ValueError("Agent Registry 鏈垵濮嬪寲")
 
         registry = dict(row.registry or {})
         agents = list(registry.get("agents") or [])
@@ -242,9 +248,9 @@ class AgentRegistryConfigService:
             break
 
         if not agent_found:
-            raise ValueError(f"未找到 Agent: {aid}")
+            raise ValueError(f"鏈壘鍒?Agent: {aid}")
         if not skill_found:
-            raise ValueError(f"未找到 Agent {aid} 的子技能: {sid}")
+            raise ValueError(f"鏈壘鍒?Agent {aid} 鐨勫瓙鎶€鑳? {sid}")
 
         registry["agents"] = agents
         row.registry = registry
@@ -253,7 +259,7 @@ class AgentRegistryConfigService:
 
     @classmethod
     def migrate_pipeline_skill_config(cls) -> int:
-        """将 FusionPipelineNode 遗留技能字段一次性迁入 Agent Registry + LLM 路由。"""
+        """Migrate pipeline skill metadata into Agent Registry and LLM routes."""
         from apps.agent.bootstrap.tier1_sections import AGENT_TIER1_SEED
         from apps.agent.binding import (
             agent_id_for_fusion_node,
@@ -323,11 +329,11 @@ class AgentRegistryConfigService:
         file_registry: Dict[str, Any],
         db_registry: Dict[str, Any],
     ) -> Dict[str, Any]:
-        """将磁盘 registry 与 DB registry 合并：保留 DB 中已配置的子技能 system_hint。
+        """Merge imported registry data with DB-managed system hints."""
 
-        规则：磁盘文件为主，但 sub_skill.system_hint 字段以 DB 中已有值优先，
-        避免重新 import_from_file 时覆盖运营手动调整的提示词。
-        """
+
+
+
         db_agents: Dict[str, Dict[str, str]] = {}
         for agent in (db_registry.get("agents") or []):
             if not isinstance(agent, dict):
@@ -377,21 +383,13 @@ class AgentRegistryConfigService:
         return merged
 
     @classmethod
+    @classmethod
     def import_from_file(cls, *, overwrite: bool = True) -> AgentRegistryConfig:
-        file_registry = cls._load_file_registry()
-        registry = dict(file_registry)
-        file_path = registry.pop("_registry_path", "registry.json")
-
         existing = AgentRegistryConfig.objects.filter(config_key=CONFIG_KEY).first()
         if existing and not overwrite:
-            raise ValueError("default 配置已存在，请使用覆盖导入")
-
-        # 保留 DB 中运营已配置的子技能 system_hint，不被磁盘文件覆盖
-        if existing and isinstance(existing.registry, dict) and existing.registry.get("agents"):
-            registry = cls._merge_file_registry_with_db_hints(registry, existing.registry)
-
+            raise ValueError("default registry already exists")
         return cls.save_registry(
-            registry,
-            note=f"从磁盘导入: {file_path}",
+            cls.builtin_registry(),
+            note="built-in ScriptForge runtime",
             activate=True,
         )

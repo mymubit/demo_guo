@@ -11,6 +11,11 @@ import time
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 # 确保 apps 包可被找到（支持从项目根目录/任意子目录运行测试）
 _CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 # 回溯找到 apps 包的父目录
@@ -155,8 +160,6 @@ def test_execution_plan():
         NodeConfig(node_id="node_outline", chain_order=4,
                    upstream_deps=["node_structure", "node_character"]),
         NodeConfig(node_id="node_script", chain_order=5, upstream_deps=["node_outline"]),
-        NodeConfig(node_id="node_review", chain_order=6, upstream_deps=["node_script"]),
-        NodeConfig(node_id="node_polish", chain_order=7, upstream_deps=["node_review"]),
     ]
 
     in_deg = {n.node_id: len(n.upstream_deps) for n in nodes}
@@ -174,7 +177,7 @@ def test_execution_plan():
 
     assert len(order) == len(nodes)
     assert order[0] == "node_brief"
-    assert order[-1] == "node_polish"
+    assert order[-1] == "node_script"
     print(f"  ✓ 拓扑排序: {' → '.join(order)}")
 
     # 循环依赖检测
@@ -230,7 +233,7 @@ def test_pack_validator():
     nodes = [
         {"fusion_node_id": "node_brief", "chain_order": 1, "runner_type": "fusion_node"},
         {"fusion_node_id": "node_structure", "chain_order": 2, "runner_type": "fusion_node"},
-        {"fusion_node_id": "node_polish", "chain_order": 3, "runner_type": "fusion_node"},
+        {"fusion_node_id": "node_script", "chain_order": 3, "runner_type": "fusion_node"},
     ]
     orders = [n["chain_order"] for n in nodes]
     assert orders == sorted(orders)

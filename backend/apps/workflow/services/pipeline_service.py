@@ -27,7 +27,7 @@ class WorkflowPipelineService:
 
         if FusionPipelineDbService.has_active_nodes():
             return
-        FusionPipelineDbService.import_from_disk(activate=True)
+        FusionPipelineDbService.ensure_builtin_default_pack()
 
     @classmethod
     def portal_hidden_fusion_node_ids(cls, pack_id: Optional[str] = None) -> frozenset:

@@ -93,7 +93,9 @@ class ScriptDeliveryTests(TestCase):
 
     @patch("apps.creation.script_delivery.settings")
     def test_persist_script_works_writes_files(self, mock_settings):
-        tmp_root = tempfile.mkdtemp(prefix="scriptforge_script_test_")
+        workspace_tmp = os.path.abspath(os.path.join(os.getcwd(), ".test_tmp"))
+        os.makedirs(workspace_tmp, exist_ok=True)
+        tmp_root = tempfile.mkdtemp(prefix="scriptforge_script_test_", dir=workspace_tmp)
         self.addCleanup(shutil.rmtree, tmp_root, ignore_errors=True)
         mock_settings.CREATION_SCRIPT_DIR = tmp_root
         pipeline = {

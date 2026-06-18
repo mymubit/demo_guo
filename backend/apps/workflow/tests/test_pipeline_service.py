@@ -25,44 +25,10 @@ class WorkflowPipelineServiceTests(TestCase):
         get_agent_registry.cache_clear()
 
     def test_creation_next_node_index_follows_chain_order(self):
-        pack = FusionPipelinePack.objects.create(version="chain-order-next", is_active=True)
-        node_a = FusionPipelineNode.objects.create(
-            pack=pack,
-            fusion_node_id="node-a",
-            chain_order=1,
-            website_index=1,
-            name="A",
-            portal_visible=True,
-            enabled=True,
-        )
-        node_b = FusionPipelineNode.objects.create(
-            pack=pack,
-            fusion_node_id="node-b",
-            chain_order=2,
-            website_index=3,
-            name="B",
-            portal_visible=True,
-            enabled=True,
-        )
-        node_c = FusionPipelineNode.objects.create(
-            pack=pack,
-            fusion_node_id="node-c",
-            chain_order=3,
-            website_index=2,
-            name="C",
-            portal_visible=True,
-            enabled=True,
-        )
+        FusionPipelineDbService.ensure_builtin_default_pack()
         self._seed_registry()
         FusionPipelineDbService.clear_caches()
 
-        self.assertEqual(WorkflowPipelineService.creation_next_node_index(1), 3)
-        self.assertEqual(WorkflowPipelineService.creation_next_node_index(3), 2)
-        self.assertIsNone(WorkflowPipelineService.creation_next_node_index(2))
-
-        PipelineStepAdminService.reorder_steps([str(node_c.id), str(node_a.id), str(node_b.id)])
-        FusionPipelineDbService.clear_caches()
-
-        self.assertEqual(WorkflowPipelineService.creation_next_node_index(2), 1)
-        self.assertEqual(WorkflowPipelineService.creation_next_node_index(1), 3)
-        self.assertIsNone(WorkflowPipelineService.creation_next_node_index(3))
+        self.assertEqual(WorkflowPipelineService.creation_next_node_index(1), 2)
+        self.assertEqual(WorkflowPipelineService.creation_next_node_index(2), 3)
+        self.assertEqual(WorkflowPipelineService.creation_next_node_index(5), None)

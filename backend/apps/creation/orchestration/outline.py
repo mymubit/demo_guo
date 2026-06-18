@@ -13,20 +13,16 @@ from .agent_common import (
     build_standard_upstream,
     deep_merge,
     filter_episodes_by_range,
-    fusion_work_dir,
     load_project_brief,
     merge_episodes_by_number,
-    write_json_artifact,
 )
 from .agent_llm import run_sub_skill_llm
 from .agent_payload import coerce_outline_chunk, extract_fixer_patch, fixer_patch_meaningful, unwrap_llm_payload
 from .sub_skill_runner import (
     agent_execution_meta,
-    cli_plan_validate,
     inject_knowledge_upstream,
     mark_executed,
     persist_execution_trace,
-    unwrap_fusion_cli_result,
 )
 from .types import AgentResult
 
@@ -74,18 +70,11 @@ def _merge_framework_chunk(outline: dict, sub_skill_id: str, raw: object) -> dic
 
 
 def _run_plan_validator(project: Project, outline: dict) -> dict:
-    from apps.workflow.fusion import FusionCliRunner, get_fusion_config
+    from apps.creation.validators import validate_plan
 
-    input_path = fusion_work_dir(project) / "series-outline.validate.json"
-    write_json_artifact(input_path, outline)
-    runner = FusionCliRunner(get_fusion_config())
-    cli_raw = cli_plan_validate(
-        runner,
-        input_path,
-        episodes=int(outline.get("totalEpisodes") or project.episode_count or 0) or None,
-        strict=False,
-    )
-    return unwrap_fusion_cli_result(cli_raw)
+    expected = int(outline.get("totalEpisodes") or project.episode_count or 0) or None
+    result = validate_plan(outline, expected_episodes=expected)
+    return result.to_dict()
 
 
 def _resolve_outline_mode(

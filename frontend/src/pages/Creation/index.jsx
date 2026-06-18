@@ -347,7 +347,7 @@ export default function Creation() {
             {/限流|429|过于频繁/.test(catalogError) ? (
               <>请求过于频繁：{catalogError}。请等待片刻后点击刷新，或关闭其他正在轮询的页面标签。</>
             ) : (
-              <>Agent 目录加载失败：{catalogError}。请刷新或联系管理员检查 FUSION_SKILL_ROOT。</>
+              <>Agent 目录加载失败：{catalogError}。请刷新或联系管理员检查 ScriptForge 资产配置。</>
             )}
           </Card>
         )}

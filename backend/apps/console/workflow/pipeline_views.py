@@ -31,16 +31,10 @@ class PipelineStepSyncView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        if not FusionPipelineDbService.has_active_nodes():
-            try:
-                FusionPipelineDbService.import_from_disk(activate=True)
-            except Exception as exc:  # noqa: BLE001
-                return api_fail(f"导入技能包失败：{exc}")
-        else:
-            try:
-                FusionPipelineDbService.sync_from_disk()
-            except Exception as exc:  # noqa: BLE001
-                return api_fail(f"同步技能包失败：{exc}")
+        try:
+            FusionPipelineDbService.ensure_builtin_default_pack()
+        except Exception as exc:  # noqa: BLE001
+            return api_fail(f"初始化 DB-only 主链失败：{exc}")
         from apps.agent.registry import AgentRegistryConfigService
 
         migrated = AgentRegistryConfigService.migrate_pipeline_skill_config()
@@ -49,5 +43,5 @@ class PipelineStepSyncView(APIView):
                 **PipelineStepAdminService.meta_payload(),
                 "migrated_agent_skill_configs": migrated,
             },
-            message="主链已从 SSOT 同步",
+            message="DB-only 5 步主链已初始化",
         )

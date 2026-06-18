@@ -16,6 +16,20 @@ _DEFAULT_PIPELINE_RESULT_KEY_BY_ARTIFACT = {
     "series_outline": "outlines",
     "episode_scripts": "scripts",
 }
+_DEFAULT_ARTIFACT_BY_INDEX = {
+    1: "project_brief",
+    2: "structure_plan",
+    3: "character_bible",
+    4: "series_outline",
+    5: "episode_scripts",
+}
+_DEFAULT_FUSION_ID_BY_INDEX = {
+    1: "node_brief",
+    2: "node_structure",
+    3: "node_character",
+    4: "node_outline",
+    5: "node_script",
+}
 
 # pipeline_result 键 → 是否需要 episode_scripts → legacy scripts 转换
 _PIPELINE_RESULT_LEGACY_SCRIPT_KEYS = frozenset({"scripts"})
@@ -65,13 +79,21 @@ class FusionArtifactRegistry:
                     all_keys.append(str(extra_key))
             if all_keys:
                 self._index_all[idx] = all_keys
+        for idx, artifact_key in _DEFAULT_ARTIFACT_BY_INDEX.items():
+            self._index_primary.setdefault(idx, artifact_key)
+            self._index_all.setdefault(idx, [artifact_key])
+            self._artifact_pipeline_key.setdefault(
+                artifact_key,
+                _DEFAULT_PIPELINE_RESULT_KEY_BY_ARTIFACT.get(artifact_key, artifact_key),
+            )
+            self._fusion_primary.setdefault(_DEFAULT_FUSION_ID_BY_INDEX[idx], artifact_key)
 
     def total_main_nodes(self) -> int:
         return self.node_registry.total_main_nodes()
 
     def max_node_index(self) -> int:
         nodes = self.node_registry.main_chain_nodes()
-        return max((n["index"] for n in nodes), default=7)
+        return max((n["index"] for n in nodes), default=5)
 
     def main_chain_nodes(self) -> List[dict]:
         return self.node_registry.main_chain_nodes()
@@ -97,7 +119,13 @@ class FusionArtifactRegistry:
     def pipeline_result_sources(self) -> List[Dict[str, str]]:
         """主链节点 → pipeline_result 字段映射（按 website index 排序）。"""
         sources: List[Dict[str, str]] = []
-        for node in self.main_chain_nodes():
+        nodes = self.main_chain_nodes()
+        if not nodes:
+            nodes = [
+                {"index": idx, "fusion_node_id": fid}
+                for idx, fid in _DEFAULT_FUSION_ID_BY_INDEX.items()
+            ]
+        for node in nodes:
             artifact_key = self._fusion_primary.get(node.get("fusion_node_id") or "")
             if not artifact_key:
                 continue

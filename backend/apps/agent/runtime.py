@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from functools import lru_cache
+import time
 from typing import Any, Callable, Dict, List, Optional
 
 from django.utils.module_loading import import_string
@@ -14,6 +14,25 @@ logger = logging.getLogger(__name__)
 
 _RUNNER_IMPORT_PREFIX = AGENT_RUNNER_PREFIX
 _EMPTY_REGISTRY: Dict[str, Any] = {"agents": [], "_meta": {}, "_registry_source": "none"}
+_SCRIPT_FORGE_WORKSPACE_MAP: Dict[int, str] = {
+    1: "brief",
+    2: "structure",
+    3: "character",
+    4: "outline",
+    5: "script",
+}
+_SCRIPT_FORGE_AGENT_DEFS: Dict[str, Dict[str, Any]] = {
+    "brief": {"id": "brief", "name": "Brief Agent", "workspace_index": 1, "outputs": ["project_brief"]},
+    "structure": {"id": "structure", "name": "Structure Agent", "workspace_index": 2, "outputs": ["structure_plan"]},
+    "character": {"id": "character", "name": "Character Agent", "workspace_index": 3, "outputs": ["character_bible"]},
+    "outline": {"id": "outline", "name": "Outline Agent", "workspace_index": 4, "outputs": ["series_outline"]},
+    "script": {"id": "script", "name": "Script Agent", "workspace_index": 5, "outputs": ["episode_scripts"]},
+    "review": {"id": "review", "name": "Review Agent", "outputs": ["review_report"]},
+    "score": {"id": "score", "name": "Score Agent", "outputs": ["script_score_report"]},
+    "polish": {"id": "polish", "name": "Polish Agent", "outputs": ["episode_scripts", "polish_log"]},
+    "marketing": {"id": "marketing", "name": "Marketing Agent", "outputs": ["marketing_kit"]},
+    "insight": {"id": "insight", "name": "Insight Agent", "outputs": ["insight_report"]},
+}
 
 
 def _parse_meta_index_list(items: Any) -> Dict[int, str]:
@@ -84,13 +103,29 @@ def _get_agent_registry_impl() -> Dict[str, Any]:
     return dict(_EMPTY_REGISTRY)
 
 
-@lru_cache(maxsize=1)
+_REGISTRY_CACHE: Dict[str, Any] = {}
+_REGISTRY_CACHE_TTL = 60  # 秒，配置改动 60s 内生效，无需重启 worker
+_REGISTRY_CACHE_AT: float = 0.0
+
+
 def get_agent_registry() -> Dict[str, Any]:
-    return _get_agent_registry_impl()
+    global _REGISTRY_CACHE, _REGISTRY_CACHE_AT
+    now = time.monotonic()
+    if _REGISTRY_CACHE and (now - _REGISTRY_CACHE_AT) < _REGISTRY_CACHE_TTL:
+        return _REGISTRY_CACHE
+    data = _get_agent_registry_impl()
+    _REGISTRY_CACHE = data
+    _REGISTRY_CACHE_AT = now
+    return data
 
 
 def clear_agent_registry_cache() -> None:
-    get_agent_registry.cache_clear()
+    global _REGISTRY_CACHE, _REGISTRY_CACHE_AT
+    _REGISTRY_CACHE = {}
+    _REGISTRY_CACHE_AT = 0.0
+
+
+get_agent_registry.cache_clear = clear_agent_registry_cache  # type: ignore[attr-defined]
 
 
 def get_agent(agent_id: str) -> Optional[Dict[str, Any]]:
@@ -98,7 +133,8 @@ def get_agent(agent_id: str) -> Optional[Dict[str, Any]]:
     for agent in reg.get("agents") or []:
         if agent.get("id") == agent_id:
             return agent
-    return None
+    builtin = _SCRIPT_FORGE_AGENT_DEFS.get(str(agent_id or "").strip())
+    return dict(builtin) if builtin else None
 
 
 def primary_output_artifact(agent_id: str) -> str:
@@ -133,14 +169,12 @@ def resolve_agent_runner(agent_id: str) -> Optional[Callable[..., Any]]:
 def workspace_agent_map() -> Dict[int, str]:
     meta = get_agent_registry().get("_meta") or {}
     mapping = _parse_meta_index_list(meta.get("workspace_modules"))
-    if mapping:
+    if all(mapping.get(idx) == aid for idx, aid in _SCRIPT_FORGE_WORKSPACE_MAP.items()):
         return mapping
-    return _agents_workspace_index_mapping()
-
-
-def post_script_pipeline_index_map() -> Dict[int, str]:
-    meta = get_agent_registry().get("_meta") or {}
-    return _parse_meta_index_list(meta.get("post_script_pipeline_index"))
+    mapping = _agents_workspace_index_mapping()
+    if all(mapping.get(idx) == aid for idx, aid in _SCRIPT_FORGE_WORKSPACE_MAP.items()):
+        return mapping
+    return dict(_SCRIPT_FORGE_WORKSPACE_MAP)
 
 
 def workspace_index_for_agent(agent_id: str) -> Optional[int]:
@@ -156,7 +190,7 @@ def agent_for_workspace_index(node_index: int) -> Optional[str]:
 
 def agent_for_pipeline_node_index(node_index: int) -> Optional[str]:
     idx = int(node_index)
-    return workspace_agent_map().get(idx) or post_script_pipeline_index_map().get(idx)
+    return workspace_agent_map().get(idx)
 
 
 def pipeline_action_display_name(action_key: str) -> str:
@@ -194,34 +228,6 @@ def action_key_agent_meta(action_key: str) -> Dict[str, str]:
         "agent_name_zh": agent.get("name_zh") or aid,
         "pipeline_step": str(idx),
     }
-
-
-def post_script_chain() -> List[str]:
-    reg = get_agent_registry()
-    meta = reg.get("_meta") or {}
-    return list(meta.get("post_script_chain") or reg.get("post_script_chain") or [])
-
-
-def post_script_append_agents() -> List[str]:
-    meta = get_agent_registry().get("_meta") or {}
-    return list(meta.get("post_script_append_agents") or ["marketing"])
-
-
-def post_script_effective_chain() -> List[str]:
-    chain = list(post_script_chain() or [])
-    for agent_id in post_script_append_agents():
-        if agent_id and agent_id not in chain:
-            chain.append(agent_id)
-    return chain
-
-
-def should_defer_to_post_script_chain(project, node_index: int) -> bool:
-    """技能工作台：pipeline 尾部节点（质检/评分等）由 post_script_chain 统一执行。"""
-    from apps.creation.models import Project
-
-    if getattr(project, "pipeline_mode", None) != Project.MODE_WORKSPACE:
-        return False
-    return int(node_index) in post_script_pipeline_index_map()
 
 
 def polish_max_rounds() -> int:

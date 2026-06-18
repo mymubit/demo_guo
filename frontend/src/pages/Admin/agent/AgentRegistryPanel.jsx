@@ -229,24 +229,26 @@ export default function AgentRegistryPanel({ onMessage }) {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <label className="block md:col-span-2">
-                <span className={labelCls}>后处理链 post_script_chain（逗号分隔 agent id）</span>
+                <span className={labelCls}>显式后处理 Agent（只读）</span>
                 <input
-                  value={listToCsv(registryMeta.post_script_chain)}
-                  onChange={(e) => patchMeta('post_script_chain', csvToList(e.target.value))}
+                  value=""
+                  disabled
+                  onChange={() => {}}
                   className={inputCls}
-                  placeholder="review, polish, review, score"
+                  placeholder="removed: explicit user-triggered agents only"
                 />
                 <p className="text-[11px] text-navy-400 mt-1">
                   可重复同一 agent（如 polish 前后各 review 一次）；顺序即执行顺序。
                 </p>
               </label>
               <label className="block md:col-span-2">
-                <span className={labelCls}>剧本完成后追加 Agent（post_script_append_agents）</span>
+                <span className={labelCls}>主链完成后自动追加 Agent（已移除）</span>
                 <input
-                  value={listToCsv(registryMeta.post_script_append_agents)}
-                  onChange={(e) => patchMeta('post_script_append_agents', csvToList(e.target.value))}
+                  value=""
+                  disabled
+                  onChange={() => {}}
                   className={inputCls}
-                  placeholder="marketing"
+                  placeholder="removed"
                 />
               </label>
               <label className="block">

@@ -28,6 +28,18 @@ def agent_id_for_fusion_node(fusion_node_id: str) -> Optional[str]:
                 break
     except Exception as exc:  # noqa: BLE001
         logger.debug("[NodeBinding] fusion_node→agent failed %s: %s", key, exc)
+    try:
+        from apps.agent.runtime import agent_for_pipeline_node_index
+        from apps.workflow.models import FusionPipelineNode
+        from apps.workflow.pipeline_store import FusionPipelineDbService
+
+        pack = FusionPipelineDbService.get_active_pack()
+        if pack:
+            row = FusionPipelineNode.objects.filter(pack=pack, fusion_node_id=key).first()
+            if row and row.website_index:
+                return agent_for_pipeline_node_index(int(row.website_index))
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("[NodeBinding] active pack lookup failed %s: %s", key, exc)
     return None
 
 

@@ -1,28 +1,21 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 from django.core.management.base import BaseCommand
 
 from apps.workflow.pipeline_store import FusionPipelineDbService
 
 
 class Command(BaseCommand):
-    help = "从 FUSION_SKILL_ROOT 导入主链与 Schema 到数据库（Phase C）"
+    help = "Deprecated. Use absorb_external_assets and DB-only default pack."
 
     def add_arguments(self, parser):
-        parser.add_argument("--root", type=str, default="", help="技能包根目录，默认 FUSION_SKILL_ROOT")
-        parser.add_argument(
-            "--no-activate",
-            action="store_true",
-            help="导入后不设为 active",
-        )
+        return None
 
     def handle(self, *args, **options):
-        root = options.get("root") or None
-        activate = not options.get("no_activate")
-        pack_id = FusionPipelineDbService.import_from_disk(activate=activate, root=root)
+        pack = FusionPipelineDbService.ensure_builtin_default_pack()
         meta = FusionPipelineDbService.meta_payload()
         self.stdout.write(
             self.style.SUCCESS(
-                f"已导入配置包 {pack_id}，config_source={meta.get('config_source')} "
+                f"DB-only default pack ensured: {pack.id}; config_source={meta.get('config_source')} "
                 f"version={meta.get('db_version')} nodes={meta.get('node_count')}"
             )
         )

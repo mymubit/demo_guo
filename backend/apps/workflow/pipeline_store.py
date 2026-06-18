@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
-"""Phase C：主链 + Schema 数据库 SSOT（CLI 仍走 FUSION_SKILL_ROOT 磁盘）。"""
+﻿# -*- coding: utf-8 -*-
+"""Workflow and schema database SSOT for the ScriptForge runtime."""
 from __future__ import annotations
 
 import json
@@ -26,6 +26,74 @@ logger = logging.getLogger(__name__)
 
 
 class FusionPipelineDbService:
+    DEFAULT_MAIN_CHAIN: Tuple[Dict[str, Any], ...] = (
+        {
+            "fusion_node_id": "node_brief",
+            "name": "Brief",
+            "description": "Project brief",
+            "chain_order": 1,
+            "website_index": 1,
+            "runner_type": "fusion_node",
+            "skill_id": "creation.brief",
+            "artifact_key": "project_brief",
+            "pipeline_result_key": "project_brief",
+            "fusion_status": "draft",
+            "coin_cost": 10,
+        },
+        {
+            "fusion_node_id": "node_structure",
+            "name": "Structure",
+            "description": "Story structure plan",
+            "chain_order": 2,
+            "website_index": 2,
+            "runner_type": "fusion_node",
+            "skill_id": "creation.structure",
+            "artifact_key": "structure_plan",
+            "pipeline_result_key": "structure",
+            "fusion_status": "planning",
+            "coin_cost": 10,
+        },
+        {
+            "fusion_node_id": "node_character",
+            "name": "Character",
+            "description": "Character bible",
+            "chain_order": 3,
+            "website_index": 3,
+            "runner_type": "fusion_node",
+            "skill_id": "creation.character",
+            "artifact_key": "character_bible",
+            "pipeline_result_key": "characters",
+            "fusion_status": "planning",
+            "coin_cost": 10,
+        },
+        {
+            "fusion_node_id": "node_outline",
+            "name": "Outline",
+            "description": "Episode outline",
+            "chain_order": 4,
+            "website_index": 4,
+            "runner_type": "fusion_node",
+            "skill_id": "creation.outline",
+            "artifact_key": "series_outline",
+            "pipeline_result_key": "outlines",
+            "fusion_status": "planning",
+            "coin_cost": 20,
+        },
+        {
+            "fusion_node_id": "node_script",
+            "name": "Script",
+            "description": "Episode scripts",
+            "chain_order": 5,
+            "website_index": 5,
+            "runner_type": "fusion_node",
+            "skill_id": "creation.script",
+            "artifact_key": "episode_scripts",
+            "pipeline_result_key": "scripts",
+            "fusion_status": "writing",
+            "coin_cost": 30,
+        },
+    )
+
     @classmethod
     @lru_cache(maxsize=1)
     def fusion_node_columns(cls) -> frozenset[str]:
@@ -53,7 +121,7 @@ class FusionPipelineDbService:
 
     @classmethod
     def disk_fallback_enabled(cls) -> bool:
-        return bool(getattr(settings, "FUSION_CONFIG_DISK_FALLBACK", True))
+        return False
 
     @classmethod
     def get_active_pack(cls):
@@ -76,13 +144,86 @@ class FusionPipelineDbService:
         if pack is None:
             return False
         try:
-            return pack.nodes.exists()
+            expected = [item["fusion_node_id"] for item in cls.DEFAULT_MAIN_CHAIN]
+            actual = list(
+                pack.nodes.filter(enabled=True, portal_visible=True)
+                .order_by("chain_order")
+                .values_list("fusion_node_id", flat=True)
+            )
+            return actual == expected and list(pack.terminal_node_ids or []) == ["node_script"]
         except Exception:  # noqa: BLE001
             return False
 
     @classmethod
     def should_use_db(cls) -> bool:
         return cls.db_config_enabled() and cls.has_active_nodes()
+
+    @classmethod
+    @transaction.atomic
+    def ensure_builtin_default_pack(cls):
+        """Create the DB-only 5-step default pack without reading external assets."""
+        from apps.workflow.models import FusionPipelineNode, FusionPipelinePack
+
+        pack, _ = FusionPipelinePack.objects.update_or_create(
+            slug="short-drama-v1",
+            defaults={
+                "version": "short-drama-v1.0",
+                "display_name": "鐭墽鍒涗綔鏍囧噯娴佺▼ v1",
+                "description": "鐭墽鍓ф湰鍒涗綔鏍囧噯宸ヤ綔娴侊細绔嬮」 鈫?缁撴瀯 鈫?瑙掕壊 鈫?澶х翰 鈫?鍓ф湰",
+                "is_active": True,
+                "is_published_to_portal": True,
+                "is_default_for_creation": True,
+                "pack_status": "active",
+                "gray_weight": 100,
+                "terminal_node_ids": ["node_script"],
+                "post_script_chain": [],
+                "engine_config": {
+                    "enabled": True,
+                    "max_retries": 3,
+                    "timeout_seconds": 1800,
+                    "heartbeat_interval_seconds": 60,
+                },
+            },
+        )
+        FusionPipelinePack.objects.exclude(pk=pack.pk).filter(is_active=True).update(is_active=False)
+        keep_ids = [item["fusion_node_id"] for item in cls.DEFAULT_MAIN_CHAIN]
+        FusionPipelineNode.objects.filter(pack=pack).exclude(fusion_node_id__in=keep_ids).delete()
+        for item in cls.DEFAULT_MAIN_CHAIN:
+            FusionPipelineNode.objects.update_or_create(
+                pack=pack,
+                fusion_node_id=item["fusion_node_id"],
+                defaults={
+                    "name": item["name"],
+                    "description": item["description"],
+                    "chain_order": item["chain_order"],
+                    "website_index": item["website_index"],
+                    "runner_type": item["runner_type"],
+                    "runner_path": "",
+                    "skill_id": item["skill_id"],
+                    "output_key": item["artifact_key"],
+                    "artifact_key": item["artifact_key"],
+                    "pipeline_result_key": item["pipeline_result_key"],
+                    "extra_artifact_keys": [],
+                    "is_terminal": item["fusion_node_id"] == "node_script",
+                    "fusion_status": item["fusion_status"],
+                    "enabled": True,
+                    "requires_confirm": True,
+                    "portal_visible": True,
+                    "coin_cost": item["coin_cost"],
+                    "runtime_config": {
+                        "timeout_seconds": 600,
+                        "retry_policy": {
+                            "max_retries": 3,
+                            "backoff": "exponential",
+                            "base_seconds": 2,
+                        },
+                        "allow_skip": False,
+                        "is_checkpoint": True,
+                    },
+                },
+            )
+        cls.clear_caches()
+        return pack
 
     @classmethod
     def config_source(cls) -> str:
@@ -125,7 +266,7 @@ class FusionPipelineDbService:
 
     @classmethod
     def resolve_pack_for_creation(cls, pack_id: Optional[str] = None):
-        """创作提交：显式 pack > 默认 > 已发布 > 当前编辑中。"""
+        """Resolve the workflow pack for a new creation."""
         from apps.workflow.models import FusionPipelinePack
 
         if pack_id:
@@ -321,7 +462,7 @@ class FusionPipelineDbService:
 
     @classmethod
     def resolve_schema_file(cls, schema_file: str) -> Optional[str]:
-        """校验时仍用 filename 形态，内部走 DB。"""
+        """Resolve schema filenames through DB only."""
         if not cls.should_use_db():
             return schema_file
         rel = schema_file.replace("schemas/", "")
@@ -334,10 +475,6 @@ class FusionPipelineDbService:
         if not skill_root:
             return ""
         normalized = skill_root.replace("\\", "/")
-        marker = "short-drama-script-creator"
-        idx = normalized.find(marker)
-        if idx >= 0:
-            return normalized[idx:]
         parts = [part for part in normalized.rstrip("/").split("/") if part]
         if len(parts) >= 2:
             return "/".join(parts[-2:])
@@ -352,7 +489,7 @@ class FusionPipelineDbService:
 
             skill_root = str(resolve_skill_root())
         except Exception:  # noqa: BLE001
-            skill_root = getattr(settings, "FUSION_SKILL_ROOT", "") or ""
+            skill_root = ""
 
         node_count = pack.nodes.count() if pack else 0
         db_version = pack.version if pack else None
@@ -403,7 +540,7 @@ class FusionPipelineDbService:
                 data = json.loads(path.read_text(encoding="utf-8"))
                 stem = path.stem.replace(".schema", "")
                 schema_key = stem.replace("-", "_")
-                # schema_key 全局唯一；多 Pack 同步时按 key 合并，避免重复插入
+                # schema_key 鍏ㄥ眬鍞竴锛涘 Pack 鍚屾鏃舵寜 key 鍚堝苟锛岄伩鍏嶉噸澶嶆彃鍏?
                 row, _ = FusionJsonSchema.objects.update_or_create(
                     schema_key=schema_key,
                     defaults={
@@ -432,7 +569,7 @@ class FusionPipelineDbService:
                 {"tier1_sections": list(tier1_sections)},
             )
         except Exception as exc:  # noqa: BLE001
-            logger.debug("[FusionPipelineDb] tier1→agent skipped %s: %s", node_id, exc)
+            logger.debug("[FusionPipelineDb] tier1鈫抋gent skipped %s: %s", node_id, exc)
 
     @classmethod
     def _structural_node_fields(
@@ -485,190 +622,17 @@ class FusionPipelineDbService:
 
     @classmethod
     @transaction.atomic
-    def sync_from_disk(cls, *, root: Optional[str] = None) -> None:
-        """从磁盘 project-config 合并结构字段；保留已有步骤的运营/LLM 配置。"""
-        from apps.workflow.models import FusionPipelineNode, FusionPipelinePack
-
-        pack = cls.get_active_pack()
-        if pack is None:
-            cls.import_from_disk(activate=True, root=root)
-            return
-
-        skill_root, cfg, main_chain, terminal_nodes, project_meta = cls._load_project_config(root)
-        pack.terminal_node_ids = terminal_nodes
-        pack.project_meta = project_meta
-        pack.imported_from_root = str(skill_root)
-        pack.save(update_fields=["terminal_node_ids", "project_meta", "imported_from_root", "updated_at"])
-
-        schema_by_filename = cls._schema_rows_for_pack(pack, skill_root)
-        main_chain_set = {str(node_id).strip() for node_id in main_chain if str(node_id).strip()}
-        existing = {
-            row.fusion_node_id: row
-            for row in FusionPipelineNode.objects.filter(pack=pack).select_related("schema")
-        }
-        seen_ids: set[str] = set()
-
-        # 先删 SSOT 主链外的占位/测试节点，避免 chain_order 与新建步骤冲突
-        orphan_ids = [fid for fid in existing if fid not in main_chain_set]
-        if orphan_ids:
-            removed, _ = FusionPipelineNode.objects.filter(
-                pack=pack, fusion_node_id__in=orphan_ids
-            ).delete()
-            logger.info("sync_from_disk removed orphan nodes: %s", removed)
-            existing = {
-                row.fusion_node_id: row
-                for row in FusionPipelineNode.objects.filter(pack=pack).select_related("schema")
-            }
-
-        # 两阶段 chain_order：主链步骤先写入独立临时区间，再归一化为 1..N
-        temp_base = 10_000
-        upsert_temp_base = 20_000
-        temp_rows: list[FusionPipelineNode] = []
-        for idx, row in enumerate(
-            FusionPipelineNode.objects.filter(pack=pack).order_by("chain_order", "fusion_node_id")
-        ):
-            row.chain_order = temp_base + idx
-            temp_rows.append(row)
-        if temp_rows:
-            FusionPipelineNode.objects.bulk_update(temp_rows, ["chain_order", "updated_at"])
-
-        upsert_rows: list[FusionPipelineNode] = []
-        create_rows: list[FusionPipelineNode] = []
-
-        for order, node_id in enumerate(main_chain, start=1):
-            fields = cls._structural_node_fields(
-                cfg=cfg,
-                node_id=node_id,
-                order=order,
-                schema_by_filename=schema_by_filename,
-                terminal_nodes=terminal_nodes,
-            )
-            if not fields:
-                continue
-            seen_ids.add(node_id)
-            ops = fields.pop("_ops_defaults", {})
-            fields["chain_order"] = upsert_temp_base + order
-            row = existing.get(node_id)
-            if row:
-                row.chain_order = fields["chain_order"]
-                row.website_index = fields["website_index"]
-                row.description = fields["description"]
-                row.runner_type = fields["runner_type"]
-                row.runner_path = fields["runner_path"]
-                row.output_key = fields["output_key"]
-                row.artifact_key = fields["artifact_key"]
-                row.pipeline_result_key = fields["pipeline_result_key"]
-                row.extra_artifact_keys = fields["extra_artifact_keys"]
-                row.schema = fields["schema"]
-                row.is_terminal = fields["is_terminal"]
-                row.fusion_status = fields["fusion_status"]
-                upsert_rows.append(row)
-            else:
-                create_rows.append(
-                    FusionPipelineNode(
-                        pack=pack,
-                        enabled=True,
-                        requires_confirm=True,
-                        portal_visible=bool(ops.get("portal_visible", True)),
-                        coin_cost=int(ops.get("coin_cost", 10)),
-                        **fields,
-                    )
-                )
-
-        if upsert_rows:
-            FusionPipelineNode.objects.bulk_update(
-                upsert_rows,
-                [
-                    "chain_order",
-                    "website_index",
-                    "description",
-                    "runner_type",
-                    "runner_path",
-                    "output_key",
-                    "artifact_key",
-                    "pipeline_result_key",
-                    "extra_artifact_keys",
-                    "schema",
-                    "is_terminal",
-                    "fusion_status",
-                    "updated_at",
-                ],
-            )
-        if create_rows:
-            FusionPipelineNode.objects.bulk_create(create_rows)
-
-        final_rows: list[FusionPipelineNode] = []
-        for order, node_id in enumerate(main_chain, start=1):
-            if node_id not in seen_ids:
-                continue
-            row = FusionPipelineNode.objects.filter(pack=pack, fusion_node_id=node_id).first()
-            if not row:
-                continue
-            row.chain_order = order
-            final_rows.append(row)
-        if final_rows:
-            FusionPipelineNode.objects.bulk_update(final_rows, ["chain_order", "updated_at"])
-
-        cls.clear_caches()
-        logger.info("sync_from_disk pack=%s nodes=%s", pack.version, len(seen_ids))
+    def removed_disk_sync(cls, *, root: Optional[str] = None) -> None:
+        raise RuntimeError("disk sync has been removed; run absorb_external_assets instead")
 
     @classmethod
     @transaction.atomic
-    def import_from_disk(cls, *, activate: bool = True, root: Optional[str] = None) -> str:
-        from apps.workflow.models import FusionJsonSchema, FusionPipelineNode, FusionPipelinePack
-
-        skill_root, cfg, main_chain, terminal_nodes, project_meta = cls._load_project_config(root)
-        version = cfg.version or "unknown"
-
-        pack, _ = FusionPipelinePack.objects.update_or_create(
-            version=version,
-            defaults={
-                "display_name": cfg.version or version,
-                "terminal_node_ids": terminal_nodes,
-                "project_meta": project_meta,
-                "imported_from_root": str(skill_root),
-                "notes": "import_from_disk",
-            },
-        )
-        cls._hydrate_pack_from_registry_meta(pack)
-
-        FusionPipelineNode.objects.filter(pack=pack).delete()
-        FusionJsonSchema.objects.filter(pack=pack).delete()
-
-        schema_by_filename = cls._schema_rows_for_pack(pack, skill_root)
-
-        for order, node_id in enumerate(main_chain, start=1):
-            fields = cls._structural_node_fields(
-                cfg=cfg,
-                node_id=node_id,
-                order=order,
-                schema_by_filename=schema_by_filename,
-                terminal_nodes=terminal_nodes,
-            )
-            if not fields:
-                continue
-            ops = fields.pop("_ops_defaults", {})
-            FusionPipelineNode.objects.create(
-                pack=pack,
-                enabled=True,
-                requires_confirm=True,
-                portal_visible=bool(ops.get("portal_visible", True)),
-                coin_cost=int(ops.get("coin_cost", 10)),
-                **fields,
-            )
-
-        if activate:
-            FusionPipelinePack.objects.exclude(pk=pack.pk).update(is_active=False)
-            pack.is_active = True
-            pack.save(update_fields=["is_active", "updated_at"])
-
-        cls.clear_caches()
-        logger.info("import_from_disk pack=%s nodes=%s schemas=%s", version, pack.nodes.count(), len(schema_by_filename))
-        return str(pack.id)
+    def removed_disk_import(cls, *, activate: bool = True, root: Optional[str] = None) -> str:
+        raise RuntimeError("disk import has been removed; run absorb_external_assets instead")
 
     @classmethod
     def _hydrate_pack_from_registry_meta(cls, pack) -> None:
-        """首次导入时，将 Registry _meta 中的 flow_graph / post_script_chain 迁入 Pack。"""
+        """Hydrate optional pack metadata from the DB agent registry."""
         if not pack:
             return
         update_fields: List[str] = []
@@ -682,8 +646,8 @@ class FusionPipelineDbService:
         if not pack.flow_graph and isinstance(meta.get("flow_graph"), dict):
             pack.flow_graph = dict(meta.get("flow_graph") or {})
             update_fields.append("flow_graph")
-        if not pack.post_script_chain and isinstance(meta.get("post_script_chain"), list):
-            pack.post_script_chain = list(meta.get("post_script_chain") or [])
+        if pack.post_script_chain:
+            pack.post_script_chain = []
             update_fields.append("post_script_chain")
         if not pack.display_name:
             pack.display_name = pack.version
@@ -711,11 +675,11 @@ class FusionPipelineDbService:
         new_version = f"{source.version}-copy-{suffix}"
         new_pack = FusionPipelinePack.objects.create(
             version=new_version,
-            display_name=(display_name or f"{source.display_name or source.version} 副本").strip()[:128],
+            display_name=(display_name or f"{source.display_name or source.version} 鍓湰").strip()[:128],
             description=source.description or "",
             slug=(slug or "").strip()[:64] or None,
             flow_graph=dict(source.flow_graph or {}),
-            post_script_chain=list(source.post_script_chain or []),
+            post_script_chain=[],
             terminal_node_ids=list(source.terminal_node_ids or []),
             project_meta=dict(source.project_meta or {}),
             imported_from_root=source.imported_from_root or "",
@@ -772,12 +736,8 @@ class FusionPipelineDbService:
             raw = data.get("flow_graph")
             pack.flow_graph = raw if isinstance(raw, dict) else {}
             update_fields.append("flow_graph")
-        if "post_script_chain" in data:
-            pack.post_script_chain = [
-                str(item).strip()
-                for item in (data.get("post_script_chain") or [])
-                if str(item).strip()
-            ]
+        if pack.post_script_chain:
+            pack.post_script_chain = []
             update_fields.append("post_script_chain")
         if "is_published_to_portal" in data:
             pack.is_published_to_portal = bool(data.get("is_published_to_portal"))
@@ -858,3 +818,7 @@ class FusionPipelineDbService:
             "imported_from_root": pack.imported_from_root,
             "updated_at": pack.updated_at,
         }
+
+
+
+

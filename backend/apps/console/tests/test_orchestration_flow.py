@@ -51,7 +51,6 @@ class OrchestrationFlowApiTests(TestCase):
         resp = self.client.put(
             "/api/admin/orchestration/flow/registry-meta/",
             {
-                "post_script_chain": ["review", "score"],
                 "flow_graph": {
                     "edges": [{"from": "node-a", "to": "node-b", "type": "sequential"}],
                     "parallel_groups": [],
@@ -60,7 +59,8 @@ class OrchestrationFlowApiTests(TestCase):
             format="json",
         )
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.data["data"]["post_script_chain"], ["review", "score"])
+        self.assertNotIn("post_script_chain", resp.data["data"])
+        self.assertEqual(resp.data["data"]["explicit_post_agents"], ["review", "score", "polish", "marketing", "insight"])
         self.assertIn("edges", resp.data["data"]["flow_graph"])
 
     def test_flow_publish_and_publish_state(self):

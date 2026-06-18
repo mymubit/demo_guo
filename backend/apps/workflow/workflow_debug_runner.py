@@ -57,9 +57,6 @@ class WorkflowDebugRunner:
     # 粗略的节点类型系数（用于估算耗时/金币）
     _RUNNER_PROFILE = {
         "fusion_node":   {"seconds": 30,  "coin": 30},
-        "fusion_review": {"seconds": 20,  "coin": 15},
-        "fusion_score":  {"seconds": 10,  "coin": 5},
-        "agent_chain":   {"seconds": 15,  "coin": 10},
         "parallel_group": {"seconds": 25, "coin": 20},  # 串行模拟
         "iterate_loop": {"seconds": 30, "coin": 25},
         "human_gate":   {"seconds": 60,  "coin": 0},

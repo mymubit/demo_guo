@@ -16,7 +16,15 @@ class ReferenceLibraryTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        ReferenceLibraryService.import_from_disk(overwrite=True)
+        from django.core.management import call_command
+
+        call_command(
+            "absorb_external_assets",
+            source=["demo4book", "ai-drama-skills-v2"],
+            write=True,
+            overwrite=True,
+            verbosity=0,
+        )
         ReferenceLibraryService.clear_cache()
 
     def test_summarize_libraries_non_empty(self):

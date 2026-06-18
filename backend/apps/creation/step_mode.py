@@ -22,8 +22,6 @@ _artifact_reg = get_artifact_registry()
 _STEP_RUNNER_IMPORT_PREFIX = "apps.creation."
 _RUNNER_PATH_BY_TYPE = {
     "fusion_node": "apps.creation.step_mode.run_orchestrator_step",
-    "fusion_review": "apps.creation.step_mode.run_fusion_review_step",
-    "fusion_score": "apps.creation.step_mode.run_fusion_score_step",
 }
 
 
@@ -52,13 +50,7 @@ def runner_type_for_node(node_index: int) -> str:
     runner_type = FusionNodeRegistry().runner_type_for_index(node_index)
     if runner_type:
         return runner_type
-    if int(node_index) <= 5:
-        return "fusion_node"
-    if int(node_index) == 6:
-        return "fusion_review"
-    if int(node_index) == 7:
-        return "fusion_score"
-    return ""
+    return "fusion_node" if int(node_index) <= 5 else ""
 
 
 def runner_path_for_node(node_index: int) -> str:
@@ -173,110 +165,8 @@ def _workspace_node_to_skill_id(node_index: int) -> str:
     return workspace_node_to_skill_id(node_index)
 
 
-def _invoke_post_skill(project: Project, agent_id: str) -> Dict[str, Any]:
-    """post-script 节点：优先 registry Agent 编排，回退扁平 SkillInvoker。"""
-    from .orchestration.polish import run_polish_agent
-    from .orchestration.review import run_review_agent
-    from .orchestration.score import run_score_agent
-    from .orchestration.types import AgentResult
-
-    runners = {
-        "review": run_review_agent,
-        "polish": run_polish_agent,
-        "score": run_score_agent,
-    }
-    runner = runners.get(agent_id)
-    if runner:
-        result: AgentResult = runner(project)
-        fusion_ok = result.status in {"completed", "skipped"}
-        return {
-            "status": "completed" if fusion_ok else "error",
-            "agent_id": agent_id,
-            "outputs": result.outputs or {},
-            "errors": list(result.errors or []),
-            "meta": {
-                **(result.meta or {}),
-                "fusion": {
-                    "ok": fusion_ok,
-                    "skipped": result.status == "skipped",
-                    "error": "; ".join(result.errors or [])[:200],
-                },
-            },
-        }
-
-    from apps.skill.skills.invoker import get_skill_invoker
-    from .skill_invoke_payload import build_creation_skill_invoke_payload
-
-    skill_id = f"creation.{agent_id}"
-    skill_result = get_skill_invoker().invoke(
-        skill_id=skill_id,
-        payload=build_creation_skill_invoke_payload(project, skill_id),
-        project_id=str(project.id),
-        user_id=project.user_id,
-    )
-    if skill_result.success:
-        return {
-            "status": "completed",
-            "agent_id": agent_id,
-            "outputs": skill_result.data or {},
-            "errors": [],
-            "meta": {
-                "fusion": {"ok": True, "skipped": False, "error": ""},
-                "skill_id": skill_id,
-                "trace_id": skill_result.trace_id,
-            },
-        }
-    return {
-        "status": "error",
-        "agent_id": agent_id,
-        "outputs": {},
-        "errors": [skill_result.error.get("message", "skill invoker failed")],
-        "meta": {
-            "fusion": {"ok": False, "skipped": False, "error": skill_result.error.get("message", "")},
-            "skill_id": skill_id,
-            "trace_id": skill_result.trace_id,
-        },
-    }
-
-
-def _post_skill_to_fusion_step(result: Dict[str, Any], node_index: int) -> Dict[str, Any]:
-    """将 SkillInvoker 结果转 step_mode 期望的 fusion post-step 格式。"""
-    if result.get("status") == "error":
-        return {"status": "error", "errors": list(result.get("errors") or ["执行失败"])}
-    fusion = (result.get("meta") or {}).get("fusion") or {}
-    return {
-        "status": "completed",
-        "node_index": int(node_index),
-        "agent_id": result.get("agent_id", ""),
-        "ok": bool(fusion.get("ok", True)),
-        "skipped": bool(fusion.get("skipped")),
-        "error": fusion.get("error") or "",
-    }
-
-
-def run_fusion_review_step(project: Project, node_index: int) -> Dict[str, Any]:
-    from apps.agent.runtime import agent_for_pipeline_node_index
-
-    agent_id = agent_for_pipeline_node_index(int(node_index)) or "review"
-    result = _invoke_post_skill(project, agent_id)
-    return _post_skill_to_fusion_step(result, int(node_index))
-
-
-def run_fusion_score_step(project: Project, node_index: int) -> Dict[str, Any]:
-    from apps.agent.runtime import agent_for_pipeline_node_index
-
-    agent_id = agent_for_pipeline_node_index(int(node_index)) or "score"
-    result = _invoke_post_skill(project, agent_id)
-    return _post_skill_to_fusion_step(result, int(node_index))
-
-
 def run_fusion_step(project: Project, node_index: int, runner_type: Optional[str] = None) -> Dict[str, Any]:
-    runner = runner_type or runner_type_for_node(node_index)
-    if runner == "fusion_review":
-        return run_fusion_review_step(project, node_index)
-    if runner == "fusion_score":
-        return run_fusion_score_step(project, node_index)
-    raise ValueError(f"节点 {node_index} 未配置融合后处理 runner")
+    raise ValueError("fusion post-processing runners have been removed; use work agent run endpoint")
 
 
 def charge_node_success(project: Project, node_index: int) -> None:
@@ -322,11 +212,6 @@ def execute_step(project: Project, node_index: int) -> Dict[str, Any]:
     out = runner(project, node_index)
     if out.get("status") == "error":
         return out
-    if runner_type in {"fusion_review", "fusion_score"}:
-        if not out.get("ok") and not out.get("skipped"):
-            err = out.get("error") or "融合后处理失败"
-            return {"status": "error", "errors": [err]}
-
     try:
         charge_node_success(project, node_index)
     except Exception as exc:  # noqa: BLE001

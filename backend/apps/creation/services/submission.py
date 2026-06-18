@@ -15,6 +15,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 
 from apps.membership.services import MembershipService
+from apps.skill.skills.invoker import get_skill_invoker
 
 from ..models import CreationNode, Project
 from ._helpers import _get_user_project
@@ -152,8 +153,6 @@ def submit(user, data: dict) -> Tuple[Project, int]:
     # ── Adapt 预处理（保留）
     try:
         from apps.skill.config.portal.creation_form import CreationFormOverrideService
-        from apps.skill.skills.invoker import get_skill_invoker
-
         requires_adapt = CreationFormOverrideService.creation_entry_requires_adapt(
             project.creation_entry or "from-scratch"
         )

@@ -10,17 +10,15 @@ from ..dialogue_shaper import apply_dialogue_shaper
 from ..ip_lock import run_script_ip_lock
 from ..models import Project
 from ..workspace.workspace_editor import _mark_skill_has_content, compute_script_batch_range
-from .agent_common import build_standard_upstream, fusion_work_dir, load_project_brief, merge_episodes_by_number, write_json_artifact
+from .agent_common import build_standard_upstream, load_project_brief, merge_episodes_by_number
 from .agent_detection import run_creator_quality_guard
 from .agent_llm import run_sub_skill_llm
 from .agent_payload import coerce_script_chunk
 from .sub_skill_runner import (
     agent_execution_meta,
-    cli_episode_gate,
     inject_knowledge_upstream,
     mark_executed,
     persist_execution_trace,
-    unwrap_fusion_cli_result,
 )
 from .types import AgentResult
 
@@ -56,12 +54,9 @@ def _run_episode_gates(
     ep_from: int,
     ep_to: int,
 ) -> dict:
-    from apps.workflow.fusion import FusionCliRunner, get_fusion_config
+    from apps.creation.validators import validate_episode
 
-    work_dir = fusion_work_dir(project)
-    outline_path = work_dir / "series-outline.gate.json"
-    write_json_artifact(outline_path, outline)
-    runner = FusionCliRunner(get_fusion_config())
+    outline_episodes = outline.get("episodes") or []
     gate_logs: List[dict] = []
     passed_all = True
     for ep in scripts.get("episodes") or []:
@@ -70,18 +65,10 @@ def _run_episode_gates(
         num = int(ep.get("episodeNumber") or ep.get("episode") or 0)
         if num < ep_from or num > ep_to:
             continue
-        script_path = work_dir / f"episode-{num}.gate.md"
-        script_path.write_text(_episode_script_to_markdown(ep), encoding="utf-8")
-        cli_raw = cli_episode_gate(
-            runner,
-            script_path,
-            episode=num,
-            outline_path=outline_path if outline_path.is_file() else None,
-            strict=False,
-        )
-        payload = unwrap_fusion_cli_result(cli_raw)
-        gate_logs.append({"episodeNumber": num, **payload})
-        if payload.get("passed") is False:
+        result = validate_episode(ep, outline_episodes=outline_episodes if outline_episodes else None)
+        payload = {**result.to_dict(), "episodeNumber": num}
+        gate_logs.append(payload)
+        if not result.passed:
             passed_all = False
     return {"passed": passed_all, "episodes": gate_logs}
 
@@ -154,8 +141,6 @@ def run_script_agent(
     except Exception as exc:  # noqa: BLE001
         logger.warning("[ScriptAgent] dialogue-shaper skipped: %s", exc)
 
-    mark_executed(executed, "psychology-advisor")
-
     try:
         quality = run_creator_quality_guard(scripts)
         scripts["creatorQualityLog"] = quality
@@ -166,8 +151,6 @@ def run_script_agent(
                 errors.append("; ".join(str(i) for i in ep_issues[:2]))
     except Exception as exc:  # noqa: BLE001
         logger.warning("[ScriptAgent] creator-quality-guard skipped: %s", exc)
-
-    mark_executed(executed, "script-formatter-lite")
 
     try:
         gate = _run_episode_gates(
@@ -188,8 +171,6 @@ def run_script_agent(
         mark_executed(executed, "ip-script-lock")
     except Exception as exc:  # noqa: BLE001
         logger.warning("[ScriptAgent] ip-script-lock skipped: %s", exc)
-
-    mark_executed(executed, "originality-gate")
 
     try:
         scripts.setdefault("projectId", str(project.id))

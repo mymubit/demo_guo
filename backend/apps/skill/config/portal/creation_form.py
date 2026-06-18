@@ -450,6 +450,10 @@ class CreationFormOverrideService:
                     continue
                 base = profiles.get(key, DEFAULT_CREATION_ENTRY_PROFILES.get("from-scratch", {}))
                 profiles[key] = CreationFormOverrideService._deep_merge(base, value)
+        if "from-reference" in profiles:
+            show = dict((profiles["from-reference"].get("show") or {}))
+            show["referenceBlock"] = "required"
+            profiles["from-reference"]["show"] = show
         return profiles
 
     @classmethod

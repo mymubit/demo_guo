@@ -56,15 +56,12 @@ def build_standard_upstream(
     series_outline = (
         series_outline if series_outline is not None else (get_artifact(project, "series_outline") or {})
     )
+    # 只发 camelCase（LLM 端约定格式），不重复发 snake_case，避免 token 双倍浪费
     return {
         "projectBrief": brief,
-        "project_brief": brief,
         "structurePlan": structure,
-        "structure_plan": structure,
         "characterBible": character_bible,
-        "character_bible": character_bible,
         "seriesOutline": series_outline,
-        "series_outline": series_outline,
         "theme": project.theme or brief.get("theme") or "",
         "episodeCount": project.episode_count or brief.get("episodeCount"),
     }
