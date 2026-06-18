@@ -1,12 +1,11 @@
-import { useEffect, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { Coins, Loader2 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useWalletStore } from '@/store/walletStore'
 
 export default function WalletBadge({ className = '', compact = false }) {
   const { isAuthenticated } = useAuthStore()
-  const location = useLocation()
   const { wallet, loading, fetchWallet, clearWallet } = useWalletStore()
 
   useEffect(() => {
@@ -15,7 +14,7 @@ export default function WalletBadge({ className = '', compact = false }) {
       return
     }
     fetchWallet()
-  }, [isAuthenticated, location.pathname, fetchWallet, clearWallet])
+  }, [isAuthenticated, fetchWallet, clearWallet])
 
   if (!isAuthenticated) return null
 

@@ -1,15 +1,20 @@
 import { request } from './http'
 import { DEFAULT_PAYMENT_METHOD } from './billing'
 import { normalizeOrder } from './adapters/businessAdapters'
-import { coerceUnwrappedArray } from './adapters/listAdapter'
+import { normalizeListResult } from './adapters/listAdapter'
 
 export const orders = {
   /** 订单列表，可选按状态过滤 status: 'paid' | 'pending' | 'cancelled' */
-  async list(status) {
+  async list(status, { page = 1, pageSize = 10 } = {}) {
     const data = await request('GET', '/api/orders/', {
-      params: status ? { status } : undefined,
+      params: {
+        ...(status ? { status } : {}),
+        page,
+        page_size: pageSize,
+      },
     })
-    return coerceUnwrappedArray(data, normalizeOrder)
+    const result = normalizeListResult(data, normalizeOrder)
+    return { items: result.items, pagination: result.pagination }
   },
   async detail(orderId) {
     const data = await request('GET', `/api/orders/${orderId}/`)

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { normalizeMembership, normalizeOrder, normalizeWorkItem } from './businessAdapters'
+import { normalizeMembership, normalizeOrder, normalizeWorkItem, normalizeWorkDetail } from './businessAdapters'
 
 describe('normalizeMembership', () => {
   it('maps plan and wallet fields', () => {
@@ -45,5 +45,29 @@ describe('normalizeWorkItem', () => {
     expect(out.episodes).toBe(12)
     expect(out.idea).toBe('核心创意')
     expect(out.createdAt).toBeTruthy()
+  })
+})
+
+describe('normalizeWorkDetail', () => {
+  it('maps fusion_snapshot fields to camelCase views', () => {
+    const out = normalizeWorkDetail({
+      project_id: 'p-2',
+      title: '详情作品',
+      status: 'completed',
+      overall_score: 90,
+      grade: 'A',
+      fusion_snapshot: {
+        scoreReport: { overallScore: 90, grade: 'A' },
+        gateSummary: { passed: 8, total: 10 },
+        reviewReport: { passed: true, issues: [] },
+        marketingKit: { titles: ['宣发标题'] },
+        projectBrief: { workingTitle: '测试剧' },
+      },
+    })
+    expect(out.scoreReport.overallScore).toBe(90)
+    expect(out.gateSummary.passed).toBe(8)
+    expect(out.reviewReport.passed).toBe(true)
+    expect(out.marketingKit.titles).toEqual(['宣发标题'])
+    expect(out.projectBrief.workingTitle).toBe('测试剧')
   })
 })

@@ -379,7 +379,15 @@ export async function request(
       })
     }
 
-    // fetch fallback
+    if (import.meta.env.PROD) {
+      throw createApiError({
+        code: 0,
+        message: 'HTTP 客户端未就绪，请刷新页面后重试',
+        status: 503,
+      })
+    }
+
+    // 开发环境 fetch fallback（axios 加载失败时）
     const token = getAccessToken()
     const url = new URL(API_BASE_URL + path)
     if (params) {

@@ -7,6 +7,10 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json-summary'],
+    },
   },
   resolve: {
     alias: {
@@ -36,7 +40,8 @@ export default defineConfig({
       output: {
         manualChunks: {
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'state-vendor': ['zustand'],
+          'state-vendor': ['zustand', '@tanstack/react-query'],
+          'motion-vendor': ['framer-motion'],
           echarts: ['echarts', 'echarts/core', 'echarts/charts', 'echarts/components', 'echarts/renderers'],
           'echarts-react': ['echarts-for-react'],
         },

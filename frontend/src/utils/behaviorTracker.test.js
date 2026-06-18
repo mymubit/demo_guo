@@ -24,10 +24,12 @@ import { request } from '@/services/http'
 const ENDPOINT = '/api/operations/track/'
 
 beforeEach(() => {
-  // 清理 sessionStorage
   if (typeof window !== 'undefined') {
     window.sessionStorage?.clear()
-    document.referrer = ''
+    Object.defineProperty(document, 'referrer', {
+      configurable: true,
+      value: '',
+    })
   }
   vi.clearAllMocks()
   __test.ensureSessionId()
@@ -83,7 +85,7 @@ describe('payload 透传', () => {
     trackBehavior('node_edited', { projectId: 'p1' })
     await new Promise((r) => setTimeout(r, 10))
     const args = request.mock.calls[0]
-    const data = args[1].data
+    const data = args[2].data
     expect(data.session_id).toBeTruthy()
     expect(data.project_id).toBe('p1')
     expect(typeof data.page).toBe('string')

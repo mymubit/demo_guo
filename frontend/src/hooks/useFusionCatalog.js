@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { creation } from '@/services/api'
 import { PIPELINE_NODE_ICONS } from '@/config/fusion'
 import { filterCreationPipelineNodes } from '@/utils/pipelineNodes'
@@ -50,6 +50,7 @@ export function useFusionCatalog() {
   const [pipelineNodes, setPipelineNodes] = useState([])
   const [executionPlan, setExecutionPlan] = useState(null)
   const [pipelineLoading, setPipelineLoading] = useState(false)
+  const previewSeqRef = useRef(0)
 
   useEffect(() => {
     let cancelled = false
@@ -82,14 +83,20 @@ export function useFusionCatalog() {
 
   const loadPipelinePreview = useCallback(async (packId) => {
     if (!packId) return
+    const seq = ++previewSeqRef.current
     setPipelineLoading(true)
     try {
       const data = await creation.fusionNodes(packId)
+      if (seq !== previewSeqRef.current) return
       setPipelineNodes(mapPipelineNodes(data?.mainChain || []))
     } catch (e) {
-      console.warn('流水线预览加载失败', e)
+      if (seq === previewSeqRef.current) {
+        console.warn('流水线预览加载失败', e)
+      }
     } finally {
-      setPipelineLoading(false)
+      if (seq === previewSeqRef.current) {
+        setPipelineLoading(false)
+      }
     }
   }, [])
 

@@ -10,5 +10,15 @@ export function useWorksList({ page = 1, status = 'all', keyword = '', ordering 
         ordering,
       }),
     staleTime: 30_000,
+    refetchInterval: (query) => {
+      const items = query.state.data?.items ?? []
+      const hasActive = items.some(
+        (work) =>
+          work.raw_status === 'running' ||
+          work.raw_status === 'pending' ||
+          work.status === 'generating'
+      )
+      return hasActive ? 5000 : false
+    },
   })
 }

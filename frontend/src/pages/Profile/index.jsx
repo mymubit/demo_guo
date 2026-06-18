@@ -79,8 +79,11 @@ export default function Profile() {
           nickname: user?.nickname || '创作者',
           avatar: user?.avatar || '',
           bio: '热爱创作，用剧本讲述精彩故事',
-          phone: user?.phone || '138****8888',
+          phone: user?.phone || '',
         })
+        if (profileData.status === 'rejected') {
+          toast.error('资料加载失败，请稍后刷新')
+        }
       }
 
       const memberRaw = memberData.status === 'fulfilled' ? memberData.value : null
@@ -105,6 +108,7 @@ export default function Profile() {
         })
       }
     } catch (err) {
+      toast.error(err?.message || '加载资料失败')
       setProfile({
         nickname: user?.nickname || '创作者',
         avatar: user?.avatar || '',

@@ -13,5 +13,12 @@ export function useWorkDetail(projectId) {
     },
     enabled: Boolean(projectId),
     staleTime: 30_000,
+    refetchInterval: (query) => {
+      const rawStatus = query.state.data?.raw_status ?? query.state.data?.status
+      if (rawStatus === 'running' || rawStatus === 'pending') {
+        return 5000
+      }
+      return false
+    },
   })
 }

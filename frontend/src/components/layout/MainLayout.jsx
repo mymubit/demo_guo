@@ -18,9 +18,10 @@ import { useAuthStore } from '@/store/authStore'
 import WalletBadge from '@/components/billing/WalletBadge'
 import BrandLogo from '@/components/ui/BrandLogo'
 import UserAvatar from '@/components/ui/UserAvatar'
-import { CONSUMER_TOP_NAV } from '@/config/consumerNav'
+import ConsumerErrorBoundary from '@/components/shared/ConsumerErrorBoundary'
 import { PageContainer } from '@/components/shared/ConsumerSection'
 import { ICON } from '@/constants/iconSizes'
+import { CONSUMER_TOP_NAV } from '@/config/consumerNav'
 import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 export default function MainLayout() {
@@ -272,7 +273,9 @@ export default function MainLayout() {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <Outlet />
+            <ConsumerErrorBoundary>
+              <Outlet />
+            </ConsumerErrorBoundary>
           </motion.div>
         </AnimatePresence>
       </main>

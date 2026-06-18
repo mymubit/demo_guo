@@ -21,13 +21,17 @@ const FILTER_OPTIONS = [
 export default function OrdersPage() {
   const queryClient = useQueryClient()
   const [filter, setFilter] = useState('all')
+  const [page, setPage] = useState(1)
   const [orderActionLoading, setOrderActionLoading] = useState(null)
+  const pageSize = 10
 
   const statusParam = filter === 'all' ? undefined : filter
-  const { data: orders = [], isLoading, isFetching, refetch } = useQuery({
-    queryKey: ['orders', statusParam ?? 'all'],
-    queryFn: () => ordersApi.list(statusParam),
+  const { data, isLoading, isFetching, refetch } = useQuery({
+    queryKey: ['orders', statusParam ?? 'all', page],
+    queryFn: () => ordersApi.list(statusParam, { page, pageSize }),
   })
+  const orders = data?.items ?? []
+  const pagination = data?.pagination ?? { page: 1, total_pages: 1, total: 0 }
 
   const filterOptions = useMemo(() => FILTER_OPTIONS.map((item) => item.label), [])
   const filterLabel = FILTER_OPTIONS.find((item) => item.key === filter)?.label ?? '全部'
@@ -105,7 +109,10 @@ export default function OrdersPage() {
             value={filterLabel}
             onChange={(label) => {
               const next = FILTER_OPTIONS.find((item) => item.label === label)
-              if (next) setFilter(next.key)
+              if (next) {
+                setFilter(next.key)
+                setPage(1)
+              }
             }}
           />
           <Link
@@ -136,6 +143,31 @@ export default function OrdersPage() {
               </Link>
             }
           />
+          {pagination.total_pages > 1 && (
+            <div className="mt-6 flex items-center justify-between gap-3 text-sm text-navy-300">
+              <span>
+                第 {pagination.page} / {pagination.total_pages} 页 · 共 {pagination.total} 条
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={pagination.page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="rounded-lg border border-white/10 px-3 py-1.5 disabled:opacity-40"
+                >
+                  上一页
+                </button>
+                <button
+                  type="button"
+                  disabled={pagination.page >= pagination.total_pages}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="rounded-lg border border-white/10 px-3 py-1.5 disabled:opacity-40"
+                >
+                  下一页
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </PageContainer>
     </motion.div>

@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { BarChart3, Star, ArrowRight, FileText, Sparkles } from 'lucide-react'
 import { works as worksApi, creation } from '@/services/api'
 import ScoreReport from '@/components/creation/ScoreReport'
@@ -20,13 +21,16 @@ export default function ScriptEvaluate() {
       setLoading(true)
       try {
         const data = await worksApi.list(1, 'completed')
-        const items = data.items.filter((w) => w.score != null)
+        const items = data.items
         if (!cancelled) {
           setWorks(items)
           if (items[0]?.project_id) setSelectedId(items[0].project_id)
         }
-      } catch {
-        if (!cancelled) setWorks([])
+      } catch (err) {
+        if (!cancelled) {
+          setWorks([])
+          toast.error(err?.message || '加载作品列表失败')
+        }
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -50,7 +54,8 @@ export default function ScriptEvaluate() {
           creation.progress(selectedId).catch(() => null),
         ])
         const report =
-          detail?.fusion_snapshot?.scoreReport ||
+          detail?.scoreReport ||
+          detail?.fusionSnapshot?.scoreReport ||
           progress?.score_summary ||
           (detail?.overall_score != null
             ? {
@@ -88,14 +93,14 @@ export default function ScriptEvaluate() {
             <Star className="w-5 h-5 text-gold-400" />
             选择已完成的剧本
           </h2>
-          <p className="text-sm text-navy-400 mb-4">仅展示已有评分的作品；新剧本请在「开始创作」完成后自动评分</p>
+          <p className="text-sm text-navy-400 mb-4">展示已完成作品；选中后可查看评分报告（无评分时显示基础信息）</p>
 
           {loading ? (
             <p className="text-sm text-navy-400">加载中…</p>
           ) : works.length === 0 ? (
             <div className="text-center py-10">
               <FileText className="w-12 h-12 text-navy-400 mx-auto mb-3" />
-              <p className="text-navy-300 mb-4">暂无带评分的已完成作品</p>
+              <p className="text-navy-300 mb-4">暂无已完成作品</p>
               <button type="button" onClick={() => navigate('/creation')} className="btn-gold px-6 py-2.5 rounded-xl">
                 去创作
               </button>

@@ -66,7 +66,17 @@ export function normalizeWorkDetail(work) {
     progressHtml: work.rendered_progress_html || work.progress_html || '',
     fusionSnapshot,
     gateSummary: fusionSnapshot.gateSummary || fusionSnapshot.gate_summary || null,
-    scoreReport: fusionSnapshot.scoreReport || fusionSnapshot.score_report || null,
+    scoreReport: fusionSnapshot.scoreReport || fusionSnapshot.score_report || work.overall_score != null
+      ? {
+          overallScore: work.overall_score,
+          grade: work.grade,
+          ...(fusionSnapshot.scoreReport || fusionSnapshot.score_report || {}),
+        }
+      : fusionSnapshot.scoreReport || fusionSnapshot.score_report || null,
+    reviewReport: fusionSnapshot.reviewReport || fusionSnapshot.review_report || null,
+    marketingKit: fusionSnapshot.marketingKit || fusionSnapshot.marketing_kit || null,
+    polishLog: fusionSnapshot.polishLog || fusionSnapshot.polish_log || null,
+    projectBrief: fusionSnapshot.projectBrief || fusionSnapshot.project_brief || null,
     structureWarnings: fusionSnapshot.structureWarnings || fusionSnapshot.structure_warnings || [],
   }
 }

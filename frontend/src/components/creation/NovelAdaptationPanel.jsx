@@ -4,7 +4,7 @@ import { BookOpen, Upload, FileSearch } from 'lucide-react'
 import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 /** 网文改编 — 独立首屏：上传/粘贴小说，而非与原创表单混在一起 */
-export default function NovelAdaptationPanel({ novelText, onChange, onFileLoaded, minLength = 200 }) {
+export default function NovelAdaptationPanel({ novelText, onChange, minLength = 200 }) {
   const inputRef = useRef(null)
   const textLength = (novelText || '').trim().length
   const hasContent = textLength >= minLength
@@ -15,7 +15,6 @@ export default function NovelAdaptationPanel({ novelText, onChange, onFileLoaded
     reader.onload = (e) => {
       const text = String(e.target?.result || '')
       onChange(text.slice(0, 20000))
-      onFileLoaded?.(file.name)
     }
     reader.readAsText(file, 'UTF-8')
   }

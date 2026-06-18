@@ -37,6 +37,7 @@ export const RUN_STATUS_LABELS = {
   completed: '成功',
   failed: '失败',
   running: '执行中',
+  partial: '部分成功',
   pending: '等待',
 }
 

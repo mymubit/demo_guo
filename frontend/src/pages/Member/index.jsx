@@ -686,7 +686,7 @@ export default function Member() {
 
                 <div className="mt-6 pt-6 border-t border-white/10">
                   <div className="text-xs text-navy-400 space-y-1.5">
-                    <p>• 卡密格式：字母和数字组成，区分大小写</p>
+                    <p>• 卡密格式：字母和数字组成，输入时自动转为大写</p>
                     <p>• 每张卡密仅可使用一次，兑换后立即生效</p>
                     <p>• 如有问题请联系客服</p>
                     <p>• 卡密由管理员批量生成，请向渠道方获取</p>

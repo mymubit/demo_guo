@@ -19,7 +19,9 @@ export default function PullSheetAnalyze() {
       setCurrencyName(data?.currency_name || '创作币')
       const row = (data?.field_actions || []).find((a) => a.action_key === 'ai.generate.pull_sheet')
       if (row?.coin_cost != null) setActionCost(row.coin_cost)
-    }).catch(() => {})
+    }).catch(() => {
+      toast.error('加载计费配置失败')
+    })
   }, [])
 
   return (
