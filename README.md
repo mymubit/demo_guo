@@ -425,7 +425,7 @@ X-Device-Fingerprint: <设备指纹>
 
 ## 历史架构（Legacy，已非 C 端主路径）
 
-> 以下 7 节点自动流水线、`WorkflowEngine`、`node_index` 工作台接口已废弃或返回 410，代码仍保留供参考，勿在新功能中接入。
+> 以下 7 节点自动流水线、`WorkflowEngine`、`node_index` 工作台接口**已删除或返回 404**；`CreationNode` / `SubSkillExecutionLog` / `CreationTask` / `WorkflowInstance` 等 Legacy 表**已通过迁移删除**。
 
 ### 7 节点创作流程（归档）
 

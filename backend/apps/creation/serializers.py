@@ -11,7 +11,7 @@ import re
 
 from rest_framework import serializers
 
-from .models import Project, CreationNode, ScriptWork, ShareLink
+from .models import Project, ScriptWork, ShareLink
 
 
 # ============================================================

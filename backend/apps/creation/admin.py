@@ -1,43 +1,18 @@
-"""
-创作模块 Django Admin 配置
-
-注意：
-- 后台可见 Project / CreationNode / ScriptWork / ShareLink 的完整字段
-- 不提供对原始剧本数据的直接编辑（也没有存储原始剧本）
-- ScriptWork.storage_path 为文件路径，不在 admin 暴露原始数据
-"""
+# -*- coding: utf-8 -*-
+"""创作模块 Django Admin 配置"""
 
 from django.contrib import admin
-
 from django.utils.html import format_html
 
 from .models import (
     AgentExecutionRun,
-    CreationNode,
     DownloadToken,
     Project,
     ProjectFusionArtifact,
     ScriptQualityDefect,
     ScriptWork,
     ShareLink,
-    SubSkillExecutionLog,
 )
-
-
-# ============================================================
-# Project Admin
-# ============================================================
-class CreationNodeInline(admin.TabularInline):
-    """节点记录内联显示
-
-    便于在 Project 详情页查看各节点的执行情况。
-    """
-
-    model = CreationNode
-    fields = ("node_index", "node_name", "status", "duration_seconds")
-    readonly_fields = fields
-    extra = 0
-    can_delete = False
 
 
 @admin.register(Project)
@@ -66,8 +41,7 @@ class ProjectAdmin(admin.ModelAdmin):
         "rendered_progress_html",
         "rendered_result_html",
     )
-    exclude = ("core_idea",)  # 创意描述不在 admin 直接展示，避免误操作
-    inlines = [CreationNodeInline]
+    exclude = ("core_idea",)
     ordering = ("-created_at",)
 
     def id_hex(self, obj) -> str:
@@ -76,9 +50,6 @@ class ProjectAdmin(admin.ModelAdmin):
     id_hex.short_description = "项目ID"
 
 
-# ============================================================
-# ScriptWork Admin
-# ============================================================
 @admin.register(ScriptWork)
 class ScriptWorkAdmin(admin.ModelAdmin):
     list_display = (
@@ -105,9 +76,6 @@ class ScriptWorkAdmin(admin.ModelAdmin):
     project_id_hex.short_description = "项目ID"
 
 
-# ============================================================
-# ShareLink Admin
-# ============================================================
 @admin.register(ShareLink)
 class ShareLinkAdmin(admin.ModelAdmin):
     list_display = (
@@ -136,9 +104,6 @@ class ShareLinkAdmin(admin.ModelAdmin):
     project_id_hex.short_description = "项目ID"
 
 
-# ============================================================
-# DownloadToken Admin
-# ============================================================
 @admin.register(DownloadToken)
 class DownloadTokenAdmin(admin.ModelAdmin):
     list_display = (
@@ -164,22 +129,6 @@ class DownloadTokenAdmin(admin.ModelAdmin):
     project_id_hex.short_description = "项目ID"
 
 
-class SubSkillExecutionLogInline(admin.TabularInline):
-    model = SubSkillExecutionLog
-    fields = (
-        "skill_id",
-        "status",
-        "skill_type",
-        "duration_ms",
-        "error_message",
-        "order_index",
-    )
-    readonly_fields = fields
-    extra = 0
-    can_delete = False
-    ordering = ("order_index", "started_at")
-
-
 @admin.register(AgentExecutionRun)
 class AgentExecutionRunAdmin(admin.ModelAdmin):
     list_display = (
@@ -203,7 +152,6 @@ class AgentExecutionRunAdmin(admin.ModelAdmin):
         "started_at",
         "finished_at",
     )
-    inlines = [SubSkillExecutionLogInline]
     ordering = ("-started_at",)
 
     def id_hex(self, obj) -> str:
@@ -214,34 +162,6 @@ class AgentExecutionRunAdmin(admin.ModelAdmin):
 
     id_hex.short_description = "Run ID"
     project_id_hex.short_description = "项目ID"
-
-
-@admin.register(SubSkillExecutionLog)
-class SubSkillExecutionLogAdmin(admin.ModelAdmin):
-    list_display = (
-        "skill_id",
-        "run_id_hex",
-        "status",
-        "skill_type",
-        "duration_ms",
-        "started_at",
-    )
-    list_filter = ("status", "skill_type")
-    search_fields = ("skill_id", "run__id", "error_message")
-    readonly_fields = (
-        "id",
-        "run",
-        "input_summary",
-        "output_summary",
-        "started_at",
-        "finished_at",
-    )
-    ordering = ("-started_at",)
-
-    def run_id_hex(self, obj) -> str:
-        return str(obj.run_id).split("-")[0] if obj.run_id else ""
-
-    run_id_hex.short_description = "Run ID"
 
 
 @admin.register(ProjectFusionArtifact)
@@ -257,9 +177,6 @@ class ProjectFusionArtifactAdmin(admin.ModelAdmin):
     project_id_hex.short_description = "项目ID"
 
 
-# ============================================================
-# ScriptQualityDefect Admin
-# ============================================================
 @admin.register(ScriptQualityDefect)
 class ScriptQualityDefectAdmin(admin.ModelAdmin):
     list_display = [

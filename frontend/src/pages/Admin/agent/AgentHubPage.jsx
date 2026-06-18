@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom'
-import { Bot, LayoutGrid, Sparkles, Gauge, Route, BookOpen } from 'lucide-react'
+import { Bot, LayoutGrid, Sparkles, Gauge, Route, BookOpen, Activity } from 'lucide-react'
 import AdminShell from '@/components/admin/AdminShell'
 import { AdminPageHeader, AdminPillTabs } from '@/components/admin/AdminUI'
 import { useAdminPanelMessage } from '@/hooks/useAdminPanelMessage'
@@ -10,9 +10,11 @@ import AgentRegistryPanel from './AgentRegistryPanel'
 import SkillRulesPanel from './SkillRulesPanel'
 import ReviewScoringPanel from './ReviewScoringPanel'
 import AgentLlmRoutePanel from './AgentLlmRoutePanel'
+import AgentRunsPanel from './AgentRunsPanel'
 
 const AGENT_TABS = [
   { key: 'definitions', label: '独立 Agent', icon: Bot },
+  { key: 'runs', label: '运行记录', icon: Activity },
   { key: 'catalog', label: '全景', icon: LayoutGrid },
   { key: 'form', label: '填表', icon: Sparkles },
   { key: 'rules', label: '规则', icon: BookOpen },
@@ -44,6 +46,7 @@ export default function AgentHubPage() {
       <AdminPillTabs tabs={AGENT_TABS} active={active.key} onChange={switchTab} className="w-full" />
       <MessageBanner />
       {active.key === 'definitions' ? <IndependentAgentPanel onMessage={showMessage} /> : null}
+      {active.key === 'runs' ? <AgentRunsPanel /> : null}
       {active.key === 'catalog' ? (
         <AdminAgentCatalogPanel
           onSelectFormAgent={(actionKey) => {

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""Main-chain Admin API 已下线。"""
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
@@ -13,25 +14,18 @@ class MainChainBlueprintApiTests(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.admin)
 
-    def test_blueprint_returns_steps_and_catalog(self):
-        resp = self.client.get("/api/admin/main-chain/blueprint/")
-        self.assertEqual(resp.status_code, 200)
-        data = resp.data["data"]
-        self.assertIn("steps", data)
-        self.assertIn("catalog", data)
-        self.assertNotIn("post_script_chain", data)
-        self.assertEqual(data.get("explicit_post_agents"), ["review", "score", "polish", "marketing", "insight"])
-        self.assertIn("meta", data)
-        self.assertIn("execution_modes", data)
-        self.assertIn("step", data["execution_modes"])
-        self.assertIn("workspace", data["execution_modes"])
-
-    def test_main_chain_steps_list(self):
-        resp = self.client.get("/api/admin/main-chain/steps/")
-        self.assertEqual(resp.status_code, 200)
-        data = resp.data["data"]
-        self.assertIn("items", data)
-        self.assertIn("meta", data)
+    def test_main_chain_endpoints_return_404(self):
+        for path in (
+            "/api/admin/main-chain/blueprint/",
+            "/api/admin/main-chain/steps/",
+            "/api/admin/main-chain/registry-meta/",
+        ):
+            resp = self.client.get(path) if path.endswith("/") and "registry-meta" not in path else None
+            if path == "/api/admin/main-chain/registry-meta/":
+                resp = self.client.put(path, {"polish_max_rounds": 3}, format="json")
+            else:
+                resp = self.client.get(path)
+            self.assertEqual(resp.status_code, 404, path)
 
     def test_workflow_steps_deprecated(self):
         resp = self.client.get("/api/admin/workflow/steps/")
@@ -44,16 +38,3 @@ class MainChainBlueprintApiTests(TestCase):
     def test_fusion_packs_deprecated(self):
         resp = self.client.get("/api/admin/fusion/packs/")
         self.assertEqual(resp.status_code, 404)
-
-    def test_patch_registry_meta(self):
-        resp = self.client.put(
-            "/api/admin/main-chain/registry-meta/",
-            {
-                "polish_max_rounds": 3,
-            },
-            format="json",
-        )
-        self.assertEqual(resp.status_code, 200)
-        self.assertNotIn("post_script_chain", resp.data["data"])
-        self.assertEqual(resp.data["data"]["explicit_post_agents"], ["review", "score", "polish", "marketing", "insight"])
-        self.assertEqual(resp.data["data"]["polish_max_rounds"], 3)

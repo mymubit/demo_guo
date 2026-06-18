@@ -39,7 +39,7 @@ class AgentTermTests(SimpleTestCase):
 
     def test_normalize_orchestration_agent_runner_path(self):
         path = "apps.creation.orchestration.world.run_world_agent"
-        self.assertEqual(normalize_agent_runner_path(path), path)
+        self.assertEqual(normalize_agent_runner_path(path), "")
 
     def test_normalize_registry_agent_runners(self):
         registry = {
@@ -51,10 +51,7 @@ class AgentTermTests(SimpleTestCase):
             ]
         }
         out = normalize_registry_for_save(registry)
-        self.assertEqual(
-            out["agents"][0]["runner"],
-            "apps.creation.orchestration.world.run_world_agent",
-        )
+        self.assertEqual(out["agents"][0]["runner"], "")
 
     def test_normalize_pipeline_runner_rejects_agent_runner(self):
         self.assertEqual(
@@ -62,15 +59,14 @@ class AgentTermTests(SimpleTestCase):
                 "apps.creation.agents.world.run_world_agent",
                 "fusion_node",
             ),
-            "apps.creation.step_mode.run_orchestrator_step",
+            "",
         )
-        # 新引擎：fusion_review 不再指向已删除的 review 模块，路径映射到 step_mode
         self.assertEqual(
             normalize_pipeline_runner_path(
                 "apps.creation.orchestration.review.run_review_agent",
                 "fusion_review",
             ),
-            "apps.creation.step_mode.run_fusion_review_step",
+            "",
         )
 
     def test_attach_api_meta_lists_deprecations(self):

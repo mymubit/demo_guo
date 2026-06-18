@@ -3,15 +3,17 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from apps.creation.artifact_service import get_artifact, save_artifact
-from apps.creation.models import CreationNode, Project
 from apps.creation.workspace.workspace_content import (
     CONTENT_AGENT_GENERATED,
     CONTENT_SKELETON,
     CONTENT_USER_CONFIRMED,
+    NODE_STATUS_COMPLETED,
+    NODE_STATUS_PENDING,
     ensure_brief_seed_enriched,
     should_emit_quality_alert,
     skill_content_kind,
 )
+from apps.creation.models import Project
 
 User = get_user_model()
 
@@ -54,17 +56,17 @@ class WorkspaceContentTests(TestCase):
 
     def test_skill_content_kind_user_confirmed_for_brief(self):
         payload = {"theme": "sweet-pet", "coreHook": "测试", "seedEnriched": True}
-        kind = skill_content_kind(1, payload, has_content=True, node_status=CreationNode.STATUS_PENDING)
+        kind = skill_content_kind(1, payload, has_content=True, node_status=NODE_STATUS_PENDING)
         self.assertEqual(kind, CONTENT_USER_CONFIRMED)
 
     def test_skill_content_kind_agent_generated_after_brief_agent(self):
         payload = {"theme": "sweet-pet", "coreHook": "测试", "agentEnriched": True}
-        kind = skill_content_kind(1, payload, has_content=True, node_status=CreationNode.STATUS_COMPLETED)
+        kind = skill_content_kind(1, payload, has_content=True, node_status=NODE_STATUS_COMPLETED)
         self.assertEqual(kind, CONTENT_AGENT_GENERATED)
 
     def test_skill_content_kind_outline_skeleton(self):
         payload = {"skeletonReady": True, "stageBlocks": [{"label": "起"}], "episodes": []}
-        kind = skill_content_kind(4, payload, has_content=True, node_status=CreationNode.STATUS_PENDING)
+        kind = skill_content_kind(4, payload, has_content=True, node_status=NODE_STATUS_PENDING)
         self.assertEqual(kind, CONTENT_SKELETON)
 
     def test_should_not_emit_brief_incomplete(self):
@@ -75,13 +77,13 @@ class WorkspaceContentTests(TestCase):
             should_emit_quality_alert(
                 3,
                 "character-gate",
-                node_status=CreationNode.STATUS_PENDING,
+                node_status=NODE_STATUS_PENDING,
             )
         )
         self.assertTrue(
             should_emit_quality_alert(
                 3,
                 "character-gate",
-                node_status=CreationNode.STATUS_COMPLETED,
+                node_status=NODE_STATUS_COMPLETED,
             )
         )

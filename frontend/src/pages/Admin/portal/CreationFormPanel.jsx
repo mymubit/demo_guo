@@ -359,8 +359,8 @@ export default function CreationFormPanel({ onMessage, embedded = false }) {
           </p>
           <p className="text-xs text-navy-400 mt-2">
             主链步骤与扣费请前往
-            <Link to="/admin/orchestration?tab=flow" className="text-gold-400 hover:underline mx-1">
-              流程编排
+            <Link to="/admin/agent" className="text-gold-400 hover:underline mx-1">
+              Agent 中心
             </Link>
           </p>
         </div>

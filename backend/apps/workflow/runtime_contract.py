@@ -208,20 +208,6 @@ def record_execution_event(
     duration_ms: int = 0,
     extra: Optional[Dict[str, Any]] = None,
 ) -> None:
-    """Best-effort NodeExecutionEvent write; never breaks the main path."""
-    if execution is None:
-        return
-    try:
-        from apps.workflow.execution_models import NodeExecutionEvent
-
-        NodeExecutionEvent.objects.create(
-            execution=execution,
-            event_type=str(event_type or "generic")[:32],
-            level=level if level in {"info", "warn", "error"} else "info",
-            message=str(message or "")[:2000],
-            duration_ms=max(0, int(duration_ms or 0)),
-            extra=extra or {},
-        )
-    except Exception:
-        return
+    """Legacy NodeExecutionEvent 已删除，保留 no-op 兼容调用。"""
+    _ = (execution, event_type, level, message, duration_ms, extra)
 

@@ -35,10 +35,10 @@ class PortalVisibleConfigTests(TestCase):
         )
         FusionPipelineDbService.clear_caches()
 
-        hidden = WorkflowPipelineService.portal_hidden_fusion_node_ids()
+        hidden = WorkflowPipelineService.portal_hidden_fusion_node_ids(pack_id=str(pack.id))
         self.assertIn("node-6-review", hidden)
 
-        chain_ids = {n["fusion_node_id"] for n in WorkflowPipelineService.portal_main_chain()}
+        chain_ids = {n["fusion_node_id"] for n in WorkflowPipelineService.portal_main_chain(pack_id=str(pack.id))}
         self.assertIn("node-1-input", chain_ids)
         self.assertNotIn("node-6-review", chain_ids)
 

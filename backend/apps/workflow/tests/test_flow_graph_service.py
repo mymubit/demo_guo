@@ -4,7 +4,7 @@ from django.test import TestCase
 
 from apps.agent.models import AgentRegistryConfig
 from apps.agent.runtime import get_agent_registry
-from apps.creation.models import CreationNode, Project
+from apps.creation.models import AgentExecutionRun, Project
 from apps.workflow.models import FusionPipelineNode, FusionPipelinePack
 from apps.workflow.pipeline_store import FusionPipelineDbService
 from apps.workflow.services.flow_graph_service import FlowGraphPlanService
@@ -16,10 +16,21 @@ class FlowGraphPlanServiceTests(TestCase):
         get_agent_registry.cache_clear()
 
     def _seed_chain(self, *, edges=None):
+        flow_graph = {
+            "parallel_groups": [
+                {
+                    "id": "g1",
+                    "label": "parallel",
+                    "node_ids": ["node_structure", "node_character"],
+                }
+            ],
+            "edges": edges or [],
+        }
         pack = FusionPipelinePack.objects.create(
             version="flow-graph-test",
             is_active=True,
             terminal_node_ids=["node_script"],
+            flow_graph=flow_graph,
         )
         specs = [
             ("node_brief", 1, 1, "Brief"),
@@ -51,18 +62,7 @@ class FlowGraphPlanServiceTests(TestCase):
                 {"id": "outline", "workspace_index": 4},
                 {"id": "script", "workspace_index": 5},
             ],
-            "_meta": {
-                "flow_graph": {
-                    "parallel_groups": [
-                        {
-                            "id": "g1",
-                            "label": "parallel",
-                            "node_ids": ["node_structure", "node_character"],
-                        }
-                    ],
-                    "edges": edges or [],
-                }
-            },
+            "_meta": {},
         }
         config.save()
         get_agent_registry.cache_clear()
@@ -84,11 +84,12 @@ class FlowGraphPlanServiceTests(TestCase):
         self._seed_chain()
         user = get_user_model().objects.create_user(phone="13900008801", password="pass-123")
         project = Project.objects.create(user=user, title="p", episode_count=10)
-        CreationNode.objects.create(
+        AgentExecutionRun.objects.create(
             project=project,
+            user=user,
+            agent_id="structure",
             node_index=2,
-            node_name="Structure",
-            status=CreationNode.STATUS_COMPLETED,
+            status=AgentExecutionRun.STATUS_COMPLETED,
         )
         pending = FlowGraphPlanService.pending_parallel_indices(project, 2)
         self.assertEqual(pending, [3])

@@ -5,7 +5,6 @@ import {
   ShoppingCart,
   Crown,
   SlidersHorizontal,
-  Layers,
   Wallet,
   Settings2,
   Wrench,
@@ -28,7 +27,7 @@ import {
  * 分组原则：按日常工作流，而非历史「十大中心」拆碎。
  * - 概览：运营数据与平台监控
  * - 创作：项目与流水线总览
- * - AI 引擎：大模型 → Agent → 流程编排 → 运行监察（配置与运行一体）
+ * - AI 引擎：大模型 → Agent → 技能管理（配置与运行一体）
  * - 用户与商业：账号、订单、会员、计费
  * - 站点 / 系统
  */
@@ -145,18 +144,11 @@ export const ADMIN_NAV_GROUPS = [
         description: 'Agent 全景、填表 Agent、注册表与 LLM 路由',
       },
       {
-        id: 'orchestration.flow',
-        path: '/admin/orchestration?tab=flow',
-        label: '流程编排',
-        icon: Layers,
-        description: '拖拽排序、并行分支、流水线步骤与 Prompt',
-      },
-      {
-        id: 'orchestration.monitor',
-        path: '/admin/orchestration?tab=monitor',
-        label: '运行监察',
-        icon: BarChart3,
-        description: '子技能执行健康度与失败分布',
+        id: 'agent.runs',
+        path: '/admin/agent?tab=runs',
+        label: '运行记录',
+        icon: Activity,
+        description: '独立 Agent 最近执行记录与健康状态',
       },
       {
         id: 'engine.skills',
@@ -164,13 +156,6 @@ export const ADMIN_NAV_GROUPS = [
         label: '技能管理',
         icon: Wrench,
         description: 'Agent 技能定义 / 版本管理 / 调用统计',
-      },
-      {
-        id: 'engine.batch',
-        path: '/admin/batch',
-        label: '批量创作',
-        icon: Layers,
-        description: 'CSV 批量生成创作项目 / 进度追踪',
       },
       {
         id: 'engine.library',
@@ -303,8 +288,8 @@ export function findAdminNavItem(pathname, search = '') {
     if (matched) return item
   }
 
-  if (normalized === '/admin/orchestration' && !currentParams.get('tab')) {
-    return flat.find((item) => item.id === 'orchestration.flow') || null
+  if (normalized === '/admin/agent' && !currentParams.get('tab')) {
+    return flat.find((item) => item.id === 'agent.hub') || null
   }
 
   const sorted = [...flat]

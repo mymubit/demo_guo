@@ -44,11 +44,11 @@ DISK_RUNNER_TYPE_BY_NODE = {
 }
 
 DISK_RUNNER_PATH_BY_NODE = {
-    "node-1-input": "apps.creation.step_mode.run_orchestrator_step",
-    "node-2-structure": "apps.creation.step_mode.run_orchestrator_step",
-    "node-3-character": "apps.creation.step_mode.run_orchestrator_step",
-    "node-4-outline": "apps.creation.step_mode.run_orchestrator_step",
-    "node-5-script": "apps.creation.step_mode.run_orchestrator_step",
+    "node-1-input": "",
+    "node-2-structure": "",
+    "node-3-character": "",
+    "node-4-outline": "",
+    "node-5-script": "",
 }
 
 # 导入磁盘 pack 时的运营默认值（与 billing 旧 _DEFAULT_NODES 对齐）

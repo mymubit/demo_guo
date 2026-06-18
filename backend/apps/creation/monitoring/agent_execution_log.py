@@ -149,52 +149,9 @@ def flush_buffer_to_db(
     *,
     max_events: int = 50,
 ) -> int:
-    """
-    将 buffer 中的关键事件持久化到 SubSkillExecutionLog。
-
-    只持久化 WARN/ERROR 及特定业务事件（convergence/comparator），
-    INFO 级别的高频事件不写库。
-
-    返回写入条数。
-    """
-    from ..models import AgentExecutionRun, SubSkillExecutionLog
-
-    if not run_id or not buf:
-        return 0
-
-    try:
-        run = AgentExecutionRun.objects.get(id=run_id)
-    except AgentExecutionRun.DoesNotExist:
-        return 0
-
-    persist_types = {EVENT_CONVERGENCE, EVENT_COMPARATOR, EVENT_GATE, EVENT_DIMENSION_EVAL}
-    persist_levels = {LEVEL_WARN, LEVEL_ERROR}
-
-    to_persist = [
-        e for e in buf
-        if e.get("event_type") in persist_types or e.get("level") in persist_levels
-    ][:max_events]
-
-    written = 0
-    for idx, event in enumerate(to_persist):
-        skill_id = f"event:{event.get('event_type', 'unknown')}:{idx}"[:64]
-        SubSkillExecutionLog.objects.update_or_create(
-            run=run,
-            skill_id=skill_id,
-            defaults={
-                "skill_type": "structured_event",
-                "cli": event.get("event_type", "")[:64],
-                "status": SubSkillExecutionLog.STATUS_EXECUTED
-                if event.get("level") == LEVEL_INFO
-                else SubSkillExecutionLog.STATUS_FAILED,
-                "error_message": event.get("message", "")[:2000],
-                "input_summary": {},
-                "output_summary": event.get("data") or {},
-                "order_index": 1000 + idx,
-            },
-        )
-        written += 1
-    return written
+    """Legacy SubSkillExecutionLog 已删除，事件仅保留在内存 buffer / 日志。"""
+    _ = (run_id, buf, max_events)
+    return 0
 
 
 # ── 各 Agent 专用快捷日志函数 ────────────────────────────────────────────

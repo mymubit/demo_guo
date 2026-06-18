@@ -13,11 +13,9 @@ class OrchestrationAdminApiTests(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.admin)
 
-    def test_orchestration_stats(self):
+    def test_orchestration_stats_returns_404(self):
         resp = self.client.get("/api/admin/orchestration/stats/?limit=10")
-        self.assertEqual(resp.status_code, 200)
-        data = resp.data["data"]
-        self.assertIn("skills", data)
+        self.assertEqual(resp.status_code, 404)
 
     def test_agent_catalog_canonical(self):
         resp = self.client.get("/api/admin/agent/catalog/")

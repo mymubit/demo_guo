@@ -91,7 +91,7 @@ class AgentRegistryConfigTests(SimpleTestCase):
             ],
         }
         with patch.object(registry, "get_agent_registry", return_value=fake_registry):
-            self.assertIsNotNone(registry.resolve_agent_runner("review"))
+            self.assertIsNone(registry.resolve_agent_runner("review"))
 
     def test_resolve_agent_runner_rejects_unsafe_path(self):
         from apps.agent import runtime as registry

@@ -29,28 +29,30 @@ function AgentCatalogCard({ kind, title, subtitle, meta, onClick }) {
   )
 }
 
-function normalizeExplicitPostAgents(blueprint) {
-  const explicit = blueprint?.explicit_post_agents || blueprint?.catalog?.explicitPostAgents
+function normalizeExplicitPostAgents(catalog) {
+  const explicit = catalog?.explicitPostAgents
   if (Array.isArray(explicit) && explicit.length) return explicit
-  const catalogAgents = blueprint?.catalog?.postScriptAgents
-  if (Array.isArray(catalogAgents) && catalogAgents.length) return catalogAgents
+  const catalogAgents = catalog?.postScriptAgents
+  if (Array.isArray(catalogAgents) && catalogAgents.length) {
+    return catalogAgents.map((agent) => agent.id || agent.agent_id || String(agent))
+  }
   return []
 }
 
 export default function AdminAgentCatalogPanel({ onSelectFormAgent }) {
   const { showMessage, MessageBanner } = useAdminPanelMessage()
   const [loading, setLoading] = useState(true)
-  const [blueprint, setBlueprint] = useState(null)
+  const [catalog, setCatalog] = useState(null)
   const [formAgents, setFormAgents] = useState([])
 
   const load = useCallback(async () => {
     setLoading(true)
     try {
-      const [bp, prompts] = await Promise.all([
-        admin.getOrchestrationFlowBlueprint(),
+      const [cat, prompts] = await Promise.all([
+        admin.agentCatalog(),
         admin.listAiFieldPrompts(),
       ])
-      setBlueprint(bp)
+      setCatalog(cat)
       setFormAgents(Array.isArray(prompts) ? prompts : [])
     } catch (err) {
       showMessage(err.message || '加载 Agent 目录失败', 'error')
@@ -64,32 +66,37 @@ export default function AdminAgentCatalogPanel({ onSelectFormAgent }) {
   }, [load])
 
   const pipelineSteps = useMemo(() => {
-    const steps = blueprint?.steps || blueprint?.workspace_steps || []
+    const steps = catalog?.workspaceAgents || []
     return [...steps].sort(
-      (a, b) => (a.chain_order ?? a.node_index ?? 0) - (b.chain_order ?? b.node_index ?? 0),
+      (a, b) => (a.workspace_index ?? 0) - (b.workspace_index ?? 0),
     )
-  }, [blueprint])
+  }, [catalog])
 
-  const postAgents = useMemo(
-    () =>
-      normalizeExplicitPostAgents(blueprint).map((agent, index) => ({
-        id: agent.id || agent.agent_id || String(agent),
+  const postAgents = useMemo(() => {
+    const explicitIds = normalizeExplicitPostAgents(catalog)
+    const byId = Object.fromEntries(
+      (catalog?.postScriptAgents || []).map((agent) => [agent.id, agent]),
+    )
+    return explicitIds.map((agentId, index) => {
+      const agent = byId[agentId] || { id: agentId }
+      return {
+        id: agent.id || agentId,
         chainIndex: index,
-        name: agent.name_zh || agent.name || agent.label || agent.id || agent.agent_id || String(agent),
-      })),
-    [blueprint],
-  )
+        name: agent.name_zh || agent.name || agent.label || agent.id || agentId,
+      }
+    })
+  }, [catalog])
 
   const stats = useMemo(
     () => ({
-      pipeline: pipelineSteps.filter((s) => s.enabled !== false).length,
+      pipeline: pipelineSteps.length,
       form: formAgents.filter((a) => a.is_active !== false).length,
       post: postAgents.length,
     }),
     [pipelineSteps, formAgents, postAgents],
   )
 
-  if (loading && !blueprint) {
+  if (loading && !catalog) {
     return <AdminLoading label="加载 Agent 目录..." />
   }
 
@@ -131,16 +138,16 @@ export default function AdminAgentCatalogPanel({ onSelectFormAgent }) {
       <section className="space-y-3">
         <h3 className="text-sm font-medium text-navy-200">ScriptForge 主链 Agent</h3>
         {pipelineSteps.length === 0 ? (
-          <AdminEmpty title="暂无主链步骤" description="请检查 ScriptForge 默认编排是否已经写入数据库。" />
+          <AdminEmpty title="暂无主链步骤" description="请检查 Agent 注册表是否已写入 registry v2。" />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {pipelineSteps.map((step) => (
               <AgentCatalogCard
-                key={step.node_id || step.id}
+                key={step.id || step.workspace_index}
                 kind="pipeline"
-                title={step.agent_name_zh || step.display_name || step.node_id}
-                subtitle={step.agent_id || step.fusion_node_id || step.node_id}
-                meta={`步骤 ${step.chain_order ?? step.node_index} / ${step.coin_cost ?? 0} 币`}
+                title={step.name_zh || step.name || step.id}
+                subtitle={step.id}
+                meta={`步骤 ${step.workspace_index ?? '—'} · ${step.sub_skill_count ?? 0} 个子技能`}
               />
             ))}
           </div>

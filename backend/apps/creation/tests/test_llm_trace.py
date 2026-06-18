@@ -8,7 +8,7 @@ from apps.creation.monitoring.llm_trace import (
     finish_llm_trace_success,
     merge_request_into_usage_record,
 )
-from apps.creation.models import AgentExecutionRun, Project, SubSkillExecutionLog
+from apps.creation.models import AgentExecutionRun, Project
 from apps.skill.llm.usage_log import LlmUsageService, llm_usage_scope
 from apps.skill.models import LlmUsageLog
 
@@ -72,37 +72,9 @@ class LlmTraceTests(TestCase):
         self.assertIn("raw_content", usage.response_payload)
         self.assertEqual(usage.response_payload["parsed"]["rootRules"], ["规则1"])
 
-        log = SubSkillExecutionLog.objects.get(run=run, skill_id="structure-generator")
-        self.assertEqual(log.input_payload["theme"], "trace-test")
-        self.assertIn("upstreamKeys", log.input_payload)
-        self.assertEqual(log.output_payload["totalEpisodes"], 10)
-        self.assertEqual(log.llm_io["request"]["system_prompt"]["text"], system_prompt)
-        self.assertEqual(log.llm_io["response"]["parsed"]["rootRules"], ["规则1"])
-
         detail = AgentExecutionRunService.get_run_detail(str(run.id))
         self.assertEqual(len(detail["llm_usage"]), 1)
         self.assertEqual(
             detail["llm_usage"][0]["request_payload"]["system_prompt"]["text"],
             system_prompt,
         )
-        sub = next(s for s in detail["sub_skills"] if s["skill_id"] == "structure-generator")
-        self.assertEqual(sub["llm_io"]["request"]["user_prompt"]["text"], user_prompt)
-
-    def test_record_sub_skill_accepts_full_payload(self):
-        with AgentExecutionRunService.run_scope(
-            self.project,
-            agent_id="world",
-            node_index=2,
-        ) as run:
-            AgentExecutionRunService.record_sub_skill(
-                "reference-injector",
-                "executed",
-                skill_type="retrieval",
-                input_payload={"query": "短剧结构", "topK": 5},
-                output_payload={"hits": [{"id": "ref-1", "score": 0.9}]},
-            )
-            AgentExecutionRunService.finish_run(run, AgentExecutionRun.STATUS_COMPLETED)
-
-        log = SubSkillExecutionLog.objects.get(run=run, skill_id="reference-injector")
-        self.assertEqual(log.input_payload["query"], "短剧结构")
-        self.assertEqual(log.output_payload["hits"][0]["id"], "ref-1")

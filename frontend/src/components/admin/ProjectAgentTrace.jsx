@@ -3,7 +3,6 @@ import { GitBranch, Layers, ShieldCheck } from 'lucide-react'
 import ExecutionRunPanel from '@/components/shared/ExecutionRunPanel'
 import AgentTimelineCard from '@/components/admin/AgentTimelineCard'
 import { SubSkillLegend } from '@/components/admin/SubSkillStepBar'
-import CreationPipelineDiagram from '@/components/admin/CreationPipelineDiagram'
 import { AdminTabBar } from '@/components/admin/AdminUI'
 import ProjectOpsSummary, {
   ProjectFusionNodesPanel,
@@ -31,7 +30,6 @@ export function agentDisplayName(agentKey, catalog, entry) {
 export function useProjectTrace(projectId) {
   const [catalog, setCatalog] = useState(null)
   const [traceData, setTraceData] = useState(null)
-  const [blueprint, setBlueprint] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -44,14 +42,12 @@ export function useProjectTrace(projectId) {
     setLoading(true)
     setError('')
     try {
-      const [cat, traces, bp] = await Promise.all([
+      const [cat, traces] = await Promise.all([
         admin.agentCatalog().catch(() => null),
         admin.agentProjectTraces(id),
-        admin.getMainChainBlueprint().catch(() => null),
       ])
       setCatalog(cat)
       setTraceData(traces)
-      setBlueprint(bp)
     } catch (e) {
       setTraceData(null)
       setError(e.message || '加载轨迹失败')
@@ -64,14 +60,13 @@ export function useProjectTrace(projectId) {
     load()
   }, [load])
 
-  return { catalog, traceData, blueprint, loading, error, reload: load }
+  return { catalog, traceData, loading, error, reload: load }
 }
 
 export function ProjectTracePanel({
   traceData,
   catalog,
   traces,
-  blueprint = null,
   latestRuns = {},
   onInspectRun,
   compact = false,
@@ -93,10 +88,6 @@ export function ProjectTracePanel({
 
   return (
     <div className="space-y-4">
-      {!compact ? (
-        <CreationPipelineDiagram compact blueprint={blueprint} linkTo="/admin/orchestration?tab=flow" />
-      ) : null}
-
       {traceData?.pipeline_mode ? (
         <div
           className={`rounded-xl border px-4 py-3 text-xs leading-relaxed ${
@@ -311,7 +302,7 @@ export function ProjectAgentTraceView({
   onTabChange,
   showSummary = true,
 }) {
-  const { catalog, traceData, blueprint, loading, error } = useProjectTrace(projectId)
+  const { catalog, traceData, loading, error } = useProjectTrace(projectId)
   const [inspectRunId, setInspectRunId] = useState('')
   const tab = activeTab
 
@@ -347,7 +338,6 @@ export function ProjectAgentTraceView({
           traceData={traceData}
           catalog={catalog}
           traces={traces}
-          blueprint={blueprint}
           latestRuns={traceData.latest_execution_runs || {}}
           onInspectRun={setInspectRunId}
           compact={compact}

@@ -4,15 +4,12 @@ export const adminSkill = {
   // 技能定义列表
   listDefinitions: (params = {}) =>
     adminRequest('GET', '/api/admin/skills/definitions/', { params }).then(unwrapAdminList),
-
   // 技能定义详情
   getDefinition: (pk) =>
     adminRequest('GET', `/api/admin/skills/definitions/${pk}/`),
-
   // 更新技能定义
   updateDefinition: (pk, data) =>
     adminRequest('PUT', `/api/admin/skills/definitions/${pk}/`, { data }),
-
   // 发布技能（灰度）
   publishDefinition: (pk, { gray_weight } = {}) =>
     adminRequest('POST', `/api/admin/skills/definitions/${pk}/publish/`, {
@@ -38,7 +35,6 @@ export const adminSkill = {
   // 创建技能定义
   createDefinition: (data) =>
     adminRequest('POST', '/api/admin/skills/definitions/', { data }),
-
   // 删除技能定义
   deleteDefinition: (pk) =>
     adminRequest('DELETE', `/api/admin/skills/definitions/${pk}/`),

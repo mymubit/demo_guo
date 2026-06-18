@@ -32,27 +32,3 @@ class RuntimeContractTests(SimpleTestCase):
 
         self.assertTrue(callable(getattr(get_agent_registry, "cache_clear", None)))
 
-
-class SkillBridgePayloadTests(SimpleTestCase):
-    def test_creation_skill_payload_uses_project_builder(self):
-        from apps.workflow.skill_bridge import SkillBridge
-
-        node = MagicMock()
-        node.skill_id = "creation.brief"
-        node.node_id = "node_brief"
-        node.extra_config = {"extra": "yes"}
-        node.runtime_config = {}
-        project = MagicMock()
-        project.id = "00000000-0000-0000-0000-000000000001"
-
-        bridge = SkillBridge(project=project, node_config=node, context={})
-        with patch(
-            "apps.creation.skill_invoke_payload.build_creation_skill_invoke_payload",
-            return_value={"theme": "ceo", "core_idea": "逆袭"},
-        ) as mock_builder:
-            payload = bridge._build_skill_payload("creation.brief", node.extra_config)
-
-        mock_builder.assert_called_once_with(project, "creation.brief")
-        self.assertEqual(payload["theme"], "ceo")
-        self.assertEqual(payload["extra"], "yes")
-

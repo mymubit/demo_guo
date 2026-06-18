@@ -3,44 +3,30 @@
 import logging
 from html import escape
 
-from ..models import CreationNode, Project, ShareLink
+from ..models import Project, ShareLink
 from ._pipeline import PIPELINE_NODES
 
 logger = logging.getLogger(__name__)
 
+_NODE_STATUS_CLASS = {
+    "pending": "pending",
+    "running": "running",
+    "completed": "completed",
+    "failed": "failed",
+}
+
 
 def _render_progress_html(project: Project) -> str:
-    """渲染项目进度卡片 HTML 片段。"""
+    """渲染项目进度卡片 HTML 片段（基于流水线元数据，不依赖 CreationNode）。"""
     nodes_html_parts = []
-    nodes = list(project.nodes.all().order_by("node_index"))
-
-    if not nodes:
-        for meta in PIPELINE_NODES:
-            nodes_html_parts.append(
-                f'<div class="creation-node pending">'
-                f'<span class="node-index">{meta["index"]}</span>'
-                f'<span class="node-name">{escape(meta["name"])}</span>'
-                f'<span class="node-status">待处理</span>'
-                f"</div>"
-            )
-    else:
-        for node in nodes:
-            status_class = {
-                CreationNode.STATUS_PENDING: "pending",
-                CreationNode.STATUS_RUNNING: "running",
-                CreationNode.STATUS_COMPLETED: "completed",
-                CreationNode.STATUS_FAILED: "failed",
-            }.get(node.status, "pending")
-            status_text = node.get_status_display()
-            summary = escape(node.summary_text or "")
-            nodes_html_parts.append(
-                f'<div class="creation-node {status_class}">'
-                f'<span class="node-index">{node.node_index}</span>'
-                f'<span class="node-name">{escape(node.node_name)}</span>'
-                f'<span class="node-status">{status_text}</span>'
-                f'<div class="node-summary">{summary}</div>'
-                f"</div>"
-            )
+    for meta in PIPELINE_NODES:
+        nodes_html_parts.append(
+            f'<div class="creation-node pending">'
+            f'<span class="node-index">{meta["index"]}</span>'
+            f'<span class="node-name">{escape(meta["name"])}</span>'
+            f'<span class="node-status">待处理</span>'
+            f"</div>"
+        )
 
     status_text = project.get_status_display()
     return (
@@ -56,7 +42,7 @@ def _render_progress_html(project: Project) -> str:
 
 
 def refresh_project_progress(project: Project, *, progress_percent: int | None = None) -> None:
-    """编排器/融合流水线中途刷新进度条与预渲染 HTML，供前端轮询增量展示。"""
+    """刷新进度条与预渲染 HTML，供前端轮询增量展示。"""
     fields = ["updated_at"]
     if progress_percent is not None:
         project.progress_percent = min(99, int(progress_percent))
@@ -84,11 +70,10 @@ def _render_result_html(project: Project) -> str:
     title = project.title or f"未命名剧本 · {project.theme}"
     nodes_html = "".join(
         f'<li class="result-node-item">'
-        f'<span class="idx">{n.node_index}.</span> '
-        f'<span class="name">{escape(n.node_name)}</span>'
-        f'<span class="status">{escape(n.get_status_display())}</span>'
+        f'<span class="idx">{meta["index"]}.</span> '
+        f'<span class="name">{escape(meta["name"])}</span>'
         f"</li>"
-        for n in project.nodes.all().order_by("node_index")
+        for meta in PIPELINE_NODES
     )
     return (
         f'<div class="creation-result-card" data-project-id="{project.id}">'
@@ -128,30 +113,14 @@ def _render_share_html(share: ShareLink) -> str:
         from ..script_delivery import build_script_display_html, resolve_scripts
 
         if resolve_scripts(project):
-            html = build_script_display_html(
-                project,
-                watermark_token=wm,
-                max_episodes=5,
-            )
-            if share.custom_title:
-                html = html.replace(
-                    escape(project.title or ""),
-                    escape(share.custom_title),
-                    1,
-                )
-            return html
+            return build_script_display_html(project, watermark_token=wm)
     except Exception as exc:  # noqa: BLE001
         logger.warning("[Creation] 分享页剧本 HTML 构建失败: %s", exc)
 
     return (
-        f'<div class="share-result-card" data-share-token="{share.token}">'
-        f'<h3 class="share-title">{escape(title)}</h3>'
-        f'<p class="share-meta">题材：{escape(project.theme)} · 集数：{project.episode_count} 集</p>'
-        f'<div class="share-body">'
-        f'<p>此内容为分享视图，含分享者不可见的数字水印以防止恶意传播。</p>'
-        f"</div>"
-        f'<div class="share-watermark" style="opacity:.45;font-size:12px;">'
-        f'分享 token: {share.token[:8]}… · 仅供查看'
-        f"</div>"
+        f'<div class="creation-share-card" data-share-token="{escape(share.token[:12])}">'
+        f'<h2>{escape(title)}</h2>'
+        f'<p>题材：{escape(project.theme)} · 集数：{project.episode_count}</p>'
+        f'<p style="opacity:.6;font-size:12px;">水印 {escape(wm)}</p>'
         f"</div>"
     )

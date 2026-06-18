@@ -843,8 +843,8 @@ export default function LlmConfigPanel({ onMessage }) {
                   <p className="text-white text-sm font-medium">Agent 绑定概况</p>
                   <p className="text-navy-400">
                     详细绑定请在
-                    <Link to="/admin/orchestration?tab=flow" className="text-gold-400 mx-1">
-                      调度中心 · 流程编排
+                    <Link to="/admin/agent?tab=routes" className="text-gold-400 mx-1">
+                      Agent 中心 · LLM 路由
                     </Link>
                     Tab 配置。
                   </p>

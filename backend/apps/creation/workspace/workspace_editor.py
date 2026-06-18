@@ -13,7 +13,7 @@ from django.utils import timezone
 from apps.billing.services import BillingService
 
 from ..artifact_service import get_artifact, save_artifact
-from ..models import CreationNode, Project
+from ..models import Project
 from ..workspace.artifact_keys import artifact_key_for_node
 from ..display.character_display import build_character_bible_view
 from ..display.portal_display import (
@@ -913,12 +913,8 @@ def apply_editor_save(project: Project, node_index: int, data: dict) -> dict:
 
 
 def _mark_skill_has_content(project: Project, node_index: int, summary: str) -> None:
-    now = timezone.now()
-    CreationNode.objects.filter(project=project, node_index=node_index).update(
-        status=CreationNode.STATUS_COMPLETED,
-        summary_text=summary[:500],
-        completed_at=now,
-    )
+    """Legacy CreationNode 已停写；独立 Agent 以 AgentExecutionRun + artifact 为准。"""
+    return
 
 
 def _outline_framework_ready(payload: dict) -> bool:

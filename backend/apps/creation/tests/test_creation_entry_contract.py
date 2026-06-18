@@ -192,7 +192,6 @@ class CreationEntrySubmitContractTests(TestCase):
             self._payload(creation_entry="from-scratch"),
         )
         self.assertEqual(project.creation_entry, "from-scratch")
-        self.assertEqual(project.nodes.count(), 0)
 
     @patch("apps.creation.services.submission.MembershipService.get_current_membership", return_value=None)
     @patch("apps.billing.services.BillingService.charge")

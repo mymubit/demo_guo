@@ -69,9 +69,7 @@ const AdminProjects = lazy(() => import('@/pages/Admin/CreationProjects.jsx'))
 const AdminProjectTrace = lazy(() => import('@/pages/Admin/CreationProjectTrace.jsx'))
 const AdminModelHub = lazy(() => import('@/pages/Admin/model/ModelHubPage.jsx'))
 const AdminAgentHub = lazy(() => import('@/pages/Admin/agent/AgentHubPage.jsx'))
-const AdminOrchestrationHub = lazy(() => import('@/pages/Admin/orchestration/OrchestrationHubPage.jsx'))
 const SkillCenterPage = lazy(() => import('@/pages/Admin/skills/SkillCenterPage.jsx'))
-const AdminBatchJobs = lazy(() => import('@/pages/Admin/batch/AdminBatchJobs.jsx'))
 const AdminLibrary = lazy(() => import('@/pages/Admin/library/AdminLibrary.jsx'))
 const AdminEvolution = lazy(() => import('@/pages/Admin/evolution/AdminEvolution.jsx'))
 const AdminUsers = lazy(() => import('@/pages/Admin/Users.jsx'))
@@ -241,9 +239,7 @@ const appRoutes = [
       // AI 引擎
       { path: 'model', element: <AdminModelHub /> },
       { path: 'agent', element: <AdminAgentHub /> },
-      { path: 'orchestration', element: <AdminOrchestrationHub /> },
       { path: 'skills', element: <SkillCenterPage /> },
-      { path: 'batch', element: <AdminBatchJobs /> },
       { path: 'library', element: <AdminLibrary /> },
       { path: 'evolution', element: <AdminEvolution /> },
       // 用户与商业
@@ -267,8 +263,10 @@ const appRoutes = [
       { path: 'operations/config-hit', element: <ConfigEffectiveness /> },
       { path: 'operations/checklist', element: <DailyChecklist /> },
       // 历史路径兼容
-      { path: 'mainchain', element: <Navigate to="/admin/orchestration?tab=flow" replace /> },
-      { path: 'mainchain/*', element: <Navigate to="/admin/orchestration?tab=flow" replace /> },
+      { path: 'mainchain', element: <Navigate to="/admin/agent" replace /> },
+      { path: 'mainchain/*', element: <Navigate to="/admin/agent" replace /> },
+      { path: 'orchestration', element: <Navigate to="/admin/agent" replace /> },
+      { path: 'orchestration/*', element: <Navigate to="/admin/agent" replace /> },
     ],
   },
 

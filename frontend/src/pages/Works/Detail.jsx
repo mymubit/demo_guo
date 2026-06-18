@@ -58,7 +58,6 @@ export default function WorksDetail() {
   const [shareLink, setShareLink] = useState('')
   const [sharing, setSharing] = useState(false)
   const [downloading, setDownloading] = useState(null)
-  const [agentRunning, setAgentRunning] = useState(null)
   const [polishApplying, setPolishApplying] = useState(false)
   const [selectedPolish, setSelectedPolish] = useState(() => new Set())
 
@@ -136,23 +135,6 @@ export default function WorksDetail() {
       toast.error(err.message || '应用失败')
     } finally {
       setPolishApplying(false)
-    }
-  }
-
-  const handleRunAgent = async (agentId) => {
-    if (!work?.project_id) return
-    setAgentRunning(agentId)
-    try {
-      const res = await worksApi.runAgent(work.project_id, agentId)
-      if (res?.status === 'error') {
-        throw new Error((res.errors || []).join('；') || 'Agent 执行失败')
-      }
-      toast.success(agentId === 'insight' ? '拉片分析完成' : '宣发物料已生成')
-      await reloadWork()
-    } catch (err) {
-      toast.error(err.message || '执行失败')
-    } finally {
-      setAgentRunning(null)
     }
   }
 
@@ -333,40 +315,6 @@ export default function WorksDetail() {
                 <Users className="w-5 h-5 text-gold-400" />
                 智能分析
               </h2>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  disabled={agentRunning != null}
-                  onClick={() => handleRunAgent('insight')}
-                  className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/[0.06] disabled:opacity-50"
-                >
-                  {agentRunning === 'insight' ? '分析中…' : '拉片分析'}
-                </button>
-                <button
-                  type="button"
-                  disabled={agentRunning != null}
-                  onClick={() => handleRunAgent('marketing')}
-                  className="px-4 py-2 rounded-xl text-sm font-medium btn-gold disabled:opacity-50"
-                >
-                  {agentRunning === 'marketing' ? '生成中…' : '宣发物料'}
-                </button>
-                <button
-                  type="button"
-                  disabled={agentRunning != null}
-                  onClick={() => handleRunAgent('review')}
-                  className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/[0.06] disabled:opacity-50"
-                >
-                  {agentRunning === 'review' ? '质检中…' : '重新质检'}
-                </button>
-                <button
-                  type="button"
-                  disabled={agentRunning != null}
-                  onClick={() => handleRunAgent('polish')}
-                  className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/[0.06] disabled:opacity-50"
-                >
-                  {agentRunning === 'polish' ? '分析中…' : '润色建议'}
-                </button>
-              </div>
             </div>
 
             {work.fusionSnapshot?.agentArtifacts?.score?.overallScore != null && (
@@ -518,7 +466,7 @@ export default function WorksDetail() {
             {!work.fusionSnapshot?.agentArtifacts?.insight?.lineCount &&
               !(work.fusionSnapshot?.agentArtifacts?.marketing?.titles || []).length && (
                 <p className="text-sm text-navy-400">
-                  剧本完成后可运行拉片分析或生成宣发物料（宣发通常在剧本后处理链自动生成）。
+                  暂无智能分析结果，请在创作工作台运行独立 Agent。
                 </p>
               )}
           </motion.div>

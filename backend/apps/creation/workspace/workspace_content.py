@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, Dict, Optional
 
 from ..artifact_service import get_artifact, save_artifact
-from ..models import CreationNode, Project
+from ..models import Project
 from ..schema_mappers import enrich_brief_from_form_seed
 from ..trend_formula import trend_formula_has_internal_refs
 from ..workspace.artifact_keys import artifact_key_for_node
@@ -15,6 +15,11 @@ CONTENT_USER_CONFIRMED = "user_confirmed"
 CONTENT_SKELETON = "skeleton"
 CONTENT_AGENT_GENERATED = "agent_generated"
 CONTENT_DRAFT = "draft"
+
+NODE_STATUS_PENDING = "pending"
+NODE_STATUS_RUNNING = "running"
+NODE_STATUS_COMPLETED = "completed"
+NODE_STATUS_FAILED = "failed"
 
 _AGENT_READY_KINDS = frozenset({CONTENT_AGENT_GENERATED})
 
@@ -80,7 +85,7 @@ def skill_content_kind(
     payload: Optional[dict],
     *,
     has_content: bool,
-    node_status: str = CreationNode.STATUS_PENDING,
+    node_status: str = NODE_STATUS_PENDING,
 ) -> str:
     if not has_content:
         return CONTENT_EMPTY
@@ -94,14 +99,14 @@ def skill_content_kind(
             (data.get("coreHook") or data.get("coreIdea") or "").strip() and (data.get("theme") or "").strip()
         ):
             return CONTENT_USER_CONFIRMED
-        return CONTENT_AGENT_GENERATED if node_status == CreationNode.STATUS_COMPLETED else CONTENT_USER_CONFIRMED
+        return CONTENT_AGENT_GENERATED if node_status == NODE_STATUS_COMPLETED else CONTENT_USER_CONFIRMED
 
     if node_index == 3:
         from ..display.character_display import build_character_bible_view
 
         if build_character_bible_view(data).get("characterCount", 0) <= 0:
             return CONTENT_EMPTY
-        if node_status == CreationNode.STATUS_COMPLETED:
+        if node_status == NODE_STATUS_COMPLETED:
             return CONTENT_AGENT_GENERATED
         return CONTENT_DRAFT
 
@@ -111,7 +116,7 @@ def skill_content_kind(
         if data.get("skeletonReady") or data.get("stageBlocks"):
             return CONTENT_SKELETON
 
-    if node_status == CreationNode.STATUS_COMPLETED:
+    if node_status == NODE_STATUS_COMPLETED:
         return CONTENT_AGENT_GENERATED
     if has_content:
         return CONTENT_DRAFT
@@ -126,7 +131,7 @@ def should_emit_quality_alert(
     node_index: int,
     alert_code: str,
     *,
-    node_status: str = CreationNode.STATUS_PENDING,
+    node_status: str = NODE_STATUS_PENDING,
     payload: Optional[dict] = None,
     content_kind: str = CONTENT_EMPTY,
 ) -> bool:
@@ -135,10 +140,10 @@ def should_emit_quality_alert(
         return False
 
     if alert_code == "character-gate":
-        return node_status == CreationNode.STATUS_COMPLETED
+        return node_status == NODE_STATUS_COMPLETED
 
     if alert_code == "outline-summary-gap":
-        return node_status == CreationNode.STATUS_COMPLETED or content_kind == CONTENT_AGENT_GENERATED
+        return node_status == NODE_STATUS_COMPLETED or content_kind == CONTENT_AGENT_GENERATED
 
     if alert_code == "episode-gate":
         data = payload if isinstance(payload, dict) else {}
@@ -148,7 +153,7 @@ def should_emit_quality_alert(
         return True
 
     if alert_code == "creator-quality-guard":
-        return node_status == CreationNode.STATUS_COMPLETED
+        return node_status == NODE_STATUS_COMPLETED
 
     return True
 

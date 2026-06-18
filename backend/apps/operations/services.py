@@ -32,7 +32,7 @@ def dashboard_slo_cards() -> dict:
     """运营 Dashboard 主页面：5 个核心 SLO 卡片。"""
     from apps.creation.models import Project
     from apps.billing.models import CoinLedger
-    from apps.workflow.execution_models import WorkflowInstance
+    from apps.creation.models import AgentExecutionRun
     from apps.monitoring.models import ApiPerformanceLog, AlertEvent, MonitoringException
 
     now = timezone.now()
@@ -53,11 +53,11 @@ def dashboard_slo_cards() -> dict:
         status_code__gte=500,
     ).count()
 
-    # 2. 僵尸工作流实例（>15min 仍 running/pending）
+    # 2. 僵尸 Agent 运行（>15min 仍 running）
     threshold_15min = now - timedelta(minutes=15)
-    zombie_count = WorkflowInstance.objects.filter(
-        status__in=[WorkflowInstance.STATUS_RUNNING, WorkflowInstance.STATUS_PENDING],
-        created_at__lt=threshold_15min,
+    zombie_count = AgentExecutionRun.objects.filter(
+        status=AgentExecutionRun.STATUS_RUNNING,
+        started_at__lt=threshold_15min,
         finished_at__isnull=True,
     ).count()
 
@@ -299,7 +299,7 @@ def config_hit_dashboard(limit: int = 30) -> dict:
 # ============================================================
 def node_duration_dashboard(days: int = 7) -> dict:
     """节点耗时分布（来自 AgentExecutionRun）。"""
-    from apps.creation.models import AgentExecutionRun, CreationNode
+    from apps.creation.models import AgentExecutionRun
 
     cache_key = f"{CACHE_KEY_PREFIX}node_dur:{days}:{int(timezone.now().timestamp() // CACHE_TTL)}"
     cached = cache.get(cache_key)
@@ -310,22 +310,28 @@ def node_duration_dashboard(days: int = 7) -> dict:
     threshold_dt = now - timedelta(days=days)
 
     by_node = list(
-        CreationNode.objects.filter(
-            started_at__gte=threshold_dt, duration_seconds__gt=0,
-        ).values("node_index", "node_name").annotate(
-            avg_seconds=Avg("duration_seconds"),
-            max_seconds=Avg("duration_seconds"),  # 简化：仍用 Avg
+        AgentExecutionRun.objects.filter(
+            started_at__gte=threshold_dt,
+            finished_at__isnull=False,
+            node_index__isnull=False,
+        )
+        .values("node_index", "agent_id")
+        .annotate(
+            avg_seconds=Avg("finished_at"),
             sample_count=Count("id"),
-        ).order_by("node_index")
+        )
+        .order_by("node_index")
     )
 
-    # 最近 7 天失败节点
     failed_by_node = list(
-        CreationNode.objects.filter(
-            started_at__gte=threshold_dt, status=CreationNode.STATUS_FAILED,
-        ).values("node_index", "node_name").annotate(
-            failed_count=Count("id"),
-        ).order_by("-failed_count")[:10]
+        AgentExecutionRun.objects.filter(
+            started_at__gte=threshold_dt,
+            status=AgentExecutionRun.STATUS_FAILED,
+            node_index__isnull=False,
+        )
+        .values("node_index", "agent_id")
+        .annotate(failed_count=Count("id"))
+        .order_by("-failed_count")[:10]
     )
 
     data = {

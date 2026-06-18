@@ -13,7 +13,7 @@ import {
   AlertTriangle,
 } from 'lucide-react'
 import AdminShell from '@/components/admin/AdminShell'
-import { adminEvolution } from '@/services/admin/batch'
+import { adminEvolution } from '@/services/admin/evolution'
 import {
   AdminPageHeader,
   AdminPanel,

@@ -16,7 +16,7 @@ LEGACY_AGENT_RUNNER_PREFIX = "apps.creation.agents."
 AGENT_RUNNER_PREFIX = "apps.creation.orchestration."
 
 PIPELINE_RUNNER_BY_TYPE: Dict[str, str] = {
-    "fusion_node": "apps.creation.step_mode.run_orchestrator_step",
+    "fusion_node": "",
 }
 
 
@@ -52,12 +52,11 @@ def resolve_agent_id(data: Optional[Mapping[str, Any]]) -> str:
 
 
 def normalize_agent_runner_path(path: Any) -> str:
-    """规范化 Agent runner 路径。
-    - 旧路径 apps.creation.agents.* → 清空（已下线）
-    - apps.creation.orchestration.* → 保留（工作台 Agent 编排入口）
-    """
+    """规范化 Agent runner 路径；legacy orchestration/agents 路径一律清空。"""
     text = str(path or "").strip()
     if text.startswith(LEGACY_AGENT_RUNNER_PREFIX):
+        return ""
+    if text.startswith(AGENT_RUNNER_PREFIX):
         return ""
     return text
 

@@ -34,9 +34,6 @@ export const works = {
   stats() {
     return request('GET', '/api/works/stats/')
   },
-  runAgent(projectId, agentId) {
-    return request('POST', `/api/works/${projectId}/agents/${agentId}/run/`)
-  },
   applyPolish(projectId, options = {}) {
     return request('POST', `/api/works/${projectId}/agents/polish/apply/`, { data: options })
   },

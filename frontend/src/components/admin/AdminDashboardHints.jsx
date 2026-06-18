@@ -129,7 +129,7 @@ export default function AdminDashboardHints({ scope = 'users' }) {
         to: '/admin/creation/projects?status=awaiting',
       })
     }
-    chips.push({ key: 'agents', label: '调度监控', to: '/admin/orchestration?view=overview' })
+    chips.push({ key: 'agents', label: '运行记录', to: '/admin/agent?tab=runs' })
   }
 
   if (!chips.length) return null

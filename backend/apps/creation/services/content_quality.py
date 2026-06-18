@@ -82,7 +82,10 @@ def detect_and_mark_abandoned(*, days: int = ABANDON_DAYS, limit: int = 500) -> 
         | Q(last_edited_at__lt=threshold_dt)
     ).order_by("created_at")[:limit]
 
-    count = qs.update(abandoned_at=timezone.now())
+    project_ids = list(qs.values_list("pk", flat=True))
+    if not project_ids:
+        return 0
+    count = Project.objects.filter(pk__in=project_ids).update(abandoned_at=timezone.now())
     if count:
         logger.info("[Operations] 批量标记弃用项目 %s 个", count)
     return count

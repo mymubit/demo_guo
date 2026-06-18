@@ -21,13 +21,12 @@ class FlowGraphPlanService:
 
     @staticmethod
     def get_flow_graph(pack_id: Optional[str] = None) -> Dict[str, Any]:
-        from apps.console.orchestration.publish_service import OrchestrationPublishService
         from apps.workflow.pipeline_store import FusionPipelineDbService
 
         pack = FusionPipelineDbService.get_pack_by_id(pack_id) if pack_id else FusionPipelineDbService.get_active_pack()
         if pack and isinstance(pack.flow_graph, dict) and pack.flow_graph:
             return dict(pack.flow_graph)
-        return OrchestrationPublishService.published_flow_graph()
+        return {"edges": [], "parallel_groups": [], "nodes": []}
 
     @classmethod
     def _chain_nodes(cls, pack_id: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -74,18 +73,10 @@ class FlowGraphPlanService:
     @classmethod
     def _project_review_passed(cls, project) -> Optional[bool]:
         from apps.creation.artifact_service import get_artifact
-        from apps.creation.models import CreationNode
 
         report = get_artifact(project, "review_report") or {}
         if "passed" in report:
             return bool(report.get("passed"))
-        node = CreationNode.objects.filter(project=project, node_index=6).first()
-        if not node:
-            return None
-        if node.status == CreationNode.STATUS_FAILED:
-            return False
-        if node.status == CreationNode.STATUS_COMPLETED:
-            return True
         return None
 
     @classmethod
@@ -276,14 +267,18 @@ class FlowGraphPlanService:
         stage = cls.stage_for_index(current_index)
         if not stage or stage["type"] != "parallel":
             return []
-        from apps.creation.models import CreationNode
+        from apps.creation.models import AgentExecutionRun
 
         pending: List[int] = []
         for idx in stage["indices"]:
             if int(idx) == int(current_index):
                 continue
-            node = CreationNode.objects.filter(project=project, node_index=int(idx)).first()
-            if not node or node.status != CreationNode.STATUS_COMPLETED:
+            completed = AgentExecutionRun.objects.filter(
+                project=project,
+                node_index=int(idx),
+                status=AgentExecutionRun.STATUS_COMPLETED,
+            ).exists()
+            if not completed:
                 pending.append(int(idx))
         return pending
 

@@ -108,7 +108,7 @@ def _reconcile_project_running_state(
         if stale_override is not None:
             run.status = AgentExecutionRun.STATUS_FAILED
             run.error_message = "管理员操作前强制解除 running 锁"
-            run.save(update_fields=["status", "error_message", "updated_at"])
+            run.save(update_fields=["status", "error_message"])
         else:
             IndependentAgentService.running_run(project)
     IndependentAgentService.update_project_status(project)

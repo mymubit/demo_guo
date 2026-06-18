@@ -315,13 +315,3 @@ class FusionPipelineNode(models.Model):
     def __str__(self):
         return f"{self.website_index}. {self.name} ({self.fusion_node_id})"
 
-
-# ━━━━ 工作流执行时模型（运行期数据）━━━━
-# 说明：实体定义放置在 execution_models.py 中便于模块化维护；
-# 此处显式 re-export 确保 Django 能扫描到这些 model。
-from apps.workflow.execution_models import (
-    WorkflowInstance,
-    NodeExecution,
-    NodeExecutionEvent,
-)
-

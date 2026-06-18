@@ -12,7 +12,6 @@ from apps.creation.artifact_service import get_artifact, save_artifact
 from apps.creation.models import AgentExecutionRun, Project
 from apps.creation.services.submission import submit
 from apps.skill.models import LlmProvider
-from apps.workflow.execution_models import WorkflowInstance
 
 User = get_user_model()
 
@@ -226,7 +225,6 @@ class CreationSubmitLegacyIsolationTests(TestCase):
     ):
         project, _ = submit(self.user, self._payload())
         mock_enqueue.assert_not_called()
-        self.assertEqual(WorkflowInstance.objects.filter(project_id=project.id).count(), 0)
         self.assertEqual(project.total_nodes, 0)
         self.assertEqual(project.status, Project.STATUS_PENDING)
 

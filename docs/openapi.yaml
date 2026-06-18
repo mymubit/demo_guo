@@ -2,7 +2,10 @@ openapi: 3.0.3
 info:
   title: ScriptForge API
   version: 1.0.0
-  description: ScriptForge 前台 / 后台 REST API 契约
+  description: |
+    ScriptForge 前台 / 后台 REST API 契约。
+    Legacy 已下线：`/api/admin/orchestration/`、`/api/admin/main-chain/`、workflow 执行类路径已移除。
+    运行监察请使用 `/api/admin/agent/runs/`、`/api/admin/agent/runs/{run_id}/`、`/api/admin/agent/projects/{project_id}/traces/`。
 paths:
   /api/admin/agent/catalog/:
     get:
@@ -126,6 +129,54 @@ paths:
           description: No response body
     put:
       operationId: admin_agent_review_scoring_update
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/admin/agent/runs/:
+    get:
+      operationId: admin_agent_runs_list
+      description: GET /api/admin/agent/runs/ — 独立 Agent 运行记录列表。
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/admin/agent/runs/{run_id}/:
+    get:
+      operationId: admin_agent_runs_retrieve
+      description: GET /api/admin/agent/runs/<run_id>/ — 单次 Agent 执行详情。
+      parameters:
+      - in: path
+        name: run_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admin
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/admin/agent/projects/{project_id}/traces/:
+    get:
+      operationId: admin_agent_projects_traces_retrieve
+      description: GET /api/admin/agent/projects/<project_id>/traces/ — 项目级 Agent 执行轨迹。
+      parameters:
+      - in: path
+        name: project_id
+        schema:
+          type: string
+        required: true
       tags:
       - admin
       security:
@@ -412,123 +463,6 @@ paths:
         管理后台首页仪表盘
 
         核心指标 + 图表数据，缓存 5 分钟
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/admin/main-chain/blueprint/:
-    get:
-      operationId: admin_main_chain_blueprint_retrieve
-      description: GET /api/admin/main-chain/blueprint/ — 主链蓝图聚合。
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/admin/main-chain/fusion/import/:
-    post:
-      operationId: admin_main_chain_fusion_import_create
-      description: POST — 从技能包磁盘导入主链 + Schema 到 DB 并激活。
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/admin/main-chain/fusion/meta/:
-    get:
-      operationId: admin_main_chain_fusion_meta_retrieve
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/admin/main-chain/fusion/packs/:
-    get:
-      operationId: admin_main_chain_fusion_packs_retrieve
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/admin/main-chain/fusion/packs/{pack_id}/activate/:
-    post:
-      operationId: admin_main_chain_fusion_packs_activate_create
-      parameters:
-      - in: path
-        name: pack_id
-        schema:
-          type: string
-          format: uuid
-        required: true
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/admin/main-chain/registry-meta/:
-    put:
-      operationId: admin_main_chain_registry_meta_update
-      description: PUT /api/admin/main-chain/registry-meta/ — 更新后处理链等 _meta 编排。
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/admin/main-chain/steps/:
-    get:
-      operationId: admin_main_chain_steps_retrieve
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/admin/main-chain/steps/{step_id}/:
-    put:
-      operationId: admin_main_chain_steps_update
-      description: PUT /api/admin/main-chain/steps/<uuid>/ — 更新单步（运营 + Agent 技能字段）。
-      parameters:
-      - in: path
-        name: step_id
-        schema:
-          type: string
-          format: uuid
-        required: true
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/admin/main-chain/steps/sync/:
-    post:
-      operationId: admin_main_chain_steps_sync_create
       tags:
       - admin
       security:
@@ -1578,111 +1512,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/SqlPerformanceLog'
           description: ''
-  /api/admin/orchestration/execution-runs/{run_id}/:
-    get:
-      operationId: admin_orchestration_execution_runs_retrieve
-      description: GET /api/admin/orchestration/execution-runs/<run_id>/ — 单次执行详情
-        + LLM 用量。
-      parameters:
-      - in: path
-        name: run_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/admin/orchestration/flow/blueprint/:
-    get:
-      operationId: admin_orchestration_flow_blueprint_retrieve
-      description: GET /api/admin/orchestration/flow/blueprint/ — 流程编排蓝图。
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/admin/orchestration/flow/registry-meta/:
-    put:
-      operationId: admin_orchestration_flow_registry_meta_update
-      description: PUT /api/admin/orchestration/flow/registry-meta/ — 后处理链与画布元数据。
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/admin/orchestration/flow/steps/{step_id}/:
-    put:
-      operationId: admin_orchestration_flow_steps_update
-      description: PUT /api/admin/orchestration/flow/steps/<uuid>/ — 更新单步。
-      parameters:
-      - in: path
-        name: step_id
-        schema:
-          type: string
-          format: uuid
-        required: true
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/admin/orchestration/flow/steps/reorder/:
-    put:
-      operationId: admin_orchestration_flow_steps_reorder_update
-      description: PUT /api/admin/orchestration/flow/steps/reorder/ — 拖拽重排 chain_order。
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/admin/orchestration/projects/{project_id}/traces/:
-    get:
-      operationId: admin_orchestration_projects_traces_retrieve
-      description: GET /api/admin/orchestration/projects/<project_id>/traces/ — 项目级
-        sub-skill 轨迹。
-      parameters:
-      - in: path
-        name: project_id
-        schema:
-          type: string
-        required: true
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/admin/orchestration/stats/:
-    get:
-      operationId: admin_orchestration_stats_retrieve
-      description: GET /api/admin/orchestration/stats/ — 近期 sub-skill 执行命中率。
-      tags:
-      - admin
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      responses:
-        '200':
-          description: No response body
   /api/admin/orders/:
     get:
       operationId: admin_orders_list

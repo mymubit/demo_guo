@@ -45,7 +45,12 @@ class LegacyApiGoneTests(TestCase):
         res = self.client.get("/api/admin/orchestration/flow/blueprint/")
         self.assertEqual(res.status_code, 404)
 
-    def test_admin_agent_run_detail_ok_shape(self):
+    def test_admin_main_chain_returns_404(self):
+        self.client.force_authenticate(user=self.admin)
+        res = self.client.get("/api/admin/main-chain/blueprint/")
+        self.assertEqual(res.status_code, 404)
+
+    def test_admin_agent_runs_list_ok(self):
         self.client.force_authenticate(user=self.admin)
         res = self.client.get("/api/admin/agent/runs/")
         self.assertEqual(res.status_code, 200)

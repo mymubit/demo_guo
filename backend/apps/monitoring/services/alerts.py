@@ -30,16 +30,14 @@ def _is_in_cooldown(rule: AlertRule) -> bool:
 
 
 def _metric_zombie_workflow_instances(since) -> tuple[float, dict]:
-    """统计僵尸 WorkflowInstance（>15min 仍 running）。"""
-    try:
-        from apps.workflow.models import WorkflowInstance
-    except ImportError:
-        return 0.0, {"sample_count": 0, "reason": "workflow app unavailable"}
+    """Legacy WorkflowInstance 已删除，改为统计僵尸 AgentExecutionRun。"""
+    from apps.creation.models import AgentExecutionRun
+
     threshold = timezone.now() - timedelta(minutes=15)
-    qs = WorkflowInstance.objects.filter(
-        status__in=[WorkflowInstance.STATUS_RUNNING, "pending"],
-        created_at__lt=threshold,
-        resolved_at__isnull=True,
+    qs = AgentExecutionRun.objects.filter(
+        status=AgentExecutionRun.STATUS_RUNNING,
+        started_at__lt=threshold,
+        finished_at__isnull=True,
     )
     return float(qs.count()), {"sample_count": qs.count()}
 

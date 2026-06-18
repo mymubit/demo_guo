@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
+"""Fusion Pack Admin API 已随 main-chain 路由下线。"""
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
 
 from apps.workflow.pipeline_store import FusionPipelineDbService
-from apps.workflow.models import FusionPipelineNode, FusionPipelinePack
 
 
 class FusionPipelinePackAdminApiTests(TestCase):
@@ -21,38 +21,13 @@ class FusionPipelinePackAdminApiTests(TestCase):
     def tearDown(self):
         FusionPipelineDbService.clear_caches()
 
-    def test_list_and_activate_pack(self):
-        pack_a = FusionPipelinePack.objects.create(version="pack-a", is_active=True)
-        FusionPipelineNode.objects.create(
-            pack=pack_a,
-            fusion_node_id="node-1-input",
-            chain_order=1,
-            website_index=1,
-            name="立项",
-        )
-        pack_b = FusionPipelinePack.objects.create(version="pack-b", is_active=False)
-        FusionPipelineNode.objects.create(
-            pack=pack_b,
-            fusion_node_id="node-1-input",
-            chain_order=1,
-            website_index=1,
-            name="立项 B",
-        )
-        FusionPipelineDbService.clear_caches()
+    def test_main_chain_fusion_packs_returns_404(self):
+        res = self.client.get("/api/admin/main-chain/fusion/packs/")
+        self.assertEqual(res.status_code, 404)
 
-        list_res = self.client.get("/api/admin/main-chain/fusion/packs/")
-        self.assertEqual(list_res.status_code, 200)
-        items = list_res.data["data"]["items"]
-        versions = {item["version"] for item in items}
-        self.assertIn("pack-a", versions)
-        self.assertIn("pack-b", versions)
+    def test_main_chain_fusion_pack_activate_returns_404(self):
+        from apps.workflow.models import FusionPipelinePack
 
-        activate_res = self.client.post(f"/api/admin/main-chain/fusion/packs/{pack_b.id}/activate/")
-        self.assertEqual(activate_res.status_code, 200)
-        pack_a.refresh_from_db()
-        pack_b.refresh_from_db()
-        self.assertFalse(pack_a.is_active)
-        self.assertTrue(pack_b.is_active)
-
-        steps = FusionPipelineDbService.get_active_pack().nodes.first()
-        self.assertEqual(steps.name, "立项 B")
+        pack = FusionPipelinePack.objects.create(version="pack-b", is_active=False)
+        res = self.client.post(f"/api/admin/main-chain/fusion/packs/{pack.id}/activate/")
+        self.assertEqual(res.status_code, 404)

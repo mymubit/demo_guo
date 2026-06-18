@@ -16,7 +16,7 @@ from django.utils import timezone
 
 from apps.common.agent_term import alias_agent_id
 
-from ..models import AgentExecutionRun, Project, SubSkillExecutionLog
+from ..models import AgentExecutionRun, Project
 from ..pipeline_debug_log import summarize_artifact, summarize_upstream
 
 logger = logging.getLogger(__name__)
@@ -180,8 +180,7 @@ class AgentExecutionRunService:
             if isinstance(meta, dict):
                 trace_entries = list(meta.get("execution_trace") or [])
 
-        if trace_entries:
-            AgentExecutionRunService.sync_sub_skills_from_trace(run, trace_entries)
+        # SubSkillExecutionLog 已停写（Legacy 编排专用）
 
         updates: Dict[str, Any] = {
             "status": status,
@@ -220,31 +219,7 @@ class AgentExecutionRunService:
         run: AgentExecutionRun,
         trace_entries: List[Dict[str, Any]],
     ) -> None:
-        status_map = {
-            "executed": SubSkillExecutionLog.STATUS_EXECUTED,
-            "failed": SubSkillExecutionLog.STATUS_FAILED,
-            "skipped": SubSkillExecutionLog.STATUS_SKIPPED,
-        }
-        for idx, entry in enumerate(trace_entries):
-            if not isinstance(entry, dict):
-                continue
-            skill_id = str(entry.get("id") or "").strip()
-            if not skill_id:
-                continue
-            raw_status = str(entry.get("status") or SubSkillExecutionLog.STATUS_SKIPPED)
-            SubSkillExecutionLog.objects.update_or_create(
-                run=run,
-                skill_id=skill_id,
-                defaults={
-                    "skill_type": str(entry.get("type") or "")[:32],
-                    "cli": str(entry.get("cli") or "")[:64],
-                    "script": str(entry.get("script") or "")[:128],
-                    "status": status_map.get(raw_status, SubSkillExecutionLog.STATUS_SKIPPED),
-                    "error_message": str(entry.get("message") or "")[:2000],
-                    "order_index": idx,
-                    "finished_at": timezone.now(),
-                },
-            )
+        return
 
     @staticmethod
     def record_sub_skill(
@@ -264,66 +239,7 @@ class AgentExecutionRunService:
         input_payload: Optional[Dict[str, Any]] = None,
         llm_io: Optional[Dict[str, Any]] = None,
     ) -> None:
-        from .llm_trace import _clip_json
-
-        run_id = _active_run_id.get()
-        if not run_id:
-            return
-
-        status_map = {
-            "executed": SubSkillExecutionLog.STATUS_EXECUTED,
-            "failed": SubSkillExecutionLog.STATUS_FAILED,
-            "skipped": SubSkillExecutionLog.STATUS_SKIPPED,
-        }
-        mapped = status_map.get(status, SubSkillExecutionLog.STATUS_SKIPPED)
-
-        in_summary = dict(input_summary or {})
-        if input_payload is not None:
-            in_summary = {}
-        elif not in_summary and node_id and upstream is not None:
-            from ..pipeline_debug_log import summarize_upstream
-
-            in_summary = summarize_upstream(node_id, upstream)
-        out_summary = dict(output_summary or {})
-        if output_payload is not None and not out_summary:
-            out_summary = {}
-        elif not out_summary and output_payload is not None:
-            out_summary = summarize_sub_skill_output(skill_id, output_payload)
-
-        try:
-            run = AgentExecutionRun.objects.get(id=run_id)
-        except AgentExecutionRun.DoesNotExist:
-            return
-
-        existing = SubSkillExecutionLog.objects.filter(run=run, skill_id=skill_id).first()
-        order_index = existing.order_index if existing else _order_counter.get(0)
-        if not existing:
-            order_token = _order_counter.get(0)
-            _order_counter.set(order_token + 1)
-
-        defaults = {
-            "skill_type": skill_type[:32],
-            "cli": cli[:64],
-            "script": script[:128],
-            "status": mapped,
-            "error_message": str(message or "")[:2000],
-            "input_summary": in_summary,
-            "output_summary": out_summary,
-            "input_payload": _clip_json(input_payload) if input_payload is not None else {},
-            "output_payload": _clip_json(output_payload) if output_payload is not None else {},
-            "llm_io": _clip_json(llm_io) if llm_io is not None else {},
-            "duration_ms": duration_ms,
-            "finished_at": timezone.now(),
-            "order_index": order_index,
-        }
-        if existing:
-            for key, val in defaults.items():
-                if key in {"input_summary", "output_summary", "input_payload", "output_payload", "llm_io"} and not val:
-                    continue
-                setattr(existing, key, val)
-            existing.save()
-        else:
-            SubSkillExecutionLog.objects.create(run=run, skill_id=skill_id, **defaults)
+        return
 
     @staticmethod
     @contextmanager
@@ -517,10 +433,8 @@ class AgentExecutionRunService:
             return result
 
     @staticmethod
-    def serialize_sub_skill(log: SubSkillExecutionLog) -> Dict[str, Any]:
-        from .run_serialization import serialize_sub_skill
-
-        return serialize_sub_skill(log)
+    def serialize_sub_skill(log) -> Dict[str, Any]:
+        return {}
 
     @staticmethod
     def sanitize_input_snapshot(snapshot: Optional[Dict[str, Any]]) -> Dict[str, Any]:
@@ -581,9 +495,7 @@ class AgentExecutionRunService:
         if include_sensitive:
             payload["rendered_prompt_preview"] = (run.rendered_prompt_preview or "")[:8000]
         if include_sub_skills:
-            from .run_serialization import serialize_legacy_sub_skills
-
-            payload.update(serialize_legacy_sub_skills(run))
+            payload.update({"sub_skills": [], "execution_trace": []})
         return alias_agent_id(payload)
 
     @staticmethod
@@ -646,7 +558,7 @@ class AgentExecutionRunService:
         node_index: Optional[int] = None,
         include_sensitive: bool = False,
     ) -> List[Dict[str, Any]]:
-        qs = AgentExecutionRun.objects.filter(project=project).prefetch_related("sub_skill_logs")
+        qs = AgentExecutionRun.objects.filter(project=project)
         if agent_id:
             qs = qs.filter(agent_id=agent_id)
         if node_index is not None:
@@ -665,7 +577,7 @@ class AgentExecutionRunService:
         node_index: Optional[int] = None,
         include_sensitive: bool = False,
     ) -> Optional[Dict[str, Any]]:
-        qs = AgentExecutionRun.objects.filter(project=project).prefetch_related("sub_skill_logs")
+        qs = AgentExecutionRun.objects.filter(project=project)
         if agent_id:
             qs = qs.filter(agent_id=agent_id)
         if node_index is not None:
@@ -754,9 +666,7 @@ class AgentExecutionRunService:
         from apps.skill.models import LlmUsageLog
 
         try:
-            run = AgentExecutionRun.objects.select_related("project", "user").prefetch_related(
-                "sub_skill_logs"
-            ).get(id=run_id)
+            run = AgentExecutionRun.objects.select_related("project", "user").get(id=run_id)
         except AgentExecutionRun.DoesNotExist:
             return None
 
@@ -879,23 +789,7 @@ class AgentExecutionRunService:
                 )
             )
 
-        failed_skills = (
-            SubSkillExecutionLog.objects.filter(
-                run__started_at__gte=since,
-                status=SubSkillExecutionLog.STATUS_FAILED,
-            )
-            .values("skill_id", "run__agent_id")
-            .annotate(failed_count=Count("id"))
-            .order_by("-failed_count")[:10]
-        )
-        top_failed_sub_skills = [
-            {
-                "skill_id": row["skill_id"],
-                "agent_id": row["run__agent_id"],
-                "failed_count": row["failed_count"] or 0,
-            }
-            for row in failed_skills
-        ]
+        top_failed_sub_skills: List[Dict[str, Any]] = []
 
         return {
             "summary": {

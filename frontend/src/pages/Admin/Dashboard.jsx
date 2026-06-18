@@ -609,9 +609,9 @@ export default function Dashboard() {
               <Link to="/admin/commerce/settings" className="text-gold-400 hover:underline mx-1">
                 商业·钱包
               </Link>
-              · 主链步骤扣费见
-              <Link to="/admin/orchestration?tab=flow" className="text-gold-400 hover:underline mx-1">
-                流程编排
+              · Agent 配置见
+              <Link to="/admin/agent" className="text-gold-400 hover:underline mx-1">
+                Agent 中心
               </Link>
               <span className="inline-flex flex-wrap gap-3 ml-0 sm:ml-2 mt-2 sm:mt-0">
                 <Link to="/admin/orders" className="text-gold-400/90 hover:text-gold-300">
@@ -708,8 +708,8 @@ export default function Dashboard() {
                   <FolderKanban className={ICON.md} />
                   创作项目
                 </Link>
-                <Link to="/admin/orchestration?view=overview" className="text-gold-400 hover:text-gold-300">
-                  Agent 监控
+                <Link to="/admin/agent?tab=definitions" className="text-gold-400 hover:text-gold-300">
+                  运行记录
                 </Link>
               </div>
             </div>
@@ -732,15 +732,15 @@ export default function Dashboard() {
             <div>
               <h3 className="text-sm font-semibold text-white">Sub-skill 详细监察</h3>
               <p className="text-xs text-navy-400 mt-1 leading-relaxed max-w-xl">
-                命中率、失败 Top、各 Agent 执行量等图表已集中在调度监控，避免与总览重复展示。
+                命中率、失败 Top、各 Agent 执行量等详情请查看 Agent 运行记录。
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Link
-                to="/admin/orchestration?view=stats"
+                to="/admin/agent?tab=definitions"
                 className="px-4 py-2 rounded-xl text-sm text-gold-300 border border-gold-500/30 bg-gold-500/10 hover:bg-gold-500/15 sf-focus-ring"
               >
-                调度监控 · 完整统计
+                Agent 运行记录
               </Link>
               <Link
                 to="/admin/creation/projects?failed_run=1"
@@ -855,7 +855,7 @@ export default function Dashboard() {
           <p className="text-sm text-navy-400">
             模型单价请在
             <Link to="/admin/model" className="text-gold-400/80 hover:underline mx-1">
-              流程编排 · 大模型
+              大模型中心
             </Link>
             调整；单价用于 Dashboard「大模型成本」核算，账单以云厂商控制台为准。
           </p>

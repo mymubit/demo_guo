@@ -313,12 +313,7 @@ CREATION_FUSION_WORK_DIR = os.getenv(
     "CREATION_FUSION_WORK_DIR",
     str(BASE_DIR / "tmp" / "fusion_work"),
 )
-# Legacy 流水线已下线；默认拒绝旧 pipeline 入队（可通过环境变量临时开启回滚）
-LEGACY_PIPELINE_ENABLED = os.getenv("LEGACY_PIPELINE_ENABLED", "false").lower() in (
-    "1",
-    "true",
-    "yes",
-)
+# Legacy 流水线已下线；FUSION_ORCHESTRATOR_ENABLED 固定关闭
 FUSION_ORCHESTRATOR_ENABLED = False
 FUSION_LLM_ENABLED = os.getenv("FUSION_LLM_ENABLED", "true").lower() in ("1", "true", "yes")
 FUSION_LLM_EPISODE_BATCH = int(os.getenv("FUSION_LLM_EPISODE_BATCH", "5"))

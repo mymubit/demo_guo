@@ -34,7 +34,6 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.workflow.condition_evaluator import safe_eval
-from apps.workflow.execution_models import NodeExecution, WorkflowInstance
 from apps.workflow.models import FusionPipelineNode, FusionPipelinePack
 
 

@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from apps.creation.monitoring.execution_run_service import AgentExecutionRunService
-from apps.creation.models import AgentExecutionRun, Project, SubSkillExecutionLog
+from apps.creation.models import AgentExecutionRun, Project
 from apps.skill.llm.usage_log import LlmUsageService, llm_usage_scope
 from apps.skill.models import LlmUsageLog
 
@@ -20,11 +20,9 @@ class AgentExecutionRunServiceTests(TestCase):
             episode_count=10,
         )
 
-    def test_run_scope_finish_syncs_trace(self):
+    def test_run_scope_finish_without_sub_skill_writes(self):
         trace = [
             {"id": "reference-injector", "type": "retrieval", "status": "executed", "message": ""},
-            {"id": "structure-generator", "type": "llm", "status": "executed", "message": ""},
-            {"id": "world-validator", "type": "cli", "status": "failed", "message": "rootRules 不足"},
         ]
 
         class _Result:
@@ -40,24 +38,19 @@ class AgentExecutionRunServiceTests(TestCase):
                 "reference-injector",
                 "executed",
                 skill_type="retrieval",
-                input_summary={"nodeId": "node-2-structure"},
             )
             AgentExecutionRunService.finish_run(
                 run,
                 AgentExecutionRun.STATUS_COMPLETED,
                 agent_result=_Result(),
                 output_artifact_key="structure_plan",
-                output_summary={"artifactKey": "structure_plan", "totalEpisodes": 10},
+                output_summary={"artifactKey": "structure_plan"},
             )
 
         run = AgentExecutionRun.objects.get(id=run.id)
         self.assertEqual(run.status, AgentExecutionRun.STATUS_COMPLETED)
-        self.assertEqual(run.output_artifact_key, "structure_plan")
-        logs = {log.skill_id: log for log in run.sub_skill_logs.all()}
-        self.assertEqual(logs["reference-injector"].status, SubSkillExecutionLog.STATUS_EXECUTED)
-        self.assertEqual(logs["world-validator"].status, SubSkillExecutionLog.STATUS_FAILED)
-        self.assertIn("rootRules", logs["world-validator"].error_message)
-        self.assertEqual(logs["structure-generator"].status, SubSkillExecutionLog.STATUS_EXECUTED)
+        detail = AgentExecutionRunService.get_run_detail(str(run.id), include_sub_skills=True)
+        self.assertEqual(detail.get("sub_skills"), [])
 
     def test_llm_usage_links_execution_run_and_sub_skill(self):
         with AgentExecutionRunService.run_scope(

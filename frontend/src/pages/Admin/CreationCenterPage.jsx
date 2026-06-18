@@ -2,14 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Bot,
-  GitBranch,
   FolderKanban,
   SlidersHorizontal,
   BarChart3,
-  ArrowRight,
   Cpu,
 } from 'lucide-react'
-import CreationPipelineDiagram from '@/components/admin/CreationPipelineDiagram'
 import AdminShell from '@/components/admin/AdminShell'
 import { AdminStatGrid, AdminLoading } from '@/components/admin/AdminUI'
 import { admin } from '@/services/api'
@@ -17,17 +14,10 @@ import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
 const HUB_CARDS = [
   {
-    to: '/admin/orchestration?tab=flow',
-    icon: GitBranch,
-    title: '流程编排',
-    desc: '拖拽排序、后处理链、Prompt 与模型路由',
-    accent: 'from-blue-500/20 to-blue-600/5 border-blue-500/25',
-  },
-  {
     to: '/admin/agent',
     icon: Bot,
     title: 'Agent 中心',
-    desc: '注册表、规则库、质检评分与 LLM 路由',
+    desc: '独立 Agent 定义、Prompt、Knowledge 与 LLM 路由',
     accent: 'from-indigo-500/20 to-indigo-600/5 border-indigo-500/25',
   },
   {
@@ -46,10 +36,10 @@ const HUB_CARDS = [
     alertKey: 'has_failed_run',
   },
   {
-    to: '/admin/orchestration?view=overview',
+    to: '/admin/agent?tab=definitions',
     icon: BarChart3,
-    title: '调度监控',
-    desc: '全站 sub-skill 命中率与失败分布',
+    title: '运行记录',
+    desc: '独立 Agent 最近执行与健康状态',
     accent: 'from-purple-500/20 to-purple-600/5 border-purple-500/25',
   },
   {
@@ -66,7 +56,6 @@ export function CreationCenterPage() {
   const [agentOps, setAgentOps] = useState({})
   const [summary, setSummary] = useState({})
   const [opsAlerts, setOpsAlerts] = useState({})
-  const [blueprint, setBlueprint] = useState(null)
 
   useEffect(() => {
     admin
@@ -78,7 +67,6 @@ export function CreationCenterPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false))
-    admin.getMainChainBlueprint().then(setBlueprint).catch(() => {})
   }, [])
 
   const execToday = agentOps.execution?.summary?.today || {}
@@ -124,32 +112,13 @@ export function CreationCenterPage() {
             ]}
           />
           <p className="text-xs text-navy-400">
-            Sub-skill 命中率与失败分布 →
-            <Link to="/admin/orchestration?view=stats" className="text-gold-400 hover:underline mx-1">
-              调度监控
+            Agent 执行记录 →
+            <Link to="/admin/agent?tab=definitions" className="text-gold-400 hover:underline mx-1">
+              运行记录
             </Link>
           </p>
         </div>
       )}
-
-      <div className="sf-console-panel p-5 border border-white/5">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-          <div>
-            <h2 className="text-sm font-semibold text-white">创作流水线</h2>
-            <p className="text-xs text-navy-400 mt-0.5">
-              改编预处理 → 工作台五步 → 后处理链（审查 / 润色 / 评分 / 营销 / 洞察）
-            </p>
-          </div>
-          <Link
-            to="/admin/orchestration?tab=flow"
-            className="text-xs text-gold-400 hover:text-gold-300 inline-flex items-center gap-1"
-          >
-            去配置
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        </div>
-        <CreationPipelineDiagram linkTo="/admin/orchestration?tab=flow" blueprint={blueprint} />
-      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {HUB_CARDS.map((card) => {
@@ -174,9 +143,9 @@ export function CreationCenterPage() {
       </div>
 
       <p className="text-xs text-navy-400">
-        流程步骤扣费在
-        <Link to="/admin/orchestration?tab=flow" className="text-gold-400/80 hover:underline mx-1">
-          调度中心 · 流程编排
+        Agent 配置与 LLM 路由见
+        <Link to="/admin/agent" className="text-gold-400/80 hover:underline mx-1">
+          Agent 中心
         </Link>
         ；币种与注册赠送在
         <Link to="/admin/commerce/settings" className="text-gold-400/80 hover:underline mx-1">
@@ -188,7 +157,7 @@ export function CreationCenterPage() {
   )
 }
 
-/** @deprecated 已迁移至 MainChainStudioPage / AgentHubPage / ModelHubPage */
+/** @deprecated 已迁移至 AgentHubPage / ModelHubPage */
 export function AiPipelineHubPage() {
   return null
 }

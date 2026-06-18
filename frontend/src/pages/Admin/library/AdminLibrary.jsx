@@ -14,7 +14,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import AdminShell from '@/components/admin/AdminShell'
-import { adminLibrary } from '@/services/admin/batch'
+import { adminLibrary } from '@/services/admin/library'
 import {
   AdminPageHeader,
   AdminPanel,

@@ -429,14 +429,13 @@ flowchart LR
 
 ## 七、旧架构在当前业务中的位置
 
-Legacy 非 C 端主路径，代码仍保留：
+Legacy 执行代码与历史表**均已删除**（迁移 `creation.0020` / `workflow.0013`）：
 
-- `run_creation_pipeline` / `run_creation_step`（`backend/apps/creation/tasks.py`）
-- `WorkflowEngine`（`backend/apps/workflow/workflow_engine.py`）
-- `backend/apps/creation/orchestration/*`
-- `CreationNode`、`SubSkillExecutionLog`
+- 已删代码：`orchestration/`、`step_mode`、`run_creation_pipeline`、`workspace_service` 旧链
+- 已删表：`CreationNode`、`SubSkillExecutionLog`、`CreationTask`、`BatchJob`、`WorkflowInstance`、`NodeExecution`
+- 已 stub：`WorkflowEngine`（实例化抛错）
 
-说明文档：`backend/apps/creation/legacy/README.md`。README 与本文档均明确：勿在新功能中接入旧 7 节点自动流水线。
+勿在新功能中接入旧 7 节点自动流水线。
 
 ---
 
@@ -484,6 +483,4 @@ Legacy 非 C 端主路径，代码仍保留：
 | Admin orchestration / main-chain / workflow API | `GET /api/admin/agent/runs/` 运行监察 |
 | batch 批量创作 | 已删除 |
 
-环境开关：`LEGACY_PIPELINE_ENABLED=false`（默认），仅用于紧急回滚旧入队点。
-
-历史表 `CreationNode` / `WorkflowInstance` / `CreationTask` 首期停写不 drop，只读保留。
+Legacy 表 `CreationNode` / `WorkflowInstance` / `CreationTask` / `SubSkillExecutionLog` / `BatchJob` 已通过迁移物理删除。

@@ -35,38 +35,8 @@ def get_reviewable_artifact(
     *,
     requesting_node_role: str = "",
 ) -> Optional[dict]:
-    """
-    供 review/score 节点读取已落盘产物的专用接口。
-
-    与 get_artifact 的关键区别：
-    1. 若 requesting_node_role 为 review/score，强制只读 DB 已落盘产物（artifact_key 完整记录），
-       不接受外部传入的实时中间产物，防止自评偏差。
-    2. 若产物尚未落盘（create 节点仍在运行），返回 None 并记录 warning，
-       调用方应拒绝启动 review 而非读取进行中的数据。
-
-    参数：
-      requesting_node_role — 调用方节点角色，传入 CreationNode.node_role 值；
-                             review/score 时会触发隔离校验。
-    """
-    from .models import CreationNode
-
-    isolation_roles = {CreationNode.ROLE_REVIEW, CreationNode.ROLE_SCORE}
-    if requesting_node_role in isolation_roles:
-        # 只读 DB 落盘产物，若对应的 create 节点仍在运行则拒绝
-        create_running = project.nodes.filter(
-            node_role=CreationNode.ROLE_CREATE,
-            status=CreationNode.STATUS_RUNNING,
-        ).exists()
-        if create_running:
-            import logging
-            logging.getLogger(__name__).warning(
-                "get_reviewable_artifact: project=%s artifact_key=%s "
-                "拒绝读取——create 节点仍在运行，review 节点不得读取实时中间产物",
-                project.id,
-                artifact_key,
-            )
-            return None
-
+    """供 review/score 读取已落盘产物；独立 Agent 模式下与 get_artifact 等价。"""
+    _ = requesting_node_role
     return get_artifact(project, artifact_key)
 
 
@@ -101,14 +71,20 @@ def build_fusion_snapshot(project: Project) -> Dict[str, Any]:
         )
 
     nodes = []
-    for n in project.nodes.all().order_by("node_index"):
+    from .models import AgentExecutionRun
+
+    seen_indices: set[int] = set()
+    for run in AgentExecutionRun.objects.filter(project=project).order_by("node_index", "-started_at"):
+        if run.node_index is None or int(run.node_index) in seen_indices:
+            continue
+        seen_indices.add(int(run.node_index))
         nodes.append(
             {
-                "index": n.node_index,
-                "fusionNodeId": n.fusion_node_id,
-                "name": n.node_name,
-                "status": n.status,
-                "summary": n.summary_text,
+                "index": int(run.node_index),
+                "fusionNodeId": "",
+                "name": run.agent_id or "",
+                "status": run.status,
+                "summary": (run.output_summary or {}).get("summary", "") if isinstance(run.output_summary, dict) else "",
             }
         )
 

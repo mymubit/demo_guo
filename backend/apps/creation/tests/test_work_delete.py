@@ -6,7 +6,7 @@ from django.core.exceptions import PermissionDenied
 from django.test import TestCase
 from django.utils import timezone
 
-from apps.creation.models import CreationNode, Project
+from apps.creation.models import AgentExecutionRun, Project
 from apps.creation.services import CreationService
 
 User = get_user_model()
@@ -38,15 +38,17 @@ class WorkDeleteTests(TestCase):
             CreationService.delete_user_project(str(self.project.id), self.user)
 
     def test_delete_stale_workspace_running_unlocks(self):
+        from apps.creation.models import AgentExecutionRun
+
         self.project.pipeline_mode = Project.MODE_WORKSPACE
         self.project.status = Project.STATUS_RUNNING
         self.project.save(update_fields=["pipeline_mode", "status"])
-        CreationNode.objects.create(
+        AgentExecutionRun.objects.create(
             project=self.project,
+            user=self.user,
+            agent_id="structure",
             node_index=2,
-            node_name="结构与世界观",
-            status=CreationNode.STATUS_RUNNING,
-            started_at=timezone.now() - timedelta(minutes=5),
+            status=AgentExecutionRun.STATUS_RUNNING,
         )
         pid = str(self.project.id)
         result = CreationService.delete_user_project(pid, self.user)

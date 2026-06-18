@@ -29,10 +29,8 @@ export { useConfig, useConfigs, useConfigReady } from './config/useConfig'
 export { useConfigStore, getConfigValue } from './config/configStore'
 export {
   admin,
-  adminMainChain,
   adminWorkflow,
   adminAgent,
-  adminOrchestration,
   adminModel,
   adminMonitoring,
   adminStats,
@@ -52,7 +50,7 @@ import { works } from './works'
 import { skill } from './skill'
 import { share } from './share'
 import { systemConfig } from './config/systemConfig'
-import { admin, adminMainChain, adminWorkflow, adminAgent, adminOrchestration, adminModel, adminMonitoring, adminStats, adminSystemConfig } from './admin'
+import { admin, adminWorkflow, adminAgent, adminModel, adminMonitoring, adminStats, adminSystemConfig } from './admin'
 import { API_BASE_URL } from './http'
 
 export default {
@@ -67,10 +65,8 @@ export default {
   share,
   systemConfig,
   admin,
-  adminMainChain,
   adminWorkflow,
   adminAgent,
-  adminOrchestration,
   adminModel,
   adminMonitoring,
   adminStats,

@@ -37,10 +37,7 @@ class AgentRegistryConfigServiceTests(TestCase):
         self.assertNotIn("post_script_chain", meta)
         self.assertNotIn("post_script_append_agents", meta)
         self.assertNotIn("post_script_pipeline_index", meta)
-        self.assertEqual(
-            row.registry["agents"][0]["runner"],
-            "apps.creation.orchestration.brief.run_brief_agent",
-        )
+        self.assertEqual(row.registry["agents"][0]["runner"], "")
 
     def test_save_registry_normalizes_legacy_runner_path(self):
         registry = {
