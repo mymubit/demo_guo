@@ -1,7 +1,7 @@
 ---
 name: drama-master
 version: "2.0.0"
-description: "AI短剧创作总入口。从零创作/断点续写/单阶段专项，智能路由到27个专业角色。Invoke when user wants full drama creation, stage routing, or needs help getting started."
+description: "AI短剧创作总入口。从零创作/断点续写/单阶段专项，智能路由到33个专业角色（含drama-intake/drama-master共35文件）。Invoke when user wants full drama creation, stage routing, or needs help getting started."
 tags: ["总入口", "创作", "路由", "全流程"]
 platforms: [cursor, codex, trae]
 input_schema:
@@ -73,15 +73,38 @@ output_schema:
 | Codex | `[hook] 需求` 或 `@drama-hook-designer` |
 | Trae | "用钩子设计师帮我..." 或自然语言描述需求 |
 
-**角色名速查**：
-`market-radar` · `formula-analyst` · `topic-planner` · `project-reviewer`
-`world-architect` · `character-designer` · `dream-analyst`
-`plot-architect` · `hook-designer` · `conflict-engine` · `reversal-master` · `rhythm-designer` · `psychology-architect`
-`script-writer` · `dialogue-expert` · `scene-director`
-`script-reviewer` · `reader-reviewer` · `emotion-auditor` · `quality-reporter`
-`script-editor` · `pacing-optimizer` · `formatter`
-`visual-producer` · `storyboard-director` · `marketing-officer`
-`compliance-guard` · `evolution-analyst`
+**角色名速查（33个，按流程顺序）**：
+
+战略选题：`market-radar` · `formula-analyst` · `topic-planner` · `project-reviewer` · `lapian-analyst` · `ip-adapter`
+
+世界构建：`world-architect` · `character-designer` · `dream-analyst`
+
+剧情引擎：`emotion-architect`【大纲前蓝图】 · `plot-architect` · `hook-designer` · `conflict-engine` · `reversal-master` · `rhythm-designer`【大纲中规划】 · `psychology-architect`
+
+创作执行：`script-writer` · `dialogue-expert` · `scene-director`【创作阶段镜头指导】
+
+评审质控：`script-reviewer` · `reader-reviewer` · `emotion-auditor`【剧本后检测】 · `quality-reporter`
+
+修改润色：`script-editor` · `pacing-optimizer`【集内时长调整】 · `formatter`
+
+制作宣发：`visual-producer` · `storyboard-director`【制作阶段九列分镜】 · `post-processor` · `marketing-officer`
+
+合规总编室：`compliance-guard` · `evolution-analyst`
+
+工具：`drama-intake`（外部内容摄入，非创作角色）
+
+---
+
+**三组易混淆角色的分工说明**：
+
+| 组 | 角色A | 角色B | 区别 |
+|----|-------|-------|------|
+| 情绪 | 情绪架构师 | 节奏设计师 | 前者大纲前设蓝图，后者大纲中做规划 |
+| 情绪 | 节奏设计师 | 情绪审计官 | 前者规划，后者剧本完成后检测偏差 |
+| 节奏 | 节奏设计师 | 节奏优化师 | 前者全剧宏观规划，后者集内场景时长调整 |
+| 镜头 | 场景导演 | 分镜导演 | 前者写作阶段提供镜头语言指导，后者制作阶段生成九列分镜表 |
+| 市场 | 市场雷达 | 拉片分析师 | 前者宏观趋势，后者某部具体作品深度分析 |
+| 梦境 | 爆款公式师 | 梦境指标师 | 前者选题阶段轻量预估，后者世界+人设完成后深度检测 |
 
 ---
 

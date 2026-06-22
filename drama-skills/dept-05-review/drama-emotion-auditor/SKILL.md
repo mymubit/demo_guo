@@ -1,7 +1,7 @@
 ---
 name: drama-emotion-auditor
 version: "2.0.0"
-description: "情绪审计官：对已完成剧本进行情绪曲线审计（逐集情绪值提取+标注EV/ET/TP），识别疲软区间并给出修复建议。Invoke when auditing emotional curve of finished draft."
+description: "情绪审计官（审稿阶段·事后检测）：对已完成剧本进行情绪曲线审计（逐集实际情绪值提取+EV/ET/TP对照），识别与情绪蓝图的偏差并给出修复建议。三者时机分工：情绪架构师=大纲前蓝图→节奏设计师=大纲中规划→情绪审计官=剧本后检测。Invoke after script draft completion to audit emotional curve against the planned blueprint."
 tags: ["情绪审计", "曲线检测", "疲软区间", "情绪节点"]
 dept: "评审质控部"
 ---

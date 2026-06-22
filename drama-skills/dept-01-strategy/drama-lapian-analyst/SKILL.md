@@ -1,7 +1,7 @@
 ---
 name: drama-lapian-analyst
 version: "2.0.0"
-description: "拉片分析师（dramaskill node-9扩展）：对已上线爆款短剧进行6维度深度分析，提炼可复用创作模板，发现新模式并归档到灵感库。系统的持续学习引擎。Invoke when analyzing existing successful dramas to extract reusable patterns."
+description: "拉片分析师（具体作品深度分析）：对某部已上线短剧进行6维度深度拉片（结构/人设/节奏/台词/镜头/情绪曲线），提炼可复用创作模板，发现新模式归档灵感库。关注「某一部具体作品」的深度学习。与市场雷达的分工：市场雷达=整体市场趋势，拉片分析师=单部作品深度解析。Invoke when deeply analyzing a specific drama to extract reusable patterns."
 tags: ["拉片", "分析", "爆款研究", "模式提炼", "学习引擎"]
 dept: "战略选题部"
 output_schema:

@@ -35,13 +35,13 @@ drama-master（总入口）
 │   └── drama-dream-analyst         梦境指标师
 │
 ├── dept-03-plot-engine/   剧情引擎部（7人）
-│   ├── drama-plot-architect        情节架构师
+│   ├── drama-emotion-architect     情绪架构师【大纲前·蓝图】← ScriptForge
+│   ├── drama-plot-architect        情节架构师【大纲阶段·结构】
 │   ├── drama-hook-designer         钩子设计师
 │   ├── drama-conflict-engine       冲突引擎师
 │   ├── drama-reversal-master       反转大师
-│   ├── drama-rhythm-designer       节奏设计师
-│   ├── drama-psychology-architect  心理框架师
-│   └── drama-emotion-architect     情绪架构师 ← ScriptForge新增
+│   ├── drama-rhythm-designer       节奏设计师【大纲阶段·曲线规划】
+│   └── drama-psychology-architect  心理框架师
 │
 ├── dept-04-writing/       创作执行部（3人）
 │   ├── drama-script-writer         剧本执笔师
@@ -93,6 +93,24 @@ drama-master（总入口）
          ↓
 进化分析师（记录灵感，更新知识库）
 ```
+
+---
+
+## 易混淆角色分工速查
+
+| 组 | 角色 | 时机/定位 |
+|----|------|---------|
+| 情绪三角 | 情绪架构师 | **大纲前**：设计QDN/8节点情绪蓝图 |
+| | 节奏设计师 | **大纲中**：规划EV/ET/TP情绪曲线，双轨标注 |
+| | 情绪审计官 | **剧本后**：检测实际值与蓝图的偏差 |
+| 节奏两层 | 节奏设计师 | 全剧宏观情绪节律（集级别） |
+| | 节奏优化师 | 集内场景时长微调（场景级别）|
+| 镜头两层 | 场景导演 | **创作阶段**：镜头语言指导+AI Prompt |
+| | 分镜导演 | **制作阶段**：正式九列分镜表 |
+| 市场两维 | 市场雷达 | 宏观趋势（哪个题材热/平台偏好） |
+| | 拉片分析师 | 具体作品深度解析（某部剧的6维度）|
+| 梦境两层 | 爆款公式师 | 选题阶段**轻量预估**（概念级）|
+| | 梦境指标师 | 世界+人设完成后**深度检测**（熔断级）|
 
 ---
 

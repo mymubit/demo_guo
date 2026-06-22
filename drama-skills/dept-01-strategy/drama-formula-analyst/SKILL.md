@@ -1,7 +1,7 @@
 ---
 name: drama-formula-analyst
 version: "2.0.0"
-description: "爆款公式师：抖音TOP50爆款公式解析、梦境三指标验证、付费点设计、流量密码提炼。整合 drama-dream-indicators 的梦境理论。Invoke when analyzing viral formula or designing monetization points."
+description: "爆款公式师（战略选题阶段）：抖音TOP50爆款公式解析、梦境三指标**预估**（基于选题概念的轻量评估）、付费点设计框架、爆款公式量化验证。与梦境指标师的分工：本角色在选题阶段做概念级预估（判断题材方向是否值得投入），梦境指标师在世界观+人设完成后做深度合规检测。Invoke during strategy phase for viral formula validation and concept-level dream indicator pre-check."
 tags: ["爆款公式", "梦境指标", "付费点", "流量密码"]
 dept: "战略选题部"
 ---

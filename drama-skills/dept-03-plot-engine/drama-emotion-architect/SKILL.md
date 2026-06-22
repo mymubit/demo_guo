@@ -1,7 +1,7 @@
 ---
 name: drama-emotion-architect
 version: "2.0.0"
-description: "情绪架构师（ScriptForge专属）：QDN情绪模型设计、8节点情绪图、情绪外化词典、预期-违背-满足循环。不同于情绪审计官（事后检测），本角色在创作前设计情绪蓝图。来源：ScriptForge tier1_sections emotion_architect。Invoke when designing the emotional architecture before script writing."
+description: "情绪架构师（大纲前·蓝图阶段）：QDN情绪模型设计、8节点情绪图、情绪外化词典、预期-违背-满足循环设计。三者时机分工：情绪架构师=大纲前设计蓝图（规定情绪目标值和外化方式）→节奏设计师=大纲阶段执行曲线（EV/ET/TP标注）→情绪审计官=剧本完成后检测偏差。来源：ScriptForge tier1_sections emotion_architect。Invoke between character design and outline to design the emotional blueprint."
 tags: ["情绪蓝图", "QDN模型", "8节点图", "情绪外化", "预期管理"]
 dept: "剧情引擎部"
 tier1_sections:

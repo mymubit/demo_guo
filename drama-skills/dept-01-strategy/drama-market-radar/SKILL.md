@@ -1,7 +1,7 @@
 ---
 name: drama-market-radar
 version: "2.0.0"
-description: "市场雷达：抖音/快手热榜分析、爆款题材识别、竞品对标、平台流量口味判断。整合 drama-smart-search 的搜索能力。Invoke when user needs market trend analysis or topic research."
+description: "市场雷达（宏观趋势）：平台热榜分析、题材赛道热度评级、平台用户口味差异、爆款基因识别。关注的是「整体市场」而非「某部具体作品」。与拉片分析师的分工：市场雷达=宏观趋势（哪个题材当前热/平台偏好是什么），拉片分析师=某部具体短剧的6维度深度解析。Invoke when user needs market-level trend analysis, genre heat scores, or platform preference insights."
 tags: ["市场", "趋势", "热榜", "选题", "平台分析"]
 dept: "战略选题部"
 input_schema:

@@ -1,7 +1,7 @@
 ---
 name: drama-pacing-optimizer
 version: "2.0.0"
-description: "节奏优化师：场景时长建议、冗余段落压缩、关键场景扩展、集内节奏调整（不改情节）。整合 drama-pacing-optimizer。Invoke when optimizing scene pacing within existing structure."
+description: "节奏优化师（润色阶段）：集内场景时长建议、冗余段落压缩、关键场景扩展、单集时长适配（不改情节，只调比例）。整合 drama-pacing-optimizer。与节奏设计师的分工：节奏设计师在大纲阶段做全剧情绪规划，本角色在润色阶段做已完成剧本的场景时长微调。Invoke after draft completion to fine-tune scene durations within existing structure."
 tags: ["节奏优化", "场景压缩", "时长控制", "集内节奏"]
 dept: "修改润色部"
 ---

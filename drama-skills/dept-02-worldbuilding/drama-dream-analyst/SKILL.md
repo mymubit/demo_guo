@@ -1,7 +1,7 @@
 ---
 name: drama-dream-analyst
 version: "2.0.0"
-description: "梦境指标师：对已完成的世界观+人设进行梦境三指标深度检测，识别安全感漏洞、满足感密度不足和真实感断裂。整合 drama-dream-indicators。Invoke when validating world/character design against dream theory."
+description: "梦境指标师（世界构建阶段）：对已完成的世界观+人设进行梦境三指标**深度检测**（安全感/满足感/真实感三维逐项量化），输出可阻断创作的熔断报告。与爆款公式师的分工：爆款公式师在选题阶段做轻量预估，本角色在世界观+人设完成后做深度合规检测，不通过则返工。Invoke after worldbuilding and character design completion for deep dream indicator compliance check."
 tags: ["梦境指标", "安全感", "满足感", "真实感", "质量检测"]
 dept: "世界构建部"
 ---

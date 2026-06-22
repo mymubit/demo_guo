@@ -1,7 +1,7 @@
 ---
 name: drama-rhythm-designer
 version: "2.1.0"
-description: "节奏设计师：情绪曲线可视化、中段疲软诊断、节奏失衡修复、单集四段式节奏、全剧节律规则。整合 drama-plot-rhythm-engine + drama-pacing-optimizer。Invoke when analyzing or fixing pacing and rhythm issues."
+description: "节奏设计师（大纲阶段）：全剧情绪曲线设计与诊断（EV/ET/TP）、双轨节奏标注（情节×情感）、中段疲软识别与修复建议、全剧节律规则。整合 drama-plot-rhythm-engine。与节奏优化师的分工：本角色在大纲/结构阶段做全剧情绪规划，节奏优化师在润色阶段做集内场景时长调整。Invoke during outline phase for emotion curve design and pacing architecture."
 tags: ["节奏", "情绪曲线", "中段疲软", "节奏修复", "四段式"]
 dept: "剧情引擎部"
 output_schema:
