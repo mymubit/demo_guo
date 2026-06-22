@@ -83,6 +83,10 @@ const INITIAL_EPISODE_COUNT = 80
 const creationDraftKey = (entry) => `creation:draft:${entry || 'from-scratch'}`
 
 // ============ 主组件 ============
+/**
+ * @deprecated 旧创作页面已废弃，请使用 /drama（Drama Skills 工作室）
+ * 此组件保留仅供平滑过渡期间访问。
+ */
 export default function Creation() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()

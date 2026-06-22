@@ -1,68 +1,66 @@
 # -*- coding: utf-8 -*-
-"""ProjectChunk 读写与列表。"""
+"""
+Chunk 分片服务 — drama.* 新体系。
+
+处理长内容 Agent（剧本执笔师、IP改编师等）的流式分片产物。
+旧的 script/outline/polish 等 artifact_key 已替换为 drama.* 体系。
+"""
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
-from django.db.models import Max
+# drama.* 角色产物 → 分片流类型映射
+# kind: 产物类型
+# array_keys: 可能包含数组内容的 JSON 键路径（用于流式拼接）
+DRAMA_ARTIFACT_CHUNK_MAP: Dict[str, Dict[str, Any]] = {
+    # 剧本执笔师 - 最大产物，需要分片
+    "episode_scripts": {
+        "kind": "episode_scripts",
+        "array_keys": ("episodes",),
+    },
+    # 情节架构师 - 分集大纲
+    "series_outline": {
+        "kind": "series_outline",
+        "array_keys": ("episodes", "stages"),
+    },
+    # 修稿师/对白专家 - 也输出 episode_scripts
+    # (同 episode_scripts，复用上面的配置)
 
-from apps.creation.models import AgentExecutionRun, Project, ProjectChunk
+    # 情绪架构师 - 情绪蓝图
+    "emotion_blueprint": {
+        "kind": "emotion_blueprint",
+        "array_keys": ("episodes",),
+    },
+    # 节奏设计师 - 情绪曲线
+    "emotion_curve": {
+        "kind": "emotion_curve",
+        "array_keys": ("episodes",),
+    },
+    # 分镜导演 - 分镜表
+    "storyboard": {
+        "kind": "storyboard",
+        "array_keys": ("scenes",),
+    },
+}
 
-
-def resolve_chunk_kind(agent_id: str, artifact_key: str = "") -> str:
-    """Agent / 产物键 → chunk kind。"""
-    key = (artifact_key or "").strip()
-    if key:
-        return key
-    mapping = {
-        "script": "episode_scripts",
-        "outline": "series_outline",
-        "polish": "episode_scripts",
-    }
-    return mapping.get((agent_id or "").strip(), "episode_scripts")
-
-
-def last_chunk_index(project: Project, kind: str) -> Optional[int]:
-    result = ProjectChunk.objects.filter(project=project, kind=kind).aggregate(m=Max("index"))
-    value = result.get("m")
-    return int(value) if value is not None else None
-
-
-def list_chunks(
-    project: Project,
-    *,
-    kind: str = "episode_scripts",
-    limit: int = 50,
-    offset: int = 0,
-) -> Dict[str, Any]:
-    qs = ProjectChunk.objects.filter(project=project, kind=kind).order_by("index")
-    total = qs.count()
-    rows = qs[offset : offset + limit]
-    last_idx = last_chunk_index(project, kind)
-    return {
-        "items": [{"index": row.index, "data": row.data} for row in rows],
-        "total": total,
-        "has_more": offset + limit < total,
-        "last_episode_index": last_idx,
-    }
-
-
-def upsert_chunk(
-    project: Project,
-    *,
-    kind: str,
-    index: int,
-    data: Dict[str, Any],
-    run: Optional[AgentExecutionRun] = None,
-) -> ProjectChunk:
-    row, _ = ProjectChunk.objects.update_or_create(
-        project=project,
-        kind=kind,
-        index=index,
-        defaults={"data": data, "run": run},
-    )
-    return row
+# drama.* agent_id → 主要产物键映射
+DRAMA_AGENT_PRIMARY_ARTIFACT: Dict[str, str] = {
+    "drama.script-writer": "episode_scripts",
+    "drama.dialogue-expert": "episode_scripts",
+    "drama.script-editor": "episode_scripts",
+    "drama.plot-architect": "series_outline",
+    "drama.emotion-architect": "emotion_blueprint",
+    "drama.rhythm-designer": "emotion_curve",
+    "drama.storyboard-director": "storyboard",
+    "drama.ip-adapter": "adaptation_plan",
+}
 
 
-def chunks_to_episodes(project: Project, kind: str) -> List[Dict[str, Any]]:
-    return [row.data for row in ProjectChunk.objects.filter(project=project, kind=kind).order_by("index")]
+def get_chunk_config(artifact_key: str) -> Optional[Dict[str, Any]]:
+    """获取指定 artifact_key 的分片配置。"""
+    return DRAMA_ARTIFACT_CHUNK_MAP.get(artifact_key)
+
+
+def get_agent_primary_artifact(agent_id: str) -> Optional[str]:
+    """获取指定 drama.* Agent 的主要产物键。"""
+    return DRAMA_AGENT_PRIMARY_ARTIFACT.get(agent_id)

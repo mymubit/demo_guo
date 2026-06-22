@@ -51,7 +51,7 @@ const Login = lazy(() => import('@/pages/Auth/Login.jsx'))
 const Register = lazy(() => import('@/pages/Auth/Register.jsx'))
 
 // ── 需登录页面 ───────────────────────────────────────────────
-const CreationCenter = lazy(() => import('@/pages/Creation/index.jsx'))
+// CreationCenter 已废弃，/creation 直接重定向到 /drama
 const Profile = lazy(() => import('@/pages/Profile/index.jsx'))
 const Member = lazy(() => import('@/pages/Member/index.jsx'))
 const Orders = lazy(() => import('@/pages/Orders/index.jsx'))
@@ -152,16 +152,12 @@ const appRoutes = [
       { path: '/works', element: <WorkList /> },
       { path: '/works/:id', element: <WorkDetail /> },
 
-      // 需登录的页面
+      // 旧创作路由 → 重定向到新 Drama Skills 工作室
       {
         path: '/creation',
-        element: (
-          <PrivateRoute>
-            <CreationCenter />
-          </PrivateRoute>
-        ),
+        element: <Navigate to="/drama" replace />,
       },
-      // Drama Skills 创作工作室
+      // Drama Skills 创作工作室（主入口）
       {
         path: '/drama',
         element: (
@@ -274,7 +270,7 @@ const appRoutes = [
       // 概览
       { path: 'stats', element: <AdminStats /> },
       { path: 'monitoring', element: <AdminMonitoring /> },
-      // 创作
+      // 创作（项目管理）
       { path: 'creation', element: <Navigate to="/admin/creation/projects" replace /> },
       { path: 'creation/projects', element: <AdminProjects /> },
       { path: 'creation/projects/:projectId', element: <AdminProjectTrace /> },

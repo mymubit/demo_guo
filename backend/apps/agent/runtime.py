@@ -1,274 +1,125 @@
 # -*- coding: utf-8 -*-
-"""Agent 中心 — 运行时 registry 缓存读。"""
+"""
+Agent 运行时工具函数 — drama.* 新体系。
+
+旧的 brief/structure/character/outline/script 等硬编码已移除。
+现在所有 Agent 统一通过 AgentDefinition 数据库记录管理。
+"""
 from __future__ import annotations
 
 import logging
-import time
-from typing import Any, Callable, Dict, List, Optional
-
-from django.utils.module_loading import import_string
-
-from apps.common.agent_term import AGENT_RUNNER_PREFIX, normalize_agent_runner_path
-
-from apps.agent.independent_defaults import AGENT_NAME_ZH_BY_ID
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
-_RUNNER_IMPORT_PREFIX = AGENT_RUNNER_PREFIX
-_EMPTY_REGISTRY: Dict[str, Any] = {"agents": [], "_meta": {}, "_registry_source": "none"}
-_SCRIPT_FORGE_WORKSPACE_MAP: Dict[int, str] = {
-    1: "brief",
-    2: "structure",
-    3: "character",
-    4: "outline",
-    5: "script",
+# drama.* 快速通道角色（workspace_order 决定排序）
+DRAMA_FAST_TRACK_AGENT_IDS = [
+    "drama.topic-planner",
+    "drama.world-architect",
+    "drama.character-designer",
+    "drama.plot-architect",
+    "drama.script-writer",
+    "drama.script-reviewer",
+    "drama.quality-reporter",
+    "drama.compliance-guard",
+]
+
+# drama.* 角色按 workspace_order 的顺序（用于进度计算）
+DRAMA_WORKSPACE_ORDER = {
+    "drama.market-radar": 101,
+    "drama.formula-analyst": 102,
+    "drama.topic-planner": 103,
+    "drama.project-reviewer": 104,
+    "drama.lapian-analyst": 105,
+    "drama.world-architect": 201,
+    "drama.character-designer": 202,
+    "drama.dream-analyst": 203,
+    "drama.emotion-architect": 301,
+    "drama.plot-architect": 302,
+    "drama.hook-designer": 303,
+    "drama.conflict-engine": 304,
+    "drama.reversal-master": 305,
+    "drama.rhythm-designer": 306,
+    "drama.psychology-architect": 307,
+    "drama.script-writer": 401,
+    "drama.dialogue-expert": 402,
+    "drama.scene-director": 403,
+    "drama.ip-adapter": 404,
+    "drama.script-reviewer": 501,
+    "drama.reader-reviewer": 502,
+    "drama.emotion-auditor": 503,
+    "drama.quality-reporter": 504,
+    "drama.script-editor": 601,
+    "drama.pacing-optimizer": 602,
+    "drama.formatter": 603,
+    "drama.word-governor": 604,
+    "drama.style-guardian": 605,
+    "drama.visual-producer": 701,
+    "drama.storyboard-director": 702,
+    "drama.post-processor": 703,
+    "drama.marketing-officer": 704,
+    "drama.compliance-guard": 801,
+    "drama.delivery-packer": 802,
+    "drama.evolution-analyst": 803,
 }
-_SCRIPT_FORGE_AGENT_DEFS: Dict[str, Dict[str, Any]] = {
-    "brief": {"id": "brief", "name": "Brief Agent", "name_zh": "立项简报", "workspace_index": 1, "outputs": ["project_brief"]},
-    "structure": {"id": "structure", "name": "Structure Agent", "name_zh": "结构设定", "workspace_index": 2, "outputs": ["structure_plan"]},
-    "character": {"id": "character", "name": "Character Agent", "name_zh": "人物小传", "workspace_index": 3, "outputs": ["character_bible"]},
-    "outline": {"id": "outline", "name": "Outline Agent", "name_zh": "分集大纲", "workspace_index": 4, "outputs": ["series_outline"]},
-    "script": {"id": "script", "name": "Script Agent", "name_zh": "剧本正文", "workspace_index": 5, "outputs": ["episode_scripts"]},
-    "review": {"id": "review", "name": "Review Agent", "name_zh": "质量审查", "outputs": ["review_report"]},
-    "score": {"id": "score", "name": "Score Agent", "name_zh": "剧本评分", "outputs": ["script_score_report"]},
-    "polish": {"id": "polish", "name": "Polish Agent", "name_zh": "剧本润色", "outputs": ["episode_scripts", "polish_log"]},
-    "marketing": {"id": "marketing", "name": "Marketing Agent", "name_zh": "宣发物料", "outputs": ["marketing_kit"]},
-    "insight": {"id": "insight", "name": "Insight Agent", "name_zh": "洞察报告", "outputs": ["insight_report"]},
-}
-for _agent_id, _meta in _SCRIPT_FORGE_AGENT_DEFS.items():
-    _meta.setdefault("name_zh", AGENT_NAME_ZH_BY_ID.get(_agent_id, ""))
 
 
-def _parse_meta_index_list(items: Any) -> Dict[int, str]:
-    mapping: Dict[int, str] = {}
-    for item in items or []:
-        if not isinstance(item, dict):
-            continue
-        try:
-            idx = int(item.get("index"))
-        except (TypeError, ValueError):
-            continue
-        agent_id = str(item.get("agent_id") or "").strip()
-        if idx > 0 and agent_id:
-            mapping[idx] = agent_id
-    return mapping
-
-
-def _agents_workspace_index_mapping() -> Dict[int, str]:
-    mapping: Dict[int, str] = {}
-    for agent in get_agent_registry().get("agents") or []:
-        if not isinstance(agent, dict):
-            continue
-        idx = agent.get("workspace_index")
-        agent_id = str(agent.get("id") or "").strip()
-        if idx and agent_id:
-            try:
-                mapping[int(idx)] = agent_id
-            except (TypeError, ValueError):
-                continue
-    return mapping
-
-
-def _read_registry_from_db() -> Optional[Dict[str, Any]]:
-    try:
-        from django.db.utils import OperationalError, ProgrammingError
-
-        from apps.agent.models import AgentRegistryConfig
-
-        row = AgentRegistryConfig.objects.filter(is_active=True).order_by("-updated_at").first()
-        if row and isinstance(row.registry, dict) and row.registry.get("agents"):
-            data = dict(row.registry)
-            data["_registry_source"] = "db"
-            data["_registry_config_id"] = str(row.id)
-            return data
-    except (OperationalError, ProgrammingError):
-        return None
-    except Exception as exc:  # noqa: BLE001
-        if type(exc).__name__ != "DatabaseOperationForbidden":
-            logger.warning("[AgentRegistry] DB registry load failed: %s", exc)
-    return None
-
-
-def _get_agent_registry_impl() -> Dict[str, Any]:
-    data = _read_registry_from_db()
-    if data is not None:
-        return data
-
-    try:
-        from apps.agent.registry import AgentRegistryConfigService
-
-        AgentRegistryConfigService.ensure_defaults()
-    except Exception as exc:  # noqa: BLE001
-        logger.warning("[AgentRegistry] bootstrap failed: %s", exc)
-
-    data = _read_registry_from_db()
-    if data is not None:
-        return data
-    return dict(_EMPTY_REGISTRY)
-
-
-_REGISTRY_CACHE: Dict[str, Any] = {}
-_REGISTRY_CACHE_TTL = 60  # 秒，配置改动 60s 内生效，无需重启 worker
-_REGISTRY_CACHE_AT: float = 0.0
+def workspace_index_for_agent(agent_id: str) -> int:
+    """获取 Agent 在工作台中的排序位置。"""
+    return DRAMA_WORKSPACE_ORDER.get(agent_id, 999)
 
 
 def get_agent_registry() -> Dict[str, Any]:
-    global _REGISTRY_CACHE, _REGISTRY_CACHE_AT
-    now = time.monotonic()
-    if _REGISTRY_CACHE and (now - _REGISTRY_CACHE_AT) < _REGISTRY_CACHE_TTL:
-        return _REGISTRY_CACHE
-    data = _get_agent_registry_impl()
-    _REGISTRY_CACHE = data
-    _REGISTRY_CACHE_AT = now
-    return data
+    """
+    从数据库获取所有 drama.* Agent 的运行时描述。
+    结果按 workspace_order 排序。
+    """
+    try:
+        from apps.agent.models import AgentDefinition
+        agents = AgentDefinition.objects.filter(
+            category="drama_skills",
+            is_enabled=True,
+            lifecycle_status=AgentDefinition.LifecycleStatus.ACTIVE,
+        ).order_by("workspace_order")
 
-
-def clear_agent_registry_cache() -> None:
-    global _REGISTRY_CACHE, _REGISTRY_CACHE_AT
-    _REGISTRY_CACHE = {}
-    _REGISTRY_CACHE_AT = 0.0
-
-
-get_agent_registry.cache_clear = clear_agent_registry_cache  # type: ignore[attr-defined]
+        return {
+            "_meta": {"version": "drama-skills-v3.0"},
+            "orchestrator": {"runtime": "scriptforge-drama"},
+            "agents": [
+                {
+                    "id": a.agent_id,
+                    "name": a.name,
+                    "name_zh": a.name_zh,
+                    "workspace_order": a.workspace_order,
+                    "is_fast_track": a.agent_id in DRAMA_FAST_TRACK_AGENT_IDS,
+                    "dept": (a.ui_schema or {}).get("dept", ""),
+                    "outputs": (a.output_contract or {}).get("artifacts", []),
+                }
+                for a in agents
+            ],
+        }
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[drama runtime] get_agent_registry failed: %s", exc)
+        return {"_meta": {"version": "drama-skills-v3.0"}, "agents": []}
 
 
 def get_agent(agent_id: str) -> Optional[Dict[str, Any]]:
-    reg = get_agent_registry()
-    agent: Optional[Dict[str, Any]] = None
-    for item in reg.get("agents") or []:
-        if item.get("id") == agent_id:
-            agent = dict(item)
-            break
-    if agent is None:
-        builtin = _SCRIPT_FORGE_AGENT_DEFS.get(str(agent_id or "").strip())
-        agent = dict(builtin) if builtin else None
-    if agent is None:
-        return None
-    if not agent.get("name_zh"):
-        try:
-            from django.db.utils import OperationalError, ProgrammingError
-
-            from apps.agent.models import AgentDefinition
-
-            row = AgentDefinition.objects.filter(agent_id=agent_id).only("name", "name_zh").first()
-            if row:
-                if row.name_zh:
-                    agent["name_zh"] = row.name_zh
-                if row.name:
-                    agent.setdefault("name", row.name)
-        except (OperationalError, ProgrammingError):
-            pass
-        except Exception as exc:  # noqa: BLE001
-            if type(exc).__name__ != "DatabaseOperationForbidden":
-                logger.debug("[AgentRegistry] enrich agent definition failed agent=%s err=%s", agent_id, exc)
-    return agent
-
-
-def primary_output_artifact(agent_id: str) -> str:
-    agent = get_agent(agent_id) or {}
-    for item in agent.get("outputs") or []:
-        if isinstance(item, str) and item.strip():
-            return item.strip()
-    return ""
-
-
-def agent_runner_path(agent_id: str) -> str:
-    agent = get_agent(agent_id) or {}
-    configured = str(agent.get("runner") or agent.get("runner_path") or "").strip()
-    if configured:
-        return normalize_agent_runner_path(configured)
-    normalized = str(agent_id or "").strip().replace("-", "_")
-    return f"{_RUNNER_IMPORT_PREFIX}{normalized}.run_{normalized}_agent"
-
-
-def resolve_agent_runner(agent_id: str) -> Optional[Callable[..., Any]]:
-    path = agent_runner_path(agent_id)
-    if not path.startswith(_RUNNER_IMPORT_PREFIX):
-        logger.warning("[AgentRegistry] runner path rejected agent=%s path=%s", agent_id, path)
-        return None
+    """按 agent_id 获取单个 Agent 运行时信息。"""
     try:
-        return import_string(path)
+        from apps.agent.models import AgentDefinition
+        agent = AgentDefinition.objects.filter(agent_id=agent_id).first()
+        if not agent:
+            return None
+        return {
+            "id": agent.agent_id,
+            "name": agent.name,
+            "name_zh": agent.name_zh,
+            "workspace_order": agent.workspace_order,
+            "outputs": (agent.output_contract or {}).get("artifacts", []),
+            "input_contract": agent.input_contract,
+            "output_contract": agent.output_contract,
+            "runtime_policy": agent.runtime_policy,
+        }
     except Exception as exc:  # noqa: BLE001
-        logger.warning("[AgentRegistry] runner import failed agent=%s path=%s err=%s", agent_id, path, exc)
+        logger.warning("[drama runtime] get_agent(%s) failed: %s", agent_id, exc)
         return None
-
-
-def workspace_agent_map() -> Dict[int, str]:
-    meta = get_agent_registry().get("_meta") or {}
-    mapping = _parse_meta_index_list(meta.get("workspace_modules"))
-    if all(mapping.get(idx) == aid for idx, aid in _SCRIPT_FORGE_WORKSPACE_MAP.items()):
-        return mapping
-    mapping = _agents_workspace_index_mapping()
-    if all(mapping.get(idx) == aid for idx, aid in _SCRIPT_FORGE_WORKSPACE_MAP.items()):
-        return mapping
-    return dict(_SCRIPT_FORGE_WORKSPACE_MAP)
-
-
-def workspace_index_for_agent(agent_id: str) -> Optional[int]:
-    for idx, aid in workspace_agent_map().items():
-        if aid == agent_id:
-            return idx
-    return None
-
-
-def agent_for_workspace_index(node_index: int) -> Optional[str]:
-    return workspace_agent_map().get(int(node_index))
-
-
-def agent_for_pipeline_node_index(node_index: int) -> Optional[str]:
-    idx = int(node_index)
-    return workspace_agent_map().get(idx)
-
-
-def pipeline_action_display_name(action_key: str) -> str:
-    key = (action_key or "").strip()
-    if not key.startswith("pipeline.node."):
-        return ""
-    try:
-        idx = int(key.rsplit(".", 1)[-1])
-    except (TypeError, ValueError):
-        return ""
-    aid = agent_for_pipeline_node_index(idx)
-    if not aid:
-        return f"步骤 {idx}"
-    agent = get_agent(aid) or {}
-    name_zh = agent.get("name_zh") or aid
-    name = agent.get("name") or aid
-    return f"{idx}. {name_zh} ({name})"
-
-
-def action_key_agent_meta(action_key: str) -> Dict[str, str]:
-    key = (action_key or "").strip()
-    if not key.startswith("pipeline.node."):
-        return {}
-    try:
-        idx = int(key.rsplit(".", 1)[-1])
-    except (TypeError, ValueError):
-        return {}
-    aid = agent_for_pipeline_node_index(idx)
-    if not aid:
-        return {}
-    agent = get_agent(aid) or {}
-    return {
-        "agent_id": aid,
-        "agent_name": agent.get("name") or aid,
-        "agent_name_zh": agent.get("name_zh") or aid,
-        "pipeline_step": str(idx),
-    }
-
-
-def polish_max_rounds() -> int:
-    meta = get_agent_registry().get("_meta") or {}
-    return int(meta.get("polish_max_rounds") or 2)
-
-
-def pacing_heuristics_rules() -> Dict[str, Any]:
-    review = get_agent("review") or {}
-    for skill in review.get("sub_skills") or []:
-        if skill.get("id") == "pacing-keyword-heuristics":
-            return skill.get("rules") or {}
-    return {}
-
-
-def list_agents() -> List[Dict[str, Any]]:
-    return list(get_agent_registry().get("agents") or [])
