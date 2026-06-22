@@ -80,6 +80,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 2,  # 优化推荐,
     },
     {
         "agent_id": "drama.formula-analyst",
@@ -108,6 +109,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 3,  # 专项增强,
     },
     {
         "agent_id": "drama.topic-planner",
@@ -136,6 +138,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象，遵循project-brief.v1 schema。"
         ),
         "fast_track": True,
+        "tier": 1,  # 核心必需,
     },
     {
         "agent_id": "drama.project-reviewer",
@@ -163,6 +166,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 3,  # 专项增强,
     },
     {
         "agent_id": "drama.lapian-analyst",
@@ -192,6 +196,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 3,  # 专项增强,
     },
 
     # ─── 世界构建部 (3个) ───────────────────────────────────────────────────
@@ -223,6 +228,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象，遵循world-setting.v1 schema。"
         ),
         "fast_track": True,
+        "tier": 1,  # 核心必需,
     },
     {
         "agent_id": "drama.character-designer",
@@ -252,6 +258,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象，遵循character-bible.v1 schema。"
         ),
         "fast_track": True,
+        "tier": 1,  # 核心必需,
     },
     {
         "agent_id": "drama.dream-analyst",
@@ -282,6 +289,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 3,  # 专项增强,
     },
 
     # ─── 剧情引擎部 (7个) ───────────────────────────────────────────────────
@@ -312,6 +320,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 2,  # 优化推荐,
     },
     {
         "agent_id": "drama.plot-architect",
@@ -344,6 +353,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象，遵循series-outline.v1 schema。"
         ),
         "fast_track": True,
+        "tier": 1,  # 核心必需,
     },
     {
         "agent_id": "drama.hook-designer",
@@ -374,6 +384,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 2,  # 优化推荐,
     },
     {
         "agent_id": "drama.conflict-engine",
@@ -404,6 +415,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 3,  # 专项增强,
     },
     {
         "agent_id": "drama.reversal-master",
@@ -434,6 +446,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 3,  # 专项增强,
     },
     {
         "agent_id": "drama.rhythm-designer",
@@ -464,6 +477,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象，遵循emotion-curve.v1 schema。"
         ),
         "fast_track": False,
+        "tier": 2,  # 优化推荐,
     },
     {
         "agent_id": "drama.psychology-architect",
@@ -494,6 +508,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 3,  # 专项增强,
     },
 
     # ─── 创作执行部 (4个) ───────────────────────────────────────────────────
@@ -528,6 +543,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象，遵循episode-scripts.v1 schema。"
         ),
         "fast_track": True,
+        "tier": 1,  # 核心必需,
     },
     {
         "agent_id": "drama.dialogue-expert",
@@ -559,6 +575,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 2,  # 优化推荐,
     },
     {
         "agent_id": "drama.scene-director",
@@ -588,6 +605,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 3,  # 专项增强,
     },
     {
         "agent_id": "drama.ip-adapter",
@@ -618,6 +636,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 3,  # 专项增强,
     },
 
     # ─── 评审质控部 (4个) ───────────────────────────────────────────────────
@@ -650,6 +669,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象，遵循review-report.v1 schema。"
         ),
         "fast_track": True,
+        "tier": 1,  # 核心必需,
     },
     {
         "agent_id": "drama.reader-reviewer",
@@ -680,6 +700,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 2,  # 优化推荐,
     },
     {
         "agent_id": "drama.emotion-auditor",
@@ -711,6 +732,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 2,  # 优化推荐,
     },
     {
         "agent_id": "drama.quality-reporter",
@@ -742,6 +764,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象，遵循quality-report.v1 schema。"
         ),
         "fast_track": True,
+        "tier": 1,  # 核心必需,
     },
 
     # ─── 修改润色部 (5个) ───────────────────────────────────────────────────
@@ -775,6 +798,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 2,  # 优化推荐,
     },
     {
         "agent_id": "drama.pacing-optimizer",
@@ -804,6 +828,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 2,  # 优化推荐,
     },
     {
         "agent_id": "drama.formatter",
@@ -835,6 +860,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 2,  # 优化推荐,
     },
     {
         "agent_id": "drama.word-governor",
@@ -867,6 +893,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 2,  # 优化推荐,
     },
     {
         "agent_id": "drama.style-guardian",
@@ -899,6 +926,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 2,  # 优化推荐,
     },
 
     # ─── 制作宣发部 (4个) ───────────────────────────────────────────────────
@@ -931,6 +959,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 3,  # 专项增强,
     },
     {
         "agent_id": "drama.storyboard-director",
@@ -961,6 +990,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 3,  # 专项增强,
     },
     {
         "agent_id": "drama.post-processor",
@@ -990,6 +1020,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 3,  # 专项增强,
     },
     {
         "agent_id": "drama.marketing-officer",
@@ -1022,6 +1053,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 3,  # 专项增强,
     },
 
     # ─── 合规总编室 (3个) ───────────────────────────────────────────────────
@@ -1055,6 +1087,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象，遵循compliance-report.v1 schema。"
         ),
         "fast_track": True,
+        "tier": 1,  # 核心必需,
     },
     {
         "agent_id": "drama.delivery-packer",
@@ -1088,6 +1121,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象，遵循delivery-pack.v1 schema。"
         ),
         "fast_track": False,
+        "tier": 3,  # 专项增强,
     },
     {
         "agent_id": "drama.evolution-analyst",
@@ -1119,6 +1153,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
             "必须输出合法JSON对象。"
         ),
         "fast_track": False,
+        "tier": 3,  # 专项增强,
     },
 ]
 
