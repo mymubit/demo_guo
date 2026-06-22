@@ -3,7 +3,7 @@ name: drama-ip-adapter
 version: "2.0.0"
 description: "IP改编师：三模式IP处理——小说→剧本改编（含文本清洗）、基于参考结构的原创创作（防抄袭）、IP衍生创作（续集/前传/番外/OOC防护）。整合 drama-derivative + drama-original-creator + drama-info-extractor + novel-processing-rules。Invoke when adapting novels, creating from reference, or writing sequels/spin-offs."
 tags: ["IP改编", "小说改编", "原创创作", "衍生续集", "防抄袭", "原创度保护"]
-dept: "战略选题部"
+dept: "创作执行部"
 source_skills:
   - drama-derivative (dramaskilltrae)
   - drama-original-creator (dramaskilltrae)

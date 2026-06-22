@@ -1,7 +1,7 @@
 ---
 name: drama-master
 version: "2.0.0"
-description: "AI短剧创作总入口。从零创作/断点续写/单阶段专项，智能路由到33个专业角色（含drama-intake/drama-master共35文件）。Invoke when user wants full drama creation, stage routing, or needs help getting started."
+description: "AI短剧创作总入口。双轨模式：快速通道（8个核心角色，适合初次创作）/ 专家通道（全部36个角色，适合商业精品）。智能路由到36个专业角色。Invoke when user wants full drama creation, stage routing, or needs help getting started."
 tags: ["总入口", "创作", "路由", "全流程"]
 platforms: [cursor, codex, trae]
 input_schema:
@@ -45,6 +45,27 @@ output_schema:
 ③ 目标平台：[抖音 / 快手 / 微信小程序 / 通用]
 ④ 创作起点：[从零 / 有核心创意 / 有大纲 / 有参考作品 / 改编IP]
 ⑤ 特殊要求：[指定受众/风格/卖点/对标作品]
+```
+
+---
+
+## 双轨模式
+
+### 快速通道 Fast Track（8个核心角色，适合初次创作/快速验证）
+
+```
+topic-planner → world-architect → character-designer → plot-architect
+→ script-writer → script-reviewer → quality-reporter → compliance-guard
+  [可选: word-governor] → [可选: delivery-packer]
+
+适合：10集以内/快速验证/初次创作
+```
+
+### 专家通道 Expert Track（全部36个角色，适合商业精品）
+
+```
+完整按部门流程，参见下方阶段路由
+适合：30集+长剧/商业项目/精品化创作
 ```
 
 ---

@@ -1,8 +1,10 @@
-# Drama Skills — AI短剧创作技能库 v2.1
+# Drama Skills — AI短剧创作技能库 v3.0
 
-> **29 个专业角色 · 8 个职能部门 · 三平台兼容 · 四轨道自我进化**
+> **36 个专业角色 · 8 个职能部门 · 双轨模式 · 三平台兼容 · 四轨道自我进化**
 > 
 > 整合三个分支：`ScriptForge`（主库+Tier1规则体系）+ `dramaskill`（节点系统+参考库）+ `dramaskilltrae`（39个专业技能）
+>
+> **快速通道**（8角色）→ **专家通道**（全36角色） · 详见 `drama-master/SKILL.md`
 
 ---
 
@@ -23,11 +25,12 @@
 ```
 drama-master（总入口）
 │
-├── dept-01-strategy/      战略选题部（4人）
-│   ├── drama-market-radar          市场雷达
-│   ├── drama-formula-analyst       爆款公式师
+├── dept-01-strategy/      战略选题部（5人）
+│   ├── drama-market-radar          市场雷达（宏观趋势）
+│   ├── drama-formula-analyst       爆款公式师（轻量预估）
 │   ├── drama-topic-planner         选题策划官
-│   └── drama-project-reviewer      立项复审官
+│   ├── drama-project-reviewer      立项复审官
+│   └── drama-lapian-analyst        拉片分析师（具体作品深度分析）
 │
 ├── dept-02-worldbuilding/ 世界构建部（3人）
 │   ├── drama-world-architect       世界架构师
@@ -43,10 +46,11 @@ drama-master（总入口）
 │   ├── drama-rhythm-designer       节奏设计师【大纲阶段·曲线规划】
 │   └── drama-psychology-architect  心理框架师
 │
-├── dept-04-writing/       创作执行部（3人）
+├── dept-04-writing/       创作执行部（4人）
 │   ├── drama-script-writer         剧本执笔师
 │   ├── drama-dialogue-expert       对白专家
-│   └── drama-scene-director        场景导演
+│   ├── drama-scene-director        场景导演【创作阶段镜头指导】
+│   └── drama-ip-adapter            IP改编师（小说改编/原创/衍生）
 │
 ├── dept-05-review/        评审质控部（4人）
 │   ├── drama-script-reviewer       审稿官
@@ -54,18 +58,21 @@ drama-master（总入口）
 │   ├── drama-emotion-auditor       情绪审计官
 │   └── drama-quality-reporter      质量报告官
 │
-├── dept-06-polish/        修改润色部（3人）
+├── dept-06-polish/        修改润色部（5人）
 │   ├── drama-script-editor         修稿师
-│   ├── drama-pacing-optimizer      节奏优化师
-│   └── drama-formatter             格式规范师
+│   ├── drama-pacing-optimizer      节奏优化师（集内时长调整）
+│   ├── drama-formatter             格式规范师
+│   ├── drama-word-governor         字数治理官✨（首集900-1100/其余700-900）
+│   └── drama-style-guardian        风格一致性官✨（防长剧风格漂移）
 │
 ├── dept-07-production/    制作宣发部（3人）
 │   ├── drama-visual-producer       视觉生产官
 │   ├── drama-storyboard-director   分镜导演
 │   └── drama-marketing-officer     营销策划官
 │
-└── dept-08-ops/           合规总编室（2人）
+└── dept-08-ops/           合规总编室（3人）
     ├── drama-compliance-guard      合规守卫
+    ├── drama-delivery-packer       交付打包官✨（生成交付包·项目终点）
     └── drama-evolution-analyst     进化分析师
 ```
 
