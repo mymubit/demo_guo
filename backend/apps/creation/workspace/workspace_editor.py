@@ -330,7 +330,7 @@ def build_editor_view(project: Project, node_index: int, *, read_only: bool = Fa
         story = _story_brief_from_payload(payload)
         core_hook = (payload.get("coreHook") or payload.get("coreIdea") or project.core_idea or "").strip()
         return {
-            "mode": "brief",
+            "mode": "project_brief",
             "editable": True,
             "storyBrief": story,
             "meta": {
@@ -367,7 +367,7 @@ def build_editor_view(project: Project, node_index: int, *, read_only: bool = Fa
         reversals = structure_reversal_text(payload)
         act_count = _payload_act_count(payload, fallback=6)
         return {
-            "mode": "structure",
+            "mode": "world_structure",
             "editable": True,
             "navigation": navigation,
             "structurePlan": plan_view,
@@ -473,7 +473,7 @@ def build_editor_view(project: Project, node_index: int, *, read_only: bool = Fa
         except ValueError:
             fill_all = {"from_episode": 0, "to_episode": 0, "count": 0, "coin_cost": node_cost}
         return {
-            "mode": "outline",
+            "mode": "series_outline",
             "editable": True,
             "skeletonReady": True,
             "frameworkReady": framework_ready,
@@ -543,7 +543,7 @@ def build_editor_view(project: Project, node_index: int, *, read_only: bool = Fa
             next_start = max(e.get("episodeNumber", 0) for e in episodes) + 1
         next_end = min(next_start + batch - 1, total_eps)
         return {
-            "mode": "scripts",
+            "mode": "episode_scripts",
             "editable": True,
             "totalEpisodes": total_eps,
             "generatedCount": generated,
