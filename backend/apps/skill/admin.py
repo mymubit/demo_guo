@@ -346,9 +346,9 @@ class FusionPipelinePackAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
         try:
-            from apps.workflow.pipeline_store import FusionPipelineDbService
+            
 
-            FusionPipelineDbService.clear_caches()
+            pass  # FusionPipelineDbService removed
         except Exception:  # noqa: BLE001
             pass
 

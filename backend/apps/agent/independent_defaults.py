@@ -1,11 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Drama Skills 36个角色的 Agent 默认定义。
+Drama Skills 36个角色定义。
 
-旧的 brief/structure/character/outline/script/review/score 等 agent 已废弃，
-全面替换为 drama.* 新体系。
-
-新角色定义在 apps.drama.defaults.DRAMA_ROLE_DEFAULTS。
+主入口：apps.drama.defaults.DRAMA_ROLE_DEFAULTS
 种入命令：python manage.py seed_drama_skills
 """
 from __future__ import annotations
@@ -13,13 +10,12 @@ from __future__ import annotations
 from typing import Any, Dict, List
 
 
-def _build_agent_defaults() -> List[Dict[str, Any]]:
-    """从 drama.defaults 构建与旧接口兼容的 AGENT_DEFAULTS 格式。"""
+def get_drama_agent_defaults() -> List[Dict[str, Any]]:
+    """获取 drama.* 全部36角色定义。"""
     from apps.drama.defaults import DRAMA_ROLE_DEFAULTS
 
-    result = []
-    for role in DRAMA_ROLE_DEFAULTS:
-        result.append({
+    return [
+        {
             "agent_id": role["agent_id"],
             "name": role["name"],
             "name_zh": role["name_zh"],
@@ -30,25 +26,9 @@ def _build_agent_defaults() -> List[Dict[str, Any]]:
             "output_contract": role.get("output_contract") or {},
             "runtime_policy": role.get("runtime_policy") or {},
             "enabled": True,
-        })
-    return result
-
-
-# 兼容旧 imports（不再直接列表，而是从 drama 动态加载）
-def _get_agent_defaults():
-    try:
-        return _build_agent_defaults()
-    except Exception:  # noqa: BLE001
-        return []
-
-
-AGENT_DEFAULTS: List[Dict[str, Any]] = []  # 运行时动态填充，勿直接迭代
-_DRAMA_AGENT_DEFAULTS_LOADED = False
-
-
-def get_drama_agent_defaults() -> List[Dict[str, Any]]:
-    """获取 drama.* 全部角色定义（推荐使用此函数替代直接引用 AGENT_DEFAULTS）。"""
-    return _build_agent_defaults()
+        }
+        for role in DRAMA_ROLE_DEFAULTS
+    ]
 
 
 DEFAULT_SYSTEM_PROMPT = (
@@ -72,9 +52,7 @@ DEFAULT_USER_PROMPT_TEMPLATE = """请执行 {{ agent.name_zh }}。
 {{ params }}
 """
 
-# 角色中文名映射（用于日志/展示）
 AGENT_NAME_ZH_BY_ID: Dict[str, str] = {
-    # drama.* 新体系
     "drama.market-radar": "市场雷达",
     "drama.formula-analyst": "爆款公式师",
     "drama.topic-planner": "选题策划官",

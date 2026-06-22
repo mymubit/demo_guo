@@ -136,18 +136,8 @@ class CreationSubmitSerializer(serializers.Serializer):
     )
 
     def validate_pipeline_pack_id(self, value):
-        if value is None:
-            return value
-        from apps.workflow.pipeline_store import FusionPipelineDbService
-
-        pack = FusionPipelineDbService.get_pack_by_id(str(value))
-        if pack is None:
-            raise serializers.ValidationError("流水线模板不存在")
-        if not pack.is_published_to_portal:
-            raise serializers.ValidationError("该流水线尚未对创作入口开放")
-        if not pack.nodes.exists():
-            raise serializers.ValidationError("流水线模板无有效步骤")
-        return value
+        # drama.* 体系不再使用 FusionPipelinePack，此字段已废弃
+        return None
 
     def validate_theme(self, value):
         """题材代码校验：允许 小写字母、数字、连字符"""

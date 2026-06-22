@@ -288,22 +288,9 @@ def _refund_quota(ctx: SkillInvokeContext) -> None:
 # ============================================================
 
 def _resolve_llm_route_key(skill_id: str) -> str:
-    """skill_id → AgentLlmRouteConfig.route_key（drama.* 新体系）。"""
-    # drama.* agent_id 直接用作 route_key
+    """skill_id → AgentLlmRouteConfig.route_key（drama.* 体系，直接使用 agent_id）。"""
     if skill_id.startswith("drama."):
         return skill_id
-    # 兼容旧 creation.* skill_id 映射（已废弃，优先使用 drama.*）
-    _legacy_mapping = {
-        "creation.brief": "drama.topic-planner",
-        "creation.structure": "drama.plot-architect",
-        "creation.character": "drama.character-designer",
-        "creation.outline": "drama.plot-architect",
-        "creation.script": "drama.script-writer",
-        "creation.review": "drama.quality-reporter",
-        "creation.polish": "drama.script-editor",
-    }
-    if skill_id in _legacy_mapping:
-        return _legacy_mapping[skill_id]
     if skill_id.startswith("creation."):
         return skill_id.split(".", 1)[1]
     return skill_id

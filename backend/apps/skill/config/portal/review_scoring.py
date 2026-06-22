@@ -127,11 +127,13 @@ class ReviewScoringService:
 
     @classmethod
     def import_thresholds_from_disk(cls) -> bool:
-        """从 skill-thresholds.json seed 放行线与子项最低分（仅首次或空值）。"""
+        """从 drama.* 默认阈值导入放行线（workflow/fusion 已移除，使用固定默认值）。"""
         try:
-            from apps.workflow.fusion.config_loader import get_fusion_config
-
-            thresholds = get_fusion_config().skill_thresholds.get("thresholds") or {}
+            thresholds = {
+                "minTotalScore": 75,
+                "minSubItemScore": 70,
+                "autoOptimizeTrigger": 70,
+            }
         except Exception:  # noqa: BLE001
             return False
 

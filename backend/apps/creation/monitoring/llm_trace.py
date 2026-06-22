@@ -9,12 +9,9 @@ from typing import Any, Dict, Optional
 
 from django.conf import settings
 
-try:
-    from apps.workflow.fusion.upstream_context import summarize_upstream_for_trace
-except ImportError:
-    def summarize_upstream_for_trace(artifacts: dict) -> str:  # type: ignore[misc]
-        """兼容存根：workflow/fusion 不可用时返回空摘要。"""
-        return ""
+def summarize_upstream_for_trace(artifacts: dict) -> str:
+    """上游产物摘要（drama.* 体系直接返回空，减少 token 消耗）。"""
+    return ""
 
 logger = logging.getLogger(__name__)
 

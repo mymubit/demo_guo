@@ -38,7 +38,12 @@ from apps.creation.serializers import (
 )
 from apps.creation.models import Project
 from apps.creation.services import CreationService
-from apps.portal.creation.legacy_gone import legacy_gone_response, legacy_workspace_gone_response
+from rest_framework.response import Response as _Response
+
+def legacy_gone_response(message=None):
+    return _Response({"code": 410, "message": message or "该接口已移除", "data": None}, status=200)
+
+legacy_workspace_gone_response = legacy_gone_response
 
 logger = logging.getLogger(__name__)
 

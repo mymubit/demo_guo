@@ -117,9 +117,3 @@ def get_creation_catalog() -> CreationCatalogService:
 
 def clear_creation_catalog_cache() -> None:
     get_creation_catalog.cache_clear()
-    try:
-        from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
-
-        get_ssot_catalog.cache_clear()
-    except Exception:  # noqa: BLE001
-        pass

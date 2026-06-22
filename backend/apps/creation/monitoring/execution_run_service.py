@@ -530,24 +530,13 @@ class AgentExecutionRunService:
 
     @staticmethod
     def list_recent_runs_global(*, limit: int = 40) -> Dict[str, Any]:
-        from apps.workflow.step_admin import PipelineStepAdminService
-
         limit = max(1, min(limit, 100))
         runs = (
             AgentExecutionRun.objects.select_related("project")
             .order_by("-started_at")[:limit]
         )
-        steps = PipelineStepAdminService.list_steps()
-        index_to_node_id = {
-            int(row.get("node_index") or 0): str(row.get("node_id") or "")
-            for row in steps
-            if row.get("node_index") is not None
-        }
-        agent_to_node_id = {
-            str(row.get("agent_id") or ""): str(row.get("node_id") or "")
-            for row in steps
-            if row.get("agent_id")
-        }
+        index_to_node_id: Dict[int, str] = {}
+        agent_to_node_id: Dict[str, str] = {}
 
         items: List[Dict[str, Any]] = []
         node_states: Dict[str, str] = {}

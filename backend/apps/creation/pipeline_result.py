@@ -48,8 +48,4 @@ def build_pipeline_result_from_project(project: Project) -> Dict[str, Any]:
         else:
             result[result_key] = payload
 
-    # 兼容旧交付格式（空值默认）
-    for legacy_key in ("project_brief", "structure", "characters", "outlines", "scripts"):
-        result.setdefault(legacy_key, {})
-
     return result

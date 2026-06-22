@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
+from apps.skill.config.portal.creation_catalog import get_creation_catalog as _get_catalog
 from apps.skill.config.portal.theme_templates import ThemeTemplateCatalogService
 
 
@@ -119,7 +119,7 @@ def trend_formula_has_internal_refs(trend: Optional[dict]) -> bool:
 
 def build_trend_formula(theme: str, *, theme_display_name: str = "") -> Dict[str, Any]:
     """从题材模板生成 C 端可读的 trendFormula。"""
-    catalog = get_ssot_catalog()
+    catalog = _get_catalog()
     display = (theme_display_name or catalog.theme_display_name(theme) or theme).strip()
     entry = _load_theme_entry(theme)
 

@@ -124,19 +124,11 @@ class AgentLlmRoutingService:
 
     @classmethod
     def routing_plan(cls) -> Dict[str, object]:
-        """供管理命令展示的路由表（读 DB 绑定状态）。"""
+        """供管理命令展示的路由表（读 DB 绑定状态）。drama.* 新体系，无旧节点。"""
         from apps.agent.routes import AgentLlmRouteService
-        from apps.workflow.step_admin import PipelineStepAdminService
 
-        nodes = {}
-        for node_id, preset in NODE_PRESET_KEYS.items():
-            nodes[node_id] = {
-                "preset_key": preset,
-                "channel": "native" if cls.is_native_preset(preset) else "volcano",
-                "endpoint_env": PRESET_ENDPOINT_ENV.get(preset, "")
-                or (NATIVE_PRESET_CONFIG.get(preset, {}).get("api_key_env", "")),
-                "provider_id": PipelineStepAdminService.resolve_provider_id(node_id),
-            }
+        # NODE_PRESET_KEYS 在新体系中为空，不再迭代
+        nodes: Dict[str, object] = {}
         agents = {}
         for agent_id, preset in AGENT_PRESET_KEYS.items():
             agents[agent_id] = {
@@ -311,22 +303,17 @@ class AgentLlmRoutingService:
 
     @classmethod
     def bind_fusion_node_providers(cls, provider_map: Dict[str, str]) -> int:
-        """将主链 fusion 节点对应 Agent 绑定到 AgentLlmRouteConfig（不再写 FusionPipelineNode）。"""
-        from apps.agent.binding import agent_id_for_fusion_node
+        """绑定 drama.* Agent 到 LLM Provider。NODE_PRESET_KEYS 在新体系中为空。"""
         from apps.agent.routes import AgentLlmRouteService
         from apps.skill.models import LlmProvider
 
-        AgentLlmRouteService.seed_defaults()
         bound = 0
-        for node_id, preset_key in NODE_PRESET_KEYS.items():
+        for agent_id, preset_key in AGENT_PRESET_KEYS.items():
             provider_id = provider_map.get(preset_key)
             if not provider_id:
                 continue
             provider = LlmProvider.objects.filter(pk=provider_id, is_enabled=True).first()
             if provider is None:
-                continue
-            agent_id = agent_id_for_fusion_node(node_id)
-            if not agent_id:
                 continue
             AgentLlmRouteService.upsert(agent_id, {"llm_provider_id": str(provider.id)})
             bound += 1

@@ -142,7 +142,7 @@ class CreationFormCatalogView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        from apps.workflow.fusion.ssot_catalog import FusionSsotCatalog, get_creation_form_overrides
+        from apps.skill.config.portal.creation_catalog import get_creation_catalog
 
         base = FusionSsotCatalog().public_catalog()
         overrides = get_creation_form_overrides()
@@ -164,7 +164,7 @@ class CreationFormCatalogView(APIView):
         )
 
     def put(self, request):
-        from apps.workflow.fusion.ssot_catalog import get_creation_form_overrides
+        from apps.skill.config.portal.creation_catalog import get_creation_catalog
 
         payload = request.data or {}
         overrides = payload.get("overrides")
@@ -206,7 +206,7 @@ class CreationFormImportView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def post(self, request):
-        from apps.workflow.fusion.ssot_catalog import FusionSsotCatalog, get_creation_form_overrides
+        from apps.skill.config.portal.creation_catalog import get_creation_catalog
 
         base = FusionSsotCatalog().public_catalog()
         return api_ok(

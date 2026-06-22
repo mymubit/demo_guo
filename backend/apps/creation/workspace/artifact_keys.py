@@ -65,16 +65,5 @@ def primary_artifact_for_agent(agent_id: str) -> str:
 
 
 def artifact_key_for_node(node_index: int) -> str:
-    """
-    兼容旧节点索引 → artifact_key 映射。
-    旧系统：节点1=project_brief, 节点2=structure_plan...
-    新系统：直接使用 drama.* artifact_key。
-    """
-    _LEGACY_MAP = {
-        1: "project_brief",
-        2: "world_setting",   # 旧 structure_plan
-        3: "character_bible",
-        4: "series_outline",  # 旧 series_outline
-        5: "episode_scripts",
-    }
-    return _LEGACY_MAP.get(node_index, "")
+    """drama.* 工作台按 workspace_order 而不是节点索引，此函数已废弃，返回空串。"""
+    return ""

@@ -42,12 +42,7 @@ class CreationFormOverrideService:
             get_creation_catalog.cache_clear()
         except Exception as exc:  # noqa: BLE001
             logger.debug("creation catalog cache clear failed: %s", exc)
-        try:
-            from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
 
-            get_ssot_catalog.cache_clear()
-        except Exception as exc:  # noqa: BLE001
-            logger.debug("ssot catalog cache clear failed: %s", exc)
 
     @staticmethod
     def get_overrides() -> Dict[str, Any]:
@@ -81,19 +76,13 @@ class CreationFormOverrideService:
 
     @staticmethod
     def _schema_enum(*path: str) -> List[str]:
-        from apps.workflow.pipeline_store import FusionPipelineDbService
-
-        schema = FusionPipelineDbService.get_schema_dict("project-brief.schema.json") or {}
-        cur: Any = schema
-        for key in path:
-            cur = (cur.get("properties") or {}).get(key) or {}
-        enums = cur.get("enum") if isinstance(cur, dict) else None
-        return list(enums) if enums else []
+        # drama.* 体系不再使用 FusionPipelinePack schema，返回空列表
+        return []
 
     @staticmethod
     def _load_disk_project_meta() -> Dict[str, Any]:
         try:
-            from apps.workflow.fusion.config_loader import get_fusion_config
+            pass  # get_fusion_config removed (workflow/fusion deprecated)
 
             meta = get_fusion_config().project_config.get("projectMeta", {}) or {}
             return meta if isinstance(meta, dict) else {}
@@ -110,7 +99,7 @@ class CreationFormOverrideService:
     @staticmethod
     def _load_disk_format_variants() -> Dict[str, Any]:
         try:
-            from apps.workflow.fusion.config_loader import get_fusion_config
+            pass  # get_fusion_config removed (workflow/fusion deprecated)
 
             variants = get_fusion_config().project_config.get("formatVariants") or {}
             return variants if isinstance(variants, dict) else {}
@@ -121,7 +110,7 @@ class CreationFormOverrideService:
     @staticmethod
     def _load_disk_theme_templates() -> Dict[str, Any]:
         try:
-            from apps.workflow.fusion.config_loader import get_fusion_config
+            pass  # get_fusion_config removed (workflow/fusion deprecated)
 
             path = get_fusion_config().root / "references" / "theme-templates.json"
             if not path.is_file():
@@ -473,12 +462,10 @@ class CreationFormOverrideService:
 
     @classmethod
     def get_public_catalog_base(cls) -> Dict[str, Any]:
-        from apps.workflow.pipeline_store import FusionPipelineDbService
-
         cls.ensure_defaults()
         return {
-            "skillVersion": FusionPipelineDbService.active_version() or "",
-            "configSource": FusionPipelineDbService.config_source(),
+            "skillVersion": "drama-skills-v3.0",
+            "configSource": "drama_skills",
             "themes": cls.get_themes(),
             "platforms": cls.get_platforms(),
             "formatVariants": cls.get_format_variants(),
