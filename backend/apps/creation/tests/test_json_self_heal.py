@@ -15,8 +15,20 @@ User = get_user_model()
 
 class JsonSelfHealTests(TestCase):
     def setUp(self):
-        AgentDefinitionService.ensure_defaults()
-        self.agent = AgentDefinition.objects.get(agent_id="brief")
+        # 创建 drama.* 角色用于测试
+        self.agent, _ = AgentDefinition.objects.get_or_create(
+            agent_id="drama.topic-planner",
+            defaults={
+                "name": "Topic Planner",
+                "name_zh": "选题策划官",
+                "description": "选题策划",
+                "category": "drama_skills",
+                "workspace_order": 103,
+                "is_enabled": True,
+                "lifecycle_status": AgentDefinition.LifecycleStatus.ACTIVE,
+                "default_output_artifact_key": "project_brief",
+            },
+        )
 
     @patch("apps.creation.agent_runtime.json_self_heal.LlmService.chat_completion")
     def test_self_heal_repairs_invalid_json(self, mock_chat):

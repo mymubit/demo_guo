@@ -82,7 +82,7 @@ class ProjectChunksContinueView(APIView):
 
     def post(self, request, project_id: str):
         body = request.data if isinstance(request.data, dict) else {}
-        agent_id = str(body.get("agent_id") or "script").strip()
+        agent_id = str(body.get("agent_id") or "drama.script-writer").strip()
         params = body.get("params") if isinstance(body.get("params"), dict) else {}
         to_episode = body.get("to_episode")
         if to_episode is not None:

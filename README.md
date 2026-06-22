@@ -1,21 +1,26 @@
 # ScriptForge AI - 短剧剧本创作平台
 
-> **基于AI的专业短剧剧本创作平台，将一句话创意快速转化为完整可拍摄的A级剧本体系。**
+> **基于AI的专业短剧剧本创作平台，36个专业角色协作，将一句话创意快速转化为完整可拍摄的A级剧本体系。**
 
 ## ✨ 项目概述
 
-ScriptForge AI 是一个商业化的短剧剧本创作平台，采用「前端 React SPA + 后端 Django 6.0.5」架构。当前 C 端主链路为 **独立 Agent 手动工作台**：用户提交创意后生成初始 `project_brief`，再按需逐个运行 DB 化 Agent（brief → structure → character → outline → script → review/score 等），产物写入 `ProjectFusionArtifact`，支持预览、下载与分享。
+ScriptForge AI 是一个商业化的短剧剧本创作平台，采用「前端 React SPA + 后端 Django 6.0.5」架构。核心功能为 **Drama Skills 工作室**（`/drama`）：36个专业角色，8个职能部门，支持快速通道（8角色）和专家通道（36角色）双轨创作模式。
 
-主 API 入口：`POST /api/creation/submit/` → `GET /api/creation/projects/<id>/workspace/` → `POST .../agents/<agent_id>/run/`。
+主 API 入口：
+- `POST /api/drama/projects/` → `GET /api/drama/projects/<id>/progress/` → `POST .../run/<role_id>/`
+- `GET /api/drama/roles/` — 获取36个角色列表（含部门分组）
+
+技能库位置：`drama-skills/`（36个角色的完整技能规范，可直接复制到 Cursor/Codex/Trae 使用）
 
 ---
 
 ## 🎯 核心特性
 
-### 平台功能
+### Drama Skills 创作工作室
+- 🎭 **36个专业角色**：市场雷达、爆款公式师、情节架构师、剧本执笔师、质量报告官等完整体系
+- ⚡ **双轨创作模式**：快速通道（8角色，适合初次创作）/ 专家通道（36角色，适合商业精品）
 - 🎬 **8大热门题材**：家庭复仇、豪门霸总、甜宠虐恋、穿越重生、都市逆袭、古装权谋、悬疑反转、混合题材
-- 📝 **4种剧本格式**：标准版、行业通用版、精简版、分镜版，满足不同团队需求
-- 🔍 **四维质量审查**：格式、节奏、内容、制作可行性自动评分
+- 🔍 **8维度质量评分**：格式/结构/人物/情绪/对白/钩子/梦境/商业可行性
 - 👥 **会员系统**：体验版 / 专业版 / 旗舰版三档套餐
 - 💳 **订单与支付**：完整的订单与支付流程
 - 📦 **作品管理**：云端保存、分享、多格式导出

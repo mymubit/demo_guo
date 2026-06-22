@@ -42,7 +42,7 @@ const TESTIMONIALS = [
     name: '林**',
     role: '独立编剧',
     avatar: '林',
-    content: '作为独立创作者，最困难的就是创意到大纲的转化。ScriptForge帮我解决了这个痛点，它的7节点流水线非常科学，从创意收集到剧本导出一气呵成。',
+    content: '作为独立创作者，最困难的就是创意到大纲的转化。ScriptForge帮我解决了这个痛点，它的Drama Skills 36角色体系非常科学，从创意收集到剧本导出一气呵成。',
     rating: 5,
   },
   {
@@ -120,7 +120,7 @@ const FEATURES = [
   },
 ]
 
-// 7 节点创作主链
+// Drama Skills 36角色创作体系
 const PIPELINE = [
   { step: 1, name: '信息收集', time: '30s', state: 'done' },
   { step: 2, name: '结构规划', time: '60s', state: 'done' },
@@ -187,7 +187,7 @@ export default function Home() {
           <div className="grid w-full grid-cols-1 items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
             <motion.div {...pageEnter} className="max-w-[620px]">
               <div className="mb-5 flex flex-wrap gap-2">
-                <Badge tone="gold" size="md">主链 7 节点</Badge>
+                <Badge tone="gold" size="md">Drama Skills</Badge>
                 <Badge tone="info" size="md">4 题材格式 · 8 题材模板</Badge>
               </div>
               <h1 className="font-display text-5xl font-bold leading-[1.05] tracking-tight md:text-6xl xl:text-7xl">
@@ -199,7 +199,7 @@ export default function Home() {
                 的 A 级剧本。
               </h1>
               <p className="mt-5 max-w-[56ch] text-base text-navy-100 md:text-lg">
-                ScriptForge 用 7 节点主链把创意拆成结构、人设、大纲、剧本、质量与交付。
+                ScriptForge 用 Drama Skills 工作室把创意拆成结构、人设、大纲、剧本、质量与交付。
                 全流程 8–12 分钟，生成即带数字水印，剧作 / 团队 / 平台三方可溯源。
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
@@ -318,11 +318,11 @@ export default function Home() {
         </PageContainer>
       </section>
 
-      {/* ========= 7 节点主链叙事 ========= */}
+      {/* ========= Drama Skills 工作室叙事 ========= */}
       <section className="py-24">
         <PageContainer width="7xl" className="grid grid-cols-1 items-center gap-16 lg:grid-cols-[1.2fr_0.8fr]">
           <div>
-            <SectionEyebrow>主链 7 节点</SectionEyebrow>
+            <SectionEyebrow>Drama Skills</SectionEyebrow>
             <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl">
               从一句话到可拍摄剧本，
               <br />

@@ -9,18 +9,21 @@ import AdminMasterDetail, {
 import { AdminPenetrationLink } from '@/components/admin/workbench/AdminWorkbenchKit'
 
 const ROUTE_HINTS = {
-  brief: 'BriefAgent 立项整理',
-  world: 'WorldAgent 结构与世界观',
-  character: 'CharacterAgent 角色设计',
-  outline: 'OutlineAgent 分集大纲',
-  script: 'ScriptAgent 剧本创作',
-  review: 'ReviewAgent 质量审查',
-  score: 'ScoreAgent 深度评分',
-  outline_framework: 'Outline 框架阶段',
-  outline_episode: 'Outline 逐集阶段',
-  script_batch: 'Script 分批生成',
-  polish: 'PolishAgent 润色建议',
-  insight: 'InsightAgent 拉片分析',
+  // drama.* 新体系
+  'drama.topic-planner': '选题策划官 - 立项简报生成',
+  'drama.world-architect': '世界架构师 - 时代背景/空间/权力结构',
+  'drama.character-designer': '人设设计师 - Want/Need/Ghost/Lie/Flaw',
+  'drama.plot-architect': '情节架构师 - 六阶段结构+分集大纲（高Token）',
+  'drama.script-writer': '剧本执笔师 - 正式剧本生成（最高Token）',
+  'drama.dialogue-expert': '对白专家 - AI腔检测与台词优化',
+  'drama.script-reviewer': '审稿官 - 格式合规+结构检查',
+  'drama.quality-reporter': '质量报告官 - 8维度综合评分',
+  'drama.compliance-guard': '合规守卫 - P0/P1/P2合规检测',
+  'drama.script-editor': '修稿师 - 针对性缺陷修复',
+  'drama.formatter': '格式规范师 - 自动格式化（轻量）',
+  'drama.word-governor': '字数治理官 - 字数达标检测（轻量）',
+  'drama.delivery-packer': '交付打包官 - 生成交付包',
+  'drama.marketing-officer': '营销策划官 - 宣发文案+投流标题',
   ai_field: '创作页 AI 字段生成',
 }
 

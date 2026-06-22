@@ -17,13 +17,13 @@ class AgentRegistryConfigServiceTests(TestCase):
         registry = {
             "_meta": {
                 "version": "test",
-                "post_script_chain": ["review", "score"],
+                "post_script_chain": ["drama.quality-reporter"],
                 "post_script_append_agents": ["marketing"],
-                "post_script_pipeline_index": [{"index": 6, "agent_id": "review"}],
+                "post_script_pipeline_index": [{"index": 504, "agent_id": "drama.quality-reporter"}],
             },
             "agents": [
                 {
-                    "id": "brief",
+                    "id": "drama.topic-planner",
                     "name": "Brief",
                     "runner": "apps.creation.orchestration.brief.run_brief_agent",
                 }
@@ -43,7 +43,7 @@ class AgentRegistryConfigServiceTests(TestCase):
         registry = {
             "agents": [
                 {
-                    "id": "structure",
+                    "id": "drama.plot-architect",
                     "name": "Structure",
                     "runner": "apps.creation.agents.world.run_world_agent",
                 }
@@ -80,7 +80,7 @@ class AgentRegistryAdminApiTests(TestCase):
             defaults={
                 "registry": {
                     "_meta": {"version": "9.9.9"},
-                    "agents": [{"id": "brief", "name": "Brief"}],
+                    "agents": [{"id": "drama.topic-planner", "name": "Brief"}],
                 },
                 "is_active": True,
             },
@@ -91,14 +91,14 @@ class AgentRegistryAdminApiTests(TestCase):
         self.assertEqual(resp.data["data"]["registry"]["_meta"]["version"], "9.9.9")
         self.assertIsInstance(resp.data["data"].get("tier1_section_catalog"), list)
         self.assertIsInstance(resp.data["data"].get("tier1_section_catalog_detail"), list)
-        self.assertIn("brief", resp.data["data"].get("default_tier1_sections_by_agent", {}))
+        self.assertIn("drama.topic-planner", resp.data["data"].get("default_tier1_sections_by_agent", {}))
 
     def test_put_agent_registry_strips_removed_post_chain_meta(self):
         body = {
             "registry": {
                 "_meta": {
                     "post_script_append_agents": ["marketing"],
-                    "post_script_pipeline_index": [{"index": 6, "agent_id": "review"}],
+                    "post_script_pipeline_index": [{"index": 504, "agent_id": "drama.quality-reporter"}],
                 },
                 "agents": [
                     {

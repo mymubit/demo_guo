@@ -1,6 +1,6 @@
 # Legacy / Fusion 删除计划
 
-> **状态**：Phase 0–3 已实现；`ssot_catalog` 已迁为 `creation_catalog` 兼容层。
+> **状态（2026-06-22 更新）**：已完成 Drama Skills v3.0 迁移。旧 brief/structure/character/outline/script/review/score agent 已全面替换为 drama.* 36角色体系。剩余待清理为 workflow/fusion/ 兼容层（中优先级，可分阶段进行）。
 
 ---
 

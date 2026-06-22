@@ -110,7 +110,7 @@ class AdminCreationProjectsTests(TestCase):
             {
                 "_meta": {"version": "2.0.0"},
                 "orchestrator": {"runtime": "scriptforge"},
-                "agents": [{"id": "brief", "name": "Brief", "workspace_index": 1}],
+                "agents": [{"id": "drama.topic-planner", "name": "Brief", "workspace_index": 1}],
             },
             note="test",
             activate=True,
@@ -174,7 +174,7 @@ class AdminCreationProjectsTests(TestCase):
         AgentExecutionRun.objects.create(
             project=self.project,
             user=self.user,
-            agent_id="brief",
+            agent_id="drama.topic-planner",
             node_index=1,
             status=AgentExecutionRun.STATUS_RUNNING,
         )

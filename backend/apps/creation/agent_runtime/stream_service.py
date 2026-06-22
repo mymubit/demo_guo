@@ -38,9 +38,18 @@ from apps.skill.skills.streaming_json_parser import IncrementalJsonArrayParser, 
 logger = logging.getLogger(__name__)
 
 AGENT_STREAM_CONFIG: Dict[str, Dict[str, Any]] = {
-    "script": {"kind": "episode_scripts", "array_keys": ("episodes",)},
-    "outline": {"kind": "series_outline", "array_keys": ("episodes", "stages")},
-    "polish": {"kind": "episode_scripts", "array_keys": ("episodes",)},
+    # drama.* 新体系
+    "drama.script-writer": {"kind": "episode_scripts", "array_keys": ("episodes",)},
+    "drama.plot-architect": {"kind": "series_outline", "array_keys": ("episodes", "stages")},
+    "drama.script-editor": {"kind": "episode_scripts", "array_keys": ("episodes",)},
+    "drama.dialogue-expert": {"kind": "episode_scripts", "array_keys": ("episodes",)},
+    "drama.emotion-architect": {"kind": "emotion_blueprint", "array_keys": ("episodes",)},
+    "drama.rhythm-designer": {"kind": "emotion_curve", "array_keys": ("episodes",)},
+    "drama.storyboard-director": {"kind": "storyboard", "array_keys": ("scenes",)},
+    "drama.ip-adapter": {"kind": "adaptation_plan", "array_keys": ()},
+    # artifact_key 直接路由（兼容旧 artifact 存储格式）
+    "episode_scripts": {"kind": "episode_scripts", "array_keys": ("episodes",)},
+    "series_outline": {"kind": "series_outline", "array_keys": ("episodes", "stages")},
 }
 
 

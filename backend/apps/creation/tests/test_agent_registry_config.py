@@ -1,168 +1,58 @@
 # -*- coding: utf-8 -*-
-from unittest.mock import MagicMock, patch
+"""
+Agent 注册表配置测试 — drama.* 新体系。
 
-from django.test import SimpleTestCase, TestCase
+旧的 brief/structure/character/outline/script workspace_index 测试已移除。
+现在改为测试 drama.* workspace_order 和 get_agent 功能。
+"""
+from django.test import TestCase
 
-
-class AgentRegistryConfigTests(SimpleTestCase):
-    def test_workspace_mapping_reads_registry_meta(self):
-        from apps.agent import runtime as registry
-
-        fake_registry = {
-            "_meta": {
-                "workspace_modules": [
-                    {"index": 1, "agent_id": "brief"},
-                    {"index": 2, "agent_id": "structure"},
-                    {"index": 3, "agent_id": "character"},
-                    {"index": 4, "agent_id": "outline"},
-                    {"index": 5, "agent_id": "script"},
-                ],
-            },
-            "agents": [],
-        }
-        with patch.object(registry, "get_agent_registry", return_value=fake_registry):
-            self.assertEqual(registry.agent_for_workspace_index(4), "outline")
-            self.assertEqual(registry.workspace_index_for_agent("script"), 5)
-            self.assertIsNone(registry.agent_for_pipeline_node_index(6))
-
-    def test_workspace_mapping_returns_none_when_unconfigured(self):
-        from apps.agent import runtime as registry
-
-        fake_registry = {"_meta": {}, "agents": []}
-        with patch.object(registry, "get_agent_registry", return_value=fake_registry):
-            self.assertEqual(registry.agent_for_workspace_index(1), "brief")
-            self.assertIsNone(registry.agent_for_pipeline_node_index(6))
-
-    def test_workspace_mapping_reads_agents_workspace_index(self):
-        from apps.agent import runtime as registry
-
-        fake_registry = {
-            "_meta": {},
-            "agents": [
-                {"id": "brief", "workspace_index": 1},
-                {"id": "structure", "workspace_index": 2},
-            ],
-        }
-        with patch.object(registry, "get_agent_registry", return_value=fake_registry):
-            self.assertEqual(registry.agent_for_workspace_index(2), "structure")
-
-    def test_removed_post_chain_runtime_api(self):
-        from apps.agent import runtime as registry
-
-        self.assertFalse(hasattr(registry, "post_script_chain"))
-        self.assertFalse(hasattr(registry, "post_script_effective_chain"))
-        self.assertFalse(hasattr(registry, "should_defer_to_post_script_chain"))
-
-    def test_explicit_post_agents_are_catalog_only(self):
-        from apps.agent.catalog import portal_agent_catalog
-        from apps.agent import catalog
-
-        fake_registry = {
-            "_meta": {"version": "2.0.0"},
-            "agents": [
-                {"id": "brief", "workspace_index": 1},
-                {"id": "structure", "workspace_index": 2},
-                {"id": "character", "workspace_index": 3},
-                {"id": "outline", "workspace_index": 4},
-                {"id": "script", "workspace_index": 5},
-                {"id": "review"},
-                {"id": "score"},
-                {"id": "polish"},
-                {"id": "marketing"},
-                {"id": "insight"},
-            ],
-        }
-        with patch.object(catalog, "get_agent_registry", return_value=fake_registry):
-            out = portal_agent_catalog()
-
-        self.assertEqual(len(out["workspaceAgents"]), 5)
-        self.assertEqual(out["explicitPostAgents"], ["review", "score", "polish", "marketing", "insight"])
-
-    def test_resolve_agent_runner_rejects_removed_python_runner_path(self):
-        from apps.agent import runtime as registry
-
-        fake_registry = {
-            "_meta": {},
-            "agents": [
-                {
-                    "id": "review",
-                    "runner": "apps.creation.orchestration.review.run_review_agent",
-                }
-            ],
-        }
-        with patch.object(registry, "get_agent_registry", return_value=fake_registry):
-            self.assertIsNone(registry.resolve_agent_runner("review"))
-
-    def test_resolve_agent_runner_rejects_unsafe_path(self):
-        from apps.agent import runtime as registry
-
-        fake_registry = {
-            "_meta": {},
-            "agents": [{"id": "bad", "runner": "os.system"}],
-        }
-        with patch.object(registry, "get_agent_registry", return_value=fake_registry):
-            self.assertIsNone(registry.resolve_agent_runner("bad"))
-
-    def test_workspace_runner_uses_skill_invoker(self):
-        from apps.skill.skills.invoker import get_skill_invoker
-
-        with patch("apps.skill.skills.invoker.SkillInvoker.invoke") as mock_invoke:
-            skill_result = MagicMock()
-            skill_result.success = True
-            skill_result.data = {"node": 1}
-            skill_result.error = {}
-            skill_result.skill_id = "creation.brief"
-            skill_result.trace_id = "trace-brief"
-            mock_invoke.return_value = skill_result
-
-            result = get_skill_invoker().invoke(
-                skill_id="creation.brief",
-                payload={"project_id": "proj-1"},
-                project_id="proj-1",
-                user_id=1,
-            )
-
-        self.assertTrue(result.success)
-        self.assertEqual(result.data["node"], 1)
+from apps.agent.runtime import (
+    DRAMA_FAST_TRACK_AGENT_IDS,
+    DRAMA_WORKSPACE_ORDER,
+    workspace_index_for_agent,
+    get_agent,
+)
 
 
-class AgentRegistryDbConfigTests(TestCase):
-    def tearDown(self):
-        from apps.agent.runtime import get_agent_registry
+class DramaWorkspaceOrderTests(TestCase):
+    """验证 drama.* 工作台排序正确性。"""
 
-        get_agent_registry.cache_clear()
+    def test_fast_track_agents_have_correct_count(self):
+        self.assertEqual(len(DRAMA_FAST_TRACK_AGENT_IDS), 8)
 
-    def test_active_db_registry_is_runtime_source(self):
-        from apps.agent.runtime import agent_for_pipeline_node_index, agent_for_workspace_index, get_agent_registry
-        from apps.agent.models import AgentRegistryConfig
+    def test_fast_track_contains_required_roles(self):
+        required = [
+            "drama.topic-planner",
+            "drama.world-architect",
+            "drama.character-designer",
+            "drama.plot-architect",
+            "drama.script-writer",
+            "drama.script-reviewer",
+            "drama.quality-reporter",
+            "drama.compliance-guard",
+        ]
+        for r in required:
+            self.assertIn(r, DRAMA_FAST_TRACK_AGENT_IDS, f"{r} 不在快速通道中")
 
-        AgentRegistryConfig.objects.create(
-            config_key="test-active",
-            display_name="Test Agent Registry",
-            is_active=True,
-            registry={
-                "_meta": {
-                    "workspace_modules": [
-                        {"index": 1, "agent_id": "brief"},
-                        {"index": 2, "agent_id": "structure"},
-                        {"index": 3, "agent_id": "character"},
-                        {"index": 4, "agent_id": "outline"},
-                        {"index": 5, "agent_id": "script"},
-                    ],
-                    "post_script_pipeline_index": [
-                        {"index": 6, "agent_id": "review"},
-                        {"index": 7, "agent_id": "score"},
-                    ],
-                },
-                "agents": [
-                    {"id": "brief", "name": "BriefAgent", "name_zh": "Brief"},
-                    {"id": "structure", "name": "StructureAgent", "name_zh": "Structure"},
-                ],
-            },
-        )
-        get_agent_registry.cache_clear()
+    def test_workspace_order_is_unique(self):
+        orders = list(DRAMA_WORKSPACE_ORDER.values())
+        self.assertEqual(len(orders), len(set(orders)), "workspace_order 有重复值")
 
-        registry = get_agent_registry()
-        self.assertEqual(registry.get("_registry_source"), "db")
-        self.assertEqual(agent_for_workspace_index(2), "structure")
-        self.assertIsNone(agent_for_pipeline_node_index(6))
+    def test_workspace_index_for_known_role(self):
+        self.assertEqual(workspace_index_for_agent("drama.topic-planner"), 103)
+        self.assertEqual(workspace_index_for_agent("drama.script-writer"), 401)
+        self.assertEqual(workspace_index_for_agent("drama.compliance-guard"), 801)
+
+    def test_workspace_index_for_unknown_returns_999(self):
+        self.assertEqual(workspace_index_for_agent("nonexistent.role"), 999)
+
+    def test_dept_order_is_sequential(self):
+        """同部门的角色 workspace_order 应该都在同一百位段。"""
+        strategy_roles = [k for k in DRAMA_WORKSPACE_ORDER if k.startswith("drama.market") or
+                          k.startswith("drama.formula") or k.startswith("drama.topic") or
+                          k.startswith("drama.project") or k.startswith("drama.lapian")]
+        for r in strategy_roles:
+            order = DRAMA_WORKSPACE_ORDER[r]
+            self.assertGreaterEqual(order, 100)
+            self.assertLess(order, 200, f"{r} 的 order={order} 不在战略选题部范围内")

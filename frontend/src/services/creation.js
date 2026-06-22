@@ -60,7 +60,7 @@ export const creation = {
       signal,
     })
   },
-  async continueChunks(projectId, { agentId = 'script', toEpisode, params = {} } = {}, options = {}) {
+  async continueChunks(projectId, { agentId = 'drama.script-writer', toEpisode, params = {} } = {}, options = {}) {
     const token = getAccessToken()
     const url = `${API_BASE_URL}/api/creation/projects/${projectId}/chunks/continue/`
     return fetch(url, {
