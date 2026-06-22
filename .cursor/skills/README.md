@@ -7,7 +7,16 @@
 
 ---
 
-## 技能全景（14 项）
+## 技能全景（16 项）
+
+### 短剧创作类（新增）
+
+| 技能名 | 职责 | 典型触发词 | 平台 |
+|--------|------|------------|------|
+| [drama-forge](drama-forge/SKILL.md) | AI短剧剧本创作多角色协作套件（总导演/世界观/人物/情节/台词/镜头/情绪/审稿） | 短剧创作、帮我写、编剧、剧本 | Cursor·Codex·Trae |
+| [drama-forge-evolution](drama-forge-evolution/SKILL.md) | drama-forge 技能自我进化协议（收集评分→分析缺陷→更新技能→PR合并） | 进化分析、技能优化、复盘改进 | Cursor·Codex·Trae |
+
+### 工程类（14 项）
 
 | 技能名 | 职责 | 典型触发词 |
 |--------|------|------------|
@@ -29,6 +38,23 @@
 ---
 
 ## 迭代生命周期推荐顺序
+
+### 短剧创作链路
+
+```mermaid
+flowchart LR
+  D[drama-forge<br/>总导演入口] --> W[world-builder<br/>世界观]
+  W --> C[character-designer<br/>人物设计]
+  C --> P[plot-architect<br/>情节架构]
+  P --> E[emotion-engineer<br/>情绪校验]
+  E --> DW[dialogue-writer<br/>台词创作]
+  DW --> SD[scene-director<br/>场景导演]
+  SD --> QR[quality-reviewer<br/>质量审稿]
+  QR --> EV[drama-forge-evolution<br/>技能进化]
+  EV -.->|下一代| D
+```
+
+### 工程开发链路
 
 ```mermaid
 flowchart LR
@@ -76,6 +102,20 @@ skill-name/
 ├── SKILL.md       # 主指令（含中文 description）
 ├── REFERENCE.md   # 详细模板与检查清单
 └── examples.md    # 可选，输出示例
+
+drama-forge/       # 短剧创作套件（额外结构）
+├── SKILL.md       # 主入口（多平台兼容头）
+├── REFERENCE.md   # 知识资产汇总
+└── roles/         # 各角色详细规范
+    ├── drama-director.md
+    ├── world-builder.md
+    ├── character-designer.md
+    ├── plot-architect.md
+    ├── dialogue-writer.md
+    ├── scene-director.md
+    ├── emotion-engineer.md
+    ├── quality-reviewer.md
+    └── evolution-analyst.md
 ```
 
 `SKILL.md` 推荐章节顺序：
@@ -100,6 +140,10 @@ skill-name/
 - [x] 新增 `fullstack-security-audit`、`fullstack-release-deploy`
 - [x] 新增 `fullstack-performance-tuning`
 - [x] 新增 `fullstack-unit-test`
+- [x] 新增 `drama-forge` — AI短剧创作多角色协作技能套件（Cursor·Codex·Trae 三平台兼容）
+- [x] 新增 `drama-forge-evolution` — 自我进化元技能（Git-Native 进化协议）
+- [x] 新增 `.codex/drama-forge.md`（Codex CLI 适配器）
+- [x] 新增 `.trae/rules/drama-forge.md`（Trae IDE 适配器）
 
 ---
 
