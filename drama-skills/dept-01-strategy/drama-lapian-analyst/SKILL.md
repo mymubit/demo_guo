@@ -4,11 +4,10 @@ version: "2.0.0"
 description: "拉片分析师（dramaskill node-9扩展）：对已上线爆款短剧进行6维度深度分析，提炼可复用创作模板，发现新模式并归档到灵感库。系统的持续学习引擎。Invoke when analyzing existing successful dramas to extract reusable patterns."
 tags: ["拉片", "分析", "爆款研究", "模式提炼", "学习引擎"]
 dept: "战略选题部"
-source: "dramaskill/short-drama-script-creator/nodes/node-9-analysis.md"
 output_schema:
   - name: lapian_report
     type: json
-    schema: "short-drama-analysis.schema.json"
+    description: "拉片分析报告（结构/人设/节奏/台词/镜头/情绪6维度）"
   - name: new_patterns
     type: array
     description: "发现的新模式提案，自动路由到evolution-analyst"

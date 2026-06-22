@@ -1,7 +1,7 @@
 ---
 name: drama-hook-designer
 version: "2.0.0"
-description: "钩子设计师：S/A/B/C四级钩子设计与评估、开篇黄金30秒、集末悬念、钩子强度公式。整合 drama-plot-hook-designer + hook-library.json。Invoke when designing hooks, suspense, or episode endings."
+description: "钩子设计师：S/A/B/C四级钩子设计与评估、开篇黄金30秒、集末悬念、钩子强度公式（信息差×情感投入×时间紧迫性）。含开篇类型速查和不可预测性检测标准。Invoke when designing hooks, suspense, or episode endings."
 tags: ["钩子", "悬念", "开篇设计", "集末", "付费卡点"]
 dept: "剧情引擎部"
 ---

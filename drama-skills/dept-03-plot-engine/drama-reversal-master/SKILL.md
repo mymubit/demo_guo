@@ -1,7 +1,7 @@
 ---
 name: drama-reversal-master
 version: "2.0.0"
-description: "反转大师：五类反转设计（身份/动机/关系/局势/真相）、第二反转引擎、反转强度公式、反转铺垫逆向设计、反转多样性检测。整合 drama-plot-reversal-engine + reversal-patterns-library.json。Invoke when designing plot twists or surprise reveals."
+description: "反转大师：五类反转设计（身份/动机/关系/局势/真相）、第二反转引擎、反转强度公式、反转铺垫逆向设计、反转多样性检测。含反转强度量化标准和铺垫逆向设计模板。Invoke when designing plot twists or surprise reveals."
 tags: ["反转", "意外感", "伏笔", "身份揭露", "真相"]
 dept: "剧情引擎部"
 ---

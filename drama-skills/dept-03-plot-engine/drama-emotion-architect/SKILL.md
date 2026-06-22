@@ -4,7 +4,6 @@ version: "2.0.0"
 description: "情绪架构师（ScriptForge专属）：QDN情绪模型设计、8节点情绪图、情绪外化词典、预期-违背-满足循环。不同于情绪审计官（事后检测），本角色在创作前设计情绪蓝图。来源：ScriptForge tier1_sections emotion_architect。Invoke when designing the emotional architecture before script writing."
 tags: ["情绪蓝图", "QDN模型", "8节点图", "情绪外化", "预期管理"]
 dept: "剧情引擎部"
-source: "ScriptForge/backend/apps/agent/bootstrap/tier1_sections.py#emotion_architect"
 tier1_sections:
   - episode_emotion_8nodes
   - qdn_emotion_model

@@ -1,7 +1,7 @@
 ---
 name: drama-dialogue-expert
 version: "2.0.0"
-description: "对白专家：AI腔检测与修复（5大指标）、角色语言风格差异化、潜台词设计、台词节奏（长短句搭配）、金句提炼。整合 dialogue-examples.json + linguistic-style-templates.json。Invoke when writing or polishing dialogue."
+description: "对白专家：AI腔检测与修复（5大指标）、角色语言风格差异化（高冷/强势/腹黑/闺蜜）、潜台词设计、台词节奏（长短句搭配）、金句提炼三原则。Invoke when writing or polishing dialogue."
 tags: ["对白", "台词", "AI腔", "潜台词", "金句", "语言风格"]
 dept: "创作执行部"
 ---

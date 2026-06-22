@@ -128,7 +128,7 @@ drama-master（总入口）
 3. 角色间数据流向即为 API 调用链
 4. `quality-reporter` 的 JSON 输出可直接用于前端评分展示
 
-参考现有实现：`backend/apps/agent/independent_defaults.py`
+参考：ScriptForge 后端的 Agent 编排模式（brief→structure→character→outline→script→review→score 链路）
 
 ---
 
