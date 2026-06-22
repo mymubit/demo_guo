@@ -186,18 +186,18 @@ class ModelConfigView(APIView):
 
         routes = AgentLlmRouteConfig.objects.filter(
             route_key__startswith="drama."
-        ).select_related("provider")
+        ).select_related("llm_provider")
 
-        providers = LlmProvider.objects.filter(is_active=True).values("id", "name", "vendor")
+        providers = LlmProvider.objects.filter(is_active=True).values("id", "name", "provider_type")
 
         config_data = []
         for route in routes.order_by("sort_order"):
             config_data.append({
                 "agent_id": route.route_key,
                 "display_name": route.display_name,
-                "provider_id": route.provider_id,
-                "provider_name": route.provider.name if route.provider else None,
-                "model_name": route.model_name or "",
+                "provider_id": route.llm_provider_id,
+                "provider_name": route.llm_provider.name if route.llm_provider else None,
+                "model_name": getattr(route, "model_name", ""),
                 "temperature": route.temperature,
                 "max_completion_tokens": route.max_completion_tokens,
                 "is_active": route.is_active,
@@ -238,19 +238,19 @@ class ModelConfigView(APIView):
             from apps.skill.models import LlmProvider
             try:
                 provider = LlmProvider.objects.get(id=d["provider_id"])
-                route.provider = provider
+                route.llm_provider = provider
             except LlmProvider.DoesNotExist:
                 return Response(
                     {"code": 404, "message": f"Provider {d['provider_id']} 不存在"},
                     status=status.HTTP_404_NOT_FOUND,
                 )
         else:
-            route.provider = None
+            route.llm_provider = None
 
         route.model_name = d.get("model_name", "")
         route.temperature = d.get("temperature", 0.7)
         route.max_completion_tokens = d.get("max_completion_tokens", 8000)
-        route.save(update_fields=["provider", "model_name", "temperature", "max_completion_tokens"])
+        route.save(update_fields=["llm_provider", "temperature", "max_completion_tokens"])
 
         return Response({"code": 0, "message": "配置已更新"})
 

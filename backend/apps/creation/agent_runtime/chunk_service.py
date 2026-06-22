@@ -64,3 +64,81 @@ def get_chunk_config(artifact_key: str) -> Optional[Dict[str, Any]]:
 def get_agent_primary_artifact(agent_id: str) -> Optional[str]:
     """获取指定 drama.* Agent 的主要产物键。"""
     return DRAMA_AGENT_PRIMARY_ARTIFACT.get(agent_id)
+
+
+def resolve_chunk_kind(agent_id: str, params: Optional[Dict[str, Any]] = None) -> str:
+    """根据 drama.* agent_id 解析分片产物类型。"""
+    config = get_chunk_config(agent_id)
+    if config:
+        return config.get("kind", "episode_scripts")
+    primary = get_agent_primary_artifact(agent_id)
+    return primary or "episode_scripts"
+
+
+def last_chunk_index(project: Any, kind: str = "episode_scripts") -> int:
+    """获取最后一个分片的索引（用于续生成断点）。"""
+    try:
+        from apps.creation.artifact_service import get_artifact
+        payload = get_artifact(project, kind) or {}
+        items = payload.get("episodes", payload.get("scenes", []))
+        if isinstance(items, list) and items:
+            last = items[-1]
+            return int(last.get("episodeNumber", last.get("index", len(items))))
+    except Exception:  # noqa: BLE001
+        pass
+    return 0
+
+
+def upsert_chunk(project: Any, kind: str, episode_number: int, content: Dict[str, Any]) -> None:
+    """
+    更新或插入分片内容到产物存储（drama.* 体系）。
+    分片数据合并到 episode_scripts/series_outline 等产物中。
+    """
+    try:
+        from apps.creation.artifact_service import get_artifact, save_artifact
+        payload = get_artifact(project, kind) or {}
+        items = payload.get("episodes", payload.get("scenes", []))
+        if not isinstance(items, list):
+            items = []
+        # 更新或追加
+        found = False
+        for item in items:
+            if item.get("episodeNumber") == episode_number or item.get("index") == episode_number:
+                item.update(content)
+                found = True
+                break
+        if not found:
+            items.append({**content, "episodeNumber": episode_number})
+        payload["episodes"] = sorted(items, key=lambda x: x.get("episodeNumber", x.get("index", 0)))
+        save_artifact(project, kind, payload)
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def list_chunks(project: Any, *, kind: str = "episode_scripts", limit: int = 50, offset: int = 0) -> Dict[str, Any]:
+    """
+    列出项目的流式分片产物（供前端分页读取）。
+    drama.* 体系中，分片存储在 ProjectFusionArtifact 中。
+    """
+    try:
+        from apps.creation.artifact_service import get_artifact
+
+        payload = get_artifact(project, kind) or {}
+        items = []
+        if isinstance(payload, dict):
+            # episode_scripts: {"episodes": [...]}
+            for key in ("episodes", "scenes", "items"):
+                raw = payload.get(key, [])
+                if isinstance(raw, list):
+                    items = raw
+                    break
+        paginated = items[offset:offset + limit]
+        return {
+            "kind": kind,
+            "total": len(items),
+            "offset": offset,
+            "limit": limit,
+            "items": paginated,
+        }
+    except Exception:  # noqa: BLE001
+        return {"kind": kind, "total": 0, "offset": offset, "limit": limit, "items": []}

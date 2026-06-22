@@ -43,3 +43,47 @@ API_SIGN_SECRET = "test-sign-secret-32bytes-min!!!!!"
 # LLM 全局禁用（测试不调用真实 LLM）
 FUSION_LLM_ENABLED = False
 LLM_ENABLED = False
+
+# 覆盖为真实PostgreSQL测试数据库
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'scriptforge_test',
+        'USER': 'testuser',
+        'PASSWORD': 'testpass123',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
+}
+
+# 补充缺失的必需apps
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "rest_framework",
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
+    "corsheaders",
+    "django_filters",
+    "drf_spectacular",
+    "dj_queue",
+    "apps.users",
+    "apps.membership",
+    "apps.billing",
+    "apps.orders",
+    "apps.creation",
+    "apps.skill",
+    "apps.agent",
+    "apps.workflow",
+    "apps.security",
+    "apps.monitoring",
+    "apps.system_config",
+    "apps.portal",
+    "apps.console",
+    "apps.operations",
+    "apps.drama",
+]

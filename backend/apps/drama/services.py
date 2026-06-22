@@ -234,7 +234,7 @@ class DramaRoleService:
             r.route_key: r
             for r in AgentLlmRouteConfig.objects.filter(
                 route_key__startswith="drama."
-            ).select_related("provider")
+            ).select_related("llm_provider")
         }
 
         result = []
@@ -246,8 +246,8 @@ class DramaRoleService:
 
                 route = routes.get(agent_id)
                 model_name = "未配置"
-                if route and route.provider:
-                    model_name = f"{route.provider.name} / {route.model_name or '默认'}"
+                if route and route.llm_provider:
+                    model_name = f"{route.llm_provider.name} / {route.model_name or '默认'}"
 
                 dept_roles.append({
                     "agent_id": agent_id,
@@ -296,17 +296,20 @@ class DramaRoleService:
         if user_id:
             qs = qs.filter(drama_project__user_id=user_id)
 
-        # 按角色聚合
+        # 按角色聚合（注意：先values再annotate，避免聚合嵌套问题）
+        from django.db.models import FloatField, ExpressionWrapper
         by_role = list(
             qs.values("agent_id", "agent_name_zh")
             .annotate(
                 total_calls=Count("id"),
                 total_tokens=Sum("total_tokens"),
-                avg_tokens=Avg("total_tokens"),
                 total_cost_cents=Sum("cost_cents"),
             )
             .order_by("-total_tokens")
         )
+        # 手动计算avg_tokens
+        for item in by_role:
+            item["avg_tokens"] = (item["total_tokens"] or 0) / max(item["total_calls"], 1)
 
         # 按天聚合（最近30天）
         from django.db.models.functions import TruncDate
