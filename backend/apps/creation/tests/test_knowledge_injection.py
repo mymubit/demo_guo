@@ -18,7 +18,7 @@ User = get_user_model()
 class KnowledgeInjectionTests(TestCase):
     def setUp(self):
         AgentDefinitionService.ensure_defaults()
-        self.agent = AgentDefinitionService.get_runnable("script")
+        self.agent = AgentDefinitionService.get_runnable("drama.script-writer")
         # 清掉默认种子绑定，专注验证本测试构造的数据
         self.agent.knowledge_bindings.all().delete()
         self.user = User.objects.create_user(phone="13900007777", password="pass-123456")

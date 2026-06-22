@@ -51,7 +51,7 @@ const Login = lazy(() => import('@/pages/Auth/Login.jsx'))
 const Register = lazy(() => import('@/pages/Auth/Register.jsx'))
 
 // ── 需登录页面 ───────────────────────────────────────────────
-const CreationCenter = lazy(() => import('@/pages/Creation/index.jsx'))
+// CreationCenter 已废弃，/creation 直接重定向到 /drama
 const Profile = lazy(() => import('@/pages/Profile/index.jsx'))
 const Member = lazy(() => import('@/pages/Member/index.jsx'))
 const Orders = lazy(() => import('@/pages/Orders/index.jsx'))
@@ -101,6 +101,12 @@ const DailyChecklist = lazy(() => import('@/pages/Admin/operations/DailyChecklis
 // ── 404 兜底 ─────────────────────────────────────────────────
 const NotFound = lazy(() => import('@/pages/NotFound.jsx'))
 
+// ── Drama Skills 创作工作室 ────────────────────────────────
+const DramaIndex = lazy(() => import('@/pages/Drama/index.jsx'))
+const DramaWorkspace = lazy(() => import('@/pages/Drama/WorkspacePage.jsx'))
+const DramaScripts = lazy(() => import('@/pages/Drama/ScriptsPage.jsx'))
+const DramaModelsAdmin = lazy(() => import('@/pages/Admin/drama-models/index.jsx'))
+
 /* ============================================================
  * Suspense 统一加载态 —— 避免每个 lazy 页面都重复写 loading
  * ============================================================ */
@@ -146,12 +152,17 @@ const appRoutes = [
       { path: '/works', element: <WorkList /> },
       { path: '/works/:id', element: <WorkDetail /> },
 
-      // 需登录的页面
+      // 旧创作路由 → 重定向到新 Drama Skills 工作室
       {
         path: '/creation',
+        element: <Navigate to="/drama" replace />,
+      },
+      // Drama Skills 创作工作室（主入口）
+      {
+        path: '/drama',
         element: (
           <PrivateRoute>
-            <CreationCenter />
+            <DramaIndex />
           </PrivateRoute>
         ),
       },
@@ -206,6 +217,28 @@ const appRoutes = [
     ],
   },
 
+  // ── Drama Skills 全屏路由（不带 MainLayout） ──
+  {
+    path: '/drama/workspace/:projectId',
+    element: (
+      <PageLoading>
+        <PrivateRoute>
+          <DramaWorkspace />
+        </PrivateRoute>
+      </PageLoading>
+    ),
+  },
+  {
+    path: '/drama/scripts/:projectId',
+    element: (
+      <PageLoading>
+        <PrivateRoute>
+          <DramaScripts />
+        </PrivateRoute>
+      </PageLoading>
+    ),
+  },
+
   // ── Auth 路由（不带 MainLayout，避免重复嵌套） ──
   { path: '/login', element: <PageLoading><Login /></PageLoading> },
   { path: '/register', element: <PageLoading><Register /></PageLoading> },
@@ -237,7 +270,7 @@ const appRoutes = [
       // 概览
       { path: 'stats', element: <AdminStats /> },
       { path: 'monitoring', element: <AdminMonitoring /> },
-      // 创作
+      // 创作（项目管理）
       { path: 'creation', element: <Navigate to="/admin/creation/projects" replace /> },
       { path: 'creation/projects', element: <AdminProjects /> },
       { path: 'creation/projects/:projectId', element: <AdminProjectTrace /> },
@@ -247,6 +280,8 @@ const appRoutes = [
       { path: 'model', element: <AdminModelHub /> },
       { path: 'agent', element: <AdminAgentHub /> },
       { path: 'skills', element: <SkillCenterPage /> },
+      // Drama Skills 配置
+      { path: 'drama-models', element: <DramaModelsAdmin /> },
       { path: 'tier-rules', element: <TierRulesPage /> },
       { path: 'library', element: <AdminLibrary /> },
       { path: 'evolution', element: <AdminEvolution /> },

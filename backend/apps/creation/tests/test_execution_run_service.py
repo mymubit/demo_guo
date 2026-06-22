@@ -80,7 +80,7 @@ class AgentExecutionRunServiceTests(TestCase):
         """新引擎：adapt 通过 SkillInvoker 路由，使用一个 mock 函数代理。"""
         def mock_adapt_runner(*args, **kwargs):
             class _Result:
-                agent_id = "adapt"
+                agent_id = "drama.ip-adapter"
                 status = "skipped"
                 outputs = {"reason": "from-scratch"}
 
@@ -88,13 +88,13 @@ class AgentExecutionRunServiceTests(TestCase):
 
         result = AgentExecutionRunService.run_tracked_agent(
             self.project,
-            "adapt",
+              "drama.ip-adapter",
             mock_adapt_runner,
             node_index=0,
             input_summary={"creation_entry": "from-scratch"},
         )
         self.assertEqual(result.status, "skipped")
-        run = AgentExecutionRun.objects.filter(project=self.project, agent_id="adapt").first()
+        run = AgentExecutionRun.objects.filter(project=self.project, agent_id="drama.ip-adapter").first()
         self.assertIsNotNone(run)
         self.assertEqual(run.status, AgentExecutionRun.STATUS_COMPLETED)
 
@@ -155,7 +155,7 @@ class AgentExecutionRunServiceTests(TestCase):
         run = AgentExecutionRun.objects.create(
             project=self.project,
             user=self.user,
-            agent_id="brief",
+            agent_id="drama.topic-planner",
             status=AgentExecutionRun.STATUS_COMPLETED,
             rendered_prompt_preview="hidden prompt text",
             input_snapshot={

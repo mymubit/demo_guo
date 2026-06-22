@@ -17,18 +17,18 @@ class AgentOutputValidationCoverageTests(TestCase):
 
     def test_validate_output_accepts_all_chain_artifacts(self):
         cases = {
-            "adapt": (AgentDefinitionService.get_runnable("adapt"), {"adaptation_meta": {}, "project_brief": {}}),
-            "brief": (AgentDefinitionService.get_runnable("brief"), {"project_brief": {}}),
-            "structure": (AgentDefinitionService.get_runnable("structure"), {"structure_plan": {}}),
-            "character": (AgentDefinitionService.get_runnable("character"), {"character_bible": {}}),
-            "outline": (AgentDefinitionService.get_runnable("outline"), {"series_outline": {}}),
+            "adapt": (AgentDefinitionService.get_runnable("drama.ip-adapter"), {"adaptation_meta": {}, "project_brief": {}}),
+            "brief": (AgentDefinitionService.get_runnable("drama.topic-planner"), {"project_brief": {}}),
+            "structure": (AgentDefinitionService.get_runnable("drama.plot-architect"), {"structure_plan": {}}),
+            "character": (AgentDefinitionService.get_runnable("drama.character-designer"), {"character_bible": {}}),
+            "outline": (AgentDefinitionService.get_runnable("drama.plot-architect"), {"series_outline": {}}),
             "script": (
-                AgentDefinitionService.get_runnable("script"),
+                AgentDefinitionService.get_runnable("drama.script-writer"),
                 {"episode_scripts": {"episodes": [{"episodeNumber": 1}]}},
             ),
-            "review": (AgentDefinitionService.get_runnable("review"), {"review_report": {"passed": True}}),
+            "review": (AgentDefinitionService.get_runnable("drama.script-reviewer"), {"review_report": {"passed": True}}),
             "score": (
-                AgentDefinitionService.get_runnable("score"),
+                AgentDefinitionService.get_runnable("drama.quality-reporter"),
                 {"script_score_report": {"overallScore": 80}},
             ),
             "marketing": (AgentDefinitionService.get_runnable("marketing"), {"marketing_kit": {}}),
@@ -74,7 +74,7 @@ class AgentOutputValidationCoverageTests(TestCase):
         """绑定超大/过多知识时，注入总量受 max_prompt_tokens 预算约束。"""
         from apps.agent.models import AgentKnowledgeBinding, AgentKnowledgeItem
 
-        agent = AgentDefinitionService.get_runnable("script")
+        agent = AgentDefinitionService.get_runnable("drama.script-writer")
         budget = int((agent.runtime_policy or {}).get("max_prompt_tokens", 40000)) * 4 * 0.4
         for i in range(5):
             item = AgentKnowledgeItem.objects.create(
@@ -104,7 +104,7 @@ class AgentOutputValidationCoverageTests(TestCase):
 
     def test_validate_output_falls_back_when_artifact_key_invalid(self):
         """真实 LLM 自创 artifact_key 时回退到契约默认 key，而非整链失败。"""
-        agent = AgentDefinitionService.get_runnable("adapt")
+        agent = AgentDefinitionService.get_runnable("drama.ip-adapter")
         output = {
             "artifact_key": "overbearing-ceo-drama-adaptation",
             "payload": {"logline": "x", "tone": "y"},
@@ -135,7 +135,7 @@ class AgentOutputValidationCoverageTests(TestCase):
             IndependentAgentService._render_template("坏模板 {{ 非法 变量 }}", ctx)
 
     def test_render_prompt_injects_allowed_artifact_keys(self):
-        agent = AgentDefinitionService.get_runnable("adapt")
+        agent = AgentDefinitionService.get_runnable("drama.ip-adapter")
         _, user_prompt, _ = IndependentAgentService.render_agent_prompt(
             agent,
             {"artifacts": {}, "project": {}, "params": {}},
@@ -145,7 +145,7 @@ class AgentOutputValidationCoverageTests(TestCase):
         self.assertIn("禁止自行命名", user_prompt)
 
     def test_resolve_overwrite_mode_reads_params(self):
-        agent = AgentDefinitionService.get_runnable("script")
+        agent = AgentDefinitionService.get_runnable("drama.script-writer")
         mode = IndependentAgentService._resolve_overwrite_mode(agent, {"overwrite": "replace"})
         self.assertEqual(mode, "replace")
 
@@ -167,14 +167,14 @@ class AgentOutputValidationCoverageTests(TestCase):
         from apps.skill.models import LlmProvider
 
         provider = LlmProvider.objects.create(name="ow-prov", model_name="m", is_enabled=True, is_active=True)
-        route = AgentLlmRouteConfig.objects.get(route_key="script")
+        route = AgentLlmRouteConfig.objects.get(route_key="drama.script-writer")
         route.llm_provider = provider
         route.save(update_fields=["llm_provider"])
 
         result = IndependentAgentService.enqueue_run(
             project,
             user,
-            "script",
+              "drama.script-writer",
             {"overwrite": "replace", "episode_from": 1, "episode_to": 1},
         )
         self.assertEqual(result.run.overwrite_mode, "replace")

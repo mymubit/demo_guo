@@ -818,10 +818,11 @@ class IndependentAgentService:
                 .values_list("agent_id", flat=True)
                 .first()
             )
-            if latest == "score":
-                return Project.FUSION_SCORING
-            if latest == "review":
+            # drama.* 新体系状态推导
+            if latest in ("drama.quality-reporter", "drama.script-reviewer", "drama.emotion-auditor"):
                 return Project.FUSION_REVIEWING
+            if latest in ("drama.delivery-packer", "drama.compliance-guard"):
+                return Project.FUSION_SCORING
             if get_artifact(project, "series_outline"):
                 return Project.FUSION_WRITING
             return Project.FUSION_PLANNING

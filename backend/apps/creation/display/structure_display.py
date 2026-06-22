@@ -213,9 +213,9 @@ def workspace_display_title(project) -> str:
     if project_title and not is_placeholder_working_title(project_title, theme):
         return project_title
     try:
-        from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
+        from apps.skill.config.portal.creation_catalog import get_creation_catalog
 
-        return get_ssot_catalog().theme_display_name(theme) or theme or "创作项目"
+        return get_creation_catalog().theme_display_name(theme) or theme or "创作项目"
     except Exception:  # noqa: BLE001
         return project_title or theme or "创作项目"
 

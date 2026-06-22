@@ -1,4 +1,4 @@
-"""独立 Agent 定义、种子数据与健康检查。"""
+"""独立 Agent 定义、种子数据与健康检查 — drama.* 新体系。"""
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -6,9 +6,9 @@ from typing import Any, Dict, List, Optional
 from django.db import transaction
 
 from apps.agent.independent_defaults import (
-    AGENT_DEFAULTS,
     DEFAULT_SYSTEM_PROMPT,
     DEFAULT_USER_PROMPT_TEMPLATE,
+    get_drama_agent_defaults,
 )
 from apps.agent.models import (
     AgentDefinition,
@@ -21,9 +21,14 @@ from apps.agent.models import (
 class AgentDefinitionService:
     @staticmethod
     def ensure_defaults() -> int:
+        """
+        种入 drama.* 36个角色到 AgentDefinition。
+        推荐使用：python manage.py seed_drama_skills
+        """
+        drama_defaults = get_drama_agent_defaults()
         created = 0
         with transaction.atomic():
-            for index, item in enumerate(AGENT_DEFAULTS, start=1):
+            for index, item in enumerate(drama_defaults, start=1):
                 enabled = bool(item.get("enabled", True))
                 agent, was_created = AgentDefinition.objects.update_or_create(
                     agent_id=item["agent_id"],

@@ -7,6 +7,7 @@ from apps.skill.config.bootstrap.workflow_disk import DEFAULT_STEP_OPS_BY_NODE
 
 
 def merge_legacy_step_config(apps, schema_editor):
+    return  # drama.* 新体系，不再迁移旧节点配置
     FusionPipelinePack = apps.get_model("skill", "FusionPipelinePack")
     FusionPipelineNode = apps.get_model("skill", "FusionPipelineNode")
     PipelineNodeConfig = apps.get_model("billing", "PipelineNodeConfig")

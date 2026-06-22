@@ -3,6 +3,8 @@ from django.db import migrations
 
 
 def migrate_pipeline_skill_to_agents(apps, schema_editor):
+    return  # drama.* 新体系，已废弃
+
     from apps.agent.routes import AgentLlmRouteService
     from apps.agent.registry import AgentRegistryConfigService
 

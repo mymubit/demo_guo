@@ -11,11 +11,16 @@ from .outline_skeleton import stage_rough_outline_ready
 from .workspace.artifact_keys import artifact_key_for_node
 
 UPSTREAM_ARTIFACT_LABELS = {
-    "project_brief": "立项策划",
-    "structure_plan": "结构与世界观",
-    "character_bible": "角色设计",
-    "series_outline": "大纲与创作规划",
-    "episode_scripts": "剧集剧本",
+    # drama.* 新产物键
+    "project_brief": "立项简报",
+    "world_setting": "世界观设定",
+    "character_bible": "人物小传",
+    "series_outline": "分集大纲",
+    "episode_scripts": "剧本正文",
+    "quality_report": "质量报告",
+    "compliance_report": "合规报告",
+    # 兼容旧键
+    "structure_plan": "世界观设定",
 }
 
 ARTIFACT_NODE_INDEX = {

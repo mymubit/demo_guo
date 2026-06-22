@@ -33,9 +33,9 @@ def submit(user, data: dict) -> Tuple[Project, int]:
 
     current_membership = MembershipService.get_current_membership(user)
 
-    from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
+    from apps.skill.config.portal.creation_catalog import get_creation_catalog as _get_catalog
 
-    catalog = get_ssot_catalog()
+    catalog = _get_catalog()
     platform = catalog.normalize_platform(data.get("target_platform", "douyin"))
 
     project = Project.objects.create(

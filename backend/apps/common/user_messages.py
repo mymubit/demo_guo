@@ -30,22 +30,30 @@ TECHNICAL_MARKERS = (
 )
 
 FUSION_NODE_LABELS = {
-    "node-1-input": "Brief",
-    "node-2-structure": "Structure",
-    "node-3-character": "Character",
-    "node-4-outline": "Outline",
-    "node-5-script": "Script",
+    # drama.* 新体系展示名
+    "drama.topic-planner": "选题策划",
+    "drama.world-architect": "世界构建",
+    "drama.character-designer": "人设设计",
+    "drama.plot-architect": "情节大纲",
+    "drama.script-writer": "剧本创作",
+    "drama.quality-reporter": "质量评审",
+    "drama.compliance-guard": "合规检测",
 }
 
 _NODE_ERROR_RE = re.compile(r"^(node-\d+-[\w-]+):\s*(.+)$", re.IGNORECASE)
 _UPSTREAM_ARTIFACT_RE = re.compile(r"missing upstream artifact:\s*([\w_]+)", re.IGNORECASE)
 
 _UPSTREAM_ARTIFACT_LABELS = {
-    "project_brief": "Brief",
-    "structure_plan": "Structure",
-    "character_bible": "Character",
-    "series_outline": "Outline",
-    "episode_scripts": "Script",
+    "project_brief": "立项简报",
+    "world_setting": "世界观设定",
+    "character_bible": "人物小传",
+    "series_outline": "分集大纲",
+    "episode_scripts": "剧本正文",
+    "emotion_blueprint": "情绪蓝图",
+    "emotion_curve": "情绪曲线",
+    "quality_report": "质量报告",
+    "compliance_report": "合规报告",
+    "delivery_pack": "交付包",
 }
 
 

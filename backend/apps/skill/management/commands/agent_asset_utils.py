@@ -81,17 +81,25 @@ def category_for_classification(classification: str) -> str:
 def suggested_agent(path: Path) -> str:
     text = path.as_posix().lower()
     mapping = {
-        "brief": "brief",
-        "structure": "structure",
-        "world": "structure",
-        "character": "character",
-        "outline": "outline",
-        "script": "script",
-        "review": "review",
-        "score": "score",
-        "marketing": "marketing",
-        "insight": "insight",
-        "polish": "polish",
+        # drama.* 新体系路径关键词 → agent_id
+        "brief": "drama.topic-planner",
+        "topic": "drama.topic-planner",
+        "world": "drama.world-architect",
+        "structure": "drama.plot-architect",
+        "character": "drama.character-designer",
+        "outline": "drama.plot-architect",
+        "plot": "drama.plot-architect",
+        "hook": "drama.hook-designer",
+        "script": "drama.script-writer",
+        "dialogue": "drama.dialogue-expert",
+        "review": "drama.script-reviewer",
+        "quality": "drama.quality-reporter",
+        "score": "drama.quality-reporter",
+        "polish": "drama.script-editor",
+        "format": "drama.formatter",
+        "marketing": "drama.marketing-officer",
+        "compliance": "drama.compliance-guard",
+        "delivery": "drama.delivery-packer",
     }
     for token, agent_id in mapping.items():
         if token in text:

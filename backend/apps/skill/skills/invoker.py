@@ -288,18 +288,9 @@ def _refund_quota(ctx: SkillInvokeContext) -> None:
 # ============================================================
 
 def _resolve_llm_route_key(skill_id: str) -> str:
-    """creation.* 技能 ID → AgentLlmRouteConfig.route_key。"""
-    mapping = {
-        "creation.brief": "brief",
-        "creation.structure": "world",
-        "creation.character": "character",
-        "creation.outline": "outline",
-        "creation.script": "script",
-        "creation.review": "review",
-        "creation.polish": "polish",
-    }
-    if skill_id in mapping:
-        return mapping[skill_id]
+    """skill_id → AgentLlmRouteConfig.route_key（drama.* 体系，直接使用 agent_id）。"""
+    if skill_id.startswith("drama."):
+        return skill_id
     if skill_id.startswith("creation."):
         return skill_id.split(".", 1)[1]
     return skill_id

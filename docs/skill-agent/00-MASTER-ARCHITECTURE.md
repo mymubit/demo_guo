@@ -1,6 +1,8 @@
-# Skill & Agent 总架构（独立 Agent 主链路）
+# Skill & Agent 总架构（Drama Skills v3.0）
 
-> **状态**：已实现（独立 Agent 主链 + SkillRule 注入 + 流式/Chunk API）。
+> **状态（2026-06-22）**：已完成 Drama Skills 迁移。旧 brief/structure/character/outline/script 7节点主链已全面替换为 drama.* 36角色体系（8个职能部门，双轨创作模式）。
+>
+> 新系统入口：`backend/apps/drama/`（API）、`drama-skills/`（技能规范）、`frontend/src/pages/Drama/`（工作台UI）
 
 ---
 

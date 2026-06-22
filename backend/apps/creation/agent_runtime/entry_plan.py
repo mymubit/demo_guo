@@ -1,98 +1,121 @@
 # -*- coding: utf-8 -*-
-"""创作入口 → 推荐 Agent Plan（非 LLM 动态编排）。"""
+"""
+创作入口规划 — drama.* 新体系。
+
+根据用户的创作入口类型，推荐对应的 drama.* 角色执行顺序。
+旧的 from-scratch/from-novel/from-outline 逻辑已更新为 drama.* 体系。
+"""
 from __future__ import annotations
 
-import logging
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict
 
-logger = logging.getLogger(__name__)
-
-DEFAULT_ENTRY_PLANS: Dict[str, Dict[str, Any]] = {
-    "from-scratch": {
-        "recommended_agents": ["structure", "character", "outline", "script", "review"],
-        "hidden_agents": [],
-        "default_params": {},
-    },
-    "from-outline": {
-        "recommended_agents": ["character", "script", "review"],
-        "hidden_agents": ["structure", "outline"],
-        "default_params": {},
-    },
-    "from-reference": {
-        "recommended_agents": ["structure", "outline", "script", "review"],
-        "hidden_agents": [],
-        "default_params": {},
-    },
-    "ip-sequel": {
-        "recommended_agents": ["outline", "script", "review"],
-        "hidden_agents": ["structure"],
-        "default_params": {},
-    },
-    "novel-adaptation": {
-        "recommended_agents": ["script", "review"],
-        "hidden_agents": ["structure", "outline", "character"],
-        "default_params": {},
-    },
-}
+from apps.agent.runtime import DRAMA_FAST_TRACK_AGENT_IDS
 
 
-def _known_agent_ids() -> Set[str]:
-    try:
-        from apps.agent.definition_service import AgentDefinitionService
+class DramaEntryPlan:
+    """
+    drama.* 创作入口规划。
 
-        AgentDefinitionService.ensure_defaults()
-        return {a.agent_id for a in AgentDefinitionService.active_agents()}
-    except Exception:  # noqa: BLE001
-        return set()
+    根据 track_mode（fast/expert）和创作起点类型，
+    决定推荐的角色执行顺序。
+    """
 
+    # 快速通道：8个核心角色
+    FAST_TRACK_PLAN = {
+        "entry_type": "fast_track",
+        "label": "快速通道",
+        "description": "8个核心角色，适合初次创作和快速验证",
+        "recommended_agents": DRAMA_FAST_TRACK_AGENT_IDS,
+        "optional_agents": [],
+    }
 
-def _validate_plan_agent_ids(plan: Dict[str, Any]) -> Dict[str, Any]:
-    known = _known_agent_ids()
-    if not known:
-        return plan
-    for field in ("recommended_agents", "hidden_agents"):
-        for aid in plan.get(field) or []:
-            if str(aid) not in known:
-                logger.warning("[EntryPlan] 未知 agent_id=%s，请检查 creation-entry-plans 配置", aid)
-    return plan
+    # 专家通道：按部门分阶段
+    EXPERT_TRACK_PLAN = {
+        "entry_type": "expert_track",
+        "label": "专家通道",
+        "description": "36个专业角色，8个职能部门，适合商业精品项目",
+        "phases": [
+            {
+                "phase": "strategy",
+                "label": "战略选题",
+                "agents": ["drama.market-radar", "drama.formula-analyst",
+                           "drama.topic-planner", "drama.project-reviewer"],
+            },
+            {
+                "phase": "worldbuilding",
+                "label": "世界构建",
+                "agents": ["drama.world-architect", "drama.character-designer",
+                           "drama.dream-analyst"],
+            },
+            {
+                "phase": "plot_design",
+                "label": "剧情引擎",
+                "agents": ["drama.emotion-architect", "drama.plot-architect",
+                           "drama.hook-designer", "drama.conflict-engine",
+                           "drama.reversal-master", "drama.rhythm-designer"],
+            },
+            {
+                "phase": "writing",
+                "label": "创作执行",
+                "agents": ["drama.script-writer", "drama.dialogue-expert",
+                           "drama.scene-director"],
+            },
+            {
+                "phase": "review",
+                "label": "评审质控",
+                "agents": ["drama.script-reviewer", "drama.reader-reviewer",
+                           "drama.emotion-auditor", "drama.quality-reporter"],
+            },
+            {
+                "phase": "polish",
+                "label": "修改润色",
+                "agents": ["drama.script-editor", "drama.pacing-optimizer",
+                           "drama.formatter", "drama.word-governor"],
+            },
+            {
+                "phase": "production",
+                "label": "制作宣发",
+                "agents": ["drama.visual-producer", "drama.storyboard-director",
+                           "drama.marketing-officer"],
+            },
+            {
+                "phase": "compliance",
+                "label": "合规交付",
+                "agents": ["drama.compliance-guard", "drama.delivery-packer"],
+            },
+        ],
+    }
 
+    # IP改编专用入口
+    IP_ADAPT_PLAN = {
+        "entry_type": "ip_adapt",
+        "label": "IP改编",
+        "description": "小说/原著改编专用通道",
+        "recommended_agents": [
+            "drama.ip-adapter",
+            "drama.world-architect",
+            "drama.character-designer",
+            "drama.plot-architect",
+            "drama.script-writer",
+            "drama.script-reviewer",
+            "drama.quality-reporter",
+            "drama.compliance-guard",
+        ],
+    }
 
-def get_entry_plan(creation_entry: str) -> Dict[str, Any]:
-    key = (creation_entry or "from-scratch").strip() or "from-scratch"
-    try:
-        from apps.skill.models import SkillConfigEntry
+    @classmethod
+    def resolve(cls, track_mode: str = "fast", entry_type: str = "from-scratch") -> Dict[str, Any]:
+        """
+        根据创作模式和入口类型获取推荐的 Agent 执行计划。
 
-        row = SkillConfigEntry.objects.filter(config_key="creation-entry-plans").first()
-        if row and isinstance(row.content, dict) and key in row.content:
-            plan = row.content[key]
-            if isinstance(plan, dict):
-                resolved = {
-                    "recommended_agents": list(plan.get("recommended_agents") or []),
-                    "hidden_agents": list(plan.get("hidden_agents") or []),
-                    "default_params": dict(plan.get("default_params") or {}),
-                }
-                return _validate_plan_agent_ids(resolved)
-    except Exception:  # noqa: BLE001
-        pass
-    return _validate_plan_agent_ids(dict(DEFAULT_ENTRY_PLANS.get(key) or DEFAULT_ENTRY_PLANS["from-scratch"]))
+        参数：
+        - track_mode: "fast" | "expert"
+        - entry_type: "from-scratch" | "from-novel" | "from-outline"
+        """
+        if entry_type == "from-novel":
+            return cls.IP_ADAPT_PLAN
 
+        if track_mode == "expert":
+            return cls.EXPERT_TRACK_PLAN
 
-def filter_agents_for_workspace(
-    agent_items: List[Dict[str, Any]],
-    creation_entry: str,
-) -> List[Dict[str, Any]]:
-    plan = get_entry_plan(creation_entry)
-    hidden = {str(x) for x in plan.get("hidden_agents") or []}
-    recommended = [str(x) for x in plan.get("recommended_agents") or []]
-    rec_rank = {aid: idx for idx, aid in enumerate(recommended)}
-    visible = []
-    for item in agent_items:
-        aid = str(item.get("agent_id") or "")
-        if aid in hidden:
-            continue
-        enriched = dict(item)
-        enriched["entry_recommended"] = aid in rec_rank
-        enriched["entry_sort"] = rec_rank.get(aid, 1000 + int(enriched.get("workspace_order") or 0))
-        visible.append(enriched)
-    visible.sort(key=lambda row: (0 if row.get("entry_recommended") else 1, row.get("entry_sort", 9999)))
-    return visible
+        return cls.FAST_TRACK_PLAN

@@ -8,9 +8,9 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 def _catalog():
-    from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
+    from apps.skill.config.portal.creation_catalog import get_creation_catalog as _get_catalog
 
-    return get_ssot_catalog()
+    return _get_catalog()
 
 
 def _theme_display(theme: str) -> str:

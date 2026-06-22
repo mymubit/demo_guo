@@ -17,7 +17,7 @@
       "priority": 1,
       "conditions": {
         "theme": ["family-revenge", "overbearing-ceo"],
-        "node_type": ["script", "dialogue"],
+        "node_type": ["drama.script-writer", "drama.dialogue-expert"],
         "user_tier": ["vip", "svip"],
         "time_window": {"start": "22:00", "end": "08:00"}  // 夜间低价窗口
       },

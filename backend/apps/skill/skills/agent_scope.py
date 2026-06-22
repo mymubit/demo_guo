@@ -1,25 +1,36 @@
 # -*- coding: utf-8 -*-
-"""独立 Agent agent_id ↔ Tier3 fusion node scope 映射。"""
+"""drama.* Agent agent_id ↔ Tier3 scope 映射。
+
+旧的 brief/structure/outline/script 等 node scope 已移除。
+drama.* Agent 使用 dept code 作为 Tier3 scope。
+"""
 from __future__ import annotations
 
 from typing import Optional
 
-# Tier3 SkillRuleItem / SkillRuleConfig 仍使用 node-* scope_key
-AGENT_ID_TO_NODE_SCOPE: dict[str, str] = {
-    "brief": "node-1-brief",
-    "structure": "node-2-structure",
-    "character": "node-3-character",
-    "outline": "node-4-outline",
-    "script": "node-5-script",
-    "review": "node-6-review",
-    "polish": "node-7-polish",
+# drama.* agent_id → Tier3 scope_key（按部门代码）
+DRAMA_AGENT_SCOPE: dict[str, str] = {
+    # 战略选题部
+    "drama.topic-planner": "dept-strategy",
+    "drama.world-architect": "dept-worldbuilding",
+    "drama.character-designer": "dept-worldbuilding",
+    "drama.plot-architect": "dept-plot",
+    "drama.script-writer": "dept-writing",
+    "drama.dialogue-expert": "dept-writing",
+    "drama.script-reviewer": "dept-review",
+    "drama.quality-reporter": "dept-review",
+    "drama.script-editor": "dept-polish",
+    "drama.formatter": "dept-polish",
+    "drama.word-governor": "dept-polish",
+    "drama.compliance-guard": "dept-ops",
+    "drama.delivery-packer": "dept-ops",
 }
 
 
 def node_scope_for_agent(agent_id: str) -> str:
     """返回 Tier3 规则 scope_key；未知 Agent 返回空串（仅加载 global Tier）。"""
     key = (agent_id or "").strip()
-    return AGENT_ID_TO_NODE_SCOPE.get(key, "")
+    return DRAMA_AGENT_SCOPE.get(key, "")
 
 
 def genre_from_project_payload(project_payload: dict) -> str:

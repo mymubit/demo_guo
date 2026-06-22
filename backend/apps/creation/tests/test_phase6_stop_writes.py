@@ -43,7 +43,7 @@ class LegacyTableRemovedTests(TestCase):
 
         catalog = build_workspace_catalog()
         agent_ids = [a.get("agent_id") for a in (catalog.get("agents") or [])]
-        self.assertIn("adapt", agent_ids)
+        self.assertIn("drama.ip-adapter", agent_ids)
 
     def test_record_sub_skill_is_noop(self):
         from apps.creation.monitoring.execution_run_service import AgentExecutionRunService
@@ -51,7 +51,7 @@ class LegacyTableRemovedTests(TestCase):
 
         with AgentExecutionRunService.run_scope(
             self.project,
-            agent_id="brief",
+            agent_id="drama.topic-planner",
             node_index=1,
         ) as run:
             AgentExecutionRunService.record_sub_skill("test-skill", "executed")

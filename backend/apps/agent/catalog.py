@@ -1,129 +1,94 @@
 # -*- coding: utf-8 -*-
-"""Agent 中心 — C 端目录与主链展示增强。"""
+"""
+Agent Catalog — drama.* 新体系。
+
+提供 C 端创作工作台所需的 Agent 目录数据。
+按部门分组，包含快速通道标记。
+旧的 brief/structure/character/outline 等已移除。
+"""
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict, List, Optional
 
-from apps.agent.runtime import (
-    agent_for_workspace_index,
-    get_agent,
-    get_agent_registry,
-    polish_max_rounds,
-)
+logger = logging.getLogger(__name__)
 
 
-def enrich_portal_chain_item(item: Dict[str, Any]) -> Dict[str, Any]:
-    """主链节点附加 Agent SSOT 元数据（C 端展示）。"""
-    idx = item.get("index")
-    aid = agent_for_workspace_index(int(idx)) if idx is not None else None
-    if not aid:
-        return dict(item)
-    agent = get_agent(aid) or {}
-    out = dict(item)
-    out["agent_id"] = aid
-    out["agent_name"] = agent.get("name") or ""
-    out["agent_name_zh"] = agent.get("name_zh") or out.get("name") or ""
-    if agent.get("description"):
-        out["description"] = agent["description"]
-    out["sub_skill_count"] = len(agent.get("sub_skills") or [])
-    out["output_artifacts"] = agent.get("outputs") or []
-    return out
-
-
-def enrich_portal_main_chain(
-    chain: List[Dict[str, Any]],
-    pack_id: Optional[str] = None,
+def portal_agent_catalog(
+    track_mode: str = "fast",
+    genre_code: Optional[str] = None,
 ) -> List[Dict[str, Any]]:
-    from apps.workflow.services.flow_graph_service import FlowGraphPlanService
+    """
+    获取创作工作台的 Agent 目录。
 
-    enriched = [enrich_portal_chain_item(item) for item in chain]
-    return FlowGraphPlanService.enrich_portal_chain(enriched, pack_id=pack_id)
+    参数：
+    - track_mode: "fast"（快速通道，8个）| "expert"（专家通道，36个）
+    - genre_code: 可选，题材代码（future use）
+
+    返回按部门分组的 Agent 列表。
+    """
+    try:
+        from apps.agent.models import AgentDefinition
+        from apps.agent.runtime import DRAMA_FAST_TRACK_AGENT_IDS
+
+        agents = AgentDefinition.objects.filter(
+            category="drama_skills",
+            is_enabled=True,
+            lifecycle_status=AgentDefinition.LifecycleStatus.ACTIVE,
+        ).order_by("workspace_order")
+
+        if track_mode == "fast":
+            agents = agents.filter(agent_id__in=DRAMA_FAST_TRACK_AGENT_IDS)
+
+        result = []
+        for agent in agents:
+            ui = agent.ui_schema or {}
+            result.append({
+                "id": agent.agent_id,
+                "name": agent.name,
+                "name_zh": agent.name_zh,
+                "description": agent.description,
+                "workspace_order": agent.workspace_order,
+                "dept": ui.get("dept", ""),
+                "is_fast_track": ui.get("is_fast_track", False),
+                "can_run": True,
+                "input_contract": agent.input_contract,
+                "output_contract": agent.output_contract,
+            })
+        return result
+
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[portal_agent_catalog] failed: %s", exc)
+        return []
 
 
-def portal_agent_catalog() -> Dict[str, Any]:
-    """C 端 Agent 目录（registry v2 SSOT）。"""
-    reg = get_agent_registry()
-    meta = reg.get("_meta") or {}
-    workspace: List[Dict[str, Any]] = []
-    post_script: List[Dict[str, Any]] = []
-    auxiliary: List[Dict[str, Any]] = []
+def get_workspace_catalog(project_id: str, user_id: int) -> Dict[str, Any]:
+    """
+    获取指定项目的工作台 Agent 目录（含完成状态）。
+    用于 C 端工作台页面渲染。
+    """
+    try:
+        from apps.drama.models import DramaProject
+        project = DramaProject.objects.filter(
+            project_id=project_id, user_id=user_id
+        ).first()
 
-    for agent in reg.get("agents") or []:
-        if not isinstance(agent, dict):
-            continue
-        agent_id = agent.get("id")
-        workspace_index = agent.get("workspace_index")
-        if workspace_index:
-            try:
-                idx = int(workspace_index)
-            except (TypeError, ValueError):
-                idx = 0
-            if agent_for_workspace_index(idx) != agent_id:
-                continue
-        sub_skills = []
-        for skill in agent.get("sub_skills") or []:
-            if not isinstance(skill, dict):
-                continue
-            sub_skills.append(
-                {
-                    "id": skill.get("id"),
-                    "type": skill.get("type"),
-                    "description": skill.get("description"),
-                    "cli": skill.get("cli"),
-                }
-            )
-        entry = {
-            "id": agent_id,
-            "name": agent.get("name"),
-            "name_zh": agent.get("name_zh"),
-            "description": agent.get("description"),
-            "workspace_index": agent.get("workspace_index"),
-            "inputs": agent.get("inputs") or [],
-            "outputs": agent.get("outputs") or [],
-            "sub_skill_count": len(sub_skills),
-            "sub_skills": sub_skills,
-            "absorbs_legacy": [
-                x.get("id") if isinstance(x, dict) else x
-                for x in (agent.get("absorbs_legacy") or [])
-            ],
+        track_mode = project.track_mode if project else "fast"
+        completed = set(project.completed_roles or []) if project else set()
+
+        agents = portal_agent_catalog(track_mode=track_mode)
+
+        for agent in agents:
+            agent["is_completed"] = agent["id"] in completed
+
+        return {
+            "project_id": project_id,
+            "track_mode": track_mode,
+            "agents": agents,
+            "total": len(agents),
+            "completed_count": sum(1 for a in agents if a.get("is_completed")),
         }
-        if agent.get("workspace_index"):
-            workspace.append(entry)
-        elif agent.get("id") in {"review", "score", "polish", "marketing", "insight"}:
-            post_script.append(entry)
-        else:
-            auxiliary.append(entry)
 
-    seen = {item.get("id") for item in workspace + post_script + auxiliary}
-    for idx in range(1, 6):
-        aid = agent_for_workspace_index(idx)
-        if not aid or aid in seen:
-            continue
-        agent = get_agent(aid) or {}
-        workspace.append(
-            {
-                "id": aid,
-                "name": agent.get("name") or aid,
-                "name_zh": agent.get("name_zh") or agent.get("name") or aid,
-                "description": agent.get("description") or "",
-                "workspace_index": idx,
-                "inputs": agent.get("inputs") or [],
-                "outputs": agent.get("outputs") or [],
-                "sub_skill_count": len(agent.get("sub_skills") or []),
-                "sub_skills": agent.get("sub_skills") or [],
-                "absorbs_legacy": [],
-            }
-        )
-        seen.add(aid)
-
-    workspace.sort(key=lambda x: int(x.get("workspace_index") or 0))
-    return {
-        "version": meta.get("version") or "2.0.0",
-        "orchestrator": reg.get("orchestrator") or {},
-        "workspaceAgents": workspace,
-        "postScriptAgents": post_script,
-        "auxiliaryAgents": auxiliary,
-        "explicitPostAgents": ["review", "score", "polish", "marketing", "insight"],
-        "polish_max_rounds": polish_max_rounds(),
-        "decisions": reg.get("decisions") or {},
-    }
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[get_workspace_catalog] project=%s failed: %s", project_id, exc)
+        return {"project_id": project_id, "agents": []}

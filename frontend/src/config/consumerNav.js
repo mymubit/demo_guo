@@ -6,7 +6,7 @@
 /** 顶栏导航（不含个人中心 — 在用户菜单中） */
 export const CONSUMER_TOP_NAV = [
   { path: '/', label: '首页' },
-  { path: '/creation', label: '开始创作' },
+  { path: '/drama', label: '开始创作' },
   { path: '/evaluate', label: '剧本评估' },
   { path: '/pull-sheet', label: '拉片分析' },
   { path: '/works', label: '我的作品' },

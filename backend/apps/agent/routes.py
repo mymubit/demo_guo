@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 
-from apps.agent.bootstrap.agent_llm_routes import ROUTE_SEED
 
 logger = logging.getLogger(__name__)
 class AgentLlmRouteService:
@@ -44,47 +43,30 @@ class AgentLlmRouteService:
 
     @staticmethod
     def resolve_node_max_tokens(node_id: str) -> Optional[int]:
-        from apps.agent.binding import agent_id_for_fusion_node
-
-        agent_id = agent_id_for_fusion_node(node_id)
-        if agent_id:
-            tokens = AgentLlmRouteService.resolve_max_tokens(agent_id)
-            if tokens:
-                return tokens
+        """drama.* 体系直接通过 agent_id 查 max_tokens，不经过节点索引。"""
+        if node_id and node_id.startswith("drama."):
+            return AgentLlmRouteService.resolve_max_tokens(node_id)
         return None
 
     @staticmethod
     def resolve_provider_id_for_node(fusion_node_id: str) -> Optional[str]:
-        from apps.agent.binding import agent_id_for_fusion_node
-
-        agent_id = agent_id_for_fusion_node(fusion_node_id)
-        if agent_id:
-            provider_id = AgentLlmRouteService.resolve_provider_id(agent_id)
-            if provider_id:
-                return provider_id
-        from apps.workflow.step_admin import PipelineStepAdminService
-
-        return PipelineStepAdminService._legacy_resolve_provider_id(fusion_node_id)
+        """
+        旧的 fusion_node_id → provider_id 映射已废弃。
+        直接通过 drama.* agent_id 查 AgentLlmRouteConfig。
+        """
+        # 如果传入的是 drama.* agent_id，直接解析
+        if fusion_node_id and fusion_node_id.startswith("drama."):
+            return AgentLlmRouteService.resolve_provider_id(fusion_node_id)
+        # 旧节点系统不再支持
+        logger.debug("[AgentLlmRouteService] resolve_provider_id_for_node: 旧节点 %s 不再支持", fusion_node_id)
+        return None
 
     @classmethod
     def seed_defaults(cls) -> int:
         from apps.agent.models import AgentLlmRouteConfig
 
-        created = 0
-        for item in ROUTE_SEED:
-            _, was_created = AgentLlmRouteConfig.objects.get_or_create(
-                route_key=item["route_key"],
-                defaults={
-                    "display_name": item.get("display_name") or item["route_key"],
-                    "max_tokens": item.get("max_tokens"),
-                    "routing_rules": item.get("routing_rules") or {},
-                    "sort_order": int(item.get("sort_order") or 0),
-                    "is_active": True,
-                },
-            )
-            if was_created:
-                created += 1
-        return created
+        # drama.* 路由由 seed_drama_skills 管理，此函数已不再使用 ROUTE_SEED
+        return 0
 
     @staticmethod
     def list_admin_items() -> List[Dict[str, Any]]:
