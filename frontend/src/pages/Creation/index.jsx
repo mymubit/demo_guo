@@ -14,7 +14,34 @@ import {
   Users as UsersIcon,
   LayoutList,
 } from 'lucide-react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
+
+// ── Drama Skills 新版提示横幅 ────────────────────────────────────────────────
+function DramaSkillsBanner() {
+  const [dismissed, setDismissed] = useState(false)
+  if (dismissed) return null
+  return (
+    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2.5 flex items-center justify-between text-sm">
+      <span>
+        🎬 <strong>新版</strong>：Drama Skills 工作室已上线！36个专业角色 · 双轨创作模式 · 更强大
+      </span>
+      <div className="flex items-center gap-3 shrink-0 ml-4">
+        <Link
+          to="/drama"
+          className="px-3 py-1 bg-white text-indigo-700 text-xs font-medium rounded-full hover:bg-indigo-50 transition-colors"
+        >
+          前往新版 →
+        </Link>
+        <button
+          onClick={() => setDismissed(true)}
+          className="text-white/70 hover:text-white text-xs"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  )
+}
 import { toast } from 'sonner'
 import { creation, membership as membershipApi, useConfig } from '@/services/api'
 import CreationStageIndicator from '@/components/creation/CreationStageIndicator'
@@ -269,6 +296,7 @@ export default function Creation() {
   if (stage === 1 || stage === 2) {
     return (
       <div className="relative min-h-screen bg-navy-950">
+        <DramaSkillsBanner />
         <CreationFormShell
           main={
             <>

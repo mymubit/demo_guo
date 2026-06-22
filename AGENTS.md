@@ -7,6 +7,15 @@
 - 前端主目录：`frontend/`，页面、组件、服务封装在 `frontend/src/`。
 - 修改代码前先阅读相关调用链，保持最小修改范围，优先复用已有服务、组件和工具函数。
 
+### Drama Skills 系统（新核心功能）
+
+- 短剧创作技能库：`drama-skills/`（根目录）— 36个专业角色，8个职能部门
+- Drama Web App：`backend/apps/drama/` + `frontend/src/pages/Drama/`
+- 技能安装说明：`drama-skills/README.md`
+- 网站技术方案：`docs/DRAMA-SKILLS-WEBSITE-PLAN.md`
+- 路由：`/drama`（创作中心）、`/drama/workspace/:id`（工作台）、`/drama/scripts/:id`（剧本展示）
+- Admin：`/admin/drama-models`（模型配置 + Token统计）
+
 ## 全局原则
 
 - 默认使用中文沟通；代码标识、库名、协议名保留英文。
