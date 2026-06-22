@@ -84,6 +84,38 @@
 
 ## 外部内容摄入记录
 
-> 此区块自动追加，记录每次外部内容摄入摘要
+---
 
-（等待首次摄入）
+### 摄入 #001 · 2026-06-22 · GitHub仓库 × 2
+
+**来源1**：https://github.com/Shanyin-ai/shanyin-screenwriting-master（459 stars · MIT）
+**来源2**：https://github.com/Shanyin-ai/shanyin-director-master（251 stars · MIT）
+**作者**：@山音（AIGC艺术家/独立导演/编剧）
+
+**提取内容摘要**：
+
+| # | 知识类型 | 内容 | 写入位置 |
+|---|---------|------|---------|
+| 1 | 新方法论 | 横截面理论（电影是现实生活的横截面） | shanyin-screenwriting-methodology.md |
+| 2 | 新框架 | Ghost/Lie/Flaw人物三角（补充现有欲望-恐惧-缺陷） | shanyin-screenwriting-methodology.md |
+| 3 | 技能升级 | 双轨节奏系统（情节节奏×情感节奏） | shanyin-screenwriting-methodology.md |
+| 4 | 技能升级 | McKee价值转变检验 | shanyin-screenwriting-methodology.md |
+| 5 | 新工具 | 记忆检查点系统（防多集剧本前后矛盾） | shanyin-screenwriting-methodology.md |
+| 6 | 新框架 | 选题五路径（主题/人物/空间/关系/标签碰撞） | shanyin-screenwriting-methodology.md |
+| 7 | 灵感归档 | 概念组合五种方法 | inspirations/structures.md S004/S005 |
+| 8 | 灵感归档 | 双轨节奏错位手法 | inspirations/structures.md S006 |
+| 9 | 新知识 | 九列标准分镜表（551个真实镜头统计） | shanyin-director-methodology.md |
+| 10 | 新框架 | 叙事目的双层分析（结构层+导演执行层） | shanyin-director-methodology.md |
+| 11 | 新工具 | 动作-反应10种镜头变体 | shanyin-director-methodology.md |
+
+**冲突标记**：
+- 分镜格式：山音使用九列格式（含叙事目的列），我们现有格式为6列。两套格式功能不同，无矛盾，建议升级我们的分镜格式加入"叙事目的"列。
+- 场景头格式：山音使用`【场景X：地点/时间】`，我们使用`集号-镜号 时间 内外 地点`。两套面向不同平台，保持并存。
+
+**待应用**（轨道一：技能规则升级提案）：
+- drama-storyboard-director：升级为九列格式，加入叙事目的列
+- drama-rhythm-designer：新增双轨节奏标注
+- drama-script-reviewer：新增McKee价值转变检验项
+- drama-script-writer：加入记忆检查点触发机制
+
+（等待PR审批后应用）
