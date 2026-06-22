@@ -15,10 +15,10 @@
   --sf-brand-600: #4f46e5;
   --sf-accent-400: #f4b719;
 
-  /* 深色层级 */
-  --sf-bg: #030d24;
-  --sf-surface: #051437;
-  --sf-surface-raised: #0f172a;
+  /* 浅色层级（C 端 dashboard） */
+  --sf-bg: #f9fafb;
+  --sf-surface: #ffffff;
+  --sf-surface-raised: #f3f4f6;
 
   /* 语义色 */
   --sf-success: #22c55e;
@@ -27,14 +27,14 @@
   --sf-info: #06b6d4;
 
   /* 文本色 */
-  --sf-text: #f1f5f9;
-  --sf-text-muted: #94a3b8;
-  --sf-text-dim: #64748b;
+  --sf-text: #111827;
+  --sf-text-muted: #6b7280;
+  --sf-text-dim: #9ca3af;
 
   /* 边框/交互 */
-  --sf-border: rgba(255, 255, 255, 0.08);
-  --sf-border-strong: rgba(255, 255, 255, 0.16);
-  --sf-focus-ring: rgba(244, 183, 25, 0.26);
+  --sf-border: #e5e7eb;
+  --sf-border-strong: #d1d5db;
+  --sf-focus-ring: rgba(99, 102, 241, 0.25);
 
   /* 字体 */
   --sf-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
@@ -48,7 +48,7 @@ html {
 
 body {
   font-family: var(--sf-font-sans);
-  background: linear-gradient(180deg, #030d24 0%, #051437 50%, #030d24 100%);
+  background: var(--sf-bg);
   min-height: 100vh;
   color: var(--sf-text);
   -webkit-font-smoothing: antialiased;
@@ -60,6 +60,17 @@ input,
 textarea,
 select {
   font-family: inherit;
+  color: var(--sf-text);
+}
+
+select {
+  background-color: #fff;
+  color-scheme: light;
+}
+
+select option {
+  color: #111827;
+  background-color: #fff;
 }
 
 ::selection {
@@ -275,14 +286,14 @@ select {
     border-radius: 0.75rem;
     font-weight: 600;
     transition: all 0.2s ease;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    background-color: rgba(30, 41, 59, 0.7);
-    color: #f1f5f9;
+    border: 1px solid var(--sf-border);
+    background-color: #fff;
+    color: #374151;
   }
 
   .btn-ghost:hover:not(:disabled) {
-    border-color: rgba(255, 255, 255, 0.2);
-    background-color: rgba(51, 65, 85, 0.7);
+    border-color: var(--sf-border-strong);
+    background-color: #f9fafb;
   }
 
   .btn-gold:disabled,
@@ -296,7 +307,7 @@ select {
   .btn-primary:focus-visible,
   .btn-ghost:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px #030d24, 0 0 0 4px rgba(244, 183, 25, 0.3);
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--sf-focus-ring);
   }
 
   /* 首页区块标题 — 与 SectionHeader centered 对齐 */
@@ -306,7 +317,7 @@ select {
     font-weight: 700;
     line-height: 1.2;
     letter-spacing: -0.02em;
-    color: #fff;
+    color: #111827;
   }
 
   @media (min-width: 768px) {
@@ -324,13 +335,36 @@ select {
     text-align: center;
     font-size: 1.125rem;
     line-height: 1.6;
-    color: #b3c5e1;
+    color: #6b7280;
+  }
+
+  /* C 端浅色卡片 */
+  .sf-surface-card {
+    border-radius: 0.75rem;
+    border: 1px solid var(--sf-border);
+    background-color: var(--sf-surface);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .sf-feature-card {
+    border-radius: 1rem;
+    border: 1px solid var(--sf-border);
+    background-color: var(--sf-surface);
+    padding: 2rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  }
+
+  .sf-feature-card:hover {
+    border-color: #c7d2fe;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
   }
 
   /* 可交互元素焦点环 — 与 --sf-focus-ring 变量对齐 */
   .sf-focus-ring:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px #030d24, 0 0 0 4px var(--sf-focus-ring);
+    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--sf-focus-ring);
   }
 
   /* 作品创作历程 HTML 渲染 */
@@ -402,8 +436,8 @@ select {
     width: 100%;
     border-radius: 10px;
     border: 1px solid var(--sf-border);
-    background-color: rgba(15, 23, 42, 0.5);
-    color: #e2e8f0;
+    background-color: #fff;
+    color: #111827;
     padding: 10px 14px;
     font-size: 14px;
     line-height: 1.5;
@@ -412,17 +446,17 @@ select {
   }
 
   .sf-control::placeholder {
-    color: #64748b;
+    color: #9ca3af;
   }
 
   .sf-control:hover:not(:disabled) {
-    border-color: rgba(255, 255, 255, 0.16);
+    border-color: var(--sf-border-strong);
   }
 
   .sf-control:focus {
-    border-color: rgba(244, 183, 25, 0.45);
-    box-shadow: 0 0 0 3px rgba(244, 183, 25, 0.15);
-    background-color: rgba(15, 23, 42, 0.7);
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    background-color: #fff;
   }
 
   .sf-control:disabled {
@@ -507,47 +541,47 @@ select {
     display: block;
     font-size: 13px;
     font-weight: 500;
-    color: #cbd5e1;
+    color: #374151;
     margin-bottom: 8px;
   }
 
   .sf-help-text {
     display: block;
     font-size: 12px;
-    color: #64748b;
+    color: #6b7280;
     margin-top: 8px;
     line-height: 1.5;
   }
 
-  /* Sonner 全局提示 — 深色主题与站点视觉对齐 */
+  /* Sonner 全局提示 — 浅色主题 */
   .sf-toast {
-    background: rgba(15, 23, 42, 0.96) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background: #fff !important;
+    border: 1px solid var(--sf-border) !important;
     color: var(--sf-text) !important;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   }
 
   .sf-toast-title {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #f8fafc !important;
+    color: #111827 !important;
     line-height: 1.45;
   }
 
   .sf-toast-description {
     font-size: 0.75rem;
-    color: #94a3b8 !important;
+    color: #6b7280 !important;
     line-height: 1.5;
   }
 
   .sf-toast-close {
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    background: rgba(15, 23, 42, 0.95) !important;
-    color: #94a3b8 !important;
+    border: 1px solid var(--sf-border) !important;
+    background: #f9fafb !important;
+    color: #6b7280 !important;
   }
 
   .sf-toast-close:hover {
-    color: #f8fafc !important;
+    color: #111827 !important;
   }
 
   .sf-toast-success {

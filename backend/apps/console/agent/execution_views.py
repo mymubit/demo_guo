@@ -77,14 +77,40 @@ def _list_quality_defects(project: Project) -> list:
 
 
 class AgentCatalogAdminView(AdminAPIView):
-    """GET /api/admin/agent/catalog/ — registry v2 SSOT。"""
+    """GET /api/admin/agent/catalog/ — drama.* 角色目录（Admin 轨迹/展示 SSOT）。"""
 
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         from apps.agent.catalog import portal_agent_catalog
+        from apps.drama.services import DramaRoleService
 
-        return api_ok(portal_agent_catalog())
+        expert_agents = portal_agent_catalog(track_mode="expert")
+        fast_agents = portal_agent_catalog(track_mode="fast")
+        departments = DramaRoleService.get_all_roles_grouped()
+
+        workspace_agents = [
+            {
+                "id": agent["id"],
+                "name": agent.get("name"),
+                "name_zh": agent.get("name_zh"),
+                "workspace_index": agent.get("workspace_order"),
+                "dept": agent.get("dept"),
+                "is_fast_track": agent.get("is_fast_track"),
+                "description": agent.get("description"),
+            }
+            for agent in expert_agents
+        ]
+
+        return api_ok(
+            {
+                "catalog_version": "drama_skills_v1",
+                "agents": expert_agents,
+                "workspaceAgents": workspace_agents,
+                "fastTrackAgents": fast_agents,
+                "departments": departments,
+            }
+        )
 
 
 class AgentExecutionRunDetailView(AdminAPIView):
@@ -123,6 +149,15 @@ class AgentProjectTraceView(AdminAPIView):
             if agent_key not in latest_by_agent:
                 latest_by_agent[agent_key] = run
         status, status_text = resolve_admin_status(project)
+        drama_trace = None
+        try:
+            from apps.drama.progress_service import DramaProjectProgressService
+
+            drama = DramaProjectProgressService.find_drama_project(project.id)
+            if drama:
+                drama_trace = DramaProjectProgressService.build_trace_payload(drama)
+        except Exception:  # noqa: BLE001
+            drama_trace = None
         return api_ok(
             {
                 "project_id": str(project.id),
@@ -151,5 +186,6 @@ class AgentProjectTraceView(AdminAPIView):
                 "artifact_keys": list_artifact_keys(project),
                 "artifacts": _list_project_artifacts(project),
                 "quality_defects": _list_quality_defects(project),
+                "drama_trace": drama_trace,
             }
         )

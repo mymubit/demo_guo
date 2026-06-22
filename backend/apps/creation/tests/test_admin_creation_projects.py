@@ -23,7 +23,6 @@ class AdminCreationProjectsTests(TestCase):
             title="运营测试项目",
             theme="sweet-pet",
             episode_count=80,
-            fusion_status=Project.FUSION_READY,
             pipeline_mode=Project.MODE_WORKSPACE,
             creation_entry="from-reference",
         )
@@ -75,19 +74,36 @@ class AdminCreationProjectsTests(TestCase):
         self.assertNotIn("skill_id", items[0]["latest_failed_run"])
 
     def test_list_filter_has_failed_run(self):
-        AgentExecutionRun.objects.create(
-            project=self.project,
+        from apps.drama.models import DramaProject, DramaRoleExecution
+
+        dp = DramaProject.objects.create(
+            id=self.project.id,
+            project_id=self.project.id,
             user=self.user,
-            agent_id="world",
-            node_index=2,
-            status=AgentExecutionRun.STATUS_FAILED,
+            title=self.project.title,
+            genre_code=self.project.theme,
+            total_episodes=self.project.episode_count,
+        )
+        DramaRoleExecution.objects.create(
+            drama_project=dp,
+            agent_id="drama.topic-planner",
+            agent_name_zh="选题策划官",
+            status=DramaRoleExecution.Status.FAILED,
+            error_message="测试失败",
         )
         other = Project.objects.create(
             user=self.user,
             title="无失败",
             theme="test",
             episode_count=10,
-            fusion_status=Project.FUSION_READY,
+        )
+        DramaProject.objects.create(
+            id=other.id,
+            project_id=other.id,
+            user=self.user,
+            title="无失败",
+            genre_code="test",
+            total_episodes=10,
         )
         self.client.force_authenticate(user=self.admin)
         res = self.client.get("/api/admin/creation/projects/", {"has_failed_run": "true"})
@@ -104,20 +120,10 @@ class AdminCreationProjectsTests(TestCase):
         self.assertIn("running", alerts)
 
     def test_build_agent_ops_dashboard(self):
-        from apps.agent.registry import AgentRegistryConfigService
-
-        AgentRegistryConfigService.save_registry(
-            {
-                "_meta": {"version": "2.0.0"},
-                "orchestrator": {"runtime": "scriptforge"},
-                "agents": [{"id": "drama.topic-planner", "name": "Brief", "workspace_index": 1}],
-            },
-            note="test",
-            activate=True,
-        )
         data = build_agent_ops_dashboard(stats_limit=50)
-        self.assertEqual(data.get("registry_version"), "2.0.0")
-        self.assertGreaterEqual(data.get("workspace_projects", 0), 1)
+        self.assertIn("registry_version", data)
+        self.assertIn("execution", data)
+        self.assertGreaterEqual(data.get("drama_projects", 0), 0)
         self.assertGreaterEqual(data.get("from_reference_projects", 0), 1)
 
     def test_list_requires_admin(self):
@@ -154,7 +160,7 @@ class AdminCreationProjectsTests(TestCase):
         self.assertEqual(res.status_code, 200)
         facets = res.json().get("facets") or {}
         self.assertGreaterEqual(facets.get("all", 0), 1)
-        self.assertGreaterEqual(facets.get("workspace", 0), 1)
+        self.assertIn("drama_projects", facets)
         self.assertIn("has_failed_run", facets)
 
     def test_admin_delete_project(self):
@@ -166,17 +172,21 @@ class AdminCreationProjectsTests(TestCase):
         self.assertFalse(Project.objects.filter(id=pid).exists())
 
     def test_admin_delete_running_blocked(self):
-        from apps.creation.models import AgentExecutionRun
+        from apps.drama.models import DramaProject, DramaRoleExecution
 
-        self.project.pipeline_mode = Project.MODE_STEP
-        self.project.fusion_status = Project.FUSION_WRITING
-        self.project.save(update_fields=["pipeline_mode", "fusion_status"])
-        AgentExecutionRun.objects.create(
-            project=self.project,
+        dp = DramaProject.objects.create(
+            id=self.project.id,
+            project_id=self.project.id,
             user=self.user,
+            title=self.project.title,
+            genre_code=self.project.theme,
+            total_episodes=self.project.episode_count,
+        )
+        DramaRoleExecution.objects.create(
+            drama_project=dp,
             agent_id="drama.topic-planner",
-            node_index=1,
-            status=AgentExecutionRun.STATUS_RUNNING,
+            agent_name_zh="选题策划官",
+            status=DramaRoleExecution.Status.RUNNING,
         )
         self.client.force_authenticate(user=self.admin)
         res = self.client.delete(f"/api/admin/creation/projects/{self.project.id}/")

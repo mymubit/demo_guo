@@ -100,6 +100,11 @@ def dashboard_slo_cards() -> dict:
     # 开放告警数（待处理）
     open_alerts = AlertEvent.objects.filter(status=AlertEvent.Status.OPEN).count()
 
+    from apps.drama.progress_service import DramaProjectProgressService
+
+    running_projects = len(set(DramaProjectProgressService.in_progress_project_ids()))
+    failed_projects = len(set(DramaProjectProgressService.blocked_project_ids()))
+
     data = {
         "as_of": now.isoformat(),
         "slo_cards": [
@@ -113,7 +118,7 @@ def dashboard_slo_cards() -> dict:
             },
             {
                 "key": "zombie_workflow",
-                "label": "僵尸工作流实例",
+                "label": "僵尸 Agent 运行",
                 "value": zombie_count,
                 "window": "实时",
                 "level": "P0",
@@ -151,14 +156,8 @@ def dashboard_slo_cards() -> dict:
         # 简版 dashboard 摘要（供首页快速预览）
         "snapshot": {
             "today_projects": Project.objects.filter(created_at__gte=today_start).count(),
-            "running_projects": Project.objects.filter(
-                fusion_status__in=(
-                    Project.FUSION_WRITING,
-                    Project.FUSION_PLANNING,
-                    Project.FUSION_SCORING,
-                )
-            ).count(),
-            "failed_projects": Project.objects.filter(fusion_status=Project.FUSION_BLOCKED).count(),
+            "running_projects": running_projects,
+            "failed_projects": failed_projects,
         },
     }
     cache.set(cache_key, data, CACHE_TTL)
@@ -304,7 +303,10 @@ def config_hit_dashboard(limit: int = 30) -> dict:
 # 节点耗时分析（来自 monitoring + workflow）
 # ============================================================
 def node_duration_dashboard(days: int = 7) -> dict:
-    """节点耗时分布（来自 AgentExecutionRun）。"""
+    """Agent 执行耗时分布（来自 AgentExecutionRun）。"""
+    from django.db.models import DurationField, ExpressionWrapper, F, FloatField
+    from django.db.models.functions import Extract
+
     from apps.creation.models import AgentExecutionRun
 
     cache_key = f"{CACHE_KEY_PREFIX}node_dur:{days}:{int(timezone.now().timestamp() // CACHE_TTL)}"
@@ -315,18 +317,34 @@ def node_duration_dashboard(days: int = 7) -> dict:
     now = timezone.now()
     threshold_dt = now - timedelta(days=days)
 
+    base_qs = AgentExecutionRun.objects.filter(
+        started_at__gte=threshold_dt,
+        finished_at__isnull=False,
+    ).annotate(
+        duration=ExpressionWrapper(
+            F("finished_at") - F("started_at"),
+            output_field=DurationField(),
+        ),
+        duration_seconds=Extract("duration", "epoch", output_field=FloatField()),
+    )
+
     by_node = list(
-        AgentExecutionRun.objects.filter(
-            started_at__gte=threshold_dt,
-            finished_at__isnull=False,
-            node_index__isnull=False,
-        )
+        base_qs.filter(node_index__isnull=False)
         .values("node_index", "agent_id")
         .annotate(
-            avg_seconds=Avg("finished_at"),
+            avg_seconds=Avg("duration_seconds"),
             sample_count=Count("id"),
         )
         .order_by("node_index")
+    )
+
+    by_agent = list(
+        base_qs.values("agent_id")
+        .annotate(
+            avg_seconds=Avg("duration_seconds"),
+            sample_count=Count("id"),
+        )
+        .order_by("-sample_count")[:20]
     )
 
     failed_by_node = list(
@@ -343,6 +361,7 @@ def node_duration_dashboard(days: int = 7) -> dict:
     data = {
         "window_days": days,
         "by_node": by_node,
+        "by_agent": by_agent,
         "failed_by_node": failed_by_node,
     }
     cache.set(cache_key, data, CACHE_TTL)
@@ -382,13 +401,18 @@ def sample_projects_for_feedback(*, days: int = 7, limit: int = 20) -> list[dict
     now = timezone.now()
     threshold_dt = now - timedelta(days=days)
 
+    from apps.drama.progress_service import DramaProjectProgressService
+
+    deliverable_ids = set(DramaProjectProgressService.deliverable_project_ids())
+    blocked_ids = set(DramaProjectProgressService.blocked_project_ids())
+
     qs = Project.objects.filter(
         created_at__gte=threshold_dt,
         is_quality_sampled=False,
     ).filter(
         Q(abandoned_at__isnull=False)
-        | Q(fusion_status=Project.FUSION_BLOCKED)
-        | (Q(final_export_count=0) & Q(fusion_status=Project.FUSION_READY))
+        | Q(id__in=blocked_ids)
+        | (Q(final_export_count=0) & Q(id__in=deliverable_ids))
     ).select_related("user").order_by("-created_at")[:limit]
 
     return [

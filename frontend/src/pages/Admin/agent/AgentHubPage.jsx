@@ -7,10 +7,12 @@ import { useAdminPanelMessage } from '@/hooks/useAdminPanelMessage'
 import IndependentAgentPanel from './IndependentAgentPanel'
 import AgentLlmRoutePanel from './AgentLlmRoutePanel'
 import AgentRunsPanel from './AgentRunsPanel'
+import AdminAgentCatalogPanel from './AdminAgentCatalogPanel'
 
-/** Agent 定义页内子 Tab：运行记录由侧栏独立入口，此处仅保留定义与路由 */
+/** Agent 定义页内子 Tab */
 const AGENT_DEFINITION_TABS = [
   { key: 'definitions', label: 'Prompt 定义', icon: Bot },
+  { key: 'roles', label: '角色目录', icon: Bot },
   { key: 'routes', label: 'LLM 路由', icon: Route },
 ]
 
@@ -19,7 +21,7 @@ export default function AgentHubPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const tab = searchParams.get('tab') || 'definitions'
   const legacyTabMap = {
-    catalog: 'definitions',
+    catalog: 'roles',
     form: 'definitions',
     review: 'definitions',
     rules: 'skills-rules',
@@ -64,6 +66,9 @@ export default function AgentHubPage() {
       {isRunsPage ? <AgentRunsPanel /> : null}
       {!isRunsPage && definitionTab.key === 'definitions' ? (
         <IndependentAgentPanel onMessage={showMessage} />
+      ) : null}
+      {!isRunsPage && definitionTab.key === 'roles' ? (
+        <AdminAgentCatalogPanel />
       ) : null}
       {!isRunsPage && definitionTab.key === 'routes' ? (
         <AgentLlmRoutePanel onMessage={showMessage} />

@@ -32,21 +32,10 @@ class AgentRegistryConfigView(APIView):
         return api_ok(payload)
 
     def put(self, request):
-        data = request.data or {}
-        registry = data.get("registry")
-        if registry is None:
-            return api_fail("缺少 registry 字段")
-        try:
-            row = AgentRegistryConfigService.save_registry(
-                registry,
-                note=str(data.get("note") or "后台保存")[:255],
-                activate=data.get("activate", True) is not False,
-            )
-        except ValueError as exc:
-            return api_fail(str(exc))
-        payload = AgentRegistryConfigService.admin_payload()
-        payload["saved_id"] = str(row.id)
-        return api_ok(payload, message="技能注册表已保存并生效")
+        return api_fail(
+            "registry v2 已下线，请使用 /api/admin/agent/definitions/ 管理 drama.* 角色",
+            code=410,
+        )
 
 
 class IndependentAgentListView(APIView):
@@ -63,6 +52,8 @@ class IndependentAgentListView(APIView):
         agent_id = str(data.get("agent_id") or "").strip()
         if not agent_id:
             return api_fail("缺少 agent_id")
+        if not agent_id.startswith("drama."):
+            return api_fail("仅支持 drama.* 角色 Agent")
         row, _ = AgentDefinition.objects.update_or_create(
             agent_id=agent_id,
             defaults={
@@ -369,7 +360,9 @@ class IndependentAgentRunsListView(APIView):
             limit = 20
         limit = max(1, min(limit, 100))
 
-        qs = AgentExecutionRun.objects.select_related("project").order_by("-started_at")
+        qs = AgentExecutionRun.objects.select_related("project").filter(
+            agent_id__startswith="drama.",
+        ).order_by("-started_at")
         if agent_id:
             qs = qs.filter(agent_id=agent_id)
         runs = list(qs[:limit])

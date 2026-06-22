@@ -1,0 +1,1351 @@
+{
+  "e2e-drama-expert": {
+    "adaptation_plan": {
+      "schema_version": "adaptation-plan.v1",
+      "top_keys": [
+        "rhythm_control",
+        "episode_breakdown",
+        "project_basic_info"
+      ],
+      "shape": {
+        "rhythm_control": {
+          "short_shot_ratio": "70%",
+          "bitter_sugar_ratio": "3:7",
+          "per_episode_hook_count": 3
+        },
+        "episode_breakdown": [
+          {
+            "episode_no": "int",
+            "cliffhanger": "陆沉衍偶然发现苏晚手上戴着和自己当年救过的小恩人一模一样的旧银镯，神色骤变",
+            "hook_opening": "豪门退婚现场，女主苏晚被前未婚夫当众羞辱扔出订婚戒指，全圈子直播嘲讽，苏晚冷笑接下退婚书当场撕毁",
+            "core_conflict": "苏晚带着隐藏的顶级设计总监身份入职星耀集团，第一天就因为项目方案和冷面总裁陆沉衍产生分歧，两人针锋相对互相看不顺眼"
+          },
+          "…共3项"
+        ],
+        "project_basic_info": {
+          "genre": "overbearing-ceo",
+          "platform": "douyin",
+          "core_theme": "现代都市甜宠逆袭：女主被豪门退婚，携隐藏身份重返商界，与冷面霸总从对立到联手，3集内完成身份反转与情感落地",
+          "total_episodes": 3
+        }
+      }
+    },
+    "character_bible": {
+      "schema_version": "character-bible.v1",
+      "top_keys": [
+        "characters",
+        "relationship_network"
+      ],
+      "shape": {
+        "characters": [
+          {
+            "lie": "只要对外永远保持低姿态的普通女孩人设，就不会再遭遇情感与事业的双重背叛，亲密关系只会成为自己商业布局的拖累",
+            "flaw": "极度不信任他人的善意，习惯用层层伪装包裹真实情绪，哪怕面对心动对象也始终保留所有底牌，习惯性将所有问题独自扛下",
+            "name": "苏晚",
+            "need": "放下过去因伪装身份产生的自我封闭，坦然接受平等的亲密关系，不再将爱情等价为需要隐藏身份的利益交换",
+            "want": "在订婚宴上完成对嫌贫爱富的前豪门家族的极致打脸，彻底夺回被对方觊觎的核心项目控制权",
+            "ghost": "大学时初入创投圈试水，因公开真实身份被对手联合当时的恋人背叛，赔光所有启动资金还险些连累家人，从此立下终身隐藏公开身份的铁则",
+            "timbre_tag": "清冷低磁御姐音，日常伪装身份时刻意放柔声线带点怯生生的软感，切换创投大佬身份时声线瞬间冷透脆利，语速翻倍气场全开",
+            "character_id": "C001",
+            "character_arc": "从刻意隐藏身份、拒绝所有亲密联结的独行资本大佬，逐渐卸下防备，敢于在公开场合同步亮出自己的商业成就与恋爱关系，实现事业与爱情的双向圆满",
+            "role_position": "双强女主/隐藏顶级创投大佬"
+          },
+          "…共4项"
+        ],
+        "relationship_network": [
+          {
+            "source_id": "C001",
+            "target_id": "C002",
+            "interaction_rule": "初期是针锋相对的商业竞标对手，手握同个核心项目的对等筹码，在数次交手后认出彼此是多年来隔空惺惺相惜的神秘资本伙伴，快速转为强强联手的恋人+事业合伙人",
+            "relationship_type": "核心博弈→双向奔赴"
+          },
+          "…共5项"
+        ]
+      }
+    },
+    "compliance_report": {
+      "schema_version": "compliance-report.v1",
+      "top_keys": [
+        "remark",
+        "p0_check_result",
+        "p0_risk_details",
+        "p1_check_result",
+        "p1_risk_details",
+        "p2_check_result",
+        "nine_dimension_risk_check",
+        "overall_compliance_decision",
+        "p2_optimization_suggestions"
+      ],
+      "shape": {
+        "remark": "该现代都市甜宠逆袭短剧内容合规，所有冲突情节均有正向正义收束，无违规风险点，符合抖音平台短剧内容规范要求。",
+        "p0_check_result": "pass",
+        "p0_risk_details": [],
+        "p1_check_result": "pass",
+        "p1_risk_details": [],
+        "p2_check_result": "suggest_no_modification",
+        "nine_dimension_risk_check": {
+          "horror": "pass",
+          "minors": "pass",
+          "values": "pass",
+          "copyright": "pass",
+          "sensitive": "pass",
+          "characters": "pass",
+          "false_info": "pass",
+          "crime_display": "pass",
+          "platform_red_line": "pass"
+        },
+        "overall_compliance_decision": "approved",
+        "p2_optimization_suggestions": []
+      }
+    },
+    "conflict_plan": {
+      "schema_version": "conflict-plan.v1",
+      "top_keys": [
+        "core_conflict_system",
+        "key_confrontation_scenes"
+      ],
+      "shape": {
+        "core_conflict_system": {
+          "total_conflict_count": 3,
+          "overall_conflict_gradient": "从公开圈层羞辱→势均力敌商业博弈→全网舆论绞杀三层递进，每轮冲突的对抗主体、矛盾属性完全异质，无同质化重复冲突，适配抖音竖屏短剧3集强节奏爽点排布要求"
+        },
+        "key_confrontation_scenes": [
+          {
+            "scene_id": "int",
+            "scene_name": "订婚宴公开退婚对峙",
+            "conflict_type": "外部冲突+人际冲突",
+            "dimensional_elements": {
+              "__dict__": 5
+            },
+            "conflict_upgrade_path": "烈度升级+范围升级：从两人私下婚约矛盾，当场扩散为全沪城名流圈层公开处刑，羞辱强度从言语嘲讽升级为物理层面扔退婚书打脸，围观人群的哄笑将矛盾烈度推至顶点"
+          },
+          "…共3项"
+        ]
+      }
+    },
+    "delivery_pack": {
+      "schema_version": "delivery-pack.v1",
+      "top_keys": [
+        "quality_score",
+        "delivery_file_list",
+        "evaluation_summary",
+        "quality_check_result",
+        "compliance_check_result",
+        "word_count_check_result"
+      ],
+      "shape": {
+        "quality_score": 90,
+        "delivery_file_list": [
+          "02_项目设定三文件/世界设定文档.md",
+          "…共8项"
+        ],
+        "evaluation_summary": "该3集都市甜宠逆袭短剧整体完成度极高，爽点密集节奏适配抖音平台特性，双强人设鲜明，三处付费卡点设计精准，所有内容合规无风险，用户留存与付费转化预期表现优异，已完全达到上线标准。",
+        "quality_check_result": true,
+        "compliance_check_result": "pass",
+        "word_count_check_result": {
+          "status": "all_pass",
+          "episode_1": 1027,
+          "episode_2": 812,
+          "episode_3": 846
+        }
+      }
+    },
+    "dream_check": {
+      "schema_version": "dream-check.v1",
+      "top_keys": [
+        "suggestion",
+        "check_result",
+        "detail_feedback",
+        "dimension_scores"
+      ],
+      "shape": {
+        "suggestion": "可直接进入后续分镜创作阶段",
+        "check_result": "pass",
+        "detail_feedback": {
+          "absolute_safety": "女主全程坚守商业底线无道德瑕疵，反派均为急功近利的逐利者无极端暴力设定，完全符合熔断级安全要求，无安全风险点",
+          "enhanced_realism": "圈层分层、创投圈身份匿名、豪门联姻攀附资源等设定贴合当下沪城商业圈层真实生态，矛盾点均来自现实中常见的嫌贫爱富、职场圈层歧视等接地气场景",
+          "efficient_satisfaction": "3集内覆盖退婚羞辱、身份亮明反杀、双强联手官宣3个核心爽点，爽感密度达1.0/集，远超≥0.8的要求，满足抖音短剧快节奏爽点需求"
+        },
+        "dimension_scores": {
+          "absolute_safety": 9,
+          "enhanced_realism": 8,
+          "efficient_satisfaction": 9
+        }
+      }
+    },
+    "emotion_audit": {
+      "schema_version": "emotion-audit.v1",
+      "top_keys": [
+        "repair_suggestions",
+        "continuous_plateau_zone",
+        "over_deviation_episodes",
+        "episode_emotion_extraction"
+      ],
+      "shape": {
+        "repair_suggestions": [
+          {
+            "insert_event": "补充顾景明带着白若曦厚着脸皮凑到二人身边，假意递名片攀关系试图蹭合作资源，还故意嘴贱调侃苏晚“刚勾搭上陆总就忘了之前跪舔我的样子”，陆沉渊直接侧身把苏晚挡在身后…",
+            "target_episode": "int",
+            "insert_position": "2-5 原空缺桥段位置"
+          },
+          "…共2项"
+        ],
+        "continuous_plateau_zone": [],
+        "over_deviation_episodes": [
+          {
+            "episodeNumber": "int",
+            "deviation_nodes": [
+              "__list[1]__"
+            ]
+          },
+          "…共2项"
+        ],
+        "episode_emotion_extraction": [
+          {
+            "emotion_tp": [
+              "__list[1]__"
+            ],
+            "episodeNumber": "int",
+            "emotion_peak_ev": {
+              "__dict__": 2
+            },
+            "emotion_valley_et": {
+              "__dict__": 2
+            },
+            "actual_emotion_nodes": [
+              "__list[8]__"
+            ]
+          },
+          "…共3项"
+        ]
+      }
+    },
+    "emotion_blueprint": {
+      "schema_version": "emotion-blueprint.v1",
+      "top_keys": [
+        "qdn_emotion_model",
+        "episode_emotion_targets",
+        "emotion_externalization_dictionary"
+      ],
+      "shape": {
+        "qdn_emotion_model": {
+          "depth": {
+            "full_score": "int",
+            "description": "锚定目标用户「被轻视后逆袭、渴望势均力敌爱情」的核心情绪痛点，所有情绪落点贴合18-35岁都市女性的现实情绪投射，避免悬浮化的无逻辑情绪爆发，让用户产生代入感。",
+            "global_target": "float",
+            "dimension_name": "情绪共情穿透度"
+          },
+          "quality_sense": {
+            "full_score": "int",
+            "description": "严格规避杂糅低质情绪，每段情绪输出精准贴合爽点/甜点核心诉求，无冗余拖沓的无效情绪铺垫，适配抖音用户碎片化刷剧的强刺激需求，爽感不注水、甜感不工业。",
+            "global_target": "float",
+            "dimension_name": "情绪质感纯度"
+          },
+          "demand_satisfaction": {
+            "full_score": "int",
+            "description": "100%覆盖用户对「打脸爽感、双强甜宠、节奏拉满」的核心内容需求，每30秒触发一次情绪反馈点，完全适配抖音算法高完播率的流量逻辑，情绪峰值匹配用户付费触发阈值。",
+            "global_target": "float",
+            "dimension_name": "核心需求匹配度"
+          }
+        },
+        "episode_emotion_targets": [
+          {
+            "episode_id": "int",
+            "episode_name": "退婚现场：隐藏大佬亮身份",
+            "node_target_values": [
+              "__list[8]__"
+            ],
+            "total_emotion_nodes": "int"
+          },
+          "…共3项"
+        ],
+        "emotion_externalization_dictionary": {
+          "eye_affinity": {
+            "emotion_name": "暧昧心动",
+            "audio_performance": "背景音全部消去只剩两人逐渐加速的心跳声，BGM换成软绵的钢琴单音，搭配极轻的衣物摩擦声",
+            "visual_performance": "慢镜头放大两人指尖触碰的瞬间，对焦模糊掉背景只剩对方的瞳孔倒影，耳边的发丝轻微晃动，暖光打在侧脸上勾勒出轮廓金边"
+          },
+          "shame_aggression": {
+            "emotion_name": "当众羞辱",
+            "audio_performance": "背景音瞬间消音只剩顾景明拔高的刻薄声线，搭配尖锐的玻璃碎裂音效，BGM用低沉压抑的弦乐单音循环",
+            "visual_performance": "慢镜头怼脸拍苏晚攥紧的指节泛白，顾景明把退婚书狠狠甩在苏晚脸上，白若曦抬手撩头发故意露出和顾景明的情侣钻戒，周围宾客的窃笑表情用快切闪回"
+          },
+          "face_slap_catharsis": {
+            "emotion_name": "打脸爽感",
+            "audio_performance": "音效用连续三声重鼓点砸下，BGM瞬间从压抑转成高燃电子乐，搭配弹幕式的「爽爆」拟声特效音",
+            "visual_performance": "镜头快速切过顾景明、白若曦从得意到错愕再到惨白的变脸全过程，苏晚抬眼的特写眼神冷光闪过，周围宾客集体倒吸凉气的表情同步定格"
+          },
+          "dual_power_satisfaction": {
+            "emotion_name": "强强联手爽甜",
+            "audio_performance": "恢弘的交响乐响起，搭配全场掌声的环绕音效，最后落版在两人对视的低笑声音轨上",
+            "visual_performance": "两人并肩站在峰会台上同步抬手按下项目启动键，镜头拉远扫过台下座无虚席的资本大佬，最后聚焦在两人交握的手上，戒指同框特写"
+          }
+        }
+      }
+    },
+    "emotion_curve": {
+      "schema_version": "emotion-curve.v1",
+      "top_keys": [
+        "full_series_emotion_curve",
+        "emotion_platform_zone_check",
+        "episode_level_emotion_markers"
+      ],
+      "shape": {
+        "full_series_emotion_curve": {
+          "total_episodes": 3,
+          "hook_density_check": {
+            "note": "前10%内容覆盖第1集开篇至中段，包含退婚冲突、身份伏笔、暗线铺垫等8个强钩子，满足钩子密度≥7的规则要求",
+            "compliance_status": "pass",
+            "first_10_percent_hook_count": "int"
+          },
+          "crisis_period_et_check": {
+            "note": "所有危机期情绪低谷归一化后数值均≤2，符合规则要求",
+            "all_et_normalized": [
+              "__list[3]__"
+            ],
+            "compliance_status": "pass"
+          },
+          "final_episode_peak_check": {
+            "note": "末集情绪峰值拉满至10，达成全剧最高爽感落点",
+            "compliance_status": "pass",
+            "final_episode_ev_value": "int"
+          }
+        },
+        "emotion_platform_zone_check": {
+          "note": "全剧仅3集，每集情绪高低起伏差异显著，不存在连续3集情绪值波动小于1的疲软平台区，无需额外修复调整",
+          "has_continuous_3_plus_episode_platform": false
+        },
+        "episode_level_emotion_markers": [
+          {
+            "episode_id": "int",
+            "emotion_peak": {
+              "__dict__": 2
+            },
+            "emotion_trough": {
+              "__dict__": 2
+            },
+            "dual_track_rhythm": {
+              "__dict__": 2
+            },
+            "plot_turning_point": {
+              "__dict__": 1
+            }
+          },
+          "…共3项"
+        ]
+      }
+    },
+    "episode_scripts": {
+      "schema_version": "episode-scripts.v1",
+      "top_keys": [
+        "episodes"
+      ],
+      "shape": {
+        "episodes": [
+          {
+            "episodeNumber": "int",
+            "scriptContent": [
+              "__list[30]__"
+            ],
+            "memoryCheckpoint": {
+              "__dict__": 3
+            },
+            "sceneDurationConfig": [
+              "__list[7]__"
+            ],
+            "totalTargetDuration": "240s"
+          },
+          "…共3项"
+        ]
+      }
+    },
+    "evolution_proposal": {
+      "schema_version": "evolution-proposal.v1",
+      "top_keys": [
+        "轨道一_技能进化提案",
+        "轨道二_灵感归档条目"
+      ],
+      "shape": {
+        "轨道一_技能进化提案": {
+          "SKILL更新提案": [
+            {
+              "__dict__": 3
+            },
+            "…共2项"
+          ],
+          "低分维度识别结果": [],
+          "共性缺陷模式判定": "本次质量报告所有维度得分均≥87，无低于70分的低分维度，仅存在1处格式小瑕疵和1个冗余无效场景的非核心问题"
+        },
+        "轨道二_灵感归档条目": [
+          {
+            "core_logic": "开篇30秒直接甩出退婚甩红手印羞辱女主的强冲突，女主不做多余辩解，一通电话直接冻结对方亿级融资，把传统甜宠剧前3集才解锁的隐藏身份直接在第一集前1分钟落地，爽感…",
+            "hook_mechanism": "退婚当场即时反杀钩子",
+            "applicable_scene": "抖音都市逆袭类短剧开篇钩子设计",
+            "source_script_position": "第1集1-1至1-4场景"
+          },
+          "…共4项"
+        ]
+      }
+    },
+    "formula_analysis": {
+      "schema_version": "formula-analysis.v1",
+      "top_keys": [
+        "revenue_forecast",
+        "dream_index_evaluation",
+        "paid_card_design_framework",
+        "explosive_index_calculation",
+        "traffic_password_extraction"
+      ],
+      "shape": {
+        "revenue_forecast": {
+          "estimated_total_play": "1200万+",
+          "estimated_revenue_input_ratio": "1:4.2"
+        },
+        "dream_index_evaluation": {
+          "evaluation_note": "无虐点全程正向反馈，爽点密集落地，都市商战+甜宠设定贴合目标用户日常认知，三项指标均处于同赛道头部区间",
+          "sense_of_reality": 87,
+          "sense_of_security": 91,
+          "sense_of_satisfaction": 96
+        },
+        "paid_card_design_framework": [
+          {
+            "hook_content": "女主甩出全球顶级投资协议，镜头切向被退婚的前未婚夫瞳孔地震的特写，弹窗提示「解锁全3集抢先看，直接看霸总当场站队女主名场面」",
+            "card_position": "Episode 1 00:58"
+          },
+          "…共2项"
+        ],
+        "explosive_index_calculation": {
+          "explosive_level": "S级爆款潜力",
+          "dimension_scores": {
+            "market_demand": "int",
+            "rhythm_matching": "int",
+            "competitive_barrier": "int",
+            "platform_policy_fit": "int"
+          },
+          "final_explosive_score": 93.7
+        },
+        "traffic_password_extraction": [
+          "10s退婚扇协议强冲突钩子，精准命中抖音30s内完播加权规则",
+          "…共5项"
+        ]
+      }
+    },
+    "hook_plan": {
+      "schema_version": "hook-plan.v1",
+      "top_keys": [
+        "s_class_hook",
+        "a_class_hooks",
+        "episode_hook_systems"
+      ],
+      "shape": {
+        "s_class_hook": {
+          "hook_content": "苏晚隐藏三年的顶级匿名创投身份，以及她和陆沉渊隔空博弈互相扶持了三年的过往，全剧所有人都被蒙在鼓里，直到最终联手时刻才完全揭晓，直接决定全剧所有爽点的落地逻辑。",
+          "hook_calculation": "信息差（全圈层无人知晓双主角双重隐秘关系）×情感投入（观众全程代入苏晚的逆袭爽感+双向奔赴期待）×时间紧迫性（3集内必须完成身份揭晓闭环）= 拉满全剧核心粘性，覆盖所有用户追更动机。"
+        },
+        "a_class_hooks": [
+          {
+            "hook_id": "A1",
+            "hook_content": "苏晚在订婚宴亮明身份后，所有人都好奇她到底为什么要隐藏顶级大佬身份，刻意伪装成普通女孩接近顾家，直到第2集两人翻出旧笔记才部分揭晓她当年是为了调查顾家侵吞她父亲…",
+            "hook_coverage": [
+              "__list[2]__"
+            ],
+            "hook_calculation": "信息差（观众仅知道她是大佬不知道她的复仇动机）×情感投入（观众好奇她过往的创伤经历）×时间紧迫性（第2集必须部分揭晓避免动机悬浮）= 覆盖前两集用户好奇心留存。"
+          },
+          "…共2项"
+        ],
+        "episode_hook_systems": [
+          {
+            "episode_id": "int",
+            "golden_30s": {
+              "__dict__": 3
+            },
+            "b_class_hook": {
+              "__dict__": 2
+            },
+            "c_class_hooks": [
+              "__list[2]__"
+            ]
+          },
+          "…共3项"
+        ]
+      }
+    },
+    "lapian_report": {
+      "schema_version": "lapian-report.v1",
+      "top_keys": [
+        "new_mode",
+        "emotion_curve",
+        "rhythm_control",
+        "camera_language",
+        "dialogue_design",
+        "reusable_template",
+        "character_analysis",
+        "structure_analysis"
+      ],
+      "shape": {
+        "new_mode": "3集超短体量下完成「退婚逆袭+商界博弈+宿命甜宠」三条线并行的创新模式，打破传统霸总短剧至少10集起的常规叙事节奏，适配抖音极速流量的短平快传播逻辑",
+        "emotion_curve": [
+          "第1集：压抑→爆发→悬念",
+          "…共3项"
+        ],
+        "rhythm_control": {
+          "no_drag_segment": "全片无冗余铺垫，每30秒至少出现一个冲突/反转/甜宠节点，适配抖音用户碎片化观看习惯",
+          "avg_hook_interval": "30s",
+          "emotion_beat_distribution": "第1集爽点占比70%，第2集冲突占比60%，第3集甜宠+爽点占比100%"
+        },
+        "camera_language": {
+          "contrast_shot": "前一秒女主被嘲讽的卑微全景，下一秒切女主亮出身份时的高位仰拍，强化反差爽感",
+          "opening_close_up": "开篇解约合同砸脸的第一视角特写，快速代入观众情绪",
+          "final_romance_shot": "结局两人牵手站在落地窗前俯瞰城市的慢镜头，完成情感仪式感落地"
+        },
+        "dialogue_design": [
+          "打脸短句：\"你退我婚，我收你公司\"，短平快适配短视频传播",
+          "…共3项"
+        ],
+        "reusable_template": [
+          "3集极速反转模板：第1集完成羞辱→身份反转，第2集完成对立→联手，第3集完成复仇→情感落地，零冗余剧情",
+          "…共4项"
+        ],
+        "character_analysis": {
+          "antagonist": "势利眼前豪门家族，工具人属性明确，负责推动冲突，承担被打脸的爽点功能",
+          "male_protagonist": "冷面禁欲商界天花板霸总，没有狗血虐女桥段，双商在线，只对女主特殊，自带多年寻找白月光的深情设定",
+          "female_protagonist": "表面是任人拿捏的普通小家女，实际是手握千亿资本的隐形大佬，人设爽点密集，反差感极强，行事果决不拖泥带水"
+        },
+        "structure_analysis": [
+          {
+            "episode_id": "int",
+            "segment_breakdown": [
+              "__list[3]__"
+            ]
+          },
+          "…共3项"
+        ]
+      }
+    },
+    "market_analysis": {
+      "schema_version": "market-analysis.v1",
+      "top_keys": [
+        "topic_suggestion",
+        "theme_heat_rating",
+        "platform_traffic_preference",
+        "competitive_product_analysis",
+        "爆款特征_matching_degree"
+      ],
+      "shape": {
+        "topic_suggestion": {
+          "optimization_direction": [
+            "Open the first 10s to directly play the scene of the heroine being slapped with …",
+            "…共4项"
+          ],
+          "estimated_market_performance": "The estimated total playback volume is more than 12 million, and the revenue-input ratio is expected to reach 1:4.2"
+        },
+        "theme_heat_rating": {
+          "trend_tag": "Rising Hot",
+          "core_hot_labels": [
+            "退婚爽点前置",
+            "…共4项"
+          ],
+          "market_saturation": "Medium Low",
+          "user_demand_growth_rate": 37.2,
+          "current_popularity_score": 92
+        },
+        "platform_traffic_preference": {
+          "target_platform": "Douyin",
+          "audience_portrait": "72% female users aged 18-35, core consumption group is urban white-collar and college students who prefer fast-paced no-…",
+          "traffic_weight_tags": [
+            "3集完整体验流量池倾斜",
+            "…共4项"
+          ],
+          "explicit_platform_benefit": "Douyin Short Drama 3-episode Micro Drama Exclusive Incentive Plan, single drama with qualified playback rate can get 120…"
+        },
+        "competitive_product_analysis": [
+          {
+            "defect": "The identity reversal is delayed to episode 6, the rhythm is too slow, and the 3…",
+            "core_score": "int",
+            "episode_count": "int",
+            "competitor_name": "The Return of the Abandoned Daughter"
+          },
+          "…共2项"
+        ],
+        "爆款特征_matching_degree": 94
+      }
+    },
+    "marketing_kit": {
+      "schema_version": "marketing-kit.v1",
+      "top_keys": [
+        "titles",
+        "synopses",
+        "payment_copy",
+        "streaming_titles",
+        "platform_diff_strategy"
+      ],
+      "shape": {
+        "titles": [
+          "退婚后我成了大佬",
+          "…共5项"
+        ],
+        "synopses": {
+          "mini_50": "女主订婚宴遭豪门退婚，当场亮明顶级创投大佬身份，和死对头冷面霸总强强联手爽甜逆袭。",
+          "long_200": "隐藏身份蛰伏三年的苏晚，本想借着订婚宴查清父亲当年被顾家侵吞资产的旧案，却不料被豪门未婚夫顾景明当众甩下退婚书嘲讽穷困，连早已移情的白若曦也跟着落井下石。苏晚不再伪装，一通电话直接冻结顾家所有待审亿级融资，当场亮明自己就是圈内传闻中操作过百…",
+          "standard_100": "普通女生苏晚在订婚宴上被未婚夫当众羞辱退婚，随即公开隐藏多年的顶级匿名创投大佬身份，当场冻结对方家族亿级融资，和隔空博弈三年的冷面霸总陆沉渊从商业对垒快速转为双向奔赴，3集完成打脸爽感与高甜恋爱双重落地。"
+        },
+        "payment_copy": {
+          "a_level_card": "前渣男已经冲到直播台上撕证据造谣女主身份了！剩下两集解锁就能看双强同步发黑料直接把渣男送进去，还有霸总当场官宣「我是她男朋友」的名场面，现在付费直接解锁全部后续不用等更新！",
+          "s_level_card": "现在解锁全3集，直接看苏晚亮明百亿大佬身份当场虐渣，还有你找了好久的双强双向奔赴全糖剧情，无广告无拖沓，爽点甜点卡到你爽，错过现在付费就要等三天才能看完全集！"
+        },
+        "streaming_titles": [
+          "【冲突爆发】订婚宴上穷女友被甩退婚书，在场几百号宾客举着手机等着看她跪地哭！",
+          "…共4项"
+        ],
+        "platform_diff_strategy": {
+          "douyin": "前3秒直接切「退婚书甩在女主身上」的冲突特写，每30秒弹出一个打脸爽点切片，剪碎「渣男下跪」「身份亮明」「双强对视」高光片段搭配快节奏BGM，挂载「3集爽完无注水」标签引流，评论区预埋「我要是女主我直接把退婚书塞渣男嘴里」等互动话术触发弹幕…",
+          "wechat": "公众号推文主打「你以为的退婚狗血，其实是两个大佬互相找了三年」的情感宿命感，发布完整番外内容补充两人早年匿名互相扶持的细节，依托朋友圈社交裂变主打「不用等更新，一口气看完全集」的无广告权益，触达偏好长内容的都市付费用户。",
+          "kuaishou": "开篇锚定「普通姑娘省吃俭用陪男友打拼，转头男友攀上富家女就把她踹了」的真实情感场景，主打普通人被欺负之后硬气反击的共情点，搭配女主逆袭后给家里打钱、给闺蜜送礼物的生活化片段，引导下沉用户产生「普通人也能靠自己硬气翻盘」的代入感。"
+        }
+      }
+    },
+    "post_assets": {
+      "schema_version": "post-assets.v1",
+      "top_keys": [
+        "duration_adjustment",
+        "dubbing_emotion_script",
+        "vertical_screen_subtitles"
+      ],
+      "shape": {
+        "duration_adjustment": {
+          "adjust_note": "严格遵循抖音爽剧节奏规范，总时长控制在3.5-4.5分钟区间，已完成冗余场景压缩△标记、核心冲突/反转/情感高点场景延伸适配，钩子占比符合15-30秒要求",
+          "adjust_details": [
+            "△ 第1集1-3场景压缩冗余重复嘲讽对话，保留核心冲突信息，避免情绪拖沓",
+            "…共4项"
+          ]
+        },
+        "dubbing_emotion_script": [
+          {
+            "episode_number": "int",
+            "emotion_timeline": [
+              "__list[7]__"
+            ]
+          },
+          "…共3项"
+        ],
+        "vertical_screen_subtitles": [
+          {
+            "subtitle_list": [
+              "__list[9]__"
+            ],
+            "episode_number": "int"
+          },
+          "…共3项"
+        ]
+      }
+    },
+    "project_brief": {
+      "schema_version": "project-brief.v1",
+      "top_keys": [
+        "core_idea",
+        "target_audience",
+        "genre_positioning",
+        "dream_index_forecast",
+        "three_unique_selling_points"
+      ],
+      "shape": {
+        "core_idea": "现代都市甜宠逆袭短剧集：女主遭豪门未婚夫当众退婚羞辱，随即亮出隐藏的顶级创投大佬身份重返商界，与原本针锋相对的冷面霸总从商业对垒快速转向强强联手，3集内完成女主身份终极反转与双向奔赴的甜宠情感落地。",
+        "target_audience": "抖音平台18-35岁女性核心用户，以一二线都市白领、高校女学生为主，偏好短平快爽感内容，对霸总甜宠、逆袭打脸类剧情有高付费意愿，日常刷剧时长集中在通勤、午休等碎片化时段。",
+        "genre_positioning": "抖音竖屏短平快霸总甜宠逆袭题材，精准贴合平台用户碎片化刷剧习惯，融合打脸爽点与高糖恋爱元素。",
+        "dream_index_forecast": "预估完播率突破65%，付费转化率达12%以上，抖音话题播放量破2亿，跻身平台同体量3集霸总短剧热度榜TOP10，用户弹幕互动量单集超10万条。",
+        "three_unique_selling_points": [
+          "节奏极致压缩：3集完成全链路剧情，第1集退婚打脸亮身份、第2集商战对垒生情愫、第3集强强联手官宣撒糖，无冗余注水内容，每30秒一个强钩子留住用户",
+          "…共3项"
+        ]
+      }
+    },
+    "project_review": {
+      "schema_version": "project-review.v1",
+      "top_keys": [
+        "total_score",
+        "review_notes",
+        "review_conclusion",
+        "compliance_risk_score",
+        "market_feasibility_score",
+        "creation_feasibility_score"
+      ],
+      "shape": {
+        "total_score": 93,
+        "review_notes": [
+          "目标受众定位精准，完全匹配抖音平台18-35岁女性核心用户内容偏好，短平快爽点设计适配碎片化观看场景，流量与商业化预期具备较高合理性",
+          "…共3项"
+        ],
+        "review_conclusion": "通过",
+        "compliance_risk_score": 28,
+        "market_feasibility_score": 27,
+        "creation_feasibility_score": 38
+      }
+    },
+    "psychology_guide": {
+      "schema_version": "psychology-guide.v1",
+      "top_keys": [
+        "immersion_design",
+        "cognitive_gap_design",
+        "expectation_management",
+        "emotion_resonance_trigger"
+      ],
+      "shape": {
+        "immersion_design": {
+          "obstacle_realism": "所有冲突障碍完全贴合现实都市语境：订婚宴当众羞辱、融资冻结、全网造谣黑公关、竞标压价博弈、财务造假实锤，都是现实中职场和商业场景里真实存在的冲突，没有脱离现实的离谱桥段",
+          "reaction_rationality": "苏晚被羞辱后没有当场歇斯底里撒泼，而是冷静亮明身份冻结融资；陆沉渊发现对手是自己找了三年的知己后没有强行霸道告白，而是先在商业层面同频对齐立场，所有角色行为完全符合各自的创伤背景和行事逻辑，没有OOC的突兀反应",
+          "universal_character_goal": "苏晚的核心目标是打脸嫌贫爱富的背叛者、夺回属于自己的话语权，陆沉渊的核心目标是打破利益至上的桎梏找到对等同行的伴侣，都是当代观众普遍向往的「靠实力打脸偏见、找到势均力敌的亲密关系」的共性诉求，无小众悬浮设定"
+        },
+        "cognitive_gap_design": [
+          {
+            "episode_id": "int",
+            "known_info": "观众初始默认苏晚是家境普通、依附顾家的准少奶奶，以为她会在退婚现场狼狈受辱",
+            "unknown_info": "苏晚是匿名顶级创投大佬，早就攥着顾家融资的生杀大权，陆沉渊找了三年的神秘对手就是她本人",
+            "information_difference_trigger": "退婚羞辱的情绪顶点同步放出加密电话冻结融资的反转信息，把观众的认知差直接转化为强爽感冲击"
+          },
+          "…共3项"
+        ],
+        "expectation_management": {
+          "type_expectation": {
+            "subversion_design": "全程无男主单向英雄救美桥段，苏晚的身份层级和商业能力完全和陆沉渊对等，所有打脸环节都是二人同频发力，彻底颠覆传统霸总剧的男强女弱固化范式",
+            "established_expectation": "观众对霸总短剧的固有预期是女主弱势被拯救、男主单向降维打脸反派"
+          },
+          "character_expectation": {
+            "subversion_design": "从竞标会不动声色帮苏晚解围，到全网黑料时主动同步放出实锤兜底，逐步解锁他多年来一直隔空关注苏晚的隐藏设定，把冷血霸总的刻板印象彻底扭转为专属偏爱",
+            "established_expectation": "观众初始预设陆沉渊是冷血无情、利益至上的资本机器，不会为任何私人情感让步"
+          },
+          "foreshadowing_expectation": {
+            "subversion_design": "苏晚亮明身份的瞬间直接冻结顾家所有融资，后续联合陆沉渊放出顾白两家财务造假实锤，让两人不仅没跨阶成功反而直接跌落原有圈层，铺垫预期完全落空放大爽感",
+            "established_expectation": "前半段铺垫顾景明退婚后靠白若曦的家世就能跨阶成功，观众默认他后续会拿到创投入场券"
+          }
+        },
+        "emotion_resonance_trigger": [
+          {
+            "trigger_design": "第1集订婚宴上所有宾客都默认苏晚是攀附豪门的普通女孩，全程没人在意她的真实能力和付出，精准戳中现实中普通人被外界标签化、能力被身份偏见掩盖的普遍情绪",
+            "resonance_point": "被忽视"
+          },
+          "…共3项"
+        ]
+      }
+    },
+    "quality_report": {
+      "schema_version": "quality-report.v1",
+      "top_keys": [
+        "scores",
+        "total_score",
+        "final_rating",
+        "suspend_status",
+        "core_evaluation"
+      ],
+      "shape": {
+        "scores": {
+          "hook_effect": 94,
+          "emotion_curve": 87,
+          "dream_indicator": 96,
+          "dialogue_quality": 91,
+          "character_shaping": 88,
+          "format_specification": 92,
+          "commercial_feasibility": 93,
+          "structural_completeness": 90
+        },
+        "total_score": 90,
+        "final_rating": "S",
+        "suspend_status": {
+          "suspend_reason": "",
+          "trigger_suspend": false
+        },
+        "core_evaluation": "该3集都市甜宠逆袭短剧整体完成度极高，爽点密集节奏适配抖音平台特性，双强人设鲜明，三处付费卡点设计精准，仅存在1处格式小瑕疵和1个可合并的冗余无效场景，补充指定缺失桥段后即可达到上线标准，用户留存与付费转化预期表现优异。"
+      }
+    },
+    "reader_review": {
+      "schema_version": "reader-review.v1",
+      "top_keys": [
+        "abandon_risk_points",
+        "emotion_performance",
+        "payment_conversion_forecast",
+        "first_episode_retention_forecast"
+      ],
+      "shape": {
+        "abandon_risk_points": [
+          "全剧仅3集体量过于精简，部分商战铺垫跳转偏快，容易让习惯了常规10集以上爽剧的用户觉得节奏跳脱，少了点循序渐进的打脸爽感",
+          "…共3项"
+        ],
+        "emotion_performance": {
+          "top_3_abandon_nodes": [
+            "第1集前30秒，要是刚开场的退婚羞辱桥段拍得太刻意尴尬，很容易让用户觉得是老套烂俗剧情直接划走",
+            "…共3项"
+          ],
+          "top_3_touching_scenes": [
+            "第1集女主把退婚纸揉碎扔进香槟杯，打电话喊冻结顾家所有融资的瞬间，爽感直接炸了，积压的被羞辱的情绪瞬间释放",
+            "…共3项"
+          ]
+        },
+        "payment_conversion_forecast": {
+          "grade_distribution": [
+            "S级卡点：第1集结尾定格在男女主对视交锋的画面，前一秒前未婚夫刚下跪求饶，后一秒两人放话互怼的钩子直接卡在最高潮处，90%的用户看到这里都想立刻解锁后续",
+            "…共3项"
+          ],
+          "estimated_payment_rate": 13.5,
+          "total_payment_card_points": 3
+        },
+        "first_episode_retention_forecast": {
+          "score": 92,
+          "empathy_performance": "开篇女主被当众甩退婚纸、被前未婚夫和白月光嘲讽穷酸的场景完全戳中普通女生曾经遇到过的下头前任、被势利眼围观的尴尬时刻，瞬间就有「这就是我当初受的气啊」的强烈代入感，不是傻白甜任人欺负的设定，她藏着底牌冷静反杀的样子既让我觉得解气，又忍不住想…"
+        }
+      }
+    },
+    "reversal_plan": {
+      "schema_version": "reversal-plan.v1",
+      "top_keys": [
+        "truth_reversals",
+        "identity_reversals",
+        "situation_reversals",
+        "motivation_reversals",
+        "relationship_reversals"
+      ],
+      "shape": {
+        "truth_reversals": [
+          {
+            "position": "第3集官宣后，全剧90%处",
+            "reversal_id": "TR-001",
+            "reversal_name": "苏晚伪装成普通女孩参加订婚宴→是主动来退婚的",
+            "reverse_design": {
+              "__dict__": 4
+            }
+          },
+          "…共1项"
+        ],
+        "identity_reversals": [
+          {
+            "position": "第1集高潮节点，全剧25%处",
+            "reversal_id": "IR-001",
+            "reversal_name": "退婚现场的普通准儿媳→匿名顶级创投大佬",
+            "reverse_design": {
+              "__dict__": 4
+            }
+          },
+          "…共1项"
+        ],
+        "situation_reversals": [
+          {
+            "position": "第1集开场10分钟节点",
+            "reversal_id": "SR-001",
+            "reversal_name": "苏晚当众被羞辱→全场宾客集体给她鞠躬道歉"
+          },
+          "…共8项"
+        ],
+        "motivation_reversals": [
+          {
+            "position": "第2集中段，全剧45%处",
+            "reversal_id": "MR-001",
+            "reversal_name": "陆沉渊抢科创项目→帮苏晚挡掉资本圈的围猎陷阱",
+            "reverse_design": {
+              "__dict__": 4
+            }
+          },
+          "…共3项"
+        ],
+        "relationship_reversals": [
+          {
+            "position": "第1集高潮，全剧30%处",
+            "reversal_id": "RR-001",
+            "reversal_name": "订婚双方→债主和欠债人",
+            "reverse_design": {
+              "__dict__": 4
+            }
+          },
+          "…共4项"
+        ]
+      }
+    },
+    "review_report": {
+      "schema_version": "review-report.v1",
+      "top_keys": [
+        "issues",
+        "passed",
+        "pacingPassed"
+      ],
+      "shape": {
+        "issues": [
+          {
+            "type": "格式错误",
+            "sceneId": "1-7",
+            "description": "苏晚的台词前多余放置了冒号，不符合「角色（情绪）：台词」的标准格式规范，错误写法为「苏晚：（把意向书往皮包里塞的动作顿了半秒...）」，正确格式应为将动作情绪描…"
+          },
+          "…共2项"
+        ],
+        "passed": false,
+        "pacingPassed": true
+      }
+    },
+    "series_outline": {
+      "schema_version": "series-outline.v1",
+      "top_keys": [
+        "episode_outlines",
+        "rhythm_control_verification",
+        "six_phase_narrative_structure"
+      ],
+      "shape": {
+        "episode_outlines": [
+          {
+            "end_hook": "陆沉渊盯着苏晚的眼睛笑：「没想到我找了三年的对手，今天主动站到了我面前」，苏晚挑眉回怼：「那陆总可得小心点，别输得太难看」，二人眼神交锋定格切黑。",
+            "episode_id": "int",
+            "episode_name": "退婚现场：隐藏大佬亮身份",
+            "emotion_markers": {
+              "__dict__": 5
+            },
+            "four_segment_structure": {
+              "__dict__": 4
+            }
+          },
+          "…共3项"
+        ],
+        "rhythm_control_verification": {
+          "a_level_reversal_check": "第1集完成A级核心反转：原本被当众羞辱的普通女孩苏晚，当场亮出顶级创投大佬身份，直接完成阶层碾压，符合每5集内有A级反转的要求，全剧仅3集就落地核心强反转。",
+          "emotion_platform_check": "全剧3集情绪曲线全程高低起伏，不存在连续3集情绪平台情况，每集的ET情绪低谷数值分别为7.8、6.3、7.4，全部满足ET≤2的倒数换算阈值要求，无情绪拖沓问题。",
+          "double_track_rhythm_note": "情节节奏每30秒一个强钩子，完全适配抖音竖屏碎片化刷剧逻辑，情感节奏同步跟随情节推进从羞辱到心动再到爽甜层层递进，用户代入感拉满，完播率指标符合平台预期。"
+        },
+        "six_phase_narrative_structure": {
+          "phase_1": {
+            "phase_name": "建立世界",
+            "core_content": "快速铺展2026年沪城资本圈规则：顶级创投人身份完全匿名，普通圈层成员挤破头想要攀附顶层资源，通过订婚宴场景交代苏晚伪装成普通女孩、顾家妄想靠联姻跨阶的基础设定…"
+          },
+          "phase_2": {
+            "phase_name": "冲突引入",
+            "core_content": "顾景明联合白若曦在公开订婚宴上撕毁婚约，当众羞辱苏晚出身普通配不上豪门，直接触发核心矛盾，将苏晚逼到退无可退的境地。"
+          },
+          "phase_3": {
+            "phase_name": "升级对抗",
+            "core_content": "苏晚亮明顶级创投大佬身份完成第一次打脸，随即在核心科创项目竞标会上和同样手握重权的陆沉渊展开正面对垒，双方势均力敌的博弈过程中逐渐认出彼此是隔空对线多年的旧识，…"
+          },
+          "phase_4": {
+            "phase_name": "危机爆发",
+            "core_content": "不甘心落败的顾景明和白若曦放出恶意黑料，全网造谣苏晚的创投身份造假，试图毁掉苏晚的所有行业信誉，把她打回底层，同时牵连陆沉渊的企业陷入舆论风波。"
+          },
+          "phase_5": {
+            "phase_name": "决战前夕",
+            "core_content": "苏晚和陆沉渊没有私下沟通就同步启动反击预案，两人行动轨迹完全同频，联手挖出顾、白两家多年财务造假的实锤，同时向对方袒露各自藏了多年的童年创伤，彻底卸下防备确认心…"
+          },
+          "phase_6": {
+            "phase_name": "最终对决",
+            "core_content": "苏晚和陆沉渊共同出席顶级创投峰会，公开联手官宣，当场放出所有实锤彻底把顾、白两家踢出核心赛道，二人同步亮明情侣+事业合伙人的双重身份，完成事业爱情双丰收的终极爽…"
+          }
+        }
+      }
+    },
+    "storyboard": {
+      "schema_version": "storyboard.v1",
+      "top_keys": [
+        "storyboard_list"
+      ],
+      "shape": {
+        "storyboard_list": [
+          {
+            "场景": "1-1 日 内 顾家订婚宴现场",
+            "声音": "纸张拍击面料的脆响、周围宾客细碎的哄笑铺垫声",
+            "备注": "开篇钩子视觉冲击，红印子停留时长严格卡3秒",
+            "景别": "特写",
+            "镜号": "int",
+            "叙事目的": "结构功能为交代/建立，导演意图为第一时间抛出退婚羞辱核心冲突，快速抓住抖音用户注意力，符合4s时长基准",
+            "摄影角度": "平视",
+            "时长(MM:SS-MM:SS)": "00:00-00:04",
+            "画面内容(△开头)": "△一张印着鲜红手印的退婚纸啪地狠狠甩在素色礼服裙面上，纸张边缘扫过苏晚的手背留下一道浅红印子，镜头在红印子上停留3秒，再缓缓上移扫过苏晚毫无波澜的脸"
+          },
+          "…共19项"
+        ]
+      }
+    },
+    "style_check": {
+      "schema_version": "style-check.v1",
+      "top_keys": [
+        "drama_type",
+        "final_verification",
+        "drift_repair_record",
+        "style_drift_detection_result"
+      ],
+      "shape": {
+        "drama_type": "overbearing-ceo 现代都市甜宠逆袭抖音爽剧",
+        "final_verification": "全剧集风格完全对齐第1集基准规范，无P1/P2类风格漂移问题，可直接进入后续生产环节",
+        "drift_repair_record": [],
+        "style_drift_detection_result": {
+          "emotional_tone_check": {
+            "detail": "全剧爽甜交织的逆袭情绪底色全程维持一致，从退婚羞辱的压抑铺垫到逐层反杀的爽感释放、双向奔赴的甜感落地，风格连贯无漂移",
+            "check_status": "pass"
+          },
+          "narrative_style_check": {
+            "detail": "描述细节密度、动作情绪外化方式、抖音爽剧快节奏卡点规则全程对齐第1集基准风格，核心冲突/反转/情感高峰场景延伸时长、冗余场景压缩逻辑完全符合3.5-4.5分钟单…",
+            "check_status": "pass"
+          },
+          "personality_language_check": {
+            "detail": "全3集人物台词均保留口语化爽感表达，无标志性口头禅消失、句式突变、情绪表达割裂或书面化AI腔问题，角色刻薄/冷冽/娇嗲的语言风格全程统一",
+            "check_status": "pass"
+          }
+        }
+      }
+    },
+    "visual_pack": {
+      "schema_version": "visual-pack.v1",
+      "top_keys": [
+        "video_prompts",
+        "single_frame_prompts",
+        "character_visual_anchors"
+      ],
+      "shape": {
+        "video_prompts": [
+          {
+            "prompt": "顾景明居高临下将带红手印的退婚纸狠狠甩向苏晚，纸张扫过苏晚手背留下红印，镜头从红印缓缓上移扫过苏晚毫无波澜的脸，周围宾客哄笑起哄，白若曦挽着顾景明的手晃着钻戒露…",
+            "scene_id": "1-1"
+          },
+          "…共6项"
+        ],
+        "single_frame_prompts": [
+          {
+            "prompt": "特写, 退婚纸狠狠甩在素色礼服裙面，纸张扫过苏晚手背留下浅红印子，苏晚面无波澜眼神冷冽, 宴会厅水晶顶光打在纸面红印上明暗对比强烈, 现代都市爽剧写实风格, 竖…",
+            "scene_id": "1-1"
+          },
+          "…共6项"
+        ],
+        "character_visual_anchors": [
+          {
+            "name": "苏晚",
+            "character_id": "C001",
+            "fixed_appearance": "女性，黑长直齐肩碎发，日常伪装状态穿素色无logo基础款通勤裙，切换大佬身份后着剪裁利落的哑光黑高定西装，标志性细节是左手腕内侧浅淡的旧星标纹身，随身常年携带一…"
+          },
+          "…共4项"
+        ]
+      }
+    },
+    "visual_prompts": {
+      "schema_version": "visual-prompts.v1",
+      "top_keys": [
+        "value"
+      ],
+      "shape": {
+        "value": [
+          {
+            "scenePrompts": [
+              "__list[12]__"
+            ],
+            "episodeNumber": "int"
+          },
+          "…共3项"
+        ]
+      }
+    },
+    "word_count_report": {
+      "schema_version": "word-count-report.v1",
+      "top_keys": [
+        "report_version",
+        "global_overview",
+        "episode_detail_list"
+      ],
+      "shape": {
+        "report_version": "word-count-report.v1",
+        "global_overview": {
+          "total_episodes": 3,
+          "total_cjk_chars": 5721,
+          "global_dialogue_ratio": 30.12,
+          "all_episodes_compliant": true,
+          "total_dialogue_cjk_chars": 1723
+        },
+        "episode_detail_list": [
+          {
+            "scene_count": "int",
+            "dialogue_ratio": "float",
+            "episode_number": "int",
+            "total_cjk_chars": "int",
+            "compliance_check": {
+              "__dict__": 3
+            },
+            "adjust_suggestion": "无需调整，当前内容情绪高点突出，台词占比达标，场景数量合规",
+            "dialogue_cjk_chars": "int"
+          },
+          "…共3项"
+        ]
+      }
+    },
+    "world_setting": {
+      "schema_version": "world-setting.v1",
+      "top_keys": [
+        "core_rules",
+        "core_spaces",
+        "special_rules",
+        "era_background",
+        "power_structure",
+        "taboo_constraints"
+      ],
+      "shape": {
+        "core_rules": [
+          "资本圈顶层身份完全匿名，仅通过内部加密通讯渠道对接合作，公开场合无人能认出顶级创投人的真实样貌。",
+          "…共2项"
+        ],
+        "core_spaces": [
+          {
+            "space_name": "豪门订婚宴现场",
+            "vertical_show_feature": "竖屏9:16画幅可完整框住主舞台C位女主、退婚男主及双方亲友群像，近距离怼脸拍摄能清晰捕捉羞辱瞬间的微表情冲突，背景滚动的宴会主题LED屏可快速交代事件背景，适…"
+          },
+          "…共3项"
+        ],
+        "special_rules": "被公开退婚羞辱的当事人，只要能当场亮出超越对方圈层层级的身份，所有在场人士必须第一时间倒向高身份方，此前的所有偏见评价自动失效。",
+        "era_background": "2026年国内一线沿海经济中心城市沪城，头部新经济企业扎堆聚集，创投圈与传统豪门圈层深度绑定，流量与资本共生，公众对圈层八卦、商业动态的关注度极高，各类高端名流宴会、商业发布会是圈层信息传递的核心场景。",
+        "power_structure": {
+          "top_tier": "掌握沪城核心资本流向的顶级创投决策层，人数不足10人，手握千亿级投资话语权，圈层身份对外高度保密。",
+          "third_tier": "中小创业公司创始人、普通都市白领，完全无法触及顶层资本圈的核心信息。",
+          "second_tier": "本土老牌豪门家族企业掌权人，依托传统产业积累财富，极度看重门当户对的圈层联姻规则，试图挤入核心资本圈。"
+        },
+        "taboo_constraints": [
+          "顶级创投人的隐藏身份禁止对外泄露，一旦提前暴露，整个投资布局将直接崩盘。",
+          "…共2项"
+        ]
+      }
+    }
+  },
+  "e2e-drama-fast": {
+    "character_bible": {
+      "schema_version": "character-bible.v1",
+      "top_keys": [
+        "main_characters",
+        "relationship_network",
+        "core_supporting_characters"
+      ],
+      "shape": {
+        "main_characters": [
+          {
+            "lie": "只有一直伪装成普通落魄女孩，才能避免再次遭遇针对自己核心专利的恶意伤害",
+            "flaw": "习惯性对所有人保持距离感，哪怕遇到欣赏的人也不敢主动表露心意，过度警惕所有靠近自己的商业合作邀约",
+            "name": "苏晚",
+            "ghost": "年少时亲眼目睹父母为了保护核心专利被迫隐姓埋名遭遇车祸意外离世，从此被家族长老要求必须隐藏身份生活",
+            "identity": "云境财团唯一继承人、核心AI算法专利持有人",
+            "deep_need": "摆脱家族多年的身份隐匿枷锁，找到一个不需要她刻意隐藏实力也能平等相待的灵魂伴侣",
+            "timbre_tag": "清冷偏低的御姐音，平时说话语速偏慢带疏离感，亮出身份时语调陡然锐利坚定，尾音带着掌控全局的笃定感",
+            "surface_want": "当众打脸退婚的顾家渣男，夺回属于自己的科创项目主导权，在澜城商界站稳脚跟",
+            "character_arc": "从刻意隐藏锋芒的复仇者，逐渐卸下伪装，坦然公开自己的顶级财团继承人身份，学会信任搭档并收获双向奔赴的爱情，完成自我身份的和解"
+          },
+          "…共2项"
+        ],
+        "relationship_network": [
+          {
+            "core_conflict": "顾明哲当众羞辱苏晚强行退婚，苏晚隐藏身份完成实力碾压，最终把顾家彻底踢出科创项目局",
+            "character_pair": [
+              "__list[2]__"
+            ],
+            "relationship_type": "前未婚夫妻/敌对关系"
+          },
+          "…共5项"
+        ],
+        "core_supporting_characters": [
+          {
+            "lie": "只要傍上更有钱的豪门未婚妻，就能靠女方的资源证明自己的能力，再也不会被人看不起",
+            "flaw": "极度势利眼，欺软怕硬，遇到实力比自己强的人立刻卑躬屈膝，毫无底线",
+            "name": "顾明哲",
+            "ghost": "从小到大一直被家族长辈拿来和其他豪门继承人对比，多次因为能力不足在商业宴会上被当众嘲讽",
+            "identity": "顾家地产继承人、苏晚的前未婚夫",
+            "deep_need": "向所有圈层证明自己不是靠家族上位的草包，摆脱一直活在父辈阴影下的自卑心态",
+            "timbre_tag": "偏高的轻浮公子音，羞辱苏晚时刻意拔高语调显得嚣张跋扈，得知苏晚真实身份后声音瞬间破音，满是不可置信的颤抖感",
+            "surface_want": "在退婚宴会上彻底羞辱苏晚，攀附上新的资本势力拿到星曜资本的投资，保住顾家地产的行业地位",
+            "character_arc": "从嚣张跋扈的退婚渣男，在苏晚公开身份后发现自己梦寐以求的投资对象居然是之前被他羞辱的前未婚妻，瞬间从云端跌落地狱，彻底失去所有商业资源被踢出澜城商圈"
+          },
+          "…共3项"
+        ]
+      }
+    },
+    "compliance_report": {
+      "schema_version": "compliance-report.v1",
+      "top_keys": [
+        "final_verdict",
+        "p0_risk_check",
+        "p1_risk_check",
+        "p2_risk_check",
+        "nine_dimension_risk_scan"
+      ],
+      "shape": {
+        "final_verdict": "通过，可正常上线",
+        "p0_risk_check": {
+          "level": "pass",
+          "details": "未检测到人口买卖、未成年犯罪、极端暴力类P0熔断内容"
+        },
+        "p1_risk_check": {
+          "level": "pass",
+          "details": "内容中涉及抄袭、恶意伤人、非法侵入、造谣诽谤等违规行为，均配套对应正义收束：侵权方顾家最终被全行业拉黑、窃取技术行为被依法固定证据追责，不存在无收束的违规内容，符合P1强制规则要求"
+        },
+        "p2_risk_check": {
+          "level": "optimize_suggestion",
+          "details": "建议优化第1-3段中掌掴情节的画面呈现尺度，避免过度渲染肢体冲突细节，适配抖音平台短剧内容审核规范"
+        },
+        "nine_dimension_risk_scan": {
+          "values": [
+            "无风险",
+            "…共1项"
+          ],
+          "details": "全内容正向传递知识产权保护、邪不压正的核心价值观，人物行为逻辑自洽，无未成年相关风险，未涉及侵权版权内容，无敏感、虚假、恐怖类违规元素，犯罪行为均得到对应惩戒，完全符合平台内容红线要求"
+        }
+      }
+    },
+    "episode_scripts": {
+      "schema_version": "episode-scripts.v1",
+      "top_keys": [
+        "episodes"
+      ],
+      "shape": {
+        "episodes": [
+          {
+            "scripts": [
+              "__list[9]__"
+            ],
+            "episodeNumber": "int",
+            "memoryCheckPoint": {
+              "__dict__": 3
+            }
+          },
+          "…共3项"
+        ]
+      }
+    },
+    "project_brief": {
+      "schema_version": "project-brief.v1",
+      "top_keys": [
+        "core_idea",
+        "target_audience",
+        "genre_positioning",
+        "dream_index_forecast",
+        "differentiated_selling_points"
+      ],
+      "shape": {
+        "core_idea": "现代都市甜宠逆袭：女主被豪门退婚，携隐藏身份重返商界，与冷面霸总从对立到联手，3集内完成身份反转与情感落地。",
+        "target_audience": "18-35岁抖音女性用户，核心群体为二三线城市年轻职场女性、高校在读女学生，偏好短平快爽感内容、甜宠情感向剧情，碎片时间刷剧需求强烈",
+        "genre_positioning": "抖音平台微浓缩霸总甜宠逆袭短剧，精准适配竖屏快节奏观看场景，融合打脸爽点与高糖情感线",
+        "dream_index_forecast": "抖音平台预估播放量破2000万，完播率≥65%，付费转化率达行业头部12%水平线，甜宠赛道3集体量短剧榜单TOP10",
+        "differentiated_selling_points": [
+          "极致压缩叙事密度：仅3集完成退婚羞辱、身份曝光、联手虐渣、确认全流程，无冗余注水内容，单集完播率拉满",
+          "…共3项"
+        ]
+      }
+    },
+    "quality_report": {
+      "schema_version": "quality-report.v1",
+      "top_keys": [
+        "rating",
+        "scores",
+        "summary",
+        "break_check",
+        "total_score"
+      ],
+      "shape": {
+        "rating": "S",
+        "scores": {
+          "人物塑造": 90,
+          "对白质量": 91,
+          "情绪曲线": 93,
+          "格式规范": 92,
+          "梦境指标": 95,
+          "钩子效果": 94,
+          "商业可行性": 96,
+          "结构完整性": 95
+        },
+        "summary": "该3集抖音霸总短剧完全符合平台内容调性，节奏紧凑爽点密集，仅存在1处轻微场景过渡逻辑瑕疵，整体完成度极高，兼具强情绪共鸣与高商业变现潜力。",
+        "break_check": {
+          "format_pass": true,
+          "dream_safety_pass": false
+        },
+        "total_score": 92.5
+      }
+    },
+    "review_report": {
+      "schema_version": "review-report.v1",
+      "top_keys": [
+        "issues",
+        "passed",
+        "pacingPassed"
+      ],
+      "shape": {
+        "issues": [
+          {
+            "type": "Format",
+            "description": "第1集第5场戏逻辑存在微小偏差：该场景动作描述为全场哄笑嘲讽苏晚，但此前第1-4场戏陆星延刚公开宣布驳回顾家项目申请，在场宾客理应先对顾家产生质疑，直接统一嘲讽…"
+          },
+          "…共1项"
+        ],
+        "passed": true,
+        "pacingPassed": true
+      }
+    },
+    "series_outline": {
+      "schema_version": "series-outline.v1",
+      "top_keys": [
+        "rhythm_control",
+        "episode_outlines",
+        "six_stage_narrative"
+      ],
+      "shape": {
+        "rhythm_control": {
+          "plot_beat": [
+            "第1集：退婚羞辱→隔空对立→甩出实锤打脸",
+            "…共3项"
+          ],
+          "emotion_beat": [
+            "第1集：羞辱愤怒→错愕不爽→爽感释放",
+            "…共3项"
+          ],
+          "compliance_check": {
+            "et_min_value": "int",
+            "a_level_reverse_count": "int",
+            "no_consecutive_3_flat": "bool"
+          }
+        },
+        "episode_outlines": [
+          {
+            "TP": "陆星延原本打算直接给顾家批投资，听到苏晚当众点破顾家项目的致命漏洞，临时叫停了所有合作流程，决定重新核查项目资质。",
+            "ending_hook": "陆星延对着身边的老周吩咐：“去查刚才那个女孩的所有资料，我要知道她到底是谁。”镜头特写老周递上来的资料袋，封面上苏晚的照片被打上了一个大大的问号。",
+            "episode_num": "int",
+            "emotion_markers": {
+              "__dict__": 2
+            },
+            "four_part_structure": {
+              "__dict__": 4
+            }
+          },
+          "…共3项"
+        ],
+        "six_stage_narrative": {
+          "eve_of_final": "顶层资本签约会议厅内，顾家带着伪造的专利证明志在必得，白梦瑶还故意当众给苏晚递了一张嘲讽她的邀请函，等着看她当众出丑，陆星延提前在会场门口拦住苏晚，主动递出自己的星曜资本合作意向书，表明自己已经知道顾家造假的全部证据，邀请她联手拆穿顾家的骗…",
+          "conflict_intro": "顾明哲当众将退婚协议甩在苏晚脸上，联合白梦瑶极尽羞辱，放话苏晚这辈子都不可能拿到科创圈的入场券，恰好苏晚此前提交的核心算法项目被顾家恶意截胡，陆星延判定项目提交方资质存疑当场驳回，双方首次隔空对立，苏晚直接向顾家与星曜资本同时下战书。",
+          "final_showdown": "签约现场顾家正准备上台签字，苏晚当众亮明云境财团唯一继承人身份，拿出专属钢笔完成全场圈层核验，在场所有资本方集体起身致敬，直接作废顾家的合作资格，陆星延当场宣布星曜资本和云境财团达成独家深度绑定，两人并肩站在台上，看着顾明哲和白梦瑶彻底崩溃…",
+          "establish_world": "2026年滨海澜城，顾家举办的公开退婚宴现场，所有人默认苏晚是无依无靠的普通孤女，在场宾客一边倒站队手握资源的顾家与新欢白梦瑶，冷面霸总陆星延作为星曜资本代表到场参会，全场聚焦顾家即将拿到的科创赛道投资名额，隐于人群的苏晚攥着云境财团专属钢…",
+          "crisis_explosion": "顾家为了抢下星曜资本的投资，直接雇人恶意盗取苏晚藏在实验室的剩余技术资料，还买通媒体造谣苏晚是学术小偷，全网铺天盖地的负面通稿把苏晚推到风口浪尖，陆星延查到被盗资料的源头恰好是自己追查多年的云境财团核心专利碎片，瞬间意识到自己之前完全看走了…",
+          "escalate_opposition": "苏晚以普通技术人员身份闯入星曜资本办公室，和陆星延就项目专利归属问题正面battle，用三页技术方案直接点破顾家提交的项目里有三处致命逻辑漏洞，陆星延起初将她当成来碰瓷的小角色，几番对谈后发现她的技术认知远超常规行业从业者，一边安排老周深挖…"
+        }
+      }
+    },
+    "world_setting": {
+      "schema_version": "world-setting.v1",
+      "top_keys": [
+        "core_spaces",
+        "special_rules",
+        "era_background",
+        "power_structure",
+        "core_world_rules",
+        "taboo_constraints"
+      ],
+      "shape": {
+        "core_spaces": [
+          "竖屏近景适配的豪门退婚宴会厅：以怼脸拍男主羞辱女主的特写镜头强化情绪冲击，画面边缘可露出围观人群的议论剪影",
+          "…共3项"
+        ],
+        "special_rules": "女主随身携带的初代云境财团定制钢笔是唯一身份核验信物，只要在合作签约画面中亮出，在场所有资本方必须立刻暂停流程向其致敬，该镜头完全适配竖屏特写放大呈现",
+        "era_background": "2026年新一线滨海都市「澜城」，科创产业爆发期，头部资本与隐形科创家族暗流博弈，高端商圈、科技产业园顶流资源高度集中，圈层信息差成为逆袭破局的核心筹码",
+        "power_structure": {
+          "中立核心变量": "冷面霸总执掌的星曜资本，手握澜城科创赛道70%投资决策权，是各方势力争抢合作的关键枢纽",
+          "表层豪门势力": "以退婚男主顾家为代表的传统地产新贵，占据大众认知里的上流圈层话语权，实则外强中干核心技术空心化",
+          "顶层隐形势力": "女主背后掌控全球顶尖AI算法专利的「云境财团」，资产体量远超本地豪门，长期隐匿在公众视野之外"
+        },
+        "core_world_rules": [
+          "商界资源分配只认核心专利硬实力，没有家族专利话语权的豪门随时会被踢出顶层牌局",
+          "…共3项"
+        ],
+        "taboo_constraints": [
+          "不得提前暴露女主的隐形继承人身份，前30分钟剧情内所有配角都只能把她当成被退婚的落魄弃女",
+          "…共2项"
+        ]
+      }
+    }
+  }
+}

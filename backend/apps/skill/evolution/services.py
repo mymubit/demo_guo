@@ -54,7 +54,12 @@ class RuleEvolutionService:
             overall_score__isnull=False,
             overall_score__lt=70,
             updated_at__gte=cutoff_date,
-        ).exclude(fusion_status=Project.FUSION_BLOCKED)
+        )
+        from apps.drama.progress_service import DramaProjectProgressService
+
+        blocked_ids = DramaProjectProgressService.blocked_project_ids()
+        if blocked_ids:
+            low_score_projects = low_score_projects.exclude(id__in=blocked_ids)
 
         project_count = low_score_projects.count()
         if project_count < min_projects:

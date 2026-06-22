@@ -129,15 +129,6 @@ class CreationSubmitSerializer(serializers.Serializer):
         required=False,
         help_text="workspace=按技能模块；auto=后台连续执行；step=每节点暂停待确认",
     )
-    pipeline_pack_id = serializers.UUIDField(
-        required=False,
-        allow_null=True,
-        help_text="创作流水线模板 ID，见 catalog.publishedPipelines",
-    )
-
-    def validate_pipeline_pack_id(self, value):
-        # drama.* 体系不再使用 FusionPipelinePack，此字段已废弃
-        return None
 
     def validate_theme(self, value):
         """题材代码校验：允许 小写字母、数字、连字符"""
@@ -239,12 +230,11 @@ class ProjectProgressSerializer(serializers.Serializer):
         default="",
         help_text="失败时的错误信息（用户可读）",
     )
-    fusion_status = serializers.CharField(
-        required=False, allow_blank=True, default="",
-    )
-    fusion_status_text = serializers.CharField(
-        required=False, allow_blank=True, default="",
-    )
+    current_stage = serializers.CharField(required=False, allow_blank=True, default="")
+    current_stage_text = serializers.CharField(required=False, allow_blank=True, default="")
+    track_mode = serializers.CharField(required=False, allow_blank=True, default="")
+    delivery_status = serializers.CharField(required=False, allow_blank=True, default="")
+    drama_project_id = serializers.CharField(required=False, allow_blank=True, default="")
     overall_score = serializers.FloatField(required=False, allow_null=True)
     grade = serializers.CharField(required=False, allow_blank=True, default="")
     ready_at = serializers.DateTimeField(required=False, allow_null=True)
@@ -271,12 +261,9 @@ class ProjectListSerializer(serializers.Serializer):
     theme = serializers.CharField(help_text="题材")
     episode_count = serializers.IntegerField(help_text="集数")
     format_variant = serializers.CharField(help_text="输出格式变体")
-    status = serializers.CharField(help_text="项目状态")
+    status = serializers.SerializerMethodField(help_text="项目状态")
     status_text = serializers.SerializerMethodField(help_text="状态中文描述")
     progress_percent = serializers.IntegerField(help_text="进度百分比")
-    fusion_status = serializers.CharField(
-        required=False, allow_blank=True, default="",
-    )
     overall_score = serializers.FloatField(required=False, allow_null=True)
     grade = serializers.CharField(required=False, allow_blank=True, default="")
     ready_at = serializers.DateTimeField(required=False, allow_null=True)
@@ -288,6 +275,42 @@ class ProjectListSerializer(serializers.Serializer):
     creation_entry = serializers.CharField(
         required=False, allow_blank=True, default="", help_text="创作入口"
     )
+    drama_project_id = serializers.SerializerMethodField(help_text="Drama 项目 ID")
+    drama_workspace_url = serializers.SerializerMethodField(help_text="Drama 工作台链接")
+    track_mode = serializers.SerializerMethodField(help_text="创作轨道")
+    current_stage = serializers.SerializerMethodField(help_text="当前阶段")
+
+    def _get_drama(self, obj):
+        drama_map = self.context.get("drama_map") or {}
+        return drama_map.get(obj.id) or drama_map.get(getattr(obj, "id", None))
+
+    def get_drama_project_id(self, obj) -> str:
+        drama = self._get_drama(obj)
+        return str(drama.id) if drama else ""
+
+    def get_drama_workspace_url(self, obj) -> str:
+        drama = self._get_drama(obj)
+        if drama:
+            return f"/drama/workspace/{drama.id}"
+        return f"/drama/workspace/{obj.id}"
+
+    def get_track_mode(self, obj) -> str:
+        drama = self._get_drama(obj)
+        return drama.track_mode if drama else ""
+
+    def get_current_stage(self, obj) -> str:
+        drama = self._get_drama(obj)
+        return drama.current_stage if drama else ""
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        drama = self._get_drama(instance)
+        if drama:
+            data["progress_percent"] = int(drama.get_completion_rate())
+        return data
+
+    def get_status(self, obj) -> str:
+        return obj.execution_status
 
     def get_status_text(self, obj) -> str:
         return obj.get_status_display()

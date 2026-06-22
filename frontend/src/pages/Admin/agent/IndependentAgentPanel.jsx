@@ -156,7 +156,7 @@ export default function IndependentAgentPanel({ onMessage }) {
       setAgents(rows)
       if (!selectedId && rows[0]) setSelectedId(rows[0].agent_id)
     } catch (err) {
-      onMessage(err.message || '加载独立 Agent 失败', 'error')
+      onMessage(err.message || '加载 Drama 角色失败', 'error')
     } finally {
       setLoading(false)
     }
@@ -348,13 +348,13 @@ export default function IndependentAgentPanel({ onMessage }) {
     }
   }
 
-  if (loading) return <AdminLoading label="加载独立 Agent…" />
+  if (loading) return <AdminLoading label="加载 Drama 角色…" />
 
   return (
     <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
       <div className="space-y-2">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-white">Agent 列表</h3>
+          <h3 className="text-sm font-semibold text-white">Drama 角色</h3>
           <button type="button" onClick={loadAgents} className="text-navy-300 hover:text-white">
             <RefreshCw className="h-4 w-4" />
           </button>
@@ -380,7 +380,7 @@ export default function IndependentAgentPanel({ onMessage }) {
             </button>
           ))
         ) : (
-          <AdminEmpty title="暂无 Agent" />
+          <AdminEmpty title="暂无 Drama 角色" />
         )}
       </div>
 

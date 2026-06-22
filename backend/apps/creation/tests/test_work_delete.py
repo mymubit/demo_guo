@@ -21,7 +21,6 @@ class WorkDeleteTests(TestCase):
             title="待删作品",
             theme="sweet-pet",
             episode_count=80,
-            fusion_status=Project.FUSION_READY,
         )
 
     def test_delete_user_project(self):
@@ -31,15 +30,21 @@ class WorkDeleteTests(TestCase):
         self.assertFalse(Project.objects.filter(id=pid).exists())
 
     def test_delete_running_blocked(self):
-        self.project.pipeline_mode = Project.MODE_STEP
-        self.project.fusion_status = Project.FUSION_WRITING
-        self.project.save(update_fields=["pipeline_mode", "fusion_status"])
-        AgentExecutionRun.objects.create(
-            project=self.project,
+        from apps.drama.models import DramaProject, DramaRoleExecution
+
+        dp = DramaProject.objects.create(
+            id=self.project.id,
+            project_id=self.project.id,
             user=self.user,
-            agent_id="brief",
-            node_index=1,
-            status=AgentExecutionRun.STATUS_RUNNING,
+            title=self.project.title,
+            genre_code=self.project.theme,
+            total_episodes=self.project.episode_count,
+        )
+        DramaRoleExecution.objects.create(
+            drama_project=dp,
+            agent_id="drama.topic-planner",
+            agent_name_zh="选题策划官",
+            status=DramaRoleExecution.Status.RUNNING,
         )
         with self.assertRaises(PermissionDenied):
             CreationService.delete_user_project(str(self.project.id), self.user)
@@ -48,14 +53,13 @@ class WorkDeleteTests(TestCase):
         from apps.creation.models import AgentExecutionRun
 
         self.project.pipeline_mode = Project.MODE_WORKSPACE
-        self.project.fusion_status = Project.FUSION_WRITING
-        self.project.save(update_fields=["pipeline_mode", "fusion_status"])
-        AgentExecutionRun.objects.create(
+        run = AgentExecutionRun.objects.create(
             project=self.project,
             user=self.user,
-            agent_id="structure",
+            agent_id="drama.topic-planner",
             node_index=2,
             status=AgentExecutionRun.STATUS_RUNNING,
+            started_at=timezone.now() - timedelta(minutes=20),
         )
         pid = str(self.project.id)
         result = CreationService.delete_user_project(pid, self.user)

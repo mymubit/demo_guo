@@ -2,8 +2,7 @@
 from django.test import SimpleTestCase, TestCase
 
 from apps.creation.episode_gate import summarize_episode_gates
-from apps.workflow.fusion import evaluate_project_readiness, get_artifact_registry
-from apps.workflow.pipeline_store import FusionPipelineDbService
+from apps.creation.readiness import evaluate_project_readiness
 
 
 class EpisodeGateSummaryTests(SimpleTestCase):
@@ -97,21 +96,3 @@ class ReadinessTests(TestCase):
         self.assertFalse(r["ready"])
 
 
-class ArtifactRegistryTests(TestCase):
-    def setUp(self):
-        FusionPipelineDbService.ensure_builtin_default_pack()
-        FusionPipelineDbService.clear_caches()
-
-    def tearDown(self):
-        FusionPipelineDbService.clear_caches()
-
-    def test_main_chain_has_five_steps(self):
-        reg = get_artifact_registry()
-        self.assertEqual(reg.total_main_nodes(), 5)
-        self.assertEqual(reg.artifact_key_for_index(1), "project_brief")
-        self.assertEqual(reg.artifact_key_for_index(5), "episode_scripts")
-
-    def test_progress_percent_uses_total_nodes(self):
-        reg = get_artifact_registry()
-        self.assertEqual(reg.progress_percent_for_node(5), 100)
-        self.assertLess(reg.progress_percent_for_node(3, awaiting=True), 99)

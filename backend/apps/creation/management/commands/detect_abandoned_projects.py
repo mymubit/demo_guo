@@ -42,9 +42,12 @@ class Command(BaseCommand):
             from apps.creation.models import Project
 
             threshold_dt = timezone.now() - timedelta(days=days)
+            from apps.drama.progress_service import DramaProjectProgressService
+
+            deliverable = DramaProjectProgressService.deliverable_project_ids()
             cnt = Project.objects.filter(
                 abandoned_at__isnull=True,
-            ).exclude(fusion_status=Project.FUSION_READY).filter(
+            ).exclude(id__in=deliverable).filter(
                 Q(last_edited_at__isnull=True, created_at__lt=threshold_dt)
                 | Q(last_edited_at__lt=threshold_dt)
             ).count()

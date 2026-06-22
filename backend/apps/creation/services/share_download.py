@@ -20,6 +20,13 @@ from .content_quality import record_final_export
 logger = logging.getLogger(__name__)
 
 
+def _require_deliverable(project: Project) -> None:
+    from apps.drama.progress_service import DramaProjectProgressService
+
+    if not DramaProjectProgressService.is_deliverable(project):
+        raise PermissionDenied("仅已完成的作品可分享或下载")
+
+
 @transaction.atomic
 def generate_share_link(
     project_id: str,
@@ -31,8 +38,7 @@ def generate_share_link(
 ) -> dict:
     """为作品生成分享链接。"""
     project = _get_user_project(project_id, user)
-    if project.fusion_status != Project.FUSION_READY:
-        raise PermissionDenied("仅已完成的作品可分享")
+    _require_deliverable(project)
 
     token = ShareLink.generate_token()
     expires_at = timezone.now() + timedelta(days=max(1, min(30, valid_days)))
@@ -104,8 +110,7 @@ def get_share_view(share_token: str) -> dict:
         share.refresh_from_db()
 
     project = share.project
-    if project.fusion_status != Project.FUSION_READY:
-        raise PermissionDenied("该作品尚未完成")
+    _require_deliverable(project)
 
     user = share.user
     author_nickname = (
@@ -143,8 +148,8 @@ def download_script(
     )
     if file_format in {"md", "zip", "html"} and workspace_export:
         pass
-    elif project.fusion_status != Project.FUSION_READY:
-        raise PermissionDenied("未完成的作品不可下载")
+    else:
+        _require_deliverable(project)
 
     try:
         work = ScriptWork.objects.filter(

@@ -41,30 +41,8 @@ class AgentOutputArtifactConfigTests(SimpleTestCase):
         self.assertEqual(artifact_key, "")
 
 
-class FusionArtifactConfigTests(TestCase):
-    def tearDown(self):
-        from apps.workflow.pipeline_store import FusionPipelineDbService
-
-        FusionPipelineDbService.clear_caches()
-
-    def test_artifacts_for_node_reads_main_chain_keys(self):
-        from apps.workflow.fusion.artifact_registry import FusionArtifactRegistry
-
-        registry = FusionArtifactRegistry()
-        self.assertEqual(registry.artifacts_for_node(1), ["project_brief"])
-        self.assertEqual(registry.artifacts_for_node(5), ["episode_scripts"])
-        self.assertEqual(registry.artifacts_for_node(6), [])
-
-    def test_pipeline_result_sources_include_five_step_defaults(self):
-        from apps.workflow.fusion.artifact_registry import FusionArtifactRegistry
-
-        registry = FusionArtifactRegistry()
-        by_artifact = {row["artifact_key"]: row for row in registry.pipeline_result_sources()}
-        self.assertEqual(by_artifact["project_brief"]["pipeline_result_key"], "project_brief")
-        self.assertEqual(by_artifact["structure_plan"]["pipeline_result_key"], "structure")
-        self.assertEqual(by_artifact["episode_scripts"]["pipeline_result_key"], "scripts")
-
-    def test_build_pipeline_result_from_project_uses_registry(self):
+class PipelineResultBuildTests(TestCase):
+    def test_build_pipeline_result_from_project_uses_drama_keys(self):
         from apps.creation.artifact_service import save_artifact
         from apps.creation.models import Project
         from apps.creation.pipeline_result import build_pipeline_result_from_project

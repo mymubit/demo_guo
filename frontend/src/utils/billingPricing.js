@@ -1,5 +1,5 @@
 export const PRICING_GROUPS = [
-  { key: 'pipeline', label: '主链 Agent', prefix: 'pipeline.node.' },
+  { key: 'drama', label: 'Drama 角色', prefix: 'drama.agent.' },
   { key: 'creation', label: '创作提交', prefix: 'creation.' },
   { key: 'ai', label: '字段 AI', prefix: 'ai.generate.' },
   { key: 'other', label: '其他', prefix: '' },

@@ -708,13 +708,16 @@ export default function Dashboard() {
                   创作与 Agent
                 </h3>
                 <p className="text-xs text-navy-400 mt-1">
-                  registry {agentOps.registry_version || '—'} · 单项目轨迹请进创作项目
+                  drama_skills · 单项目轨迹见创作项目 · Drama 角色轨 SSOT
                 </p>
               </div>
               <div className="flex flex-wrap gap-3 text-sm">
                 <Link to="/admin/creation/projects" className="text-gold-400 hover:text-gold-300 inline-flex items-center gap-1">
                   <LayoutGrid className={ICON.md} />
                   创作项目
+                </Link>
+                <Link to="/admin/drama-models" className="text-gold-400 hover:text-gold-300">
+                  Drama 模型
                 </Link>
                 <Link to="/admin/agent?tab=definitions" className="text-gold-400 hover:text-gold-300">
                   运行记录
@@ -724,8 +727,8 @@ export default function Dashboard() {
             <AdminStatGrid
               items={[
                 { label: '创作项目累计', value: summary.total_creations ?? 0, hint: `今日 +${summary.today_creations ?? 0}` },
-                { label: '工作台项目', value: agentOps.workspace_projects ?? 0 },
-                { label: '今日 Agent 执行', value: execToday.run_count ?? 0, hint: `失败 ${execToday.failed_count ?? 0}` },
+                { label: 'Drama 项目', value: agentOps.drama_projects ?? 0, hint: `执行中 ${agentOps.drama_running_projects ?? 0}` },
+                { label: '今日角色执行', value: execToday.run_count ?? 0, hint: `失败 ${execToday.failed_count ?? 0}` },
                 {
                   label: '30 天失败率',
                   value: execPeriod.run_count ? `${Math.round((execPeriod.failure_rate || 0) * 100)}%` : '—',
@@ -738,17 +741,17 @@ export default function Dashboard() {
 
           <Card padding="md" className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h3 className="text-sm font-semibold text-white">Sub-skill 详细监察</h3>
+              <h3 className="text-sm font-semibold text-white">Drama 角色执行监察</h3>
               <p className="text-xs text-navy-400 mt-1 leading-relaxed max-w-xl">
-                命中率、失败 Top、各 Agent 执行量等详情请查看 Agent 运行记录。
+                按 drama.* 角色统计执行量与失败率；各角色 Token 与模型配置见 Drama 模型面板。
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Link
-                to="/admin/agent?tab=definitions"
+                to="/admin/drama-models"
                 className="px-4 py-2 rounded-xl text-sm text-gold-300 border border-gold-500/30 bg-gold-500/10 hover:bg-gold-500/15 sf-focus-ring"
               >
-                Agent 运行记录
+                Drama 模型 & Token
               </Link>
               <Link
                 to="/admin/creation/projects?failed_run=1"

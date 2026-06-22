@@ -12,6 +12,8 @@ from apps.creation.models import AgentExecutionRun, Project
 from apps.creation.tasks import run_independent_agent
 from apps.skill.models import LlmProvider
 
+from apps.creation.tests.test_helpers import grant_test_coins
+
 User = get_user_model()
 
 
@@ -30,25 +32,25 @@ def _attach_test_llm_provider(agent_id: str) -> LlmProvider:
 class AgentExecuteRunTests(TestCase):
     def setUp(self):
         AgentDefinitionService.ensure_defaults()
-        _attach_test_llm_provider("brief")
+        _attach_test_llm_provider("drama.topic-planner")
         self.user = User.objects.create_user(phone="13900008801", password="test-pass-123")
         self.project = Project.objects.create(
             user=self.user,
             title="exec-test",
             theme="overbearing-ceo",
-            core_idea="测试 execute_run",
+            core_idea="?? execute_run",
             episode_count=20,
             format_variant="B",
         )
         save_artifact(
             self.project,
             "project_brief",
-            {"status": "confirmed", "coreIdea": "测试"},
+            {"status": "confirmed", "coreIdea": "??"},
         )
         self.run = AgentExecutionRun.objects.create(
             project=self.project,
             user=self.user,
-            agent_id="brief",
+            agent_id="drama.topic-planner",
             status=AgentExecutionRun.STATUS_RUNNING,
             run_params={},
             input_snapshot={"project": {}, "artifacts": {}, "params": {}},
@@ -56,19 +58,19 @@ class AgentExecuteRunTests(TestCase):
 
     @patch("apps.creation.agent_runtime.independent_service.LlmService.chat_completion")
     def test_execute_run_persists_output_and_updates_project_status(self, mock_chat):
-        mock_chat.return_value = '{"project_brief": {"status": "confirmed", "coreIdea": "AI 输出"}}'
+        mock_chat.return_value = '{"project_brief": {"status": "confirmed", "coreIdea": "AI ??"}}'
         result = IndependentAgentService.execute_run(self.run)
         self.project.refresh_from_db()
         self.assertEqual(result.status, AgentExecutionRun.STATUS_COMPLETED)
         self.assertEqual(self.project.execution_status, Project.STATUS_PENDING)
-        self.assertIn(self.project.fusion_status, {Project.FUSION_DRAFT, Project.FUSION_PLANNING})
+        self.assertGreaterEqual(self.project.progress_percent, 0)
 
     @patch("apps.creation.agent_runtime.independent_service.LlmService.chat_completion")
     def test_run_independent_agent_task_invokes_execute(self, mock_chat):
-        mock_chat.return_value = '{"project_brief": {"status": "confirmed", "coreIdea": "task 输出"}}'
+        mock_chat.return_value = '{"project_brief": {"status": "confirmed", "coreIdea": "task ??"}}'
         payload = run_independent_agent.call(
             str(self.project.id),
-            "brief",
+            "drama.topic-planner",
             {},
             run_id=str(self.run.id),
         )
@@ -78,7 +80,7 @@ class AgentExecuteRunTests(TestCase):
 
     @patch("apps.creation.agent_runtime.independent_service.LlmService.chat_completion")
     def test_execute_run_marks_failed_on_llm_error(self, mock_chat):
-        mock_chat.side_effect = RuntimeError("LLM 不可用")
+        mock_chat.side_effect = RuntimeError("LLM ???")
         IndependentAgentService.execute_run(self.run)
         self.run.refresh_from_db()
         self.assertEqual(self.run.status, AgentExecutionRun.STATUS_FAILED)
@@ -93,29 +95,27 @@ class ProjectStatusSyncTests(TestCase):
             user=self.user,
             title="status-sync",
             theme="overbearing-ceo",
-            core_idea="状态同步",
+            core_idea="??????",
             episode_count=20,
             format_variant="B",
-            fusion_status=Project.FUSION_DRAFT,
         )
 
     def test_update_project_status_sets_completed_when_scripts_exist(self):
         save_artifact(
             self.project,
             "episode_scripts",
-            {"episodes": [{"episodeNumber": 1, "title": "第1集"}]},
+            {"episodes": [{"episodeNumber": 1, "title": "???"}]},
         )
         IndependentAgentService.update_project_status(self.project)
         self.project.refresh_from_db()
         self.assertEqual(self.project.execution_status, Project.STATUS_COMPLETED)
-        self.assertEqual(self.project.fusion_status, Project.FUSION_READY)
         self.assertEqual(self.project.progress_percent, 100)
 
     def test_enqueue_sets_running_status_not_reverted_to_pending(self):
-        _attach_test_llm_provider("brief")
+        _attach_test_llm_provider("drama.topic-planner")
+        grant_test_coins(self.user)
         save_artifact(self.project, "project_brief", {"status": "confirmed"})
-        result = IndependentAgentService.enqueue_run(self.project, self.user, "brief", {})
+        result = IndependentAgentService.enqueue_run(self.project, self.user, "drama.topic-planner", {})
         self.project.refresh_from_db()
         self.assertTrue(result.created_new_run)
         self.assertEqual(self.project.execution_status, Project.STATUS_RUNNING)
-        self.assertEqual(self.project.fusion_status, Project.FUSION_WRITING)

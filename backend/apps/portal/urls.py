@@ -20,7 +20,6 @@ urlpatterns = [
     path("orders/", include("apps.portal.orders.urls")),
     path("billing/", include("apps.portal.billing.urls")),
     path("creation/", include("apps.portal.creation.urls")),
-    path("workflow/", include("apps.portal.workflow.urls")),
     path("agent/", include("apps.portal.agent.urls")),
     path("works/", include("apps.portal.creation.urls_works")),
     path("skill/", include("apps.portal.config.urls")),

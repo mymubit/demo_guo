@@ -9,9 +9,24 @@ from typing import Any, Dict, Optional
 
 from django.conf import settings
 
-def summarize_upstream_for_trace(artifacts: dict) -> str:
-    """上游产物摘要（drama.* 体系直接返回空，减少 token 消耗）。"""
-    return ""
+def summarize_upstream_for_trace(
+    upstream: dict,
+    extra: Optional[Dict[str, Any]] = None,
+) -> dict:
+    """上游产物摘要（保留 trace 测试与排障所需的关键字段）。"""
+    if not upstream:
+        return {}
+    keys = sorted(str(k) for k in upstream.keys())
+    summary: Dict[str, Any] = {"upstreamKeys": keys}
+    if upstream.get("theme") is not None:
+        summary["theme"] = upstream.get("theme")
+    if upstream.get("episodeCount") is not None:
+        summary["episodeCount"] = upstream.get("episodeCount")
+    if upstream.get("nodeId") is not None:
+        summary["nodeId"] = upstream.get("nodeId")
+    if extra:
+        summary["extraKeys"] = sorted(str(k) for k in extra.keys())
+    return summary
 
 logger = logging.getLogger(__name__)
 

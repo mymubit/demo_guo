@@ -87,20 +87,20 @@ export default function ScriptEvaluate() {
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-white/5 bg-slate-900/60 p-6 mb-6"
+          className="rounded-2xl border border-gray-200 bg-white border border-gray-200 p-6 mb-6"
         >
-          <h2 className="text-lg font-bold text-white mb-1 flex items-center gap-2">
-            <Star className="w-5 h-5 text-gold-400" />
+          <h2 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
+            <Star className="w-5 h-5 text-brand-600" />
             选择已完成的剧本
           </h2>
-          <p className="text-sm text-navy-400 mb-4">展示已完成作品；选中后可查看评分报告（无评分时显示基础信息）</p>
+          <p className="text-sm text-gray-400 mb-4">展示已完成作品；选中后可查看评分报告（无评分时显示基础信息）</p>
 
           {loading ? (
-            <p className="text-sm text-navy-400">加载中…</p>
+            <p className="text-sm text-gray-400">加载中…</p>
           ) : works.length === 0 ? (
             <div className="text-center py-10">
-              <FileText className="w-12 h-12 text-navy-400 mx-auto mb-3" />
-              <p className="text-navy-300 mb-4">暂无已完成作品</p>
+              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+              <p className="text-gray-500 mb-4">暂无已完成作品</p>
               <button type="button" onClick={() => navigate('/creation')} className="btn-gold px-6 py-2.5 rounded-xl">
                 去创作
               </button>
@@ -118,14 +118,14 @@ export default function ScriptEvaluate() {
                     className={`w-full text-left px-4 py-3 rounded-xl border transition-all flex items-center justify-between gap-3 ${
                       active
                         ? 'border-gold-400/50 bg-gold-400/10 shadow-gold'
-                        : 'border-white/10 bg-white/[0.02] hover:border-white/20'
+                        : 'border-gray-200 bg-white/[0.02] hover:border-gray-300'
                     }`}
                   >
                     <div>
-                      <div className="font-medium text-white">{w.title || '未命名剧本'}</div>
-                      <div className="text-xs text-navy-400 mt-0.5">{w.episode_count || '—'} 集</div>
+                      <div className="font-medium text-gray-900">{w.title || '未命名剧本'}</div>
+                      <div className="text-xs text-gray-400 mt-0.5">{w.episode_count || '—'} 集</div>
                     </div>
-                    <span className="text-gold-400 font-bold shrink-0">{score != null ? `${score} 分` : '—'}</span>
+                    <span className="text-brand-600 font-bold shrink-0">{score != null ? `${score} 分` : '—'}</span>
                   </button>
                 )
               })}
@@ -137,15 +137,15 @@ export default function ScriptEvaluate() {
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl border border-white/5 bg-slate-900/60 p-6 mb-6"
+            className="rounded-2xl border border-gray-200 bg-white border border-gray-200 p-6 mb-6"
           >
             <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-              <h2 className="text-lg font-bold text-white">8 维评分报告</h2>
+              <h2 className="text-lg font-bold text-gray-900">8 维评分报告</h2>
               {selectedId && (
                 <button
                   type="button"
                   onClick={() => navigate(`/works/${selectedId}`)}
-                  className="inline-flex items-center gap-1 text-sm text-gold-400 hover:text-gold-300"
+                  className="inline-flex items-center gap-1 text-sm text-brand-600 hover:text-gold-300"
                 >
                   查看完整作品
                   <ArrowRight className="w-4 h-4" />
@@ -153,11 +153,11 @@ export default function ScriptEvaluate() {
               )}
             </div>
             {reportLoading ? (
-              <p className="text-sm text-navy-400">加载报告…</p>
+              <p className="text-sm text-gray-400">加载报告…</p>
             ) : scoreReport ? (
               <ScoreReport report={scoreReport} />
             ) : (
-              <p className="text-sm text-navy-400">该作品暂无详细评分数据，请稍后在作品详情查看。</p>
+              <p className="text-sm text-gray-400">该作品暂无详细评分数据，请稍后在作品详情查看。</p>
             )}
           </motion.div>
         )}
@@ -165,10 +165,10 @@ export default function ScriptEvaluate() {
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-dashed border-white/10 p-6 text-center"
+          className="rounded-2xl border border-dashed border-gray-200 p-6 text-center"
         >
-          <Sparkles className="w-8 h-8 text-navy-400 mx-auto mb-2" />
-          <p className="text-sm text-navy-400">
+          <Sparkles className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+          <p className="text-sm text-gray-400">
             上传外部剧本文本直接评估的能力即将开放；当前请通过「开始创作」生成剧本后在此查看评分。
           </p>
         </motion.div>

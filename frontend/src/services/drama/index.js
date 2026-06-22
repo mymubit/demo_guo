@@ -1,31 +1,41 @@
-import http from '../http';
+import { request } from '../http'
 
 // 角色列表
-export const getDramaRoles = () => http.get('/api/drama/roles/');
+export const getDramaRoles = () => request('GET', '/api/drama/roles/')
 
 // 项目管理
-export const createDramaProject = (data) => http.post('/api/drama/projects/', data);
-export const getDramaProjects = () => http.get('/api/drama/projects/');
-export const getDramaProject = (id) => http.get(`/api/drama/projects/${id}/`);
-export const getProjectProgress = (id) => http.get(`/api/drama/projects/${id}/progress/`);
+export const createDramaProject = (data) =>
+  request('POST', '/api/drama/projects/', { data })
+
+export const getDramaProjects = () => request('GET', '/api/drama/projects/')
+
+export const getDramaProject = (id) => request('GET', `/api/drama/projects/${id}/`)
+
+export const getProjectProgress = (id) =>
+  request('GET', `/api/drama/projects/${id}/progress/`)
+
 export const runRole = (projectId, roleId) =>
-  http.post(`/api/drama/projects/${projectId}/run/${roleId}/`);
+  request('POST', `/api/drama/projects/${projectId}/run/${roleId}/`)
 
 // 质量评分雷达
 export const getQualityRadar = (projectId) =>
-  http.get(`/api/drama/projects/${projectId}/quality-radar/`);
+  request('GET', `/api/drama/projects/${projectId}/quality-radar/`)
 
 // 字数验证
 export const validateWordCount = (content, episodeNumber) =>
-  http.post('/api/drama/validate/word-count/', {
-    content,
-    episode_number: episodeNumber,
-  });
+  request('POST', '/api/drama/validate/word-count/', {
+    data: {
+      content,
+      episode_number: episodeNumber,
+    },
+  })
 
-// Token统计
+// Token 统计
 export const getTokenStats = (days = 30) =>
-  http.get('/api/drama/stats/token/', { params: { days } });
+  request('GET', '/api/drama/stats/token/', { params: { days } })
 
 // 模型配置
-export const getModelConfig = () => http.get('/api/drama/models/config/');
-export const updateModelConfig = (data) => http.put('/api/drama/models/config/', data);
+export const getModelConfig = () => request('GET', '/api/drama/models/config/')
+
+export const updateModelConfig = (data) =>
+  request('PUT', '/api/drama/models/config/', { data })

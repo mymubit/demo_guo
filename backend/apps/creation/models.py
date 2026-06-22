@@ -56,24 +56,6 @@ class Project(models.Model):
         (MODE_WORKSPACE, "技能工作台"),
     ]
 
-    FUSION_DRAFT = "draft"
-    FUSION_PLANNING = "planning"
-    FUSION_WRITING = "writing"
-    FUSION_REVIEWING = "reviewing"
-    FUSION_SCORING = "scoring"
-    FUSION_READY = "ready"
-    FUSION_BLOCKED = "blocked"
-
-    FUSION_STATUS_CHOICES = [
-        (FUSION_DRAFT, "立项中"),
-        (FUSION_PLANNING, "策划中"),
-        (FUSION_WRITING, "创作中"),
-        (FUSION_REVIEWING, "质检中"),
-        (FUSION_SCORING, "评分中"),
-        (FUSION_READY, "可发布"),
-        (FUSION_BLOCKED, "需修改"),
-    ]
-
     # 输出格式变体（默认 B）
     FORMAT_A = "A"
     FORMAT_B = "B"
@@ -156,7 +138,7 @@ class Project(models.Model):
         verbose_name="消耗的会员",
     )
 
-    # 状态 & 流程进度（fusion_status 为运营 SSOT；执行态由 project_execution 推导）
+    # 状态 & 流程进度（执行态由 project_execution + Drama SSOT 推导）
     pipeline_mode = models.CharField(
         "流水线模式",
         max_length=16,
@@ -164,30 +146,9 @@ class Project(models.Model):
         default=MODE_WORKSPACE,
         help_text="workspace=按技能模块；auto=一键跑完；step=每节点暂停待确认",
     )
-    pipeline_pack = models.ForeignKey(
-        "workflow.FusionPipelinePack",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="projects",
-        verbose_name="流水线模板",
-    )
-    current_node_index = models.IntegerField(
-        "当前节点索引", default=0, help_text="0 表示未开始，1-7 表示正在/已完成该节点"
-    )
-    total_nodes = models.IntegerField("总节点数", default=7)
     progress_percent = models.IntegerField("进度百分比", default=0)
     error_message = models.TextField(
         "错误信息", blank=True, default="", help_text="status=failed 时填充"
-    )
-
-    # 融合技能状态（SSOT：fusion-plan §5；与 legacy status 并存）
-    fusion_status = models.CharField(
-        "融合流程状态",
-        max_length=16,
-        choices=FUSION_STATUS_CHOICES,
-        blank=True,
-        default="",
     )
     overall_score = models.FloatField("8维综合分", null=True, blank=True)
     grade = models.CharField("报告等级", max_length=16, blank=True, default="")
@@ -195,11 +156,6 @@ class Project(models.Model):
     skill_version = models.CharField(
         "技能版本", max_length=32, blank=True, default="",
         help_text="来自历史 project-config projectMeta.version",
-    )
-    # 新增：记录创作命中了哪个工作流版本（用于灰度追踪）
-    gray_flow_version = models.CharField(
-        "命中工作流版本", max_length=64, blank=True, default="",
-        help_text="记录创作请求命中的工作流 pack version，用于灰度流量分析",
     )
     compliance_tier = models.CharField(
         "合规分层", max_length=32, blank=True, default="domestic",
@@ -278,9 +234,8 @@ class Project(models.Model):
         ordering = ["-created_at"]
         indexes = [
             models.Index(fields=["user", "-created_at"]),
-            models.Index(fields=["fusion_status"]),
-            models.Index(fields=["abandoned_at", "fusion_status"]),
-            models.Index(fields=["-created_at", "fusion_status"]),
+            models.Index(fields=["abandoned_at"]),
+            models.Index(fields=["-created_at"]),
         ]
 
     @property
@@ -289,9 +244,11 @@ class Project(models.Model):
 
         return derive_execution_status(self)
 
+    def get_status_display(self) -> str:
+        return dict(self.STATUS_CHOICES).get(self.execution_status, self.execution_status or "—")
+
     def __str__(self) -> str:
-        label = dict(self.FUSION_STATUS_CHOICES).get(self.fusion_status, self.fusion_status or "—")
-        return f"[{label}] {self.id.hex[:8]} - {self.theme}"
+        return f"[{self.get_status_display()}] {self.id.hex[:8]} - {self.theme}"
 
 
 # ============================================================

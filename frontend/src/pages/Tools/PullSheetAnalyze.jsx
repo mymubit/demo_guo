@@ -33,11 +33,11 @@ export default function PullSheetAnalyze() {
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-white/5 bg-slate-900/60 p-6 space-y-6"
+          className="rounded-2xl border border-gray-200 bg-white border border-gray-200 p-6 space-y-6"
         >
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-white mb-2">
-              <BookOpen className="w-4 h-4 text-gold-400" />
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-900 mb-2">
+              <BookOpen className="w-4 h-4 text-brand-600" />
               参考作品 <span className="text-red-400">*</span>
             </label>
             <textarea
@@ -49,7 +49,7 @@ export default function PullSheetAnalyze() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white mb-2">题材（可选）</label>
+            <label className="block text-sm font-medium text-gray-900 mb-2">题材（可选）</label>
             <input
               value={theme}
               onChange={(e) => setTheme(e.target.value.slice(0, 50))}
@@ -59,7 +59,7 @@ export default function PullSheetAnalyze() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-white mb-2">你的创意方向（可选）</label>
+            <label className="block text-sm font-medium text-gray-900 mb-2">你的创意方向（可选）</label>
             <textarea
               value={coreIdea}
               onChange={(e) => setCoreIdea(e.target.value.slice(0, 300))}
@@ -90,12 +90,12 @@ export default function PullSheetAnalyze() {
           </div>
 
           {analysis && (
-            <div className="rounded-xl border border-white/5 bg-slate-900/60 p-5">
-              <h3 className="text-sm font-semibold text-gold-400 mb-3 flex items-center gap-2">
+            <div className="rounded-xl border border-gray-200 bg-white border border-gray-200 p-5">
+              <h3 className="text-sm font-semibold text-brand-600 mb-3 flex items-center gap-2">
                 <Sparkles className="w-4 h-4" />
                 分析结果
               </h3>
-              <pre className="whitespace-pre-wrap text-sm text-navy-200 leading-relaxed font-sans">{analysis}</pre>
+              <pre className="whitespace-pre-wrap text-sm text-gray-600 leading-relaxed font-sans">{analysis}</pre>
             </div>
           )}
         </motion.div>

@@ -10,14 +10,14 @@ from apps.skill.models import CreationFormOverrideConfig
 class CreationFormOverrideServiceTests(TestCase):
     def setUp(self):
         CreationFormOverrideConfig.objects.filter(config_key="default").delete()
-        from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
+        from apps.skill.config.portal.creation_catalog import clear_creation_catalog_cache
 
-        get_ssot_catalog.cache_clear()
+        clear_creation_catalog_cache()
 
     def tearDown(self):
-        from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
+        from apps.skill.config.portal.creation_catalog import clear_creation_catalog_cache
 
-        get_ssot_catalog.cache_clear()
+        clear_creation_catalog_cache()
 
     def test_ensure_defaults_imports_disk_catalog_to_db(self):
         self.assertTrue(CreationFormOverrideService.ensure_defaults())

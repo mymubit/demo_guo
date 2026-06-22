@@ -31,42 +31,47 @@ import {
 import ProjectSpotlightCard from '@/components/admin/ProjectSpotlightCard'
 import { renderLucideIcon } from '@/utils/renderLucideIcon'
 
-const STATUS_OPTIONS = [
-  { key: '', label: '全部状态' },
-  { key: 'draft', label: '立项中' },
-  { key: 'planning', label: '策划中' },
-  { key: 'writing', label: '创作中' },
-  { key: 'reviewing', label: '质检中' },
-  { key: 'scoring', label: '评分中' },
-  { key: 'ready', label: '可发布' },
-  { key: 'blocked', label: '需修改' },
+const STAGE_OPTIONS = [
+  { key: '', label: '全部阶段' },
+  { key: 'strategy', label: '战略选题' },
+  { key: 'worldbuilding', label: '世界构建' },
+  { key: 'plot_design', label: '剧情设计' },
+  { key: 'writing', label: '剧本创作' },
+  { key: 'review', label: '评审质控' },
+  { key: 'polish', label: '修改润色' },
+  { key: 'production', label: '制作宣发' },
+  { key: 'compliance', label: '合规审查' },
+  { key: 'delivered', label: '已交付' },
+  { key: 'ready', label: '可交付' },
 ]
 
 const STATUS_TONE = {
+  delivered: 'success',
   ready: 'success',
-  blocked: 'danger',
+  compliance: 'warning',
   writing: 'warning',
-  reviewing: 'warning',
-  scoring: 'warning',
-  planning: 'default',
-  draft: 'default',
+  review: 'warning',
+  polish: 'warning',
+  production: 'warning',
+  plot_design: 'default',
+  worldbuilding: 'default',
+  strategy: 'default',
 }
 
-const MODE_OPTIONS = [
-  { key: '', label: '全部模式' },
-  { key: 'workspace', label: '工作台' },
-  { key: 'auto', label: '一键生成' },
-  { key: 'step', label: '分步' },
+const TRACK_OPTIONS = [
+  { key: '', label: '全部轨道' },
+  { key: 'fast', label: '快速通道' },
+  { key: 'expert', label: '专家通道' },
 ]
 
 const QUICK_FILTERS = [
   { id: 'all', label: '全部项目', facetKey: 'all', icon: ListFilter },
-  { id: 'running', label: '创作中', facetKey: 'running', icon: Loader2, status: 'writing' },
-  { id: 'failed', label: '需修改', facetKey: 'failed', icon: XCircle, status: 'blocked' },
-  { id: 'awaiting', label: '质检中', facetKey: 'awaiting', icon: Clock, status: 'reviewing' },
+  { id: 'running', label: '执行中', facetKey: 'running', icon: Loader2, status: 'running' },
+  { id: 'failed', label: '有失败', facetKey: 'failed', icon: XCircle, status: 'failed_run' },
+  { id: 'awaiting', label: '评审质控', facetKey: 'awaiting', icon: Clock, status: 'review' },
   {
     id: 'failed_run',
-    label: '有失败 run',
+    label: '失败记录',
     facetKey: 'has_failed_run',
     icon: AlertTriangle,
     failedRun: true,
@@ -75,15 +80,17 @@ const QUICK_FILTERS = [
 
 function activeQuickFilterId(status, hasFailedRun) {
   if (hasFailedRun) return 'failed_run'
-  if (status === 'writing') return 'running'
-  if (status === 'blocked') return 'failed'
-  if (status === 'reviewing') return 'awaiting'
+  if (status === 'running') return 'running'
+  if (status === 'failed_run') return 'failed'
+  if (status === 'review') return 'awaiting'
   if (!status) return 'all'
   return ''
 }
 
-function isProjectBusy(status) {
-  return ['writing', 'reviewing', 'scoring', 'planning'].includes(status)
+function isProjectBusy(row) {
+  const busyStages = ['writing', 'review', 'polish', 'production', 'compliance', 'plot_design']
+  const stage = row.drama?.current_stage || row.status
+  return busyStages.includes(stage)
 }
 
 export default function CreationProjectsPage() {
@@ -93,7 +100,7 @@ export default function CreationProjectsPage() {
 
   const keyword = searchParams.get('q') || ''
   const status = searchParams.get('status') || ''
-  const pipelineMode = searchParams.get('mode') || ''
+  const trackMode = searchParams.get('track') || ''
   const hasFailedRun = searchParams.get('failed_run') === '1'
   const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10) || 1)
 
@@ -143,7 +150,7 @@ export default function CreationProjectsPage() {
         facets: '1',
         keyword: keyword.trim() || undefined,
         status: status || undefined,
-        pipeline_mode: pipelineMode || undefined,
+        track_mode: trackMode || undefined,
         has_failed_run: hasFailedRun ? 'true' : undefined,
       })
       const pageInfo = res.pagination
@@ -161,7 +168,7 @@ export default function CreationProjectsPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, keyword, status, pipelineMode, hasFailedRun])
+  }, [page, keyword, status, trackMode, hasFailedRun])
 
   useEffect(() => {
     load()
@@ -176,8 +183,8 @@ export default function CreationProjectsPage() {
 
   const spotlightProjects = useMemo(() => {
     if (!items?.length) return []
-    const running = items.find((p) => p.status === 'writing')
-    const completed = items.find((p) => p.status === 'ready')
+    const running = items.find((p) => p.status === 'writing' || p.drama?.current_stage === 'writing')
+    const completed = items.find((p) => p.status === 'delivered' || p.drama?.delivery_status === 'delivered')
     const picked = []
     if (running) picked.push(running)
     if (completed && completed.project_id !== running?.project_id) picked.push(completed)
@@ -245,14 +252,31 @@ export default function CreationProjectsPage() {
       ),
     },
     {
+      key: 'drama',
+      title: 'Drama 轨道',
+      render: (row) => {
+        const d = row.drama
+        if (!d) return <span className="text-navy-500 text-xs">—</span>
+        return (
+          <div className="text-xs space-y-0.5 min-w-[100px]">
+            <p className="text-indigo-300">{d.track_mode_display || d.track_mode}</p>
+            <p className="text-navy-300">{d.current_stage_display || d.current_stage}</p>
+            <p className="text-gold-400/90">{d.completion_rate ?? 0}%</p>
+          </div>
+        )
+      },
+    },
+    {
       key: 'status',
       title: '状态',
       render: (row) => (
         <div className="space-y-1">
-          <AdminBadge tone={STATUS_TONE[row.status] || 'default'}>
-            {row.status_text || row.status}
+          <AdminBadge tone={STATUS_TONE[row.status] || STATUS_TONE[row.drama?.current_stage] || 'default'}>
+            {row.drama?.current_stage_display || row.status_text || row.status}
           </AdminBadge>
-          <p className="text-[10px] text-navy-400">{row.pipeline_mode}</p>
+          {row.drama?.track_mode_display ? (
+            <p className="text-[10px] text-navy-400">{row.drama.track_mode_display}</p>
+          ) : null}
         </div>
       ),
     },
@@ -334,7 +358,7 @@ export default function CreationProjectsPage() {
       title: '',
       render: (row) => {
         const isDeleting = deletingId === row.project_id
-        const busy = isProjectBusy(row.status)
+        const busy = isProjectBusy(row)
         return (
           <div className="flex items-center gap-2">
             <ChevronRight className="w-4 h-4 text-gold-400/80" />
@@ -360,7 +384,7 @@ export default function CreationProjectsPage() {
       <AdminPageHeader
         crumbs={[{ label: 'Console' }, { label: '创作项目' }]}
         title={`创作项目 · ${runningCount ?? 0} 进行中`}
-        subtitle="点击任意项目进入详情工作台（基本信息 / 执行记录 / AI 产物 / 质量缺陷）"
+        subtitle="Drama 36 角色轨 · 点击项目查看角色执行轨迹与产物"
       />
 
       {spotlightProjects.length > 0 ? (
@@ -422,18 +446,18 @@ export default function CreationProjectsPage() {
           onChange={(e) => patchParams({ status: e.target.value, failed_run: false })}
           className="sf-control"
         >
-          {STATUS_OPTIONS.map((o) => (
+          {STAGE_OPTIONS.map((o) => (
             <option key={o.key || 'all'} value={o.key}>
               {o.label}
             </option>
           ))}
         </select>
         <select
-          value={pipelineMode}
-          onChange={(e) => patchParams({ mode: e.target.value })}
+          value={trackMode}
+          onChange={(e) => patchParams({ track: e.target.value })}
           className="sf-control"
         >
-          {MODE_OPTIONS.map((o) => (
+          {TRACK_OPTIONS.map((o) => (
             <option key={o.key || 'all'} value={o.key}>
               {o.label}
             </option>

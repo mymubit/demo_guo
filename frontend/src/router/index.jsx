@@ -127,6 +127,16 @@ function PageLoading({ children }) {
   )
 }
 
+function CreationRedirect() {
+  const { search } = useLocation()
+  const params = new URLSearchParams(search)
+  const projectId = params.get('project')
+  if (projectId) {
+    return <Navigate to={`/drama/workspace/${projectId}`} replace />
+  }
+  return <Navigate to="/drama" replace />
+}
+
 function RootLayout() {
   return (
     <>
@@ -155,7 +165,11 @@ const appRoutes = [
       // 旧创作路由 → 重定向到新 Drama Skills 工作室
       {
         path: '/creation',
-        element: <Navigate to="/drama" replace />,
+        element: (
+          <PrivateRoute>
+            <CreationRedirect />
+          </PrivateRoute>
+        ),
       },
       // Drama Skills 创作工作室（主入口）
       {

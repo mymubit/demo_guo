@@ -182,8 +182,7 @@ class AgentStreamService:
                     run_params={**params, "stream": True, "trace_id": trace_id},
                     overwrite_mode=IndependentAgentService._resolve_overwrite_mode(agent, params),  # noqa: SLF001
                 )
-                locked.fusion_status = Project.FUSION_WRITING
-                locked.save(update_fields=["fusion_status", "updated_at"])
+                locked.save(update_fields=["updated_at"])
                 project = locked
 
             try:

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -117,14 +117,14 @@ export default function OrdersPage() {
           />
           <Link
             to="/member"
-            className="inline-flex h-9 items-center gap-1 rounded-xl border border-white/10 px-3 text-xs text-navy-200 transition-colors hover:bg-white/5"
+            className="inline-flex h-9 items-center gap-1 rounded-xl border border-gray-200 px-3 text-xs text-gray-600 transition-colors hover:bg-white/5"
           >
             会员中心
             <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
 
-        <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-6 md:p-8">
+        <div className="rounded-2xl border border-gray-200 bg-white border border-gray-200 p-6 md:p-8">
           <OrdersListPanel
             orders={orders}
             orderActionLoading={orderActionLoading}
@@ -144,7 +144,7 @@ export default function OrdersPage() {
             }
           />
           {pagination.total_pages > 1 && (
-            <div className="mt-6 flex items-center justify-between gap-3 text-sm text-navy-300">
+            <div className="mt-6 flex items-center justify-between gap-3 text-sm text-gray-500">
               <span>
                 第 {pagination.page} / {pagination.total_pages} 页 · 共 {pagination.total} 条
               </span>
@@ -153,7 +153,7 @@ export default function OrdersPage() {
                   type="button"
                   disabled={pagination.page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="rounded-lg border border-white/10 px-3 py-1.5 disabled:opacity-40"
+                  className="rounded-lg border border-gray-200 px-3 py-1.5 disabled:opacity-40"
                 >
                   上一页
                 </button>
@@ -161,7 +161,7 @@ export default function OrdersPage() {
                   type="button"
                   disabled={pagination.page >= pagination.total_pages}
                   onClick={() => setPage((p) => p + 1)}
-                  className="rounded-lg border border-white/10 px-3 py-1.5 disabled:opacity-40"
+                  className="rounded-lg border border-gray-200 px-3 py-1.5 disabled:opacity-40"
                 >
                   下一页
                 </button>

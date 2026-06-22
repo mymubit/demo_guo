@@ -12,7 +12,7 @@ from typing import Any, Dict, List
 
 def get_drama_agent_defaults() -> List[Dict[str, Any]]:
     """获取 drama.* 全部36角色定义。"""
-    from apps.drama.defaults import DRAMA_ROLE_DEFAULTS
+    from apps.drama.defaults import DRAMA_FAST_TRACK_ROLES, DRAMA_ROLE_DEFAULTS
 
     return [
         {
@@ -26,6 +26,10 @@ def get_drama_agent_defaults() -> List[Dict[str, Any]]:
             "output_contract": role.get("output_contract") or {},
             "runtime_policy": role.get("runtime_policy") or {},
             "enabled": True,
+            "ui_schema": {
+                "dept": role["dept"],
+                "is_fast_track": role["agent_id"] in DRAMA_FAST_TRACK_ROLES,
+            },
         }
         for role in DRAMA_ROLE_DEFAULTS
     ]

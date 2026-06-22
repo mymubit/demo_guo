@@ -11,7 +11,6 @@ from django.db import IntegrityError, transaction
 from django.db.models import F
 
 from apps.common.agent_term import alias_agent_id
-from apps.workflow.services.pipeline_service import WorkflowPipelineService
 
 from .models import ActionPricing, CoinLedger, SiteCoinSettings, UserWallet
 
@@ -76,12 +75,9 @@ class BillingService:
         key = (action_key or "").strip()
         if not key:
             return "账户变动"
-        if key.startswith("pipeline.node."):
-            from apps.agent.runtime import pipeline_action_display_name
-
-            label = pipeline_action_display_name(key)
-            if label:
-                return label
+        if key.startswith("drama.agent."):
+            slug = key[len("drama.agent.") :].replace("-", " ")
+            return f"Drama·{slug}"
         row = BillingService.get_price_row(key)
         if row and row.display_name:
             return row.display_name
@@ -91,7 +87,6 @@ class BillingService:
             "membership.grant": "会员赠送",
             "recharge.grant": "充值到账",
             "creation.submit": "发起创作",
-            "pipeline.regenerate": "重跑 Agent 步骤",
         }
         if key in static_labels:
             return static_labels[key]
@@ -120,8 +115,8 @@ class BillingService:
             return "收入"
         if key.startswith("ai.generate."):
             return "AI 消耗"
-        if key.startswith("pipeline.node."):
-            return "主链 Agent"
+        if key.startswith("drama.agent."):
+            return "Drama 角色"
         if key == "creation.submit":
             return "发起创作"
         return "消耗"
@@ -198,22 +193,6 @@ class BillingService:
         if row:
             return int(row.coin_cost)
         return 0
-
-    @staticmethod
-    def node_action_key(node_index: int) -> str:
-        return f"pipeline.node.{node_index}"
-
-    @staticmethod
-    def get_node_coin_cost(node_index: int) -> int:
-        from apps.workflow.fusion.registry import FusionNodeRegistry
-
-        for node in FusionNodeRegistry().main_chain_nodes():
-            if node.get("index") == node_index and node.get("enabled", True):
-                cost = int(node.get("coin_cost") or 0)
-                if cost > 0:
-                    return cost
-                break
-        return BillingService.get_price(BillingService.node_action_key(node_index))
 
     @staticmethod
     @transaction.atomic
@@ -351,41 +330,6 @@ class BillingService:
         return wallet, wallet.balance
 
     @staticmethod
-    @transaction.atomic
-    def charge_node(user, node_index: int, *, reference_id: str = "") -> Tuple[UserWallet, int]:
-        cost = BillingService.get_node_coin_cost(node_index)
-        action_key = BillingService.node_action_key(node_index)
-        return BillingService.charge(
-            user,
-            action_key,
-            reference_id=reference_id,
-            remark=f"节点 {node_index}",
-            coin_cost=cost,
-        )
-
-    @staticmethod
-    def ensure_node_chargeable(user, node_index: int) -> None:
-        """执行节点前做会员与余额预检，避免余额不足时仍消耗模型算力。"""
-        action_key = BillingService.node_action_key(node_index)
-        cost = BillingService.get_node_coin_cost(node_index)
-        row = BillingService.get_price_row(action_key)
-        if row and row.member_only:
-            from apps.membership.services import MembershipService
-
-            ok, msg = MembershipService.check_membership_status(user)
-            if not ok:
-                raise PermissionDenied(msg or "该功能需有效会员")
-
-        if cost <= 0:
-            return
-
-        balance = BillingService.get_balance(user)
-        if balance < cost:
-            raise InsufficientCoins(
-                f"{BillingService.currency_name()}不足，需要 {cost}，当前 {balance}"
-            )
-
-    @staticmethod
     def _apply_delta(
         wallet: UserWallet,
         delta: int,
@@ -423,10 +367,9 @@ class BillingService:
 
     @staticmethod
     def estimate_auto_pipeline_cost() -> int:
-        total = BillingService.get_price("creation.submit")
-        for cfg in WorkflowPipelineService.portal_main_chain():
-            total += cfg.get("coin_cost") or BillingService.get_node_coin_cost(cfg["index"])
-        return total
+        from apps.skill.drama_pricing import estimate_fast_track_cost
+
+        return estimate_fast_track_cost()
 
     @staticmethod
     def list_active_pricing() -> List[Dict[str, Any]]:
@@ -517,4 +460,3 @@ def refund_coins(
     )
 
 
-PipelineOrchestrationService = WorkflowPipelineService

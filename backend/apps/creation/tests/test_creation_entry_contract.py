@@ -98,16 +98,16 @@ class CreationEntryConfigurableValidationTests(TestCase):
 
 class CreationEntryCatalogContractTests(TestCase):
     def test_catalog_keeps_from_reference_required_reference_block(self):
-        from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
+        from apps.skill.config.portal.creation_catalog import get_creation_catalog
 
-        catalog = get_ssot_catalog().public_catalog()
+        catalog = get_creation_catalog().public_catalog()
         profile = (catalog.get("creationEntryProfiles") or {}).get("from-reference") or {}
         self.assertEqual((profile.get("show") or {}).get("referenceBlock"), "required")
 
     def test_catalog_includes_entry_display_meta_defaults(self):
-        from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
+        from apps.skill.config.portal.creation_catalog import get_creation_catalog
 
-        catalog = get_ssot_catalog().public_catalog()
+        catalog = get_creation_catalog().public_catalog()
         profile = (catalog.get("creationEntryProfiles") or {}).get("from-scratch") or {}
         self.assertEqual(profile.get("tag"), "原创")
         self.assertEqual(profile.get("headline"), "原创短剧")
@@ -116,9 +116,9 @@ class CreationEntryCatalogContractTests(TestCase):
         self.assertGreaterEqual(len(profile.get("steps") or []), 3)
 
     def test_catalog_includes_pipeline_hints_defaults(self):
-        from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
+        from apps.skill.config.portal.creation_catalog import get_creation_catalog
 
-        catalog = get_ssot_catalog().public_catalog()
+        catalog = get_creation_catalog().public_catalog()
         profile = (catalog.get("creationEntryProfiles") or {}).get("from-outline") or {}
         hints = profile.get("pipelineHints") or {}
         self.assertEqual(hints.get("prefilledSteps"), [1])
@@ -130,7 +130,7 @@ class CreationEntryCatalogContractTests(TestCase):
         catalog = _portal_catalog()
         self.assertIn("executionPlan", catalog)
         plan = catalog["executionPlan"]
-        self.assertEqual(plan.get("mode"), "independent")
+        self.assertEqual(plan.get("mode"), "drama_skills")
         self.assertIn("hint", plan)
         self.assertEqual(catalog.get("mainChain"), [])
 

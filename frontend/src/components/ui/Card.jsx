@@ -3,11 +3,11 @@ import { cn } from '@/utils/cn'
 import { hoverLift } from '@/constants/motion'
 
 const variants = {
-  default: 'border border-white/5 bg-slate-900/60 shadow-card',
-  glass: 'sf-console-panel shadow-card',
-  gold: 'rounded-2xl border border-gold-400/30 bg-gold-400/5 shadow-gold',
-  subtle: 'border border-white/5 bg-slate-900/40',
-  flat: 'border border-white/5 bg-slate-950/50',
+  default: 'border border-gray-200 bg-white shadow-sm',
+  glass: 'border border-gray-200 bg-white shadow-sm',
+  gold: 'rounded-2xl border border-accent-300/50 bg-accent-50 shadow-sm',
+  subtle: 'border border-gray-100 bg-gray-50',
+  flat: 'border border-gray-200 bg-white',
 }
 
 const paddings = {
@@ -35,10 +35,10 @@ export default function Card({
     <Element
       {...motionProps}
       className={cn(
-        'rounded-2xl',
+        'rounded-xl',
         variants[variant] || variants.default,
         paddings[padding] || paddings.md,
-        interactive && 'transition-shadow hover:shadow-card-hover',
+        interactive && 'transition-shadow hover:shadow-md hover:border-gray-300',
         className,
       )}
       {...props}

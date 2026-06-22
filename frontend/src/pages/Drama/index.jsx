@@ -1,5 +1,6 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { createDramaProject, getDramaProjects } from '../../services/drama';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -39,15 +40,26 @@ export default function DramaIndex() {
     queryKey: ['drama-projects'],
     queryFn: getDramaProjects,
   });
-  const projects = projectsRes?.data?.results || projectsRes?.data || [];
+  const projects = Array.isArray(projectsRes)
+    ? projectsRes
+    : Array.isArray(projectsRes?.data)
+      ? projectsRes.data
+      : [];
 
   const createMut = useMutation({
     mutationFn: createDramaProject,
-    onSuccess: (res) => {
-      queryClient.invalidateQueries(['drama-projects']);
-      const id = res?.data?.data?.id;
-      if (id) navigate(`/drama/workspace/${id}`);
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['drama-projects'] });
+      const id = data?.id;
+      if (!id) {
+        toast.error('项目已创建，但未返回项目 ID');
+        return;
+      }
       setShowNew(false);
+      navigate(`/drama/workspace/${id}`);
+    },
+    onError: (err) => {
+      toast.error(err?.message || '创建失败，请稍后重试');
     },
   });
 
@@ -57,7 +69,7 @@ export default function DramaIndex() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-full">
       {/* 顶部标题栏 */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -128,7 +140,7 @@ export default function DramaIndex() {
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="暂定剧名，可后续修改"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="sf-control w-full rounded-lg px-3 py-2 text-sm text-gray-900 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -137,7 +149,7 @@ export default function DramaIndex() {
                   <select
                     value={form.genre_code}
                     onChange={(e) => setForm({ ...form, genre_code: e.target.value })}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                  className="sf-control w-full rounded-lg px-3 py-2 text-sm text-gray-900 bg-white"
                   >
                     {GENRE_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>{o.label}</option>
@@ -152,7 +164,7 @@ export default function DramaIndex() {
                     max={200}
                     value={form.total_episodes}
                     onChange={(e) => setForm({ ...form, total_episodes: +e.target.value })}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                  className="sf-control w-full rounded-lg px-3 py-2 text-sm text-gray-900 bg-white"
                   />
                 </div>
               </div>
@@ -162,7 +174,7 @@ export default function DramaIndex() {
                   <select
                     value={form.target_platform}
                     onChange={(e) => setForm({ ...form, target_platform: e.target.value })}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                  className="sf-control w-full rounded-lg px-3 py-2 text-sm text-gray-900 bg-white"
                   >
                     {PLATFORM_OPTIONS.map((o) => (
                       <option key={o.value} value={o.value}>{o.label}</option>
@@ -174,7 +186,7 @@ export default function DramaIndex() {
                   <select
                     value={form.track_mode}
                     onChange={(e) => setForm({ ...form, track_mode: e.target.value })}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                  className="sf-control w-full rounded-lg px-3 py-2 text-sm text-gray-900 bg-white"
                   >
                     <option value="fast">快速通道（8角色）</option>
                     <option value="expert">专家通道（36角色）</option>
@@ -188,7 +200,7 @@ export default function DramaIndex() {
                   onChange={(e) => setForm({ ...form, core_idea: e.target.value })}
                   placeholder="例：全职太太隐忍三年，发现丈夫秘密后觉醒反击"
                   rows={2}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none"
+                  className="sf-control w-full rounded-lg px-3 py-2 text-sm text-gray-900 bg-white resize-none"
                 />
               </div>
               <div className="flex gap-3 pt-2">

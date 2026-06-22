@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-"""【运营 M4-M6】运营监控中心单测。
+"""????M4-M6???????????
 
-覆盖：
-  • CreationFeedback 增/查/处理
-  • UserBehaviorEvent 上报
-  • 内容质量聚合（content_quality_summary / funnel / stuck）
-  • 弃用项目扫描
-  • 配置命中率自维护
-  • Dashboard 聚合
+????
+  ??CreationFeedback ??????
+  ??UserBehaviorEvent ??
+  ?????????content_quality_summary / funnel / stuck??
+  ????????
+  ??????????
+  ??Dashboard ??
 """
 from datetime import timedelta
 from unittest import mock
@@ -36,10 +36,9 @@ class CreationFeedbackTests(TestCase):
         self.user = User.objects.create_user(phone="13800001001", password="x")
         self.project = Project.objects.create(
             user=self.user,
-            title="运营测试项目",
+            title="??????",
             theme="sweet-pet",
             episode_count=20,
-            fusion_status=Project.FUSION_WRITING,
             pipeline_mode=Project.MODE_WORKSPACE,
             creation_entry="from-scratch",
         )
@@ -50,16 +49,16 @@ class CreationFeedbackTests(TestCase):
             project=self.project,
             category=CreationFeedback.Category.BUG,
             severity=CreationFeedback.Severity.P1,
-            title="大纲界面卡顿",
-            content="进入第 3 屏后鼠标会卡 2s",
+            title="??????",
+            content="????3 ?????? 2s",
         )
         self.assertEqual(feedback.status, CreationFeedback.Status.OPEN)
         self.assertEqual(feedback.severity, "P1")
-        self.assertIn("大纲界面卡顿", feedback.title)
+        self.assertIn("??????", feedback.title)
 
     def test_default_severity(self):
         fb = CreationFeedback.objects.create(
-            user=self.user, title="一般建议", content="",
+            user=self.user, title="????", content="",
         )
         self.assertEqual(fb.severity, "P2")
         self.assertEqual(fb.source, CreationFeedback.Source.WORKSPACE)
@@ -106,27 +105,60 @@ class ContentQualityTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(phone="13800001003", password="x")
         now = timezone.now()
+        from apps.drama.models import DramaProject, DramaRoleExecution
 
-        # 已完成 + 导出了 2 次
         self.p1 = Project.objects.create(
             user=self.user, title="p1", theme="t1", episode_count=10,
-            fusion_status=Project.FUSION_READY, pipeline_mode=Project.MODE_WORKSPACE,
+            pipeline_mode=Project.MODE_WORKSPACE,
             creation_entry="from-scratch", user_edit_count=5, final_export_count=2,
             created_at=now - timedelta(days=2),
         )
-        # 进行中 + 编辑过 3 次
+        DramaProject.objects.create(
+            id=self.p1.id,
+            project_id=self.p1.id,
+            user=self.user,
+            title="p1",
+            genre_code="t1",
+            total_episodes=10,
+            delivery_status="delivered",
+            current_stage=DramaProject.Stage.DELIVERED,
+        )
         self.p2 = Project.objects.create(
             user=self.user, title="p2", theme="t2", episode_count=8,
-            fusion_status=Project.FUSION_WRITING, pipeline_mode=Project.MODE_WORKSPACE,
+            pipeline_mode=Project.MODE_WORKSPACE,
             creation_entry="from-outline", user_edit_count=3, final_export_count=0,
             created_at=now - timedelta(days=1),
         )
-        # 失败 + 弃用
+        DramaProject.objects.create(
+            id=self.p2.id,
+            project_id=self.p2.id,
+            user=self.user,
+            title="p2",
+            genre_code="t2",
+            total_episodes=8,
+            current_stage=DramaProject.Stage.WRITING,
+        )
         self.p3 = Project.objects.create(
             user=self.user, title="p3", theme="t3", episode_count=5,
-            fusion_status=Project.FUSION_BLOCKED, pipeline_mode=Project.MODE_WORKSPACE,
+            pipeline_mode=Project.MODE_WORKSPACE,
             creation_entry="from-scratch", user_edit_count=0, final_export_count=0,
             abandoned_at=now - timedelta(days=1), created_at=now - timedelta(days=3),
+        )
+        dp3 = DramaProject.objects.create(
+            id=self.p3.id,
+            project_id=self.p3.id,
+            user=self.user,
+            title="p3",
+            genre_code="t3",
+            total_episodes=5,
+            current_stage=DramaProject.Stage.WRITING,
+        )
+        DramaRoleExecution.objects.create(
+            drama_project=dp3,
+            agent_id="drama.topic-planner",
+            agent_name_zh="?????",
+            status=DramaRoleExecution.Status.FAILED,
+            error_message="????",
         )
 
     def test_content_quality_summary(self):
@@ -146,7 +178,7 @@ class ContentQualityTests(TestCase):
         self.assertEqual(f["completed"], 1)
         self.assertEqual(f["exported"], 1)
         self.assertEqual(f["abandoned"], 1)
-        # 4 个 stage
+        # 4 ??stage
         self.assertEqual(len(f["stages"]), 4)
 
     def test_record_user_edit_clears_abandoned(self):
@@ -165,11 +197,22 @@ class ContentQualityTests(TestCase):
         self.assertEqual(self.p1.final_export_count, 3)
 
     def test_detect_and_mark_abandoned_marks_7d_old(self):
+        from apps.drama.models import DramaProject
+
         old = Project.objects.create(
             user=self.user, title="old", theme="t", episode_count=5,
-            fusion_status=Project.FUSION_WRITING, pipeline_mode=Project.MODE_WORKSPACE,
+            pipeline_mode=Project.MODE_WORKSPACE,
             creation_entry="from-scratch",
             created_at=timezone.now() - timedelta(days=20),
+        )
+        DramaProject.objects.create(
+            id=old.id,
+            project_id=old.id,
+            user=self.user,
+            title="old",
+            genre_code="t",
+            total_episodes=5,
+            current_stage=DramaProject.Stage.WRITING,
         )
         count = detect_and_mark_abandoned(days=7)
         self.assertGreaterEqual(count, 1)
@@ -178,16 +221,16 @@ class ContentQualityTests(TestCase):
 
     def test_stuck_projects(self):
         stuck = stuck_projects(days=3, limit=10)
-        # p2 是 STATUS_RUNNING + 创建时间在 3 天内，不算卡点
-        # p3 是 STATUS_FAILED，不在候选
-        # 因此默认无卡点（p1 已完成、p3 已弃用）
+        # p2 ??STATUS_RUNNING + ??????3 ????????
+        # p3 ??STATUS_FAILED??????
+        # ????????p1 ????p3 ????
         self.assertIsInstance(stuck, list)
 
 
 class FeedbackSummaryTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(phone="13800001004", password="x")
-        # 不同分类/状态/等级的反馈
+        # ????/?????????
         for i in range(3):
             CreationFeedback.objects.create(
                 user=self.user, title=f"bug {i}", content="x",

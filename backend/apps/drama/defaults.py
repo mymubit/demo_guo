@@ -598,6 +598,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
         "workspace_order": 404,
         "default_output_artifact_key": "adaptation_plan",
         "input_contract": {
+            "project_fields": ["theme", "core_idea", "episode_count", "novel_text", "creation_entry"],
             "params": ["mode", "source_content", "target_genre", "episode_count"],
             "required_artifacts": [],
         },

@@ -9,7 +9,6 @@ from django.contrib import messages
 from django.utils.html import format_html
 
 from apps.agent.models import AgentRegistryConfig
-from apps.workflow.models import FusionJsonSchema, FusionPipelineNode, FusionPipelinePack
 from apps.skill.models import (
     AgentSkillDefinition,
     AgentSkillSection,
@@ -306,59 +305,6 @@ class AgentRegistryConfigAdmin(admin.ModelAdmin):
         except Exception:  # noqa: BLE001
             pass
         self.message_user(request, "Agent 注册表已保存，运行时缓存已刷新。")
-
-
-class FusionPipelineNodeInline(admin.TabularInline):
-    model = FusionPipelineNode
-    extra = 0
-    fields = [
-        "chain_order",
-        "website_index",
-        "fusion_node_id",
-        "name",
-        "runner_type",
-        "runner_path",
-        "output_key",
-        "artifact_key",
-        "pipeline_result_key",
-        "extra_artifact_keys",
-        "schema",
-        "enabled",
-        "coin_cost",
-        "is_terminal",
-        "fusion_status",
-    ]
-    ordering = ["chain_order"]
-
-
-@admin.register(FusionPipelinePack)
-class FusionPipelinePackAdmin(admin.ModelAdmin):
-    list_display = ["version", "is_active", "nodes_count", "imported_from_root", "updated_at"]
-    list_filter = ["is_active"]
-    search_fields = ["version", "notes", "imported_from_root"]
-    readonly_fields = ["id", "created_at", "updated_at"]
-    inlines = [FusionPipelineNodeInline]
-
-    @admin.display(description="节点数")
-    def nodes_count(self, obj):
-        return obj.nodes.count()
-
-    def save_model(self, request, obj, form, change):
-        super().save_model(request, obj, form, change)
-        try:
-            
-
-            pass  # FusionPipelineDbService removed
-        except Exception:  # noqa: BLE001
-            pass
-
-
-@admin.register(FusionJsonSchema)
-class FusionJsonSchemaAdmin(admin.ModelAdmin):
-    list_display = ["schema_key", "filename", "pack", "updated_at"]
-    list_filter = ["pack"]
-    search_fields = ["schema_key", "filename"]
-    readonly_fields = ["id", "updated_at"]
 
 
 # ============================================================
