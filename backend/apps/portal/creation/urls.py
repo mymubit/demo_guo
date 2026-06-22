@@ -21,6 +21,12 @@ from .views import (
     IndependentAgentEstimateView,
     ProjectArtifactView,
 )
+from .views_stream import (
+    IndependentAgentStreamView,
+    ProjectAgentNotesView,
+    ProjectChunksContinueView,
+    ProjectChunksView,
+)
 from .fusion_views import (
     AgentCatalogView,
     AgentWorkspaceCatalogView,
@@ -68,6 +74,26 @@ urlpatterns = [
         "projects/<str:project_id>/artifacts/<str:artifact_key>/",
         ProjectArtifactView.as_view(),
         name="creation-project-artifact",
+    ),
+    path(
+        "projects/<str:project_id>/agents/<str:agent_id>/stream/",
+        IndependentAgentStreamView.as_view(),
+        name="creation-independent-agent-stream",
+    ),
+    path(
+        "projects/<str:project_id>/chunks/",
+        ProjectChunksView.as_view(),
+        name="creation-project-chunks",
+    ),
+    path(
+        "projects/<str:project_id>/chunks/continue/",
+        ProjectChunksContinueView.as_view(),
+        name="creation-project-chunks-continue",
+    ),
+    path(
+        "projects/<str:project_id>/agent-notes/",
+        ProjectAgentNotesView.as_view(),
+        name="creation-project-agent-notes",
     ),
     path("submit/", CreationSubmitView.as_view(), name="creation-submit"),
     path("ai/generate/", AiFieldGenerateView.as_view(), name="creation-ai-generate"),

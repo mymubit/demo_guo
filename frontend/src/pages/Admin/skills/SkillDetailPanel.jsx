@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Pencil, Save } from 'lucide-react'
 import AdminEvolution from '@/pages/Admin/evolution/AdminEvolution'
-import SkillRulesPanel from '@/pages/Admin/agent/SkillRulesPanel'
 import {
   AdminDetailHeader,
   AdminField,
@@ -229,10 +228,6 @@ export default function SkillDetailPanel({
 
       {detailTab === 'evolution' ? (
         <AdminEvolution embedded filterSkillId={selected.skill_id} />
-      ) : null}
-
-      {detailTab === 'rules' ? (
-        <SkillRulesPanel embedded onMessage={onMessage} />
       ) : null}
 
       <AdminJsonDrawer

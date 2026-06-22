@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -12,6 +11,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { admin } from '@/services/api'
+import { AdminWorkbench, adminBtnSecondary } from '@/components/admin/workbench/AdminWorkbenchKit'
 import { LLM_PRICING_NOTE } from '@/utils/adminEconomics'
 import {
   EMPTY_LLM_PROVIDER,
@@ -253,7 +253,7 @@ export default function LlmConfigPanel({ onMessage }) {
   const [form, setForm] = useState({ ...EMPTY_LLM_PROVIDER })
   const [apiKeyTouched, setApiKeyTouched] = useState(false)
   const [busyId, setBusyId] = useState(null)
-  const [connectedProvidersOpen, setConnectedProvidersOpen] = useState(true)
+  const [activePanel, setActivePanel] = useState('')
 
   function notify(text, type = 'success') {
     const msg = formatAdminError(text, type)
@@ -291,6 +291,36 @@ export default function LlmConfigPanel({ onMessage }) {
   useEffect(() => {
     load()
   }, [])
+
+  useEffect(() => {
+    if (!loading && providers.length && !activePanel) {
+      setActivePanel(providers[0].id)
+      setEditingId(providers[0].id)
+      loadProviderForm(providers[0])
+      setCreating(false)
+    }
+  }, [loading, providers, activePanel])
+
+  function selectPanel(key) {
+    setActivePanel(key)
+    if (key === 'templates' || key === 'ops') {
+      closeEditor()
+      return
+    }
+    if (key === 'new') {
+      setCreating(true)
+      setEditingId(null)
+      setForm({ ...EMPTY_LLM_PROVIDER })
+      setApiKeyTouched(false)
+      return
+    }
+    const p = findProvider(key)
+    if (p) {
+      setCreating(false)
+      setEditingId(p.id)
+      loadProviderForm(p)
+    }
+  }
 
   const selectedProvider = editingId ? findProvider(editingId) : null
   const editorOpen = creating || !!selectedProvider
@@ -355,12 +385,14 @@ export default function LlmConfigPanel({ onMessage }) {
       (p) => p.catalog_id === preset.id || (p.model_name === preset.model_name && p.base_url === preset.base_url),
     )
     if (existing) {
+      setActivePanel(existing.id)
       setCreating(false)
       setEditingId(existing.id)
       loadProviderForm(existing)
       return
     }
     applyPreset(preset)
+    setActivePanel('new')
   }
 
   function closeEditor() {
@@ -531,350 +563,185 @@ export default function LlmConfigPanel({ onMessage }) {
     : 0
   const totalNodes = routingPlan ? Object.keys(routingPlan.nodes || {}).length : 0
 
-  return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-      <div className="sf-console-panel px-4 py-3 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-4">
-          <label className="flex items-center gap-2 text-sm text-white cursor-pointer">
-            <input
-              type="checkbox"
-              checked={globalEnabled}
-              onChange={(e) => toggleGlobal(e.target.checked)}
-              className="w-4 h-4"
-            />
-            启用 LLM
-          </label>
-          <span
-            className={`text-xs px-2.5 py-1 rounded-full ${
-              ready ? 'bg-green-500/15 text-green-400' : 'bg-amber-500/15 text-amber-300'
-            }`}
-          >
-            {ready ? '可创作' : '未就绪'}
-          </span>
-          {status?.active_provider_name ? (
-            <span className="text-xs text-navy-400">
-              全局默认：<span className="text-purple-300">{status.active_provider_name}</span>
-            </span>
+  const sidebarItems = [
+    ...providers.map((p) => ({ ...p, _kind: 'provider' })),
+    { id: 'templates', _kind: 'meta', name: '接入新模型', model_name: '从模板目录选择' },
+    { id: 'ops', _kind: 'meta', name: '高级运维', model_name: '批量 / .env / 测试' },
+    { id: 'new', _kind: 'meta', name: '手动添加', model_name: '非模板自定义' },
+  ]
+
+  const toolbar = (
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center gap-4">
+        <label className="flex items-center gap-2 text-sm text-white cursor-pointer">
+          <input type="checkbox" checked={globalEnabled} onChange={(e) => toggleGlobal(e.target.checked)} className="w-4 h-4" />
+          启用 LLM
+        </label>
+        <span className={`text-xs px-2.5 py-1 rounded-full ${ready ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'}`}>
+          {ready ? '可创作' : '未就绪'}
+        </span>
+        {status?.active_provider_name ? (
+          <span className="text-xs text-navy-400">全局默认：<span className="text-purple-300">{status.active_provider_name}</span></span>
+        ) : null}
+        {totalNodes ? (
+          <span className="text-xs text-navy-400">路由已绑 {boundNodeCount}/{totalNodes}</span>
+        ) : null}
+      </div>
+      <p className="text-[10px] text-navy-500 max-w-md">{LLM_PRICING_NOTE}</p>
+    </div>
+  )
+
+  const renderDetail = () => {
+    if (activePanel === 'templates') {
+      return (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold text-white">{showAllPresets ? '全部模型模板' : '常用模板'}</h3>
+            <button type="button" onClick={() => setShowAllPresets((v) => !v)} className="text-xs text-gold-300">
+              {showAllPresets ? '只看常用' : '显示全部'}
+            </button>
+          </div>
+          <div className="space-y-2 max-h-[calc(100vh-400px)] overflow-y-auto pr-1">
+            {presetGroups.map((group) => {
+              const configuredInGroup = group.items.filter((p) => p.configured).length
+              const pricingInGroup = group.items.filter((p) => {
+                const row = catalog.find((c) => c.id === p.id) || p
+                return hasSavedCatalogPricing(row)
+              }).length
+              return (
+                <LlmVendorCollapse
+                  key={group.vendor}
+                  label={group.label}
+                  count={group.items.length}
+                  hint={`已接入 ${configuredInGroup}/${group.items.length} · 单价 ${pricingInGroup}/${group.items.length}`}
+                  defaultOpen={group.vendor === 'volcengine'}
+                >
+                  <LlmVendorCredentialForm
+                    vendor={group.vendor}
+                    credential={findVendorCredential(vendorCredentials, group.vendor)}
+                    onSaved={refreshFromResponse}
+                    onMessage={notify}
+                  />
+                  {group.items.map((preset) => {
+                    const catalogRow = catalog.find((c) => c.id === preset.id) || preset
+                    return (
+                      <LlmModelSetupRow
+                        key={preset.id || preset.preset_key}
+                        preset={preset}
+                        catalogRow={catalogRow}
+                        pricingDraft={pricing.drafts[preset.id] || {}}
+                        pricingSaving={pricing.savingId === preset.id}
+                        onPatchPricing={pricing.patchDraft}
+                        onSavePricing={pricing.saveRow}
+                        onConnect={() => handlePresetClick(preset)}
+                      />
+                    )
+                  })}
+                </LlmVendorCollapse>
+              )
+            })}
+          </div>
+        </div>
+      )
+    }
+
+    if (activePanel === 'ops') {
+      return (
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-white">高级运维</h3>
+          <p className="text-sm text-navy-400">同步目录种子、从 .env 一键接入、测试全局默认模型。</p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" disabled={!!busyId} onClick={handleSyncPresets} className={adminBtnSecondary()}>同步目录种子</button>
+            <button type="button" disabled={!!busyId} onClick={handleEnvSetup} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold-400/20 text-gold-300 text-sm">从 .env 一键接入</button>
+            <button type="button" disabled={!!busyId} onClick={() => handleTest(null)} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm border border-purple-500/30 text-purple-300">
+              <Sparkles className="w-4 h-4" />测试全局默认
+            </button>
+          </div>
+          {routingPlan ? (
+            <div className="rounded-xl border border-white/10 p-4 text-xs text-navy-300 space-y-2">
+              <p className="text-white text-sm font-medium">Agent 绑定概况</p>
+              <Link to="/admin/agent?tab=routes" className="text-gold-400 text-xs">前往 LLM 路由配置 →</Link>
+            </div>
           ) : null}
-          {totalNodes ? (
-            <span className="text-xs text-navy-400">
-              Agent 路由已绑 {boundNodeCount}/{totalNodes}
-            </span>
+        </div>
+      )
+    }
+
+    if (!editorOpen) {
+      return <p className="text-sm text-navy-400 py-12 text-center">从左侧选择已接入模型，或「接入新模型」</p>
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <h3 className="text-lg font-semibold text-white">{creating ? `接入：${form.name || '新模型'}` : `编辑：${selectedProvider?.name}`}</h3>
+            <p className="text-xs text-navy-400 mt-1">
+              {activeVendorCredential?.api_key_set ? '使用厂商共用 Key，填 model id 即可' : '请先保存厂商 API Key'}
+            </p>
+          </div>
+          {!creating && selectedProvider ? (
+            <button type="button" onClick={closeEditor} className="text-xs text-navy-400 hover:text-white">取消</button>
+          ) : null}
+        </div>
+        <LlmProviderFormFields
+          form={form}
+          setForm={setForm}
+          apiKeyTouched={apiKeyTouched}
+          setApiKeyTouched={setApiKeyTouched}
+          apiKeySet={selectedProvider?.api_key_set}
+          apiKeyUrl={catalog.find((c) => c.id === form.catalog_id)?.api_key_url}
+          vendorApiKeySet={!!activeVendorCredential?.api_key_set}
+          minimal
+        />
+        <div className="flex flex-wrap gap-2">
+          {creating ? (
+            <button type="button" disabled={busyId === 'create'} onClick={handleCreate} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl btn-gold text-sm">
+              <Save className="w-4 h-4" />{busyId === 'create' ? '保存中…' : '保存并接入'}
+            </button>
+          ) : selectedProvider ? (
+            <>
+              <button type="button" disabled={busyId === selectedProvider.id} onClick={() => handleUpdate(selectedProvider.id)} className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl btn-gold text-sm">
+                <Save className="w-4 h-4" />{busyId === selectedProvider.id ? '保存中…' : '保存'}
+              </button>
+              <button type="button" disabled={!!busyId} onClick={() => handleTest(selectedProvider.id)} className="px-4 py-2.5 rounded-xl text-sm border border-purple-500/30 text-purple-300">测试连通</button>
+              {!selectedProvider.is_active ? (
+                <button type="button" disabled={!!busyId} onClick={() => handleActivate(selectedProvider.id)} className="px-4 py-2.5 rounded-xl text-sm border border-gold-500/30 text-gold-300">设为全局默认</button>
+              ) : null}
+              <button type="button" disabled={!!busyId} onClick={() => handleDelete(selectedProvider.id)} className="p-2.5 rounded-xl text-red-400 hover:bg-red-500/10"><Trash2 className="w-4 h-4" /></button>
+            </>
           ) : null}
         </div>
       </div>
+    )
+  }
 
-      <div className="space-y-5">
-          <p className="text-xs text-navy-400">
-            {LLM_PRICING_NOTE}
-          </p>
-
-          {/* 已接入 */}
-          {providers.length > 0 ? (
-            <details
-              className="rounded-xl border border-white/10 bg-slate-900/40 group"
-              open={connectedProvidersOpen}
-              onToggle={(event) => setConnectedProvidersOpen(event.currentTarget.open)}
-            >
-              <summary className="cursor-pointer list-none px-4 py-3 flex items-center justify-between gap-2">
-                <span className="text-xs text-navy-400 font-medium">已接入（{providers.length}）</span>
-                <ChevronDown className="w-4 h-4 text-navy-400 transition group-open:rotate-180" />
-              </summary>
-              <div className="px-3 pb-3 pt-1 space-y-2 border-t border-white/5">
-                {providerGroups.map((group) => (
-                  <LlmVendorCollapse
-                    key={group.vendor}
-                    label={group.label}
-                    count={group.items.length}
-                    defaultOpen={group.items.some((p) => p.is_active) || group.vendor === 'volcengine'}
-                  >
-                    <div className="flex flex-wrap gap-2">
-                      {group.items.map((p) => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          onClick={() => {
-                            setCreating(false)
-                            setEditingId(p.id)
-                            loadProviderForm(p)
-                          }}
-                          className={`text-left px-3 py-2 rounded-xl border text-sm transition ${
-                            editingId === p.id && !creating
-                              ? 'border-gold-500/40 bg-gold-500/10 text-gold-200'
-                              : 'border-white/10 bg-white/[0.03] text-navy-200 hover:border-white/20'
-                          }`}
-                        >
-                          <span className="font-medium block">{p.name}</span>
-                          <span className="text-[10px] text-navy-300 font-mono">{p.model_name}</span>
-                          <span
-                            className={`text-[10px] block mt-0.5 ${
-                              p.catalog_id && p.catalog_input_price_per_million != null
-                                ? 'text-navy-400'
-                                : 'text-amber-400'
-                            }`}
-                          >
-                            {providerPricingHint(p, catalog)}
-                          </span>
-                          {p.is_active ? (
-                            <span className="text-[10px] text-gold-400 block mt-0.5">全局默认</span>
-                          ) : null}
-                        </button>
-                      ))}
-                    </div>
-                  </LlmVendorCollapse>
-                ))}
-              </div>
-            </details>
+  return (
+    <AdminWorkbench
+      listTitle="模型实例"
+      toolbar={toolbar}
+      listItems={sidebarItems}
+      selectedId={activePanel}
+      onSelect={selectPanel}
+      getItemId={(item) => item.id}
+      listEmpty={<p className="px-3 py-8 text-sm text-navy-400 text-center">暂无已接入模型，请从「接入新模型」开始</p>}
+      renderListItem={(item, { active, onSelect }) => (
+        <button
+          key={item.id}
+          type="button"
+          onClick={onSelect}
+          className={`w-full rounded-xl px-3 py-2.5 text-left border transition ${active ? 'border-gold-500/35 bg-gold-400/10' : 'border-transparent hover:bg-white/[0.06]'}`}
+        >
+          <div className="text-sm font-medium text-white truncate">{item.name}</div>
+          <div className="text-[10px] font-mono text-navy-400 truncate mt-0.5">{item.model_name || item._kind}</div>
+          {item._kind === 'provider' && item.is_active ? (
+            <span className="text-[10px] text-gold-400 mt-1 inline-block">全局默认</span>
           ) : null}
-
-          {/* 内联编辑器 */}
-          {editorOpen ? (
-            <div className="sf-console-panel p-5 border border-gold-500/25 space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <h4 className="text-white font-semibold">
-                    {creating ? `接入：${form.name || '新模型'}` : `编辑：${selectedProvider?.name}`}
-                  </h4>
-                  <p className="text-xs text-navy-400 mt-0.5">
-                    {activeVendorCredential?.api_key_set
-                      ? '只需填模型 ID，Key 使用厂商共用'
-                      : '请先在该厂商区块保存共用 API Key'}
-                  </p>
-                  {creating && form.catalog_id ? (
-                    <p className="text-xs text-navy-400 mt-1">
-                      {providerPricingHint(
-                        {
-                          catalog_id: form.catalog_id,
-                          catalog_input_price_per_million: catalog.find((c) => c.id === form.catalog_id)
-                            ?.input_price_per_million,
-                          catalog_output_price_per_million: catalog.find((c) => c.id === form.catalog_id)
-                            ?.output_price_per_million,
-                        },
-                        catalog,
-                      )}
-                    </p>
-                  ) : null}
-                  {!creating && selectedProvider && !selectedProvider.catalog_id ? (
-                    <p className="text-xs text-amber-400 mt-1">
-                      此实例未关联目录模板，Dashboard 的 LLM 成本无法按 Token 单价核算。请删除后从模板重新接入。
-                    </p>
-                  ) : null}
-                </div>
-                <button type="button" onClick={closeEditor} className="text-xs text-navy-400 hover:text-white">
-                  取消
-                </button>
-              </div>
-              <LlmProviderFormFields
-                form={form}
-                setForm={setForm}
-                apiKeyTouched={apiKeyTouched}
-                setApiKeyTouched={setApiKeyTouched}
-                apiKeySet={selectedProvider?.api_key_set}
-                apiKeyUrl={
-                  catalog.find((c) => c.id === form.catalog_id)?.api_key_url ||
-                  findVendorCredential(vendorCredentials, activeFormVendor)?.api_key_url ||
-                  vendors.find((v) => v.models?.some((m) => m.id === form.catalog_id))?.api_key_url
-                }
-                vendorApiKeySet={!!activeVendorCredential?.api_key_set}
-                minimal
-              />
-              <div className="flex flex-wrap gap-2">
-                {creating ? (
-                  <button
-                    type="button"
-                    disabled={busyId === 'create'}
-                    onClick={handleCreate}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl btn-gold text-sm"
-                  >
-                    <Save className="w-4 h-4" />
-                    {busyId === 'create' ? '保存中…' : '保存并接入'}
-                  </button>
-                ) : selectedProvider ? (
-                  <>
-                    <button
-                      type="button"
-                      disabled={busyId === selectedProvider.id}
-                      onClick={() => handleUpdate(selectedProvider.id)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl btn-gold text-sm"
-                    >
-                      <Save className="w-4 h-4" />
-                      {busyId === selectedProvider.id ? '保存中…' : '保存'}
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!!busyId}
-                      onClick={() => handleTest(selectedProvider.id)}
-                      className="px-4 py-2.5 rounded-xl text-sm border border-purple-500/30 text-purple-300"
-                    >
-                      测试连通
-                    </button>
-                    {!selectedProvider.is_active ? (
-                      <button
-                        type="button"
-                        disabled={!!busyId}
-                        onClick={() => handleActivate(selectedProvider.id)}
-                        className="px-4 py-2.5 rounded-xl text-sm border border-gold-500/30 text-gold-300"
-                      >
-                        设为全局默认
-                      </button>
-                    ) : null}
-                    <button
-                      type="button"
-                      disabled={!!busyId}
-                      onClick={() => handleDelete(selectedProvider.id)}
-                      className="p-2.5 rounded-xl text-red-400 hover:bg-red-500/10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
-
-          {/* 模板选择 */}
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm text-white font-medium">
-                {showAllPresets ? '全部模型模板' : '常用模板'}
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowAllPresets((v) => !v)}
-                className="text-xs text-navy-400 hover:text-gold-300"
-              >
-                {showAllPresets ? '只看常用' : '显示全部'}
-              </button>
-            </div>
-            <div className="space-y-2">
-              {presetGroups.map((group) => {
-                const configuredInGroup = group.items.filter((p) => p.configured).length
-                const pricingInGroup = group.items.filter((p) => {
-                  const row = catalog.find((c) => c.id === p.id) || p
-                  return hasSavedCatalogPricing(row)
-                }).length
-                return (
-                  <LlmVendorCollapse
-                    key={group.vendor}
-                    label={group.label}
-                    count={group.items.length}
-                    hint={`已接入 ${configuredInGroup}/${group.items.length} · 单价 ${pricingInGroup}/${group.items.length}`}
-                    defaultOpen={
-                      group.vendor === 'volcengine' ||
-                      group.items.some((p) => LLM_RECOMMENDED_PRESET_KEYS.has(p.preset_key || p.key))
-                    }
-                  >
-                    <LlmVendorCredentialForm
-                      vendor={group.vendor}
-                      credential={findVendorCredential(vendorCredentials, group.vendor)}
-                      onSaved={refreshFromResponse}
-                      onMessage={notify}
-                    />
-                    {group.items.map((preset) => {
-                      const catalogRow = catalog.find((c) => c.id === preset.id) || preset
-                      return (
-                        <LlmModelSetupRow
-                          key={preset.id || preset.preset_key}
-                          preset={preset}
-                          catalogRow={catalogRow}
-                          pricingDraft={pricing.drafts[preset.id] || {}}
-                          pricingSaving={pricing.savingId === preset.id}
-                          onPatchPricing={pricing.patchDraft}
-                          onSavePricing={pricing.saveRow}
-                          onConnect={() => handlePresetClick(preset)}
-                        />
-                      )
-                    })}
-                  </LlmVendorCollapse>
-                )
-              })}
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                setCreating(true)
-                setEditingId(null)
-                setForm({ ...EMPTY_LLM_PROVIDER })
-                setApiKeyTouched(false)
-              }}
-              className="inline-flex items-center gap-2 text-sm text-navy-400 hover:text-gold-300"
-            >
-              <Plus className="w-4 h-4" />
-              手动添加（非模板）
-            </button>
-          </div>
-
-          <details className="rounded-xl border border-white/10 bg-slate-900/40 group">
-            <summary className="cursor-pointer list-none px-4 py-3 flex items-center justify-between gap-2">
-              <span className="text-sm text-navy-300 font-medium">高级运维（部署 / 批量）</span>
-              <ChevronDown className="w-4 h-4 text-navy-400 transition group-open:rotate-180" />
-            </summary>
-            <div className="px-4 pb-4 pt-2 space-y-4 border-t border-white/5">
-              <p className="text-sm text-navy-400">同步目录种子、从 .env 一键接入、测试全局默认模型。日常改 Key / 模型 ID 请在上方操作。</p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  disabled={!!busyId}
-                  onClick={handleSyncPresets}
-                  className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-navy-200 hover:bg-white/[0.06]"
-                >
-                  同步目录种子
-                </button>
-                <button
-                  type="button"
-                  disabled={!!busyId}
-                  onClick={handleEnvSetup}
-                  className="px-4 py-2 rounded-xl btn-gold text-sm font-semibold"
-                >
-                  从 .env 一键接入
-                </button>
-                <button
-                  type="button"
-                  disabled={!!busyId}
-                  onClick={() => handleTest(null)}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm border border-purple-500/30 text-purple-300"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  测试全局默认模型
-                </button>
-              </div>
-              {routingPlan ? (
-                <div className="rounded-xl space-y-2 rounded-xl border border-white/10 p-4 text-xs text-navy-300">
-                  <p className="text-white text-sm font-medium">Agent 绑定概况</p>
-                  <p className="text-navy-400">
-                    详细绑定请在
-                    <Link to="/admin/agent?tab=routes" className="text-gold-400 mx-1">
-                      Agent 中心 · LLM 路由
-                    </Link>
-                    Tab 配置。
-                  </p>
-                  <div className="grid sm:grid-cols-2 gap-3 font-mono">
-                    <div>
-                      {Object.entries(routingPlan.nodes || {}).map(([id, meta]) => (
-                        <div key={id} className="flex justify-between gap-2 py-0.5">
-                          <span className="truncate">{id}</span>
-                          <span className={meta.provider_id ? 'text-green-400' : 'text-amber-300'}>
-                            {meta.provider_id ? '已绑' : '未绑'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    <div>
-                      {Object.entries(routingPlan.agents || {}).map(([id, meta]) => (
-                        <div key={id} className="flex justify-between gap-2 py-0.5">
-                          <span>{id}</span>
-                          <span className={meta.provider_id ? 'text-green-400' : 'text-amber-300'}>
-                            {meta.provider_id ? '已绑' : '未绑'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </details>
-      </div>
-    </motion.div>
+        </button>
+      )}
+      detailEmpty="选择左侧项"
+    >
+      {renderDetail()}
+    </AdminWorkbench>
   )
 }

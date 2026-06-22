@@ -11,7 +11,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.billing.services import BillingService
-from apps.workflow.services.pipeline_service import WorkflowPipelineService
 from apps.common.user_messages import safe_api_message
 from apps.portal.creation.legacy_gone import legacy_workspace_gone_response
 from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
@@ -31,21 +30,16 @@ def _portal_response(request, data: dict, *, legacy_marker: str, canonical_path:
 
 
 def _portal_catalog(*, pack_id: str | None = None) -> dict:
-    from apps.agent.catalog import enrich_portal_main_chain, portal_agent_catalog
+    from apps.agent.catalog import portal_agent_catalog
     from apps.workflow.pipeline_store import FusionPipelineDbService
-    from apps.workflow.services.flow_graph_service import FlowGraphPlanService
 
     default_pack = FusionPipelineDbService.resolve_pack_for_creation(pack_id)
     default_pack_id = str(default_pack.id) if default_pack else None
 
     catalog = get_ssot_catalog().public_catalog()
-    catalog["mainChain"] = enrich_portal_main_chain(
-        WorkflowPipelineService.portal_main_chain(pack_id=default_pack_id),
-        pack_id=default_pack_id,
-    )
-    catalog["executionPlan"] = FlowGraphPlanService.execution_plan_payload(
-        pack_id=default_pack_id
-    )
+    # 7 节点自动主链已下线；C 端使用独立 Agent 工作台（见 skill-agent/02-LEGACY-REMOVAL-PLAN.md）
+    catalog["mainChain"] = []
+    catalog["executionPlan"] = {"mode": "independent", "hint": "请使用独立 Agent 工作台逐个运行"}
     catalog["agentCatalog"] = portal_agent_catalog()
     catalog.pop("artifactKeys", None)
     catalog["currencyName"] = BillingService.currency_name()
@@ -73,39 +67,12 @@ class FusionCatalogView(APIView):
 
 
 class FusionNodesView(APIView):
-    """GET /api/creation/fusion/nodes/ — 主链节点（Agent 元数据 + 币价）。"""
+    """GET /api/creation/fusion/nodes/ — 已废弃（原 7 节点主链）。"""
 
     permission_classes = [AllowAny]
 
     def get(self, request):
-        from apps.agent.catalog import enrich_portal_main_chain
-        from apps.workflow.pipeline_store import FusionPipelineDbService
-
-        pack_id = (request.query_params.get("pack_id") or "").strip() or None
-        if pack_id:
-            pack = FusionPipelineDbService.get_pack_by_id(pack_id)
-            if pack is None or not pack.is_published_to_portal:
-                return Response(
-                    {"code": 40001, "message": "流水线不可用", "data": None},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-        else:
-            pack = FusionPipelineDbService.resolve_pack_for_creation(None)
-        resolved_id = str(pack.id) if pack else None
-
-        return _portal_response(
-            request,
-            {
-                "mainChain": enrich_portal_main_chain(
-                    WorkflowPipelineService.portal_main_chain(pack_id=resolved_id),
-                    pack_id=resolved_id,
-                ),
-                "pipelinePackId": resolved_id,
-                "currencyName": BillingService.currency_name(),
-            },
-            legacy_marker="/workflow/nodes",
-            canonical_path="/api/creation/fusion/nodes/",
-        )
+        return legacy_workspace_gone_response()
 
 
 class AgentCatalogView(APIView):

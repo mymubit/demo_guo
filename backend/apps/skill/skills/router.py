@@ -19,6 +19,41 @@ from apps.skill.models import AgentSkillDefinition
 logger = logging.getLogger(__name__)
 
 
+def pick_skill_version(
+    skill_id: str,
+    user_id: int | str,
+    *,
+    version: str = "latest",
+) -> Optional[AgentSkillDefinition]:
+    """文档 22：按 user_id + gray_traffic_salt 稳定分流。"""
+    if version != "latest":
+        return SkillRouter._get_by_version(skill_id, version)
+
+    candidates = list(
+        AgentSkillDefinition.objects.filter(
+            skill_id=skill_id,
+            lifecycle_status__in=[
+                AgentSkillDefinition.LIFECYCLE_ACTIVE,
+                AgentSkillDefinition.LIFECYCLE_GRAY,
+            ],
+        ).order_by("-published_at", "-created_at")
+    )
+    if not candidates:
+        return SkillRouter._get_fallback(skill_id)
+
+    active_versions = [c for c in candidates if c.lifecycle_status == AgentSkillDefinition.LIFECYCLE_ACTIVE]
+    gray_versions = [c for c in candidates if c.lifecycle_status == AgentSkillDefinition.LIFECYCLE_GRAY]
+    if not gray_versions:
+        return active_versions[0] if active_versions else None
+
+    gray_version = gray_versions[0]
+    salt = gray_version.gray_traffic_salt or skill_id
+    hash_val = int(hashlib.md5(f"{salt}{user_id}".encode()).hexdigest(), 16) % 100
+    if hash_val < gray_version.gray_weight:
+        return gray_version
+    return active_versions[0] if active_versions else gray_version
+
+
 class SkillRouter:
     """技能版本路由器"""
 
@@ -42,35 +77,7 @@ class SkillRouter:
         if version != "latest":
             return SkillRouter._get_by_version(skill_id, version)
 
-        candidates = list(
-            AgentSkillDefinition.objects.filter(
-                skill_id=skill_id,
-                lifecycle_status__in=[
-                    AgentSkillDefinition.LIFECYCLE_ACTIVE,
-                    AgentSkillDefinition.LIFECYCLE_GRAY,
-                ],
-            ).order_by("-published_at", "-created_at")
-        )
-
-        if not candidates:
-            logger.warning("技能 %r 无 active/gray 版本", skill_id)
-            return SkillRouter._get_fallback(skill_id)
-
-        active_versions = [c for c in candidates if c.lifecycle_status == AgentSkillDefinition.LIFECYCLE_ACTIVE]
-        gray_versions   = [c for c in candidates if c.lifecycle_status == AgentSkillDefinition.LIFECYCLE_GRAY]
-
-        if not gray_versions:
-            return active_versions[0] if active_versions else None
-
-        # 灰度分流：用确定性哈希决定走 active 还是 gray
-        gray_version = gray_versions[0]
-        hash_key = f"{project_id}:{skill_id}"
-        hash_val  = int(hashlib.md5(hash_key.encode()).hexdigest(), 16) % 100
-        if hash_val < gray_version.gray_weight:
-            logger.debug("技能 %r 走灰度分流 (hash=%d, weight=%d)", skill_id, hash_val, gray_version.gray_weight)
-            return gray_version
-
-        return active_versions[0] if active_versions else gray_version
+        return pick_skill_version(skill_id, project_id or "0")
 
     @staticmethod
     def _get_by_version(skill_id: str, version: str) -> Optional[AgentSkillDefinition]:

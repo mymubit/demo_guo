@@ -12,6 +12,8 @@ from apps.agent.models import AgentRegistryConfig
 from apps.workflow.models import FusionJsonSchema, FusionPipelineNode, FusionPipelinePack
 from apps.skill.models import (
     AgentSkillDefinition,
+    AgentSkillSection,
+    CreationFormOverrideConfig,
     DialogueTemplate,
     HookLibrary,
     LlmModelCatalog,
@@ -20,7 +22,25 @@ from apps.skill.models import (
     SkillConfigEntry,
     SkillDefect,
     SkillRuleConfig,
+    SkillRuleItem,
     ThemeTemplate,
+)
+from apps.skill.models_catalog import (
+    ThemeActRatio,
+    ThemeCharacterArchetype,
+    ThemeEmotionCurve,
+    ThemeEmotionalPeakMoment,
+    ThemeHookType,
+    ThemeReversalDensity,
+)
+from apps.skill.models_creation_form import (
+    CreationBudgetLevel,
+    CreationEntry,
+    CreationEntryProfile,
+    CreationPlatform,
+    CreationThemeEntry,
+    EpisodeSettingsConfig,
+    FormatVariant,
 )
 
 
@@ -54,7 +74,57 @@ class SkillConfigAdmin(admin.ModelAdmin):
         messages.info(request, '配置已更新，缓存已刷新')
 
 
+class ThemeActRatioInline(admin.TabularInline):
+    model = ThemeActRatio
+    extra = 0
+    fields = ["act_name", "ratio_percent", "sort_order", "is_active"]
+    ordering = ["sort_order"]
+
+
+class ThemeEmotionCurveInline(admin.TabularInline):
+    model = ThemeEmotionCurve
+    extra = 0
+    fields = ["episode_from", "episode_to", "emotion_value", "label", "sort_order", "is_active"]
+    ordering = ["sort_order"]
+
+
+class ThemeHookTypeInline(admin.TabularInline):
+    model = ThemeHookType
+    extra = 0
+    fields = ["hook_type", "description", "sort_order", "is_active"]
+    ordering = ["sort_order"]
+
+
+class ThemeCharacterArchetypeInline(admin.TabularInline):
+    model = ThemeCharacterArchetype
+    extra = 0
+    fields = ["name", "description", "sort_order", "is_active"]
+    ordering = ["sort_order"]
+
+
+class ThemeEmotionalPeakMomentInline(admin.TabularInline):
+    model = ThemeEmotionalPeakMoment
+    extra = 0
+    fields = ["episode_hint", "moment", "sort_order", "is_active"]
+    ordering = ["sort_order"]
+
+
+class ThemeReversalDensityInline(admin.TabularInline):
+    model = ThemeReversalDensity
+    extra = 0
+    fields = ["stage", "density", "sort_order", "is_active"]
+    ordering = ["sort_order"]
+
+
 class ThemeTemplateAdmin(admin.ModelAdmin):
+    inlines = [
+        ThemeActRatioInline,
+        ThemeEmotionCurveInline,
+        ThemeHookTypeInline,
+        ThemeCharacterArchetypeInline,
+        ThemeEmotionalPeakMomentInline,
+        ThemeReversalDensityInline,
+    ]
     list_display = ['theme_code', 'theme_name', 'is_active', 'created_at']
     list_filter = ['is_active']
     search_fields = ['theme_code', 'theme_name']
@@ -64,6 +134,23 @@ class ThemeTemplateAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return request.user.is_superuser
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+
+    def save_formset(self, request, form, formset, change):
+        super().save_formset(request, form, formset, change)
+        if form.instance and formset.model in (
+            ThemeActRatio,
+            ThemeEmotionCurve,
+            ThemeHookType,
+            ThemeCharacterArchetype,
+            ThemeEmotionalPeakMoment,
+            ThemeReversalDensity,
+        ):
+            from apps.skill.services.theme_atomic_sync import sync_params_from_atomic_tables
+
+            sync_params_from_atomic_tables(form.instance)
 
 
 class HookLibraryAdmin(admin.ModelAdmin):
@@ -126,8 +213,17 @@ admin.site.register(DialogueTemplate, DialogueTemplateAdmin)
 # ============================================================
 # SkillRuleConfig Admin
 # ============================================================
+class SkillRuleItemInline(admin.TabularInline):
+    model = SkillRuleItem
+    extra = 0
+    fields = ["title", "body", "status", "sort_order", "apply_count", "last_applied_at"]
+    readonly_fields = ["apply_count", "last_applied_at"]
+    show_change_link = True
+
+
 @admin.register(SkillRuleConfig)
 class SkillRuleConfigAdmin(admin.ModelAdmin):
+    inlines = [SkillRuleItemInline]
     list_display = [
         "rule_label", "tier", "scope_type", "scope_key", "section",
         "version_tag", "status_badge", "source", "trigger_score_avg", "updated_at",
@@ -140,7 +236,7 @@ class SkillRuleConfigAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("规则定位", {"fields": ("tier", "scope_type", "scope_key", "section")}),
-        ("内容", {"fields": ("content", "version_tag", "note")}),
+        ("内容", {"fields": ("content_source", "content", "version_tag", "note")}),
         ("状态", {"fields": ("status", "source", "approved_by", "approved_at")}),
         ("进化追踪", {"fields": ("trigger_project_ids", "trigger_score_avg")}),
         ("元数据", {"fields": ("id", "created_at", "updated_at"), "classes": ("collapse",)}),
@@ -170,6 +266,23 @@ class SkillRuleConfigAdmin(admin.ModelAdmin):
     def archive_selected(self, request, queryset):
         updated = queryset.exclude(status=SkillRuleConfig.STATUS_ARCHIVED).update(status=SkillRuleConfig.STATUS_ARCHIVED)
         self.message_user(request, f"已归档 {updated} 条规则。")
+
+
+@admin.register(SkillRuleItem)
+class SkillRuleItemAdmin(admin.ModelAdmin):
+    list_display = [
+        "title",
+        "rule_key",
+        "tier",
+        "section",
+        "status",
+        "apply_count",
+        "last_applied_at",
+        "updated_at",
+    ]
+    list_filter = ["tier", "status", "item_type", "scope_type"]
+    search_fields = ["title", "rule_key", "body", "section"]
+    ordering = ["tier", "section", "sort_order", "-apply_count"]
 
 
 @admin.register(AgentRegistryConfig)
@@ -251,8 +364,16 @@ class FusionJsonSchemaAdmin(admin.ModelAdmin):
 # ============================================================
 # AgentSkillDefinition Admin
 # ============================================================
+class AgentSkillSectionInline(admin.TabularInline):
+    model = AgentSkillSection
+    extra = 0
+    fields = ["section_key", "section_content", "sort_order", "is_active"]
+    ordering = ["sort_order", "section_key"]
+
+
 @admin.register(AgentSkillDefinition)
 class AgentSkillDefinitionAdmin(admin.ModelAdmin):
+    inlines = [AgentSkillSectionInline]
     list_display = ["skill_id", "name", "skill_layer", "lifecycle_status", "version", "updated_at"]
     list_filter = ["skill_layer", "lifecycle_status"]
     search_fields = ["skill_id", "name", "source_file"]
@@ -265,6 +386,20 @@ class AgentSkillDefinitionAdmin(admin.ModelAdmin):
         ("来源追踪", {"fields": ("source_file",)}),
         ("时间戳", {"fields": ("created_at", "updated_at", "published_at", "deprecated_at"), "classes": ("collapse",)}),
     )
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        from apps.skill.skills.skill_section_sync import sync_content_from_sections
+
+        if obj.sections.exists():
+            sync_content_from_sections(obj)
+
+    def save_formset(self, request, form, formset, change):
+        super().save_formset(request, form, formset, change)
+        if formset.model is AgentSkillSection and form.instance:
+            from apps.skill.skills.skill_section_sync import sync_content_from_sections
+
+            sync_content_from_sections(form.instance)
 
 
 # ============================================================
@@ -332,3 +467,115 @@ class SkillDefectAdmin(admin.ModelAdmin):
             status=SkillDefect.STATUS_CLOSED,
         )
         self.message_user(request, f"已关闭 {updated} 条缺陷。")
+
+
+# ============================================================
+# CreationForm 原子 Catalog Admin
+# ============================================================
+def _sync_creation_form_cache(config_key: str = "default") -> None:
+    from apps.skill.services.creation_form_atomic_sync import sync_overrides_cache
+
+    sync_overrides_cache(config_key)
+    try:
+        from apps.skill.config.portal.creation_form import CreationFormOverrideService
+
+        CreationFormOverrideService._clear_catalog_cache()
+    except Exception:  # noqa: BLE001
+        pass
+
+
+class CreationFormAtomicAdminMixin:
+    list_filter = ["config_key", "is_active"]
+    ordering = ["config_key", "sort_order"]
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        _sync_creation_form_cache(getattr(obj, "config_key", "default"))
+
+
+@admin.register(CreationPlatform)
+class CreationPlatformAdmin(CreationFormAtomicAdminMixin, admin.ModelAdmin):
+    list_display = ["config_key", "item_key", "name", "sort_order", "is_active"]
+    search_fields = ["item_key", "name"]
+
+
+@admin.register(CreationBudgetLevel)
+class CreationBudgetLevelAdmin(CreationFormAtomicAdminMixin, admin.ModelAdmin):
+    list_display = ["config_key", "item_key", "name", "sort_order", "is_active"]
+    search_fields = ["item_key", "name"]
+
+
+@admin.register(CreationEntry)
+class CreationEntryAdmin(CreationFormAtomicAdminMixin, admin.ModelAdmin):
+    list_display = ["config_key", "item_key", "name", "sort_order", "is_active"]
+    search_fields = ["item_key", "name"]
+
+
+@admin.register(CreationEntryProfile)
+class CreationEntryProfileAdmin(admin.ModelAdmin):
+    list_display = ["config_key", "entry_key", "is_active"]
+    list_filter = ["config_key", "is_active"]
+    search_fields = ["entry_key"]
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        _sync_creation_form_cache(obj.config_key)
+
+
+@admin.register(FormatVariant)
+class FormatVariantAdmin(CreationFormAtomicAdminMixin, admin.ModelAdmin):
+    list_display = ["config_key", "item_key", "name", "schema_key", "sort_order", "is_active"]
+    search_fields = ["item_key", "name"]
+
+
+@admin.register(CreationThemeEntry)
+class CreationThemeEntryAdmin(admin.ModelAdmin):
+    list_display = ["config_key", "theme_key", "display_name", "is_enabled", "sort_order"]
+    list_filter = ["config_key", "is_enabled"]
+    search_fields = ["theme_key", "display_name"]
+    ordering = ["config_key", "sort_order"]
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        _sync_creation_form_cache(obj.config_key)
+
+
+@admin.register(EpisodeSettingsConfig)
+class EpisodeSettingsConfigAdmin(admin.ModelAdmin):
+    list_display = ["config_key", "min_episodes", "max_episodes", "default_episodes", "duration_minutes"]
+    search_fields = ["config_key"]
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        _sync_creation_form_cache(obj.config_key)
+
+
+@admin.register(CreationFormOverrideConfig)
+class CreationFormOverrideConfigAdmin(admin.ModelAdmin):
+    list_display = ["config_key", "updated_at"]
+    search_fields = ["config_key"]
+    readonly_fields = ["updated_at"]
+    actions = ["sync_atomic_to_json_cache", "import_json_to_atomic"]
+    fieldsets = (
+        ("配置键", {"fields": ("config_key",)}),
+        ("JSON 缓存（只读参考）", {"fields": ("overrides", "episode_settings"), "classes": ("collapse",)}),
+        ("时间戳", {"fields": ("updated_at",), "classes": ("collapse",)}),
+    )
+
+    @admin.action(description="原子表 → overrides JSON 缓存")
+    def sync_atomic_to_json_cache(self, request, queryset):
+        count = 0
+        for row in queryset:
+            _sync_creation_form_cache(row.config_key)
+            count += 1
+        self.message_user(request, f"已同步 {count} 条配置的 JSON 缓存。")
+
+    @admin.action(description="overrides JSON → 原子子表")
+    def import_json_to_atomic(self, request, queryset):
+        from apps.skill.services.creation_form_atomic_sync import migrate_from_overrides
+
+        total = 0
+        for row in queryset:
+            result = migrate_from_overrides(config_key=row.config_key, overwrite=False)
+            total += int(result.get("created") or 0)
+        self.message_user(request, f"已从 JSON 导入/更新 {total} 条原子行。")

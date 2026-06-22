@@ -195,6 +195,19 @@ export const admin = {
   importSkillRules: (data) =>
     adminRequest('POST', '/api/admin/skills/rules/import/', { data: data || {} }),
 
+  listSkillRuleItems: (params = {}) =>
+    adminRequest('GET', '/api/admin/skills/rule-items/', { params }),
+  updateSkillRuleItem: (id, data) =>
+    adminRequest('PUT', `/api/admin/skills/rule-items/${id}/`, { data }),
+  createSkillRuleItem: (data) =>
+    adminRequest('POST', '/api/admin/skills/rule-items/', { data }),
+  approveSkillRuleItem: (id) =>
+    adminRequest('POST', `/api/admin/skills/rule-items/${id}/approve/`),
+  archiveSkillRuleItem: (id) =>
+    adminRequest('POST', `/api/admin/skills/rule-items/${id}/archive/`),
+  flattenSkillRuleItems: (data) =>
+    adminRequest('POST', '/api/admin/skills/rule-items/flatten/', { data: data || {} }),
+
   // 会员功能矩阵
   listFeatureMatrix: () =>
     adminRequest('GET', '/api/admin/members/feature-matrix/').then(unwrapAdminListData),

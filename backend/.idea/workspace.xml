@@ -2,13 +2,24 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="433975c9-3cd8-4893-870b-559e7229355b" name="更改" comment="全量逻辑优化65">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/console/skills/rule_views.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/console/skills/rule_views.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/console/urls.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/console/urls.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/skill/admin.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/skill/admin.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/skill/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/skill/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/apps/skill/skills/loader.py" beforeDir="false" afterPath="$PROJECT_DIR$/apps/skill/skills/loader.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test_full_out.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/components/admin/workbench/AdminWorkbenchKit.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/components/admin/workbench/AdminWorkbenchKit.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/config/adminNav.js" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/config/adminNav.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/agent/AgentHubPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/agent/AgentHubPage.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/agent/AgentRunsPanel.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/agent/AgentRunsPanel.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/agent/IndependentAgentPanel.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/agent/IndependentAgentPanel.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/agent/SkillRulesPanel.jsx" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/evolution/AdminEvolution.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/evolution/AdminEvolution.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/model/LlmConfigPanel.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/model/LlmConfigPanel.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/model/ModelHubPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/model/ModelHubPage.jsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/skills/SkillCenterPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/skills/SkillCenterPage.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../frontend/src/services/admin/skill.js" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/services/admin/skill.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/skills/SkillDetailPanel.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/skills/SkillDetailPanel.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/pages/Admin/skills/skillFormUtils.js" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/pages/Admin/skills/skillFormUtils.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/router/index.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/router/index.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../frontend/src/services/admin/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/../frontend/src/services/admin/index.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -115,6 +126,7 @@
       <workItem from="1781483139272" duration="6181000" />
       <workItem from="1781571993484" duration="13495000" />
       <workItem from="1781759363414" duration="10464000" />
+      <workItem from="1781848970644" duration="11000" />
     </task>
     <task id="LOCAL-00001" summary="全量逻辑更新">
       <option name="closed" value="true" />

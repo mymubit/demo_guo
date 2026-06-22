@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Plus, RefreshCw, Search } from 'lucide-react'
-import AdminShell from '@/components/admin/AdminShell'
-import { AdminMessage, AdminPageHeader } from '@/components/admin/AdminUI'
+import AiConfigShell from '@/components/admin/ai-config/AiConfigShell'
+import { AdminMessage } from '@/components/admin/AdminUI'
 import {
   AdminLifecycleBadge,
   AdminWorkbench,
@@ -21,8 +21,15 @@ import {
 } from './skillFormUtils'
 
 export default function SkillCenterPage() {
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const detailTab = searchParams.get('tab') || 'overview'
+
+  useEffect(() => {
+    if (searchParams.get('tab') === 'rules') {
+      navigate('/admin/tier-rules', { replace: true })
+    }
+  }, [searchParams, navigate])
 
   const [items, setItems] = useState([])
   const [total, setTotal] = useState(0)
@@ -234,12 +241,7 @@ export default function SkillCenterPage() {
   )
 
   return (
-    <AdminShell hideDescription>
-      <AdminPageHeader
-        crumbs={[{ label: 'Console' }, { label: 'AI 配置' }, { label: '技能规则' }]}
-        title="技能规则"
-        description="技能定义、Prompt、Schema、版本发布与规则进化"
-      />
+    <AiConfigShell sectionId="skills">
       <AdminMessage message={message} onClose={() => setMessage(null)} />
 
       <AdminWorkbench
@@ -323,6 +325,6 @@ export default function SkillCenterPage() {
           </div>
         </div>
       ) : null}
-    </AdminShell>
+    </AiConfigShell>
   )
 }

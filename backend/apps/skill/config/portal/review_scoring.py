@@ -2,6 +2,7 @@
 """质量审查评分 — DB SSOT，代码默认值兜底。"""
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict
 
 from apps.agent.models import ReviewScoringConfig
@@ -17,12 +18,24 @@ from .review_scoring_defaults import (
     list_review_scoring_presets,
 )
 
+logger = logging.getLogger(__name__)
+
 CONFIG_KEY = "default"
 
 
 class ReviewScoringService:
     @staticmethod
     def resolve() -> Dict[str, Any]:
+        try:
+            from apps.skill.services.review_scoring_atomic import expand_preset, resolve_active_preset
+
+            preset = resolve_active_preset()
+            if preset:
+                return expand_preset(preset)
+        except Exception as exc:  # noqa: BLE001
+            if type(exc).__name__ != "DatabaseOperationForbidden":
+                logger.debug("ReviewScoringPreset 读取失败: %s", exc)
+
         row = None
         try:
             row = ReviewScoringConfig.objects.filter(config_key=CONFIG_KEY).first()

@@ -1,4 +1,4 @@
-import { request } from './http'
+import { request, API_BASE_URL, getAccessToken } from './http'
 import {
   normalizeCreationProgress,
   normalizeCreationSubmitResult,
@@ -30,6 +30,52 @@ export const creation = {
   },
   artifact(projectId, artifactKey) {
     return request('GET', `/api/creation/projects/${projectId}/artifacts/${artifactKey}/`)
+  },
+  listChunks(projectId, { kind = 'episode_scripts', limit = 50, offset = 0 } = {}) {
+    return request('GET', `/api/creation/projects/${projectId}/chunks/`, {
+      params: { kind, limit, offset },
+    })
+  },
+  agentNotes(projectId) {
+    return request('GET', `/api/creation/projects/${projectId}/agent-notes/`)
+  },
+  patchAgentNotes(projectId, agentNotes) {
+    return request('PATCH', `/api/creation/projects/${projectId}/agent-notes/`, {
+      data: { agent_notes: agentNotes },
+    })
+  },
+  /**
+   * SSE 流式 Agent（返回原始 Response，供 useSkillStream 或自定义消费）
+   */
+  async streamAgent(projectId, agentId, params = {}, { signal } = {}) {
+    const token = getAccessToken()
+    const url = `${API_BASE_URL}/api/creation/projects/${projectId}/agents/${agentId}/stream/`
+    return fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ params }),
+      signal,
+    })
+  },
+  async continueChunks(projectId, { agentId = 'script', toEpisode, params = {} } = {}, options = {}) {
+    const token = getAccessToken()
+    const url = `${API_BASE_URL}/api/creation/projects/${projectId}/chunks/continue/`
+    return fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        agent_id: agentId,
+        to_episode: toEpisode,
+        params,
+      }),
+      signal: options.signal,
+    })
   },
   async progress(projectId) {
     const data = await request('GET', `/api/creation/progress/${projectId}/`)

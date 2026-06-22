@@ -26,7 +26,6 @@ export const SKILL_DETAIL_TABS = [
   { key: 'versions', label: '版本' },
   { key: 'stats', label: '统计' },
   { key: 'evolution', label: '进化' },
-  { key: 'rules', label: '规则库' },
 ]
 
 export const EMPTY_SKILL_FORM = {

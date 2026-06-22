@@ -75,6 +75,7 @@ function AdminProjectTraceLegacyRedirect() {
 const AdminModelHub = lazy(() => import('@/pages/Admin/model/ModelHubPage.jsx'))
 const AdminAgentHub = lazy(() => import('@/pages/Admin/agent/AgentHubPage.jsx'))
 const SkillCenterPage = lazy(() => import('@/pages/Admin/skills/SkillCenterPage.jsx'))
+const TierRulesPage = lazy(() => import('@/pages/Admin/tier-rules/TierRulesPage.jsx'))
 const AdminLibrary = lazy(() => import('@/pages/Admin/library/AdminLibrary.jsx'))
 const AdminEvolution = lazy(() => import('@/pages/Admin/evolution/AdminEvolution.jsx'))
 const AdminUsers = lazy(() => import('@/pages/Admin/Users.jsx'))
@@ -246,6 +247,7 @@ const appRoutes = [
       { path: 'model', element: <AdminModelHub /> },
       { path: 'agent', element: <AdminAgentHub /> },
       { path: 'skills', element: <SkillCenterPage /> },
+      { path: 'tier-rules', element: <TierRulesPage /> },
       { path: 'library', element: <AdminLibrary /> },
       { path: 'evolution', element: <AdminEvolution /> },
       // 用户与商业

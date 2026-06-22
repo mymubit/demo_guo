@@ -2,7 +2,8 @@
 
 > **文档定位**：描述当前 C 端主链路的业务流程与创作流程架构。旧 7 节点自动流水线仅作 Legacy 背景，不作为当前主路径。
 >
-> **技术视角**见 [TECH-ARCHITECTURE.md](./TECH-ARCHITECTURE.md)；迁移历史见 [CORE-CHAIN-REFACTOR-PLAN.md](./CORE-CHAIN-REFACTOR-PLAN.md)。
+> **技术视角**见 [TECH-ARCHITECTURE.md](./TECH-ARCHITECTURE.md)；迁移历史见 [CORE-CHAIN-REFACTOR-PLAN.md](./CORE-CHAIN-REFACTOR-PLAN.md)。  
+> **Skill/Agent SSOT 与实施文档**见 [skill-agent/README.md](./skill-agent/README.md)。
 
 ---
 

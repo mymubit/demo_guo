@@ -37,6 +37,12 @@ class CreationFormOverrideService:
     @staticmethod
     def _clear_catalog_cache() -> None:
         try:
+            from apps.skill.config.portal.creation_catalog import get_creation_catalog
+
+            get_creation_catalog.cache_clear()
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("creation catalog cache clear failed: %s", exc)
+        try:
             from apps.workflow.fusion.ssot_catalog import get_ssot_catalog
 
             get_ssot_catalog.cache_clear()
@@ -46,6 +52,15 @@ class CreationFormOverrideService:
     @staticmethod
     def get_overrides() -> Dict[str, Any]:
         try:
+            from apps.skill.services.creation_form_atomic_sync import (
+                build_overrides_from_atomic,
+                has_atomic_data,
+            )
+
+            if has_atomic_data(CONFIG_KEY):
+                atomic = build_overrides_from_atomic(CONFIG_KEY)
+                if atomic:
+                    return atomic
             row = CreationFormOverrideService._get_row()
             if isinstance(row.overrides, dict):
                 return row.overrides

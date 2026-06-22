@@ -51,6 +51,13 @@ from apps.console.skills.rule_views import (
     SkillRuleImportView,
     SkillRuleListView,
 )
+from apps.console.skills.rule_item_views import (
+    SkillRuleItemApproveView,
+    SkillRuleItemArchiveView,
+    SkillRuleItemDetailView,
+    SkillRuleItemFlattenView,
+    SkillRuleItemListView,
+)
 from apps.console.skills.definition_views import (
     SkillDefinitionDetailView,
     SkillDefinitionListView,
@@ -224,6 +231,11 @@ _skills_routes = [
     path("skills/rules/<uuid:rule_id>/", SkillRuleDetailView.as_view(), name="admin-skills-rules-detail"),
     path("skills/rules/<uuid:rule_id>/approve/", SkillRuleApproveView.as_view(), name="admin-skills-rules-approve"),
     path("skills/rules/<uuid:rule_id>/archive/", SkillRuleArchiveView.as_view(), name="admin-skills-rules-archive"),
+    path("skills/rule-items/", SkillRuleItemListView.as_view(), name="admin-skills-rule-items-list"),
+    path("skills/rule-items/flatten/", SkillRuleItemFlattenView.as_view(), name="admin-skills-rule-items-flatten"),
+    path("skills/rule-items/<uuid:item_id>/", SkillRuleItemDetailView.as_view(), name="admin-skills-rule-items-detail"),
+    path("skills/rule-items/<uuid:item_id>/approve/", SkillRuleItemApproveView.as_view(), name="admin-skills-rule-items-approve"),
+    path("skills/rule-items/<uuid:item_id>/archive/", SkillRuleItemArchiveView.as_view(), name="admin-skills-rule-items-archive"),
     # 技能定义（SKILL.md → DB）+ 生命周期操作
     path("skills/definitions/", SkillDefinitionListView.as_view(), name="admin-skills-definitions-list"),
     path("skills/definitions/<int:pk>/", SkillDefinitionDetailView.as_view(), name="admin-skills-definitions-detail"),

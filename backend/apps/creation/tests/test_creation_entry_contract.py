@@ -130,8 +130,9 @@ class CreationEntryCatalogContractTests(TestCase):
         catalog = _portal_catalog()
         self.assertIn("executionPlan", catalog)
         plan = catalog["executionPlan"]
-        self.assertIn("stages", plan)
-        self.assertIn("edges", plan)
+        self.assertEqual(plan.get("mode"), "independent")
+        self.assertIn("hint", plan)
+        self.assertEqual(catalog.get("mainChain"), [])
 
 
 class CreationEntrySubmitContractTests(TestCase):

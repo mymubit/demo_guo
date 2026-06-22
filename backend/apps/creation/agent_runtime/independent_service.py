@@ -127,6 +127,7 @@ class IndependentAgentService:
             "params": dict(params or {}),
             "required_artifacts": required_artifacts,
             "optional_artifacts": optional_artifacts,
+            "agent_notes": dict(getattr(project, "agent_notes", None) or {}),
         }
         IndependentAgentService._attach_reference_materials(project, payload)
         return payload
@@ -405,6 +406,9 @@ class IndependentAgentService:
     def preview_run(cls, project: Project, agent_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
         agent = AgentDefinitionService.get_runnable(agent_id)
         prepared = cls._prepare_prompt(project, agent, dict(params or {}))
+        from apps.creation.agent_runtime.agent_billing import billing_preview
+
+        billing = billing_preview(agent_id, params)
         return {
             "agent_id": agent.agent_id,
             "estimated_prompt_tokens": prepared["estimated_prompt_tokens"],
@@ -413,7 +417,42 @@ class IndependentAgentService:
             "input_artifact_keys": prepared["input_artifact_keys"],
             "input_char_summary": prepared["input_char_summary"],
             "prompt_version": prepared["prompt_version"],
+            "coin_cost": billing["coin_cost"],
+            "action_key": billing["action_key"],
+            "currency_name": billing["currency_name"],
         }
+
+    @classmethod
+    def _append_agent_notes_block(cls, user_prompt: str, input_payload: Dict[str, Any]) -> str:
+        notes = input_payload.get("agent_notes") or {}
+        if not isinstance(notes, dict) or not notes:
+            return user_prompt
+        lines = []
+        rejects = notes.get("rejects") or []
+        if rejects:
+            lines.append("用户曾拒绝以下方向，请勿重复：" + "；".join(str(x) for x in rejects[:20]))
+        prefs = notes.get("style_preferences") or []
+        if prefs:
+            lines.append("风格偏好：" + "、".join(str(x) for x in prefs[:20]))
+        guidance = notes.get("character_guidance") or ""
+        if guidance:
+            lines.append(f"角色指导：{guidance}")
+        if not lines:
+            return user_prompt
+        block = "\n".join(lines)
+        return f"{user_prompt}\n\n【项目记忆】\n{block}"
+
+    @classmethod
+    def _build_skill_rules_snippet(cls, agent: AgentDefinition, input_payload: Dict[str, Any]) -> str:
+        try:
+            from apps.skill.skills.agent_scope import genre_from_project_payload
+            from apps.skill.skills.loader import get_skill_rule_loader
+
+            genre = genre_from_project_payload(input_payload.get("project") or {})
+            return get_skill_rule_loader().build_agent_rules_snippet(agent.agent_id, genre=genre)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("[Agent] skill rules snippet skipped agent=%s err=%s", agent.agent_id, exc)
+            return ""
 
     @classmethod
     def render_agent_prompt(
@@ -433,7 +472,12 @@ class IndependentAgentService:
         suffix = "\n\n".join(s for s in sections if s)
         if suffix:
             user_prompt = f"{user_prompt}\n\n{suffix}"
-        return prompt.system_prompt, user_prompt, prompt.version
+        user_prompt = cls._append_agent_notes_block(user_prompt, input_payload)
+        system_prompt = prompt.system_prompt or ""
+        rules_snippet = cls._build_skill_rules_snippet(agent, input_payload)
+        if rules_snippet:
+            system_prompt = f"{system_prompt}\n\n{rules_snippet}".strip() if system_prompt else rules_snippet
+        return system_prompt, user_prompt, prompt.version
 
     # 各产物 schema 的强制输出字段说明，防止 LLM 自由发挥字段名导致校验失败
     SCHEMA_FIELD_HINTS: Dict[str, str] = {
@@ -640,6 +684,9 @@ class IndependentAgentService:
             return EnqueueRunResult(run=running, created_new_run=False, should_enqueue=False)
         agent = AgentDefinitionService.get_runnable(agent_id)
         run_params = dict(params or {})
+        from apps.creation.agent_runtime.agent_billing import ensure_agent_chargeable
+
+        ensure_agent_chargeable(user, agent_id, run_params)
         prepared = cls._prepare_prompt(locked_project, agent, run_params)
         if not prepared["within_limit"]:
             raise AgentRuntimeError(
@@ -686,7 +733,13 @@ class IndependentAgentService:
         agent = AgentDefinitionService.get_runnable(run.agent_id)
         route = AgentDefinitionService.active_route(agent)
         provider_id = str(route.llm_provider_id)
+        from apps.creation.agent_runtime.agent_billing import charge_agent_run, refund_agent_run
+
+        user = project.user
+        charged = False
         try:
+            charge_agent_run(user, agent.agent_id, run_id=str(run.id), params=run.run_params or {})
+            charged = True
             input_payload = run.input_snapshot or cls.build_agent_input(project, agent, run.run_params or {})
             knowledge = cls.load_knowledge(agent, project)
             system_prompt, user_prompt, prompt_version = cls.render_agent_prompt(agent, input_payload, knowledge)
@@ -708,7 +761,17 @@ class IndependentAgentService:
                     provider_id=provider_id,
                     json_mode=True,
                 )
-            parsed = extract_json_object(raw)
+            from apps.creation.agent_runtime.json_self_heal import parse_json_with_self_heal
+
+            parsed, heal_attempts = parse_json_with_self_heal(
+                raw,
+                agent=agent,
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                temperature=route.temperature,
+                max_tokens=max_completion,
+                provider_id=provider_id,
+            )
             outputs = cls.validate_output(agent, parsed)
             with transaction.atomic():
                 saved_keys = cls.persist_agent_output(
@@ -723,7 +786,7 @@ class IndependentAgentService:
                     run,
                     AgentExecutionRun.STATUS_COMPLETED,
                     output_artifact_key=saved_keys[0] if saved_keys else "",
-                    output_summary={"outputKeys": saved_keys},
+                    output_summary={"outputKeys": saved_keys, "jsonHealAttempts": heal_attempts},
                     prompt_tokens=usage.prompt_tokens if usage else None,
                     completion_tokens=usage.completion_tokens if usage else None,
                     total_tokens=usage.total_tokens if usage else None,
@@ -732,6 +795,8 @@ class IndependentAgentService:
                 )
             cls.update_project_status(project)
         except Exception as exc:  # noqa: BLE001
+            if charged:
+                refund_agent_run(user, agent.agent_id, run_id=str(run.id))
             AgentExecutionRunService.finish_run(run, AgentExecutionRun.STATUS_FAILED, error_message=str(exc)[:2000])
             cls.update_project_status(project)
         return run

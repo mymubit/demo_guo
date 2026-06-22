@@ -217,6 +217,12 @@ class Project(models.Model):
             "前端工作台用于展示跨集一致性概览，不直接用于创作逻辑。"
         ),
     )
+    agent_notes = models.JSONField(
+        "Agent 项目记忆",
+        default=dict,
+        blank=True,
+        help_text="跨 Agent 的用户偏好与拒绝项，如 rejects / style_preferences / character_guidance",
+    )
 
     # 安全/展示用缓存字段（不直接返回给前端，由服务层按需使用）
     title = models.CharField(
@@ -623,6 +629,119 @@ class AgentExecutionRun(models.Model):
 
     def __str__(self) -> str:
         return f"{self.agent_id} node={self.node_index} {self.status}"
+
+
+# ============================================================
+# ProjectChunk - 流式生成分片（单集/单条）
+# ============================================================
+class ProjectChunk(models.Model):
+    """流式 Agent 产出分片；index 为集号/序号（DB 权威）。"""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.CASCADE,
+        related_name="chunks",
+        verbose_name="项目",
+    )
+    kind = models.CharField("分片类型", max_length=32, db_index=True)
+    index = models.PositiveIntegerField("序号/集号", db_index=True)
+    data = models.JSONField("分片数据", default=dict, blank=True)
+    run = models.ForeignKey(
+        AgentExecutionRun,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="chunks",
+        verbose_name="执行记录",
+    )
+    created_at = models.DateTimeField("创建时间", auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = "creation_project_chunk"
+        verbose_name = "项目分片"
+        verbose_name_plural = verbose_name
+        ordering = ["index"]
+        unique_together = [["project", "kind", "index"]]
+        indexes = [
+            models.Index(fields=["project", "kind", "index"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.project_id} · {self.kind}[{self.index}]"
+
+
+# ============================================================
+# SkillGenerationLog - 流式/技能生成追踪
+# ============================================================
+class SkillGenerationLog(models.Model):
+    """流式生成完成/失败日志（trace 维度）。"""
+
+    STATUS_OK = "ok"
+    STATUS_ERROR = "error"
+    STATUS_TRUNCATED = "truncated"
+    STATUS_CHOICES = [
+        (STATUS_OK, "成功"),
+        (STATUS_ERROR, "失败"),
+        (STATUS_TRUNCATED, "截断"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    trace_id = models.CharField("追踪 ID", max_length=64, db_index=True)
+    skill_id = models.CharField("技能 ID", max_length=64, blank=True, default="", db_index=True)
+    agent_id = models.CharField("Agent ID", max_length=64, blank=True, default="", db_index=True)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="skill_generation_logs",
+        verbose_name="用户",
+    )
+    project = models.ForeignKey(
+        Project,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="skill_generation_logs",
+        verbose_name="项目",
+    )
+    run = models.ForeignKey(
+        AgentExecutionRun,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="generation_logs",
+        verbose_name="执行记录",
+    )
+    prompt_tokens = models.PositiveIntegerField("Prompt Tokens", null=True, blank=True)
+    completion_tokens = models.PositiveIntegerField("Completion Tokens", null=True, blank=True)
+    total_tokens = models.PositiveIntegerField("Total Tokens", null=True, blank=True)
+    provider = models.CharField("Provider", max_length=128, blank=True, default="")
+    model = models.CharField("模型", max_length=128, blank=True, default="")
+    duration_ms = models.PositiveIntegerField("耗时(ms)", null=True, blank=True)
+    status = models.CharField(
+        "状态",
+        max_length=16,
+        choices=STATUS_CHOICES,
+        default=STATUS_OK,
+        db_index=True,
+    )
+    error_message = models.TextField("错误信息", blank=True, default="")
+    created_at = models.DateTimeField("创建时间", auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = "creation_skill_generation_log"
+        verbose_name = "技能生成日志"
+        verbose_name_plural = verbose_name
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["project", "-created_at"]),
+            models.Index(fields=["trace_id"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.trace_id} {self.agent_id or self.skill_id} {self.status}"
 
 
 # ============================================================

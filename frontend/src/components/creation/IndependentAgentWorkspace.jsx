@@ -13,7 +13,11 @@ import {
 import { toast } from 'sonner'
 import { creation } from '@/services/api'
 import { cn } from '@/utils/cn'
+import useSkillStream from '@/hooks/useSkillStream'
 import ArtifactPreviewPanel from './ArtifactPreviewPanel'
+import ProjectChunksVirtualList from './ProjectChunksVirtualList'
+
+const STREAM_AGENT_IDS = new Set(['script', 'outline'])
 
 function healthReasons(agent) {
   const reasons = []
@@ -274,6 +278,15 @@ export default function IndependentAgentWorkspace({ projectId, onBack, onRestart
   const [error, setError] = useState('')
   const [tokenEstimate, setTokenEstimate] = useState(null)
   const [estimateLoading, setEstimateLoading] = useState(false)
+  const [persistedChunks, setPersistedChunks] = useState([])
+  const {
+    items: streamItems,
+    status: streamStatus,
+    error: streamError,
+    startStream,
+    stop: stopStream,
+    reset: resetStream,
+  } = useSkillStream()
 
   const agents = workspace?.agents || []
   const episodeCount = workspace?.project?.episode_count || 80
@@ -407,6 +420,16 @@ export default function IndependentAgentWorkspace({ projectId, onBack, onRestart
     }
     setRunningAgentId(agent.agent_id)
     try {
+      if (STREAM_AGENT_IDS.has(agent.agent_id)) {
+        resetStream()
+        await startStream(projectId, agent.agent_id, params)
+        toast.success(`${agent.name_zh || agent.agent_id} 流式生成完成`)
+        await loadWorkspace()
+        const kind = agent.agent_id === 'outline' ? 'series_outline' : 'episode_scripts'
+        const chunkData = await creation.listChunks(projectId, { kind })
+        setPersistedChunks(chunkData?.items || [])
+        return
+      }
       const result = await creation.runAgent(projectId, agent.agent_id, params)
       if (result?.already_running) {
         toast.info('该 Agent 已在运行中')
@@ -420,6 +443,18 @@ export default function IndependentAgentWorkspace({ projectId, onBack, onRestart
       setRunningAgentId('')
     }
   }
+
+  useEffect(() => {
+    if (!projectId || !activeAgent || !STREAM_AGENT_IDS.has(activeAgent.agent_id)) {
+      setPersistedChunks([])
+      return
+    }
+    const kind = activeAgent.agent_id === 'outline' ? 'series_outline' : 'episode_scripts'
+    creation
+      .listChunks(projectId, { kind })
+      .then((data) => setPersistedChunks(data?.items || []))
+      .catch(() => setPersistedChunks([]))
+  }, [projectId, activeAgent?.agent_id])
 
   async function openRunDetail(runId) {
     setRunDetailLoading(true)
@@ -656,6 +691,34 @@ export default function IndependentAgentWorkspace({ projectId, onBack, onRestart
                   </button>
                 </div>
               </div>
+
+              {STREAM_AGENT_IDS.has(activeAgent.agent_id) ? (
+                <div className="mb-5 rounded-2xl border border-white/10 bg-black/10 p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <h3 className="text-sm font-medium text-white">流式分片</h3>
+                    {streamStatus === 'streaming' ? (
+                      <button
+                        type="button"
+                        onClick={stopStream}
+                        className="text-xs text-red-300 hover:text-red-200"
+                      >
+                        停止
+                      </button>
+                    ) : null}
+                  </div>
+                  {streamError ? <p className="mb-2 text-xs text-red-300">{streamError}</p> : null}
+                  <ProjectChunksVirtualList
+                    items={
+                      streamItems.length
+                        ? streamItems
+                        : (persistedChunks || []).map((row) => ({
+                            effectiveIndex: row.index,
+                            data: row.data,
+                          }))
+                    }
+                  />
+                </div>
+              ) : null}
 
               <div className="mb-5 rounded-2xl border border-white/10 bg-black/10 p-4">
                 <div className="mb-3 flex items-center gap-2 text-sm font-medium text-white">

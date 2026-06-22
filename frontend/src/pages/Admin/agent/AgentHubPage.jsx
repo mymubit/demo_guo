@@ -1,17 +1,17 @@
 import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Bot, Activity, Route } from 'lucide-react'
-import AdminShell from '@/components/admin/AdminShell'
-import { AdminPageHeader, AdminPillTabs } from '@/components/admin/AdminUI'
+import { Bot, Route } from 'lucide-react'
+import AiConfigShell from '@/components/admin/ai-config/AiConfigShell'
+import { AdminPillTabs } from '@/components/admin/AdminUI'
 import { useAdminPanelMessage } from '@/hooks/useAdminPanelMessage'
 import IndependentAgentPanel from './IndependentAgentPanel'
 import AgentLlmRoutePanel from './AgentLlmRoutePanel'
 import AgentRunsPanel from './AgentRunsPanel'
 
-const AGENT_TABS = [
-  { key: 'definitions', label: '定义', icon: Bot },
-  { key: 'runs', label: '运行记录', icon: Activity },
-  { key: 'routes', label: '路由', icon: Route },
+/** Agent 定义页内子 Tab：运行记录由侧栏独立入口，此处仅保留定义与路由 */
+const AGENT_DEFINITION_TABS = [
+  { key: 'definitions', label: 'Prompt 定义', icon: Bot },
+  { key: 'routes', label: 'LLM 路由', icon: Route },
 ]
 
 export default function AgentHubPage() {
@@ -25,15 +25,16 @@ export default function AgentHubPage() {
     rules: 'skills-rules',
   }
   const resolvedTab = legacyTabMap[tab] || tab
+  const isRunsPage = resolvedTab === 'runs'
 
   useEffect(() => {
     if (tab === 'rules') {
-      navigate('/admin/skills?tab=rules', { replace: true })
+      navigate('/admin/tier-rules', { replace: true })
     }
   }, [tab, navigate])
 
-  const active = AGENT_TABS.find((t) => t.key === resolvedTab) || AGENT_TABS[0]
   const { showMessage, MessageBanner } = useAdminPanelMessage()
+  const sectionId = isRunsPage ? 'agent-runs' : 'agent-definitions'
 
   const switchTab = (key) => {
     const next = new URLSearchParams(searchParams)
@@ -42,18 +43,31 @@ export default function AgentHubPage() {
     setSearchParams(next, { replace: true })
   }
 
+  const definitionTab =
+    AGENT_DEFINITION_TABS.find((t) => t.key === resolvedTab) || AGENT_DEFINITION_TABS[0]
+
   return (
-    <AdminShell hideDescription>
-      <AdminPageHeader
-        crumbs={[{ label: 'Console' }, { label: 'AI 配置' }, { label: 'Agent' }]}
-        title="Agent 定义 · 运行 · 路由"
-        subtitle="独立 Agent Prompt、LLM 路由与健康检查 · Tier 规则已迁至技能页"
-      />
-      <AdminPillTabs tabs={AGENT_TABS} active={active.key} onChange={switchTab} className="w-full" />
+    <AiConfigShell
+      sectionId={sectionId}
+      subTabs={
+        isRunsPage ? null : (
+          <AdminPillTabs
+            tabs={AGENT_DEFINITION_TABS}
+            active={definitionTab.key}
+            onChange={switchTab}
+            className="w-full"
+          />
+        )
+      }
+    >
       <MessageBanner />
-      {active.key === 'definitions' ? <IndependentAgentPanel onMessage={showMessage} /> : null}
-      {active.key === 'runs' ? <AgentRunsPanel /> : null}
-      {active.key === 'routes' ? <AgentLlmRoutePanel onMessage={showMessage} /> : null}
-    </AdminShell>
+      {isRunsPage ? <AgentRunsPanel /> : null}
+      {!isRunsPage && definitionTab.key === 'definitions' ? (
+        <IndependentAgentPanel onMessage={showMessage} />
+      ) : null}
+      {!isRunsPage && definitionTab.key === 'routes' ? (
+        <AgentLlmRoutePanel onMessage={showMessage} />
+      ) : null}
+    </AiConfigShell>
   )
 }

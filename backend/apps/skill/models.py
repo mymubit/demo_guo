@@ -423,6 +423,10 @@ class ThemeTemplate(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     theme_code = models.CharField('题材代码', max_length=64, unique=True, db_index=True)
     theme_name = models.CharField('题材名称', max_length=64)
+    description = models.TextField('题材描述', blank=True, default='')
+    core_conflict_formula = models.CharField('核心冲突公式', max_length=512, blank=True, default='')
+    audience_fit = models.CharField('受众定位', max_length=256, blank=True, default='')
+    recommended_episodes = models.PositiveSmallIntegerField('推荐集数', null=True, blank=True)
     is_active = models.BooleanField('是否启用', default=True)
     sort_order = models.IntegerField('排序', default=0)
     params = models.JSONField('参数配置', default=dict, blank=True)
@@ -447,9 +451,19 @@ class HookLibrary(models.Model):
         default=HOOK_TYPE_OPENING, db_index=True,
     )
     content = models.TextField('钩子内容')
+    theme = models.ForeignKey(
+        ThemeTemplate,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='hooks',
+        verbose_name='关联题材',
+    )
     tags = models.CharField('标签', max_length=256, blank=True, default='')
     is_active = models.BooleanField('是否启用', default=True)
     use_count = models.IntegerField('使用次数', default=0)
+    approved_by = models.CharField('审核人', max_length=128, blank=True, default='')
+    approved_at = models.DateTimeField('审核时间', null=True, blank=True)
     created_at = models.DateTimeField('创建时间', default=timezone.now)
 
     class Meta:
@@ -602,6 +616,22 @@ class SkillRuleConfig(models.Model):
         "规则内容",
         help_text="该 section 的完整规则数据（结构对齐 tier JSON 文件中的对应字段）",
     )
+    CONTENT_JSON = "json"
+    CONTENT_ATOMIC = "atomic"
+    CONTENT_HYBRID = "hybrid"
+    CONTENT_SOURCE_CHOICES = [
+        (CONTENT_JSON, "JSON 包"),
+        (CONTENT_ATOMIC, "原子条目"),
+        (CONTENT_HYBRID, "混合（条目优先）"),
+    ]
+    content_source = models.CharField(
+        "内容来源",
+        max_length=16,
+        choices=CONTENT_SOURCE_CHOICES,
+        default=CONTENT_HYBRID,
+        db_index=True,
+        help_text="json=仅 SkillRuleConfig；atomic=仅 SkillRuleItem；hybrid=条目优先、Config 兜底",
+    )
 
     # 版本与状态
     version_tag = models.CharField(
@@ -650,6 +680,13 @@ class SkillRuleConfig(models.Model):
                 name="skill_rule_status_idx",
             ),
         ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tier", "scope_type", "scope_key", "section"],
+                condition=models.Q(status="active"),
+                name="skill_rule_config_active_scope_uniq",
+            ),
+        ]
 
     def __str__(self) -> str:
         return (
@@ -676,6 +713,125 @@ class SkillRuleConfig(models.Model):
             ).update(status=self.STATUS_ARCHIVED)
 
             self.status = self.STATUS_ACTIVE
+            self.approved_by = approved_by
+            self.approved_at = tz.now()
+            self.save(update_fields=["status", "approved_by", "approved_at", "updated_at"])
+
+
+# ============================================================
+# SkillRuleItem：Tier 规则条目（逐条管理，运行时按需渲染）
+# ============================================================
+class SkillRuleItem(models.Model):
+    """Tier 规则单条记录 — 由 SkillRuleConfig 拆分或后台直接录入。"""
+
+    TYPE_META = "meta"
+    TYPE_RULE = "rule"
+    TYPE_CHOICES = [
+        (TYPE_META, "元信息"),
+        (TYPE_RULE, "规则条目"),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    rule_key = models.CharField(
+        "规则键",
+        max_length=256,
+        db_index=True,
+        help_text="全站唯一稳定标识，如 t1.global.philosophy.core_formula",
+    )
+    config = models.ForeignKey(
+        SkillRuleConfig,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="items",
+        verbose_name="来源配置包",
+    )
+
+    tier = models.PositiveSmallIntegerField("层级", choices=SkillRuleConfig.TIER_CHOICES, db_index=True)
+    scope_type = models.CharField(
+        "范围类型",
+        max_length=16,
+        choices=SkillRuleConfig.SCOPE_CHOICES,
+        default=SkillRuleConfig.SCOPE_GLOBAL,
+        db_index=True,
+    )
+    scope_key = models.CharField("范围键", max_length=128, blank=True, default="", db_index=True)
+    section = models.CharField("规则分区", max_length=64, db_index=True)
+
+    item_type = models.CharField(
+        "条目类型",
+        max_length=16,
+        choices=TYPE_CHOICES,
+        default=TYPE_RULE,
+        db_index=True,
+    )
+    title = models.CharField("标题", max_length=512)
+    body = models.TextField("规则正文", help_text="渲染进 Prompt 的可读文本")
+    payload = models.JSONField("结构化附加", default=dict, blank=True)
+
+    priority = models.IntegerField("优先级", default=100, db_index=True)
+    sort_order = models.IntegerField("排序", default=0)
+
+    version_tag = models.CharField("版本标签", max_length=32, default="v5.0.0", db_index=True)
+    status = models.CharField(
+        "状态",
+        max_length=16,
+        choices=SkillRuleConfig.STATUS_CHOICES,
+        default=SkillRuleConfig.STATUS_DRAFT,
+        db_index=True,
+    )
+    source = models.CharField(
+        "来源",
+        max_length=16,
+        choices=SkillRuleConfig.SOURCE_CHOICES,
+        default=SkillRuleConfig.SOURCE_ADMIN,
+        db_index=True,
+    )
+    note = models.TextField("备注", blank=True, default="")
+
+    apply_count = models.PositiveBigIntegerField("引用次数", default=0)
+    last_applied_at = models.DateTimeField("最近引用时间", null=True, blank=True)
+
+    approved_by = models.CharField("审核人", max_length=128, blank=True, default="")
+    approved_at = models.DateTimeField("审核时间", null=True, blank=True)
+
+    created_at = models.DateTimeField("创建时间", auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField("更新时间", auto_now=True)
+
+    class Meta:
+        verbose_name = "技能规则条目"
+        verbose_name_plural = verbose_name
+        db_table = "skill_rule_item"
+        ordering = ["tier", "scope_type", "scope_key", "section", "sort_order", "priority", "-created_at"]
+        indexes = [
+            models.Index(
+                fields=["tier", "scope_type", "scope_key", "section", "status"],
+                name="skill_rule_item_main_idx",
+            ),
+            models.Index(fields=["status", "-apply_count"], name="skill_rule_item_apply_idx"),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["rule_key"],
+                condition=models.Q(status="active"),
+                name="skill_rule_item_active_key_uniq",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"[T{self.tier}] {self.rule_key} ({self.get_status_display()})"
+
+    def approve(self, approved_by: str = "admin") -> None:
+        from django.db import transaction
+        from django.utils import timezone as tz
+
+        with transaction.atomic():
+            SkillRuleItem.objects.filter(
+                rule_key=self.rule_key,
+                status=SkillRuleConfig.STATUS_ACTIVE,
+            ).exclude(pk=self.pk).update(status=SkillRuleConfig.STATUS_ARCHIVED)
+
+            self.status = SkillRuleConfig.STATUS_ACTIVE
             self.approved_by = approved_by
             self.approved_at = tz.now()
             self.save(update_fields=["status", "approved_by", "approved_at", "updated_at"])
@@ -949,3 +1105,23 @@ class SkillDefect(models.Model):
 
     def __str__(self) -> str:
         return f"[{self.severity}] {self.title} ({self.get_status_display()})"
+
+
+from apps.skill.models_catalog import (  # noqa: E402,F401
+    AgentSkillSection,
+    ThemeActRatio,
+    ThemeCharacterArchetype,
+    ThemeEmotionCurve,
+    ThemeEmotionalPeakMoment,
+    ThemeHookType,
+    ThemeReversalDensity,
+)
+from apps.skill.models_creation_form import (  # noqa: E402,F401
+    CreationBudgetLevel,
+    CreationEntry,
+    CreationEntryProfile,
+    CreationPlatform,
+    CreationThemeEntry,
+    EpisodeSettingsConfig,
+    FormatVariant,
+)

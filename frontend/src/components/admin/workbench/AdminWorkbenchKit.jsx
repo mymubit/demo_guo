@@ -9,6 +9,7 @@ import { modalOverlay, modalPanel } from '@/constants/motion'
 /** 左列表 + 右详情工作台壳层 */
 export function AdminWorkbench({
   toolbar,
+  listTitle = '列表',
   listHeader,
   listFooter,
   listEmpty,
@@ -26,14 +27,47 @@ export function AdminWorkbench({
   detailEmpty = '请从左侧选择一项',
   children,
   className,
+  compact = false,
 }) {
+  const isListEmpty = !listLoading && listItems.length === 0
+
+  if (isListEmpty) {
+    return (
+      <div className={cn('space-y-3', className)}>
+        {toolbar ? (
+          <div className="rounded-xl border border-white/[0.06] bg-black/20 px-4 py-3">{toolbar}</div>
+        ) : null}
+        <div className="rounded-xl border border-white/[0.08] bg-slate-950/40 min-h-[360px] flex items-center justify-center p-8">
+          {listEmpty || (
+            <p className="text-sm text-navy-400 text-center">{detailEmpty}</p>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className={cn('space-y-4', className)}>
-      {toolbar ? <div className="sf-console-panel p-4">{toolbar}</div> : null}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[280px_minmax(0,1fr)] lg:min-h-[560px]">
-        <div className="sf-console-panel flex flex-col overflow-hidden">
+    <div className={cn('space-y-3', className)}>
+      {toolbar ? (
+        <div className="rounded-xl border border-white/[0.06] bg-black/20 px-4 py-3">{toolbar}</div>
+      ) : null}
+      <div
+        className={cn(
+          'grid grid-cols-1 gap-0 overflow-hidden rounded-xl border border-white/[0.08] bg-slate-950/40',
+          compact ? 'lg:grid-cols-[240px_minmax(0,1fr)]' : 'lg:grid-cols-[280px_minmax(0,1fr)]',
+          'lg:min-h-[520px]',
+        )}
+      >
+        {/* 左栏 */}
+        <div className="flex flex-col border-b lg:border-b-0 lg:border-r border-white/[0.06] bg-black/25">
+          <div className="px-3 py-2.5 border-b border-white/[0.06] flex items-center justify-between">
+            <span className="text-xs font-semibold uppercase tracking-wider text-navy-400">{listTitle}</span>
+            {listItems.length ? (
+              <span className="text-[10px] text-navy-500">{listItems.length} 项</span>
+            ) : null}
+          </div>
           {listHeader}
-          <div className="flex-1 overflow-y-auto p-2 space-y-1 max-h-[calc(100vh-320px)]">
+          <div className="flex-1 overflow-y-auto p-2 space-y-1 max-h-[calc(100vh-360px)]">
             {listLoading ? (
               <div className="py-12 text-center text-sm text-navy-400">
                 <Loader2 className="mx-auto mb-2 h-5 w-5 animate-spin" />
@@ -67,14 +101,15 @@ export function AdminWorkbench({
           {listFooter}
         </div>
 
-        <div className="sf-console-panel flex flex-col overflow-hidden min-h-[420px]">
+        {/* 右栏 */}
+        <div className="flex flex-col min-h-[360px] bg-gradient-to-br from-slate-900/30 to-slate-950/60">
           {detailHeader}
           {detailTabs?.length ? (
-            <div className="px-4 pt-3 border-b border-white/5">
+            <div className="px-4 pt-3 border-b border-white/[0.06]">
               <AdminTabBar tabs={detailTabs} active={activeTab} onChange={onTabChange} stretch />
             </div>
           ) : null}
-          <div className="flex-1 overflow-y-auto p-4 lg:max-h-[calc(100vh-280px)]">
+          <div className="flex-1 overflow-y-auto p-4 lg:max-h-[calc(100vh-320px)]">
             {detailLoading ? (
               <AdminLoading label="加载详情…" />
             ) : selectedId == null && !children ? (

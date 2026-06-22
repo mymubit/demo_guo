@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from apps.common.permissions import IsAdminUser
 from apps.skill.models import SkillRuleConfig
 from apps.skill.skills.admin_service import SkillRuleConfigService
+from apps.skill.skills.rule_item_service import SkillRuleItemService
 
 from apps.console.responses import api_fail, api_ok
 
@@ -117,4 +118,5 @@ class SkillRuleImportView(APIView):
     def post(self, request):
         overwrite = (request.data or {}).get("overwrite", True) is not False
         counts = SkillRuleConfigService.import_from_files(overwrite=overwrite)
-        return api_ok({"counts": counts}, message="已从 skill-rules 目录导入")
+        flat = SkillRuleItemService.flatten_from_configs(overwrite=overwrite)
+        return api_ok({"counts": counts, "flatten": flat}, message="已从 skill-rules 目录导入并拆分条目")

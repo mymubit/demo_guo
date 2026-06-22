@@ -17,6 +17,7 @@ import {
   ClipboardCheck,
   TrendingUp,
   Gauge,
+  Layers,
   MessageSquare,
 } from 'lucide-react'
 
@@ -161,9 +162,16 @@ export const ADMIN_NAV_GROUPS = [
       {
         id: 'engine.skills',
         path: '/admin/skills',
-        label: '技能规则',
+        label: '技能定义',
         icon: Wrench,
-        description: '技能定义、版本管理与进化提案',
+        description: '各技能 Prompt、Schema 与版本发布',
+      },
+      {
+        id: 'engine.tier-rules',
+        path: '/admin/tier-rules',
+        label: 'Tier 规则库',
+        icon: Layers,
+        description: 'Tier1–4 全站通用规则（铁律/题材/节点/合规）',
       },
       {
         id: 'engine.evolution',

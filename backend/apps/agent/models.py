@@ -287,3 +287,56 @@ class ReviewScoringConfig(models.Model):
 
     def __str__(self) -> str:
         return f"审查评分 · 通过线 {self.pass_threshold}"
+
+
+class ReviewScoringPreset(models.Model):
+    """审查评分预设（skill-agent/13）。"""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    preset_id = models.CharField("预设 ID", max_length=32, unique=True, db_index=True)
+    name = models.CharField("名称", max_length=64)
+    is_active = models.BooleanField("默认启用", default=False, db_index=True)
+    pass_threshold = models.PositiveSmallIntegerField("通过分数线", default=70)
+    min_sub_item_score = models.PositiveSmallIntegerField("子项最低分", default=75)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "agent_review_scoring_preset"
+        verbose_name = "审查评分预设"
+        verbose_name_plural = verbose_name
+
+
+class ReviewScoringDimension(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    preset = models.ForeignKey(
+        ReviewScoringPreset,
+        on_delete=models.CASCADE,
+        related_name="dimensions",
+    )
+    dimension_key = models.CharField("维度", max_length=32, db_index=True)
+    weight = models.DecimalField("权重", max_digits=5, decimal_places=2, default=1)
+    sort_order = models.IntegerField("排序", default=0)
+
+    class Meta:
+        db_table = "agent_review_scoring_dimension"
+        verbose_name = "审查评分维度"
+        verbose_name_plural = verbose_name
+        unique_together = [["preset", "dimension_key"]]
+
+
+class ReviewGradeThreshold(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    preset = models.ForeignKey(
+        ReviewScoringPreset,
+        on_delete=models.CASCADE,
+        related_name="grade_thresholds",
+    )
+    grade = models.CharField("等级", max_length=8)
+    min_score = models.PositiveSmallIntegerField("最低分", default=0)
+    sort_order = models.IntegerField("排序", default=0)
+
+    class Meta:
+        db_table = "agent_review_grade_threshold"
+        verbose_name = "审查等级阈值"
+        verbose_name_plural = verbose_name
+        unique_together = [["preset", "grade"]]
