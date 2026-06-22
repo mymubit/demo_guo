@@ -120,10 +120,19 @@ class DramaProjectViewSet(ModelViewSet):
             },
         })
 
-    @action(detail=True, methods=["post"], url_path="run/(?P<role_id>[^/.]+)")
+    @action(detail=True, methods=["post"], url_path=r"run/(?P<role_id>[^/]+)")
     def run_role(self, request, pk=None, role_id=None):
         """触发某个角色执行（异步）。"""
         project = self.get_object()
+        # 校验 role_id 是否是有效的 drama.* 角色
+        from apps.agent.models import AgentDefinition
+        if not AgentDefinition.objects.filter(
+            agent_id=role_id, category="drama_skills", is_enabled=True
+        ).exists():
+            return Response(
+                {"code": 404, "message": f"角色 {role_id} 不存在或未启用"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         # TODO: 集成 IndependentAgentService 执行
         # 此处先返回占位响应，实际实现需接入 Celery 任务队列
         return Response({
