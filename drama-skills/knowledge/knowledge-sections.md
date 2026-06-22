@@ -1,9 +1,21 @@
-# 知识规则区块索引（Knowledge Sections）
+# 知识规则区块索引（四Tier完整体系）
 
-> 来源：ScriptForge `backend/apps/agent/bootstrap/tier1_sections.py`
-> 
-> 每个创作角色（Agent）依赖特定的知识规则区块（Sections）。本文档定义各区块内容，
-> 便于理解每个角色的"必读知识范围"，也是外部内容摄入时的分类依据。
+> 来源：ScriptForge `tier1_sections.py` + `tier4_sections.py` + dramaskill `nodes/` + `config/`
+>
+> 四个 Tier 完整覆盖从"创作哲学"到"合规熔断"的全部规则。
+
+---
+
+## 四Tier概览
+
+| Tier | 名称 | 范围 | 知识文件 |
+|------|------|------|---------|
+| **Tier1** | 全局铁律 | 所有题材、所有节点通用 | 各角色SKILL.md内嵌 |
+| **Tier2** | 品类规范 | 特定题材（genre）专属 | `tier2-genre-rules.md` |
+| **Tier3** | 节点流程 | 特定创作阶段（node）专属 | `tier3-node-rules.md` |
+| **Tier4** | 合规熔断 | 内容安全，不可突破 | `tier4-compliance.md` |
+
+---
 
 ---
 
