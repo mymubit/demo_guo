@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     "apps.portal",
     "apps.console",
     "apps.operations",
+    "apps.drama",
 ]
 
 MIDDLEWARE = [

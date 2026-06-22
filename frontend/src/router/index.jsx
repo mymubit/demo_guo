@@ -101,6 +101,12 @@ const DailyChecklist = lazy(() => import('@/pages/Admin/operations/DailyChecklis
 // ── 404 兜底 ─────────────────────────────────────────────────
 const NotFound = lazy(() => import('@/pages/NotFound.jsx'))
 
+// ── Drama Skills 创作工作室 ────────────────────────────────
+const DramaIndex = lazy(() => import('@/pages/Drama/index.jsx'))
+const DramaWorkspace = lazy(() => import('@/pages/Drama/WorkspacePage.jsx'))
+const DramaScripts = lazy(() => import('@/pages/Drama/ScriptsPage.jsx'))
+const DramaModelsAdmin = lazy(() => import('@/pages/Admin/drama-models/index.jsx'))
+
 /* ============================================================
  * Suspense 统一加载态 —— 避免每个 lazy 页面都重复写 loading
  * ============================================================ */
@@ -155,6 +161,15 @@ const appRoutes = [
           </PrivateRoute>
         ),
       },
+      // Drama Skills 创作工作室
+      {
+        path: '/drama',
+        element: (
+          <PrivateRoute>
+            <DramaIndex />
+          </PrivateRoute>
+        ),
+      },
       {
         path: '/profile',
         element: (
@@ -206,6 +221,28 @@ const appRoutes = [
     ],
   },
 
+  // ── Drama Skills 全屏路由（不带 MainLayout） ──
+  {
+    path: '/drama/workspace/:projectId',
+    element: (
+      <PageLoading>
+        <PrivateRoute>
+          <DramaWorkspace />
+        </PrivateRoute>
+      </PageLoading>
+    ),
+  },
+  {
+    path: '/drama/scripts/:projectId',
+    element: (
+      <PageLoading>
+        <PrivateRoute>
+          <DramaScripts />
+        </PrivateRoute>
+      </PageLoading>
+    ),
+  },
+
   // ── Auth 路由（不带 MainLayout，避免重复嵌套） ──
   { path: '/login', element: <PageLoading><Login /></PageLoading> },
   { path: '/register', element: <PageLoading><Register /></PageLoading> },
@@ -247,6 +284,8 @@ const appRoutes = [
       { path: 'model', element: <AdminModelHub /> },
       { path: 'agent', element: <AdminAgentHub /> },
       { path: 'skills', element: <SkillCenterPage /> },
+      // Drama Skills 配置
+      { path: 'drama-models', element: <DramaModelsAdmin /> },
       { path: 'tier-rules', element: <TierRulesPage /> },
       { path: 'library', element: <AdminLibrary /> },
       { path: 'evolution', element: <AdminEvolution /> },
