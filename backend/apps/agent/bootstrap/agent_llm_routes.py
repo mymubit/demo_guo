@@ -10,6 +10,10 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
+# ROUTE_SEED: 供 AgentLlmRouteService.seed_defaults() 使用
+# drama.* 角色的默认路由种子（由 seed_drama_skills 管理，此处作为备份）
+ROUTE_SEED: List[Dict[str, Any]] = []  # seed_drama_skills 负责创建 AgentLlmRouteConfig 记录
+
 # drama.* 默认 LLM 路由配置（由 seed_drama_skills 种入）
 # 此处仅作参考，实际路由配置通过 Admin 界面或 seed_drama_skills 管理
 DRAMA_DEFAULT_LLM_ROUTES: List[Dict[str, Any]] = [

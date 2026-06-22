@@ -202,7 +202,7 @@ const TRACE_TABS = [
 
 export function agentDisplayName(agentKey, catalog, entry) {
   const id = resolveSkillId(entry) || agentKey
-  if (id === 'adapt') return '改编预处理'
+  if (id === 'drama.ip-adapter' || id === 'adapt') return 'IP改编师'
   const nodeIndex = Number.isFinite(Number(agentKey)) ? Number(agentKey) : entry?.node_index
   return resolveAgentDisplayName(id, catalog, nodeIndex)
 }
@@ -309,10 +309,10 @@ export function ProjectTracePanel({
                 }`
               : 'adapt'
           }
-          agentId="adapt"
+          agentId="drama.ip-adapter"
           catalog={catalog}
-          executionTrace={(traces.adapt || {}).execution_trace}
-          dbRun={latestRuns.adapt}
+          executionTrace={(traces['drama.ip-adapter'] || traces.adapt || {}).execution_trace}
+          dbRun={latestRuns['drama.ip-adapter'] || latestRuns.adapt}
           onInspectRun={onInspectRun}
         />
       ) : null}

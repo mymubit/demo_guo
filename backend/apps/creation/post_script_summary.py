@@ -11,7 +11,14 @@ from .display.portal_display import portal_sanitize_review_block, portal_strip_a
 
 
 def _build_post_script_chain_display() -> List[str]:
-    return ["review", "score", "polish", "marketing", "insight"]
+    """drama.* 创作完成后的后续处理角色链。"""
+    return [
+        "drama.script-reviewer",
+        "drama.quality-reporter",
+        "drama.script-editor",
+        "drama.marketing-officer",
+        "drama.evolution-analyst",
+    ]
 
 
 def _latest_run_block(project: Project, agent_id: str) -> Optional[dict]:

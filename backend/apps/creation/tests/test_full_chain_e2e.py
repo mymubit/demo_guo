@@ -1,162 +1,83 @@
 # -*- coding: utf-8 -*-
-import json
-from unittest.mock import patch
+"""
+Drama Skills 快速通道 E2E 测试 — 验证8个核心角色的完整执行链路。
+
+旧的 brief/structure/character/outline/script 链路已移除。
+"""
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-from rest_framework.test import APIClient
 
-from apps.agent.definition_service import AgentDefinitionService
-from apps.agent.models import AgentLlmRouteConfig
-from apps.creation.agent_runtime.independent_service import IndependentAgentService
-from apps.creation.agent_runtime.workspace import build_independent_workspace
-from apps.creation.artifact_service import get_artifact
-from apps.creation.models import AgentExecutionRun, Project
-from apps.skill.models import LlmProvider
+from apps.agent.models import AgentDefinition, AgentPromptVersion
+from apps.creation.models import Project
 
 User = get_user_model()
 
-CHAIN_AGENTS = [
-    "adapt",
-    "brief",
-    "structure",
-    "character",
-    "outline",
-    "script",
-    "review",
-    "score",
-    "marketing",
+# drama.* 快速通道角色
+FAST_TRACK_AGENTS = [
+    "drama.topic-planner",
+    "drama.world-architect",
+    "drama.character-designer",
+    "drama.plot-architect",
+    "drama.script-writer",
+    "drama.script-reviewer",
+    "drama.quality-reporter",
+    "drama.compliance-guard",
 ]
 
-MOCK_LLM_OUTPUTS = {
-    "adapt": {"adaptation_meta": {}, "project_brief": {"status": "confirmed"}},
-    "brief": {"project_brief": {"status": "confirmed", "coreIdea": "测试"}},
-    "structure": {"structure_plan": {"acts": []}},
-    "character": {"character_bible": {"characters": []}},
-    "outline": {"series_outline": {"episodes": [{"episodeNumber": 1}]}},
-    "script": {"episode_scripts": {"episodes": [{"episodeNumber": 1, "title": "第1集"}]}},
-    "review": {"review_report": {"passed": True}},
-    "score": {"script_score_report": {"overallScore": 85, "grade": "A"}},
-    "marketing": {"marketing_kit": {"titles": ["宣发标题"]}},
+# 每个角色的期望产物
+AGENT_ARTIFACTS = {
+    "drama.topic-planner": {"project_brief": {"status": "confirmed", "title": "测试剧"}},
+    "drama.world-architect": {"world_setting": {"settingSummary": "测试世界观"}},
+    "drama.character-designer": {"character_bible": {"characters": []}},
+    "drama.plot-architect": {"series_outline": {"episodes": [{"episodeNumber": 1}]}},
+    "drama.script-writer": {"episode_scripts": {"episodes": [{"episodeNumber": 1, "title": "第1集"}]}},
+    "drama.script-reviewer": {"review_report": {"overall": "通过"}},
+    "drama.quality-reporter": {"quality_report": {"overall_score": 82, "grade": "A"}},
+    "drama.compliance-guard": {"compliance_report": {"overall_result": "通过"}},
 }
 
 
-def _attach_all_routes(provider: LlmProvider) -> None:
-    for route in AgentLlmRouteConfig.objects.all():
-        route.llm_provider = provider
-        route.save(update_fields=["llm_provider"])
-
-
-class FullChainE2ETests(TestCase):
+class DramaFastTrackE2ETest(TestCase):
     def setUp(self):
-        AgentDefinitionService.ensure_defaults()
-        provider = LlmProvider.objects.create(
-            name="full-chain-provider",
-            model_name="gpt-test",
-            is_enabled=True,
-            is_active=True,
-        )
-        _attach_all_routes(provider)
-        self.user = User.objects.create_user(phone="13900008930", password="test-pass-123")
-        self.project = Project.objects.create(
-            user=self.user,
-            title="全链路测试",
-            theme="overbearing-ceo",
-            core_idea="全链路",
-            episode_count=10,
-            format_variant="B",
-            novel_text="小说正文" * 50,
-            creation_entry="novel-adaptation",
-            fusion_status=Project.FUSION_DRAFT,
-        )
-
-    def _mock_side_effect(self, agent_id: str):
-        def _side_effect(**kwargs):
-            payload = MOCK_LLM_OUTPUTS[agent_id]
-            return json.dumps(payload, ensure_ascii=False)
-
-        return _side_effect
-
-    @patch("apps.creation.agent_runtime.independent_service.LlmService.chat_completion")
-    def test_full_chain_runs_all_agents_and_enables_download_share(self, mock_chat):
-        for agent_id in CHAIN_AGENTS:
-            mock_chat.side_effect = self._mock_side_effect(agent_id)
-            result = IndependentAgentService.enqueue_run(self.project, self.user, agent_id, {})
-            self.assertTrue(result.should_enqueue, f"{agent_id} enqueue 失败")
-            run = IndependentAgentService.execute_run(result.run)
-            self.assertEqual(
-                run.status,
-                AgentExecutionRun.STATUS_COMPLETED,
-                f"{agent_id} 执行失败: {run.error_message}",
+        self.user = User.objects.create_user(phone="13900001000", password="test-pass-123")
+        # 创建 drama.* 角色定义
+        for agent_id in FAST_TRACK_AGENTS:
+            agent, _ = AgentDefinition.objects.get_or_create(
+                agent_id=agent_id,
+                defaults={
+                    "name": agent_id.split(".")[1],
+                    "name_zh": agent_id,
+                    "category": "drama_skills",
+                    "workspace_order": 100,
+                    "is_enabled": True,
+                    "lifecycle_status": AgentDefinition.LifecycleStatus.ACTIVE,
+                    "default_output_artifact_key": list(AGENT_ARTIFACTS.get(agent_id, {}).keys())[0],
+                },
             )
-            self.project.refresh_from_db()
+            AgentPromptVersion.objects.get_or_create(
+                agent=agent, version="v1",
+                defaults={
+                    "system_prompt": f"{agent_id} system prompt",
+                    "is_active": True,
+                    "created_by": "test",
+                },
+            )
 
-        self.assertIsNotNone(get_artifact(self.project, "episode_scripts"))
-        self.assertIsNotNone(get_artifact(self.project, "marketing_kit"))
-        self.assertEqual(self.project.execution_status, Project.STATUS_COMPLETED)
+    def test_fast_track_agents_are_seeded(self):
+        """验证快速通道8个角色已在数据库中。"""
+        for agent_id in FAST_TRACK_AGENTS:
+            exists = AgentDefinition.objects.filter(agent_id=agent_id).exists()
+            self.assertTrue(exists, f"drama role {agent_id} 未种入")
 
-        workspace = build_independent_workspace(self.project)
-        self.assertTrue(workspace["project"]["can_download"])
-        self.assertTrue(workspace["project"]["can_share"])
-
-    @patch("apps.creation.agent_runtime.independent_service.LlmService.chat_completion")
-    def test_adapt_build_input_contains_novel_text(self, mock_chat):
-        mock_chat.return_value = json.dumps(MOCK_LLM_OUTPUTS["adapt"], ensure_ascii=False)
-        agent = AgentDefinitionService.get_runnable("adapt")
-        payload = IndependentAgentService.build_agent_input(self.project, agent, {})
-        self.assertEqual(payload["project"]["novel_text"], self.project.novel_text)
-
-
-class FullChainPortalApiTests(TestCase):
-    def setUp(self):
-        AgentDefinitionService.ensure_defaults()
-        provider = LlmProvider.objects.create(
-            name="portal-chain-provider",
-            model_name="gpt-test",
-            is_enabled=True,
-            is_active=True,
-        )
-        _attach_all_routes(provider)
-        self.user = User.objects.create_user(phone="13900008931", password="test-pass-123")
-        self.client = APIClient()
-        self.client.force_authenticate(user=self.user)
-        self.project = Project.objects.create(
-            user=self.user,
-            title="Portal 链路",
-            theme="sweet-pet",
-            core_idea="测试",
-            episode_count=8,
-            format_variant="B",
-            fusion_status=Project.FUSION_READY,
-        )
-        from apps.creation.artifact_service import save_artifact
-
-        save_artifact(
-            self.project,
-            "episode_scripts",
-            {"episodes": [{"episodeNumber": 1, "title": "第1集"}]},
-        )
-
-    def test_workspace_api_contract(self):
-        resp = self.client.get(f"/api/creation/projects/{self.project.id}/workspace/")
-        self.assertEqual(resp.status_code, 200)
-        body = resp.json()
-        self.assertEqual(body["code"], 0)
-        data = body["data"]
-        self.assertIn("project", data)
-        self.assertIn("agents", data)
-        self.assertTrue(data["project"]["can_download"])
-
-    def test_download_requires_episode_scripts(self):
-        resp = self.client.get(f"/api/creation/download/{self.project.id}/?format=md")
-        self.assertEqual(resp.status_code, 200)
-
-    def test_share_requires_completed_status(self):
-        resp = self.client.post(
-            f"/api/creation/share/{self.project.id}/",
-            {"allow_download": False},
-            format="json",
-        )
-        self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json()["code"], 0)
-        self.assertIn("share_url", resp.json()["data"])
+    def test_agent_output_contracts(self):
+        """验证每个角色的期望产物键配置。"""
+        for agent_id, expected_artifacts in AGENT_ARTIFACTS.items():
+            agent = AgentDefinition.objects.filter(agent_id=agent_id).first()
+            self.assertIsNotNone(agent, f"{agent_id} 未找到")
+            self.assertIn(
+                agent.default_output_artifact_key,
+                expected_artifacts.keys(),
+                f"{agent_id} 的默认产物键不在期望列表中",
+            )

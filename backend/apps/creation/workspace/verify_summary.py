@@ -10,16 +10,16 @@ def verify_summary(adaptation_meta: dict) -> Dict[str, Any]:
     brief = adaptation_meta.get("verifyCreation") or {}
     stages: List[Dict[str, Any]] = []
     labels = {
-        "world": "世界观",
-        "characters": "人设",
-        "outline": "大纲",
-        "script": "剧本",
+        "world_setting": "世界观",
+        "character_bible": "人设",
+        "series_outline": "大纲",
+        "episode_scripts": "剧本",
     }
     if brief and not brief.get("skipped"):
         stages.append(
             {
-                "key": "brief",
-                "label": "动笔前禁令",
+                "key": "project_brief",
+                "label": "立项简报校验",
                 "passed": brief.get("passed"),
                 "skipped": False,
             }
