@@ -1,8 +1,8 @@
-# Drama Skills — AI短剧创作技能库 v2.0
+# Drama Skills — AI短剧创作技能库 v2.1
 
-> **27 个专业角色 · 8 个职能部门 · 三平台兼容 · 自我进化**
+> **29 个专业角色 · 8 个职能部门 · 三平台兼容 · 四轨道自我进化**
 > 
-> 来源：整合 `dramaskill`、`dramaskilltrae` 两个分支的 39 个现有技能 + 新增角色设计
+> 整合三个分支：`ScriptForge`（主库+Tier1规则体系）+ `dramaskill`（节点系统+参考库）+ `dramaskilltrae`（39个专业技能）
 
 ---
 
@@ -34,13 +34,14 @@ drama-master（总入口）
 │   ├── drama-character-designer    人设设计师
 │   └── drama-dream-analyst         梦境指标师
 │
-├── dept-03-plot-engine/   剧情引擎部（6人）
+├── dept-03-plot-engine/   剧情引擎部（7人）
 │   ├── drama-plot-architect        情节架构师
 │   ├── drama-hook-designer         钩子设计师
 │   ├── drama-conflict-engine       冲突引擎师
 │   ├── drama-reversal-master       反转大师
 │   ├── drama-rhythm-designer       节奏设计师
-│   └── drama-psychology-architect  心理框架师
+│   ├── drama-psychology-architect  心理框架师
+│   └── drama-emotion-architect     情绪架构师 ← ScriptForge新增
 │
 ├── dept-04-writing/       创作执行部（3人）
 │   ├── drama-script-writer         剧本执笔师
@@ -95,14 +96,16 @@ drama-master（总入口）
 
 ---
 
-## 进化系统
+## 进化系统（四轨道）
 
-本技能库内置**双轨进化**：
+| 轨道 | 触发 | 内容 |
+|------|------|------|
+| **轨道一：技能规则** | 评分低于阈值 | 更新角色SKILL.md → PR审批 |
+| **轨道二：灵感归档** | 创作中随时 | 钩子/反转/对白/结构 → `inspirations/` |
+| **轨道三：外部摄入** | 用户提交内容 | PDF/公众号/GitHub等 → `knowledge/` |
+| **轨道四：新模式** | 拉片/摄入发现 | 全新规律 → 验证后升级为规则 |
 
-| 进化轨道 | 内容 | 存放位置 |
-|---------|------|---------|
-| **技能进化** | 规范不完善 → 更新角色 SKILL.md | `EVOLUTION_LOG.md` |
-| **灵感进化** | 创作中发现好钩子/反转/对白 → 归档 | `inspirations/` |
+**外部内容提交方式**：参见 `INTAKE_PROTOCOL.md`（支持GitHub/PDF/公众号/小红书/Word）
 
 详见 `EVOLUTION_LOG.md` 和 `dept-08-ops/drama-evolution-analyst/SKILL.md`。
 
@@ -133,21 +136,55 @@ drama-master（总入口）
 
 ```
 drama-skills/
-├── README.md              本文件
-├── EVOLUTION_LOG.md       进化日志
+├── README.md                 本文件
+├── EVOLUTION_LOG.md          四轨道进化日志
+├── INTAKE_PROTOCOL.md        外部内容摄入协议
+├── drama-master/             总入口技能
+├── drama-intake/             外部内容摄入器
+│
+├── dept-01-strategy/         战略选题部（5人）
+│   └── drama-lapian-analyst/ 拉片分析师 ← dramaskill node-9
+├── dept-02-worldbuilding/    世界构建部（3人）
+├── dept-03-plot-engine/      剧情引擎部（7人）
+│   └── drama-emotion-architect/ 情绪架构师 ← ScriptForge
+├── dept-04-writing/          创作执行部（3人）
+├── dept-05-review/           评审质控部（4人）
+├── dept-06-polish/           修改润色部（3人）
+├── dept-07-production/       制作宣发部（3人）
+└── dept-08-ops/              合规总编室（2人）
+│
 ├── inspirations/
-│   ├── hooks.md           钩子灵感库
-│   ├── reversals.md       反转灵感库
-│   ├── dialogues.md       金句对白库
-│   └── structures.md      结构创新库
-├── drama-master/          总入口技能
-└── dept-0X-xxx/           各部门文件夹
-    └── drama-xxx/         技能文件夹（可直接复制到平台）
-        ├── SKILL.md       主技能文件（必需）
-        └── reference/     参考文档（可选）
+│   ├── hooks.md              钩子灵感库（含预置示例）
+│   ├── reversals.md          反转灵感库（含预置示例）
+│   ├── dialogues.md          金句对白库（含预置示例）
+│   ├── structures.md         结构创新库（含预置示例）
+│   └── new-patterns.md       新模式发现库（待填充）
+│
+└── knowledge/
+    ├── market-insights.md    市场洞察知识库（来自外部摄入）
+    └── knowledge-sections.md ScriptForge Tier1规则区块索引
 ```
 
 ---
+
+## 三分支整合说明
+
+### ScriptForge（主库）贡献
+- Tier1知识区块体系（17个区块，见 `knowledge/knowledge-sections.md`）
+- `emotion_architect` Agent → 情绪架构师角色
+- ai_field_prompts（拉片分析AI字段）
+- Django 后端技能进化引擎（`RuleEvolutionProposal`）
+
+### dramaskill（节点版）贡献
+- Node-9 拉片分析6维度框架 → 拉片分析师角色
+- "发现新模式"机制 → 轨道四（新模式发现）
+- 5大参考JSON库（hook-library/reversal-patterns等）→ 灵感库预置内容
+
+### dramaskilltrae（Trae版）贡献
+- 39个专业技能（钩子设计师/反转大师/合规守卫等）
+- drama-master-suite 编排架构
+- 梦境三指标理论（dream-indicators）
+- 八维评分体系（evaluation-scorer）
 
 ## 与 dramaskilltrae 的对应关系
 
