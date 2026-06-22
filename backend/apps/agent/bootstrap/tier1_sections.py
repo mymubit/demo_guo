@@ -12,8 +12,9 @@ from __future__ import annotations
 # drama.* Agent → Tier1 知识区块映射
 AGENT_TIER1_SEED: dict[str, list[str]] = {
     # 战略选题部
-    "drama.topic-planner": ["philosophy"],
+    "drama.market-radar": ["rhythm_rules"],       # 市场分析，节奏规则用于趋势判断
     "drama.formula-analyst": ["philosophy"],
+    "drama.topic-planner": ["philosophy"],
     "drama.project-reviewer": ["scoring", "philosophy"],
     "drama.lapian-analyst": ["rhythm_rules", "episode_structure"],
 
@@ -69,6 +70,7 @@ AGENT_TIER1_SEED: dict[str, list[str]] = {
     # 制作宣发部
     "drama.visual-producer": ["format_standard"],
     "drama.storyboard-director": ["format_standard"],
+    "drama.post-processor": ["format_standard", "dialogue_quality"],  # 配音/字幕后期处理
     "drama.marketing-officer": ["hook_effectiveness"],
 
     # 合规总编室
