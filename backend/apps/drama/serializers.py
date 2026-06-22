@@ -46,16 +46,23 @@ class DramaProjectCreateSerializer(serializers.Serializer):
 
 class DramaRoleExecutionSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source="get_status_display", read_only=True)
+    output_views = serializers.SerializerMethodField()
 
     class Meta:
         model = DramaRoleExecution
         fields = [
             "id", "agent_id", "agent_name_zh", "status", "status_display",
+            "output_artifacts", "output_views",
             "prompt_tokens", "completion_tokens", "total_tokens", "cost_cents",
             "elapsed_seconds", "llm_provider", "llm_model",
             "error_message", "started_at", "finished_at", "created_at",
         ]
         read_only_fields = fields
+
+    def get_output_views(self, obj: DramaRoleExecution) -> dict:
+        from apps.drama.presentation.service import build_execution_output_views
+
+        return build_execution_output_views(obj)
 
 
 class WordCountValidateSerializer(serializers.Serializer):

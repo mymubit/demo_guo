@@ -1,28 +1,31 @@
 # -*- coding: utf-8 -*-
-"""【运营 M2】Project 内容质量统计服务。
-
-对外只暴露三个写入入口，**所有更新必须经过这里**，避免在业务代码里散落
-`Project.objects.update(...)`，确保运营 Dashboard 数据一致。
-
-  • record_user_edit(project)   - 用户保存/编辑工作台内容
-  • record_final_export(project)- 用户成功下载/导出最终剧本
-  • mark_abandoned(project)     - 用户主动放弃
-  • detect_and_mark_abandoned() - 7 天未活跃项目的批量弃用标记（运营定时任务）
-"""
+"""【运营 M2】Project 内容质量统计服务（Drama SSOT）。"""
 from __future__ import annotations
 
 import logging
 from datetime import timedelta
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from ..models import Project
 
 logger = logging.getLogger(__name__)
 
-# 7 天未活跃且未完成即视为弃用（一人运营铁律）
 ABANDON_DAYS = 7
+
+
+def _deliverable_project_ids():
+    from apps.drama.progress_service import DramaProjectProgressService
+
+    return list(DramaProjectProgressService.deliverable_project_ids())
+
+
+def _blocked_project_ids():
+    from apps.drama.progress_service import DramaProjectProgressService
+
+    return list(DramaProjectProgressService.blocked_project_ids())
 
 
 def record_user_edit(project: Project) -> Project:
@@ -31,7 +34,6 @@ def record_user_edit(project: Project) -> Project:
     Project.objects.filter(pk=project.pk).update(
         user_edit_count=project.user_edit_count + 1 if hasattr(project, "user_edit_count") else 1,
         last_edited_at=now,
-        # 用户重新活跃 -> 清除弃用标记
         abandoned_at=None,
     )
     project.refresh_from_db(fields=["user_edit_count", "last_edited_at", "abandoned_at"])
@@ -61,17 +63,12 @@ def mark_abandoned(project: Project) -> Project:
 
 
 def detect_and_mark_abandoned(*, days: int = ABANDON_DAYS, limit: int = 500) -> int:
-    """扫描 7 天未活跃且未完成的项目，批量标记为弃用。
-
-    返回标记数量。设计为幂等（已标记过的会被过滤掉）。
-    用于运营 cron / management command 调用。
-    """
-    from django.db.models import Q
-
+    """扫描 N 天未活跃且未交付的项目，批量标记为弃用。"""
     threshold_dt = timezone.now() - timedelta(days=days)
+    deliverable = _deliverable_project_ids()
     qs = Project.objects.filter(
         abandoned_at__isnull=True,
-    ).exclude(fusion_status=Project.FUSION_READY).filter(
+    ).exclude(id__in=deliverable).filter(
         Q(last_edited_at__isnull=True, created_at__lt=threshold_dt)
         | Q(last_edited_at__lt=threshold_dt)
     ).order_by("created_at")[:limit]
@@ -87,19 +84,18 @@ def detect_and_mark_abandoned(*, days: int = ABANDON_DAYS, limit: int = 500) -> 
 
 def content_quality_summary(days: int = 30) -> dict:
     """运营 M2 看板：内容质量聚合。"""
-    from django.db.models import Count, Q
-    from django.utils import timezone
-
     now = timezone.now()
     threshold_dt = now - timedelta(days=days)
 
     base = Project.objects.filter(created_at__gte=threshold_dt)
+    deliverable = _deliverable_project_ids()
+    blocked = _blocked_project_ids()
     total = base.count()
     exported = base.filter(final_export_count__gt=0).count()
     edited = base.filter(user_edit_count__gt=0).count()
     abandoned = base.filter(abandoned_at__isnull=False).count()
-    completed = base.filter(fusion_status=Project.FUSION_READY).count()
-    failed = base.filter(fusion_status=Project.FUSION_BLOCKED).count()
+    completed = base.filter(id__in=deliverable).count()
+    failed = base.filter(id__in=blocked).count()
 
     return {
         "window_days": days,
@@ -117,21 +113,16 @@ def content_quality_summary(days: int = 30) -> dict:
 
 
 def content_quality_funnel(days: int = 30) -> dict:
-    """用户漏斗：注册 → 进入创作 → 提交创作 → 至少保存 1 次 → 完成 → 导出。"""
-    from datetime import timedelta
-    from django.db.models import Count
-    from django.utils import timezone
-
-    from apps.users.models import User
-
+    """用户漏斗：提交 → 保存 → 交付 → 导出。"""
     now = timezone.now()
     threshold_dt = now - timedelta(days=days)
     period_projects = Project.objects.filter(created_at__gte=threshold_dt)
+    deliverable = _deliverable_project_ids()
 
     total_projects = period_projects.count()
-    submitted = total_projects  # 提交即创建
+    submitted = total_projects
     saved = period_projects.filter(user_edit_count__gt=0).count()
-    completed = period_projects.filter(fusion_status=Project.FUSION_READY).count()
+    completed = period_projects.filter(id__in=deliverable).count()
     exported = period_projects.filter(final_export_count__gt=0).count()
     abandoned = period_projects.filter(abandoned_at__isnull=False).count()
 
@@ -155,25 +146,26 @@ def content_quality_funnel(days: int = 30) -> dict:
 
 
 def stuck_projects(days: int = 3, limit: int = 50) -> list[dict]:
-    """卡点人群：>= days 天未完成 + 未弃用 + 有过编辑但未完成的项目。"""
-    from django.utils import timezone
-    from datetime import timedelta
+    """卡点人群：>= days 天未交付 + 未弃用。"""
+    from apps.drama.models import DramaProject
 
     threshold_dt = timezone.now() - timedelta(days=days)
+    deliverable = set(_deliverable_project_ids())
+    drama_pids = DramaProject.objects.exclude(
+        Q(delivery_status__in=("ready", "delivered"))
+        | Q(current_stage=DramaProject.Stage.DELIVERED)
+    ).values_list("project_id", flat=True)
+
     qs = Project.objects.filter(
-        fusion_status__in=[
-            Project.FUSION_DRAFT,
-            Project.FUSION_PLANNING,
-            Project.FUSION_WRITING,
-            Project.FUSION_REVIEWING,
-            Project.FUSION_SCORING,
-        ],
+        id__in=drama_pids,
         abandoned_at__isnull=True,
         created_at__lt=threshold_dt,
     ).order_by("created_at")[:limit]
 
     out = []
     for p in qs:
+        if p.id in deliverable:
+            continue
         out.append({
             "project_id": str(p.id),
             "user_id": str(p.user_id) if p.user_id else "",

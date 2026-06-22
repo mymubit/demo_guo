@@ -2,45 +2,45 @@ import { cn } from '@/utils/cn'
 
 const tones = {
   brand: {
-    bg: 'bg-brand-500/12',
-    border: 'border-brand-500/30',
-    text: 'text-brand-300',
+    bg: 'bg-brand-50',
+    border: 'border-brand-200',
+    text: 'text-brand-700',
   },
   accent: {
-    bg: 'bg-accent-400/12',
-    border: 'border-accent-400/30',
-    text: 'text-accent-300',
+    bg: 'bg-accent-50',
+    border: 'border-accent-200',
+    text: 'text-accent-700',
   },
   success: {
-    bg: 'bg-success-bg',
-    border: 'border-success-border',
-    text: 'text-success-light',
+    bg: 'bg-green-50',
+    border: 'border-green-200',
+    text: 'text-green-700',
   },
   warning: {
-    bg: 'bg-warning-bg',
-    border: 'border-warning-border',
-    text: 'text-warning-light',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
+    text: 'text-amber-700',
   },
   danger: {
-    bg: 'bg-danger-bg',
-    border: 'border-danger-border',
-    text: 'text-danger-light',
+    bg: 'bg-red-50',
+    border: 'border-red-200',
+    text: 'text-red-700',
   },
   info: {
-    bg: 'bg-info-bg',
-    border: 'border-info-border',
-    text: 'text-info-light',
+    bg: 'bg-cyan-50',
+    border: 'border-cyan-200',
+    text: 'text-cyan-700',
   },
   default: {
-    bg: 'bg-slate-800/55',
-    border: 'border-white/10',
-    text: 'text-slate-300',
+    bg: 'bg-gray-100',
+    border: 'border-gray-200',
+    text: 'text-gray-600',
   },
   // 旧名兼容
   gold: {
-    bg: 'bg-accent-400/14',
-    border: 'border-accent-400/30',
-    text: 'text-accent-300',
+    bg: 'bg-accent-50',
+    border: 'border-accent-200',
+    text: 'text-accent-700',
   },
 }
 

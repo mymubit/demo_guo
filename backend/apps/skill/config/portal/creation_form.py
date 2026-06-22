@@ -81,14 +81,7 @@ class CreationFormOverrideService:
 
     @staticmethod
     def _load_disk_project_meta() -> Dict[str, Any]:
-        try:
-            pass  # get_fusion_config removed (workflow/fusion deprecated)
-
-            meta = get_fusion_config().project_config.get("projectMeta", {}) or {}
-            return meta if isinstance(meta, dict) else {}
-        except Exception as exc:  # noqa: BLE001
-            logger.debug("disk projectMeta 读取失败: %s", exc)
-            return {}
+        return {}
 
     @staticmethod
     def _load_disk_creation_form() -> Dict[str, Any]:
@@ -98,30 +91,11 @@ class CreationFormOverrideService:
 
     @staticmethod
     def _load_disk_format_variants() -> Dict[str, Any]:
-        try:
-            pass  # get_fusion_config removed (workflow/fusion deprecated)
-
-            variants = get_fusion_config().project_config.get("formatVariants") or {}
-            return variants if isinstance(variants, dict) else {}
-        except Exception as exc:  # noqa: BLE001
-            logger.debug("disk formatVariants 读取失败: %s", exc)
-            return {}
+        return {}
 
     @staticmethod
     def _load_disk_theme_templates() -> Dict[str, Any]:
-        try:
-            pass  # get_fusion_config removed (workflow/fusion deprecated)
-
-            path = get_fusion_config().root / "references" / "theme-templates.json"
-            if not path.is_file():
-                return {}
-            with path.open("r", encoding="utf-8") as f:
-                data = json.load(f)
-            templates = data.get("themeTemplates") or {}
-            return templates if isinstance(templates, dict) else {}
-        except Exception as exc:  # noqa: BLE001
-            logger.debug("disk theme-templates 读取失败: %s", exc)
-            return {}
+        return {}
 
     @classmethod
     def _merge_seed_and_disk_profiles(cls) -> Dict[str, Any]:

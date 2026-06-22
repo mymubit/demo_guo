@@ -43,7 +43,7 @@ export default function EmptyState({
   compact = false,
 }) {
   const preset = presets[type] || presets['no-data']
-  const iconSizeClass = cn(compact ? 'w-6 h-6' : 'w-8 h-8', 'text-slate-500')
+  const iconSizeClass = cn(compact ? 'w-6 h-6' : 'w-8 h-8', 'text-gray-400')
   const actionContent =
     action ||
     (actionLabel && onAction ? (
@@ -62,16 +62,16 @@ export default function EmptyState({
     >
       <div
         className={cn(
-          'rounded-2xl bg-slate-800/60 flex items-center justify-center mb-4',
+          'rounded-2xl bg-gray-100 flex items-center justify-center mb-4',
           compact ? 'w-12 h-12' : 'w-16 h-16',
         )}
       >
         {renderLucideIcon(icon || preset.icon, iconSizeClass)}
       </div>
-      <h3 className={cn('font-semibold text-white mb-1', compact ? 'text-sm' : 'text-base')}>
+      <h3 className={cn('font-semibold text-gray-900 mb-1', compact ? 'text-sm' : 'text-base')}>
         {title || preset.title}
       </h3>
-      <p className={cn('text-slate-400 mb-4', compact ? 'text-xs' : 'text-sm')}>
+      <p className={cn('text-gray-500 mb-4', compact ? 'text-xs' : 'text-sm')}>
         {description || preset.description}
       </p>
       {actionContent ? <div className="mt-2">{actionContent}</div> : null}
@@ -79,7 +79,6 @@ export default function EmptyState({
   )
 }
 
-// 便捷子组件 — 直接在页面调用
 export function EmptyStateWithButton({
   type = 'no-data',
   title,

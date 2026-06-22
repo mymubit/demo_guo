@@ -11,7 +11,7 @@ from apps.creation.services.submission import submit
 
 User = get_user_model()
 
-NOVEL_BODY = "第一章 女主重生回到豪门。" * 20
+NOVEL_BODY = "??? ?????????" * 20
 
 
 class NovelTextAdaptInputTests(TestCase):
@@ -49,13 +49,12 @@ class NovelTextAdaptInputTests(TestCase):
             user=self.user,
             title="adapt-input",
             theme="overbearing-ceo",
-            core_idea="改编测试",
+            core_idea="????",
             episode_count=20,
             format_variant="B",
             novel_text=NOVEL_BODY,
             creation_entry="novel-adaptation",
-            fusion_status=Project.FUSION_DRAFT,
         )
-        agent = AgentDefinitionService.get_runnable("adapt")
+        agent = AgentDefinitionService.get_runnable("drama.ip-adapter")
         payload = IndependentAgentService.build_agent_input(project, agent, {})
         self.assertEqual(payload["project"]["novel_text"], NOVEL_BODY)

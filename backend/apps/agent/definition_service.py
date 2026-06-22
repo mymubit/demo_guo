@@ -36,7 +36,7 @@ class AgentDefinitionService:
                         "name": item["name"],
                         "name_zh": item["name_zh"],
                         "description": item["description"],
-                        "category": "creation",
+                        "category": "drama_skills",
                         "workspace_order": item.get("workspace_order") or index,
                         "is_enabled": enabled,
                         "is_system": True,
@@ -182,7 +182,9 @@ class AgentDefinitionService:
 
     @staticmethod
     def admin_list() -> List[Dict[str, Any]]:
-        agents = AgentDefinition.objects.all().order_by("workspace_order", "agent_id")
+        agents = AgentDefinition.objects.filter(
+            agent_id__startswith="drama.",
+        ).order_by("workspace_order", "agent_id")
         return [
             {
                 "id": str(agent.id),

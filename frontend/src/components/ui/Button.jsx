@@ -14,9 +14,9 @@ const variants = {
   gold:
     'bg-gradient-to-r from-accent-300 to-accent-500 text-slate-900 shadow-gold hover:from-accent-200 hover:to-accent-400',
   secondary:
-    'border border-white/10 bg-slate-800/70 text-slate-100 hover:border-white/20 hover:bg-slate-700/70',
+    'border border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50',
   ghost:
-    'border border-white/5 bg-slate-900/40 text-slate-200 hover:border-white/20 hover:bg-white/[0.06] hover:text-white',
+    'border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900',
   danger:
     'border border-danger/35 bg-danger-bg text-danger-300 hover:bg-danger/20 hover:text-danger-light',
   text: 'text-brand-400 hover:text-brand-300 underline-offset-2 hover:underline px-0 py-0 h-auto',
@@ -64,7 +64,7 @@ const Button = forwardRef(function Button(
       type={type}
       disabled={isDisabled}
       className={cn(
-        'inline-flex shrink-0 items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2 focus-visible:ring-offset-navy-950',
+        'inline-flex shrink-0 items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white',
         'disabled:pointer-events-none disabled:opacity-55',
         sizeClass,
         variantClass,

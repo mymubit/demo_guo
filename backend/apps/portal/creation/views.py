@@ -94,7 +94,7 @@ class CreationSubmitView(APIView):
                 "project_id": str(project.id),
                 "estimated_minutes": estimated_minutes,
                 "status": project.execution_status,
-                "workspace_url": f"/creation?project={project.id}",
+                "workspace_url": f"/drama/workspace/{project.id}",
             }
         )
         return Response(

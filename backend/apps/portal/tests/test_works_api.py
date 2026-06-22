@@ -3,7 +3,8 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from apps.creation.models import Project
+from apps.creation.artifact_service import save_artifact
+from apps.creation.models import AgentExecutionRun, Project
 
 User = get_user_model()
 
@@ -16,24 +17,33 @@ class PortalWorksApiTests(TestCase):
         self.client.force_authenticate(user=self.user)
         self.completed = Project.objects.create(
             user=self.user,
-            title="已完成作品",
+            title="completed-work",
             theme="sweet-pet",
             episode_count=10,
-            fusion_status=Project.FUSION_READY,
         )
-        Project.objects.create(
+        save_artifact(
+            self.completed,
+            "episode_scripts",
+            {"episodes": [{"episodeNumber": 1, "title": "ep1", "full_script_text": "done"}]},
+        )
+        self.running = Project.objects.create(
             user=self.user,
-            title="进行中作品",
+            title="running-work",
             theme="overbearing-ceo",
             episode_count=20,
-            fusion_status=Project.FUSION_WRITING,
+        )
+        AgentExecutionRun.objects.create(
+            project=self.running,
+            user=self.user,
+            agent_id="drama.topic-planner",
+            status=AgentExecutionRun.STATUS_RUNNING,
+            run_params={},
         )
         Project.objects.create(
             user=self.other,
-            title="他人作品",
+            title="other-user-work",
             theme="sweet-pet",
             episode_count=5,
-            fusion_status=Project.FUSION_READY,
         )
 
     def test_works_list_paginated_with_data_and_pagination(self):
@@ -51,6 +61,8 @@ class PortalWorksApiTests(TestCase):
         self.assertEqual(resp.data["code"], 0)
         statuses = {item["status"] for item in resp.data["data"]}
         self.assertEqual(statuses, {Project.STATUS_COMPLETED})
+        project_ids = {item["project_id"] for item in resp.data["data"]}
+        self.assertIn(str(self.completed.id), project_ids)
 
     def test_works_list_empty_for_other_user_scope(self):
         resp = self.client.get("/api/works/")

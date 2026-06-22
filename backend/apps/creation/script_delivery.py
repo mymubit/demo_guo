@@ -14,7 +14,7 @@ from django.utils import timezone
 
 from .artifact_renderer import normalize_episode_scripts_for_delivery
 from .artifact_service import get_artifact
-from .fusion.fusion_pipeline import scripts_result_to_markdown
+from .script_format import scripts_result_to_markdown
 from .models import Project, ScriptWork
 
 logger = logging.getLogger(__name__)

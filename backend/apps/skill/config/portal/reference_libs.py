@@ -71,7 +71,6 @@ class ReferenceLibraryService:
             return []
 
     @classmethod
-    @classmethod
     def ensure_defaults(cls) -> bool:
         """Runtime never imports external files; reads DB only."""
         return False

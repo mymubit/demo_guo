@@ -65,5 +65,23 @@ def primary_artifact_for_agent(agent_id: str) -> str:
 
 
 def artifact_key_for_node(node_index: int) -> str:
-    """drama.* 工作台按 workspace_order 而不是节点索引，此函数已废弃，返回空串。"""
-    return ""
+    """工作台节点索引 → 产物键（兼容独立工作台 1–5 段式编辑）。"""
+    return {
+        1: "project_brief",
+        2: "structure_plan",
+        3: "character_bible",
+        4: "series_outline",
+        5: "episode_scripts",
+    }.get(int(node_index), "")
+
+
+def node_index_for_artifact(artifact_key: str) -> int:
+    """产物键 → 工作台节点索引。"""
+    mapping = {
+        "project_brief": 1,
+        "structure_plan": 2,
+        "character_bible": 3,
+        "series_outline": 4,
+        "episode_scripts": 5,
+    }
+    return mapping.get(str(artifact_key or "").strip(), 0)

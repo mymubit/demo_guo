@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
@@ -184,8 +184,8 @@ export default function Profile() {
     return (
       <PageContainer width="7xl" className="py-12">
         <div className="animate-pulse space-y-6">
-          <div className="h-32 rounded-2xl border border-white/5 bg-slate-900/60 animate-pulse" />
-          <div className="h-96 rounded-2xl border border-white/5 bg-slate-900/60 animate-pulse" />
+          <div className="h-32 rounded-2xl border border-gray-200 bg-white border border-gray-200 animate-pulse" />
+          <div className="h-96 rounded-2xl border border-gray-200 bg-white border border-gray-200 animate-pulse" />
         </div>
       </PageContainer>
     )
@@ -195,16 +195,16 @@ export default function Profile() {
     <PageContainer as={motion.div} {...pageEnter} width="6xl" className="py-10">
       <header className="mb-8">
         <SectionEyebrow>个人中心</SectionEyebrow>
-        <h1 className="mt-3 text-3xl font-bold text-white">账号与创作概览</h1>
+        <h1 className="mt-3 text-3xl font-bold text-gray-900">账号与创作概览</h1>
       </header>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-[280px_1fr]">
         <aside className="space-y-3.5">
-          <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-5 text-center sticky top-24">
+          <div className="rounded-2xl border border-gray-200 bg-white border border-gray-200 p-5 text-center sticky top-24">
             <div className="inline-block">
               <UserAvatar src={profile.avatar} name={profile.nickname} size="lg" />
             </div>
-            <h2 className="mt-3 text-base font-semibold text-white">{profile.nickname}</h2>
+            <h2 className="mt-3 text-base font-semibold text-gray-900">{profile.nickname}</h2>
             <p className="mt-1 text-xs text-slate-500">{profile.phone}</p>
             <div className="mt-3 flex flex-wrap justify-center gap-1.5">
               <Badge tone={membershipInfo?.is_active ? 'gold' : 'default'}>
@@ -214,40 +214,40 @@ export default function Profile() {
             </div>
 
             <div className="mt-5 rounded-xl border border-gold-400/20 bg-gold-400/5 p-4 text-left text-sm">
-              <div className="flex justify-between text-navy-200">
+              <div className="flex justify-between text-gray-600">
                 <span>{wallet?.currency_name || '创作币'}余额</span>
-                <span className="font-semibold text-gold-400">{wallet?.balance ?? 0}</span>
+                <span className="font-semibold text-brand-600">{wallet?.balance ?? 0}</span>
               </div>
               <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs">
-                <Link to="/wallet" className="text-gold-400 hover:underline">
+                <Link to="/wallet" className="text-brand-600 hover:underline">
                   去充值 →
                 </Link>
-                <Link to="/orders" className="text-navy-300 hover:text-white hover:underline">
+                <Link to="/orders" className="text-gray-500 hover:text-gray-900 hover:underline">
                   我的订单
                 </Link>
-                <Link to="/member" className="text-navy-300 hover:text-white hover:underline">
+                <Link to="/member" className="text-gray-500 hover:text-gray-900 hover:underline">
                   会员中心
                 </Link>
               </div>
             </div>
 
             <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-              <div className="rounded-lg border border-white/5 bg-white/[0.02] p-2">
-                <div className="text-lg font-bold text-white">{stats.total}</div>
+              <div className="rounded-lg border border-gray-200 bg-white/[0.02] p-2">
+                <div className="text-lg font-bold text-gray-900">{stats.total}</div>
                 <div className="text-[10px] text-slate-500">作品</div>
               </div>
-              <div className="rounded-lg border border-white/5 bg-white/[0.02] p-2">
-                <div className="text-lg font-bold text-white">{stats.completed}</div>
+              <div className="rounded-lg border border-gray-200 bg-white/[0.02] p-2">
+                <div className="text-lg font-bold text-gray-900">{stats.completed}</div>
                 <div className="text-[10px] text-slate-500">完成</div>
               </div>
-              <div className="rounded-lg border border-white/5 bg-white/[0.02] p-2">
-                <div className="text-lg font-bold text-white">{stats.running}</div>
+              <div className="rounded-lg border border-gray-200 bg-white/[0.02] p-2">
+                <div className="text-lg font-bold text-gray-900">{stats.running}</div>
                 <div className="text-[10px] text-slate-500">进行中</div>
               </div>
             </div>
           </div>
 
-          <nav className="rounded-2xl border border-white/5 bg-slate-900/60 p-2">
+          <nav className="rounded-2xl border border-gray-200 bg-white border border-gray-200 p-2">
             {tabs.map((tab) => (
               <button
                 key={tab.key}
@@ -256,18 +256,18 @@ export default function Profile() {
                 className={cn(
                   'flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-sm transition-colors',
                   activeTab === tab.key
-                    ? 'bg-gold-400/10 text-white'
-                    : 'text-slate-300 hover:bg-white/5 hover:text-white',
+                    ? 'bg-gold-400/10 text-gray-900'
+                    : 'text-gray-600 hover:bg-white/5 hover:text-gray-900',
                 )}
               >
-                {renderLucideIcon(tab.icon, cn('w-4 h-4', activeTab === tab.key ? 'text-gold-400' : 'text-slate-400'))}
+                {renderLucideIcon(tab.icon, cn('w-4 h-4', activeTab === tab.key ? 'text-brand-600' : 'text-gray-500'))}
                 {tab.label}
               </button>
             ))}
           </nav>
         </aside>
 
-        <main className="rounded-2xl border border-white/5 bg-slate-900/60 p-5 md:p-6">
+        <main className="rounded-2xl border border-gray-200 bg-white border border-gray-200 p-5 md:p-6">
           <AnimatePresence mode="wait">
             {activeTab === 'profile' && (
               <motion.div
@@ -277,8 +277,8 @@ export default function Profile() {
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-6"
               >
-                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-                  <UserCircle2 className="w-6 h-6 text-gold-400" />
+                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                  <UserCircle2 className="w-6 h-6 text-brand-600" />
                   个人资料
                 </h3>
 
@@ -313,7 +313,7 @@ export default function Profile() {
                   {/* 手机号（只读） */}
                   <div>
                     <label className="sf-label">手机号</label>
-                    <div className="w-full px-4 py-3 rounded-xl bg-slate-900/40 border border-white/10 text-navy-300">
+                    <div className="w-full px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-500">
                       {profile.phone}
                     </div>
                   </div>
@@ -363,8 +363,8 @@ export default function Profile() {
                 className="space-y-6"
               >
                 <div>
-                  <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-                    <Lock className="w-6 h-6 text-gold-400" />
+                  <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                    <Lock className="w-6 h-6 text-brand-600" />
                     修改密码
                   </h3>
 
@@ -430,37 +430,37 @@ export default function Profile() {
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-6"
               >
-                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-                  <BarChart3 className="w-6 h-6 text-gold-400" />
+                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                  <BarChart3 className="w-6 h-6 text-brand-600" />
                   作品统计
                 </h3>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                  <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-6">
-                    <div className="text-sm text-slate-400 mb-2">作品总数</div>
-                    <div className="text-3xl font-bold text-white">{stats.total}</div>
+                  <div className="rounded-2xl border border-gray-200 bg-white/[0.02] p-6">
+                    <div className="text-sm text-gray-500 mb-2">作品总数</div>
+                    <div className="text-3xl font-bold text-gray-900">{stats.total}</div>
                   </div>
-                  <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-6">
-                    <div className="text-sm text-slate-400 mb-2">已完成</div>
+                  <div className="rounded-2xl border border-gray-200 bg-white/[0.02] p-6">
+                    <div className="text-sm text-gray-500 mb-2">已完成</div>
                     <div className="text-3xl font-bold text-green-400">{stats.completed}</div>
                   </div>
-                  <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-6">
-                    <div className="text-sm text-slate-400 mb-2">进行中</div>
-                    <div className="text-3xl font-bold text-gold-400">{stats.running}</div>
+                  <div className="rounded-2xl border border-gray-200 bg-white/[0.02] p-6">
+                    <div className="text-sm text-gray-500 mb-2">进行中</div>
+                    <div className="text-3xl font-bold text-brand-600">{stats.running}</div>
                   </div>
-                  <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-6">
-                    <div className="text-sm text-slate-400 mb-2">失败</div>
+                  <div className="rounded-2xl border border-gray-200 bg-white/[0.02] p-6">
+                    <div className="text-sm text-gray-500 mb-2">失败</div>
                     <div className="text-3xl font-bold text-red-400">{stats.failed}</div>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap items-start gap-3 rounded-2xl border border-gold-400/20 bg-gold-400/5 p-4">
-                  <ChevronRight className="w-5 h-5 text-gold-400 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-navy-200">
+                  <ChevronRight className="w-5 h-5 text-brand-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-gray-600">
                     数据来自你的创作项目。
-                    <Link to="/works" className="ml-1 text-gold-400 hover:underline">我的作品</Link>
-                    <span className="text-navy-400 mx-1">·</span>
-                    <Link to="/orders" className="text-gold-400 hover:underline">我的订单</Link>
+                    <Link to="/works" className="ml-1 text-brand-600 hover:underline">我的作品</Link>
+                    <span className="text-gray-400 mx-1">·</span>
+                    <Link to="/orders" className="text-brand-600 hover:underline">我的订单</Link>
                   </div>
                 </div>
               </motion.div>

@@ -8,6 +8,7 @@ Agent 运行时工具函数 — drama.* 新体系。
 from __future__ import annotations
 
 import logging
+from functools import lru_cache
 from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
@@ -64,6 +65,38 @@ DRAMA_WORKSPACE_ORDER = {
 }
 
 
+def action_key_agent_meta(action_key: str) -> Dict[str, Any]:
+    """解析计费 action_key 对应的 drama.* agent 元信息。"""
+    key = (action_key or "").strip()
+    if key.startswith("drama.agent."):
+        slug = key[len("drama.agent.") :]
+        return {"agent_id": f"drama.{slug}", "billing_scope": "drama"}
+    if key.startswith("drama."):
+        return {"agent_id": key, "billing_scope": "drama"}
+    return {}
+
+
+def primary_output_artifact(agent_id: str) -> str:
+    """推断 Agent 主输出产物键。"""
+    agent = get_agent(agent_id)
+    if agent:
+        outputs = agent.get("outputs") or []
+        if outputs:
+            return str(outputs[0])
+    if agent_id.startswith("drama."):
+        try:
+            from apps.agent.definition_service import AgentDefinitionService
+
+            row = AgentDefinitionService.get(agent_id)
+            if row and isinstance(row.output_contract, dict):
+                artifacts = row.output_contract.get("artifacts") or []
+                if artifacts:
+                    return str(artifacts[0])
+        except Exception:  # noqa: BLE001
+            pass
+    return ""
+
+
 def workspace_index_for_agent(agent_id: str) -> int:
     """获取 Agent 在工作台中的排序位置。"""
     return DRAMA_WORKSPACE_ORDER.get(agent_id, 999)
@@ -74,6 +107,11 @@ def get_agent_registry() -> Dict[str, Any]:
     从数据库获取所有 drama.* Agent 的运行时描述。
     结果按 workspace_order 排序。
     """
+    return _load_agent_registry()
+
+
+@lru_cache(maxsize=1)
+def _load_agent_registry() -> Dict[str, Any]:
     try:
         from apps.agent.models import AgentDefinition
         agents = AgentDefinition.objects.filter(
@@ -101,6 +139,9 @@ def get_agent_registry() -> Dict[str, Any]:
     except Exception as exc:  # noqa: BLE001
         logger.warning("[drama runtime] get_agent_registry failed: %s", exc)
         return {"_meta": {"version": "drama-skills-v3.0"}, "agents": []}
+
+
+get_agent_registry.cache_clear = _load_agent_registry.cache_clear  # type: ignore[attr-defined]
 
 
 def get_agent(agent_id: str) -> Optional[Dict[str, Any]]:

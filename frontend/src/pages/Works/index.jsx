@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
@@ -98,7 +98,7 @@ export default function Works() {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="mb-5 flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-navy-300 transition-colors hover:bg-white/[0.06] hover:text-white"
+            className="mb-5 flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900"
             aria-label="返回首页"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -106,15 +106,15 @@ export default function Works() {
           <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="min-w-0">
               <SectionEyebrow>我的作品</SectionEyebrow>
-              <h1 className="mt-3 text-3xl font-bold leading-tight tracking-tight text-white md:text-4xl">
+              <h1 className="mt-3 text-3xl font-bold leading-tight tracking-tight text-gray-900 md:text-4xl">
                 {pagination.total} 部剧本
                 {generatingCount > 0 ? (
-                  <span className="ml-2 text-lg font-medium text-gold-400/90 md:text-xl">
+                  <span className="ml-2 text-lg font-medium text-brand-600/90 md:text-xl">
                     · {generatingCount} 部生成中
                   </span>
                 ) : null}
               </h1>
-              <p className="mt-2 text-sm text-navy-300 md:text-base">
+              <p className="mt-2 text-sm text-gray-500 md:text-base">
                 共 {pagination.total} 个项目 · 当前页已完成 {completedCount} 个 · 自动加密存档
               </p>
             </div>
@@ -178,7 +178,7 @@ export default function Works() {
                 variant="gold"
                 size="md"
                 iconLeft={Sparkles}
-                onClick={() => navigate('/creation')}
+                onClick={() => navigate('/drama')}
               >
                 新建创作
               </Button>
@@ -197,7 +197,7 @@ export default function Works() {
           <LoadingSkeleton />
         ) : filtered.length === 0 ? (
           <WorksEmptyState
-            onNew={() => navigate('/creation')}
+            onNew={() => navigate('/drama')}
             onClear={clearFilters}
             hasFilter={!!search || statusFilter !== 'all'}
           />
@@ -226,17 +226,17 @@ export default function Works() {
             <button
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-navy-200 transition-colors hover:bg-white/[0.06] disabled:opacity-40"
+              className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-40"
             >
               上一页
             </button>
-            <span className="text-sm text-navy-300">
+            <span className="text-sm text-gray-500">
               第 {page} / {pagination.total_pages} 页 · 共 {pagination.total} 个作品
             </span>
             <button
               disabled={page >= pagination.total_pages}
               onClick={() => setPage((p) => p + 1)}
-              className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-navy-200 transition-colors hover:bg-white/[0.06] disabled:opacity-40"
+              className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2 text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-40"
             >
               下一页
             </button>
@@ -272,8 +272,10 @@ function WorkCard({ work, index, theme, navigate, onDelete, deleting }) {
     const pid = work.project_id
     if (work.status === 'completed') {
       navigate(`/works/${pid}`)
+    } else if (work.drama_workspace_url) {
+      navigate(work.drama_workspace_url)
     } else if (pid) {
-      navigate(`/creation?project=${pid}`)
+      navigate(`/drama/workspace/${pid}`)
     }
   }
 
@@ -284,10 +286,10 @@ function WorkCard({ work, index, theme, navigate, onDelete, deleting }) {
       transition={{ delay: index * 0.05 }}
       whileHover={{ y: -2 }}
       onClick={goToWork}
-      className="group cursor-pointer overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-navy-900/65 to-navy-950/65 transition-all hover:border-gold-400/35 hover:shadow-gold"
+      className="group cursor-pointer overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-all hover:border-brand-200 hover:shadow-md"
     >
       <div className="relative aspect-video w-full bg-cover bg-center" style={coverStyle} role="img" aria-label={work.title}>
-        <div className="absolute inset-0 bg-gradient-to-t from-navy-950/80 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 via-transparent to-transparent" />
         <div className="absolute left-3 top-3">
           <ThemeBadge theme={theme} size="sm" />
         </div>
@@ -311,7 +313,7 @@ function WorkCard({ work, index, theme, navigate, onDelete, deleting }) {
               e.stopPropagation()
               onDelete?.(work)
             }}
-            className="rounded-xl border border-transparent bg-white/[0.03] p-2 text-navy-300 transition-all transition-all hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
+            className="rounded-xl border border-transparent bg-gray-50 p-2 text-gray-500 transition-all transition-all hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-400 disabled:opacity-50"
           >
             {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
           </button>
@@ -319,23 +321,23 @@ function WorkCard({ work, index, theme, navigate, onDelete, deleting }) {
       </div>
 
       <div className="p-4 pb-5">
-        <h3 className="mb-1 line-clamp-2 text-base font-semibold text-white transition-colors group-hover:text-gold-400">
+        <h3 className="mb-1 line-clamp-2 text-base font-semibold text-gray-900 transition-colors group-hover:text-brand-600">
           {work.title}
         </h3>
-        <p className="mb-2 line-clamp-2 text-xs text-navy-300">
+        <p className="mb-2 line-clamp-2 text-xs text-gray-500">
           {work.idea ? (
             work.idea
           ) : (
-            <span className="italic text-navy-400">
+            <span className="italic text-gray-400">
               {meta.key === 'draft' ? '尚未填写创意描述' : '暂无创意摘要'}
             </span>
           )}
         </p>
-        <div className="text-xs text-navy-300">
+        <div className="text-xs text-gray-500">
           {theme.name} · {work.episodes} 集 · {work.format}
           {work.score ? (
-            <span className="ml-2 inline-flex items-center gap-1 text-gold-400">
-              <Star className="h-3 w-3 fill-gold-400" />
+            <span className="ml-2 inline-flex items-center gap-1 text-brand-600">
+              <Star className="h-3 w-3 fill-brand-500" />
               {work.score}
             </span>
           ) : null}
@@ -343,11 +345,11 @@ function WorkCard({ work, index, theme, navigate, onDelete, deleting }) {
 
         {meta.progress > 0 && meta.progress < 100 && meta.key === 'generating' ? (
           <div className="mt-3">
-            <div className="mb-1 flex justify-between text-[10px] text-navy-400">
+            <div className="mb-1 flex justify-between text-[10px] text-gray-400">
               <span>创作进度</span>
               <span>{meta.progress}%</span>
             </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div className="h-1.5 overflow-hidden rounded-full bg-gray-100">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-gold-500 to-amber-400 transition-all"
                 style={{ width: `${meta.progress}%` }}
@@ -356,12 +358,12 @@ function WorkCard({ work, index, theme, navigate, onDelete, deleting }) {
           </div>
         ) : null}
 
-        <div className="mt-3 flex items-center justify-between border-t border-white/5 pt-3">
-          <div className="flex items-center gap-1.5 text-xs text-navy-400">
+        <div className="mt-3 flex items-center justify-between border-t border-gray-200 pt-3">
+          <div className="flex items-center gap-1.5 text-xs text-gray-400">
             <Calendar className="h-3.5 w-3.5" />
             <span>{work.createdAt}</span>
           </div>
-          <div className="flex items-center gap-1 text-sm text-gold-400 transition-all group-hover:gap-2">
+          <div className="flex items-center gap-1 text-sm text-brand-600 transition-all group-hover:gap-2">
             <span>{meta.cta}</span>
             <ArrowRight className="h-4 w-4" />
           </div>
@@ -381,13 +383,13 @@ function LoadingSkeleton() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: i * 0.05 }}
-          className="overflow-hidden rounded-2xl border border-white/5 bg-gradient-to-br from-navy-900/65 to-navy-950/65"
+          className="overflow-hidden rounded-2xl border border-gray-200 bg-white border border-gray-200 shadow-sm"
         >
-          <div className="aspect-video animate-pulse bg-white/10" />
+          <div className="aspect-video animate-pulse bg-gray-100" />
           <div className="space-y-3 p-4 pb-5">
-            <div className="h-5 w-4/5 animate-pulse rounded-lg bg-white/10" />
-            <div className="h-3 w-full animate-pulse rounded bg-white/[0.05]" />
-            <div className="h-3 w-2/3 animate-pulse rounded bg-white/[0.05]" />
+            <div className="h-5 w-4/5 animate-pulse rounded-lg bg-gray-100" />
+            <div className="h-3 w-full animate-pulse rounded bg-gray-50" />
+            <div className="h-3 w-2/3 animate-pulse rounded bg-gray-50" />
           </div>
         </motion.div>
       ))}

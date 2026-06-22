@@ -164,47 +164,31 @@ export default function Home() {
   const stats = normalizeHeroStats(configHeroStats, DEFAULT_HERO_STATS)
 
   return (
-    <div className="relative">
-      {/* ========= Hero — 全屏电影感 ========= */}
-      <section className="relative min-h-[calc(100svh-4rem)] w-full overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${HERO_BG})`, filter: 'brightness(.55) saturate(1.05)' }}
-          aria-hidden
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              'radial-gradient(60% 50% at 70% 30%, rgba(253,160,133,.18), transparent 70%),' +
-              'radial-gradient(40% 30% at 20% 80%, rgba(102,126,234,.12), transparent 70%),' +
-              'linear-gradient(180deg, rgba(3,13,36,.3) 0%, rgba(3,13,36,.85) 75%, #030d24 100%)',
-          }}
-          aria-hidden
-        />
-
-        <PageContainer width="7xl" className="relative z-10 flex min-h-[calc(100svh-4rem)] items-center">
+    <div className="relative bg-gray-50">
+      {/* ========= Hero ========= */}
+      <section className="relative w-full overflow-hidden border-b border-gray-200 bg-gradient-to-br from-brand-50 via-white to-gray-50">
+        <PageContainer width="7xl" className="relative z-10 py-16 md:py-24">
           <div className="grid w-full grid-cols-1 items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
             <motion.div {...pageEnter} className="max-w-[620px]">
               <div className="mb-5 flex flex-wrap gap-2">
                 <Badge tone="gold" size="md">Drama Skills</Badge>
                 <Badge tone="info" size="md">4 题材格式 · 8 题材模板</Badge>
               </div>
-              <h1 className="font-display text-5xl font-bold leading-[1.05] tracking-tight md:text-6xl xl:text-7xl">
+              <h1 className="font-display text-4xl font-bold leading-[1.08] tracking-tight text-gray-900 md:text-5xl xl:text-6xl">
                 一句话创意，
                 <br />
-                <span className="bg-gradient-to-r from-gold-400 to-gold-200 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-brand-600 to-brand-500 bg-clip-text text-transparent">
                   80 集可拍摄
                 </span>
                 的 A 级剧本。
               </h1>
-              <p className="mt-5 max-w-[56ch] text-base text-navy-100 md:text-lg">
+              <p className="mt-5 max-w-[56ch] text-base text-gray-600 md:text-lg">
                 ScriptForge 用 Drama Skills 工作室把创意拆成结构、人设、大纲、剧本、质量与交付。
                 全流程 8–12 分钟，生成即带数字水印，剧作 / 团队 / 平台三方可溯源。
               </p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link to="/creation">
-                  <Button variant="gold" size="lg" iconRight={<ChevronRight className={ICON.md} />}>
+                  <Button variant="brand" size="lg" iconRight={<ChevronRight className={ICON.md} />}>
                     立即开始创作
                   </Button>
                 </Link>
@@ -214,9 +198,9 @@ export default function Home() {
               </div>
               <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {stats.map((stat) => (
-                  <div key={stat.label} className="rounded-2xl border border-white/5 bg-white/[0.03] p-3">
-                    <div className="text-xl font-bold text-white md:text-2xl">{stat.value}</div>
-                    <div className="mt-1 text-xs text-navy-300">{stat.label}</div>
+                  <div key={stat.label} className="sf-surface-card p-3">
+                    <div className="text-xl font-bold text-gray-900 md:text-2xl">{stat.value}</div>
+                    <div className="mt-1 text-xs text-gray-500">{stat.label}</div>
                   </div>
                 ))}
               </div>
@@ -224,17 +208,17 @@ export default function Home() {
 
             <div className="hidden lg:block">
               <motion.div
-                initial={{ opacity: 0, y: 20, rotate: 1.5 }}
-                animate={{ opacity: 1, y: 0, rotate: 1.5 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.2 }}
-                className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-white/10 shadow-[0_30px_80px_-20px_rgba(0,0,0,.7)]"
+                className="relative aspect-[4/5] overflow-hidden rounded-2xl border border-gray-200 shadow-lg"
               >
                 <img src={POSTER_BG} alt="剧本海报示意" className="h-full w-full object-cover" />
-                <span className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-gold-300 to-gold-500 px-3 py-1 text-xs font-bold text-navy-950">
+                <span className="absolute right-4 top-4 rounded-full bg-gradient-to-r from-accent-300 to-accent-500 px-3 py-1 text-xs font-bold text-gray-900">
                   第 17 集 · 钩子
                 </span>
-                <div className="absolute bottom-4 left-4 rounded-xl border border-white/10 bg-navy-950/70 px-3 py-2 text-xs text-navy-100 backdrop-blur-md">
-                  <b className="text-white">《逆光》</b> · 都市逆袭 · 80 集
+                <div className="absolute bottom-4 left-4 rounded-xl border border-gray-200 bg-white/90 px-3 py-2 text-xs text-gray-700 backdrop-blur-md">
+                  <b className="text-gray-900">《逆光》</b> · 都市逆袭 · 80 集
                 </div>
               </motion.div>
             </div>
@@ -264,20 +248,19 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                whileHover={{ y: -5 }}
-                className="rounded-3xl border border-white/5 bg-gradient-to-br from-navy-900/65 to-navy-950/65 p-8 transition-all hover:border-gold-400/30 hover:shadow-card-hover group"
+                className="sf-feature-card group"
               >
                 <div
                   className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"
                   style={{
-                    background: `${feature.color}20`,
-                    boxShadow: `0 8px 24px -8px ${feature.color}60`,
+                    background: `${feature.color}15`,
+                    boxShadow: `0 4px 12px -4px ${feature.color}40`,
                   }}
                 >
                   {renderLucideIcon(feature.icon, 'w-7 h-7', { style: { color: feature.color } })}
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-white">{feature.title}</h3>
-                <p className="text-navy-200 leading-relaxed">{feature.description}</p>
+                <h3 className="text-xl font-bold mb-3 text-gray-900">{feature.title}</h3>
+                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
               </motion.div>
             ))}
           </div>
@@ -307,11 +290,10 @@ export default function Home() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.05 }}
-                whileHover={{ y: -3, scale: 1.02 }}
-                className="cursor-pointer rounded-2xl border border-white/5 bg-gradient-to-br from-navy-900/65 to-navy-950/65 p-6 text-center group"
+                className="sf-surface-card cursor-pointer p-6 text-center group hover:border-brand-200 hover:shadow-md transition-all"
               >
                 <ThemeBadge theme={theme} size="xl" />
-                <div className="text-xs text-navy-300 mt-2">专业优化模板</div>
+                <div className="text-xs text-gray-400 mt-2">专业优化模板</div>
               </motion.div>
             ))}
           </div>
@@ -323,43 +305,43 @@ export default function Home() {
         <PageContainer width="7xl" className="grid grid-cols-1 items-center gap-16 lg:grid-cols-[1.2fr_0.8fr]">
           <div>
             <SectionEyebrow>Drama Skills</SectionEyebrow>
-            <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight md:text-4xl">
+            <h2 className="mt-3 text-3xl font-bold leading-tight tracking-tight text-gray-900 md:text-4xl">
               从一句话到可拍摄剧本，
               <br />
               每一步都可被复盘。
             </h2>
-            <p className="mt-4 max-w-[56ch] text-navy-200">
+            <p className="mt-4 max-w-[56ch] text-gray-600">
               创作不是黑箱。每完成一个节点，都能回看输入、决策、产出与评分。
               想要推到哪一步，由你说了算。
             </p>
           </div>
 
-          <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-navy-900/80 to-navy-950/80 p-7">
+          <div className="sf-surface-card p-7">
             <div className="relative grid grid-cols-7 gap-0">
-              <span className="pointer-events-none absolute left-[6%] right-[6%] top-7 h-px bg-gradient-to-r from-transparent via-gold-400/40 to-transparent" />
+              <span className="pointer-events-none absolute left-[6%] right-[6%] top-7 h-px bg-gradient-to-r from-transparent via-brand-300 to-transparent" />
               {PIPELINE.map((n) => (
                 <div key={n.step} className="flex flex-col items-center gap-2">
                   <span
                     className={cn(
                       'grid h-14 w-14 place-items-center rounded-2xl border text-sm font-bold',
-                      n.state === 'active' && 'border-transparent bg-gradient-to-r from-gold-300 to-gold-500 text-navy-950 shadow-gold',
-                      n.state === 'done' && 'border-gold-400/40 bg-gold-400/15 text-gold-300',
-                      n.state === 'idle' && 'border-white/10 bg-white/5 text-navy-200',
+                      n.state === 'active' && 'border-transparent bg-brand-600 text-white shadow-md',
+                      n.state === 'done' && 'border-brand-200 bg-brand-50 text-brand-700',
+                      n.state === 'idle' && 'border-gray-200 bg-gray-50 text-gray-400',
                     )}
                   >
                     {n.step}
                   </span>
-                  <span className={cn('text-xs', n.state === 'active' ? 'text-white' : 'text-navy-200')}>{n.name}</span>
-                  <span className="text-[10px] text-navy-400">{n.time}</span>
+                  <span className={cn('text-xs', n.state === 'active' ? 'text-gray-900 font-medium' : 'text-gray-500')}>{n.name}</span>
+                  <span className="text-[10px] text-gray-400">{n.time}</span>
                 </div>
               ))}
             </div>
-            <div className="mt-6 h-1.5 overflow-hidden rounded-full bg-white/5">
-              <span className="block h-full w-[42%] rounded-full bg-gradient-to-r from-gold-300 to-gold-500 shadow-gold" />
+            <div className="mt-6 h-1.5 overflow-hidden rounded-full bg-gray-100">
+              <span className="block h-full w-[42%] rounded-full bg-brand-600" />
             </div>
-            <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 text-[13px] text-navy-200">
+            <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 text-[13px] text-gray-500">
               <span>
-                当前：<b className="text-white">第 4 节点 · 大纲撰写</b>
+                当前：<b className="text-gray-900">第 4 节点 · 大纲撰写</b>
               </span>
               <span>已耗时 03:12 · 预计剩余 04:48</span>
             </div>
@@ -389,21 +371,21 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
-                className="rounded-3xl border border-white/5 bg-gradient-to-br from-navy-900/65 to-navy-950/65 p-8"
+                className="sf-surface-card p-8"
               >
                 <div className="flex items-center gap-1 mb-4">
                   {Array.from({ length: t.rating }).map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-gold-400 fill-gold-400" />
+                    <Star key={i} className="w-5 h-5 text-accent-500 fill-accent-500" />
                   ))}
                 </div>
-                <p className="text-navy-100 leading-relaxed mb-6 text-lg">{t.content}</p>
+                <p className="text-gray-700 leading-relaxed mb-6 text-lg">{t.content}</p>
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-gold-400 to-gold-600 flex items-center justify-center text-navy-950 font-bold">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-accent-300 to-accent-500 flex items-center justify-center text-gray-900 font-bold">
                     {t.avatar}
                   </div>
                   <div>
-                    <div className="font-semibold text-white">{t.name}</div>
-                    <div className="text-sm text-navy-300">{t.role}</div>
+                    <div className="font-semibold text-gray-900">{t.name}</div>
+                    <div className="text-sm text-gray-500">{t.role}</div>
                   </div>
                 </div>
               </motion.div>
@@ -440,13 +422,13 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="relative overflow-hidden rounded-[40px] border border-gold-400/30 bg-gold-400/5 p-12 text-center shadow-gold md:p-16"
+            className="relative overflow-hidden rounded-3xl border border-brand-200 bg-brand-50 p-12 text-center md:p-16"
           >
             <div className="relative z-10">
-              <h2 className="text-4xl md:text-5xl font-bold mb-6">
-                准备好让你的创意 <span className="gradient-text">腾飞</span> 了吗？
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900">
+                准备好让你的创意 <span className="text-brand-600">腾飞</span> 了吗？
               </h2>
-              <p className="text-xl text-navy-200 mb-10 max-w-2xl mx-auto">
+              <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
                 加入 50,000+ 创作者的行列，体验 AI 赋能的专业剧本创作
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -475,19 +457,19 @@ function FAQItem({ q, a }) {
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      className="overflow-hidden rounded-2xl border border-white/5 bg-slate-900/60"
+      className="overflow-hidden rounded-xl border border-gray-200 bg-white"
     >
       <button
         onClick={() => setOpen(!open)}
-        className="w-full p-6 flex items-center justify-between text-left"
+        className="w-full p-6 flex items-center justify-between text-left hover:bg-gray-50 transition-colors"
       >
-        <span className="font-semibold text-white pr-4">{q}</span>
+        <span className="font-semibold text-gray-900 pr-4">{q}</span>
         <motion.div
           animate={{ rotate: open ? 180 : 0 }}
           transition={{ duration: 0.3 }}
-          className="w-8 h-8 rounded-full bg-gold-400/20 flex items-center justify-center flex-shrink-0"
+          className="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center flex-shrink-0"
         >
-          <ChevronRight className="w-4 h-4 text-gold-400" />
+          <ChevronRight className="w-4 h-4 text-brand-600" />
         </motion.div>
       </button>
       <motion.div
@@ -496,7 +478,7 @@ function FAQItem({ q, a }) {
         transition={{ duration: 0.3 }}
         className="overflow-hidden"
       >
-        <div className="px-6 pb-6 text-navy-200 leading-relaxed">{a}</div>
+        <div className="px-6 pb-6 text-gray-600 leading-relaxed">{a}</div>
       </motion.div>
     </motion.div>
   )

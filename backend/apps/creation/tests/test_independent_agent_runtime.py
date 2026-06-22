@@ -13,6 +13,8 @@ from apps.creation.models import AgentExecutionRun, Project
 from apps.creation.services.submission import submit
 from apps.skill.models import LlmProvider
 
+from apps.creation.tests.test_helpers import grant_test_coins
+
 User = get_user_model()
 
 
@@ -31,24 +33,24 @@ def _attach_test_llm_provider(agent_id: str) -> LlmProvider:
 class IndependentAgentEnqueueTests(TestCase):
     def setUp(self):
         AgentDefinitionService.ensure_defaults()
-        _attach_test_llm_provider("brief")
+        _attach_test_llm_provider("drama.topic-planner")
         self.user = User.objects.create_user(phone="13900007701", password="test-pass-123")
+        grant_test_coins(self.user)
         self.project = Project.objects.create(
             user=self.user,
             title="enqueue-test",
             theme="overbearing-ceo",
-            core_idea="测试并发入队",
+            core_idea="??????",
             episode_count=20,
             format_variant="B",
-            fusion_status=Project.FUSION_DRAFT,
         )
 
     def test_enqueue_returns_existing_running_without_creating_duplicate(self):
-        first = IndependentAgentService.enqueue_run(self.project, self.user, "brief", {})
+        first = IndependentAgentService.enqueue_run(self.project, self.user, "drama.topic-planner", {})
         self.assertTrue(first.created_new_run)
         self.assertTrue(first.should_enqueue)
 
-        second = IndependentAgentService.enqueue_run(self.project, self.user, "brief", {})
+        second = IndependentAgentService.enqueue_run(self.project, self.user, "drama.topic-planner", {})
         self.assertFalse(second.created_new_run)
         self.assertFalse(second.should_enqueue)
         self.assertEqual(second.run.id, first.run.id)
@@ -61,7 +63,7 @@ class IndependentAgentEnqueueTests(TestCase):
     def test_run_api_skips_enqueue_when_run_already_running(self, mock_enqueue):
         client = APIClient()
         client.force_authenticate(user=self.user)
-        url = f"/api/creation/projects/{self.project.id}/agents/brief/run/"
+        url = f"/api/creation/projects/{self.project.id}/agents/drama.topic-planner/run/"
 
         first = client.post(url, {"params": {}}, format="json")
         self.assertEqual(first.status_code, 200)
@@ -85,26 +87,25 @@ class IndependentAgentMergePersistTests(TestCase):
             user=self.user,
             title="merge-test",
             theme="overbearing-ceo",
-            core_idea="测试 merge 写入",
+            core_idea="?? merge ??",
             episode_count=20,
             format_variant="B",
-            fusion_status=Project.FUSION_DRAFT,
         )
         save_artifact(
             self.project,
             "episode_scripts",
             {
                 "episodes": [
-                    {"episodeNumber": 1, "title": "旧第1集"},
-                    {"episodeNumber": 2, "title": "旧第2集"},
+                    {"episodeNumber": 1, "title": "?1?"},
+                    {"episodeNumber": 2, "title": "?2?"},
                 ]
             },
         )
-        self.agent = AgentDefinitionService.get_runnable("script")
+        self.agent = AgentDefinitionService.get_runnable("drama.script-writer")
         self.run = AgentExecutionRun.objects.create(
             project=self.project,
             user=self.user,
-            agent_id="script",
+            agent_id="drama.script-writer",
             status=AgentExecutionRun.STATUS_RUNNING,
             batch_from=2,
             batch_to=3,
@@ -120,9 +121,9 @@ class IndependentAgentMergePersistTests(TestCase):
             {
                 "episode_scripts": {
                     "episodes": [
-                        {"episodeNumber": 2, "title": "新第2集"},
-                        {"episodeNumber": 3, "title": "新第3集"},
-                        {"episodeNumber": 99, "title": "越界集"},
+                        {"episodeNumber": 2, "title": "??2?"},
+                        {"episodeNumber": 3, "title": "?3?"},
+                        {"episodeNumber": 99, "title": "????"},
                     ]
                 }
             },
@@ -130,22 +131,22 @@ class IndependentAgentMergePersistTests(TestCase):
         )
         merged = get_artifact(self.project, "episode_scripts") or {}
         by_num = {ep["episodeNumber"]: ep["title"] for ep in merged.get("episodes") or []}
-        self.assertEqual(by_num[1], "旧第1集")
-        self.assertEqual(by_num[2], "新第2集")
-        self.assertEqual(by_num[3], "新第3集")
+        self.assertEqual(by_num[1], "?1?")
+        self.assertEqual(by_num[2], "??2?")
+        self.assertEqual(by_num[3], "?3?")
         self.assertNotIn(99, by_num)
 
 
 class IndependentAgentTemplateTests(TestCase):
     def setUp(self):
         AgentDefinitionService.ensure_defaults()
-        self.agent = AgentDefinitionService.get_runnable("brief")
+        self.agent = AgentDefinitionService.get_runnable("drama.topic-planner")
 
     def test_render_template_supports_dot_path_variables(self):
         context = {
             "agent": self.agent,
             "input": {
-                "project": {"core_idea": "女主逆袭", "theme": "overbearing-ceo"},
+                "project": {"core_idea": "????", "theme": "overbearing-ceo"},
                 "artifacts": {"project_brief": {"status": "confirmed"}},
                 "params": {"episode_from": 1},
             },
@@ -155,7 +156,7 @@ class IndependentAgentTemplateTests(TestCase):
             "idea={{ project.core_idea }} brief={{ artifacts.project_brief }} from={{ params.episode_from }}",
             context,
         )
-        self.assertIn("女主逆袭", rendered)
+        self.assertIn("????", rendered)
         self.assertIn('"status": "confirmed"', rendered)
         self.assertIn("from=1", rendered)
 
@@ -163,21 +164,21 @@ class IndependentAgentTemplateTests(TestCase):
 class IndependentAgentPreviewTests(TestCase):
     def setUp(self):
         AgentDefinitionService.ensure_defaults()
-        _attach_test_llm_provider("brief")
+        _attach_test_llm_provider("drama.topic-planner")
         self.user = User.objects.create_user(phone="13900007704", password="test-pass-123")
+        grant_test_coins(self.user)
         self.project = Project.objects.create(
             user=self.user,
             title="preview-test",
             theme="overbearing-ceo",
-            core_idea="测试预估",
+            core_idea="????",
             episode_count=20,
             format_variant="B",
-            fusion_status=Project.FUSION_DRAFT,
         )
 
     def test_preview_run_does_not_create_execution_run(self):
         before = AgentExecutionRun.objects.filter(project=self.project).count()
-        preview = IndependentAgentService.preview_run(self.project, "brief", {})
+        preview = IndependentAgentService.preview_run(self.project, "drama.topic-planner", {})
         after = AgentExecutionRun.objects.filter(project=self.project).count()
         self.assertEqual(before, after)
         self.assertIn("estimated_prompt_tokens", preview)
@@ -187,7 +188,7 @@ class IndependentAgentPreviewTests(TestCase):
         client = APIClient()
         client.force_authenticate(user=self.user)
         res = client.post(
-            f"/api/creation/projects/{self.project.id}/agents/brief/estimate/",
+            f"/api/creation/projects/{self.project.id}/agents/drama.topic-planner/estimate/",
             {"params": {}},
             format="json",
         )
@@ -204,7 +205,7 @@ class CreationSubmitLegacyIsolationTests(TestCase):
     def _payload(self):
         return {
             "theme": "overbearing-ceo",
-            "core_idea": "一个被误解的女主重回豪门，在权力与情感夹缝中反击。",
+            "core_idea": "????????? pipeline ??",
             "episode_count": 20,
             "format_variant": "B",
             "target_platform": "douyin",
@@ -225,23 +226,22 @@ class CreationSubmitLegacyIsolationTests(TestCase):
     ):
         project, _ = submit(self.user, self._payload())
         mock_enqueue.assert_not_called()
-        self.assertEqual(project.total_nodes, 0)
         self.assertEqual(project.execution_status, Project.STATUS_PENDING)
 
 
 class IndependentAgentOutputValidationTests(TestCase):
     def setUp(self):
         AgentDefinitionService.ensure_defaults()
-        self.script_agent = AgentDefinitionService.get_runnable("script")
-        self.review_agent = AgentDefinitionService.get_runnable("review")
+        self.script_writer_agent = AgentDefinitionService.get_runnable("drama.script-writer")
+        self.script_reviewer_agent = AgentDefinitionService.get_runnable("drama.script-reviewer")
 
     def test_validate_output_rejects_episode_without_number(self):
         with self.assertRaises(Exception) as ctx:
             IndependentAgentService.validate_output(
-                self.script_agent,
+                self.script_writer_agent,
                 {
                     "episode_scripts": {
-                        "episodes": [{"title": "缺集号"}],
+                        "episodes": [{"title": "???"}],
                     }
                 },
             )
@@ -249,10 +249,10 @@ class IndependentAgentOutputValidationTests(TestCase):
 
     def test_validate_output_accepts_valid_episode_scripts(self):
         result = IndependentAgentService.validate_output(
-            self.script_agent,
+            self.script_writer_agent,
             {
                 "episode_scripts": {
-                    "episodes": [{"episodeNumber": 1, "title": "第1集"}],
+                    "episodes": [{"episodeNumber": 1, "title": "?1?"}],
                 }
             },
         )
@@ -261,7 +261,7 @@ class IndependentAgentOutputValidationTests(TestCase):
     def test_validate_output_rejects_review_report_without_passed(self):
         with self.assertRaises(Exception) as ctx:
             IndependentAgentService.validate_output(
-                self.review_agent,
+                self.script_reviewer_agent,
                 {"review_report": {"issues": []}},
             )
         self.assertIn("passed", str(ctx.exception))
@@ -274,10 +274,9 @@ class ReportArtifactEditorViewTests(TestCase):
             user=self.user,
             title="report-view-test",
             theme="overbearing-ceo",
-            core_idea="测试报告预览",
+            core_idea="??????",
             episode_count=20,
             format_variant="B",
-            fusion_status=Project.FUSION_DRAFT,
         )
 
     def test_build_artifact_editor_view_routes_review_report(self):
@@ -286,7 +285,7 @@ class ReportArtifactEditorViewTests(TestCase):
         save_artifact(
             self.project,
             "review_report",
-            {"agentId": "review", "passed": True, "issues": []},
+            {"agentId": "drama.script-reviewer", "passed": True, "issues": []},
         )
         view = build_artifact_editor_view(self.project, "review_report")
         self.assertEqual(view["mode"], "review_report")

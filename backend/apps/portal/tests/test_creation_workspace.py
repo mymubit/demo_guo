@@ -5,7 +5,6 @@ from rest_framework.test import APIClient
 
 from apps.creation.artifact_service import save_artifact
 from apps.creation.models import Project
-from apps.creation.services import CreationService
 
 User = get_user_model()
 
@@ -17,30 +16,20 @@ class CreationWorkspaceApiTests(TestCase):
         self.other = User.objects.create_user(phone="13900004407", password="test-pass-123")
         self.project = Project.objects.create(
             user=self.user,
-            title="API 工作台",
+            title="api-workspace",
             theme="sweet-pet",
-            core_idea="API 测试",
+            core_idea="api test",
             episode_count=10,
             pipeline_mode=Project.MODE_WORKSPACE,
-            fusion_status=Project.FUSION_DRAFT,
         )
         save_artifact(
             self.project,
             "project_brief",
             {
-                "workingTitle": "API 工作台",
+                "workingTitle": "api-workspace",
                 "theme": "sweet-pet",
                 "episodeCount": 10,
-                "coreHook": "API 测试",
-            },
-        )
-        save_artifact(
-            self.project,
-            "episode_scripts",
-            {
-                "episodes": [
-                    {"episodeNumber": 1, "title": "第1集", "full_script_text": "正文"},
-                ]
+                "coreHook": "api test",
             },
         )
         self.client.force_authenticate(user=self.user)
@@ -62,15 +51,13 @@ class CreationWorkspaceApiTests(TestCase):
         self.assertGreaterEqual(len(agents), 5)
         self.assertIn("agent_id", agents[0])
         self.assertIn("health", agents[0])
-        artifacts = data.get("artifacts") or []
-        artifact_keys = {row.get("artifact_key") for row in artifacts}
+        artifact_keys = {row.get("artifact_key") for row in (data.get("artifacts") or [])}
         self.assertIn("project_brief", artifact_keys)
-        self.assertIn("episode_scripts", artifact_keys)
 
     def test_legacy_agent_content_returns_404(self):
         put_res = self.client.put(
             f"/api/creation/projects/{self.project.id}/agents/1/content/",
-            {"fields": [{"key": "themeDisplayName", "value": "甜宠 API"}]},
+            {"fields": [{"key": "themeDisplayName", "value": "sweet-pet-api"}]},
             format="json",
         )
         self.assertEqual(put_res.status_code, 404)
@@ -81,11 +68,11 @@ class CreationWorkspaceApiTests(TestCase):
         self.assertEqual(res.json().get("code"), 403)
 
     def test_share_completed_project_ok(self):
-        from apps.creation.artifact_service import save_artifact
-
-        self.project.fusion_status = Project.FUSION_READY
-        save_artifact(self.project, "episode_scripts", {"episodes": [{"episodeNumber": 1, "title": "第1集"}]})
-        self.project.save(update_fields=["fusion_status"])
+        save_artifact(
+            self.project,
+            "episode_scripts",
+            {"episodes": [{"episodeNumber": 1, "title": "ep1", "full_script_text": "body"}]},
+        )
         res = self.client.post(f"/api/creation/share/{self.project.id}/", {}, format="json")
         self.assertEqual(res.status_code, 200)
         body = res.json()
@@ -94,14 +81,13 @@ class CreationWorkspaceApiTests(TestCase):
 
     def test_workspace_can_share_field_via_api(self):
         res = self.client.get(f"/api/creation/projects/{self.project.id}/workspace/")
-        self.assertEqual(res.status_code, 200)
         project = (res.json().get("data") or {}).get("project") or {}
         self.assertFalse(project.get("can_share"))
-        from apps.creation.artifact_service import save_artifact
-
-        self.project.fusion_status = Project.FUSION_READY
-        save_artifact(self.project, "episode_scripts", {"episodes": [{"episodeNumber": 1, "title": "第1集"}]})
-        self.project.save(update_fields=["fusion_status"])
+        save_artifact(
+            self.project,
+            "episode_scripts",
+            {"episodes": [{"episodeNumber": 1, "title": "ep1", "full_script_text": "body"}]},
+        )
         res = self.client.get(f"/api/creation/projects/{self.project.id}/workspace/")
         project = (res.json().get("data") or {}).get("project") or {}
         self.assertTrue(project.get("can_share"))

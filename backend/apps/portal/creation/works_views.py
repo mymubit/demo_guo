@@ -98,6 +98,16 @@ class WorkListView(APIView):
         end = start + page_size
         items_qs = list(qs[start:end])
 
+        drama_map = {}
+        try:
+            from apps.drama.progress_service import DramaProjectProgressService
+
+            drama_map = DramaProjectProgressService.batch_by_creation_ids(
+                [p.id for p in items_qs]
+            )
+        except Exception:  # noqa: BLE001
+            drama_map = {}
+
         for project in items_qs:
             if (
                 project.pipeline_mode == Project.MODE_WORKSPACE
@@ -106,7 +116,9 @@ class WorkListView(APIView):
                 CreationService._reconcile_project_running_state(project)
 
         # 传入 model 实例给 Serializer（SerializerMethodField 会读取 obj.get_status_display）
-        items = ProjectListSerializer(instance=items_qs, many=True)
+        items = ProjectListSerializer(
+            instance=items_qs, many=True, context={"drama_map": drama_map}
+        )
 
         total_pages = (total + page_size - 1) // page_size if page_size > 0 else 0
 
@@ -167,6 +179,16 @@ class WorkDetailView(APIView):
     def get(self, request, project_id: str):
         try:
             data = CreationService.get_project_detail(project_id, request.user)
+            try:
+                from apps.drama.progress_service import DramaProjectProgressService
+
+                drama = DramaProjectProgressService.find_drama_project(project_id)
+                if drama:
+                    data["drama"] = DramaProjectProgressService.build_admin_summary(drama)
+                    data["drama_workspace_url"] = f"/drama/workspace/{drama.id}"
+                    data["progress_percent"] = int(drama.get_completion_rate())
+            except Exception:  # noqa: BLE001
+                pass
         except PermissionDenied as exc:
             return Response(
                 {"code": 403, "message": safe_api_message(exc, "无权限"), "data": None},

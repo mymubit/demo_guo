@@ -81,7 +81,11 @@ export const creation = {
     const data = await request('GET', `/api/creation/progress/${projectId}/`)
     return normalizeCreationProgress(data)
   },
+  /** @deprecated 使用 catalog() */
   fusionCatalog() {
+    return this.catalog()
+  },
+  catalog() {
     return request('GET', '/api/creation/fusion/catalog/')
   },
   agentCatalog() {
@@ -89,10 +93,6 @@ export const creation = {
   },
   workspaceCatalog() {
     return request('GET', '/api/creation/agents/workspace-catalog/')
-  },
-  fusionNodes(packId) {
-    const suffix = packId ? `?pack_id=${encodeURIComponent(packId)}` : ''
-    return request('GET', `/api/creation/fusion/nodes/${suffix}`)
   },
   aiGenerate(actionKey, context = {}) {
     return request('POST', '/api/creation/ai/generate/', {

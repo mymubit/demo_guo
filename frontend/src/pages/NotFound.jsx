@@ -26,20 +26,20 @@ export default function NotFound() {
   return (
     <motion.div
       {...pageEnter}
-      className="flex min-h-screen items-center justify-center bg-navy-950 px-6 py-16"
+      className="flex min-h-screen items-center justify-center bg-gray-50 px-6 py-16"
     >
       <div className="w-full max-w-2xl text-center">
         <div className="relative mb-8 inline-block">
-          <div className="mx-auto grid h-24 w-24 place-items-center rounded-2xl border border-white/10 bg-white/[0.03]">
-            <Compass className="h-12 w-12 text-gold-400" />
+          <div className="mx-auto grid h-24 w-24 place-items-center rounded-2xl border border-gray-200 bg-gray-50">
+            <Compass className="h-12 w-12 text-brand-600" />
           </div>
         </div>
 
-        <h1 className="mb-4 text-7xl font-bold text-white md:text-8xl">
+        <h1 className="mb-4 text-7xl font-bold text-gray-900 md:text-8xl">
           <span className="gradient-text">404</span>
         </h1>
-        <h2 className="mb-4 text-2xl font-bold text-white md:text-3xl">页面不存在</h2>
-        <p className="mx-auto mb-10 max-w-md text-lg leading-relaxed text-navy-300">
+        <h2 className="mb-4 text-2xl font-bold text-gray-900 md:text-3xl">页面不存在</h2>
+        <p className="mx-auto mb-10 max-w-md text-lg leading-relaxed text-gray-500">
           很抱歉，你访问的页面可能已经被删除、重命名或暂时不可用。让我们帮你回到正确的轨道。
         </p>
 
@@ -61,9 +61,9 @@ export default function NotFound() {
           </Link>
         </div>
 
-        <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-6 md:p-8">
-          <h3 className="mb-5 flex items-center justify-center gap-2 font-semibold text-white">
-            <Search className="h-4 w-4 text-gold-400" />
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8">
+          <h3 className="mb-5 flex items-center justify-center gap-2 font-semibold text-gray-900">
+            <Search className="h-4 w-4 text-brand-600" />
             你可能想访问
           </h3>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
@@ -71,10 +71,10 @@ export default function NotFound() {
               <Link
                 key={item.path}
                 to={item.path}
-                className="group rounded-xl border border-white/5 bg-white/[0.02] p-4 transition-all hover:border-gold-400/40 hover:bg-gold-400/5"
+                className="group rounded-xl border border-gray-200 bg-gray-50 p-4 transition-all hover:border-brand-200 hover:bg-brand-50"
               >
-                {renderLucideIcon(item.icon, 'mx-auto mb-2 h-5 w-5 text-navy-300 transition-colors group-hover:text-gold-400')}
-                <span className="text-sm text-navy-200 transition-colors group-hover:text-white">
+                {renderLucideIcon(item.icon, 'mx-auto mb-2 h-5 w-5 text-gray-500 transition-colors group-hover:text-brand-600')}
+                <span className="text-sm text-gray-600 transition-colors group-hover:text-gray-900">
                   {item.name}
                 </span>
               </Link>
@@ -82,7 +82,7 @@ export default function NotFound() {
           </div>
         </div>
 
-        <p className="mt-10 flex items-center justify-center gap-2 text-sm text-navy-400">
+        <p className="mt-10 flex items-center justify-center gap-2 text-sm text-gray-400">
           <AlertTriangle className="h-4 w-4" />
           如果你认为这是一个错误，请联系管理员或稍后再试
         </p>

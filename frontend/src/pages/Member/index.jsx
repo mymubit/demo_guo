@@ -1,4 +1,4 @@
-/* =========================================================================
+﻿/* =========================================================================
  * Member（会员中心）—— API 调用说明（与 services/api.js 重构后的新模块对齐）
  *
  * 当前页面已经在使用 memberApi / orderApi，这些别名在 api.js 中仍被
@@ -271,18 +271,18 @@ export default function Member() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-10"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-3 flex items-center gap-3">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3 flex items-center gap-3">
             <span className="gradient-text">会员中心</span>
-            <Crown className="w-10 h-10 text-gold-400" />
+            <Crown className="w-10 h-10 text-brand-600" />
           </h1>
-          <p className="text-navy-300 text-lg flex flex-wrap items-center gap-3">
+          <p className="text-gray-500 text-lg flex flex-wrap items-center gap-3">
             <span>
-              你好，<span className="text-white font-semibold">{user?.nickname || user?.phone?.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') || '创作者'}</span>
+              你好，<span className="text-gray-900 font-semibold">{user?.nickname || user?.phone?.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2') || '创作者'}</span>
               ，解锁专业能力，让创意腾飞
             </span>
             <Link
               to="/orders"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm text-navy-200 border border-white/10 hover:bg-white/5 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm text-gray-600 border border-gray-200 hover:bg-white/5 transition-colors"
             >
               <ShoppingBag className="w-4 h-4" />
               我的订单
@@ -309,7 +309,7 @@ export default function Member() {
               'relative overflow-hidden rounded-3xl border p-8 md:p-10',
               membershipInfo?.is_active
                 ? 'border-gold-400/35 bg-gradient-to-br from-gold-400/15 via-navy-900/80 to-navy-950 shadow-gold'
-                : 'border-white/5 bg-gradient-to-br from-navy-900/65 to-navy-950/65',
+                : 'border-gray-200 bg-white border border-gray-200 shadow-sm',
             )}
           >
             <div className="relative flex flex-col gap-8 md:flex-row md:items-center md:gap-12">
@@ -321,7 +321,7 @@ export default function Member() {
                       {membershipInfo?.plan_name || '会员'}
                     </div>
                   ) : (
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-navy-200 bg-slate-700/50 border border-white/10">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold text-gray-600 bg-slate-700/50 border border-gray-200">
                       <Gift className="w-4 h-4" />
                       {membershipInfo?.plan_name || '免费用户'}
                     </div>
@@ -333,7 +333,7 @@ export default function Member() {
                   )}
                 </div>
 
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
                   {membershipInfo?.is_active ? (
                     <>享受完整的专业创作能力</>
                   ) : (
@@ -343,46 +343,46 @@ export default function Member() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
                   {/* 创作次数 */}
-                  <div className="p-5 rounded-2xl bg-slate-900/40 border border-white/10">
+                  <div className="p-5 rounded-2xl bg-white border border-gray-200">
                     <div className="flex items-center justify-between mb-3">
-                      <div className="text-sm text-navy-300 flex items-center gap-1.5">
+                      <div className="text-sm text-gray-500 flex items-center gap-1.5">
                         <Wallet className="w-4 h-4" /> 创作币余额
                       </div>
-                      <Link to="/wallet" className="text-xs text-gold-400 hover:underline">
+                      <Link to="/wallet" className="text-xs text-brand-600 hover:underline">
                         去充值
                       </Link>
                     </div>
-                    <div className="text-3xl font-bold text-white mb-1">
+                    <div className="text-3xl font-bold text-gray-900 mb-1">
                       <span className="gradient-text">{walletBalance}</span>
-                      <span className="text-navy-400 text-lg font-normal ml-2">{walletCurrency}</span>
+                      <span className="text-gray-400 text-lg font-normal ml-2">{walletCurrency}</span>
                     </div>
-                    <div className="text-xs text-navy-400">创作按节点/动作扣费，开通会员赠送创作币</div>
+                    <div className="text-xs text-gray-400">创作按节点/动作扣费，开通会员赠送创作币</div>
                   </div>
 
                   {/* 到期时间 */}
-                  <div className="p-5 rounded-2xl bg-slate-900/40 border border-white/10">
-                    <div className="text-sm text-navy-300 flex items-center gap-1.5 mb-3">
+                  <div className="p-5 rounded-2xl bg-white border border-gray-200">
+                    <div className="text-sm text-gray-500 flex items-center gap-1.5 mb-3">
                       <Calendar className="w-4 h-4" /> 会员到期时间
                     </div>
-                    <div className="text-xl font-bold text-white mb-1">
+                    <div className="text-xl font-bold text-gray-900 mb-1">
                       {membershipInfo?.is_active ? formatDate(membershipInfo.end_at) : '未开通'}
                     </div>
                     {membershipInfo?.is_active && remainingDays > 0 && (
-                      <div className="text-xs text-gold-400">
+                      <div className="text-xs text-brand-600">
                         还有 {remainingDays} 天到期
                       </div>
                     )}
                   </div>
 
                   {/* 会员权益 */}
-                  <div className="p-5 rounded-2xl bg-slate-900/40 border border-white/10">
-                    <div className="text-sm text-navy-300 flex items-center gap-1.5 mb-3">
+                  <div className="p-5 rounded-2xl bg-white border border-gray-200">
+                    <div className="text-sm text-gray-500 flex items-center gap-1.5 mb-3">
                       <Shield className="w-4 h-4" /> 专属权益
                     </div>
-                    <div className="text-xl font-bold text-white mb-1">
+                    <div className="text-xl font-bold text-gray-900 mb-1">
                       {membershipInfo?.is_active ? '全部解锁' : '基础功能'}
                     </div>
-                    <div className="text-xs text-navy-300">
+                    <div className="text-xs text-gray-500">
                       {membershipInfo?.is_active ? '所有模板和格式可用' : '仅使用免费模板'}
                     </div>
                   </div>
@@ -399,7 +399,7 @@ export default function Member() {
                       : 'bg-gradient-to-br from-indigo-500/30 to-purple-600/30',
                   )}
                 >
-                  <Crown className={`w-16 h-16 ${membershipInfo?.is_active ? 'text-navy-950' : 'text-gold-400'}`} />
+                  <Crown className={`w-16 h-16 ${membershipInfo?.is_active ? 'text-navy-950' : 'text-brand-600'}`} />
                 </div>
                 {!membershipInfo?.is_active && (
                   <button
@@ -421,13 +421,13 @@ export default function Member() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-10"
           >
-            <h2 className="text-lg font-semibold text-white mb-4">会员与非会员权益对比</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">会员与非会员权益对比</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-2xl border border-white/5 bg-gradient-to-br from-navy-900/65 to-navy-950/65 p-6">
-              <h3 className="text-lg font-bold text-white mb-1">
+            <div className="rounded-2xl border border-gray-200 bg-white border border-gray-200 shadow-sm p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-1">
                 {featureMatrix.free_tier?.name || '普通用户'}
               </h3>
-              <p className="text-xs text-navy-400 mb-4">充值仅到账基础创作币，无额外赠送</p>
+              <p className="text-xs text-gray-400 mb-4">充值仅到账基础创作币，无额外赠送</p>
               <ul className="space-y-2">
                 {(featureMatrix.free_tier?.matrix || []).map((row) => (
                   <li
@@ -436,7 +436,7 @@ export default function Member() {
                       row.free !== row.member ? 'bg-white/[0.04]' : ''
                     }`}
                   >
-                    <span className="text-navy-200">{row.label}</span>
+                    <span className="text-gray-600">{row.label}</span>
                     {row.free ? (
                       <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
                     ) : (
@@ -446,11 +446,11 @@ export default function Member() {
                 ))}
               </ul>
             </div>
-            <div className="rounded-2xl border border-gold-400/30 bg-gradient-to-br from-navy-900/65 to-navy-950/65 p-6 shadow-gold">
-              <h3 className="text-lg font-bold text-gold-400 mb-1">
+            <div className="rounded-2xl border border-gold-400/30 bg-white border border-gray-200 shadow-sm p-6 shadow-gold">
+              <h3 className="text-lg font-bold text-brand-600 mb-1">
                 {featureMatrix.member_tier?.name || '会员用户'}
               </h3>
-              <p className="text-xs text-navy-400 mb-4">开通赠币 + 充值额外赠送创作币</p>
+              <p className="text-xs text-gray-400 mb-4">开通赠币 + 充值额外赠送创作币</p>
               <ul className="space-y-2">
                 {(featureMatrix.member_tier?.matrix || featureMatrix.free_tier?.matrix || []).map((row) => (
                   <li
@@ -459,7 +459,7 @@ export default function Member() {
                       row.free !== row.member ? 'bg-gold-500/5 border border-gold-500/10' : ''
                     }`}
                   >
-                    <span className="text-navy-100 flex items-center gap-2">
+                    <span className="text-gray-700 flex items-center gap-2">
                       {row.label}
                       {row.coming_soon && (
                         <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300">
@@ -468,7 +468,7 @@ export default function Member() {
                       )}
                     </span>
                     {row.member ? (
-                      <Check className="w-4 h-4 text-gold-400 flex-shrink-0" />
+                      <Check className="w-4 h-4 text-brand-600 flex-shrink-0" />
                     ) : (
                       <XCircle className="w-4 h-4 text-navy-500 flex-shrink-0" />
                     )}
@@ -503,7 +503,7 @@ export default function Member() {
                 'flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all',
                 tab === t.key
                   ? 'bg-gradient-to-br from-[#f6d365] to-[#fda085] text-navy-950 shadow-gold'
-                  : 'border border-white/10 bg-slate-800/50 text-navy-200 hover:border-white/20 hover:text-white',
+                  : 'border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-900',
               )}
             >
               {renderLucideIcon(t.icon, 'w-4 h-4')}
@@ -537,7 +537,7 @@ export default function Member() {
                     transition={{ delay: 0.1 + idx * 0.1 }}
                     whileHover={{ y: plan.highlight ? -4 : -2 }}
                     className={cn(
-                      'relative flex flex-col rounded-3xl border border-white/5 bg-gradient-to-br from-navy-900/65 to-navy-950/65 p-8 transition-shadow',
+                      'relative flex flex-col rounded-3xl border border-gray-200 bg-white border border-gray-200 shadow-sm p-8 transition-shadow',
                       plan.highlight && 'border-gold-400/50 shadow-gold -translate-y-1.5',
                     )}
                   >
@@ -548,13 +548,13 @@ export default function Member() {
                     )}
 
                     {!plan.highlight && plan.badge && (
-                      <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-navy-400">
+                      <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
                         {plan.badge}
                       </div>
                     )}
 
                     <div className="mb-5">
-                      <h3 className={cn('text-2xl font-bold', plan.highlight ? 'gradient-text' : 'text-white')}>
+                      <h3 className={cn('text-2xl font-bold', plan.highlight ? 'gradient-text' : 'text-gray-900')}>
                         {plan.name}
                       </h3>
                     </div>
@@ -577,8 +577,8 @@ export default function Member() {
 
                     <ul className="mb-8 min-h-[200px] space-y-2.5">
                       {plan.features.map((feat) => (
-                        <li key={feat} className="flex items-start gap-2 text-sm text-navy-100">
-                          <Check className={cn('mt-0.5 h-4 w-4 flex-shrink-0', plan.highlight ? 'text-gold-400' : 'text-navy-400')} />
+                        <li key={feat} className="flex items-start gap-2 text-sm text-gray-700">
+                          <Check className={cn('mt-0.5 h-4 w-4 flex-shrink-0', plan.highlight ? 'text-brand-600' : 'text-gray-400')} />
                           <span>{feat}</span>
                         </li>
                       ))}
@@ -593,7 +593,7 @@ export default function Member() {
                         'mt-auto flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-60',
                         plan.highlight
                           ? 'bg-gradient-to-br from-[#f6d365] to-[#fda085] text-navy-950 shadow-gold'
-                          : 'border border-white/10 bg-indigo-500/20 text-white',
+                          : 'border border-gray-200 bg-indigo-500/20 text-gray-900',
                       )}
                     >
                       {payLoading[plan.id] ? (
@@ -620,9 +620,9 @@ export default function Member() {
                 className="rounded-2xl border border-gold-400/30 bg-gold-400/5 p-6"
               >
                 <div className="flex items-start gap-3">
-                  <Shield className="w-5 h-5 text-gold-400 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-navy-200">
-                    <div className="font-semibold text-white mb-1">安全支付说明</div>
+                  <Shield className="w-5 h-5 text-brand-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-gray-600">
+                    <div className="font-semibold text-gray-900 mb-1">安全支付说明</div>
                     <p>演示环境中点击"立即开通"将模拟支付流程，真实支付请在生产环境接入第三方支付渠道。会员开通后立即生效，创作次数将自动累加。</p>
                   </div>
                 </div>
@@ -640,26 +640,26 @@ export default function Member() {
               className="grid grid-cols-1 lg:grid-cols-2 gap-6"
             >
               {/* 兑换表单 */}
-              <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-8">
+              <div className="rounded-2xl border border-gray-200 bg-white border border-gray-200 p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-gold-400/15 border border-gold-400/30">
-                    <Ticket className="w-6 h-6 text-gold-400" />
+                    <Ticket className="w-6 h-6 text-brand-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-white">卡密兑换</h3>
-                    <p className="text-sm text-navy-300">输入您的卡密，立即激活会员</p>
+                    <h3 className="text-xl font-bold text-gray-900">卡密兑换</h3>
+                    <p className="text-sm text-gray-500">输入您的卡密，立即激活会员</p>
                   </div>
                 </div>
 
                 <form onSubmit={handleRedeem} className="space-y-5">
                   <div>
-                    <label className="block text-sm font-medium text-navy-200 mb-2">卡密</label>
+                    <label className="block text-sm font-medium text-gray-600 mb-2">卡密</label>
                     <input
                       type="text"
                       placeholder="请输入卡密（例如 SF-XXXX-XXXX-XXXX）"
                       value={redeemCode}
                       onChange={(e) => setRedeemCode(e.target.value.toUpperCase())}
-                      className="w-full px-5 py-4 rounded-xl bg-slate-900/60 border border-white/10 focus:border-gold-400 text-white placeholder-navy-400 outline-none transition-all focus:ring-2 focus:ring-gold-400/20 text-sm tracking-wider font-mono"
+                      className="w-full px-5 py-4 rounded-xl bg-white border border-gray-200 border border-gray-200 focus:border-gold-400 text-gray-900 placeholder-navy-400 outline-none transition-all focus:ring-2 focus:ring-gold-400/20 text-sm tracking-wider font-mono"
                     />
                   </div>
 
@@ -684,8 +684,8 @@ export default function Member() {
                   </motion.button>
                 </form>
 
-                <div className="mt-6 pt-6 border-t border-white/10">
-                  <div className="text-xs text-navy-400 space-y-1.5">
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <div className="text-xs text-gray-400 space-y-1.5">
                     <p>• 卡密格式：字母和数字组成，输入时自动转为大写</p>
                     <p>• 每张卡密仅可使用一次，兑换后立即生效</p>
                     <p>• 如有问题请联系客服</p>
@@ -695,37 +695,37 @@ export default function Member() {
               </div>
 
               {/* 卡密信息 */}
-              <div className="rounded-2xl border border-white/5 bg-slate-900/60 p-8">
+              <div className="rounded-2xl border border-gray-200 bg-white border border-gray-200 p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 rounded-2xl bg-slate-700/50 flex items-center justify-center">
-                    <Award className="w-6 h-6 text-gold-400" />
+                    <Award className="w-6 h-6 text-brand-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-white">兑换记录</h3>
-                    <p className="text-sm text-navy-300">查看您的卡密兑换历史</p>
+                    <h3 className="text-xl font-bold text-gray-900">兑换记录</h3>
+                    <p className="text-sm text-gray-500">查看您的卡密兑换历史</p>
                   </div>
                 </div>
 
                 {redeemHistory.length > 0 ? (
                   <div className="space-y-3">
                     {redeemHistory.map((record) => (
-                      <div key={record.id} className="p-4 rounded-xl bg-slate-900/40 border border-white/10 flex items-center justify-between">
+                      <div key={record.id} className="p-4 rounded-xl bg-white border border-gray-200 flex items-center justify-between">
                         <div>
-                          <div className="text-sm text-white font-semibold">{record.plan_name}</div>
-                          <div className="text-xs text-navy-400 mt-1">开通于 {formatDate(record.redeemed_at)}</div>
+                          <div className="text-sm text-gray-900 font-semibold">{record.plan_name}</div>
+                          <div className="text-xs text-gray-400 mt-1">开通于 {formatDate(record.redeemed_at)}</div>
                           {record.end_at && (
-                            <div className="text-xs text-navy-400 mt-0.5">到期 {formatDate(record.end_at)}</div>
+                            <div className="text-xs text-gray-400 mt-0.5">到期 {formatDate(record.end_at)}</div>
                           )}
                         </div>
-                        <div className="text-xs text-gold-400 font-semibold">已激活</div>
+                        <div className="text-xs text-brand-600 font-semibold">已激活</div>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-12">
                     <Ticket className="w-16 h-16 text-navy-500 mx-auto mb-4" />
-                    <p className="text-navy-300 mb-1">暂无兑换记录</p>
-                    <p className="text-xs text-navy-400">使用卡密激活会员后将显示在此处</p>
+                    <p className="text-gray-500 mb-1">暂无兑换记录</p>
+                    <p className="text-xs text-gray-400">使用卡密激活会员后将显示在此处</p>
                   </div>
                 )}
               </div>
@@ -739,7 +739,7 @@ export default function Member() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="rounded-2xl border border-white/5 bg-slate-900/60 p-6 md:p-8"
+              className="rounded-2xl border border-gray-200 bg-white border border-gray-200 p-6 md:p-8"
             >
               <OrdersListPanel
                 orders={orderList}

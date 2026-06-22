@@ -7,9 +7,13 @@
 """
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any, Dict, List
+
+import logging
 
 from apps.agent.runtime import DRAMA_FAST_TRACK_AGENT_IDS
+
+logger = logging.getLogger(__name__)
 
 
 class DramaEntryPlan:
@@ -112,10 +116,54 @@ class DramaEntryPlan:
         - track_mode: "fast" | "expert"
         - entry_type: "from-scratch" | "from-novel" | "from-outline"
         """
-        if entry_type == "from-novel":
+        if entry_type in ("from-novel", "novel-adaptation"):
             return cls.IP_ADAPT_PLAN
 
         if track_mode == "expert":
             return cls.EXPERT_TRACK_PLAN
 
         return cls.FAST_TRACK_PLAN
+
+    @classmethod
+    def list_agent_ids(cls, track_mode: str = "fast", entry_type: str = "from-scratch") -> list[str]:
+        """返回当前轨道下的全部 agent_id 有序列表。"""
+        plan = cls.resolve(track_mode=track_mode, entry_type=entry_type)
+        if plan.get("recommended_agents"):
+            return list(plan["recommended_agents"])
+        agents: list[str] = []
+        for phase in plan.get("phases") or []:
+            agents.extend(phase.get("agents") or [])
+        return agents
+
+
+def get_entry_plan(entry_type: str = "from-scratch", *, track_mode: str = "fast") -> Dict[str, Any]:
+    """读取创作入口计划（DB 覆盖 + drama 默认）。"""
+    from apps.agent.definition_service import AgentDefinitionService
+    from apps.skill.models import SkillConfigEntry
+
+    plan = dict(DramaEntryPlan.resolve(track_mode=track_mode, entry_type=entry_type))
+    try:
+        row = SkillConfigEntry.objects.filter(config_key="creation-entry-plans").first()
+        content = (row.content if row else None) or {}
+        override = content.get(entry_type) if isinstance(content, dict) else None
+        if isinstance(override, dict):
+            if override.get("recommended_agents") is not None:
+                plan["recommended_agents"] = list(override["recommended_agents"])
+            if override.get("hidden_agents") is not None:
+                plan["hidden_agents"] = list(override["hidden_agents"])
+            known = {a.agent_id for a in AgentDefinitionService.active_agents()}
+            for agent_id in plan.get("recommended_agents") or []:
+                if agent_id not in known:
+                    logger.warning("[EntryPlan] unknown agent in plan %s: %s", entry_type, agent_id)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[EntryPlan] load override failed: %s", exc)
+    return plan
+
+
+def filter_agents_for_workspace(agent_items: List[Dict[str, Any]], entry_type: str) -> List[Dict[str, Any]]:
+    """按入口计划 hidden_agents 过滤工作台展示。"""
+    plan = get_entry_plan(entry_type)
+    hidden = set(plan.get("hidden_agents") or [])
+    if not hidden:
+        return agent_items
+    return [item for item in agent_items if item.get("agent_id") not in hidden]

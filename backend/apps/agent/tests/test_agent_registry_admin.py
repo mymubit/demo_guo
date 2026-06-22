@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from apps.agent.models import AgentRegistryConfig
+from apps.agent.definition_service import AgentDefinitionService
 from apps.agent.registry import AgentRegistryConfigService
 
 
@@ -13,56 +13,17 @@ class AgentRegistryConfigServiceTests(TestCase):
         self.assertFalse(ok)
         self.assertIn("agents", message)
 
-    def test_save_registry_strips_removed_post_chain_meta(self):
-        registry = {
-            "_meta": {
-                "version": "test",
-                "post_script_chain": ["drama.quality-reporter"],
-                "post_script_append_agents": ["marketing"],
-                "post_script_pipeline_index": [{"index": 504, "agent_id": "drama.quality-reporter"}],
-            },
-            "agents": [
-                {
-                    "id": "drama.topic-planner",
-                    "name": "Brief",
-                    "runner": "apps.creation.orchestration.brief.run_brief_agent",
-                }
-            ],
-        }
-        row = AgentRegistryConfigService.save_registry(registry)
-        self.assertTrue(row.is_active)
+    def test_admin_payload_reads_drama_definitions(self):
+        AgentDefinitionService.ensure_defaults()
+        AgentRegistryConfigService.clear_cache()
         payload = AgentRegistryConfigService.admin_payload()
-        meta = payload["registry"]["_meta"]
-        self.assertEqual(payload["source"], "db")
-        self.assertNotIn("post_script_chain", meta)
-        self.assertNotIn("post_script_append_agents", meta)
-        self.assertNotIn("post_script_pipeline_index", meta)
-        self.assertEqual(row.registry["agents"][0]["runner"], "")
+        self.assertEqual(payload["source"], "drama_definitions")
+        self.assertTrue(payload["registry"].get("agents"))
+        self.assertIn("drama.topic-planner", payload["default_tier1_sections_by_agent"])
 
-    def test_save_registry_normalizes_legacy_runner_path(self):
-        registry = {
-            "agents": [
-                {
-                    "id": "drama.plot-architect",
-                    "name": "Structure",
-                    "runner": "apps.creation.agents.world.run_world_agent",
-                }
-            ]
-        }
-        row = AgentRegistryConfigService.save_registry(registry)
-        self.assertEqual(row.registry["agents"][0]["runner"], "")
-
-    def test_ensure_defaults_seeds_db_registry(self):
-        from apps.agent.runtime import get_agent_registry
-
-        get_agent_registry.cache_clear()
-        AgentRegistryConfigService.ensure_defaults()
-        row = AgentRegistryConfigService.get_active_row()
-        self.assertIsNotNone(row)
-        self.assertTrue(row.registry.get("agents"))
-        get_agent_registry.cache_clear()
-        registry = get_agent_registry()
-        self.assertEqual(registry.get("_registry_source"), "db")
+    def test_save_registry_is_disabled(self):
+        with self.assertRaises(ValueError):
+            AgentRegistryConfigService.save_registry({"agents": [{"id": "drama.topic-planner"}]})
 
 
 class AgentRegistryAdminApiTests(TestCase):
@@ -73,47 +34,21 @@ class AgentRegistryAdminApiTests(TestCase):
         )
         self.client = APIClient()
         self.client.force_authenticate(user=self.admin)
+        AgentDefinitionService.ensure_defaults()
 
-    def test_get_agent_registry_returns_payload(self):
-        AgentRegistryConfig.objects.update_or_create(
-            config_key="default",
-            defaults={
-                "registry": {
-                    "_meta": {"version": "9.9.9"},
-                    "agents": [{"id": "drama.topic-planner", "name": "Brief"}],
-                },
-                "is_active": True,
-            },
-        )
+    def test_get_agent_registry_returns_readonly_payload(self):
         resp = self.client.get("/api/admin/agent/registry/")
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.data["data"]["source"], "db")
-        self.assertEqual(resp.data["data"]["registry"]["_meta"]["version"], "9.9.9")
-        self.assertIsInstance(resp.data["data"].get("tier1_section_catalog"), list)
-        self.assertIsInstance(resp.data["data"].get("tier1_section_catalog_detail"), list)
-        self.assertIn("drama.topic-planner", resp.data["data"].get("default_tier1_sections_by_agent", {}))
+        data = resp.data["data"]
+        self.assertEqual(data["source"], "drama_definitions")
+        self.assertTrue(data["registry"].get("agents"))
+        self.assertTrue(data.get("_deprecated"))
 
-    def test_put_agent_registry_strips_removed_post_chain_meta(self):
-        body = {
-            "registry": {
-                "_meta": {
-                    "post_script_append_agents": ["marketing"],
-                    "post_script_pipeline_index": [{"index": 504, "agent_id": "drama.quality-reporter"}],
-                },
-                "agents": [
-                    {
-                        "id": "marketing",
-                        "name": "Marketing",
-                        "runner": "apps.creation.orchestration.marketing.run_marketing_agent",
-                    }
-                ],
-            }
-        }
-        resp = self.client.put("/api/admin/agent/registry/", body, format="json")
+    def test_put_agent_registry_returns_410(self):
+        resp = self.client.put(
+            "/api/admin/agent/registry/",
+            {"registry": {"agents": [{"id": "drama.topic-planner"}]}},
+            format="json",
+        )
         self.assertEqual(resp.status_code, 200)
-        row = AgentRegistryConfig.objects.filter(config_key="default", is_active=True).first()
-        self.assertIsNotNone(row)
-        self.assertEqual(row.registry["agents"][0]["id"], "marketing")
-        meta = row.registry.get("_meta") or {}
-        self.assertNotIn("post_script_append_agents", meta)
-        self.assertNotIn("post_script_pipeline_index", meta)
+        self.assertNotEqual(resp.data.get("code"), 0)

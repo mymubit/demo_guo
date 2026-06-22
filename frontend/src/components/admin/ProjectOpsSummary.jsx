@@ -52,6 +52,15 @@ export default function ProjectOpsSummary({ data, compact = false, onTabChange, 
             {data.title || '未命名'}
           </h2>
           <p className="text-xs text-navy-300 font-mono mt-1 break-all">{data.project_id}</p>
+          {data.drama_trace ? (
+            <p className="text-xs text-indigo-300/90 mt-1">
+              {data.drama_trace.track_mode_display || data.drama_trace.track_mode}
+              {' · '}
+              {data.drama_trace.current_stage_display || data.drama_trace.current_stage}
+              {' · '}
+              完成 {data.drama_trace.completion_rate ?? 0}%
+            </p>
+          ) : null}
         </div>
         <AdminBadge tone={STATUS_TONE[data.status] || 'default'}>
           {data.status_text || data.status}
@@ -102,7 +111,12 @@ export default function ProjectOpsSummary({ data, compact = false, onTabChange, 
           { label: '模式', value: data.pipeline_mode || '—' },
           { label: '题材', value: data.theme || '—' },
           { label: '集数', value: data.episode_count ?? '—' },
-          { label: '进度', value: data.progress_percent != null ? `${data.progress_percent}%` : '—' },
+          { label: '进度', value: data.drama_trace?.completion_rate != null
+              ? `${data.drama_trace.completion_rate}%`
+              : data.progress_percent != null
+                ? `${data.progress_percent}%`
+                : '—' },
+          { label: 'Drama 阶段', value: data.drama_trace?.current_stage_display || '—' },
           { label: '评分', value: score },
           {
             label: 'Agent 执行',

@@ -41,12 +41,12 @@ export default function BrandLogo({
       {box}
       {showText && (
         <div className="min-w-0">
-          <span className="text-xl font-bold">
-            <span className="gradient-text">ScriptForge</span>
+          <span className="text-xl font-bold text-gray-900">
+            <span className="text-brand-600">ScriptForge</span>
             {subtitle ? (
-              <span className="text-white/70 ml-1 text-sm font-normal">{subtitle}</span>
+              <span className="text-gray-500 ml-1 text-sm font-normal">{subtitle}</span>
             ) : (
-              <span className="text-white/80 ml-1 text-sm font-normal">AI</span>
+              <span className="text-gray-500 ml-1 text-sm font-normal">AI</span>
             )}
           </span>
         </div>

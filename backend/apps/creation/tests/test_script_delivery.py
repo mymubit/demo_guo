@@ -1,4 +1,4 @@
-"""创作交付单元测试。"""
+# -*- coding: utf-8 -*-
 import os
 import shutil
 import tempfile
@@ -21,25 +21,24 @@ class ScriptDeliveryTests(TestCase):
         self.user = User.objects.create_user(phone="13900001111", password="TestPass123!")
         self.project = Project.objects.create(
             user=self.user,
-            title="测试剧本",
+            title="test-script",
             theme="urban-counterattack",
-            core_idea="逆袭故事",
+            core_idea="revenge story",
             episode_count=2,
             format_variant="B",
-            fusion_status=Project.FUSION_READY,
         )
 
     def test_resolve_scripts_from_pipeline_result(self):
         pipeline = {
             "scripts": {
                 "episodes": [
-                    {"episode": 1, "title": "开局", "full_script_text": "## 第1集\n\n对白内容"},
+                    {"episode": 1, "title": "open", "full_script_text": "## ep1\n\ndialogue"},
                 ]
             }
         }
         scripts = resolve_scripts(self.project, pipeline)
         self.assertEqual(len(scripts["episodes"]), 1)
-        self.assertIn("对白内容", scripts["episodes"][0]["full_script_text"])
+        self.assertIn("dialogue", scripts["episodes"][0]["full_script_text"])
 
     def test_resolve_scripts_from_artifacts(self):
         pipeline = {
@@ -48,13 +47,13 @@ class ScriptDeliveryTests(TestCase):
                     "episodes": [
                         {
                             "episodeNumber": 1,
-                            "title": "第一集",
+                            "title": "ep1",
                             "scenes": [
                                 {
                                     "sceneNumber": "1-1",
-                                    "location": "客厅",
-                                    "actions": [{"content": "女主进门"}],
-                                    "dialogues": [{"speaker": "林晚", "line": "我回来了"}],
+                                    "location": "living room",
+                                    "actions": [{"content": "hero enters"}],
+                                    "dialogues": [{"speaker": "Lin", "line": "I am back"}],
                                 }
                             ],
                         }
@@ -64,19 +63,19 @@ class ScriptDeliveryTests(TestCase):
         }
         scripts = resolve_scripts(self.project, pipeline)
         self.assertEqual(scripts["total_episodes"], 1)
-        self.assertIn("林晚", scripts["episodes"][0]["full_script_text"])
+        self.assertIn("Lin", scripts["episodes"][0]["full_script_text"])
 
     def test_build_script_markdown_contains_body(self):
         pipeline = {
             "scripts": {
                 "episodes": [
-                    {"episode": 1, "full_script_text": "# 第1集\n\n场景一"},
+                    {"episode": 1, "full_script_text": "# ep1\n\nscene one"},
                 ]
             }
         }
         md = build_script_markdown(self.project, pipeline, watermark_token="wm-test")
-        self.assertIn("测试剧本", md)
-        self.assertIn("场景一", md)
+        self.assertIn("test-script", md)
+        self.assertIn("scene one", md)
         self.assertIn("wm-test", md)
 
     def test_build_script_display_html_escapes_html(self):
@@ -101,7 +100,7 @@ class ScriptDeliveryTests(TestCase):
         pipeline = {
             "scripts": {
                 "episodes": [
-                    {"episode": 1, "full_script_text": "# 第1集\n\n正文段落"},
+                    {"episode": 1, "full_script_text": "# ep1\n\nbody"},
                 ]
             }
         }

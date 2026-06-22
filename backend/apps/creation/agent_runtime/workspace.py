@@ -62,7 +62,9 @@ def build_independent_workspace(project: Project) -> Dict[str, Any]:
     agent_items = filter_agents_for_workspace(agent_items, getattr(project, "creation_entry", "") or "from-scratch")
     entry_plan = get_entry_plan(getattr(project, "creation_entry", "") or "from-scratch")
     can_download = "episode_scripts" in artifact_keys
-    can_share = project.fusion_status == Project.FUSION_READY and can_download
+    from apps.drama.progress_service import DramaProjectProgressService
+
+    can_share = DramaProjectProgressService.is_deliverable(project) and can_download
     has_running_agent = AgentExecutionRun.objects.filter(
         project=project,
         status=AgentExecutionRun.STATUS_RUNNING,

@@ -2,19 +2,18 @@
 from django.core.management.base import BaseCommand
 
 from apps.billing.models import ActionPricing, SiteCoinSettings
-from apps.workflow.services.pipeline_service import WorkflowPipelineService
 from apps.billing.ai_field_prompt_service import AiFieldPromptService
 
 DEFAULT_PRICING = [
     ("creation.submit", "发起创作", 5, 10, False),
-    ("pipeline.node.1", "1. 立项策划 (BriefAgent)", 5, 20, False),
-    ("pipeline.node.2", "2. 结构与世界观 (WorldAgent)", 10, 30, False),
-    ("pipeline.node.3", "3. 角色设计 (CharacterAgent)", 10, 40, False),
-    ("pipeline.node.4", "4. 大纲与创作规划 (OutlineAgent)", 15, 50, False),
-    ("pipeline.node.5", "5. 剧集剧本 (ScriptAgent)", 30, 60, False),
-    ("pipeline.node.6", "6. 质检审查 (ReviewAgent)", 10, 70, False),
-    ("pipeline.node.7", "7. 深度评估 (ScoreAgent)", 10, 80, False),
-    ("pipeline.regenerate", "重跑 Agent 步骤", 0, 90, False),
+    ("drama.agent.topic-planner", "Drama·选题策划", 3, 20, False),
+    ("drama.agent.world-architect", "Drama·世界观", 4, 30, False),
+    ("drama.agent.character-designer", "Drama·角色设计", 5, 40, False),
+    ("drama.agent.plot-architect", "Drama·剧情架构", 8, 50, False),
+    ("drama.agent.script-writer", "Drama·剧本创作", 15, 60, False),
+    ("drama.agent.script-reviewer", "Drama·剧本审查", 5, 70, False),
+    ("drama.agent.quality-reporter", "Drama·质量报告", 6, 80, False),
+    ("drama.agent.compliance-guard", "Drama·合规审查", 6, 90, False),
     ("ai.generate.core_idea", "AI·核心创意", 20, 100, False),
     ("ai.generate.audience", "AI·目标受众", 10, 110, False),
     ("ai.generate.reference_work", "AI·参考作品", 10, 120, False),
@@ -25,7 +24,7 @@ DEFAULT_PRICING = [
 
 
 class Command(BaseCommand):
-    help = "初始化币种定价、站点设置、流程节点编排"
+    help = "初始化币种定价与站点设置"
 
     def handle(self, *args, **options):
         SiteCoinSettings.load()
@@ -40,6 +39,5 @@ class Command(BaseCommand):
                     "member_only": member_only,
                 },
             )
-        WorkflowPipelineService.ensure_defaults()
         AiFieldPromptService.seed_defaults()
-        self.stdout.write(self.style.SUCCESS("计费与流程编排数据已初始化"))
+        self.stdout.write(self.style.SUCCESS("计费数据已初始化"))

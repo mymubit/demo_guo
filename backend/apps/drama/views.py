@@ -60,14 +60,22 @@ class DramaProjectViewSet(ModelViewSet):
         d = ser.validated_data
 
         with transaction.atomic():
+            shared_id = d.get("project_id") or __import__("uuid").uuid4()
             project = DramaProject.objects.create(
+                id=shared_id,
                 user=request.user,
-                project_id=d.get("project_id") or __import__("uuid").uuid4(),
+                project_id=shared_id,
                 title=d["title"],
                 genre_code=d["genre_code"],
                 total_episodes=d["total_episodes"],
                 target_platform=d["target_platform"],
                 track_mode=d["track_mode"],
+            )
+            from apps.drama.services import DramaRoleRunService
+
+            DramaRoleRunService.ensure_creation_project(
+                project,
+                core_idea=d.get("core_idea") or "",
             )
 
         return Response(
@@ -106,6 +114,13 @@ class DramaProjectViewSet(ModelViewSet):
                 drama_project=project
             ).order_by("-created_at")
         }
+        # 加载最新执行记录（每个角色只取最新一条）
+        executions = {}
+        for exec_obj in DramaRoleExecution.objects.filter(
+            drama_project=project
+        ).order_by("-created_at"):
+            if exec_obj.agent_id not in executions:
+                executions[exec_obj.agent_id] = exec_obj
         for item in role_progress:
             exec_obj = executions.get(item["agent_id"])
             if exec_obj:
@@ -116,6 +131,10 @@ class DramaProjectViewSet(ModelViewSet):
             drama_project=project,
             artifact_key=DramaEpisodeArtifact.ArtifactKey.EPISODE_SCRIPT,
         ).values("episode_number").distinct().count()
+        from apps.drama.progress_service import DramaProjectProgressService
+
+        payload = DramaProjectProgressService.build_progress_payload(project)
+        payload["roles"] = role_progress
 
         return Response({
             "code": 0,
@@ -134,27 +153,49 @@ class DramaProjectViewSet(ModelViewSet):
                     if project.total_episodes > 0 else 0,
                 },
             },
+            "data": payload,
         })
 
     @action(detail=True, methods=["post"], url_path=r"run/(?P<role_id>[^/]+)")
     def run_role(self, request, pk=None, role_id=None):
         """触发某个角色执行（异步）。"""
         project = self.get_object()
-        # 校验 role_id 是否是有效的 drama.* 角色
         from apps.agent.models import AgentDefinition
+        from apps.drama.services import DramaRoleRunService
+
         if not AgentDefinition.objects.filter(
-            agent_id=role_id, category="drama_skills", is_enabled=True
+            agent_id=role_id,
+            agent_id__startswith="drama.",
+            is_enabled=True,
         ).exists():
             return Response(
                 {"code": 404, "message": f"角色 {role_id} 不存在或未启用"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        # TODO: 集成 IndependentAgentService 执行
-        # 此处先返回占位响应，实际实现需接入 Celery 任务队列
+
+        body = request.data if isinstance(request.data, dict) else {}
+        params = body.get("params") if isinstance(body.get("params"), dict) else None
+
+        try:
+            drama_exec, created_new = DramaRoleRunService.enqueue_role_run(
+                project, role_id, request.user, params=params
+            )
+        except Exception as exc:  # noqa: BLE001
+            return Response(
+                {"code": 400, "message": str(exc)[:500], "data": None},
+                status=status.HTTP_200_OK,
+            )
+
         return Response({
             "code": 0,
-            "message": f"角色 {role_id} 已加入执行队列",
-            "data": {"project_id": str(project.id), "role_id": role_id, "status": "queued"},
+            "message": "success" if created_new else f"角色 {role_id} 正在执行中",
+            "data": {
+                "execution_id": str(drama_exec.id),
+                "project_id": str(project.id),
+                "role_id": role_id,
+                "status": drama_exec.status,
+                "created_new_run": created_new,
+            },
         })
 
 
