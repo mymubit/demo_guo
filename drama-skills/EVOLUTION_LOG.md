@@ -112,10 +112,29 @@
 - 分镜格式：山音使用九列格式（含叙事目的列），我们现有格式为6列。两套格式功能不同，无矛盾，建议升级我们的分镜格式加入"叙事目的"列。
 - 场景头格式：山音使用`【场景X：地点/时间】`，我们使用`集号-镜号 时间 内外 地点`。两套面向不同平台，保持并存。
 
-**待应用**（轨道一：技能规则升级提案）：
-- drama-storyboard-director：升级为九列格式，加入叙事目的列
-- drama-rhythm-designer：新增双轨节奏标注
-- drama-script-reviewer：新增McKee价值转变检验项
-- drama-script-writer：加入记忆检查点触发机制
+**已应用**（摄入 #002，2026-06-22）：
+- ✅ drama-storyboard-director v2.1：升级为九列格式，加入叙事目的列
+- ✅ drama-rhythm-designer v2.1：新增双轨节奏（情节×情感）标注
+- ✅ drama-script-reviewer v2.1：新增McKee价值转变检验
+- ✅ drama-script-writer v2.1：加入记忆检查点触发机制
 
-（等待PR审批后应用）
+---
+
+### 摄入 #002 · 2026-06-22 · 山音三仓库全量摄取
+
+**来源**：
+- shanyin-screenwriting-master（459 stars）— 全部参考文件（format-series/feature/short/ultrashort/core-methodology）
+- shanyin-director-master（251 stars）— 全部参考文件（genre-A~F/shot-design/storyboard-format/core-methodology）
+- Story-to-game（292 stars）— README+核心能力
+
+**新增知识文件**：
+- `knowledge/shanyin-series-format.md`：剧集格式完整指南（四阶段季度弧线/弧光预算/连续性追踪四表/集间节奏）
+- `knowledge/shanyin-feature-format.md`：长片格式（STC15节拍/Story Circle/McKee/内在节拍+五种风格变体）
+- `knowledge/shanyin-director-styles.md`：六维度导演风格模板库（是枝裕和/王家卫/希区柯克/奉俊昊等）
+- `knowledge/story-to-game.md`：剧本→互动分支游戏转化工具
+
+**技能升级（轨道一）**：
+- drama-storyboard-director v2.1：六列→九列（加叙事目的列，统计数据支撑）
+- drama-rhythm-designer v2.1：单轨→双轨（情节节奏×情感节奏）
+- drama-script-reviewer v2.1：新增McKee价值转变检验
+- drama-script-writer v2.1：新增记忆检查点机制（防多集前后矛盾）
