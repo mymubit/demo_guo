@@ -41,6 +41,7 @@ export default function WorkspacePage() {
   const [selectedRole, setSelectedRole] = useState(null);
   // 视图模式：tier（分层）| dept（分部门）| fast（只看核心）
   const [viewMode, setViewMode] = useState('tier');
+  const [execFeedback, setExecFeedback] = useState(null);
 
   const { data: projectRes } = useQuery({
     queryKey: ['drama-project', projectId],
@@ -71,9 +72,19 @@ export default function WorkspacePage() {
   const completedEpisodes = episodesRes?.data?.completed_episodes || episodeProgress?.completed || 0;
 
   const runMut = useMutation({
-    mutationFn: ({ projId, roleId }) => runRole(projId, roleId),
-    onSuccess: () => {
+    mutationFn: ({ projId, roleId, options = {} }) => runRole(projId, roleId, options),
+    onSuccess: (res) => {
       queryClient.invalidateQueries(['drama-progress', projectId]);
+      queryClient.invalidateQueries(['drama-episodes', projectId]);
+      // 显示执行反馈
+      if (res?.data?.scope) {
+        setExecFeedback(`✅ ${res.data.role_name} — ${res.data.scope}`);
+        setTimeout(() => setExecFeedback(null), 4000);
+      }
+    },
+    onError: (err) => {
+      setExecFeedback(`❌ 执行失败：${err?.message || '未知错误'}`);
+      setTimeout(() => setExecFeedback(null), 5000);
     },
   });
 
@@ -97,8 +108,8 @@ export default function WorkspacePage() {
     (rolesByTier[tier] || rolesByTier[3]).push(r);
   });
 
-  const handleRunRole = (roleId) => {
-    runMut.mutate({ projId: projectId, roleId });
+  const handleRunRole = (roleId, options = {}) => {
+    runMut.mutate({ projId: projectId, roleId, options });
     setSelectedRole(roleId);
   };
 
@@ -207,6 +218,14 @@ export default function WorkspacePage() {
 
       {/* 右侧详情区 */}
       <main className="flex-1 overflow-y-auto p-6">
+        {/* 执行反馈 Toast */}
+        {execFeedback && (
+          <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium transition-all ${
+            execFeedback.startsWith('✅') ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+          }`}>
+            {execFeedback}
+          </div>
+        )}
         {selectedRole ? (
           <RoleDetailPanel
             projectId={projectId}
@@ -216,6 +235,7 @@ export default function WorkspacePage() {
             runLoading={runMut.isPending && runMut.variables?.roleId === selectedRole}
             completedSet={completedSet}
             project={project}
+            lastExecResult={runMut.data?.data}
           />
         ) : (
           <WelcomePanel project={project} progress={progress} episodeProgress={episodeProgress} completedEpisodes={completedEpisodes} />
@@ -421,7 +441,7 @@ function Step({ n, title, desc }) {
 }
 
 // ─── 角色详情面板 ─────────────────────────────────────────────────────────────
-function RoleDetailPanel({ projectId, roleId, allRoles, onRun, runLoading, completedSet, project }) {
+function RoleDetailPanel({ projectId, roleId, allRoles, onRun, runLoading, completedSet, project, lastExecResult }) {
   const role = allRoles.find((r) => r.agent_id === roleId);
   const [episodeRange, setEpisodeRange] = useState('1-5');
 
@@ -431,9 +451,13 @@ function RoleDetailPanel({ projectId, roleId, allRoles, onRun, runLoading, compl
   const tier = role.tier || (role.is_fast_track ? 1 : 3);
   const tierCfg = TIER_CONFIG[tier];
 
-  // 是否是剧本生成类角色（需要指定集数范围）
-  const isScriptWriter = roleId === 'drama.script-writer' || roleId === 'drama.dialogue-expert';
-  const isBatchRole = isScriptWriter && (project?.total_episodes || 0) > 1;
+  // 需要指定集数范围的角色
+  const RANGE_ROLES = ['drama.script-writer', 'drama.dialogue-expert', 'drama.hook-designer',
+                       'drama.storyboard-director', 'drama.pacing-optimizer'];
+  // 需要指定总集数的角色（生成全剧大纲）
+  const COUNT_ROLES = ['drama.plot-architect'];
+  const isBatchRole = (RANGE_ROLES.includes(roleId) || COUNT_ROLES.includes(roleId)) && (project?.total_episodes || 0) > 1;
+  const isCountMode = COUNT_ROLES.includes(roleId); // 大纲类：用集数而非范围
 
   return (
     <div className="max-w-3xl">
@@ -457,38 +481,74 @@ function RoleDetailPanel({ projectId, roleId, allRoles, onRun, runLoading, compl
           </div>
         </div>
 
-        {/* 执行配置（批量生成支持） */}
+        {/* 执行配置（分集范围支持） */}
         {isBatchRole && (
           <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-100">
-            <p className="text-xs font-medium text-purple-700 mb-2">
-              📌 分集生成配置（共{project.total_episodes}集，建议每批5集）
-            </p>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-gray-600">生成集数范围</label>
-                <input
-                  type="text"
-                  value={episodeRange}
-                  onChange={(e) => setEpisodeRange(e.target.value)}
-                  placeholder="例：1-5 或 6-10"
-                  className="border border-gray-200 rounded px-2 py-1 text-sm w-24"
-                />
-              </div>
-              <div className="flex gap-2">
-                {['1-5','6-10','11-15','16-20'].filter((r) => {
-                  const end = parseInt(r.split('-')[1]);
-                  return end <= (project.total_episodes || 0);
-                }).map((r) => (
-                  <button
-                    key={r}
-                    onClick={() => setEpisodeRange(r)}
-                    className={`text-xs px-2 py-1 rounded ${episodeRange === r ? 'bg-purple-600 text-white' : 'bg-white border text-gray-600 hover:border-purple-400'}`}
-                  >
-                    {r}集
-                  </button>
-                ))}
-              </div>
-            </div>
+            {isCountMode ? (
+              <>
+                <p className="text-xs font-medium text-purple-700 mb-2">
+                  📋 大纲生成配置（将生成全部{project.total_episodes}集分集大纲）
+                </p>
+                <p className="text-xs text-purple-500">
+                  ⚠️ 分集大纲一次性生成所有集，建议先生成再按需分批写剧本。
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-xs font-medium text-purple-700 mb-2">
+                  📌 分集生成配置（共{project.total_episodes}集，建议每批5集以控制质量）
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-gray-600">生成集数范围</label>
+                    <input
+                      type="text"
+                      value={episodeRange}
+                      onChange={(e) => setEpisodeRange(e.target.value)}
+                      placeholder="如：1-5 或 6-10"
+                      className="border border-gray-200 rounded px-2 py-1 text-sm w-24 focus:ring-1 focus:ring-purple-400"
+                    />
+                  </div>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {Array.from({ length: Math.ceil(project.total_episodes / 5) }, (_, i) => {
+                      const start = i * 5 + 1;
+                      const end = Math.min((i + 1) * 5, project.total_episodes);
+                      const range = `${start}-${end}`;
+                      return (
+                        <button
+                          key={range}
+                          onClick={() => setEpisodeRange(range)}
+                          className={`text-xs px-2 py-1 rounded border transition-colors ${
+                            episodeRange === range
+                              ? 'bg-purple-600 text-white border-purple-600'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-purple-400'
+                          }`}
+                        >
+                          {range}集
+                        </button>
+                      );
+                    }).slice(0, 8)}
+                  </div>
+                </div>
+                <p className="text-xs text-purple-500 mt-2">
+                  当前选择：第{episodeRange}集（{(() => {
+                    const [s, e] = episodeRange.split('-').map(Number);
+                    return isNaN(s) || isNaN(e) ? '？' : e - s + 1;
+                  })()}集）· 预估 Token：~{(() => {
+                    const [s, e] = episodeRange.split('-').map(Number);
+                    const count = isNaN(s) || isNaN(e) ? 5 : e - s + 1;
+                    return `${(count * 12000 / 1000).toFixed(0)}K`;
+                  })()}
+                </p>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* 上次执行结果 */}
+        {lastExecResult && lastExecResult.scope && (
+          <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-100 text-xs text-green-700">
+            ✅ 上次执行：{lastExecResult.scope} · 执行ID: {lastExecResult.execution_id?.slice(0,8)}
           </div>
         )}
 
@@ -537,7 +597,10 @@ function RoleDetailPanel({ projectId, roleId, allRoles, onRun, runLoading, compl
         {/* 执行按钮区 */}
         <div className="flex gap-3 pt-3 border-t border-gray-100">
           <button
-            onClick={() => onRun(roleId)}
+            onClick={() => onRun(roleId, {
+              episode_range: isBatchRole && !isCountMode ? episodeRange : undefined,
+              episode_count: isCountMode ? project.total_episodes : undefined,
+            })}
             disabled={runLoading}
             className="flex-1 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2"
           >

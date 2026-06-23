@@ -1,18 +1,76 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createDramaProject, getDramaProjects } from '../../services/drama';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-const GENRE_OPTIONS = [
-  { value: 'family-revenge', label: '家庭伦理复仇' },
-  { value: 'domineering-ceo', label: '豪门霸总' },
-  { value: 'sweet-pet', label: '甜宠虐恋' },
-  { value: 'time-travel', label: '穿越重生' },
-  { value: 'urban-counterattack', label: '都市逆袭' },
-  { value: 'ancient-power', label: '古装权谋' },
-  { value: 'mystery-reversal', label: '悬疑反转' },
-  { value: 'healing', label: '情感疗愈' },
+// ─── 多维度题材矩阵（破除固定选项限制，支持创新组合）────────────────────────
+// 设计理念：参考《Save the Cat》剧情类型×情感轴×冲突类型三维矩阵
+// 行业实践：爆款往往来自两个维度的"意外组合"（如：古装×职场、悬疑×甜宠）
+
+const GENRE_MATRIX = {
+  // 情感轴（核心驱动力）
+  emotion: {
+    label: '情感轴',
+    hint: '驱动观众追剧的核心情绪',
+    options: [
+      { value: 'revenge',     label: '复仇爽感',   desc: '主角逆境反击，爽感高密度' },
+      { value: 'love',        label: '爱情甜虐',   desc: '甜蜜与虐心交替，情绪拉扯' },
+      { value: 'healing',     label: '治愈共鸣',   desc: '情感认同，慢热积累' },
+      { value: 'suspense',    label: '悬疑烧脑',   desc: '信息差维持，反转成瘾' },
+      { value: 'ambition',    label: '野心逐权',   desc: '权力博弈，人性复杂' },
+    ],
+  },
+  // 身份轴（主角设定）
+  identity: {
+    label: '身份轴',
+    hint: '主角的社会角色与身份冲突',
+    options: [
+      { value: 'ceo',         label: '豪门精英',   desc: '高权势，资源博弈' },
+      { value: 'ordinary',    label: '普通女性',   desc: '真实代入感，草根逆袭' },
+      { value: 'hidden',      label: '隐藏大佬',   desc: '错认身份，反差冲击' },
+      { value: 'reborn',      label: '重生觉醒',   desc: '前世记忆，改写命运' },
+      { value: 'transmigrate',label: '跨世界者',   desc: '穿越/降临，文化碰撞' },
+    ],
+  },
+  // 冲突类型（核心矛盾）
+  conflict: {
+    label: '冲突轴',
+    hint: '推动剧情前进的核心矛盾',
+    options: [
+      { value: 'family',      label: '家族内斗',   desc: '血缘关系中的权力与背叛' },
+      { value: 'workplace',   label: '职场博弈',   desc: '利益链条，规则与阴谋' },
+      { value: 'romance',     label: '情感纠葛',   desc: '三角关系，追逐与逃离' },
+      { value: 'secret',      label: '身份秘密',   desc: '信息不对等，揭穿的时刻' },
+      { value: 'survival',    label: '生存竞争',   desc: '资源稀缺，淘汰机制' },
+    ],
+  },
+  // 世界观（时空背景）
+  world: {
+    label: '世界观',
+    hint: '故事发生的时空与规则',
+    options: [
+      { value: 'modern',      label: '当代都市',   desc: '现实感强，快节奏' },
+      { value: 'ancient',     label: '古代宫廷',   desc: '权谋服饰，历史质感' },
+      { value: 'fantasy',     label: '架空仙侠',   desc: '规则自定义，想象空间大' },
+      { value: 'near-future', label: '近未来',     desc: '科技+情感，新奇设定' },
+      { value: 'overseas',    label: '海外异地',   desc: '文化差异，异域背景' },
+    ],
+  },
+};
+
+// 预设创新组合（对立面法：跨维度"意外配对"）
+const INNOVATIVE_COMBOS = [
+  { label: '古装×职场权谋', code: 'ancient-workplace', dims: { emotion:'ambition', identity:'hidden', conflict:'workplace', world:'ancient' }, heat: '🔥 新兴热点' },
+  { label: '甜宠×悬疑反转', code: 'sweet-mystery',     dims: { emotion:'suspense', identity:'hidden', conflict:'secret', world:'modern' }, heat: '✨ 破圈潜力' },
+  { label: '普通女性×隐藏大佬', code: 'hidden-boss',   dims: { emotion:'love', identity:'hidden', conflict:'romance', world:'modern' }, heat: '💡 高爆款率' },
+  { label: '重生复仇×家族内斗', code: 'reborn-revenge', dims: { emotion:'revenge', identity:'reborn', conflict:'family', world:'modern' }, heat: '🔝 经典爆款' },
+  { label: '职场逆袭×情感治愈', code: 'career-healing',dims: { emotion:'healing', identity:'ordinary', conflict:'workplace', world:'modern' }, heat: '🌟 长尾用户' },
 ];
+
+// 根据维度选择生成 genre_code
+function genreCodeFromDims(dims) {
+  return Object.values(dims).filter(Boolean).join('-');
+}
 
 const PLATFORM_OPTIONS = [
   { value: 'douyin', label: '抖音' },
@@ -26,14 +84,32 @@ export default function DramaIndex() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [showNew, setShowNew] = useState(false);
+  const [genreMode, setGenreMode] = useState('matrix'); // 'matrix' | 'preset' | 'free'
+  const [dimSelections, setDimSelections] = useState({});
   const [form, setForm] = useState({
     title: '',
-    genre_code: 'family-revenge',
+    genre_code: '',
     total_episodes: 30,
     target_platform: 'douyin',
     track_mode: 'fast',
     core_idea: '',
   });
+
+  // 根据矩阵选择动态生成 genre_code
+  const computedGenreCode = useMemo(() => {
+    if (genreMode === 'free') return form.genre_code;
+    if (genreMode === 'preset') return form.genre_code;
+    return genreCodeFromDims(dimSelections);
+  }, [genreMode, dimSelections, form.genre_code]);
+
+  const selectDim = (axis, value) => {
+    setDimSelections(prev => ({ ...prev, [axis]: prev[axis] === value ? undefined : value }));
+  };
+
+  const applyCombo = (combo) => {
+    setDimSelections(combo.dims);
+    setForm(f => ({ ...f, genre_code: combo.code }));
+  };
 
   const { data: projectsRes } = useQuery({
     queryKey: ['drama-projects'],
@@ -45,7 +121,7 @@ export default function DramaIndex() {
     mutationFn: createDramaProject,
     onSuccess: (res) => {
       queryClient.invalidateQueries(['drama-projects']);
-      const id = res?.data?.data?.id;
+      const id = res?.data?.data?.id || res?.data?.id;
       if (id) navigate(`/drama/workspace/${id}`);
       setShowNew(false);
     },
@@ -53,7 +129,7 @@ export default function DramaIndex() {
 
   const handleCreate = (e) => {
     e.preventDefault();
-    createMut.mutate(form);
+    createMut.mutate({ ...form, genre_code: computedGenreCode || 'custom' });
   };
 
   return (
@@ -115,96 +191,158 @@ export default function DramaIndex() {
         </div>
       </div>
 
-      {/* 新建项目对话框 */}
+      {/* 新建项目弹窗 */}
       {showNew && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-5">新建剧本项目</h2>
-            <form onSubmit={handleCreate} className="space-y-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-900">新建剧本项目</h2>
+              <button onClick={() => setShowNew(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+            </div>
+            <form onSubmit={handleCreate} className="p-6 space-y-5">
+              {/* 基础信息 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">剧名</label>
-                <input
-                  required
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  placeholder="暂定剧名，可后续修改"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">剧名 <span className="text-red-400">*</span></label>
+                <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="暂定剧名，可后续修改" className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">题材</label>
-                  <select
-                    value={form.genre_code}
-                    onChange={(e) => setForm({ ...form, genre_code: e.target.value })}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                  >
-                    {GENRE_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
+
+              {/* 题材选择 — 多维度矩阵 */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-gray-700">题材定位</label>
+                  <div className="flex gap-1">
+                    {[['matrix','矩阵选择'],['preset','快速预设'],['free','自由输入']].map(([m,l]) => (
+                      <button key={m} type="button" onClick={() => setGenreMode(m)}
+                        className={`px-2 py-1 text-xs rounded ${genreMode===m?'bg-indigo-100 text-indigo-700 font-medium':'text-gray-500 hover:bg-gray-100'}`}>
+                        {l}
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
+
+                {/* 矩阵选择模式 */}
+                {genreMode === 'matrix' && (
+                  <div className="space-y-3">
+                    {/* 创新组合推荐 */}
+                    <div className="bg-indigo-50 rounded-xl p-3">
+                      <p className="text-xs font-medium text-indigo-700 mb-2">💡 创新组合推荐（对立面法）</p>
+                      <div className="flex flex-wrap gap-2">
+                        {INNOVATIVE_COMBOS.map(combo => (
+                          <button key={combo.code} type="button" onClick={() => applyCombo(combo)}
+                            className={`text-xs px-2 py-1.5 rounded-lg border transition-all ${
+                              computedGenreCode === combo.code
+                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-400'
+                            }`}>
+                            {combo.heat} {combo.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {/* 四维选择 */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {Object.entries(GENRE_MATRIX).map(([axis, config]) => (
+                        <div key={axis}>
+                          <div className="text-xs font-semibold text-gray-600 mb-1">
+                            {config.label}
+                            <span className="text-gray-400 font-normal ml-1">· {config.hint}</span>
+                          </div>
+                          <div className="space-y-1">
+                            {config.options.map(opt => (
+                              <button key={opt.value} type="button" onClick={() => selectDim(axis, opt.value)}
+                                className={`w-full text-left px-2 py-1.5 rounded-lg text-xs border transition-all ${
+                                  dimSelections[axis] === opt.value
+                                    ? 'bg-indigo-600 text-white border-indigo-600'
+                                    : 'bg-white text-gray-700 border-gray-100 hover:border-indigo-300'
+                                }`}>
+                                <span className="font-medium">{opt.label}</span>
+                                <span className="opacity-70 ml-1">— {opt.desc}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {/* 当前组合 */}
+                    <div className="bg-gray-50 rounded-lg px-3 py-2 text-xs text-gray-600">
+                      当前组合：<span className="font-medium text-indigo-700">
+                        {Object.entries(dimSelections).filter(([,v])=>v).map(([axis,val]) => {
+                          const opt = GENRE_MATRIX[axis]?.options.find(o => o.value === val);
+                          return opt?.label;
+                        }).filter(Boolean).join(' × ') || '请从上方选择维度…'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* 快速预设模式 */}
+                {genreMode === 'preset' && (
+                  <div className="grid grid-cols-2 gap-2">
+                    {INNOVATIVE_COMBOS.map(combo => (
+                      <button key={combo.code} type="button" onClick={() => { applyCombo(combo); setForm(f=>({...f,genre_code:combo.code})); }}
+                        className={`p-2 rounded-lg border text-left text-sm transition-all ${form.genre_code===combo.code?'bg-indigo-50 border-indigo-400':'border-gray-200 hover:border-indigo-300'}`}>
+                        <div className="font-medium text-gray-800">{combo.label}</div>
+                        <div className="text-xs text-gray-400 mt-0.5">{combo.heat}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* 自由输入模式 */}
+                {genreMode === 'free' && (
+                  <div>
+                    <input value={form.genre_code} onChange={(e) => setForm({...form, genre_code: e.target.value})}
+                      placeholder="自定义题材标签，如：都市×悬疑×女主觉醒"
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" />
+                    <p className="text-xs text-gray-400 mt-1">自由描述你的题材方向，选题策划官会依据此输入生成更精准的立项建议</p>
+                  </div>
+                )}
+              </div>
+
+              {/* 其他配置 */}
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">总集数</label>
-                  <input
-                    type="number"
-                    min={5}
-                    max={200}
-                    value={form.total_episodes}
+                  <input type="number" min={5} max={200} value={form.total_episodes}
                     onChange={(e) => setForm({ ...form, total_episodes: +e.target.value })}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                  />
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">目标平台</label>
-                  <select
-                    value={form.target_platform}
-                    onChange={(e) => setForm({ ...form, target_platform: e.target.value })}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                  >
-                    {PLATFORM_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
+                  <select value={form.target_platform} onChange={(e) => setForm({ ...form, target_platform: e.target.value })}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    {PLATFORM_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">创作模式</label>
-                  <select
-                    value={form.track_mode}
-                    onChange={(e) => setForm({ ...form, track_mode: e.target.value })}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                  >
-                    <option value="fast">快速通道（8角色）</option>
-                    <option value="expert">专家通道（36角色）</option>
+                  <select value={form.track_mode} onChange={(e) => setForm({ ...form, track_mode: e.target.value })}
+                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    <option value="fast">⚡ 快速（8角色）</option>
+                    <option value="expert">🎬 专家（35角色）</option>
                   </select>
                 </div>
               </div>
+
+              {/* 核心创意 */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">一句话核心创意（可选）</label>
-                <textarea
-                  value={form.core_idea}
-                  onChange={(e) => setForm({ ...form, core_idea: e.target.value })}
-                  placeholder="例：全职太太隐忍三年，发现丈夫秘密后觉醒反击"
-                  rows={2}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none"
-                />
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  一句话核心创意 <span className="text-gray-400 font-normal">（可选，越具体创作质量越高）</span>
+                </label>
+                <textarea value={form.core_idea} onChange={(e) => setForm({ ...form, core_idea: e.target.value })}
+                  placeholder="例：被家人抛弃的天才医生，携带前世记忆重生，在宫廷权谋中用现代医术完成复仇"
+                  rows={2} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none" />
               </div>
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowNew(false)}
-                  className="flex-1 py-2 border border-gray-200 text-gray-700 text-sm rounded-lg hover:bg-gray-50"
-                >
+
+              <div className="flex gap-3 pt-1">
+                <button type="button" onClick={() => setShowNew(false)}
+                  className="flex-1 py-2.5 border border-gray-200 text-gray-700 text-sm rounded-xl hover:bg-gray-50">
                   取消
                 </button>
-                <button
-                  type="submit"
-                  disabled={createMut.isPending}
-                  className="flex-1 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-                >
-                  {createMut.isPending ? '创建中...' : '开始创作'}
+                <button type="submit" disabled={createMut.isPending}
+                  className="flex-1 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50">
+                  {createMut.isPending ? '创建中...' : '🚀 开始创作'}
                 </button>
               </div>
             </form>

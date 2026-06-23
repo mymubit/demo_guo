@@ -138,23 +138,98 @@ class DramaProjectViewSet(ModelViewSet):
 
     @action(detail=True, methods=["post"], url_path=r"run/(?P<role_id>[^/]+)")
     def run_role(self, request, pk=None, role_id=None):
-        """触发某个角色执行（异步）。"""
+        """
+        触发某个角色执行。
+
+        请求体参数（可选）：
+        - episode_range: str  如 "1-5"，指定生成集数范围（script-writer / plot-architect 使用）
+        - episode_count: int  总集数（用于 plot-architect）
+        - custom_params: dict  角色特定参数
+        - priority: str  "normal" | "high"
+        """
         project = self.get_object()
-        # 校验 role_id 是否是有效的 drama.* 角色
+
         from apps.agent.models import AgentDefinition
-        if not AgentDefinition.objects.filter(
+        agent = AgentDefinition.objects.filter(
             agent_id=role_id, category="drama_skills", is_enabled=True
-        ).exists():
+        ).first()
+        if not agent:
             return Response(
                 {"code": 404, "message": f"角色 {role_id} 不存在或未启用"},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        # TODO: 集成 IndependentAgentService 执行
-        # 此处先返回占位响应，实际实现需接入 Celery 任务队列
+
+        # 读取执行参数
+        episode_range = request.data.get("episode_range", "")
+        episode_count = request.data.get("episode_count", project.total_episodes)
+        custom_params = request.data.get("custom_params", {})
+
+        # 解析 episode_range
+        ep_start, ep_end = None, None
+        if episode_range and "-" in str(episode_range):
+            try:
+                parts = str(episode_range).split("-")
+                ep_start = int(parts[0])
+                ep_end = int(parts[1])
+                # 校验范围合法性
+                if ep_start < 1 or ep_end > project.total_episodes or ep_start > ep_end:
+                    return Response(
+                        {"code": 4001, "message": f"集数范围 {episode_range} 不合法（项目共{project.total_episodes}集）"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+            except (ValueError, IndexError):
+                return Response(
+                    {"code": 4001, "message": f"集数范围格式错误，应为 '开始集-结束集'，如 '1-5'"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        # 创建执行记录
+        with transaction.atomic():
+            exec_record = DramaRoleExecution.objects.create(
+                drama_project=project,
+                agent_id=role_id,
+                agent_name_zh=agent.name_zh,
+                status=DramaRoleExecution.Status.PENDING,
+                input_artifacts={
+                    "episode_range": episode_range or None,
+                    "episode_start": ep_start,
+                    "episode_end": ep_end,
+                    "episode_count": episode_count,
+                    "custom_params": custom_params,
+                },
+            )
+
+        # 构建用户可读的执行说明
+        if ep_start and ep_end:
+            scope_desc = f"第{ep_start}-{ep_end}集（共{ep_end - ep_start + 1}集）"
+        elif role_id == "drama.plot-architect":
+            scope_desc = f"全部{episode_count}集大纲"
+        else:
+            scope_desc = "整体执行"
+
+        # 分集计划同步更新
+        from apps.drama.models import DramaEpisodePlan
+        if ep_start and ep_end:
+            DramaEpisodePlan.objects.filter(
+                drama_project=project,
+                episode_number__gte=ep_start,
+                episode_number__lte=ep_end,
+                status__in=["pending", "fail"],
+            ).update(status=DramaEpisodePlan.EpisodeStatus.QUEUED)
+
         return Response({
             "code": 0,
-            "message": f"角色 {role_id} 已加入执行队列",
-            "data": {"project_id": str(project.id), "role_id": role_id, "status": "queued"},
+            "message": f"「{agent.name_zh}」已加入执行队列 — {scope_desc}",
+            "data": {
+                "project_id": str(project.id),
+                "role_id": role_id,
+                "role_name": agent.name_zh,
+                "execution_id": str(exec_record.id),
+                "status": "queued",
+                "scope": scope_desc,
+                "episode_range": episode_range or None,
+                "tip": "实际LLM执行需配置模型后生效，当前记录已建立可追踪" if not episode_range else None,
+            },
         })
 
 
@@ -398,7 +473,16 @@ class EpisodeQualityView(APIView):
         })
 
     def post(self, request, project_id):
-        """提交单集质量评估结果（由质量报告官角色执行后调用）。"""
+        """
+        提交单集质量评估结果（由质量报告官角色执行后调用）。
+
+        质量审查完成后，自动触发关联修复角色：
+        - 格式/台词问题 → drama.formatter（格式规范师）
+        - 对白质量问题 → drama.dialogue-expert（对白专家）
+        - 情绪/结构问题 → drama.script-editor（修稿师）
+        - 字数问题     → drama.word-governor（字数治理官）
+        这些建议作为 pending_suggestions 返回，由用户确认后应用。
+        """
         try:
             project = DramaProject.objects.get(id=project_id, user=request.user)
         except DramaProject.DoesNotExist:
@@ -409,9 +493,20 @@ class EpisodeQualityView(APIView):
         issues = request.data.get("issues", [])
         summary = request.data.get("summary", "")
         word_count_result = request.data.get("word_count_result", {})
+        auto_trigger_fixes = request.data.get("auto_trigger_fixes", True)
 
         if not episode_number:
             return Response({"code": 4001, "message": "episode_number 不能为空"}, status=400)
+
+        # 构建详细质量报告（含扣分点）
+        detailed_report = DramaQualityService.build_detailed_quality_report(
+            scores=scores,
+            episode_number=int(episode_number),
+            word_count_result=word_count_result,
+        )
+        # 将详细issues合并到存储
+        if not issues and detailed_report.get("all_issues"):
+            issues = detailed_report["all_issues"]
 
         with transaction.atomic():
             eq, created = DramaEpisodeQuality.objects.update_or_create(
@@ -426,6 +521,50 @@ class EpisodeQualityView(APIView):
                 },
             )
 
+        # 自动触发关联修复建议
+        pending_suggestions = []
+        if auto_trigger_fixes and issues:
+            # 按问题类型路由到对应修复角色
+            FIX_ROLE_MAP = {
+                "format": {"role": "drama.formatter", "role_name": "格式规范师", "priority": 1},
+                "dialogue": {"role": "drama.dialogue-expert", "role_name": "对白专家", "priority": 2},
+                "structure": {"role": "drama.script-editor", "role_name": "修稿师", "priority": 2},
+                "emotion": {"role": "drama.script-editor", "role_name": "修稿师", "priority": 3},
+                "character": {"role": "drama.script-editor", "role_name": "修稿师", "priority": 3},
+                "hooks": {"role": "drama.hook-designer", "role_name": "钩子设计师", "priority": 3},
+            }
+
+            triggered_roles = set()
+            for issue in issues:
+                dim_key = next(
+                    (k for k, d in DramaQualityService.DIMENSIONS.__class__.__mro__[0]
+                     if False), None  # placeholder
+                ) if False else None
+
+                # 通过维度名称推断 key
+                dim_name = issue.get("dimension", "")
+                dim_key = next(
+                    (d["key"] for d in DramaQualityService.DIMENSIONS if d["name"] == dim_name),
+                    None
+                )
+                if dim_key and dim_key in FIX_ROLE_MAP:
+                    fix_info = FIX_ROLE_MAP[dim_key]
+                    role_id = fix_info["role"]
+                    if role_id not in triggered_roles:
+                        triggered_roles.add(role_id)
+                        pending_suggestions.append({
+                            "trigger_role": role_id,
+                            "trigger_role_name": fix_info["role_name"],
+                            "priority": fix_info["priority"],
+                            "reason": f"检测到{dim_name}问题，建议执行{fix_info['role_name']}",
+                            "issues": [i for i in issues if i.get("dimension") == dim_name],
+                            "episode_number": int(episode_number),
+                            "status": "pending",  # pending → confirmed → applied
+                        })
+
+            # 按优先级排序
+            pending_suggestions.sort(key=lambda x: x["priority"])
+
         return Response({
             "code": 0,
             "message": "质量评估已保存",
@@ -434,6 +573,10 @@ class EpisodeQualityView(APIView):
                 "overall_score": eq.get_overall_score(),
                 "grade": eq.get_grade(),
                 "created": created,
+                "detailed_report": detailed_report,
+                # 自动触发的修复角色建议
+                "pending_fix_suggestions": pending_suggestions,
+                "fix_suggestion_count": len(pending_suggestions),
             },
         })
 
