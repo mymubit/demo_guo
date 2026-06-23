@@ -611,12 +611,7 @@ class EpisodeQualityView(APIView):
 
             triggered_roles = set()
             for issue in issues:
-                dim_key = next(
-                    (k for k, d in DramaQualityService.DIMENSIONS.__class__.__mro__[0]
-                     if False), None  # placeholder
-                ) if False else None
-
-                # ???????? key
+                # 根据维度名称查找 key
                 dim_name = issue.get("dimension", "")
                 dim_key = next(
                     (d["key"] for d in DramaQualityService.DIMENSIONS if d["name"] == dim_name),
