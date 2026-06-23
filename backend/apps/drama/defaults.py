@@ -66,7 +66,8 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [   {   'agent_id': 'drama.topic-pla
         'dept': 'strategy',
         'description': '核心创意提炼、题材定位、卖点差异化设计、目标受众画像、立项简报生成。',
         'fast_track': True,
-        'input_contract': {   'params': ['core_idea', 'genre', 'episode_count', 'target_platform'],
+        'input_contract': {   'optional_artifacts': ['market_report'],
+                              'params': ['core_idea', 'genre', 'episode_count', 'target_platform'],
                               'required_artifacts': []},
         'name': 'Topic Planner',
         'name_zh': '选题策划官',
@@ -85,7 +86,15 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [   {   'agent_id': 'drama.topic-pla
                          '保留核心情感冲突+人物弧光+标志性场景 → 输出改编计划\n'
                          'reference模式（参考原创）：提取结构指纹（节奏/冲突类型/反转时机）→ 创作全新内容，原创度>90% → 防止实质性相似\n'
                          'derivative模式（衍生续集）：继承原作人物风格（OOC防护：角色性格不得颠覆）→ 设计续集/前传/番外 → 输出衍生项目简报\n'
-                         '原创度规则参考：knowledge/originality-rules.md（六类保护：角色名/标题/情节/台词/AI漫剧/出海）',
+                         '原创度规则参考：knowledge/originality-rules.md（六类保护：角色名/标题/情节/台词/AI漫剧/出海）\n'
+                         '\n'
+                         '【market_report使用说明（市场分析师产物）】\n'
+                         '若收到market_report，在立项简报中引用以下内容：\n'
+                         '- 市场热点排行中的最优题材方向 → 填入题材定位\n'
+                         '- 爆款指数评估 → 调整差异化卖点设计\n'
+                         '- 市场空白点 → 作为差异化卖点的依据\n'
+                         '- 梦境指标最优组合（安全8-9×满足8-9×真实7-8）→ 用于梦境指标预估\n'
+                         "market_report中的拉片结论 → 指导'可借鉴结构'的设计。",
         'tier': 1,
         'workspace_order': 103},
     {   'agent_id': 'drama.world-architect',
@@ -136,7 +145,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [   {   'agent_id': 'drama.topic-pla
         'dept': 'plot_engine',
         'description': '设计六阶段叙事结构、全剧分集大纲（含情绪节点EV/ET/TP）、主支线规划、双轨节奏标注。',
         'fast_track': True,
-        'input_contract': {   'optional_artifacts': ['emotion_blueprint'],
+        'input_contract': {   'optional_artifacts': ['emotion_blueprint', 'market_report'],
                               'params': ['episode_count'],
                               'required_artifacts': ['project_brief', 'world_setting', 'character_bible']},
         'name': 'Plot Architect',
@@ -153,7 +162,13 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [   {   'agent_id': 'drama.topic-pla
                          "每集末尾必须有悬念钩子（未解问题/新威胁/反转预告）- 每集核心戏剧动作必须是具体的'Goal × "
                          "Conflict'，不能是模糊的'发展推进'必须输出合法JSON对象，遵循series-outline.v1 schema。\n"
                          '\n'
-                         '[G-Eval] 每集推进型节拍占比需>=60%。[停机策略] 大纲最多3轮修正；停滞/发散/振荡立即停止交给用户。',
+                         '[G-Eval] 每集推进型节拍占比需>=60%。[停机策略] 大纲最多3轮修正；停滞/发散/振荡立即停止交给用户。\n'
+                         '\n'
+                         '【market_report使用说明（市场分析师产物）】\n'
+                         '若收到market_report，参考以下内容设计大纲结构：\n'
+                         "- 爆款公式中的'付费卡点设计'→ 确定付费墙前后集的张力设计\n"
+                         '- 钩子密度基准（首集>=7个情绪触发点）→ 大纲中的钩子布局\n'
+                         '- 赛道套路（LR-001等规则）→ 大纲开篇必须符合赛道基本规律',
         'tier': 1,
         'workspace_order': 302},
     {   'agent_id': 'drama.script-writer',
@@ -161,7 +176,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [   {   'agent_id': 'drama.topic-pla
         'dept': 'writing',
         'description': '按商业剧本格式生成正式剧本（场景头/△动作/台词），每集完成后触发记忆检查点。',
         'fast_track': True,
-        'input_contract': {   'optional_artifacts': ['emotion_curve', 'hook_plan'],
+        'input_contract': {   'optional_artifacts': ['emotion_curve', 'hook_plan', 'narrative_plan'],
                               'params': ['episode_range'],
                               'required_artifacts': ['series_outline', 'world_setting', 'character_bible']},
         'name': 'Script Writer',
@@ -191,7 +206,16 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [   {   'agent_id': 'drama.topic-pla
                          '情绪-景别对应：愤怒→特写急推/悲伤→近景慢推/对峙→正反打/惊喜→全景拉远\n'
                          '竖屏9:16：单镜3-8秒/主体居中/字幕安全区下25%\n'
                          'Prompt格式：[景别],[角色+动作+情绪],[光线],[风格],竖屏9:16\n'
-                         '仅在有[visual]标记时触发，默认不输出（避免增加token消耗）。',
+                         '仅在有[visual]标记时触发，默认不输出（避免增加token消耗）。\n'
+                         '\n'
+                         '【narrative_plan使用说明（叙事工程师产物）】\n'
+                         '若收到narrative_plan，必须遵循以下内容执行每集写作：\n'
+                         '- 双轨节奏标注：按narrative_plan中每集的情节[松/中/紧]×情感[轻/中/重]设定写作基调\n'
+                         '- 钩子位置：按hook_plan中B级钩子的具体设计放置集末悬念\n'
+                         '- 冲突安排：按conflict_escalation中每集的冲突类型/烈度写对峙场景\n'
+                         '- 反转时机：S级反转必须在narrative_plan指定的集数发生\n'
+                         '- EV/ET目标：每集的情绪峰值/低谷必须符合narrative_plan的情绪蓝图\n'
+                         '未收到narrative_plan时，按大纲（series_outline）自行判断。',
         'tier': 1,
         'workspace_order': 401},
     {   'agent_id': 'drama.script-reviewer',
@@ -230,7 +254,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [   {   'agent_id': 'drama.topic-pla
         'dept': 'review',
         'description': '综合审稿+读者视角+情绪审计，生成8维度量化评分报告（JSON），输出通过/条件/返工结论。',
         'fast_track': True,
-        'input_contract': {   'optional_artifacts': ['reader_review', 'emotion_audit'],
+        'input_contract': {   'optional_artifacts': ['reader_review', 'emotion_audit', 'narrative_plan'],
                               'required_artifacts': ['episode_scripts', 'review_report']},
         'name': 'Quality Reporter',
         'name_zh': '质量报告官',
@@ -276,7 +300,14 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [   {   'agent_id': 'drama.topic-pla
                          '弃剧风险点识别：主角决策不合理/节奏连续2集无高点/反转靠巧合/结局预感过早\n'
                          "付费转化预测：付费卡点是否在'关键秘密即将揭晓/重要人物生死未定/情感决定时刻'\n"
                          "情感共鸣评估：每个重要场景让观众产生了什么情绪反应?如果'没什么感觉'则场景需要强化\n"
-                         '输出reader_review字段：{retention_forecast, churn_risks[], paid_conversion, emotion_resonance[]}',
+                         '输出reader_review字段：{retention_forecast, churn_risks[], paid_conversion, emotion_resonance[]}\n'
+                         '\n'
+                         '【narrative_plan对比评估（叙事工程师产物）】\n'
+                         '若收到narrative_plan，在情感深度/钩子强度/冲突处理维度执行蓝图对比评估：\n'
+                         '- 实际EV/ET vs narrative_plan规划值，偏差>2的集数标记为问题集\n'
+                         '- 实际钩子强度 vs hook_plan规划级别，降级的集数给出说明\n'
+                         '- 反转是否在规划时机发生，提前/延后超过2集需说明原因\n'
+                         '对比结果写入quality_report.narrative_deviation字段。',
         'tier': 1,
         'workspace_order': 504},
     {   'agent_id': 'drama.compliance-guard',
@@ -362,7 +393,7 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [   {   'agent_id': 'drama.topic-pla
         'description': '整合对白优化+修稿+格式规范+字数治理+节奏优化+风格一致六项能力。剧本完成后一站式精修，输出修改后剧本+详细修改说明。',
         'fast_track': False,
         'hidden': False,
-        'input_contract': {   'optional_artifacts': ['review_report'],
+        'input_contract': {   'optional_artifacts': ['review_report', 'quality_report'],
                               'params': ['episode_range', 'focus_areas'],
                               'required_artifacts': ['episode_scripts']},
         'name': 'Polish Master',
@@ -378,7 +409,14 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [   {   'agent_id': 'drama.topic-pla
                          '台词占比不足：将△动作行改为等效台词【精修模块四：集内节奏优化】检测：集内时间分布是否符合四段式（钩子10%+情境30%+升级40%+悬念20%）修复：标记节奏失衡的段落，提供调整建议【精修模块五：风格一致性守护（跨集）】检测：跨集的语言习惯漂移（术语/口头禅/叙事节奏是否保持一致）修复：统一角色的语言风格标签【精修模块六：九列分镜表生成（山音551镜头统计基准）】为关键场景（情绪高潮/集末钩子/S级反转）生成九列分镜表：镜号/时长/摄影角度/景别/画面内容/场景/声音/备注/叙事目的时长基准：推进镜头2.5-3.5秒/展示镜头4-5秒/转折镜头5-7秒/主旨镜头6-10秒叙事目的（每个镜头必须明确）：推进/建立/展现/情绪/转折/升华输出：精修后剧本全文 '
                          '+ 修改说明（标注每处改动的类型和理由）必须输出合法JSON对象。\n'
                          '\n'
-                         '[G-Eval叙事效率] 精修后验证每集推进型节拍>=60%，不足需重写。[LR规则] LR-002甜宠类不超过3句连续内心独白；LR-004反派不能降智失败。',
+                         '[G-Eval叙事效率] 精修后验证每集推进型节拍>=60%，不足需重写。[LR规则] LR-002甜宠类不超过3句连续内心独白；LR-004反派不能降智失败。\n'
+                         '\n'
+                         '【quality_report使用说明（质量报告官产物）】\n'
+                         '若收到quality_report，按报告中问题优先级执行针对性精修：\n'
+                         '- error级问题：优先处理，本次精修必须覆盖\n'
+                         '- warning级问题：按维度权重排序处理\n'
+                         '- narrative_deviation字段（如有）：按叙事偏差优先修复对应集\n'
+                         "精修完成后，输出polished_script同时更新quality_report.polish_status='done'。",
         'tier': 2,
         'workspace_order': 601},
     {   'agent_id': 'drama.production-pack',
