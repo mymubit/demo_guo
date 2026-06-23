@@ -160,7 +160,7 @@ Gate通过条件（全部满足才算通过）：
 
 ```
 1. 输出标准 quality-report.json
-2. 将缺陷列表（defects）路由给 drama-script-editor
-3. 检查：overall_score < 70 → 触发 drama-evolution-analyst 分析
+2. 将缺陷列表（defects）路由给 drama-polish-master
+3. 检查：overall_score < 70 → 触发 drama-intake（内嵌进化） 分析
 4. 检查：某维度连续2次 < 70 → 生成技能规则进化提案
 ```

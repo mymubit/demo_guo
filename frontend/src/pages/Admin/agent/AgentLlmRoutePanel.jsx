@@ -15,14 +15,17 @@ const ROUTE_HINTS = {
   'drama.character-designer': '人设设计师 - Want/Need/Ghost/Lie/Flaw',
   'drama.plot-architect': '情节架构师 - 六阶段结构+分集大纲（高Token）',
   'drama.script-writer': '剧本执笔师 - 正式剧本生成（最高Token）',
-  'drama.dialogue-expert': '对白专家 - AI腔检测与台词优化',
+  'drama.market-analyst': '市场分析师 - 市场分析+爆款公式+拉片分析',
+  'drama.narrative-engineer': '叙事工程师 - 情绪+钩子+冲突+反转+节奏综合设计',
+  'drama.polish-master': '精修大师 - 对白/格式/字数/节奏/风格一站式精修',
+  'drama.production-pack': '制作发行师 - 视觉+分镜+营销+交付一站式制作',
   'drama.script-reviewer': '审稿官 - 格式合规+结构检查',
   'drama.quality-reporter': '质量报告官 - 8维度综合评分',
   'drama.compliance-guard': '合规守卫 - P0/P1/P2合规检测',
-  'drama.script-editor': '修稿师 - 针对性缺陷修复',
-  'drama.formatter': '格式规范师 - 自动格式化（轻量）',
-  'drama.word-governor': '字数治理官 - 字数达标检测（轻量）',
-  'drama.delivery-packer': '交付打包官 - 生成交付包',
+
+
+
+
   'drama.marketing-officer': '营销策划官 - 宣发文案+投流标题',
   ai_field: '创作页 AI 字段生成',
 }

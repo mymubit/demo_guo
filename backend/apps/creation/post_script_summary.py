@@ -15,9 +15,8 @@ def _build_post_script_chain_display() -> List[str]:
     return [
         "drama.script-reviewer",
         "drama.quality-reporter",
-        "drama.script-editor",
-        "drama.marketing-officer",
-        "drama.evolution-analyst",
+        "drama.polish-master",
+        "drama.production-pack",
     ]
 
 

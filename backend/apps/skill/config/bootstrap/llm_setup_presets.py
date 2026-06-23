@@ -11,11 +11,7 @@ DRAMA_PRESET_KEYS: dict[str, str] = {
     # 中等角色 - 通用模型
     "drama.character-designer": "ark-deepseek-v4-flash",
     "drama.world-architect": "ark-deepseek-v4-flash",
-    "drama.dialogue-expert": "ark-deepseek-v4-flash",
     # 轻量角色 - 快速低成本模型
-    "drama.formatter": "doubao-seed-2.0-lite",
-    "drama.word-governor": "doubao-seed-2.0-lite",
-    "drama.delivery-packer": "doubao-seed-2.0-lite",
 }
 
 AGENT_PRESET_KEYS: dict[str, str] = {

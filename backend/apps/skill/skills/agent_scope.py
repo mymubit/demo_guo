@@ -16,14 +16,9 @@ DRAMA_AGENT_SCOPE: dict[str, str] = {
     "drama.character-designer": "dept-worldbuilding",
     "drama.plot-architect": "dept-plot",
     "drama.script-writer": "dept-writing",
-    "drama.dialogue-expert": "dept-writing",
     "drama.script-reviewer": "dept-review",
     "drama.quality-reporter": "dept-review",
-    "drama.script-editor": "dept-polish",
-    "drama.formatter": "dept-polish",
-    "drama.word-governor": "dept-polish",
     "drama.compliance-guard": "dept-ops",
-    "drama.delivery-packer": "dept-ops",
 }
 
 

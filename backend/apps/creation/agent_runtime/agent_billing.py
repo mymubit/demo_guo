@@ -15,50 +15,19 @@ from django.core.exceptions import PermissionDenied
 logger = logging.getLogger(__name__)
 
 # drama.* 角色 Coin 消耗等级
-DRAMA_AGENT_COIN_COST: Dict[str, int] = {
-    # 战略选题部（轻量分析）
-    "drama.market-radar": 2,
-    "drama.formula-analyst": 2,
-    "drama.topic-planner": 3,
-    "drama.project-reviewer": 2,
-    "drama.lapian-analyst": 5,
-    # 世界构建部
-    "drama.world-architect": 4,
-    "drama.character-designer": 5,
-    "drama.dream-analyst": 2,
-    # 剧情引擎部
-    "drama.emotion-architect": 3,
+DRAMA_AGENT_COIN_COST: dict[str, int] = {
+    "drama.character-designer": 4,
+    "drama.compliance-guard": 3,
+    "drama.market-analyst": 8,
+    "drama.narrative-engineer": 15,
     "drama.plot-architect": 8,
-    "drama.hook-designer": 3,
-    "drama.conflict-engine": 3,
-    "drama.reversal-master": 3,
-    "drama.rhythm-designer": 4,
-    "drama.psychology-architect": 3,
-    # 创作执行部（核心高消耗）
-    "drama.script-writer": 15,
-    "drama.dialogue-expert": 8,
-    "drama.scene-director": 4,
-    "drama.ip-adapter": 10,
-    # 评审质控部
+    "drama.polish-master": 15,
+    "drama.production-pack": 12,
+    "drama.quality-reporter": 4,
     "drama.script-reviewer": 5,
-    "drama.reader-reviewer": 4,
-    "drama.emotion-auditor": 4,
-    "drama.quality-reporter": 6,
-    # 修改润色部
-    "drama.script-editor": 8,
-    "drama.pacing-optimizer": 4,
-    "drama.formatter": 2,
-    "drama.word-governor": 2,
-    "drama.style-guardian": 4,
-    # 制作宣发部
-    "drama.visual-producer": 5,
-    "drama.storyboard-director": 6,
-    "drama.post-processor": 4,
-    "drama.marketing-officer": 4,
-    # 合规总编室
-    "drama.compliance-guard": 6,
-    "drama.delivery-packer": 3,
-    "drama.evolution-analyst": 4,
+    "drama.script-writer": 12,
+    "drama.topic-planner": 3,
+    "drama.world-architect": 4,
 }
 
 DEFAULT_COIN_COST = 5

@@ -12,7 +12,9 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from apps.agent.models import AgentDefinition, AgentLlmRouteConfig, AgentPromptVersion
-from apps.drama.defaults import DRAMA_DEPARTMENTS, DRAMA_FAST_TRACK_ROLES, DRAMA_ROLE_DEFAULTS
+from apps.drama.defaults import (
+    DRAMA_DEPARTMENTS, DRAMA_FAST_TRACK_ROLES, DRAMA_ROLE_DEFAULTS, DRAMA_VISIBLE_ROLES,
+)
 
 
 class Command(BaseCommand):
@@ -36,8 +38,13 @@ class Command(BaseCommand):
         force = options["force"]
         dry_run = options["dry_run"]
 
+        visible_count = len(DRAMA_VISIBLE_ROLES)
+        total_count = len(DRAMA_ROLE_DEFAULTS)
         self.stdout.write(f"开始种入 drama-skills 角色 (force={force}, dry_run={dry_run})")
-        self.stdout.write(f"共 {len(DRAMA_ROLE_DEFAULTS)} 个角色，{len(DRAMA_DEPARTMENTS)} 个部门")
+        self.stdout.write(
+            f"总计 {total_count} 个角色（可见 {visible_count} 个：8核心+4复合，"
+            f"其余 {total_count - visible_count} 个标记hidden不在UI展示）"
+        )
 
         if dry_run:
             for role in DRAMA_ROLE_DEFAULTS:
@@ -72,7 +79,14 @@ class Command(BaseCommand):
                     "ui_schema": {
                         "dept": role["dept"],
                         "is_fast_track": is_fast_track,
+                        "is_composite": agent_id in {
+                            "drama.market-analyst", "drama.narrative-engineer",
+                            "drama.polish-master", "drama.production-pack",
+                        },
+                        "is_visible": agent_id in DRAMA_VISIBLE_ROLES,
+                        "hidden": role.get("hidden", False),
                         "dept_order": role["workspace_order"] // 100,
+                        "tier": role.get("tier", 3),
                     },
                 }
 
@@ -140,12 +154,31 @@ class Command(BaseCommand):
                 except Exception as exc:  # noqa: BLE001
                     self.stdout.write(self.style.ERROR(f"  ❌ 失败: {agent_id} - {exc}"))
 
+        # ── 清理数据库中不再属于 DRAMA_ROLE_DEFAULTS 的旧角色 ──
+        self.stdout.write("")
+        self.stdout.write("正在清理已废弃的旧角色…")
+        current_ids = {r["agent_id"] for r in DRAMA_ROLE_DEFAULTS}
+        stale_agents = AgentDefinition.objects.filter(
+            category="drama_skills",
+            agent_id__startswith="drama.",
+        ).exclude(agent_id__in=current_ids)
+
+        deleted_agent_count = 0
+        for stale in stale_agents:
+            # 同时清理关联的路由配置和提示词版本
+            AgentLlmRouteConfig.objects.filter(route_key=stale.agent_id).delete()
+            AgentLlmRouteConfig.objects.filter(agent=stale).delete()
+            stale.delete()
+            deleted_agent_count += 1
+            self.stdout.write(self.style.WARNING(f"  🗑️  删除: {stale.agent_id} ({stale.name_zh})"))
+
         self.stdout.write("")
         self.stdout.write(self.style.SUCCESS(
-            f"完成！创建 {created_count} 个，更新 {updated_count} 个，跳过 {skipped_count} 个"
+            f"完成！创建 {created_count} 个，更新 {updated_count} 个，跳过 {skipped_count} 个，"
+            f"清理 {deleted_agent_count} 个废弃角色"
         ))
+        self.stdout.write(f"当前可用角色: {len(DRAMA_ROLE_DEFAULTS)} 个")
         self.stdout.write(f"快速通道角色: {len(DRAMA_FAST_TRACK_ROLES)} 个")
-        self.stdout.write(f"专家通道总计: {len(DRAMA_ROLE_DEFAULTS)} 个")
 
 
 def _build_user_prompt_template(role: dict) -> str:

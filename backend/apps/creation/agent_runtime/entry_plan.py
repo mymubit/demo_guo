@@ -42,50 +42,35 @@ class DramaEntryPlan:
             {
                 "phase": "strategy",
                 "label": "战略选题",
-                "agents": ["drama.market-radar", "drama.formula-analyst",
-                           "drama.topic-planner", "drama.project-reviewer"],
             },
             {
                 "phase": "worldbuilding",
                 "label": "世界构建",
                 "agents": ["drama.world-architect", "drama.character-designer",
-                           "drama.dream-analyst"],
             },
             {
                 "phase": "plot_design",
                 "label": "剧情引擎",
-                "agents": ["drama.emotion-architect", "drama.plot-architect",
-                           "drama.hook-designer", "drama.conflict-engine",
-                           "drama.reversal-master", "drama.rhythm-designer"],
             },
             {
                 "phase": "writing",
                 "label": "创作执行",
-                "agents": ["drama.script-writer", "drama.dialogue-expert",
-                           "drama.scene-director"],
             },
             {
                 "phase": "review",
                 "label": "评审质控",
-                "agents": ["drama.script-reviewer", "drama.reader-reviewer",
-                           "drama.emotion-auditor", "drama.quality-reporter"],
             },
             {
                 "phase": "polish",
                 "label": "修改润色",
-                "agents": ["drama.script-editor", "drama.pacing-optimizer",
-                           "drama.formatter", "drama.word-governor"],
             },
             {
                 "phase": "production",
                 "label": "制作宣发",
-                "agents": ["drama.visual-producer", "drama.storyboard-director",
-                           "drama.marketing-officer"],
             },
             {
                 "phase": "compliance",
                 "label": "合规交付",
-                "agents": ["drama.compliance-guard", "drama.delivery-packer"],
             },
         ],
     }
@@ -96,7 +81,6 @@ class DramaEntryPlan:
         "label": "IP改编",
         "description": "小说/原著改编专用通道",
         "recommended_agents": [
-            "drama.ip-adapter",
             "drama.world-architect",
             "drama.character-designer",
             "drama.plot-architect",
@@ -104,6 +88,10 @@ class DramaEntryPlan:
             "drama.script-reviewer",
             "drama.quality-reporter",
             "drama.compliance-guard",
+    "drama.market-analyst",
+    "drama.narrative-engineer",
+    "drama.polish-master",
+    "drama.production-pack",
         ],
     }
 

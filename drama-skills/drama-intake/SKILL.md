@@ -63,7 +63,7 @@ Step 5：归档确认
 | 角色/情节设计理论 | 轨道一：技能规则 | 对应角色的 SKILL.md（提案） |
 | 全新的创作方法论 | 轨道四：新模式发现 | `inspirations/new-patterns.md` |
 | 行业数据/平台规律 | 轨道三：外部摄入 | `knowledge/market-insights.md` |
-| 爆款作品分析 | 触发拉片分析 | `drama-lapian-analyst` |
+| 爆款作品分析 | 触发拉片分析 | `drama-market-analyst`（含拉片分析能力） |
 
 ---
 
@@ -155,3 +155,34 @@ Step 5：归档确认
 - "我给你一篇文章"、"分析这个仓库"、"这个PDF很有价值"
 - "更新知识库"、"学习这个内容"、"摄入"
 - `@drama-intake`、`[intake]`
+
+---
+
+## 进化闭环（内嵌·原evolution-analyst能力）
+
+摄入内容分析完成后，自动触发双轨进化：
+
+**轨道一：灵感即时归档**
+发现以下内容时立即归档到 `inspirations/` 对应文件：
+- 独特的钩子设计 → `inspirations/hooks.md`
+- 精妙的反转机制 → `inspirations/reversals.md`
+- 金句/潜台词设计 → `inspirations/dialogues.md`
+- 创新叙事结构 → `inspirations/structures.md`
+
+**轨道二：技能进化提案**
+发现现有技能未覆盖的新规律时，输出进化提案：
+```json
+{
+  "evolution_proposal": {
+    "target_skill": "drama.narrative-engineer",
+    "change_type": "add_rule",
+    "content": "新规律描述",
+    "evidence": "来源内容片段",
+    "pr_description": "建议更新内容"
+  }
+}
+```
+
+触发条件：
+- 质量报告连续两次某维度<70分 → 提案改进对应角色prompt
+- 摄入内容包含现有库未覆盖的新模式 → 触发`inspirations/new-patterns.md`归档

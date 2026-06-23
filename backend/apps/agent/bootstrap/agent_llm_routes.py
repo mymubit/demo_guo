@@ -19,15 +19,14 @@ DRAMA_DEFAULT_LLM_ROUTES: List[Dict[str, Any]] = [
     {"route_key": "drama.script-writer", "display_name": "剧本执笔师", "max_tokens": 16000, "sort_order": 401},
     {"route_key": "drama.quality-reporter", "display_name": "质量报告官", "max_tokens": 8000, "sort_order": 504},
     {"route_key": "drama.compliance-guard", "display_name": "合规守卫", "max_tokens": 8000, "sort_order": 801},
+    {"route_key": "drama.market-analyst",   "display_name": "市场分析师", "max_tokens": 8000,  "sort_order": 106},
+    {"route_key": "drama.narrative-engineer","display_name": "叙事工程师", "max_tokens": 16000, "sort_order": 308},
+    {"route_key": "drama.polish-master",     "display_name": "精修大师",   "max_tokens": 16000, "sort_order": 601},
+    {"route_key": "drama.production-pack",   "display_name": "制作发行师", "max_tokens": 12000, "sort_order": 701},
 
     # 中等强度角色
     {"route_key": "drama.character-designer", "display_name": "人设设计师", "max_tokens": 10000, "sort_order": 202},
     {"route_key": "drama.world-architect", "display_name": "世界架构师", "max_tokens": 8000, "sort_order": 201},
-    {"route_key": "drama.dialogue-expert", "display_name": "对白专家", "max_tokens": 12000, "sort_order": 402},
-    {"route_key": "drama.script-editor", "display_name": "修稿师", "max_tokens": 16000, "sort_order": 601},
 
     # 轻量角色（适合轻量快速模型）
-    {"route_key": "drama.formatter", "display_name": "格式规范师", "max_tokens": 10000, "sort_order": 603},
-    {"route_key": "drama.word-governor", "display_name": "字数治理官", "max_tokens": 6000, "sort_order": 604},
-    {"route_key": "drama.delivery-packer", "display_name": "交付打包官", "max_tokens": 20000, "sort_order": 802},
 ]

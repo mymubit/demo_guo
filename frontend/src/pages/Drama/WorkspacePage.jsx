@@ -23,9 +23,9 @@ const DEPT_LABELS = {
 };
 
 const TIER_CONFIG = {
-  1: { label: '核心必需', badge: '必须', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500', priority: '必执行' },
-  2: { label: '优化推荐', badge: '推荐', color: 'bg-green-100 text-green-700', dot: 'bg-green-500', priority: '按需执行' },
-  3: { label: '专项增强', badge: '可选', color: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400', priority: '特需执行' },
+  1: { label: '核心必需', badge: '必须', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500', priority: '必执行', desc: '8个快速通道角色，所有项目都要执行' },
+  2: { label: '增强复合', badge: '增强', color: 'bg-purple-100 text-purple-700', dot: 'bg-purple-500', priority: '按需执行', desc: '4个复合角色，每个整合多项专业能力' },
+  3: { label: '专项', badge: '专项', color: 'bg-gray-100 text-gray-500', dot: 'bg-gray-300', priority: '特需', desc: '已整合进复合角色，后台自动调用' },
 };
 
 const EXEC_STATUS = {
@@ -43,25 +43,23 @@ export default function WorkspacePage() {
   const [selectedRole, setSelectedRole] = useState(null);
   // 视图模式：tier（分层）| dept（分部门）| fast（只看核心）
   const [viewMode, setViewMode] = useState('tier');
+  const [execFeedback, setExecFeedback] = useState(null);
 
   const { data: projectRes } = useQuery({
     queryKey: ['drama-project', projectId],
     queryFn: () => getDramaProject(projectId),
   });
-  const project = projectRes?.id ? projectRes : projectRes?.data;
+  const project = projectRes?.data || projectRes;
 
   const { data: progressRes } = useQuery({
     queryKey: ['drama-progress', projectId],
     queryFn: () => getProjectProgress(projectId),
     refetchInterval: (query) => {
-      const roles = query.state.data?.roles || query.state.data?.data?.roles || [];
-      const hasRunning = roles.some(
-        (r) => r.execution?.status === 'running' || r.execution?.status === 'pending',
-      );
-      return hasRunning ? 2000 : 5000;
+      const roles = query.state.data?.data?.roles || [];
+      return roles.some((r) => r.execution?.status === 'running') ? 2000 : 5000;
     },
   });
-  const progress = progressRes?.roles ? progressRes : progressRes?.data;
+  const progress = progressRes?.data;
 
   const { data: rolesRes } = useQuery({
     queryKey: ['drama-roles'],
@@ -79,18 +77,19 @@ export default function WorkspacePage() {
   const completedEpisodes = episodesRes?.data?.completed_episodes || episodeProgress?.completed || 0;
 
   const runMut = useMutation({
-    mutationFn: ({ projId, roleId }) => runRole(projId, roleId),
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['drama-progress', projectId] });
-      const status = data?.status || data?.data?.status;
-      if (status === 'running' || status === 'pending') {
-        toast.success('已加入执行队列，正在生成…');
-      } else if (data?.created_new_run === false) {
-        toast.info('该角色正在执行中');
+    mutationFn: ({ projId, roleId, options = {} }) => runRole(projId, roleId, options),
+    onSuccess: (res) => {
+      queryClient.invalidateQueries(['drama-progress', projectId]);
+      queryClient.invalidateQueries(['drama-episodes', projectId]);
+      // 显示执行反馈
+      if (res?.data?.scope) {
+        setExecFeedback(`✅ ${res.data.role_name} — ${res.data.scope}`);
+        setTimeout(() => setExecFeedback(null), 4000);
       }
     },
     onError: (err) => {
-      toast.error(err?.message || '执行失败，请稍后重试');
+      setExecFeedback(`❌ 执行失败：${err?.message || '未知错误'}`);
+      setTimeout(() => setExecFeedback(null), 5000);
     },
   });
 
@@ -114,8 +113,8 @@ export default function WorkspacePage() {
     (rolesByTier[tier] || rolesByTier[3]).push(r);
   });
 
-  const handleRunRole = (roleId) => {
-    runMut.mutate({ projId: projectId, roleId });
+  const handleRunRole = (roleId, options = {}) => {
+    runMut.mutate({ projId: projectId, roleId, options });
     setSelectedRole(roleId);
   };
 
@@ -229,8 +228,15 @@ export default function WorkspacePage() {
       </aside>
 
       {/* 右侧详情区 */}
-      <main className="flex-1 overflow-y-auto bg-gray-50">
-        <div className="w-full min-h-full p-6 lg:p-8">
+      <main className="flex-1 overflow-y-auto p-6">
+        {/* 执行反馈 Toast */}
+        {execFeedback && (
+          <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg text-sm font-medium transition-all ${
+            execFeedback.startsWith('✅') ? 'bg-green-600 text-white' : 'bg-red-600 text-white'
+          }`}>
+            {execFeedback}
+          </div>
+        )}
         {selectedRole ? (
           <RoleDetailPanel
             roleId={selectedRole}
@@ -240,6 +246,7 @@ export default function WorkspacePage() {
             runLoading={runMut.isPending && runMut.variables?.roleId === selectedRole}
             completedSet={completedSet}
             project={project}
+            lastExecResult={runMut.data?.data}
           />
         ) : (
           <WelcomePanel
@@ -357,8 +364,8 @@ function FastTrackView({ roles, completedSet, roleStatusMap, selectedRole, onSel
 function RoleItem({ role, isCompleted, execution, isSelected, onSelect, showDeptTag }) {
   const execStatus = execution?.status ?? 'pending';
   const statusCfg = EXEC_STATUS[execStatus] || EXEC_STATUS.pending;
-  const tier = role.tier || (role.is_fast_track ? 1 : 3);
-  const tierCfg = TIER_CONFIG[tier];
+  const tier = role.tier || (role.is_fast_track ? 1 : 2);
+  const tierCfg = TIER_CONFIG[tier] || TIER_CONFIG[2];
 
   return (
     <button
@@ -372,6 +379,7 @@ function RoleItem({ role, isCompleted, execution, isSelected, onSelect, showDept
         <div className="flex items-center gap-1">
           <span className="text-sm text-gray-800 truncate">{role.name_zh}</span>
           {tier === 1 && <span className="text-xs text-blue-400">⚡</span>}
+          {role.is_composite && <span className="text-xs text-purple-400">◈</span>}
         </div>
         {showDeptTag && role.dept_name && (
           <span className="text-xs text-gray-400">{role.dept_name}</span>
@@ -482,27 +490,18 @@ function WelcomePanel({
             })}
           </div>
 
-          {recommendRoles.length > 0 && (
-            <>
-              <h4 className="text-sm font-medium text-gray-500 mt-6 mb-3">优化推荐（按需执行）</h4>
-              <div className="grid sm:grid-cols-2 gap-2">
-                {recommendRoles.slice(0, 6).map((role) => {
-                  const isDone = completedSet.has(role.agent_id);
-                  return (
-                    <button
-                      key={role.agent_id}
-                      type="button"
-                      onClick={() => onSelectRole(role.agent_id)}
-                      className="flex items-center gap-2 p-2.5 rounded-lg border border-gray-100 hover:border-green-200 hover:bg-green-50/50 transition-colors text-left text-sm"
-                    >
-                      <span className={isDone ? 'text-green-600' : 'text-gray-300'}>{isDone ? '✅' : '○'}</span>
-                      <span className="truncate text-gray-700">{role.name_zh}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </>
-          )}
+      <div className="bg-white rounded-xl border border-gray-200 p-5">
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">创作流程（重构后）</h3>
+        <div className="space-y-2">
+          <Step n={1} title="执行8个核心角色（⚡蓝色）" desc="按顺序：立项→世界观→人设→大纲→剧本→审稿→质量→合规。这8个角色已深度整合山音方法论。" />
+          <Step n={2} title="分批生成剧本（每批5集）" desc="剧本执笔师严格执行：首集900-1100字，其余700-900字，台词≥35%，场景≤3个。" />
+          <Step n={3} title="按需选择复合角色（◈紫色）" desc="4个复合角色各自整合了5-6项专业能力：市场分析师/叙事工程师/精修大师/制作发行师。" />
+          <Step n={4} title="查看质量报告并应用修改" desc="质量报告包含：雷达图+情绪曲线+8维扣分详情+汇总报告。建议可一键应用。" />
+        </div>
+
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-700 border border-blue-100">
+          <strong>角色架构说明：</strong>原来35个角色已重组为12个可见角色（8核心+4复合）。
+          旧的23个散碎角色的能力已整合到复合角色中，使用更简单，质量更高。
         </div>
       </div>
     </div>
@@ -534,15 +533,7 @@ function Step({ n, title, desc }) {
 }
 
 // ─── 角色详情面板 ─────────────────────────────────────────────────────────────
-function RoleDetailPanel({
-  roleId,
-  allRoles,
-  roleProgress,
-  onRun,
-  runLoading,
-  completedSet,
-  project,
-}) {
+function RoleDetailPanel({ projectId, roleId, allRoles, onRun, runLoading, completedSet, project, lastExecResult }) {
   const role = allRoles.find((r) => r.agent_id === roleId);
   const [episodeRange, setEpisodeRange] = useState('1-5');
 
@@ -551,18 +542,13 @@ function RoleDetailPanel({
   const isCompleted = completedSet.has(roleId);
   const tier = role.tier || (role.is_fast_track ? 1 : 3);
   const tierCfg = TIER_CONFIG[tier];
-  const isScriptWriter = roleId === 'drama.script-writer' || roleId === 'drama.dialogue-expert';
-  const isBatchRole = isScriptWriter && (project?.total_episodes || 0) > 1;
 
-  const execution = roleProgress?.execution;
-  const execStatus = execution?.status;
-  const statusCfg = execStatus ? EXEC_STATUS[execStatus] : null;
-  const isRunning = execStatus === 'running' || execStatus === 'pending' || runLoading;
-  const outputArtifacts = execution?.output_artifacts || {};
-  const outputViews = execution?.output_views || {};
-  const outputKeys = Object.keys(outputViews).length
-    ? Object.keys(outputViews)
-    : Object.keys(outputArtifacts);
+  // 需要指定集数范围的角色
+  const RANGE_ROLES = ['drama.script-writer', 'drama.polish-master', 'drama.narrative-engineer', 'drama.production-pack'];
+  // 需要指定总集数的角色（生成全剧大纲）
+  const COUNT_ROLES = ['drama.plot-architect'];
+  const isBatchRole = (RANGE_ROLES.includes(roleId) || COUNT_ROLES.includes(roleId)) && (project?.total_episodes || 0) > 1;
+  const isCountMode = COUNT_ROLES.includes(roleId); // 大纲类：用集数而非范围
 
   const canShowOutput = !isRunning && execStatus === 'success' && outputKeys.length > 0;
   const showEmptyDone = !isRunning && execStatus === 'success' && outputKeys.length === 0;
@@ -608,42 +594,76 @@ function RoleDetailPanel({
           </div>
         </div>
 
-        <div className="px-5 py-4 flex flex-wrap gap-3">
-          {isBatchRole && (
-            <div className="w-full p-3 bg-purple-50 rounded-xl border border-purple-100">
-              <p className="text-xs font-medium text-purple-700 mb-2">
-                📌 分集生成（共 {project.total_episodes} 集，建议每批 5 集）
-              </p>
-              <div className="flex flex-wrap items-center gap-3">
-                <input
-                  type="text"
-                  value={episodeRange}
-                  onChange={(e) => setEpisodeRange(e.target.value)}
-                  placeholder="例：1-5"
-                  className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-28 bg-white"
-                />
-                <div className="flex flex-wrap gap-1.5">
-                  {['1-5', '6-10', '11-15', '16-20'].filter((r) => {
-                    const end = parseInt(r.split('-')[1], 10)
-                    return end <= (project.total_episodes || 0)
-                  }).map((r) => (
-                    <button
-                      key={r}
-                      type="button"
-                      onClick={() => setEpisodeRange(r)}
-                      className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${
-                        episodeRange === r
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-white border border-gray-200 text-gray-600 hover:border-purple-300'
-                      }`}
-                    >
-                      {r} 集
-                    </button>
-                  ))}
+        {/* 执行配置（分集范围支持） */}
+        {isBatchRole && (
+          <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-100">
+            {isCountMode ? (
+              <>
+                <p className="text-xs font-medium text-purple-700 mb-2">
+                  📋 大纲生成配置（将生成全部{project.total_episodes}集分集大纲）
+                </p>
+                <p className="text-xs text-purple-500">
+                  ⚠️ 分集大纲一次性生成所有集，建议先生成再按需分批写剧本。
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-xs font-medium text-purple-700 mb-2">
+                  📌 分集生成配置（共{project.total_episodes}集，建议每批5集以控制质量）
+                </p>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <label className="text-xs text-gray-600">生成集数范围</label>
+                    <input
+                      type="text"
+                      value={episodeRange}
+                      onChange={(e) => setEpisodeRange(e.target.value)}
+                      placeholder="如：1-5 或 6-10"
+                      className="border border-gray-200 rounded px-2 py-1 text-sm w-24 focus:ring-1 focus:ring-purple-400"
+                    />
+                  </div>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {Array.from({ length: Math.ceil(project.total_episodes / 5) }, (_, i) => {
+                      const start = i * 5 + 1;
+                      const end = Math.min((i + 1) * 5, project.total_episodes);
+                      const range = `${start}-${end}`;
+                      return (
+                        <button
+                          key={range}
+                          onClick={() => setEpisodeRange(range)}
+                          className={`text-xs px-2 py-1 rounded border transition-colors ${
+                            episodeRange === range
+                              ? 'bg-purple-600 text-white border-purple-600'
+                              : 'bg-white text-gray-600 border-gray-200 hover:border-purple-400'
+                          }`}
+                        >
+                          {range}集
+                        </button>
+                      );
+                    }).slice(0, 8)}
+                  </div>
                 </div>
-              </div>
-            </div>
-          )}
+                <p className="text-xs text-purple-500 mt-2">
+                  当前选择：第{episodeRange}集（{(() => {
+                    const [s, e] = episodeRange.split('-').map(Number);
+                    return isNaN(s) || isNaN(e) ? '？' : e - s + 1;
+                  })()}集）· 预估 Token：~{(() => {
+                    const [s, e] = episodeRange.split('-').map(Number);
+                    const count = isNaN(s) || isNaN(e) ? 5 : e - s + 1;
+                    return `${(count * 12000 / 1000).toFixed(0)}K`;
+                  })()}
+                </p>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* 上次执行结果 */}
+        {lastExecResult && lastExecResult.scope && (
+          <div className="mb-4 p-3 bg-green-50 rounded-lg border border-green-100 text-xs text-green-700">
+            ✅ 上次执行：{lastExecResult.scope} · 执行ID: {lastExecResult.execution_id?.slice(0,8)}
+          </div>
+        )}
 
           <div className="flex-1 min-w-[220px] rounded-xl bg-gray-50/80 border border-gray-100 px-3 py-3">
             <h4 className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-2">输入依赖</h4>
@@ -673,77 +693,51 @@ function RoleDetailPanel({
             </div>
           </div>
 
-          <div className="flex-1 min-w-[220px] rounded-xl bg-gray-50/80 border border-gray-100 px-3 py-3">
-            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-2">当前模型</h4>
-            <p className="text-sm text-gray-700 truncate">{role.current_model || '跟随全局配置'}</p>
-          </div>
+        {/* 执行按钮区 */}
+        <div className="flex gap-3 pt-3 border-t border-gray-100">
+          <button
+            onClick={() => onRun(roleId, {
+              episode_range: isBatchRole && !isCountMode ? episodeRange : undefined,
+              episode_count: isCountMode ? project.total_episodes : undefined,
+            })}
+            disabled={runLoading}
+            className="flex-1 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {runLoading ? (
+              <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />执行中...</>
+            ) : (
+              `🚀 ${isCompleted ? '重新执行' : '执行此角色'}`
+            )}
+          </button>
+          <a
+            href="/admin/drama-models"
+            className="px-4 py-2.5 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50 flex items-center gap-1"
+          >
+            ⚙️ 配置模型
+          </a>
         </div>
 
-        {tier === 3 && (
-          <div className="px-5 pb-4">
-            <p className="text-xs text-gray-500 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
-              💡 专项增强角色：完成核心步骤后按需使用，可显著提升特定方面质量。
-            </p>
+        {/* 复合角色说明 */}
+        {role.is_composite && (
+          <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-100 text-xs text-purple-700">
+            <div className="font-semibold mb-1">◈ 复合增强角色</div>
+            <p>此角色整合了多项专业能力，单次执行即可完成原本需要多个角色才能完成的工作。</p>
+            <p className="mt-1 text-purple-500">在完成8个核心角色后，按需选择此角色进行深度增强。</p>
           </div>
         )}
       </div>
-
-      {/* 执行输出 — 全宽占满剩余高度 */}
-      <div className="flex-1 flex flex-col rounded-2xl border border-gray-200/80 bg-white shadow-sm min-h-[480px]">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-gray-50/50 shrink-0">
-          <h3 className="text-sm font-semibold text-gray-800">执行输出</h3>
-          <div className="flex items-center gap-3">
-            {!isRunning && execution?.elapsed_seconds != null && (
-              <span className="text-xs text-gray-400 tabular-nums">
-                耗时 {execution.elapsed_seconds.toFixed(1)}s
-                {execution.total_tokens ? ` · ${execution.total_tokens} tokens` : ''}
-              </span>
-            )}
-            {statusCfg && (
-              <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${
-                execStatus === 'success' ? 'bg-green-100 text-green-700'
-                : execStatus === 'failed' ? 'bg-red-100 text-red-700'
-                : execStatus === 'running' ? 'bg-blue-100 text-blue-700'
-                : 'bg-gray-100 text-gray-600'
-              }`}>
-                {statusCfg.icon} {statusCfg.label}
-              </span>
-            )}
+      {/* 执行输出区 */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <h3 className="text-sm font-medium text-gray-700 mb-3">执行输出</h3>
+        {!isCompleted ? (
+          <div className="text-center py-8 text-gray-400 text-sm">
+            点击「执行角色」开始生成内容
           </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-5 py-5 w-full">
-          {isRunning && (
-            <div className="flex flex-col items-center justify-center py-20 text-blue-600">
-              <span className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mb-4" />
-              <p className="text-sm font-medium">AI 正在生成内容，请稍候…</p>
-            </div>
-          )}
-
-          {!isRunning && execStatus === 'failed' && (
-            <div className="rounded-xl bg-red-50 border border-red-100 p-5 text-sm text-red-700 max-w-2xl">
-              <p className="font-semibold mb-2">执行失败</p>
-              <p className="text-red-600 whitespace-pre-wrap leading-relaxed">{execution?.error_message || '未知错误'}</p>
-            </div>
-          )}
-
-          {canShowOutput && (
-            <DramaPresentation views={outputViews} rawArtifacts={outputArtifacts} />
-          )}
-
-          {showIdle && (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-              <p className="text-4xl mb-3 opacity-30">📝</p>
-              <p className="text-sm">点击上方「执行此角色」开始生成内容</p>
-            </div>
-          )}
-
-          {showEmptyDone && (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-              <p className="text-sm">执行已完成，暂无输出产物</p>
-            </div>
-          )}
-        </div>
+        ) : (
+          <div className="text-sm text-gray-600 bg-green-50 rounded-lg p-3">
+            ✅ 此角色已完成执行。{lastExecResult?.scope && `范围：${lastExecResult.scope}`}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -89,17 +89,11 @@ def suggested_agent(path: Path) -> str:
         "character": "drama.character-designer",
         "outline": "drama.plot-architect",
         "plot": "drama.plot-architect",
-        "hook": "drama.hook-designer",
         "script": "drama.script-writer",
-        "dialogue": "drama.dialogue-expert",
         "review": "drama.script-reviewer",
         "quality": "drama.quality-reporter",
         "score": "drama.quality-reporter",
-        "polish": "drama.script-editor",
-        "format": "drama.formatter",
-        "marketing": "drama.marketing-officer",
         "compliance": "drama.compliance-guard",
-        "delivery": "drama.delivery-packer",
     }
     for token, agent_id in mapping.items():
         if token in text:

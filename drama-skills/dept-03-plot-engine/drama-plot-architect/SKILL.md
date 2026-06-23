@@ -1,7 +1,7 @@
 ---
 name: drama-plot-architect
 version: "2.0.0"
-description: "情节架构师：六阶段叙事结构设计、分集大纲（含情绪节点）、主支线规划、节奏控制。协调钩子/冲突/反转/节奏/心理五大引擎子技能。整合 drama-plot-optimizer。Invoke for story structure planning or episode outline creation."
+description: "情节架构师：六阶段叙事结构设计、分集大纲（含情绪节点）、主支线规划、节奏控制。大纲完成后可选调用 drama-narrative-engineer 进行叙事深度强化。整合 drama-plot-optimizer。Invoke for story structure planning or episode outline creation."
 tags: ["结构", "大纲", "六阶段", "分集", "节奏规划"]
 dept: "剧情引擎部"
 output_schema:

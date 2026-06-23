@@ -46,13 +46,11 @@ DRAMA_ARTIFACT_CHUNK_MAP: Dict[str, Dict[str, Any]] = {
 # drama.* agent_id → 主要产物键映射
 DRAMA_AGENT_PRIMARY_ARTIFACT: Dict[str, str] = {
     "drama.script-writer": "episode_scripts",
-    "drama.dialogue-expert": "episode_scripts",
-    "drama.script-editor": "episode_scripts",
+    "drama.polish-master": "polished_script",
+    "drama.production-pack": "production_package",
+    "drama.narrative-engineer": "narrative_plan",
+    "drama.market-analyst": "market_report",
     "drama.plot-architect": "series_outline",
-    "drama.emotion-architect": "emotion_blueprint",
-    "drama.rhythm-designer": "emotion_curve",
-    "drama.storyboard-director": "storyboard",
-    "drama.ip-adapter": "adaptation_plan",
 }
 
 

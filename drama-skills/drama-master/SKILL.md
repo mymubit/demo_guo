@@ -1,163 +1,153 @@
 ---
 name: drama-master
-version: "2.0.0"
-description: "AI短剧创作总入口。双轨模式：快速通道（8个核心角色，适合初次创作）/ 专家通道（全部36个角色，适合商业精品）。智能路由到36个专业角色。Invoke when user wants full drama creation, stage routing, or needs help getting started."
-tags: ["总入口", "创作", "路由", "全流程"]
+version: "3.0.0"
+description: "AI短剧创作总入口（v3.0重构版）。12个精简角色·双轨模式·四轴题材矩阵·山音方法论深度集成。智能路由到8个核心角色+4个复合增强角色。Invoke when user wants full drama creation, stage routing, or needs help getting started."
+tags: ["总入口", "创作", "路由", "全流程", "双轨"]
 platforms: [cursor, codex, trae]
 input_schema:
   - name: request
     type: string
     required: true
     description: "用户需求描述"
-  - name: stage
-    type: string
-    required: false
-    enum: [full, strategy, worldbuilding, plot, writing, review, polish, production, compliance]
-    description: "指定阶段，不填则智能路由"
 output_schema:
   - name: plan
     type: object
     description: "创作计划（角色分工+执行顺序）"
-  - name: artifacts
-    type: array
-    description: "各阶段产物列表"
 ---
 
-# Drama Master — AI短剧创作总入口 v2.0
+# Drama Master — AI短剧创作总入口 v3.0
+
+> **12个精简角色 · 双轨模式 · 四轴题材矩阵 · 山音方法论**
+>
+> v3.0 重构亮点：
+> - 从35个角色精简到12个（8核心+4复合），消除功能重叠
+> - 四轴题材矩阵取代固定8选项（理论625种组合）
+> - 山音横截面理论/双轨节奏/Ghost-Lie-Flaw深度集成到每个角色
+
+---
 
 ## 启动方式
 
 ```
 @drama-master 我要创作一部30集复仇短剧
-@drama-master [hook-designer] 设计开篇钩子
-@drama-master --stage=review 审查这份剧本
+@drama-master 从四轴矩阵推荐一个有爆款潜力的题材
+@drama-master --stage=writing 从第6集开始继续写剧本
+@drama-master [help] 查看角色列表和使用说明
 ```
-
-不指定角色时，显示启动问卷，引导用户完成创作配置。
 
 ---
 
-## 启动问卷（首次创作必填）
+## 启动问卷
+
+首次创作时，收集以下信息：
 
 ```
-① 题材类型：[都市/古代/玄幻/商战/甜宠/复仇/逆袭/悬疑/...]
-② 集数规模：[短集10-20 / 标准30-40 / 长集50-80 / 其他]
+① 题材方向（四轴矩阵选择 或 自由描述）：
+   情感轴：[复仇爽感/爱情甜虐/治愈共鸣/悬疑烧脑/野心逐权]
+   身份轴：[豪门精英/普通女性/隐藏大佬/重生觉醒/跨世界者]
+   冲突轴：[家族内斗/职场博弈/情感纠葛/身份秘密/生存竞争]
+   世界观：[当代都市/古代宫廷/架空仙侠/近未来/海外异地]
+   —— 或 ——
+   一句话核心创意（AI自动匹配最优矩阵）
+
+② 集数规模：[10-20集（快速验证）/ 30-50集（标准长度）/ 50集以上（长剧）]
 ③ 目标平台：[抖音 / 快手 / 微信小程序 / 通用]
-④ 创作起点：[从零 / 有核心创意 / 有大纲 / 有参考作品 / 改编IP]
-⑤ 特殊要求：[指定受众/风格/卖点/对标作品]
+④ 当前进度：[从零 / 有创意 / 有大纲 / 已有剧本 / 改编IP]
+⑤ 创作模式：[快速通道（8角色） / 专家通道（12角色）]
 ```
 
 ---
 
 ## 双轨模式
 
-### 快速通道 Fast Track（8个核心角色，适合初次创作/快速验证）
+### ⚡ 快速通道（8个核心角色，任何项目必做）
 
 ```
-topic-planner → world-architect → character-designer → plot-architect
-→ script-writer → script-reviewer → quality-reporter → compliance-guard
-  [可选: word-governor] → [可选: delivery-packer]
+适合：验证创意/10-30集/首次创作
 
-适合：10集以内/快速验证/初次创作
+执行顺序：
+①选题策划官 → ②世界架构师 → ③人设设计师 → ④情节架构师
+→ ⑤剧本执笔师（分批，每批5集）→ ⑥审稿官 → ⑦质量报告官 → ⑧合规守卫
+
+关键约束（v3.0新增）：
+- 剧本执笔师：每批≤5集，严格执行字数/场景/台词约束
+- 审稿官：McKee价值转变+横截面检验（非可选）
+- 大纲必须标注双轨节奏（情节松/中/紧 × 情感轻/中/重）
 ```
 
-### 专家通道 Expert Track（全部36个角色，适合商业精品）
+### 🎬 专家通道（12角色，商业精品）
 
 ```
-完整按部门流程，参见下方阶段路由
-适合：30集+长剧/商业项目/精品化创作
+适合：30集以上/商业项目/精品化创作
+
+在快速通道基础上，按需添加复合增强角色：
+◈ 市场分析师  → 立项前（市场验证+拉片研究）
+◈ 叙事工程师  → 大纲完成后（情绪+钩子+冲突+反转全面强化）
+◈ 精修大师    → 剧本完成后（台词+格式+字数+分镜一站式精修）
+◈ 制作发行师  → 定稿后（视觉+营销+交付+可选Story-to-Game）
 ```
 
 ---
 
-## 阶段路由
+## 阶段路由（12角色）
 
-| 阶段 | 角色链 | 输出 |
-|------|--------|------|
-| **strategy** | market-radar → formula-analyst → topic-planner → project-reviewer | 立项简报 |
-| **worldbuilding** | world-architect → character-designer → dream-analyst | 世界观+人物小传 |
-| **plot** | plot-architect → [hook/conflict/reversal/rhythm/psychology] | 分集大纲+情绪曲线 |
-| **writing** | script-writer + dialogue-expert + scene-director | 03_完整剧本/ |
-| **review** | script-reviewer + reader-reviewer + emotion-auditor → quality-reporter | 质量报告 |
-| **polish** | script-editor → pacing-optimizer → formatter | 润色后剧本 |
-| **production** | visual-producer + storyboard-director + marketing-officer | 制作包+宣发物料 |
-| **compliance** | compliance-guard | 合规报告 |
-| **full** | strategy → worldbuilding → plot → writing → review → [polish] → production → compliance | 完整交付包 |
+| 阶段 | 角色 | 标志 | 输出 |
+|------|------|------|------|
+| **战略选题** | 市场分析师（可选）→ 选题策划官 | ◈+⚡ | 市场报告+立项简报 |
+| **世界构建** | 世界架构师 → 人设设计师 | ⚡⚡ | 世界观设定+人物小传 |
+| **剧情设计** | 情节架构师 → 叙事工程师（可选）| ⚡+◈ | 分集大纲+叙事增强方案 |
+| **剧本创作** | 剧本执笔师（分批5集/次）| ⚡ | 分集剧本+记忆检查点 |
+| **质量审查** | 审稿官 → 质量报告官 → 合规守卫 | ⚡⚡⚡ | 审查报告+质量评分+合规报告 |
+| **精修提升** | 精修大师（可选）| ◈ | 精修剧本+九列分镜 |
+| **制作发行** | 制作发行师（可选）| ◈ | 制作发行物料包 |
 
 ---
 
-## 角色调用语法
-
-| 平台 | 语法 |
-|------|------|
-| Cursor | `@drama-master [角色名] 需求` 或 `@drama-hook-designer 设计钩子` |
-| Codex | `[hook] 需求` 或 `@drama-hook-designer` |
-| Trae | "用钩子设计师帮我..." 或自然语言描述需求 |
-
-**角色名速查（33个，按流程顺序）**：
-
-战略选题：`market-radar` · `formula-analyst` · `topic-planner` · `project-reviewer` · `lapian-analyst` · `ip-adapter`
-
-世界构建：`world-architect` · `character-designer` · `dream-analyst`
-
-剧情引擎：`emotion-architect`【大纲前蓝图】 · `plot-architect` · `hook-designer` · `conflict-engine` · `reversal-master` · `rhythm-designer`【大纲中规划】 · `psychology-architect`
-
-创作执行：`script-writer` · `dialogue-expert` · `scene-director`【创作阶段镜头指导】
-
-评审质控：`script-reviewer` · `reader-reviewer` · `emotion-auditor`【剧本后检测】 · `quality-reporter`
-
-修改润色：`script-editor` · `pacing-optimizer`【集内时长调整】 · `formatter`
-
-制作宣发：`visual-producer` · `storyboard-director`【制作阶段九列分镜】 · `post-processor` · `marketing-officer`
-
-合规总编室：`compliance-guard` · `evolution-analyst`
-
-工具：`drama-intake`（外部内容摄入，非创作角色）
-
----
-
-**三组易混淆角色的分工说明**：
-
-| 组 | 角色A | 角色B | 区别 |
-|----|-------|-------|------|
-| 情绪 | 情绪架构师 | 节奏设计师 | 前者大纲前设蓝图，后者大纲中做规划 |
-| 情绪 | 节奏设计师 | 情绪审计官 | 前者规划，后者剧本完成后检测偏差 |
-| 节奏 | 节奏设计师 | 节奏优化师 | 前者全剧宏观规划，后者集内场景时长调整 |
-| 镜头 | 场景导演 | 分镜导演 | 前者写作阶段提供镜头语言指导，后者制作阶段生成九列分镜表 |
-| 市场 | 市场雷达 | 拉片分析师 | 前者宏观趋势，后者某部具体作品深度分析 |
-| 梦境 | 爆款公式师 | 梦境指标师 | 前者选题阶段轻量预估，后者世界+人设完成后深度检测 |
-
----
-
-## 交付标准
-
-完整创作完成后，交付物必须包含：
+## 直接调用角色
 
 ```
-output/《剧名》/
-├── 02_项目设定/
-│   ├── 世界观设定.md
-│   ├── 人物小传.md
-│   └── 分集大纲.md
-├── 03_完整剧本/
-│   └── *.md（按集分文件）
-├── 04_评估报告/
-│   └── 质量报告.json
-└── 《剧名》交付包.md
-```
+@drama-topic-planner       选题策划官（立项，核心创意）
+@drama-world-architect     世界架构师（世界观设定）
+@drama-character-designer  人设设计师（Ghost/Lie/Flaw人物框架）
+@drama-plot-architect      情节架构师（分集大纲+双轨节奏）
+@drama-script-writer       剧本执笔师（分集剧本，指定episode_range）
+@drama-script-reviewer     审稿官（McKee检验+横截面检验）
+@drama-quality-reporter    质量报告官（8维度评分雷达图）
+@drama-compliance-guard    合规守卫（P0/P1/P2三级合规）
 
-**质量门槛**（默认值）：
-- 综合评分 ≥ 80
-- 格式合规 ≥ 90
-- 合规检测：通过
+@drama-market-analyst      市场分析师 ◈（市场+爆款+拉片）
+@drama-narrative-engineer  叙事工程师 ◈（情绪+钩子+冲突+反转+节奏）
+@drama-polish-master       精修大师 ◈（台词+格式+字数+分镜）
+@drama-production-pack     制作发行师 ◈（视觉+分镜+营销+Story-to-Game）
+```
 
 ---
 
-## 进化说明
+## 100集长剧分集生成策略
 
-每次创作完成后，`evolution-analyst` 会：
-1. 扫描本次创作中的亮点（钩子、反转、对白）
-2. 询问用户是否归档到灵感库
-3. 如质量报告有低分维度，生成技能改进提案
+```
+Token爆炸问题的解决方案：
 
-详见 `dept-08-ops/drama-evolution-analyst/SKILL.md`
+Step 1：大纲先行（情节架构师，一次生成全部集）
+Step 2：叙事工程师强化大纲（一次完成）
+Step 3：剧本执笔师分批生成（每批5集，20批完成100集）
+Step 4：每批完成后立即审稿+质量评分
+Step 5：质量<75分的批次立即重写（最多2次），再继续下一批
+Step 6：全部完成后：精修大师精修 → 制作发行师打包
+
+预计成本（每集约1万token）：
+100集 × 1万 = 约100万tokens（约25分钟，建议分批执行）
+```
+
+---
+
+## 知识库
+
+所有角色可引用 `knowledge/` 目录下的专业知识：
+
+- `shanyin-screenwriting-methodology.md` — 横截面理论/戏剧动作/Ghost-Lie-Flaw
+- `shanyin-director-methodology.md` — 九列分镜/551镜头统计基准
+- `douyin-formulas.md` — 抖音爆款公式库
+- `scoring-presets.md` — 8维度质量评分标准
+- `tier4-compliance.md` — 合规红线清单
+- `story-to-game.md` — 剧本转互动游戏工具链
