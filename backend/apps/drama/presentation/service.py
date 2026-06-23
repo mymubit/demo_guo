@@ -5,32 +5,36 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from apps.agent.definition_service import AgentDefinitionService
-from apps.creation.artifact_service import get_artifact
-from apps.creation.models import Project
 from apps.drama.models import DramaRoleExecution
 from apps.drama.presentation.presenters import present_artifact
-from apps.drama.services import DramaRoleRunService
 
 
 def build_role_output_views(
-    creation_project: Project,
     output_artifacts: Dict[str, Any],
     *,
     agent_id: str = "",
 ) -> Dict[str, dict]:
-    """按角色 output_contract 构建展示视图。"""
+    """仅依据 execution 快照中的 output_artifacts 构建展示视图。"""
     schema_by_key: Dict[str, str] = {}
+    artifact_keys: list[str] = []
     if agent_id:
         agent = AgentDefinitionService.get_runnable(agent_id)
         contract = agent.output_contract or {}
         schema_version = str(contract.get("schema_version") or "")
         for key in contract.get("artifacts") or []:
-            schema_by_key[str(key)] = schema_version
+            key_str = str(key)
+            schema_by_key[key_str] = schema_version
+            artifact_keys.append(key_str)
+
+    if output_artifacts:
+        for key in output_artifacts:
+            key_str = str(key)
+            if key_str not in artifact_keys:
+                artifact_keys.append(key_str)
 
     views: Dict[str, dict] = {}
-    for key, payload in (output_artifacts or {}).items():
-        if payload in (None, {}, []):
-            payload = get_artifact(creation_project, key)
+    for key in artifact_keys:
+        payload = (output_artifacts or {}).get(key)
         if payload in (None, {}, []):
             continue
         schema = schema_by_key.get(key) or _infer_schema_version(key, payload)
@@ -41,12 +45,8 @@ def build_role_output_views(
 def build_execution_output_views(drama_exec: DramaRoleExecution) -> Dict[str, dict]:
     if drama_exec.status != DramaRoleExecution.Status.SUCCESS:
         return {}
-    creation = DramaRoleRunService.ensure_creation_project(drama_exec.drama_project)
-    return build_role_output_views(
-        creation,
-        drama_exec.output_artifacts or {},
-        agent_id=drama_exec.agent_id,
-    )
+    artifacts = dict(drama_exec.output_artifacts or {})
+    return build_role_output_views(artifacts, agent_id=drama_exec.agent_id)
 
 
 def _infer_schema_version(artifact_key: str, payload: Any) -> str:

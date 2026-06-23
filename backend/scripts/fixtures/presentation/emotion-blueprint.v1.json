@@ -1,0 +1,219 @@
+{
+  "_meta": {
+    "runId": "1bcac43a-f4ee-4b63-a021-91543d3b03a7",
+    "agentId": "drama.emotion-architect",
+    "generatedAt": "2026-06-22T08:29:25.733307+00:00",
+    "overwriteMode": "replace",
+    "promptVersion": "v1",
+    "schemaVersion": "emotion-blueprint.v1"
+  },
+  "artifact_key": "emotion_blueprint",
+  "qdn_emotion_model": {
+    "depth": {
+      "full_score": 10,
+      "description": "锚定目标用户「被轻视后逆袭、渴望势均力敌爱情」的核心情绪痛点，所有情绪落点贴合18-35岁都市女性的现实情绪投射，避免悬浮化的无逻辑情绪爆发，让用户产生代入感。",
+      "global_target": 8.8,
+      "dimension_name": "情绪共情穿透度"
+    },
+    "quality_sense": {
+      "full_score": 10,
+      "description": "严格规避杂糅低质情绪，每段情绪输出精准贴合爽点/甜点核心诉求，无冗余拖沓的无效情绪铺垫，适配抖音用户碎片化刷剧的强刺激需求，爽感不注水、甜感不工业。",
+      "global_target": 9.2,
+      "dimension_name": "情绪质感纯度"
+    },
+    "demand_satisfaction": {
+      "full_score": 10,
+      "description": "100%覆盖用户对「打脸爽感、双强甜宠、节奏拉满」的核心内容需求，每30秒触发一次情绪反馈点，完全适配抖音算法高完播率的流量逻辑，情绪峰值匹配用户付费触发阈值。",
+      "global_target": 9.5,
+      "dimension_name": "核心需求匹配度"
+    }
+  },
+  "episode_emotion_targets": [
+    {
+      "episode_id": 1,
+      "episode_name": "退婚现场：隐藏大佬亮身份",
+      "node_target_values": [
+        {
+          "node_index": 1,
+          "description": "苏晚以普通女孩身份站在订婚宴现场，刻意放低姿态掩饰情绪",
+          "emotion_tag": "伪装隐忍",
+          "target_value": 3.2
+        },
+        {
+          "node_index": 2,
+          "description": "顾景明联合白若曦当众递退婚书，嘲讽苏晚配不上豪门门槛",
+          "emotion_tag": "当众羞辱",
+          "target_value": 7.8
+        },
+        {
+          "node_index": 3,
+          "description": "苏晚收起怯态，气场瞬间切换，周围宾客集体哗然",
+          "emotion_tag": "错愕反转",
+          "target_value": 6.5
+        },
+        {
+          "node_index": 4,
+          "description": "苏晚拨通助理电话，直接冻结顾家所有待审批融资，亮明顶级创投大佬身份",
+          "emotion_tag": "身份碾压",
+          "target_value": 9.3
+        },
+        {
+          "node_index": 5,
+          "description": "顾景明和白若曦脸色惨白当众下跪道歉，全场宾客集体倒吸凉气",
+          "emotion_tag": "打脸爽感",
+          "target_value": 9.7
+        },
+        {
+          "node_index": 6,
+          "description": "陆沉渊到场，认出苏晚就是自己隔空对线多年的神秘对手，两人眼神交锋",
+          "emotion_tag": "初遇对峙",
+          "target_value": 5.4
+        },
+        {
+          "node_index": 7,
+          "description": "陆沉渊当场宣布核心项目优先对接苏晚，留下全场错愕的悬念",
+          "emotion_tag": "悬念拉扯",
+          "target_value": 6.1
+        },
+        {
+          "node_index": 8,
+          "description": "苏晚抬眼看向陆沉渊，两人嘴角同时露出意味深长的笑意，留足下集期待",
+          "emotion_tag": "收尾钩子",
+          "target_value": 4.8
+        }
+      ],
+      "total_emotion_nodes": 8
+    },
+    {
+      "episode_id": 2,
+      "episode_name": "商战对垒：对手互生情愫",
+      "node_target_values": [
+        {
+          "node_index": 1,
+          "description": "苏晚和陆沉渊在项目竞标会上针锋相对，各自甩出底牌互不相让",
+          "emotion_tag": "商业交锋",
+          "target_value": 6.3
+        },
+        {
+          "node_index": 2,
+          "description": "两人的方案精准踩中对方的预判点，全场其他投资方完全沦为背景板",
+          "emotion_tag": "势均力敌",
+          "target_value": 7.2
+        },
+        {
+          "node_index": 3,
+          "description": "有竞品故意设局围堵苏晚，陆沉渊不动声色出手帮她化解危机",
+          "emotion_tag": "意外解围",
+          "target_value": 5.7
+        },
+        {
+          "node_index": 4,
+          "description": "两人独处复盘项目，发现彼此多年来一直在线上隔空互相输出思路，瞬间产生知己共鸣",
+          "emotion_tag": "暧昧松动",
+          "target_value": 6.8
+        },
+        {
+          "node_index": 5,
+          "description": "顾景明不死心凑上来想攀关系，被陆沉渊冷脸怼走，苏晚忍不住笑出声",
+          "emotion_tag": "醋意拉扯",
+          "target_value": 4.9
+        },
+        {
+          "node_index": 6,
+          "description": "两人留在办公室核对合作细节，灯光落在对方脸上，氛围逐渐升温",
+          "emotion_tag": "深夜独处",
+          "target_value": 7.5
+        },
+        {
+          "node_index": 7,
+          "description": "陆沉渊递热咖啡时指尖碰到苏晚的手，两人同时顿住，眼神交汇拉丝",
+          "emotion_tag": "心动试探",
+          "target_value": 7.1
+        },
+        {
+          "node_index": 8,
+          "description": "苏晚的手机弹出顾家狗仔偷拍的消息，两人同时看向镜头方向，冲突预警拉满",
+          "emotion_tag": "悬念钩子",
+          "target_value": 5.6
+        }
+      ],
+      "total_emotion_nodes": 8
+    },
+    {
+      "episode_id": 3,
+      "episode_name": "强强联手：官宣双向奔赴",
+      "total_emotion_nodes": [
+        {
+          "node_index": 1,
+          "description": "顾景明和白若曦放黑料造谣苏晚的创投身份造假，全网舆论瞬间发酵",
+          "emotion_tag": "危机爆发",
+          "target_value": 7.4
+        },
+        {
+          "node_index": 2,
+          "description": "苏晚和陆沉渊没有私下沟通，各自同步出手反击，完全踩中同一步调",
+          "emotion_tag": "并肩作战",
+          "target_value": 8.2
+        },
+        {
+          "node_index": 3,
+          "description": "两人联手放出实锤，直接把顾、白两家企业踢出核心赛道，彻底断绝翻盘可能",
+          "emotion_tag": "全面碾压",
+          "target_value": 9.1
+        },
+        {
+          "node_index": 4,
+          "description": "两人在落地窗前聊起各自的过往创伤，第一次向对方袒露自己藏了多年的软肋",
+          "emotion_tag": "坦诚卸防",
+          "target_value": 7.8
+        },
+        {
+          "node_index": 5,
+          "description": "陆沉渊主动牵起苏晚的手，直白告白说不想再一个人站在资本风口，想和她并肩走",
+          "emotion_tag": "甜度飙升",
+          "target_value": 8.5
+        },
+        {
+          "node_index": 6,
+          "description": "两人共同出席顶级创投峰会，手牵手走上台，同步亮明双方的情侣+合伙人双重身份",
+          "emotion_tag": "公开官宣",
+          "target_value": 9.4
+        },
+        {
+          "node_index": 7,
+          "description": "全场资本圈大佬集体起立鼓掌，之前羞辱过苏晚的人全都脸色煞白不敢抬头",
+          "emotion_tag": "终极爽甜",
+          "target_value": 9.6
+        },
+        {
+          "node_index": 8,
+          "description": "峰会散场陆沉渊把苏晚搂进怀里低头吻她，镜头拉远定格在落地窗外的沪城夜景，全剧收尾",
+          "emotion_tag": "圆满落地",
+          "target_value": 8.9
+        }
+      ]
+    }
+  ],
+  "emotion_externalization_dictionary": {
+    "eye_affinity": {
+      "emotion_name": "暧昧心动",
+      "audio_performance": "背景音全部消去只剩两人逐渐加速的心跳声，BGM换成软绵的钢琴单音，搭配极轻的衣物摩擦声",
+      "visual_performance": "慢镜头放大两人指尖触碰的瞬间，对焦模糊掉背景只剩对方的瞳孔倒影，耳边的发丝轻微晃动，暖光打在侧脸上勾勒出轮廓金边"
+    },
+    "shame_aggression": {
+      "emotion_name": "当众羞辱",
+      "audio_performance": "背景音瞬间消音只剩顾景明拔高的刻薄声线，搭配尖锐的玻璃碎裂音效，BGM用低沉压抑的弦乐单音循环",
+      "visual_performance": "慢镜头怼脸拍苏晚攥紧的指节泛白，顾景明把退婚书狠狠甩在苏晚脸上，白若曦抬手撩头发故意露出和顾景明的情侣钻戒，周围宾客的窃笑表情用快切闪回"
+    },
+    "face_slap_catharsis": {
+      "emotion_name": "打脸爽感",
+      "audio_performance": "音效用连续三声重鼓点砸下，BGM瞬间从压抑转成高燃电子乐，搭配弹幕式的「爽爆」拟声特效音",
+      "visual_performance": "镜头快速切过顾景明、白若曦从得意到错愕再到惨白的变脸全过程，苏晚抬眼的特写眼神冷光闪过，周围宾客集体倒吸凉气的表情同步定格"
+    },
+    "dual_power_satisfaction": {
+      "emotion_name": "强强联手爽甜",
+      "audio_performance": "恢弘的交响乐响起，搭配全场掌声的环绕音效，最后落版在两人对视的低笑声音轨上",
+      "visual_performance": "两人并肩站在峰会台上同步抬手按下项目启动键，镜头拉远扫过台下座无虚席的资本大佬，最后聚焦在两人交握的手上，戒指同框特写"
+    }
+  }
+}

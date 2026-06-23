@@ -26,7 +26,116 @@ _TIMELINE_KEYS = frozenset({"volume", "emotion", "timestamp", "transition", "spe
 def field_label(key: str) -> str:
     if _EPISODE_KEY_RE.match(key):
         return f"第{_EPISODE_KEY_RE.match(key).group(1)}集"
-    return FIELD_LABELS.get(key) or FIELD_LABELS.get(key.replace("-", "_")) or key
+    normalized = key.replace("-", "_")
+    return FIELD_LABELS.get(key) or FIELD_LABELS.get(normalized) or key
+
+
+def localize_role_label(value: Any) -> str:
+    if value in (None, "", [], {}):
+        return ""
+    raw = str(value).strip()
+    if not raw:
+        return ""
+    if any("\u4e00" <= char <= "\u9fff" for char in raw):
+        return raw
+    phrase = localize_phrase_label(raw)
+    if phrase and phrase != raw:
+        return phrase
+    normalized = raw.replace("-", "_").lower()
+    if normalized in FIELD_LABELS:
+        return FIELD_LABELS[normalized]
+    if normalized.startswith("protagonist"):
+        if "female" in normalized:
+            return "女主"
+        if "male" in normalized:
+            return "男主"
+        return "主角"
+    if normalized.startswith("antagonist"):
+        if "main" in normalized:
+            return "核心反派"
+        return "反派"
+    if normalized.endswith("_antagonist") or "_antagonist" in normalized:
+        if normalized.startswith("main_"):
+            return "核心反派"
+        if normalized.startswith("secondary_"):
+            return "次要反派"
+        if normalized.startswith("tertiary_"):
+            return "帮凶"
+        return "反派"
+    if normalized.startswith("supporting"):
+        return "配角"
+    return FIELD_LABELS.get(normalized, "")
+
+
+def _normalize_phrase_key(text: str) -> str:
+    return re.sub(r"\s+", " ", text.strip().lower().replace("_", "-"))
+
+
+def _localize_single_phrase(raw: str) -> str:
+    text = str(raw or "").strip()
+    if not text:
+        return ""
+    if any("\u4e00" <= char <= "\u9fff" for char in text):
+        return text
+
+    for candidate in (text, text.lower(), _normalize_phrase_key(text)):
+        if candidate in FIELD_LABELS:
+            return FIELD_LABELS[candidate]
+        spaced = candidate.replace("-", " ")
+        if spaced in FIELD_LABELS:
+            return FIELD_LABELS[spaced]
+
+    normalized = text.replace("-", "_").lower()
+    if normalized in FIELD_LABELS:
+        return FIELD_LABELS[normalized]
+    if normalized.startswith("protagonist"):
+        return "女主" if "female" in normalized else "男主" if "male" in normalized else "主角"
+    if normalized.endswith("_antagonist") or "_antagonist" in normalized:
+        if normalized.startswith("main_"):
+            return "核心反派"
+        if normalized.startswith("secondary_"):
+            return "次要反派"
+        if normalized.startswith("tertiary_"):
+            return "帮凶"
+        return "反派"
+    if normalized.startswith("antagonist"):
+        return "核心反派" if "main" in normalized else "反派"
+    if normalized.startswith("supporting"):
+        return "配角"
+    return ""
+
+
+def localize_phrase_label(value: Any) -> str:
+    """将 slash/箭头 连接的英文短语转为中文（关系类型、角色定位等）。"""
+    if value in (None, "", [], {}):
+        return ""
+    raw = str(value).strip()
+    if not raw:
+        return ""
+    if any("\u4e00" <= char <= "\u9fff" for char in raw):
+        return raw
+
+    whole = _localize_single_phrase(raw)
+    if whole:
+        return whole
+
+    if re.search(r"[/→|]", raw):
+        parts = [part.strip() for part in re.split(r"\s*[/→|]\s*", raw) if part.strip()]
+        localized_parts = [_localize_single_phrase(part) for part in parts]
+        if any(localized_parts):
+            return " / ".join(part for part in localized_parts if part)
+
+    return ""
+
+
+def relationship_type_label(item: dict) -> str:
+    """仅依据 relationship_type 字段本地化，不做推断或别名兜底。"""
+    if not isinstance(item, dict):
+        return ""
+    val = item.get("relationship_type")
+    if val in (None, "", [], {}):
+        return ""
+    return localize_phrase_label(str(val))
 
 
 def localize_display_text(text: str) -> str:
@@ -55,6 +164,43 @@ def format_inline_dict(data: dict) -> str:
         if isinstance(val, (str, int, float, bool)):
             parts.append(f"{field_label(str(key))}：{val}")
     return " · ".join(parts[:8]) if parts else ""
+
+
+def parse_enumerated_prose(text: str, *, min_items: int = 2) -> list[str]:
+    """将「1. … 2. …」或换行/分号分隔的长文本拆成列表项。"""
+    if not isinstance(text, str) or not text.strip():
+        return []
+    raw = text.strip().replace("\r\n", "\n")
+
+    if re.search(r"\d+\.\s*\S", raw):
+        parts = re.split(r"(?=\d+\.\s*)", raw)
+        items: list[str] = []
+        for part in parts:
+            part = part.strip()
+            if not part:
+                continue
+            part = re.sub(r"^\d+\.\s*", "", part).strip()
+            if part:
+                items.append(part)
+        if len(items) >= min_items:
+            return items
+
+    if "\n" in raw:
+        lines = [
+            re.sub(r"^\d+\.\s*", "", ln.strip()).strip()
+            for ln in raw.splitlines()
+            if ln.strip()
+        ]
+        if len(lines) >= min_items:
+            return lines
+
+    if raw.count("；") >= min_items - 1:
+        parts = [p.strip() for p in raw.split("；") if p.strip()]
+        parts = [re.sub(r"^\d+\.\s*", "", p).strip() for p in parts]
+        if len(parts) >= min_items:
+            return parts
+
+    return []
 
 
 def try_format_raw_dict_string(text: str) -> str:

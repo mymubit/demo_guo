@@ -227,15 +227,6 @@ class DramaRoleService:
         # 从 defaults 中获取 tier 信息（tier字段在defaults中已定义）
         tier_map = {r["agent_id"]: r.get("tier", 3) for r in DRAMA_ROLE_DEFAULTS}
 
-        agents = {
-            a.agent_id: a
-            for a in AgentDefinition.objects.filter(category="drama_skills").select_related()
-        }
-            DRAMA_DEPARTMENTS,
-            DRAMA_FAST_TRACK_ROLES,
-            DRAMA_ROLE_DEFAULTS,
-        )
-
         defaults_by_id = {role["agent_id"]: role for role in DRAMA_ROLE_DEFAULTS}
 
         agents = list(
@@ -272,10 +263,10 @@ class DramaRoleService:
                 model_name = "未配置"
                 if route and route.llm_provider:
                     model_name = route.llm_provider.name
-
-                tier = tier_map.get(agent_id, 3)
                 elif route and route.display_name:
                     model_name = route.display_name
+
+                tier = tier_map.get(agent_id, 3)
 
                 dept_roles.append({
                     "agent_id": agent_id,

@@ -1,0 +1,93 @@
+{
+  "_meta": {
+    "runId": "7eb02fb0-0dbc-4e8b-ab61-fca949124681",
+    "agentId": "drama.rhythm-designer",
+    "generatedAt": "2026-06-22T08:34:20.094481+00:00",
+    "overwriteMode": "replace",
+    "promptVersion": "v1",
+    "schemaVersion": "emotion-curve.v1"
+  },
+  "artifact_key": "emotion_curve",
+  "full_series_emotion_curve": {
+    "total_episodes": 3,
+    "hook_density_check": {
+      "note": "前10%内容覆盖第1集开篇至中段，包含退婚冲突、身份伏笔、暗线铺垫等8个强钩子，满足钩子密度≥7的规则要求",
+      "compliance_status": "pass",
+      "first_10_percent_hook_count": 8
+    },
+    "crisis_period_et_check": {
+      "note": "所有危机期情绪低谷归一化后数值均≤2，符合规则要求",
+      "all_et_normalized": [
+        0.2,
+        1.7,
+        0.6
+      ],
+      "compliance_status": "pass"
+    },
+    "final_episode_peak_check": {
+      "note": "末集情绪峰值拉满至10，达成全剧最高爽感落点",
+      "compliance_status": "pass",
+      "final_episode_ev_value": 10
+    }
+  },
+  "emotion_platform_zone_check": {
+    "note": "全剧仅3集，每集情绪高低起伏差异显著，不存在连续3集情绪值波动小于1的疲软平台区，无需额外修复调整",
+    "has_continuous_3_plus_episode_platform": false
+  },
+  "episode_level_emotion_markers": [
+    {
+      "episode_id": 1,
+      "emotion_peak": {
+        "value": 9.7,
+        "description": "苏晚亮明顶级创投大佬身份，顾景明、白若曦当场下跪道歉，全场宾客集体错愕，身份反转爽感拉满"
+      },
+      "emotion_trough": {
+        "value": 7.8,
+        "description": "顾景明当众撕毁婚约，将退婚书甩在苏晚脸上，联合白若曦公开嘲讽她出身低微，全场围观哄笑"
+      },
+      "dual_track_rhythm": {
+        "plot_rhythm": "紧",
+        "emotion_rhythm": "重"
+      },
+      "plot_turning_point": {
+        "description": "苏晚拨通加密电话通知助理冻结顾家所有亿级融资，从被羞辱的弱势方直接切换为手握绝对话语权的顶层资本掌控者"
+      }
+    },
+    {
+      "episode_id": 2,
+      "emotion_peak": {
+        "value": 7.5,
+        "description": "苏晚与陆沉渊翻出多年匿名行业分析笔记，确认彼此是隔空互相扶持多年的行业知己，独处对视瞬间暧昧心动拉满"
+      },
+      "emotion_trough": {
+        "value": 6.3,
+        "description": "竞标开场双方针锋相对压价抢份额，纯粹对立的商战博弈将情绪拉至低位"
+      },
+      "dual_track_rhythm": {
+        "plot_rhythm": "中",
+        "emotion_rhythm": "中"
+      },
+      "plot_turning_point": {
+        "description": "二人核对过往匿名操作记录，确认对方就是自己隔空欣赏多年的同行，从纯粹商业对手关系转向知己羁绊"
+      }
+    },
+    {
+      "episode_id": 3,
+      "emotion_peak": {
+        "value": 10,
+        "description": "苏晚与陆沉渊共同登上顶级创投峰会主舞台，官宣情侣+事业合伙人双重身份，当场启动核心科创项目，全场大佬集体起立鼓掌，完成事业爱情双丰收的终极爽甜落点"
+      },
+      "emotion_trough": {
+        "value": 7.4,
+        "description": "全网黑料爆发，苏晚隐藏身份被恶意造谣，多年积累的事业信誉面临前所未有的崩塌危机"
+      },
+      "dual_track_rhythm": {
+        "plot_rhythm": "紧",
+        "emotion_rhythm": "重"
+      },
+      "plot_turning_point": {
+        "description": "苏晚与陆沉渊无提前沟通却同步放出反击素材，精准踩中同一步调，从各自为战的独立个体正式转为完全信任的命运共同体"
+      }
+    }
+  ]
+}

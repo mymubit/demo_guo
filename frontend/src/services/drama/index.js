@@ -12,28 +12,6 @@ export const getProjectProgress = (id) => request('GET', `/api/drama/projects/${
 // ─── 角色执行（支持分集范围参数） ──────────────────────────────────────────
 export const runRole = (projectId, roleId, options = {}) =>
   request('POST', `/api/drama/projects/${projectId}/run/${roleId}/`, { data: options });
-import { request } from '../http'
-
-// 角色列表
-export const getDramaRoles = () => request('GET', '/api/drama/roles/')
-
-// 项目管理
-export const createDramaProject = (data) =>
-  request('POST', '/api/drama/projects/', { data })
-
-export const getDramaProjects = () => request('GET', '/api/drama/projects/')
-
-export const getDramaProject = (id) => request('GET', `/api/drama/projects/${id}/`)
-
-export const getProjectProgress = (id) =>
-  request('GET', `/api/drama/projects/${id}/progress/`)
-
-export const runRole = (projectId, roleId) =>
-  request('POST', `/api/drama/projects/${projectId}/run/${roleId}/`)
-
-// 质量评分雷达
-export const getQualityRadar = (projectId) =>
-  request('GET', `/api/drama/projects/${projectId}/quality-radar/`)
 
 // ─── 分集产物（剧本内容读写） ────────────────────────────────────────────────
 /** 获取项目所有集的产物摘要列表 */
@@ -112,18 +90,3 @@ export const createGenerationPlan = (projectId, options = {}) =>
       auto_proceed: options.autoProceed || false,
     },
   });
-    data: {
-      content,
-      episode_number: episodeNumber,
-    },
-  })
-
-// Token 统计
-export const getTokenStats = (days = 30) =>
-  request('GET', '/api/drama/stats/token/', { params: { days } })
-
-// 模型配置
-export const getModelConfig = () => request('GET', '/api/drama/models/config/')
-
-export const updateModelConfig = (data) =>
-  request('PUT', '/api/drama/models/config/', { data })

@@ -5,19 +5,26 @@ from __future__ import annotations
 from typing import Any, List
 
 from apps.drama.presentation.base import (
+    a_level_reverse_cards,
     adaptation_breakdown_cards,
     append_cards,
     append_dict_kv,
     append_list,
     append_paragraph,
     append_scalar_kv,
+    assessment_report_block,
+    build_character_id_map,
+    build_compliance_report_view,
+    build_quality_dimensions,
+    build_stage_grouped_outlines,
     cards_block,
+    character_roster_block,
+    character_roster_entries,
     checks_block,
-    compliance_passed,
+    deliverable_sections_block,
     dict_to_kv_rows,
     emotion_externalization_cards,
-    episode_outline_cards,
-    format_detail_list,
+    episode_metrics_list_block,
     format_deviation_node,
     format_emotion_marker,
     format_emotion_node_line,
@@ -26,22 +33,29 @@ from apps.drama.presentation.base import (
     kv_block,
     label,
     list_block,
+    list_block_from_items,
     metrics_block,
     nested_check_rows,
     normalize_payload,
+    normalize_review_issues,
+    outline_overview_block,
     paragraph_block,
-    phase_narrative_cards,
-    qdn_model_metrics,
-    relationship_network_cards,
+    parse_episode_script_content,
+    plan_items_block,
+    plan_overview_block,
+    quality_report_block,
+    relationship_graph_block,
+    relationship_graph_entries,
     reversal_cards,
+    review_issues_block,
+    review_overview_block,
     rows_from_dict,
-    score_board_block,
-    script_content_to_beats,
     script_episodes_block,
+    stage_outlines_block,
     storyboard_to_cards,
-    verdict_block,
     view,
     visual_prompt_episode_blocks,
+    world_sections_block,
 )
 
 def present_market_analysis(artifact_key: str, payload: Any) -> dict:
@@ -50,12 +64,10 @@ def present_market_analysis(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "market-analysis.v1", blocks)
 
-    heat = body.get("theme_heat_rating") or {}
+    heat = body.get("theme_heat_rating")
     if not isinstance(heat, dict):
         heat = {}
     match_degree = body.get("爆款特征_matching_degree")
-    if match_degree is None:
-        match_degree = body.get("hit_feature_matching_degree")
 
     metrics = []
     if heat.get("current_popularity_score") is not None:
@@ -71,11 +83,11 @@ def present_market_analysis(artifact_key: str, payload: Any) -> dict:
         rows = rows_from_dict(heat, ("trend_tag", "market_saturation", "current_popularity_score"))
         if rows:
             blocks.append(kv_block("题材热度", rows))
-        tags = heat.get("core_hot_labels") or []
+        tags = heat.get("core_hot_labels")
         if isinstance(tags, list) and tags:
             blocks.append(list_block("核心热词", [str(x) for x in tags]))
 
-    platform = body.get("platform_traffic_preference") or {}
+    platform = body.get("platform_traffic_preference")
     if isinstance(platform, dict) and platform:
         rows = rows_from_dict(
             platform,
@@ -83,12 +95,12 @@ def present_market_analysis(artifact_key: str, payload: Any) -> dict:
         )
         if rows:
             blocks.append(kv_block("平台流量偏好", rows))
-        tags = platform.get("traffic_weight_tags") or []
+        tags = platform.get("traffic_weight_tags")
         if isinstance(tags, list) and tags:
             blocks.append(list_block("流量权重标签", [str(x) for x in tags]))
 
     append_cards(blocks, body, "competitive_product_analysis", "竞品对标")
-    topic = body.get("topic_suggestion") or {}
+    topic = body.get("topic_suggestion")
     if isinstance(topic, dict) and topic:
         append_paragraph(blocks, topic, "estimated_market_performance", "预期市场表现")
         append_list(blocks, topic, "optimization_direction", "优化方向")
@@ -104,21 +116,21 @@ def present_formula_analysis(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "formula-analysis.v1", blocks)
 
-    explosive = body.get("explosive_index_calculation") or {}
+    explosive = body.get("explosive_index_calculation")
     if isinstance(explosive, dict):
         metrics = []
         if explosive.get("final_explosive_score") is not None:
             metrics.append({"label": "爆款指数", "value": format_scalar(explosive["final_explosive_score"])})
         if explosive.get("explosive_level"):
             metrics.append({"label": "爆款等级", "value": str(explosive["explosive_level"])})
-        dim = explosive.get("dimension_scores") or {}
+        dim = explosive.get("dimension_scores")
         if isinstance(dim, dict):
             for key, val in dim.items():
                 metrics.append({"label": label(key), "value": format_scalar(val)})
         if metrics:
             blocks.append(metrics_block("爆款指数", metrics))
 
-    dream = body.get("dream_index_evaluation") or {}
+    dream = body.get("dream_index_evaluation")
     if isinstance(dream, dict):
         metrics = []
         for key in ("sense_of_security", "sense_of_satisfaction", "sense_of_reality"):
@@ -150,7 +162,7 @@ def present_project_brief(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "project-brief.v1", blocks)
 
-    core = str(body.get("core_idea") or body.get("coreIdea") or "").strip()
+    core = str(body.get("core_idea") or "").strip()
     if core:
         blocks.append({"type": "hero", "title": "立项简报", "subtitle": core})
 
@@ -161,14 +173,9 @@ def present_project_brief(artifact_key: str, payload: Any) -> dict:
         "项目定位",
     )
 
-    selling = (
-        body.get("three_unique_selling_points")
-        or body.get("differentiated_selling_points")
-        or body.get("sellingPoints")
-        or []
-    )
+    selling = body.get("three_differentiated_selling_points")
     if isinstance(selling, list) and selling:
-        blocks.append(list_block("差异化卖点", [str(x) for x in selling[:12]]))
+        blocks.append(list_block("三大差异化卖点", [str(x).strip() for x in selling[:12] if str(x).strip()]))
 
     return view(artifact_key, "project-brief.v1", blocks, summary=core)
 
@@ -179,8 +186,8 @@ def present_project_review(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "project-review.v1", blocks)
 
-    conclusion = str(body.get("review_conclusion") or body.get("verdict") or "")
-    passed = str(conclusion).lower() in ("pass", "approved", "通过") or "通过" in conclusion
+    conclusion = str(body.get("review_conclusion") or "")
+    passed = "通过" in conclusion
     metrics = []
     for key, metric_label in (
         ("total_score", "总分"),
@@ -190,21 +197,23 @@ def present_project_review(artifact_key: str, payload: Any) -> dict:
     ):
         if body.get(key) is not None:
             metrics.append({"label": metric_label, "value": format_scalar(body[key])})
-    if metrics:
-        blocks.append(metrics_block("立项评分", metrics))
+
+    notes = body.get("review_notes")
+    note_items: List[str] = []
+    if isinstance(notes, list):
+        note_items = [str(x) for x in notes[:10]]
+    elif isinstance(notes, str) and notes.strip():
+        note_items = [notes.strip()]
 
     blocks.append(
-        verdict_block(
-            "复审结论",
-            passed=passed,
-            detail=conclusion or ("审查通过" if passed else "需进一步评估"),
+        assessment_report_block(
+            "立项复审",
+            passed=passed if conclusion else None,
+            metrics=metrics,
+            detail=conclusion,
+            notes=note_items,
         )
     )
-    notes = body.get("review_notes")
-    if isinstance(notes, list) and notes:
-        blocks.append(list_block("复审说明", [str(x) for x in notes[:10]]))
-    elif isinstance(notes, str) and notes.strip():
-        blocks.append(paragraph_block("复审说明", notes.strip()))
     return view(artifact_key, "project-review.v1", blocks, summary=conclusion)
 
 
@@ -218,8 +227,10 @@ def present_lapian_report(artifact_key: str, payload: Any) -> dict:
 
     for key in ("emotion_curve", "dialogue_design", "reusable_template"):
         items = body.get(key)
-        if isinstance(items, list) and items and all(isinstance(x, str) for x in items):
-            blocks.append(list_block(label(key), [str(x) for x in items[:12]]))
+        if isinstance(items, list) and items:
+            block = list_block_from_items(label(key), items[:12])
+            if block:
+                blocks.append(block)
 
     for key in ("rhythm_control", "camera_language"):
         section = body.get(key)
@@ -228,7 +239,7 @@ def present_lapian_report(artifact_key: str, payload: Any) -> dict:
             if rows:
                 blocks.append(kv_block(label(key), rows))
 
-    analysis = body.get("character_analysis") or {}
+    analysis = body.get("character_analysis")
     if isinstance(analysis, dict):
         role_labels = {
             "female_protagonist": "女主",
@@ -242,14 +253,14 @@ def present_lapian_report(artifact_key: str, payload: Any) -> dict:
         if rows:
             blocks.append(kv_block("人设分析", rows))
 
-    structures = body.get("structure_analysis") or []
+    structures = body.get("structure_analysis")
     if isinstance(structures, list):
         cards = []
         for item in structures[:10]:
             if not isinstance(item, dict):
                 continue
             ep_id = item.get("episode_id") or ""
-            segments = item.get("segment_breakdown") or []
+            segments = item.get("segment_breakdown")
             body_text = "\n".join(str(x) for x in segments[:6]) if isinstance(segments, list) else ""
             cards.append({"title": f"第{ep_id}集结构", "subtitle": "", "body": body_text[:500]})
         if cards:
@@ -264,48 +275,38 @@ def present_world_setting(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "world-setting.v1", blocks)
 
-    append_scalar_kv(blocks, body, ("era_background",), "时代背景")
+    sections: List[dict] = []
+    era = body.get("era_background")
+    if isinstance(era, str) and era.strip():
+        sections.append({"title": "时代背景", "kind": "paragraph", "text": era.strip()})
 
     power = body.get("power_structure")
-    if isinstance(power, dict):
-        rows = dict_to_kv_rows(power)
-        if rows:
-            blocks.append(kv_block("权力结构", rows))
-    elif power:
-        blocks.append(kv_block("权力结构", [{"key": "结构", "value": format_scalar(power)}]))
+    if isinstance(power, list) and power:
+        if all(isinstance(x, str) for x in power):
+            sections.append({"title": "权力结构", "kind": "list", "items": [str(x) for x in power[:20]]})
+        else:
+            items = format_list_items(power, limit=20)
+            if items:
+                sections.append({"title": "权力结构", "kind": "list", "items": items})
 
-    rules = body.get("core_rules") or body.get("core_world_rules") or []
+    rules = body.get("core_rules")
     if isinstance(rules, list) and rules:
-        blocks.append(list_block("核心规则", [str(x) for x in rules[:12]]))
+        sections.append({"title": "核心规则", "kind": "list", "items": [str(x) for x in rules[:12]]})
 
     special = body.get("special_rules")
-    if isinstance(special, list):
-        blocks.append(list_block("特殊规则", [str(x) for x in special[:12]]))
-    elif isinstance(special, str) and special.strip():
-        blocks.append(paragraph_block("特殊规则", special.strip()))
+    if isinstance(special, str) and special.strip():
+        sections.append({"title": "特殊规则", "kind": "paragraph", "text": special.strip()})
 
-    constraints = body.get("taboo_constraints") or []
+    constraints = body.get("taboo_constraints")
     if isinstance(constraints, list) and constraints:
-        blocks.append(list_block("禁忌约束", [str(x) for x in constraints[:12]]))
+        sections.append({"title": "禁忌约束", "kind": "list", "items": [str(x) for x in constraints[:12]]})
 
-    spaces = body.get("core_spaces") or []
-    if isinstance(spaces, list) and spaces:
-        if isinstance(spaces[0], str):
-            blocks.append(list_block("核心场景", [str(x) for x in spaces[:12]]))
-        else:
-            cards = []
-            for space in spaces[:12]:
-                if not isinstance(space, dict):
-                    continue
-                cards.append(
-                    {
-                        "title": str(space.get("space_name") or "场景"),
-                        "subtitle": "",
-                        "body": str(space.get("vertical_show_feature") or "")[:500],
-                    }
-                )
-            if cards:
-                blocks.append(cards_block("核心场景", cards))
+    core_space = body.get("core_space")
+    if isinstance(core_space, str) and core_space.strip():
+        sections.append({"title": "核心场景", "kind": "paragraph", "text": core_space.strip()})
+
+    if sections:
+        blocks.append(world_sections_block(sections))
 
     return view(artifact_key, "world-setting.v1", blocks)
 
@@ -316,50 +317,15 @@ def present_character_bible(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "character-bible.v1", blocks)
 
-    cards = []
-    for group_key in ("main_characters", "characters", "core_supporting_characters"):
-        chars = body.get(group_key) or []
-        if not isinstance(chars, list):
-            continue
-        for char in chars[:12]:
-            if not isinstance(char, dict):
-                continue
-            name = str(char.get("name") or "未命名")
-            identity = str(char.get("role_position") or char.get("identity") or "")
-            want = char.get("surface_want") or char.get("want") or ""
-            need = char.get("deep_need") or char.get("need") or ""
-            cards.append(
-                {
-                    "title": name,
-                    "subtitle": identity,
-                    "tags": [str(char.get("timbre_tag") or char.get("timbre_ta") or "")]
-                    if char.get("timbre_tag") or char.get("timbre_ta")
-                    else [],
-                    "body": " · ".join(
-                        filter(
-                            None,
-                            [
-                                f"欲望：{want}" if want else "",
-                                f"需求：{need}" if need else "",
-                                f"缺陷：{char['flaw']}" if char.get("flaw") else "",
-                                f"弧光：{char['character_arc']}" if char.get("character_arc") else "",
-                            ],
-                        )
-                    )[:500],
-                }
-            )
-    if cards:
-        blocks.append(cards_block("人物档案", cards))
+    id_map = build_character_id_map(body)
+    roster = character_roster_entries(body.get("characters"))
+    if roster:
+        blocks.append(character_roster_block(roster))
 
     network = body.get("relationship_network")
-    if isinstance(network, str) and network.strip():
-        blocks.append(paragraph_block("关系网络", network.strip()))
-    elif isinstance(network, list):
-        rel_cards = relationship_network_cards(network)
-        if rel_cards:
-            blocks.append(cards_block("关系网络", rel_cards))
-        elif network:
-            blocks.append(list_block("关系网络", [str(x) for x in network[:20]]))
+    rel_items = relationship_graph_entries(network, id_map=id_map)
+    if rel_items:
+        blocks.append(relationship_graph_block(rel_items))
 
     return view(artifact_key, "character-bible.v1", blocks)
 
@@ -370,24 +336,32 @@ def present_dream_check(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "dream-check.v1", blocks)
 
-    result = str(body.get("check_result") or body.get("result") or "")
-    passed = str(result).lower() in ("pass", "passed", "通过") or "通过" in result
-    blocks.append(verdict_block("梦境指标校验", passed=passed, detail=result or "—"))
-
-    scores = body.get("dimension_scores") or {}
+    result = str(body.get("check_result") or "")
+    passed = "通过" in result
+    metrics = []
+    scores = body.get("dimension_scores")
     if isinstance(scores, dict) and scores:
         metrics = [{"label": label(k), "value": format_scalar(v)} for k, v in scores.items()]
-        blocks.append(metrics_block("维度得分", metrics))
 
-    feedback = body.get("detail_feedback") or {}
+    notes: List[str] = []
+    feedback = body.get("detail_feedback")
     if isinstance(feedback, dict):
         for key, val in feedback.items():
             if isinstance(val, str) and val.strip():
-                blocks.append(paragraph_block(label(str(key)), val.strip()))
-    elif isinstance(feedback, str) and feedback.strip():
-        blocks.append(paragraph_block("详细反馈", feedback.strip()))
+                notes.append(f"{label(str(key))}：{val.strip()}")
+    suggestion = body.get("suggestion")
+    if isinstance(suggestion, str) and suggestion.strip():
+        notes.append(suggestion.strip())
 
-    append_paragraph(blocks, body, "suggestion", "优化建议")
+    blocks.append(
+        assessment_report_block(
+            "梦境指标校验",
+            passed=passed if result else None,
+            metrics=metrics,
+            detail=result,
+            notes=notes,
+        )
+    )
     return view(artifact_key, "dream-check.v1", blocks, summary=result)
 
 
@@ -397,31 +371,36 @@ def present_emotion_blueprint(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "emotion-blueprint.v1", blocks)
 
-    qdn = body.get("qdn_emotion_model") or {}
-    metrics = qdn_model_metrics(qdn if isinstance(qdn, dict) else {})
-    if metrics:
-        blocks.append(metrics_block("QDN 情绪模型", metrics))
+    qdn = body.get("qdn_emotion_model")
+    metrics = []
     if isinstance(qdn, dict):
         for key, val in qdn.items():
-            if isinstance(val, dict) and val.get("description"):
-                blocks.append(paragraph_block(str(val.get("dimension_name") or label(str(key))), str(val["description"])))
+            if not isinstance(val, dict):
+                continue
+            name = val.get("dimension_name") or label(str(key))
+            target = val.get("global_target")
+            if target is not None:
+                metrics.append({"label": str(name), "value": format_scalar(target)})
+    if metrics:
+        blocks.append(metrics_block("QDN 情绪模型", metrics))
 
-    targets = body.get("episode_emotion_targets") or []
+    targets = body.get("episode_emotion_targets")
     if isinstance(targets, list):
-        cards = []
-        for item in targets[:10]:
+        episodes = []
+        for item in targets[:15]:
             if not isinstance(item, dict):
                 continue
             ep_id = item.get("episode_id") or ""
-            cards.append(
+            episodes.append(
                 {
+                    "episode_no": str(ep_id),
                     "title": f"第{ep_id}集 · {item.get('episode_name', '')}".strip(" ·"),
                     "subtitle": f"情绪节点 {item.get('total_emotion_nodes', '—')}",
                     "body": "",
                 }
             )
-        if cards:
-            blocks.append(cards_block("分集情绪目标", cards))
+        if episodes:
+            blocks.append(episode_metrics_list_block("分集情绪目标", episodes))
 
     ext_cards = emotion_externalization_cards(body.get("emotion_externalization_dictionary") or {})
     if ext_cards:
@@ -433,41 +412,47 @@ def present_emotion_blueprint(artifact_key: str, payload: Any) -> dict:
 def present_series_outline(artifact_key: str, payload: Any) -> dict:
     body = normalize_payload(payload)
     blocks: List[dict] = []
+    summary = ""
     if not isinstance(body, dict):
         return view(artifact_key, "series-outline.v1", blocks)
 
-    rhythm = body.get("rhythm_control") or body.get("rhythm_control_verification") or {}
+    rhythm = body.get("rhythm_control")
+    rhythm_checks: List[dict] = []
+    reverse_cards: List[dict] = []
     if isinstance(rhythm, dict):
-        for beat_key in ("plot_beat", "emotion_beat"):
-            beats = rhythm.get(beat_key) or []
-            if isinstance(beats, list) and beats:
-                blocks.append(list_block(label(beat_key), [str(x) for x in beats[:10]]))
-        for note_key in ("a_level_reversal_check", "emotion_platform_check", "double_track_rhythm_note"):
-            note = rhythm.get(note_key)
-            if isinstance(note, str) and note.strip():
-                blocks.append(paragraph_block(label(note_key), note.strip()))
-        compliance = rhythm.get("compliance_check")
-        if isinstance(compliance, dict):
-            rows = dict_to_kv_rows(compliance)
-            if rows:
-                blocks.append(kv_block("节奏合规校验", rows))
+        crisis = rhythm.get("crisis_depth_check")
+        if isinstance(crisis, str) and crisis.strip():
+            rhythm_checks.append({"label": label("crisis_depth_check"), "text": crisis.strip()})
+        platform = rhythm.get("emotion_platform_check")
+        if isinstance(platform, str) and platform.strip():
+            rhythm_checks.append({"label": label("emotion_platform_check"), "text": platform.strip()})
+        reverse_points = rhythm.get("a_level_reverse_points") or []
+        if isinstance(reverse_points, list):
+            reverse_cards = a_level_reverse_cards(reverse_points)
 
-    six_phase = (
-        body.get("six_phase_narrative_structure")
-        or body.get("six_stage_narrative")
-        or {}
-    )
-    phase_cards = phase_narrative_cards(six_phase if isinstance(six_phase, dict) else {})
-    if phase_cards:
-        blocks.append(cards_block("六段叙事", phase_cards))
+    total_episodes = body.get("total_episodes")
+    if (
+        total_episodes not in (None, "", [], {})
+        or rhythm_checks
+        or reverse_cards
+    ):
+        blocks.append(
+            outline_overview_block(
+                total_episodes=total_episodes,
+                checks=rhythm_checks,
+                reverse_points=reverse_cards,
+            )
+        )
+        summary = rhythm_checks[0]["text"][:240] if rhythm_checks else ""
 
-    outlines = body.get("episode_outlines") or body.get("episodes") or []
-    if isinstance(outlines, list):
-        cards = episode_outline_cards(outlines)
-        if cards:
-            blocks.append(cards_block("分集大纲", cards))
+    outlines = body.get("episode_outlines")
+    stage_narrative = body.get("six_stage_narrative")
+    if isinstance(outlines, list) and isinstance(stage_narrative, dict):
+        grouped = build_stage_grouped_outlines(stage_narrative, outlines)
+        if grouped:
+            blocks.append(stage_outlines_block("分集大纲", grouped))
 
-    return view(artifact_key, "series-outline.v1", blocks)
+    return view(artifact_key, "series-outline.v1", blocks, summary=summary)
 
 
 def present_hook_plan(artifact_key: str, payload: Any) -> dict:
@@ -476,41 +461,55 @@ def present_hook_plan(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "hook-plan.v1", blocks)
 
-    s_hook = body.get("s_class_hook") or {}
+    s_hook = body.get("s_class_hook")
+    hero_text = ""
+    checks: List[dict] = []
     if isinstance(s_hook, dict):
-        content = str(s_hook.get("hook_content") or s_hook.get("content") or "")
-        if content:
-            blocks.append({"type": "hero", "title": "S 级钩子", "subtitle": content[:240]})
+        hero_text = str(s_hook.get("hook_content") or "")
         calc = s_hook.get("hook_calculation")
         if calc:
-            blocks.append(paragraph_block("S 级钩子公式", str(calc)))
+            checks.append({"label": "S 级钩子公式", "text": str(calc)})
 
-    append_cards(blocks, body, "a_class_hooks", "A 级钩子")
+    a_hooks = body.get("a_class_hooks")
+    plan_items: List[dict] = []
+    if isinstance(a_hooks, list):
+        for item in a_hooks[:12]:
+            if not isinstance(item, dict):
+                continue
+            plan_items.append(
+                {
+                    "title": str(item.get("hook_id") or "A 级钩子"),
+                    "subtitle": "",
+                    "body": str(item.get("hook_content") or "")[:600],
+                }
+            )
 
-    systems = body.get("episode_hook_systems") or []
+    systems = body.get("episode_hook_systems")
     if isinstance(systems, list):
-        cards = []
         for item in systems[:15]:
             if not isinstance(item, dict):
                 continue
-            ep_id = item.get("episode_id") or item.get("episodeNumber") or ""
-            golden = item.get("golden_30s") or {}
+            ep_id = item.get("episode_id") or ""
+            golden = item.get("golden_30s")
             subtitle = ""
             if isinstance(golden, dict):
-                subtitle = str(golden.get("0_3s_visual_impact") or golden.get("visual_impact") or "")[:120]
-            b_hook = item.get("b_class_hook") or {}
+                subtitle = str(golden.get("0_3s_visual_impact") or "")[:120]
+            b_hook = item.get("b_class_hook")
             body_text = ""
             if isinstance(b_hook, dict):
                 body_text = str(b_hook.get("hook_content") or "")
-            cards.append(
+            plan_items.append(
                 {
                     "title": f"第{ep_id}集钩子体系" if ep_id else "分集钩子",
                     "subtitle": subtitle,
                     "body": body_text[:400],
                 }
             )
-        if cards:
-            blocks.append(cards_block("分集钩子体系", cards))
+
+    if hero_text or checks:
+        blocks.append(plan_overview_block("钩子计划", hero_text=hero_text[:240], checks=checks))
+    if plan_items:
+        blocks.append(plan_items_block("钩子清单", plan_items))
 
     return view(artifact_key, "hook-plan.v1", blocks)
 
@@ -521,28 +520,32 @@ def present_conflict_plan(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "conflict-plan.v1", blocks)
 
-    core = body.get("core_conflict_system") or {}
+    core = body.get("core_conflict_system")
+    metrics: List[dict] = []
     if isinstance(core, dict):
-        rows = []
         for key, val in core.items():
             if format_scalar(val) != "—":
-                rows.append({"key": label(str(key)), "value": format_scalar(val)})
-        if rows:
-            blocks.append(kv_block("核心冲突体系", rows))
+                metrics.append({"label": label(str(key)), "value": format_scalar(val)})
 
-    scenes = body.get("key_confrontation_scenes") or []
-    if isinstance(scenes, list) and scenes and isinstance(scenes[0], dict):
-        cards = []
+    plan_items: List[dict] = []
+    scenes = body.get("key_confrontation_scenes")
+    if isinstance(scenes, list):
         for item in scenes[:10]:
-            cards.append(
+            if not isinstance(item, dict):
+                continue
+            plan_items.append(
                 {
                     "title": str(item.get("scene_name") or f"场景 {item.get('scene_id', '')}"),
                     "subtitle": str(item.get("conflict_type") or ""),
                     "body": str(item.get("conflict_upgrade_path") or "")[:500],
                 }
             )
-        if cards:
-            blocks.append(cards_block("关键对峙场景", cards))
+
+    if metrics:
+        blocks.append(plan_overview_block("冲突计划", metrics=metrics))
+    if plan_items:
+        blocks.append(plan_items_block("关键对峙场景", plan_items))
+
     return view(artifact_key, "conflict-plan.v1", blocks)
 
 
@@ -552,6 +555,7 @@ def present_reversal_plan(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "reversal-plan.v1", blocks)
 
+    plan_items: List[dict] = []
     for key in (
         "truth_reversals",
         "identity_reversals",
@@ -559,11 +563,21 @@ def present_reversal_plan(artifact_key: str, payload: Any) -> dict:
         "motivation_reversals",
         "relationship_reversals",
     ):
-        items = body.get(key) or []
-        if isinstance(items, list) and items:
-            cards = reversal_cards([x for x in items if isinstance(x, dict)])
-            if cards:
-                blocks.append(cards_block(label(key), cards))
+        items = body.get(key)
+        if not isinstance(items, list) or not items:
+            continue
+        cards = reversal_cards([x for x in items if isinstance(x, dict)])
+        for card in cards:
+            plan_items.append(
+                {
+                    "title": f"{label(key)} · {card.get('title', '')}".strip(" ·"),
+                    "subtitle": card.get("subtitle") or "",
+                    "body": card.get("body") or "",
+                }
+            )
+
+    if plan_items:
+        blocks.append(plan_items_block("反转计划", plan_items))
     return view(artifact_key, "reversal-plan.v1", blocks)
 
 
@@ -573,24 +587,21 @@ def present_emotion_curve(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "emotion-curve.v1", blocks)
 
-    curve = body.get("full_series_emotion_curve") or {}
-    if isinstance(curve, dict) and curve:
+    curve = body.get("full_series_emotion_curve")
+    metrics: List[dict] = []
+    checks: List[dict] = []
+    if isinstance(curve, dict):
         if curve.get("total_episodes") is not None:
-            blocks.append(
-                metrics_block(
-                    "全剧情绪曲线",
-                    [{"label": "总集数", "value": format_scalar(curve["total_episodes"])}],
-                )
-            )
+            metrics.append({"label": "总集数", "value": format_scalar(curve["total_episodes"])})
         for check_key in ("hook_density_check", "crisis_period_et_check", "final_episode_peak_check"):
             check = curve.get(check_key)
             if isinstance(check, dict) and check.get("note"):
-                blocks.append(paragraph_block(label(check_key), str(check["note"])))
+                checks.append({"label": label(check_key), "text": str(check["note"])})
 
-    markers = body.get("episode_level_emotion_markers") or []
+    plan_items: List[dict] = []
+    markers = body.get("episode_level_emotion_markers")
     if isinstance(markers, list):
-        cards = []
-        for item in markers[:10]:
+        for item in markers[:15]:
             if not isinstance(item, dict):
                 continue
             ep_id = item.get("episode_id") or ""
@@ -600,13 +611,16 @@ def present_emotion_curve(artifact_key: str, payload: Any) -> dict:
                 if isinstance(nested, dict):
                     for sub_k, sub_v in nested.items():
                         body_parts.append(f"{label(sub_k)}：{sub_v}")
-            cards.append({"title": f"第{ep_id}集", "subtitle": "", "body": "\n".join(body_parts)[:500]})
-        if cards:
-            blocks.append(cards_block("分集情绪标记", cards))
+            plan_items.append({"title": f"第{ep_id}集", "subtitle": "", "body": "\n".join(body_parts)[:500]})
 
-    zone = body.get("emotion_platform_zone_check") or {}
+    zone = body.get("emotion_platform_zone_check")
     if isinstance(zone, dict) and zone.get("note"):
-        blocks.append(paragraph_block("情绪平台区校验", str(zone["note"])))
+        checks.append({"label": "情绪平台区校验", "text": str(zone["note"])})
+
+    if metrics or checks:
+        blocks.append(plan_overview_block("情绪曲线", metrics=metrics, checks=checks))
+    if plan_items:
+        blocks.append(plan_items_block("分集情绪标记", plan_items))
 
     return view(artifact_key, "emotion-curve.v1", blocks)
 
@@ -634,7 +648,7 @@ def present_psychology_guide(artifact_key: str, payload: Any) -> dict:
                 {
                     "title": f"第{ep_id}集认知差",
                     "subtitle": str(item.get("known_info") or "")[:80],
-                    "body": str(item.get("information_difference_trigger") or item.get("unknown_info") or "")[:500],
+                    "body": str(item.get("information_difference_trigger") or "")[:500],
                 }
             )
         if cards:
@@ -673,55 +687,37 @@ def present_psychology_guide(artifact_key: str, payload: Any) -> dict:
 
 def present_episode_scripts(artifact_key: str, payload: Any) -> dict:
     body = normalize_payload(payload)
-    episodes_raw = []
-    if isinstance(body, dict):
-        episodes_raw = body.get("episodes") or []
-    elif isinstance(body, list):
-        episodes_raw = body
+    episodes_raw = body.get("episodes") if isinstance(body, dict) else []
+    if not isinstance(episodes_raw, list):
+        episodes_raw = []
 
     episodes = []
-    for item in episodes_raw[:20]:
+    for item in episodes_raw[:40]:
         if not isinstance(item, dict):
             continue
-        ep_no = item.get("episodeNumber") or item.get("episode_number") or item.get("episode_id")
-        beats = []
-        script_content = item.get("scriptContent") or item.get("script_content") or []
-        if isinstance(script_content, list) and script_content:
-            beats = script_content_to_beats(script_content)
-        else:
-            for script in (item.get("scripts") or item.get("scenes") or [])[:40]:
-                if not isinstance(script, dict):
-                    continue
-                beats.append(
-                    {
-                        "sceneHeader": str(script.get("sceneHeader") or script.get("scene_header") or ""),
-                        "action": str(script.get("action") or script.get("content") or ""),
-                        "dialogue": str(script.get("dialogue") or ""),
-                    }
-                )
+        ep_no = item.get("episodeNumber")
+        script_content = item.get("scriptContent")
+        beats: List[dict] = []
+        embedded_checkpoint = ""
+        if script_content not in (None, "", [], {}):
+            beats, embedded_checkpoint = parse_episode_script_content(script_content)
 
-        checkpoint = item.get("memoryCheckpoint") or item.get("memory_checkpoint") or {}
-        checkpoint_text = ""
-        if isinstance(checkpoint, dict):
-            parts = []
-            for ck in ("characterStates", "activeClues", "foreshadowStatus"):
-                val = checkpoint.get(ck)
-                if isinstance(val, list):
-                    parts.extend(str(x) for x in val)
-                elif val:
-                    parts.append(str(val))
-            checkpoint_text = "；".join(parts)
-
+        scene_count = len({beat["sceneHeader"] for beat in beats if beat.get("sceneHeader")})
         episodes.append(
             {
                 "episodeNumber": ep_no,
-                "title": str(item.get("title") or item.get("episode_name") or f"第{ep_no}集"),
-                "memoryCheckPoint": checkpoint_text or str(item.get("memoryCheckPoint") or ""),
+                "title": str(item.get("title") or f"第{ep_no}集"),
+                "memoryCheckPoint": embedded_checkpoint,
+                "sceneCount": scene_count,
                 "beats": beats,
             }
         )
 
-    blocks = [script_episodes_block("分集剧本", episodes)] if episodes else []
+    blocks = (
+        [script_episodes_block("分集剧本", episodes, total_episodes=len(episodes))]
+        if episodes
+        else []
+    )
     summary = f"共 {len(episodes)} 集剧本" if episodes else ""
     return view(artifact_key, "episode-scripts.v1", blocks, summary=summary)
 
@@ -732,13 +728,11 @@ def present_visual_prompts(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "visual-prompts.v1", blocks)
 
-    value = body.get("value") or body.get("prompts") or []
+    value = body.get("value")
     if isinstance(value, list) and value and isinstance(value[0], dict):
         blocks.extend(visual_prompt_episode_blocks(value))
     elif isinstance(value, str) and value.strip():
         blocks.append(paragraph_block("视觉提示词", value.strip()))
-    elif isinstance(value, list):
-        blocks.append(list_block("视觉提示词", [str(x) for x in value[:30]]))
 
     return view(artifact_key, "visual-prompts.v1", blocks)
 
@@ -749,7 +743,7 @@ def present_adaptation_plan(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "adaptation-plan.v1", blocks)
 
-    info = body.get("project_basic_info") or {}
+    info = body.get("project_basic_info")
     if isinstance(info, dict):
         rows = dict_to_kv_rows(
             info,
@@ -763,13 +757,13 @@ def present_adaptation_plan(artifact_key: str, payload: Any) -> dict:
         if rows:
             blocks.append(kv_block("项目基本信息", rows))
 
-    rhythm = body.get("rhythm_control") or {}
+    rhythm = body.get("rhythm_control")
     if isinstance(rhythm, dict):
         rows = dict_to_kv_rows(rhythm)
         if rows:
             blocks.append(kv_block("节奏控制", rows))
 
-    breakdown = body.get("episode_breakdown") or []
+    breakdown = body.get("episode_breakdown")
     if isinstance(breakdown, list):
         cards = adaptation_breakdown_cards([x for x in breakdown if isinstance(x, dict)])
         if cards:
@@ -783,24 +777,32 @@ def present_review_report(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "review-report.v1", [])
 
-    passed = bool(body.get("passed"))
-    issues = []
-    for item in body.get("issues") or []:
-        if isinstance(item, str):
-            issues.append(item)
-        elif isinstance(item, dict):
-            text = item.get("description") or item.get("message") or item.get("detail") or ""
-            issue_type = item.get("type") or item.get("category") or item.get("sceneId") or ""
-            issues.append(f"[{issue_type}] {text}".strip() if issue_type else str(text))
+    passed_raw = body.get("passed")
+    pacing_raw = body.get("pacingPassed")
+    passed = bool(passed_raw) if passed_raw is not None else None
+    pacing_passed = bool(pacing_raw) if pacing_raw is not None else None
+    issues = normalize_review_issues(body.get("issues"))
 
-    detail = "审查通过"
-    if not passed:
-        detail = "审查未通过，需修改"
-    if body.get("pacingPassed") is False:
-        detail += "（节奏未通过）"
+    blocks: List[dict] = [
+        review_overview_block(
+            passed=passed,
+            pacing_passed=pacing_passed,
+            issue_count=len(issues),
+        )
+    ]
+    if issues:
+        blocks.append(review_issues_block("问题清单", issues))
 
-    blocks = [verdict_block("审稿结论", passed=passed, detail=detail, issues=issues[:20])]
-    return view(artifact_key, "review-report.v1", blocks)
+    if passed is True and not issues:
+        summary = "审查通过，未发现问题"
+    elif passed is True:
+        summary = f"审查通过，记录 {len(issues)} 项待优化问题"
+    elif passed is False:
+        summary = f"审查未通过，共 {len(issues)} 项问题"
+    else:
+        summary = f"共 {len(issues)} 项问题" if issues else ""
+
+    return view(artifact_key, "review-report.v1", blocks, summary=summary)
 
 
 def present_reader_review(artifact_key: str, payload: Any) -> dict:
@@ -853,7 +855,7 @@ def present_emotion_audit(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "emotion-audit.v1", blocks)
 
-    repairs = body.get("repair_suggestions") or []
+    repairs = body.get("repair_suggestions")
     if isinstance(repairs, list):
         cards = []
         for item in repairs[:10]:
@@ -869,18 +871,18 @@ def present_emotion_audit(artifact_key: str, payload: Any) -> dict:
         if cards:
             blocks.append(cards_block("修复建议", cards))
 
-    plateau = body.get("continuous_plateau_zone") or []
+    plateau = body.get("continuous_plateau_zone")
     if isinstance(plateau, list) and plateau:
         blocks.append(list_block("连续平台区", format_list_items(plateau, limit=10)))
 
-    deviations = body.get("over_deviation_episodes") or []
+    deviations = body.get("over_deviation_episodes")
     if isinstance(deviations, list):
         cards = []
         for item in deviations[:10]:
             if not isinstance(item, dict):
                 continue
-            nodes = item.get("deviation_nodes") or []
-            body_lines = [format_deviation_node(node) for node in nodes if isinstance(node, dict)]
+            nodes = item.get("deviation_nodes")
+            body_lines = [format_deviation_node(node) for node in (nodes or []) if isinstance(node, dict)]
             cards.append(
                 {
                     "title": f"第{item.get('episodeNumber', '—')}集偏离",
@@ -891,15 +893,15 @@ def present_emotion_audit(artifact_key: str, payload: Any) -> dict:
         if cards:
             blocks.append(cards_block("偏离集数", cards))
 
-    extractions = body.get("episode_emotion_extraction") or []
+    extractions = body.get("episode_emotion_extraction")
     if isinstance(extractions, list):
-        cards = []
-        for item in extractions[:10]:
+        episodes = []
+        for item in extractions[:15]:
             if not isinstance(item, dict):
                 continue
             ep_no = item.get("episodeNumber") or ""
-            peak_raw = item.get("emotion_peak_ev") or {}
-            valley_raw = item.get("emotion_valley_et") or {}
+            peak_raw = item.get("emotion_peak_ev")
+            valley_raw = item.get("emotion_valley_et")
             peak_val = peak_raw.get("value") if isinstance(peak_raw, dict) else None
             valley_val = valley_raw.get("value") if isinstance(valley_raw, dict) else None
             subtitle = ""
@@ -912,23 +914,24 @@ def present_emotion_audit(artifact_key: str, payload: Any) -> dict:
                 body_parts.append(f"峰值：{peak}")
             if valley:
                 body_parts.append(f"低谷：{valley}")
-            tps = item.get("emotion_tp") or []
+            tps = item.get("emotion_tp")
             if isinstance(tps, list) and tps:
                 body_parts.append("转折点：")
                 body_parts.extend(format_list_items(tps, limit=5))
-            nodes = item.get("actual_emotion_nodes") or []
+            nodes = item.get("actual_emotion_nodes")
             if isinstance(nodes, list) and nodes:
                 body_parts.append("情绪节点：")
                 body_parts.extend(format_emotion_node_line(n) for n in nodes if isinstance(n, dict))
-            cards.append(
+            episodes.append(
                 {
+                    "episode_no": str(ep_no),
                     "title": f"第{ep_no}集情绪",
                     "subtitle": subtitle[:120],
                     "body": "\n".join(body_parts)[:600],
                 }
             )
-        if cards:
-            blocks.append(cards_block("分集情绪提取", cards))
+        if episodes:
+            blocks.append(episode_metrics_list_block("分集情绪提取", episodes))
 
     return view(artifact_key, "emotion-audit.v1", blocks)
 
@@ -938,44 +941,26 @@ def present_quality_report(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "quality-report.v1", [])
 
-    scores = body.get("scores") or body.get("dimensions") or {}
-    dimensions = []
-    if isinstance(scores, dict):
-        dimensions = [{"name": label(str(k)), "score": v} for k, v in scores.items()]
-    elif isinstance(scores, list):
-        for row in scores:
-            if isinstance(row, dict):
-                dimensions.append(
-                    {
-                        "name": str(row.get("name") or row.get("dimension") or ""),
-                        "score": row.get("score") or row.get("value"),
-                    }
-                )
+    dimensions = build_quality_dimensions(body.get("scores"), body.get("details"))
+    rating = str(body.get("rating") or "").strip()
+    total_score = body.get("total_score")
+    fuse_raw = body.get("fuse_triggered")
+    fuse_triggered = bool(fuse_raw) if fuse_raw is not None else None
 
-    suspend = body.get("suspend_status") or {}
-    summary = str(body.get("core_evaluation") or body.get("summary") or body.get("verdict") or "")
-    if isinstance(suspend, dict) and suspend.get("trigger_suspend"):
-        summary = f"【暂缓】{suspend.get('suspend_reason', '')} {summary}".strip()
+    summary = ""
+    if rating and total_score not in (None, "", [], {}):
+        summary = f"{rating} 级 · 总分 {format_scalar(total_score)}"
 
-    break_check = body.get("break_check") or {}
-    if isinstance(break_check, dict) and break_check:
-        parts = []
-        if "format_pass" in break_check:
-            parts.append(f"格式{'通过' if break_check['format_pass'] else '未通过'}")
-        if "dream_safety_pass" in break_check:
-            parts.append(f"梦境安全{'通过' if break_check['dream_safety_pass'] else '未通过'}")
-        if parts:
-            summary = f"{' · '.join(parts)}。{summary}".strip()
-
-    blocks = [
-        score_board_block(
-            "质量评分",
-            grade=str(body.get("final_rating") or body.get("rating") or body.get("grade") or ""),
-            total=body.get("total_score") or body.get("overall_score") or body.get("overallScore"),
-            summary=summary,
+    blocks: List[dict] = [
+        quality_report_block(
+            rating=rating,
+            total_score=total_score,
+            max_total=100,
+            fuse_triggered=fuse_triggered,
             dimensions=dimensions,
         )
     ]
+
     return view(artifact_key, "quality-report.v1", blocks, summary=summary[:240])
 
 
@@ -985,7 +970,7 @@ def present_word_count_report(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "word-count-report.v1", blocks)
 
-    overview = body.get("global_overview") or {}
+    overview = body.get("global_overview")
     if isinstance(overview, dict):
         rows = []
         for key, val in overview.items():
@@ -994,19 +979,20 @@ def present_word_count_report(artifact_key: str, payload: Any) -> dict:
         if rows:
             blocks.append(kv_block("全局概览", rows))
 
-    episodes = body.get("episode_detail_list") or []
-    if isinstance(episodes, list):
-        cards = []
-        for item in episodes[:10]:
+    episodes_raw = body.get("episode_detail_list")
+    if isinstance(episodes_raw, list):
+        episodes = []
+        for item in episodes_raw[:20]:
             if not isinstance(item, dict):
                 continue
             ep_no = item.get("episode_number") or ""
-            compliance = item.get("compliance_check") or {}
+            compliance = item.get("compliance_check")
             subtitle = ""
             if isinstance(compliance, dict) and compliance.get("status"):
                 subtitle = str(compliance["status"])
-            cards.append(
+            episodes.append(
                 {
+                    "episode_no": str(ep_no),
                     "title": f"第{ep_no}集",
                     "subtitle": subtitle,
                     "body": " · ".join(
@@ -1021,8 +1007,8 @@ def present_word_count_report(artifact_key: str, payload: Any) -> dict:
                     )[:500],
                 }
             )
-        if cards:
-            blocks.append(cards_block("分集字数明细", cards))
+        if episodes:
+            blocks.append(episode_metrics_list_block("分集字数明细", episodes))
 
     return view(artifact_key, "word-count-report.v1", blocks)
 
@@ -1033,21 +1019,31 @@ def present_style_check(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "style-check.v1", blocks)
 
-    verdict = str(body.get("final_verification") or body.get("verdict") or "")
-    passed = "通过" in verdict or "对齐" in verdict or str(verdict).lower() in ("pass", "passed")
-    blocks.append(verdict_block("风格校验", passed=passed, detail=verdict or "—"))
-    append_scalar_kv(blocks, body, ("drama_type",), "剧种类型")
+    verdict = str(body.get("final_verification") or "")
+    passed = "通过" in verdict or "对齐" in verdict
+    notes: List[str] = []
+    drama_type = body.get("drama_type")
+    if drama_type not in (None, "", [], {}):
+        notes.append(f"剧种类型：{format_scalar(drama_type)}")
 
-    drift = body.get("style_drift_detection_result") or {}
+    drift = body.get("style_drift_detection_result")
     if isinstance(drift, dict):
-        rows = nested_check_rows(drift)
-        if rows:
-            blocks.append(kv_block("风格漂移检测", rows))
+        for row in nested_check_rows(drift):
+            notes.append(f"{row['key']}：{row['value']}")
 
-    repairs = body.get("drift_repair_record") or []
+    repairs = body.get("drift_repair_record")
     if isinstance(repairs, list) and repairs:
-        blocks.append(list_block("漂移修复记录", [str(x) for x in repairs[:10]]))
+        notes.extend(format_list_items(repairs, limit=10))
 
+    blocks.append(
+        assessment_report_block(
+            "风格校验",
+            passed=passed if verdict else None,
+            metrics=[],
+            detail=verdict,
+            notes=notes,
+        )
+    )
     return view(artifact_key, "style-check.v1", blocks, summary=verdict)
 
 
@@ -1100,7 +1096,7 @@ def present_storyboard(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "storyboard.v1", blocks)
 
-    items = body.get("storyboard_list") or body.get("shots") or []
+    items = body.get("storyboard_list")
     if isinstance(items, list):
         cards = storyboard_to_cards([x for x in items if isinstance(x, dict)])
         if cards:
@@ -1122,7 +1118,10 @@ def present_post_assets(artifact_key: str, payload: Any) -> dict:
             blocks.append(paragraph_block("时长调整说明", str(duration["adjust_note"])))
         details = duration.get("adjust_details") or []
         if isinstance(details, list) and details:
-            blocks.append(list_block("调整明细", [str(x) for x in details[:10]]))
+            if isinstance(details, list) and details:
+                block = list_block_from_items("调整明细", details[:10])
+                if block:
+                    blocks.append(block)
 
     for key, title in (("dubbing_emotion_script", "配音情绪脚本"), ("vertical_screen_subtitles", "竖屏字幕")):
         items = body.get(key) or []
@@ -1133,7 +1132,7 @@ def present_post_assets(artifact_key: str, payload: Any) -> dict:
             if not isinstance(item, dict):
                 continue
             ep_no = item.get("episode_number") or ""
-            sub_items = item.get("emotion_timeline") or item.get("subtitle_list") or []
+            sub_items = item.get("emotion_timeline") if key == "dubbing_emotion_script" else item.get("subtitle_list")
             body_text = ""
             if isinstance(sub_items, list):
                 body_text = "\n".join(format_list_items(sub_items, limit=20))[:800]
@@ -1150,25 +1149,28 @@ def present_marketing_kit(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "marketing-kit.v1", blocks)
 
-    for key in ("titles", "streaming_titles"):
-        append_list(blocks, body, key)
+    sections: List[dict] = []
+    for key, title in (("titles", "标题候选"), ("streaming_titles", "流媒体标题")):
+        items = body.get(key)
+        if isinstance(items, list) and items:
+            sections.append({"title": title, "kind": "list", "items": [str(x) for x in items[:12]]})
 
-    synopses = body.get("synopses") or {}
+    synopses = body.get("synopses")
     if isinstance(synopses, dict):
         rows = dict_to_kv_rows(
             synopses,
             key_labels={"mini_50": "50字简介", "standard_100": "100字简介", "long_200": "200字简介"},
         )
         if rows:
-            blocks.append(kv_block("剧情简介", rows))
+            sections.append({"title": "剧情简介", "kind": "kv", "rows": rows})
 
-    payment = body.get("payment_copy") or {}
+    payment = body.get("payment_copy")
     if isinstance(payment, dict):
         rows = dict_to_kv_rows(payment, key_labels={"s_level_card": "S级付费文案", "a_level_card": "A级付费文案"})
         if rows:
-            blocks.append(kv_block("付费文案", rows))
+            sections.append({"title": "付费文案", "kind": "kv", "rows": rows})
 
-    strategy = body.get("platform_diff_strategy") or {}
+    strategy = body.get("platform_diff_strategy")
     if isinstance(strategy, dict):
         platform_labels = {"douyin": "抖音", "wechat": "微信", "kuaishou": "快手"}
         rows = []
@@ -1176,7 +1178,10 @@ def present_marketing_kit(artifact_key: str, payload: Any) -> dict:
             if isinstance(plat_val, str) and plat_val.strip():
                 rows.append({"key": platform_labels.get(plat_key, str(plat_key)), "value": plat_val[:300]})
         if rows:
-            blocks.append(kv_block("平台差异化策略", rows))
+            sections.append({"title": "平台差异化策略", "kind": "kv", "rows": rows})
+
+    if sections:
+        blocks.append(deliverable_sections_block("营销物料", sections))
 
     return view(artifact_key, "marketing-kit.v1", blocks)
 
@@ -1186,78 +1191,9 @@ def present_compliance_report(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "compliance-report.v1", [])
 
-    verdict = str(
-        body.get("overall_compliance_decision")
-        or body.get("final_verdict")
-        or body.get("overall_result")
-        or body.get("verdict")
-        or ""
-    )
-    checks = []
-    for level, result_key, detail_key in (
-        ("P0", "p0_check_result", "p0_risk_details"),
-        ("P1", "p1_check_result", "p1_risk_details"),
-        ("P2", "p2_check_result", "p2_optimization_suggestions"),
-    ):
-        result = body.get(result_key)
-        if result is not None and result != "":
-            checks.append(
-                {
-                    "level": level,
-                    "status": format_scalar(result),
-                    "detail": format_detail_list(body.get(detail_key)),
-                }
-            )
-
-    for legacy_key in ("p0_risk_check", "p1_risk_check", "p2_risk_check"):
-        block = body.get(legacy_key)
-        if isinstance(block, dict):
-            checks.append(
-                {
-                    "level": legacy_key.replace("_risk_check", "").upper(),
-                    "status": format_scalar(block.get("level") or block.get("result")),
-                    "detail": str(block.get("details") or block.get("detail") or ""),
-                }
-            )
-
-    nine = body.get("nine_dimension_risk_scan") or body.get("nine_dimension_risk_check") or {}
-    if isinstance(nine, dict) and nine:
-        if nine.get("details"):
-            checks.append({"level": "九维扫描", "status": "—", "detail": str(nine["details"])[:400]})
-        else:
-            status_parts = []
-            all_pass = True
-            for dim_key, dim_val in nine.items():
-                if dim_key in ("details", "values"):
-                    continue
-                if isinstance(dim_val, str):
-                    status_parts.append(f"{label(dim_key)}:{dim_val}")
-                    if dim_val.lower() != "pass":
-                        all_pass = False
-            values = nine.get("values")
-            if isinstance(values, list):
-                status_parts.insert(0, "价值观：" + "、".join(str(v) for v in values))
-            checks.append(
-                {
-                    "level": "九维扫描",
-                    "status": "通过" if all_pass else "需关注",
-                    "detail": " · ".join(status_parts[:12]),
-                }
-            )
-
-    remark = str(body.get("remark") or "")
-    blocks = [
-        checks_block(
-            "合规审查",
-            passed=compliance_passed(verdict),
-            verdict=verdict or "—",
-            items=checks,
-        )
-    ]
-    if remark:
-        blocks.append(paragraph_block("备注", remark))
-
-    return view(artifact_key, "compliance-report.v1", blocks, summary=verdict or remark[:240])
+    block = build_compliance_report_view(body)
+    summary = block.get("conclusion") or ("合规通过" if block.get("passed") else "合规未通过")
+    return view(artifact_key, "compliance-report.v1", [block], summary=summary[:240])
 
 
 def present_delivery_pack(artifact_key: str, payload: Any) -> dict:
@@ -1266,32 +1202,52 @@ def present_delivery_pack(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "delivery-pack.v1", blocks)
 
+    sections: List[dict] = []
     if body.get("quality_score") is not None:
-        blocks.append(
-            metrics_block("交付质量", [{"label": "质量分", "value": format_scalar(body["quality_score"])}])
+        sections.append(
+            {
+                "title": "交付质量",
+                "kind": "metrics",
+                "items": [{"label": "质量分", "value": format_scalar(body["quality_score"])}],
+            }
         )
 
-    append_paragraph(blocks, body, "evaluation_summary", "评估摘要")
-    append_list(blocks, body, "delivery_file_list", "交付文件清单")
+    evaluation = body.get("evaluation_summary")
+    if isinstance(evaluation, str) and evaluation.strip():
+        sections.append({"title": "评估摘要", "kind": "paragraph", "text": evaluation.strip()})
+
+    files = body.get("delivery_file_list")
+    if isinstance(files, list) and files:
+        sections.append({"title": "交付文件清单", "kind": "list", "items": [str(x) for x in files[:20]]})
 
     quality_ok = body.get("quality_check_result")
-    if isinstance(quality_ok, bool):
-        blocks.append(
-            kv_block(
-                "质量检查结果",
-                [{"key": "状态", "value": "通过" if quality_ok else "未通过"}],
-            )
+    if quality_ok is not None:
+        sections.append(
+            {
+                "title": "质量检查结果",
+                "kind": "kv",
+                "rows": [{"key": "状态", "value": "通过" if quality_ok is True else format_scalar(quality_ok)}],
+            }
         )
 
     compliance_ok = body.get("compliance_check_result")
-    if compliance_ok not in (None, ""):
-        blocks.append(kv_block("合规检查结果", [{"key": "状态", "value": format_scalar(compliance_ok)}]))
+    if compliance_ok is not None:
+        sections.append(
+            {
+                "title": "合规检查结果",
+                "kind": "kv",
+                "rows": [{"key": "状态", "value": format_scalar(compliance_ok)}],
+            }
+        )
 
-    word_count = body.get("word_count_check_result") or {}
+    word_count = body.get("word_count_check_result")
     if isinstance(word_count, dict):
         rows = dict_to_kv_rows(word_count)
         if rows:
-            blocks.append(kv_block("字数检查结果", rows))
+            sections.append({"title": "字数检查结果", "kind": "kv", "rows": rows})
+
+    if sections:
+        blocks.append(deliverable_sections_block("交付包", sections))
 
     return view(artifact_key, "delivery-pack.v1", blocks)
 
@@ -1302,10 +1258,12 @@ def present_evolution_proposal(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "evolution-proposal.v1", blocks)
 
-    track1 = body.get("轨道一_技能进化提案") or body.get("skill_evolution_proposal") or {}
+    track1 = body.get("轨道一_技能进化提案")
     if isinstance(track1, dict):
-        append_paragraph(blocks, track1, "共性缺陷模式判定", "共性缺陷模式")
-        skills = track1.get("SKILL更新提案") or track1.get("skill_updates") or []
+        pattern = track1.get("共性缺陷模式判定")
+        if isinstance(pattern, str) and pattern.strip():
+            blocks.append(paragraph_block("共性缺陷模式", pattern.strip()))
+        skills = track1.get("SKILL更新提案")
         if isinstance(skills, list):
             cards = []
             for item in skills[:10]:
@@ -1313,15 +1271,15 @@ def present_evolution_proposal(artifact_key: str, payload: Any) -> dict:
                     continue
                 cards.append(
                     {
-                        "title": str(item.get("target_skill_file") or item.get("skill") or "技能更新"),
+                        "title": str(item.get("target_skill_file") or "技能更新"),
                         "subtitle": f"优先级：{item.get('priority', '—')}",
-                        "body": str(item.get("update_content") or item.get("content") or "")[:500],
+                        "body": str(item.get("update_content") or "")[:500],
                     }
                 )
             if cards:
                 blocks.append(cards_block("技能进化提案", cards))
 
-    inspirations = body.get("轨道二_灵感归档条目") or body.get("inspiration_archive") or []
+    inspirations = body.get("轨道二_灵感归档条目")
     if isinstance(inspirations, list):
         cards = []
         for item in inspirations[:15]:
@@ -1332,7 +1290,6 @@ def present_evolution_proposal(artifact_key: str, payload: Any) -> dict:
                 or item.get("reversal_mechanism")
                 or item.get("structure_innovation")
                 or item.get("classic_dialogue")
-                or item.get("applicable_scene")
                 or "灵感条目"
             )
             cards.append(
