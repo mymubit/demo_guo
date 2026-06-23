@@ -2,8 +2,14 @@
 """Drama Skills 核心服务层。"""
 from __future__ import annotations
 
+import logging
 import re
 from typing import Any, Dict, List, Optional, Tuple
+
+from django.db import transaction
+from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 
 class DramaWordCountService:
@@ -225,6 +231,19 @@ class DramaRoleService:
             a.agent_id: a
             for a in AgentDefinition.objects.filter(category="drama_skills").select_related()
         }
+            DRAMA_DEPARTMENTS,
+            DRAMA_FAST_TRACK_ROLES,
+            DRAMA_ROLE_DEFAULTS,
+        )
+
+        defaults_by_id = {role["agent_id"]: role for role in DRAMA_ROLE_DEFAULTS}
+
+        agents = list(
+            AgentDefinition.objects.filter(
+                agent_id__startswith="drama.",
+                is_enabled=True,
+            ).order_by("workspace_order", "agent_id")
+        )
 
         routes = {
             r.route_key: r
@@ -233,19 +252,30 @@ class DramaRoleService:
             ).select_related("llm_provider")
         }
 
+        def resolve_dept_code(agent: AgentDefinition) -> str | None:
+            ui_schema = agent.ui_schema if isinstance(agent.ui_schema, dict) else {}
+            dept_code = ui_schema.get("dept")
+            if dept_code:
+                return dept_code
+            meta = defaults_by_id.get(agent.agent_id)
+            return meta.get("dept") if meta else None
+
         result = []
         for dept in sorted(DRAMA_DEPARTMENTS, key=lambda d: d["order"]):
             dept_roles = []
-            for agent_id, agent in sorted(agents.items()):
-                if agent.ui_schema.get("dept") != dept["code"]:
+            for agent in agents:
+                if resolve_dept_code(agent) != dept["code"]:
                     continue
 
+                agent_id = agent.agent_id
                 route = routes.get(agent_id)
                 model_name = "未配置"
                 if route and route.llm_provider:
                     model_name = route.llm_provider.name
 
                 tier = tier_map.get(agent_id, 3)
+                elif route and route.display_name:
+                    model_name = route.display_name
 
                 dept_roles.append({
                     "agent_id": agent_id,
@@ -732,3 +762,248 @@ class DramaQualityService:
             "skipped_suggestions": skipped,
             "note": "当前为建议预览，实际修改需LLM执行。配置LLM后自动应用。",
         }
+class DramaRoleRunService:
+    """Drama 角色执行 — 桥接 creation.Project 与 IndependentAgentService。"""
+
+    ACTIVE_STATUSES = (
+        "pending",
+        "running",
+    )
+
+    @staticmethod
+    def ensure_creation_project(drama_project, core_idea: str = ""):
+        """确保存在关联的 creation.Project（id = drama_project.project_id）。"""
+        from apps.creation.models import Project
+
+        defaults = {
+            "user": drama_project.user,
+            "theme": drama_project.genre_code,
+            "core_idea": (core_idea or drama_project.title).strip() or drama_project.title,
+            "episode_count": drama_project.total_episodes,
+            "target_platform": drama_project.target_platform,
+            "title": drama_project.title,
+            "pipeline_mode": Project.MODE_WORKSPACE,
+            "creation_entry": "from-scratch",
+        }
+        project, created = Project.objects.get_or_create(
+            id=drama_project.project_id,
+            defaults=defaults,
+        )
+        if not created:
+            updates = {}
+            if core_idea and not (project.core_idea or "").strip():
+                updates["core_idea"] = core_idea.strip()
+            if drama_project.title and not (project.title or "").strip():
+                updates["title"] = drama_project.title
+            if updates:
+                for field, value in updates.items():
+                    setattr(project, field, value)
+                project.save(update_fields=list(updates.keys()) + ["updated_at"])
+        return project
+
+    @staticmethod
+    def build_run_params(drama_project, creation_project) -> Dict[str, Any]:
+        """从 Drama 项目字段构造 Agent 运行参数。"""
+        return {
+            "core_idea": (creation_project.core_idea or drama_project.title).strip(),
+            "genre": drama_project.genre_code,
+            "genre_hint": drama_project.genre_code,
+            "episode_count": drama_project.total_episodes,
+            "target_platform": drama_project.target_platform,
+            "platform": drama_project.target_platform,
+        }
+
+    @classmethod
+    def get_active_execution(cls, drama_project, agent_id: str):
+        from apps.drama.models import DramaRoleExecution
+
+        return (
+            DramaRoleExecution.objects.filter(
+                drama_project=drama_project,
+                agent_id=agent_id,
+                status__in=[
+                    DramaRoleExecution.Status.PENDING,
+                    DramaRoleExecution.Status.RUNNING,
+                ],
+            )
+            .order_by("-created_at")
+            .first()
+        )
+
+    @classmethod
+    def enqueue_role_run(cls, drama_project, agent_id: str, user, params: Optional[Dict[str, Any]] = None):
+        """创建执行记录并入队异步任务。"""
+        from apps.agent.definition_service import AgentDefinitionService
+        from apps.drama.models import DramaRoleExecution
+        from apps.drama.tasks import run_drama_role
+        from dj_queue.api import enqueue_on_commit
+
+        agent = AgentDefinitionService.get_runnable(agent_id)
+
+        existing = cls.get_active_execution(drama_project, agent_id)
+        if existing:
+            return existing, False
+
+        creation_project = cls.ensure_creation_project(drama_project)
+        run_params = dict(params or cls.build_run_params(drama_project, creation_project))
+
+        with transaction.atomic():
+            drama_exec = DramaRoleExecution.objects.create(
+                drama_project=drama_project,
+                agent_id=agent_id,
+                agent_name_zh=agent.name_zh or agent.name,
+                status=DramaRoleExecution.Status.RUNNING,
+                input_artifacts={"params": run_params},
+                started_at=timezone.now(),
+            )
+            enqueue_on_commit(run_drama_role, str(drama_exec.id))
+
+        return drama_exec, True
+
+    @classmethod
+    def execute_role(cls, drama_execution_id: str, agent_run_id: str = "") -> Dict[str, Any]:
+        """后台任务：调用 IndependentAgentService 并回写 DramaRoleExecution。"""
+        from apps.agent.definition_service import AgentDefinitionService
+        from apps.creation.agent_runtime.independent_service import IndependentAgentService
+        from apps.creation.models import AgentExecutionRun
+        from apps.drama.models import DramaRoleExecution
+
+        drama_exec = DramaRoleExecution.objects.select_related(
+            "drama_project", "drama_project__user"
+        ).get(id=drama_execution_id)
+        drama_project = drama_exec.drama_project
+        user = drama_project.user
+        agent_id = drama_exec.agent_id
+        run_params = (drama_exec.input_artifacts or {}).get("params") or {}
+
+        creation_project = cls.ensure_creation_project(drama_project)
+
+        try:
+            if agent_run_id:
+                run = AgentExecutionRun.objects.select_related("project").get(id=agent_run_id)
+            else:
+                result = IndependentAgentService.enqueue_run(
+                    creation_project, user, agent_id, run_params
+                )
+                run = result.run
+                if result.should_enqueue:
+                    IndependentAgentService.execute_run(run)
+                else:
+                    run.refresh_from_db()
+
+            cls.sync_from_agent_run(drama_exec, run, creation_project)
+            drama_exec.refresh_from_db()
+            return {
+                "execution_id": str(drama_exec.id),
+                "agent_id": agent_id,
+                "status": drama_exec.status,
+                "run_id": str(run.id),
+            }
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("[DramaRoleRun] 执行失败 execution=%s agent=%s", drama_execution_id, agent_id)
+            cls._mark_failed(drama_exec, str(exc))
+            raise
+
+    @classmethod
+    def sync_from_agent_run(cls, drama_exec, agent_run, creation_project) -> None:
+        """将 AgentExecutionRun 结果同步到 DramaRoleExecution。"""
+        from apps.agent.definition_service import AgentDefinitionService
+        from apps.creation.artifact_service import get_artifact
+        from apps.creation.models import AgentExecutionRun
+        from apps.drama.models import DramaRoleExecution
+
+        agent = AgentDefinitionService.get_runnable(drama_exec.agent_id)
+        output_keys = [str(k) for k in (agent.output_contract or {}).get("artifacts") or []]
+        output_artifacts = {}
+        for key in output_keys:
+            payload = get_artifact(creation_project, key)
+            if payload is not None:
+                output_artifacts[key] = payload
+
+        now = timezone.now()
+        elapsed = None
+        if drama_exec.started_at:
+            elapsed = (now - drama_exec.started_at).total_seconds()
+
+        if agent_run.status == AgentExecutionRun.STATUS_COMPLETED:
+            drama_status = DramaRoleExecution.Status.SUCCESS
+        elif agent_run.status == AgentExecutionRun.STATUS_FAILED:
+            drama_status = DramaRoleExecution.Status.FAILED
+        elif agent_run.status == AgentExecutionRun.STATUS_RUNNING:
+            drama_status = DramaRoleExecution.Status.RUNNING
+        else:
+            drama_status = DramaRoleExecution.Status.FAILED
+
+        drama_exec.status = drama_status
+        drama_exec.output_artifacts = output_artifacts
+        drama_exec.prompt_tokens = agent_run.prompt_tokens or 0
+        drama_exec.completion_tokens = agent_run.completion_tokens or 0
+        drama_exec.total_tokens = agent_run.total_tokens or 0
+        run_params = (drama_exec.input_artifacts or {}).get("params") or {}
+        try:
+            from apps.creation.agent_runtime.agent_billing import resolve_coin_cost
+
+            drama_exec.cost_cents = resolve_coin_cost(drama_exec.agent_id, run_params)
+        except Exception:  # noqa: BLE001
+            drama_exec.cost_cents = 0
+        input_meta = dict(drama_exec.input_artifacts or {})
+        input_meta["agent_run_id"] = str(agent_run.id)
+        drama_exec.input_artifacts = input_meta
+        drama_exec.llm_provider = agent_run.provider_name or ""
+        drama_exec.llm_model = agent_run.model_name or ""
+        drama_exec.error_message = (agent_run.error_message or "")[:2000]
+        drama_exec.elapsed_seconds = elapsed
+        drama_exec.finished_at = now if drama_status != DramaRoleExecution.Status.RUNNING else None
+        drama_exec.save(
+            update_fields=[
+                "status",
+                "output_artifacts",
+                "prompt_tokens",
+                "completion_tokens",
+                "total_tokens",
+                "cost_cents",
+                "input_artifacts",
+                "llm_provider",
+                "llm_model",
+                "error_message",
+                "elapsed_seconds",
+                "finished_at",
+            ]
+        )
+
+        if drama_status == DramaRoleExecution.Status.SUCCESS:
+            cls._mark_project_role_completed(drama_exec)
+
+    @classmethod
+    def _mark_project_role_completed(cls, drama_exec) -> None:
+        from apps.drama.progress_service import DramaProjectProgressService
+
+        drama_project = drama_exec.drama_project
+        completed = list(drama_project.completed_roles or [])
+        if drama_exec.agent_id not in completed:
+            completed.append(drama_exec.agent_id)
+        drama_project.completed_roles = completed
+        drama_project.total_tokens_used = (drama_project.total_tokens_used or 0) + (drama_exec.total_tokens or 0)
+        drama_project.total_cost_cents = (drama_project.total_cost_cents or 0) + (drama_exec.cost_cents or 0)
+        drama_project.save(
+            update_fields=[
+                "completed_roles",
+                "total_tokens_used",
+                "total_cost_cents",
+                "updated_at",
+            ]
+        )
+        DramaProjectProgressService.recompute_project_state(drama_project)
+
+    @staticmethod
+    def _mark_failed(drama_exec, message: str) -> None:
+        from apps.drama.models import DramaRoleExecution
+
+        drama_exec.status = DramaRoleExecution.Status.FAILED
+        drama_exec.error_message = (message or "执行失败")[:2000]
+        drama_exec.finished_at = timezone.now()
+        if drama_exec.started_at:
+            drama_exec.elapsed_seconds = (drama_exec.finished_at - drama_exec.started_at).total_seconds()
+        drama_exec.save(
+            update_fields=["status", "error_message", "finished_at", "elapsed_seconds"]
+        )

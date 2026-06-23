@@ -14,7 +14,7 @@ import { runStatusLabel } from '@/utils/agentExecutionLabels'
 const RUNNING_POLL_MS = 5000
 const STATUS_FILTERS = [
   { value: '', label: '全部状态' },
-  { value: 'success', label: '成功' },
+  { value: 'completed', label: '成功' },
   { value: 'failed', label: '失败' },
   { value: 'running', label: '运行中' },
 ]
@@ -109,9 +109,9 @@ export default function AgentRunsPanel() {
   const toolbar = (
     <div className="flex flex-wrap items-end gap-3">
       <label className="text-xs text-navy-400">
-        Agent
-        <select className="sf-control mt-1 text-sm block min-w-[140px]" value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)}>
-          <option value="">全部</option>
+        Drama 角色
+        <select className="sf-control mt-1 text-sm block min-w-[180px]" value={agentFilter} onChange={(e) => setAgentFilter(e.target.value)}>
+          <option value="">全部 drama.*</option>
           {agentOptions.map((id) => (
             <option key={id} value={id}>{id}</option>
           ))}

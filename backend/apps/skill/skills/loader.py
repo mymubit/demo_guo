@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 from django.conf import settings
 
-from apps.workflow.tier1_sections import resolve_tier1_sections
+from apps.agent.bootstrap.tier1_sections import resolve_tier1_sections
 
 logger = logging.getLogger(__name__)
 

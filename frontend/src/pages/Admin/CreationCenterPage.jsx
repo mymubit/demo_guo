@@ -17,7 +17,7 @@ const HUB_CARDS = [
     to: '/admin/agent',
     icon: Bot,
     title: 'Agent 中心',
-    desc: '独立 Agent 定义、Prompt、Knowledge 与 LLM 路由',
+    desc: 'Drama 36 角色 Prompt 定义、Knowledge 与 LLM 路由',
     accent: 'from-indigo-500/20 to-indigo-600/5 border-indigo-500/25',
   },
   {
@@ -39,7 +39,7 @@ const HUB_CARDS = [
     to: '/admin/agent?tab=definitions',
     icon: BarChart3,
     title: '运行记录',
-    desc: '独立 Agent 最近执行与健康状态',
+    desc: 'Drama 角色最近执行与健康状态',
     accent: 'from-purple-500/20 to-purple-600/5 border-purple-500/25',
   },
   {
@@ -94,8 +94,8 @@ export function CreationCenterPage() {
             columns={3}
             items={[
               {
-                label: '工作台项目',
-                value: agentOps.workspace_projects ?? summary.creation_projects ?? 0,
+                label: 'Drama 项目',
+                value: agentOps.drama_projects ?? summary.creation_projects ?? 0,
               },
               {
                 label: '今日 Agent 执行',
@@ -113,8 +113,8 @@ export function CreationCenterPage() {
           />
           <p className="text-xs text-navy-400">
             Agent 执行记录 →
-            <Link to="/admin/agent?tab=definitions" className="text-gold-400 hover:underline mx-1">
-              运行记录
+            <Link to="/admin/agent?tab=runs" className="text-gold-400 hover:underline mx-1">
+              角色运行记录
             </Link>
           </p>
         </div>

@@ -11,8 +11,8 @@ from django.db import transaction
 from django.db.models import Q
 
 from apps.skill.models import SkillRuleConfig
-from apps.workflow.tier1_sections import tier1_section_label
-from apps.workflow.tier4_sections import TIER4_SECTION_KEYS, tier4_section_label
+from apps.agent.bootstrap.tier1_sections import tier1_section_label
+from apps.agent.bootstrap.tier4_sections import TIER4_SECTION_KEYS, tier4_section_label
 from .loader import _get_rules_root, _TIER1_RENDERERS
 
 logger = logging.getLogger(__name__)

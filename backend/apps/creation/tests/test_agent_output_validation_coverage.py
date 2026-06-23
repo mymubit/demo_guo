@@ -17,7 +17,7 @@ class AgentOutputValidationCoverageTests(TestCase):
 
     def test_validate_output_accepts_all_chain_artifacts(self):
         cases = {
-            "adapt": (AgentDefinitionService.get_runnable("drama.ip-adapter"), {"adaptation_meta": {}, "project_brief": {}}),
+            "adapt": (AgentDefinitionService.get_runnable("drama.ip-adapter"), {"adaptation_plan": {}, "project_brief": {}}),
             "brief": (AgentDefinitionService.get_runnable("drama.topic-planner"), {"project_brief": {}}),
             "structure": (AgentDefinitionService.get_runnable("drama.plot-architect"), {"structure_plan": {}}),
             "character": (AgentDefinitionService.get_runnable("drama.character-designer"), {"character_bible": {}}),
@@ -31,7 +31,7 @@ class AgentOutputValidationCoverageTests(TestCase):
                 AgentDefinitionService.get_runnable("drama.quality-reporter"),
                 {"script_score_report": {"overallScore": 80}},
             ),
-            "marketing": (AgentDefinitionService.get_runnable("marketing"), {"marketing_kit": {}}),
+            "marketing": (AgentDefinitionService.get_runnable("drama.marketing-officer"), {"marketing_kit": {}}),
         }
         for agent_id, (agent, output) in cases.items():
             with self.subTest(agent_id=agent_id):
@@ -141,7 +141,7 @@ class AgentOutputValidationCoverageTests(TestCase):
             {"artifacts": {}, "project": {}, "params": {}},
             [],
         )
-        self.assertIn("adaptation_meta", user_prompt)
+        self.assertIn("adaptation_plan", user_prompt)
         self.assertIn("禁止自行命名", user_prompt)
 
     def test_resolve_overwrite_mode_reads_params(self):
@@ -150,7 +150,10 @@ class AgentOutputValidationCoverageTests(TestCase):
         self.assertEqual(mode, "replace")
 
     def test_enqueue_run_uses_params_overwrite_mode(self):
+        from apps.creation.tests.test_helpers import grant_test_coins
+
         user = User.objects.create_user(phone="13900008932", password="test-pass-123")
+        grant_test_coins(user)
         project = Project.objects.create(
             user=user,
             title="overwrite-test",
@@ -161,8 +164,9 @@ class AgentOutputValidationCoverageTests(TestCase):
         )
         from apps.creation.artifact_service import save_artifact
 
+        save_artifact(project, "world_setting", {"settingSummary": "modern city"})
+        save_artifact(project, "character_bible", {"protagonists": []})
         save_artifact(project, "series_outline", {"episodes": []})
-        save_artifact(project, "character_bible", {"characters": []})
         from apps.agent.models import AgentLlmRouteConfig
         from apps.skill.models import LlmProvider
 

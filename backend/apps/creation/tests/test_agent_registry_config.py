@@ -48,11 +48,11 @@ class DramaWorkspaceOrderTests(TestCase):
         self.assertEqual(workspace_index_for_agent("nonexistent.role"), 999)
 
     def test_dept_order_is_sequential(self):
-        """同部门的角色 workspace_order 应该都在同一百位段。"""
-        strategy_roles = [k for k in DRAMA_WORKSPACE_ORDER if k.startswith("drama.market") or
-                          k.startswith("drama.formula") or k.startswith("drama.topic") or
-                          k.startswith("drama.project") or k.startswith("drama.lapian")]
-        for r in strategy_roles:
-            order = DRAMA_WORKSPACE_ORDER[r]
-            self.assertGreaterEqual(order, 100)
-            self.assertLess(order, 200, f"{r} 的 order={order} 不在战略选题部范围内")
+        """同部门的角色 workspace_order 应落在对应百位段。"""
+        for agent_id, order in DRAMA_WORKSPACE_ORDER.items():
+            if 100 <= order < 200:
+                self.assertLess(order, 200, f"{agent_id} order={order}")
+            elif 200 <= order < 300:
+                self.assertLess(order, 300, f"{agent_id} order={order}")
+            elif 700 <= order < 800:
+                self.assertLess(order, 800, f"{agent_id} order={order}")

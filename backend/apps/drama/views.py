@@ -60,14 +60,22 @@ class DramaProjectViewSet(ModelViewSet):
         d = ser.validated_data
 
         with transaction.atomic():
+            shared_id = d.get("project_id") or __import__("uuid").uuid4()
             project = DramaProject.objects.create(
+                id=shared_id,
                 user=request.user,
-                project_id=d.get("project_id") or __import__("uuid").uuid4(),
+                project_id=shared_id,
                 title=d["title"],
                 genre_code=d["genre_code"],
                 total_episodes=d["total_episodes"],
                 target_platform=d["target_platform"],
                 track_mode=d["track_mode"],
+            )
+            from apps.drama.services import DramaRoleRunService
+
+            DramaRoleRunService.ensure_creation_project(
+                project,
+                core_idea=d.get("core_idea") or "",
             )
 
         return Response(
@@ -106,6 +114,13 @@ class DramaProjectViewSet(ModelViewSet):
                 drama_project=project
             ).order_by("-created_at")
         }
+        # 加载最新执行记录（每个角色只取最新一条）
+        executions = {}
+        for exec_obj in DramaRoleExecution.objects.filter(
+            drama_project=project
+        ).order_by("-created_at"):
+            if exec_obj.agent_id not in executions:
+                executions[exec_obj.agent_id] = exec_obj
         for item in role_progress:
             exec_obj = executions.get(item["agent_id"])
             if exec_obj:
@@ -116,6 +131,10 @@ class DramaProjectViewSet(ModelViewSet):
             drama_project=project,
             artifact_key=DramaEpisodeArtifact.ArtifactKey.EPISODE_SCRIPT,
         ).values("episode_number").distinct().count()
+        from apps.drama.progress_service import DramaProjectProgressService
+
+        payload = DramaProjectProgressService.build_progress_payload(project)
+        payload["roles"] = role_progress
 
         return Response({
             "code": 0,
@@ -134,6 +153,7 @@ class DramaProjectViewSet(ModelViewSet):
                     if project.total_episodes > 0 else 0,
                 },
             },
+            "data": payload,
         })
 
     @action(detail=True, methods=["post"], url_path=r"run/(?P<role_id>[^/]+)")

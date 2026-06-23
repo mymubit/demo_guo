@@ -10,7 +10,7 @@ from django.core.exceptions import PermissionDenied
 from apps.billing.commerce_pricing import discount_display_label, normalize_discount_percent, quantize_yuan
 from apps.billing.models import RechargePackage
 from apps.billing.services import BillingService
-from apps.workflow.services.pipeline_service import WorkflowPipelineService
+from apps.skill.drama_pricing import list_public_drama_roles
 from apps.orders.services import OrderService, PaymentService
 from .serializers import RechargeOrderCreateSerializer
 
@@ -78,7 +78,7 @@ class BillingCatalogView(APIView):
             "balance": BillingService.get_balance(request.user),
             "submit_cost": BillingService.get_price("creation.submit"),
             "estimated_auto_cost": BillingService.estimate_auto_pipeline_cost(),
-            "pipeline_nodes": WorkflowPipelineService.public_nodes(),
+            "pipeline_nodes": list_public_drama_roles(),
             "pricing": BillingService.list_active_pricing(),
             "field_actions": BillingService.list_field_actions(),
             "payment_method": PaymentProvider.catalog_payment_method(),

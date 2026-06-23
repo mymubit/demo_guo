@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { createDramaProject, getDramaProjects } from '../../services/drama';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -115,7 +116,11 @@ export default function DramaIndex() {
     queryKey: ['drama-projects'],
     queryFn: getDramaProjects,
   });
-  const projects = projectsRes?.data?.results || projectsRes?.data || [];
+  const projects = Array.isArray(projectsRes)
+    ? projectsRes
+    : Array.isArray(projectsRes?.data)
+      ? projectsRes.data
+      : [];
 
   const createMut = useMutation({
     mutationFn: createDramaProject,
@@ -124,6 +129,10 @@ export default function DramaIndex() {
       const id = res?.data?.data?.id || res?.data?.id;
       if (id) navigate(`/drama/workspace/${id}`);
       setShowNew(false);
+      navigate(`/drama/workspace/${id}`);
+    },
+    onError: (err) => {
+      toast.error(err?.message || '创建失败，请稍后重试');
     },
   });
 
@@ -133,7 +142,7 @@ export default function DramaIndex() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-full">
       {/* 顶部标题栏 */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">

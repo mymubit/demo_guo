@@ -8,7 +8,7 @@
 
 SSE 事件格式：
   event: progress
-  data: {"status": "running", "progress_percent": 60, "current_node_index": 4, ...}
+  data: {"status": "running", "progress_percent": 60, "current_stage": "plot-architect", ...}
 
   event: done
   data: {"status": "completed", ...}
@@ -48,15 +48,17 @@ def _build_event(event_type: str, data: dict) -> str:
 
 def _serialize_project_state(project: Project) -> dict:
     """提取客户端需要的进度字段"""
+    from apps.drama.progress_service import DramaProjectProgressService
+
+    drama = DramaProjectProgressService.find_drama_project(project.id)
     return {
-        "project_id":         str(project.id),
-        "status":             project.execution_status,
-        "fusion_status":      project.fusion_status,
-        "progress_percent":   project.progress_percent,
-        "current_node_index": project.current_node_index,
-        "total_nodes":        project.total_nodes,
-        "error_message":      project.error_message or "",
-        "updated_at":         project.updated_at.isoformat(),
+        "project_id": str(project.id),
+        "status": project.execution_status,
+        "current_stage": drama.current_stage if drama else "",
+        "delivery_status": (drama.delivery_status if drama else "") or "",
+        "progress_percent": project.progress_percent,
+        "error_message": project.error_message or "",
+        "updated_at": project.updated_at.isoformat(),
     }
 
 

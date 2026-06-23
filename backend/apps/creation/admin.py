@@ -23,14 +23,13 @@ class ProjectAdmin(admin.ModelAdmin):
         "theme",
         "episode_count",
         "format_variant",
-        "fusion_status",
+        "progress_percent",
         "overall_score",
         "grade",
-        "progress_percent",
         "created_at",
         "completed_at",
     )
-    list_filter = ("fusion_status", "format_variant", "created_at")
+    list_filter = ("format_variant", "created_at")
     search_fields = ("id", "user__id", "theme", "title")
     readonly_fields = (
         "id",

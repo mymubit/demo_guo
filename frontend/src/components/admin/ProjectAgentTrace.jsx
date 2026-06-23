@@ -2,22 +2,123 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { GitBranch, Layers, ShieldCheck, Package, AlertTriangle, Info } from 'lucide-react'
 import ExecutionRunPanel from '@/components/shared/ExecutionRunPanel'
-import AgentTimelineCard from '@/components/admin/AgentTimelineCard'
-import { SubSkillLegend } from '@/components/admin/SubSkillStepBar'
 import { AdminTabBar } from '@/components/admin/AdminUI'
 import ProjectOpsSummary, {
   ProjectVerifyPanel,
 } from '@/components/admin/ProjectOpsSummary'
 import { resolveAgentDisplayName } from '@/utils/agentExecutionLabels'
-import { resolveSkillId } from '@/utils/skillTerm'
 import { admin } from '@/services/api'
 
-const POST_CHAIN_ORDER = ['review', 'polish', 'score', 'marketing', 'insight']
+const DRAMA_EXEC_STATUS = {
+  success: { label: '成功', tone: 'text-green-400 bg-green-500/10 border-green-500/20' },
+  running: { label: '执行中', tone: 'text-blue-400 bg-blue-500/10 border-blue-500/20 animate-pulse' },
+  failed: { label: '失败', tone: 'text-red-400 bg-red-500/10 border-red-500/20' },
+  pending: { label: '待执行', tone: 'text-navy-400 bg-slate-900/40 border-white/5' },
+  skipped: { label: '已跳过', tone: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' },
+}
+
+function DramaBasicFields({ drama }) {
+  if (!drama) return null
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
+      {[
+        ['创作轨道', drama.track_mode_display || drama.track_mode],
+        ['当前阶段', drama.current_stage_display || drama.current_stage],
+        ['完成度', drama.completion_rate != null ? `${drama.completion_rate}%` : '—'],
+        ['交付状态', drama.delivery_status || '—'],
+        ['已完成角色', `${(drama.completed_roles || []).length} 个`],
+        ['Token 消耗', drama.total_tokens_used?.toLocaleString?.() ?? drama.total_tokens_used ?? '—'],
+      ].map(([label, value]) => (
+        <div key={label} className="rounded-xl border border-indigo-500/15 bg-indigo-500/5 px-3 py-2">
+          <p className="text-[10px] text-indigo-300/70">{label}</p>
+          <p className="text-sm text-white mt-0.5">{value ?? '—'}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function DramaTracePanel({ dramaTrace, catalog }) {
+  if (!dramaTrace) return null
+  const phases = dramaTrace.phases || []
+  const timeline = dramaTrace.timeline || []
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-3 text-xs leading-relaxed text-indigo-200/90">
+        <span className="font-medium text-indigo-100">Drama 36 角色轨</span>
+        ：按部门顺序执行 drama.* 角色，产物写入 ProjectFusionArtifact，进度以 DramaProject 为 SSOT。
+        {dramaTrace.track_plan?.label ? ` 当前计划：${dramaTrace.track_plan.label}。` : ''}
+      </div>
+
+      <DramaBasicFields drama={dramaTrace} />
+
+      {phases.length > 0 ? (
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {phases.map((phase) => (
+            <div
+              key={phase.phase}
+              className={`rounded-xl border px-3 py-2 ${
+                phase.is_complete
+                  ? 'border-green-500/30 bg-green-500/5'
+                  : 'border-white/5 bg-slate-900/40'
+              }`}
+            >
+              <p className="text-[10px] text-navy-400">{phase.label}</p>
+              <p className="text-sm text-white mt-0.5">
+                {phase.completed_roles}/{phase.total_roles} 角色
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="rounded-xl border border-white/5 bg-slate-900/40 px-4 py-3">
+        <p className="text-sm text-navy-200 mb-2">角色执行时间线（最新 {timeline.length} 条）</p>
+        {!timeline.length ? (
+          <p className="text-sm text-navy-400 py-4 text-center">尚无角色执行记录</p>
+        ) : (
+          <div className="space-y-2 max-h-[520px] overflow-y-auto">
+            {timeline.map((item) => {
+              const cfg = DRAMA_EXEC_STATUS[item.status] || DRAMA_EXEC_STATUS.pending
+              const name = resolveAgentDisplayName(item.agent_id, catalog)
+              return (
+                <div
+                  key={item.execution_id}
+                  className={`rounded-xl border px-4 py-3 ${cfg.tone}`}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium text-white">{name}</span>
+                    <span className="text-[10px] font-mono text-navy-400">{item.agent_id}</span>
+                    <span className="ml-auto text-xs">{cfg.label}</span>
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-3 text-[10px] text-navy-400">
+                    {item.total_tokens ? <span>{item.total_tokens} tokens</span> : null}
+                    {item.elapsed_seconds != null ? (
+                      <span>{item.elapsed_seconds.toFixed(1)}s</span>
+                    ) : null}
+                    {item.started_at ? (
+                      <span>{new Date(item.started_at).toLocaleString()}</span>
+                    ) : null}
+                  </div>
+                  {item.error_message ? (
+                    <p className="mt-2 text-xs text-red-300/90 line-clamp-2">{item.error_message}</p>
+                  ) : null}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 function ProjectBasicPanel({ traceData }) {
   if (!traceData) return null
   return (
     <div className="sf-console-panel border border-white/5 p-5 space-y-4">
+      {traceData.drama_trace ? <DramaBasicFields drama={traceData.drama_trace} /> : null}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
         {[
           ['题材', traceData.theme],
@@ -200,13 +301,6 @@ const TRACE_TABS = [
   { key: 'verify', label: '原创复核', icon: ShieldCheck },
 ]
 
-export function agentDisplayName(agentKey, catalog, entry) {
-  const id = resolveSkillId(entry) || agentKey
-  if (id === 'drama.ip-adapter' || id === 'adapt') return 'IP改编师'
-  const nodeIndex = Number.isFinite(Number(agentKey)) ? Number(agentKey) : entry?.node_index
-  return resolveAgentDisplayName(id, catalog, nodeIndex)
-}
-
 export function useProjectTrace(projectId) {
   const [catalog, setCatalog] = useState(null)
   const [traceData, setTraceData] = useState(null)
@@ -241,134 +335,6 @@ export function useProjectTrace(projectId) {
   }, [load])
 
   return { catalog, traceData, loading, error, reload: load }
-}
-
-export function ProjectTracePanel({
-  traceData,
-  catalog,
-  traces,
-  latestRuns = {},
-  onInspectRun,
-  compact = false,
-}) {
-  const orderedKeys = (() => {
-    const keys = Object.keys(traces || {})
-    const workspace = (catalog?.workspaceAgents || [])
-      .map((a) => String(a.workspace_index))
-      .filter((k) => keys.includes(k))
-    const adapt = keys.includes('adapt') ? ['adapt'] : []
-    const post = POST_CHAIN_ORDER.filter((k) => keys.includes(k))
-    const rest = keys.filter((k) => !workspace.includes(k) && k !== 'adapt' && !post.includes(k))
-    return [...adapt, ...workspace, ...post, ...rest]
-  })()
-
-  const runLimit = compact ? 3 : 12
-  const hasAdaptMeta = Boolean(traceData.adaptation_meta?.creationEntry)
-  const showAdapt = hasAdaptMeta || traces.adapt
-
-  return (
-    <div className="space-y-4">
-      {traceData?.pipeline_mode ? (
-        <div
-          className={`rounded-xl border px-4 py-3 text-xs leading-relaxed ${
-            traceData.pipeline_mode === 'workspace'
-              ? 'border-white/10 bg-slate-900/40 text-navy-400'
-              : 'border-violet-500/20 bg-violet-500/5 text-violet-200/80'
-          }`}
-        >
-          {traceData.pipeline_mode === 'workspace' ? (
-            <>
-              <span className="font-medium text-navy-200">技能工作台</span>
-              ：主链只执行 brief / structure / character / outline / script。质检、评分、润色、营销、洞察仅在用户主动触发后出现在轨迹中。
-            </>
-          ) : (
-            <>
-              <span className="font-medium text-violet-100">分步掌控</span>
-              ：分步模式同样只覆盖 5 个主链节点，后处理不会自动接入主链。
-            </>
-          )}
-        </div>
-      ) : null}
-
-      <div className="rounded-xl border border-white/5 bg-slate-900/40 px-4 py-3">
-        <p className="text-sm text-navy-200 mb-2">
-          按创作流水线顺序展示每个 Agent 的子技能步骤。绿色=已执行，红色=失败，灰色=跳过，虚线=尚未跑到。
-        </p>
-        <SubSkillLegend />
-      </div>
-
-      {showAdapt ? (
-        <AgentTimelineCard
-          title="改编预处理"
-          subtitle={
-            traceData.adaptation_meta?.creationEntry
-              ? `入口 ${traceData.adaptation_meta.creationEntry}${
-                  traceData.adaptation_meta.referenceWork
-                    ? ` · 参考 ${traceData.adaptation_meta.referenceWork}`
-                    : ''
-                }`
-              : 'adapt'
-          }
-          agentId="drama.ip-adapter"
-          catalog={catalog}
-          executionTrace={(traces['drama.ip-adapter'] || traces.adapt || {}).execution_trace}
-          dbRun={latestRuns['drama.ip-adapter'] || latestRuns.adapt}
-          onInspectRun={onInspectRun}
-        />
-      ) : null}
-
-      {orderedKeys
-        .filter((key) => key !== 'adapt')
-        .map((agentKey) => {
-          const entry = traces[agentKey] || {}
-          const agentId = resolveSkillId(entry) || agentKey
-          const dbRun = latestRuns[agentKey] || latestRuns[resolveSkillId(entry)]
-          const wsAgent = (catalog?.workspaceAgents || []).find(
-            (a) => String(a.workspace_index) === String(agentKey),
-          )
-          const subtitle = wsAgent
-            ? `${wsAgent.name || agentId} · 步骤 ${wsAgent.workspace_index}`
-            : agentId
-
-          return (
-            <AgentTimelineCard
-              key={agentKey}
-              title={agentDisplayName(agentKey, catalog, entry)}
-              subtitle={subtitle}
-              agentId={agentId}
-              catalog={catalog}
-              executionTrace={entry.execution_trace}
-              dbRun={dbRun}
-              onInspectRun={onInspectRun}
-            />
-          )
-        })}
-
-      {!orderedKeys.length && !showAdapt ? (
-        <p className="text-sm text-navy-400 py-8 text-center">该项目尚无 Agent 执行轨迹</p>
-      ) : null}
-
-      {(traceData.execution_runs || []).length > 0 ? (
-        <details className="rounded-xl border border-white/5 bg-slate-900/40">
-          <summary className="cursor-pointer px-4 py-3 text-sm text-white font-medium hover:bg-white/[0.06] rounded-xl">
-            全部执行记录（{traceData.execution_runs.length} 条 DB 记录）
-          </summary>
-          <div className={`px-4 pb-4 space-y-2 ${compact ? 'max-h-[280px] overflow-y-auto' : ''}`}>
-            {traceData.execution_runs.slice(0, runLimit).map((run) => (
-              <button
-                key={run.id}
-                type="button"
-                onClick={() => onInspectRun?.(run.id)}
-                className="w-full text-left rounded-xl hover:ring-1 hover:ring-gold-500/30 transition"
-              >
-                <ExecutionRunPanel run={run} compact catalog={catalog} />
-              </button>
-            ))}
-          </div>
-        </details>
-      ) : null}
-    </div>
-  )
 }
 
 export function RunDetailModal({ runId, onClose }) {
@@ -410,8 +376,7 @@ export function RunDetailModal({ runId, onClose }) {
             <h3 className="text-lg font-semibold text-white">执行详情</h3>
             {detail ? (
               <p className="text-sm text-gold-400/90 mt-1">
-                {resolveAgentDisplayName(resolveSkillId(detail), catalog, detail.node_index)}
-                {detail.node_index != null ? ` · 节点${detail.node_index}` : ''}
+                {resolveAgentDisplayName(detail.agent_id, catalog, detail.node_index)}
               </p>
             ) : null}
             <p className="text-xs text-navy-300 mt-1 font-mono">{runId}</p>
@@ -435,15 +400,7 @@ export function RunDetailModal({ runId, onClose }) {
               <p className="text-sm text-gold-400 mb-2">LLM 用量汇总</p>
               <p className="text-xs text-navy-400 mb-3">
                 {detail.llm_summary?.call_count ?? 0} 次 ·{' '}
-                {(detail.llm_summary?.total_tokens ?? 0).toLocaleString()} Token ·{' '}
-                入 {(detail.llm_summary?.prompt_tokens ?? 0).toLocaleString()} / 出{' '}
-                {(detail.llm_summary?.completion_tokens ?? 0).toLocaleString()} ·{' '}
-                入 ¥{Number(detail.llm_summary?.estimated_input_cost_yuan || 0).toFixed(4)} / 出 ¥
-                {Number(detail.llm_summary?.estimated_output_cost_yuan || 0).toFixed(4)} · 合计 ¥
-                {Number(detail.llm_summary?.estimated_cost_yuan || 0).toFixed(4)}
-              </p>
-              <p className="text-[10px] text-navy-500 mb-2">
-                完整 Prompt / 响应见上方「LLM 调用明细」各 sub_skill，此处仅 Token 与费用。
+                {(detail.llm_summary?.total_tokens ?? 0).toLocaleString()} Token
               </p>
               {(detail.llm_usage || []).length ? (
                 <ul className="space-y-1 text-xs">
@@ -456,9 +413,7 @@ export function RunDetailModal({ runId, onClose }) {
                         {row.sub_skill_id || row.source_key || '—'} · {row.model_name}
                       </span>
                       <span className="text-navy-400">
-                        入 {row.prompt_tokens ?? 0} / 出 {row.completion_tokens ?? 0} · 入 ¥
-                        {Number(row.estimated_input_cost_yuan || 0).toFixed(4)} / 出 ¥
-                        {Number(row.estimated_output_cost_yuan || 0).toFixed(4)}
+                        入 {row.prompt_tokens ?? 0} / 出 {row.completion_tokens ?? 0}
                       </span>
                     </li>
                   ))}
@@ -502,7 +457,9 @@ export function ProjectAgentTraceView({
     return <p className="text-sm text-navy-400">暂无轨迹数据</p>
   }
 
-  const traces = traceData.execution_traces || {}
+  const dramaRuns = (traceData.execution_runs || []).filter(
+    (run) => String(run.agent_id || '').startsWith('drama.'),
+  )
 
   return (
     <div className="space-y-4">
@@ -523,19 +480,18 @@ export function ProjectAgentTraceView({
       {tab === 'basic' && !compact ? <ProjectBasicPanel traceData={traceData} /> : null}
 
       {tab === 'timeline' || compact ? (
-        <ProjectTracePanel
-          traceData={traceData}
-          catalog={catalog}
-          traces={traces}
-          latestRuns={traceData.latest_execution_runs || {}}
-          onInspectRun={setInspectRunId}
-          compact={compact}
-        />
+        traceData.drama_trace ? (
+          <DramaTracePanel dramaTrace={traceData.drama_trace} catalog={catalog} />
+        ) : (
+          <div className="rounded-xl border border-white/5 bg-slate-900/40 px-4 py-8 text-center text-sm text-navy-400">
+            暂无 Drama 执行轨迹。请在 C 端工作台执行 drama.* 角色。
+          </div>
+        )
       ) : null}
 
       {tab === 'runs' && !compact ? (
         <ProjectRunsPanel
-          runs={traceData.execution_runs || []}
+          runs={dramaRuns}
           catalog={catalog}
           onInspectRun={setInspectRunId}
         />

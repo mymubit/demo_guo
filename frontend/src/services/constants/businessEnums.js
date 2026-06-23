@@ -21,14 +21,17 @@ export const CREATION_STATUS_TEXT = {
   [PROJECT_STATUS.FAILED]: '生成失败',
 }
 
-export const FUSION_STATUS = {
-  DRAFT: 'draft',
-  PLANNING: 'planning',
+export const DRAMA_STAGE = {
+  STRATEGY: 'strategy',
+  WORLDBUILDING: 'worldbuilding',
+  PLOT_DESIGN: 'plot_design',
   WRITING: 'writing',
-  REVIEWING: 'reviewing',
-  SCORING: 'scoring',
+  REVIEW: 'review',
+  POLISH: 'polish',
+  PRODUCTION: 'production',
+  COMPLIANCE: 'compliance',
+  DELIVERED: 'delivered',
   READY: 'ready',
-  BLOCKED: 'blocked',
 }
 
 export const ORDER_STATUS = {

@@ -720,8 +720,7 @@ class IndependentAgentService:
             run_params=run_params,
             overwrite_mode=cls._resolve_overwrite_mode(agent, run_params),
         )
-        locked_project.fusion_status = Project.FUSION_WRITING
-        locked_project.save(update_fields=["fusion_status", "updated_at"])
+        locked_project.save(update_fields=["updated_at"])
         return EnqueueRunResult(run=run, created_new_run=True, should_enqueue=True)
 
     @classmethod
@@ -802,37 +801,16 @@ class IndependentAgentService:
         return run
 
     @staticmethod
-    def _derive_fusion_status(project: Project) -> str:
-        """根据产物与运行态推导 fusion_status。"""
-        from apps.creation.project_execution import derive_execution_status
-
-        status = derive_execution_status(project)
-        if status == Project.STATUS_FAILED:
-            return Project.FUSION_BLOCKED
-        if get_artifact(project, "episode_scripts"):
-            return Project.FUSION_READY
-        if status == Project.STATUS_RUNNING:
-            latest = (
-                AgentExecutionRun.objects.filter(project=project)
-                .order_by("-started_at")
-                .values_list("agent_id", flat=True)
-                .first()
-            )
-            # drama.* 新体系状态推导
-            if latest in ("drama.quality-reporter", "drama.script-reviewer", "drama.emotion-auditor"):
-                return Project.FUSION_REVIEWING
-            if latest in ("drama.delivery-packer", "drama.compliance-guard"):
-                return Project.FUSION_SCORING
-            if get_artifact(project, "series_outline"):
-                return Project.FUSION_WRITING
-            return Project.FUSION_PLANNING
-        if get_artifact(project, "series_outline") or get_artifact(project, "structure_plan"):
-            return Project.FUSION_PLANNING
-        return Project.FUSION_DRAFT
-
-    @staticmethod
     def _compute_progress_percent(project: Project) -> int:
-        """按核心产物完成度估算进度（0-100）。"""
+        """按 Drama 或核心产物完成度估算进度（0-100）。"""
+        try:
+            from apps.drama.progress_service import DramaProjectProgressService
+
+            drama = DramaProjectProgressService.find_drama_project(project.id)
+            if drama:
+                return int(drama.get_completion_rate())
+        except Exception:  # noqa: BLE001
+            pass
         if get_artifact(project, "episode_scripts"):
             return 100
         milestones = [
@@ -849,10 +827,9 @@ class IndependentAgentService:
         from apps.creation.project_execution import derive_execution_status
 
         exec_status = derive_execution_status(project)
-        fusion_status = cls._derive_fusion_status(project)
         progress_percent = cls._compute_progress_percent(project)
-        fields = ["fusion_status", "progress_percent", "updated_at"]
-        project.fusion_status = fusion_status
+
+        fields = ["progress_percent", "updated_at"]
         project.progress_percent = progress_percent
         if exec_status == Project.STATUS_COMPLETED and not project.completed_at:
             project.completed_at = timezone.now()

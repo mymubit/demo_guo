@@ -12,6 +12,8 @@ from apps.creation.artifact_service import save_artifact
 from apps.creation.models import AgentExecutionRun, Project
 from apps.skill.models import LlmProvider
 
+from apps.creation.tests.test_helpers import grant_test_coins
+
 User = get_user_model()
 
 
@@ -32,8 +34,9 @@ class EnqueueConcurrencyTests(TransactionTestCase):
 
     def setUp(self):
         AgentDefinitionService.ensure_defaults()
-        _attach_test_llm_provider("brief")
+        _attach_test_llm_provider("drama.topic-planner")
         self.user = User.objects.create_user(phone="13900008901", password="test-pass-123")
+        grant_test_coins(self.user)
         self.project = Project.objects.create(
             user=self.user,
             title="concurrency-test",
@@ -56,7 +59,7 @@ class EnqueueConcurrencyTests(TransactionTestCase):
             try:
                 barrier.wait(timeout=5)
                 results.append(
-                    IndependentAgentService.enqueue_run(self.project, self.user, "brief", {})
+                    IndependentAgentService.enqueue_run(self.project, self.user, "drama.topic-planner", {})
                 )
             except Exception as exc:  # noqa: BLE001
                 errors.append(exc)

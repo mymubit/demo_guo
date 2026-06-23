@@ -45,6 +45,17 @@ def _project_ops_row(
     user = project.user
     exec_summary = execution_summary or {}
     status, status_text = resolve_admin_status(project)
+    drama_summary = None
+    try:
+        from apps.drama.progress_service import DramaProjectProgressService
+
+        drama = DramaProjectProgressService.find_drama_project(project.id)
+        if drama:
+            drama_summary = DramaProjectProgressService.build_admin_summary(drama)
+            if drama.get_completion_rate() is not None:
+                exec_summary = {**exec_summary, "drama_completion_rate": drama.get_completion_rate()}
+    except Exception:  # noqa: BLE001
+        drama_summary = None
     row = {
         "project_id": str(project.id),
         "title": (project.title or project.theme or "未命名")[:200],
@@ -74,17 +85,17 @@ def _project_ops_row(
         "last_edited_at": project.last_edited_at.isoformat() if getattr(project, "last_edited_at", None) else "",
         "abandoned_at": project.abandoned_at.isoformat() if getattr(project, "abandoned_at", None) else "",
         "is_quality_sampled": getattr(project, "is_quality_sampled", False) or False,
+        "drama": drama_summary,
     }
     return row
 
 
 def build_creation_ops_alerts() -> Dict[str, int]:
-    """Dashboard / 创作中心待办计数（fusion_status SSOT）。"""
-    from apps.creation.models import AgentExecutionRun
+    """Dashboard / 创作中心待办计数（Drama SSOT）。"""
+    from apps.drama.models import DramaRoleExecution
+    from apps.drama.progress_service import DramaProjectProgressService
 
-    failed_project_ids = AgentExecutionRun.objects.filter(
-        status=AgentExecutionRun.STATUS_FAILED
-    ).values("project_id")
+    facets = DramaProjectProgressService.build_admin_facets()
     feedback_open = 0
     try:
         from apps.operations.services import feedback_summary
@@ -100,19 +111,10 @@ def build_creation_ops_alerts() -> Dict[str, int]:
     except Exception:  # noqa: BLE001
         alert_open = 0
     return {
-        "running": Project.objects.filter(
-            fusion_status__in=(
-                Project.FUSION_WRITING,
-                Project.FUSION_PLANNING,
-                Project.FUSION_SCORING,
-            )
+        **facets,
+        "drama_running": DramaRoleExecution.objects.filter(
+            status=DramaRoleExecution.Status.RUNNING
         ).count(),
-        "failed": Project.objects.filter(fusion_status=Project.FUSION_BLOCKED).count(),
-        "awaiting": Project.objects.filter(fusion_status=Project.FUSION_REVIEWING).count(),
-        "pending": Project.objects.filter(
-            fusion_status__in=(Project.FUSION_DRAFT, "")
-        ).count(),
-        "has_failed_run": Project.objects.filter(id__in=failed_project_ids).count(),
         "feedback_open": feedback_open,
         "alert_open": alert_open,
     }
@@ -122,12 +124,44 @@ def build_agent_ops_dashboard(*, stats_limit: int = 200) -> Dict[str, Any]:
     """Dashboard Agent 运营摘要。"""
     from apps.agent.runtime import get_agent_registry
     from apps.creation.monitoring.execution_run_service import AgentExecutionRunService
+    from apps.drama.models import DramaProject
+    from apps.drama.progress_service import DramaProjectProgressService
 
     registry = get_agent_registry()
     execution = AgentExecutionRunService.dashboard_payload(days=30)
+    drama = DramaProjectProgressService.dashboard_payload(days=30)
+    execution["drama"] = drama
+
+    # Drama 角色轨优先作为 Dashboard Agent 统计源
+    drama_by_role = drama.get("by_role") or []
+    if drama_by_role:
+        execution["agent_stats"] = [
+            {
+                "agent_id": row["agent_id"],
+                "run_count": row["run_count"],
+                "failed_count": row["failed_count"],
+                "failure_rate": row.get("failure_rate", 0),
+                "avg_duration_ms": row.get("avg_duration_ms", 0),
+            }
+            for row in drama_by_role
+        ]
+    if drama.get("runs_7d"):
+        execution["runs_7d"] = drama["runs_7d"]
+
+    drama_today = (drama.get("summary") or {}).get("today") or {}
+    if drama_today.get("run_count"):
+        execution.setdefault("summary", {})
+        execution["summary"]["today"] = {
+            **(execution.get("summary") or {}).get("today", {}),
+            **drama_today,
+            "source": "drama",
+        }
+
     return {
-        "registry_version": (registry.get("_meta") or {}).get("version") or "",
-        "workspace_projects": Project.objects.filter(pipeline_mode=Project.MODE_WORKSPACE).count(),
+        "registry_version": (registry.get("_meta") or {}).get("version") or "drama_skills",
+        "workspace_projects": DramaProject.objects.count(),
+        "drama_projects": drama.get("drama_project_count", 0),
+        "drama_running_projects": drama.get("active_project_count", 0),
         "from_reference_projects": Project.objects.filter(creation_entry="from-reference").count(),
         "execution": execution,
     }
@@ -140,7 +174,7 @@ class AdminCreationProjectListView(APIView):
 
     def get(self, request):
         status_filter = (request.query_params.get("status") or "").strip()
-        pipeline_mode = (request.query_params.get("pipeline_mode") or "").strip()
+        track_mode = (request.query_params.get("track_mode") or "").strip()
         creation_entry = (request.query_params.get("creation_entry") or "").strip()
         keyword = (request.query_params.get("keyword") or "").strip()
         has_failed_run = (request.query_params.get("has_failed_run") or "").strip().lower() in (
@@ -158,15 +192,14 @@ class AdminCreationProjectListView(APIView):
             page_size = 20
 
         qs = Project.objects.select_related("user").order_by("-updated_at")
-        fusion_status_set = set(dict(Project.FUSION_STATUS_CHOICES))
-        if status_filter in fusion_status_set:
-            qs = qs.filter(fusion_status=status_filter)
-        elif status_filter in dict(Project.STATUS_CHOICES):
-            from apps.creation.project_execution import filter_projects_by_execution_status
+        from apps.drama.progress_service import DramaProjectProgressService
 
-            qs = filter_projects_by_execution_status(qs, status_filter)
-        if pipeline_mode in dict(Project.PIPELINE_MODE_CHOICES):
-            qs = qs.filter(pipeline_mode=pipeline_mode)
+        qs = DramaProjectProgressService.filter_creation_projects(
+            qs,
+            status_filter=status_filter,
+            track_mode=track_mode,
+            has_failed_run=has_failed_run,
+        )
         if creation_entry:
             qs = qs.filter(creation_entry=creation_entry)
         if keyword:
@@ -175,14 +208,6 @@ class AdminCreationProjectListView(APIView):
                 | Q(theme__icontains=keyword)
                 | Q(core_idea__icontains=keyword)
                 | Q(user__phone__icontains=keyword)
-            )
-        if has_failed_run:
-            from apps.creation.models import AgentExecutionRun
-
-            qs = qs.filter(
-                id__in=AgentExecutionRun.objects.filter(
-                    status=AgentExecutionRun.STATUS_FAILED
-                ).values("project_id")
             )
 
         total = qs.count()
@@ -212,28 +237,7 @@ class AdminCreationProjectListView(APIView):
         }
         facets = None
         if (request.query_params.get("facets") or "").strip().lower() in ("1", "true", "yes"):
-            from apps.creation.models import AgentExecutionRun
-
-            failed_project_ids = AgentExecutionRun.objects.filter(
-                status=AgentExecutionRun.STATUS_FAILED
-            ).values("project_id")
-            facets = {
-                "all": Project.objects.count(),
-                "running": Project.objects.filter(
-                    fusion_status__in=(
-                        Project.FUSION_WRITING,
-                        Project.FUSION_PLANNING,
-                        Project.FUSION_SCORING,
-                    )
-                ).count(),
-                "failed": Project.objects.filter(fusion_status=Project.FUSION_BLOCKED).count(),
-                "pending": Project.objects.filter(
-                    fusion_status__in=(Project.FUSION_DRAFT, "")
-                ).count(),
-                "awaiting": Project.objects.filter(fusion_status=Project.FUSION_REVIEWING).count(),
-                "workspace": Project.objects.filter(pipeline_mode=Project.MODE_WORKSPACE).count(),
-                "has_failed_run": Project.objects.filter(id__in=failed_project_ids).count(),
-            }
+            facets = DramaProjectProgressService.build_admin_facets()
 
         response = api_ok(items)
         response.data["pagination"] = pagination

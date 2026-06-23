@@ -69,8 +69,11 @@ def get_workspace_catalog(project_id: str, user_id: int) -> Dict[str, Any]:
     """
     try:
         from apps.drama.models import DramaProject
+        from django.db.models import Q
+
         project = DramaProject.objects.filter(
-            project_id=project_id, user_id=user_id
+            Q(id=project_id) | Q(project_id=project_id),
+            user_id=user_id,
         ).first()
 
         track_mode = project.track_mode if project else "fast"

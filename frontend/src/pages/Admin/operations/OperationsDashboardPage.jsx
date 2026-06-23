@@ -38,7 +38,7 @@ const SLO_ICONS = {
 
 const SLO_DESCRIPTIONS = {
   submit_5xx: '5 分钟内创作提交接口 5xx 数量；超过 5 即 P0 告警',
-  zombie_workflow: '15 分钟前启动仍未结束的 workflow 实例（堆积排查）',
+  zombie_workflow: '15 分钟前启动仍未结束的 Agent 运行（堆积排查）',
   llm_error_rate: '5 分钟内 LLM 业务错误率；≥15% 视为 P0',
   coin_spend_anomaly: '与昨日同时段扣费差异；波动 50% 触发 P1 告警',
   dashboard_cache: '5 分钟内 Dashboard 平均耗时；≥800ms 视为 P2',

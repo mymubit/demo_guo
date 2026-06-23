@@ -25,8 +25,29 @@ def _latest_execution_run_summary(project: Project) -> dict | None:
     return AgentExecutionRunService.compact_run_summary(run)
 
 
+def _drama_progress_fields(project: Project) -> dict:
+    from apps.drama.progress_service import DramaProjectProgressService
+
+    drama = DramaProjectProgressService.find_drama_project(project.id)
+    if not drama:
+        return {
+            "current_stage": "",
+            "current_stage_text": "",
+            "track_mode": "",
+            "delivery_status": "",
+            "drama_project_id": "",
+        }
+    return {
+        "current_stage": drama.current_stage,
+        "current_stage_text": DramaProjectProgressService.drama_stage_label(drama.current_stage),
+        "track_mode": drama.track_mode,
+        "delivery_status": drama.delivery_status or "",
+        "drama_project_id": str(drama.id),
+    }
+
+
 def get_progress(project_id: str, user) -> dict:
-    """查询创作进度（项目状态 + 最近一次 Agent 运行摘要）。"""
+    """查询创作进度（项目状态 + Drama 阶段 + 最近一次 Agent 运行摘要）。"""
     project = _get_user_project(project_id, user)
 
     rendered_progress_html = _render_progress_html(project)
@@ -68,12 +89,7 @@ def get_progress(project_id: str, user) -> dict:
     return {
         "status": exec_status,
         "status_text": dict(Project.STATUS_CHOICES).get(exec_status, exec_status),
-        "fusion_status": project.fusion_status or "",
-        "fusion_status_text": (
-            dict(Project.FUSION_STATUS_CHOICES).get(project.fusion_status, "")
-            if project.fusion_status
-            else ""
-        ),
+        **_drama_progress_fields(project),
         "overall_score": project.overall_score,
         "grade": project.grade,
         "ready_at": project.ready_at,

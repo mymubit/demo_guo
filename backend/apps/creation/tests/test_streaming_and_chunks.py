@@ -5,7 +5,8 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from apps.creation.models import Project, ProjectChunk
+from apps.creation.artifact_service import save_artifact
+from apps.creation.models import Project
 from apps.skill.skills.streaming_json_parser import IncrementalJsonArrayParser, extract_episode_number
 
 User = get_user_model()
@@ -54,10 +55,9 @@ class ProjectAgentNotesApiTests(TestCase):
             user=self.user,
             title="notes-test",
             theme="overbearing-ceo",
-            core_idea="测试记忆",
+            core_idea="test memory",
             episode_count=10,
             format_variant="B",
-            fusion_status=Project.FUSION_DRAFT,
         )
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
@@ -66,16 +66,16 @@ class ProjectAgentNotesApiTests(TestCase):
         url = f"/api/creation/projects/{self.project.id}/agent-notes/"
         resp = self.client.patch(
             url,
-            {"agent_notes": {"rejects": ["狗血反转"], "style_preferences": ["快节奏"]}},
+            {"agent_notes": {"rejects": ["no-cliche"], "style_preferences": ["fast-pace"]}},
             format="json",
         )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data["code"], 0)
         self.project.refresh_from_db()
-        self.assertEqual(self.project.agent_notes.get("rejects"), ["狗血反转"])
+        self.assertEqual(self.project.agent_notes.get("rejects"), ["no-cliche"])
 
         get_resp = self.client.get(url)
-        self.assertEqual(get_resp.data["data"]["agent_notes"]["style_preferences"], ["快节奏"])
+        self.assertEqual(get_resp.data["data"]["agent_notes"]["style_preferences"], ["fast-pace"])
 
 
 class ProjectChunksApiTests(TestCase):
@@ -85,16 +85,14 @@ class ProjectChunksApiTests(TestCase):
             user=self.user,
             title="chunk-test",
             theme="overbearing-ceo",
-            core_idea="测试分片",
+            core_idea="chunk test",
             episode_count=10,
             format_variant="B",
-            fusion_status=Project.FUSION_DRAFT,
         )
-        ProjectChunk.objects.create(
-            project=self.project,
-            kind="episode_scripts",
-            index=1,
-            data={"episodeNumber": 1, "body": "第一集"},
+        save_artifact(
+            self.project,
+            "episode_scripts",
+            {"episodes": [{"episodeNumber": 1, "body": "episode 1"}]},
         )
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
@@ -105,5 +103,4 @@ class ProjectChunksApiTests(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data["code"], 0)
         self.assertEqual(resp.data["data"]["total"], 1)
-        self.assertEqual(resp.data["data"]["last_episode_index"], 1)
-        self.assertEqual(resp.data["data"]["items"][0]["index"], 1)
+        self.assertEqual(resp.data["data"]["items"][0]["episodeNumber"], 1)

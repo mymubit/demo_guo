@@ -11,6 +11,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from apps.billing.services import BillingService
+from apps.creation.agent_runtime.agent_billing import resolve_coin_cost
 
 from ..artifact_service import get_artifact, save_artifact
 from ..models import Project
@@ -442,7 +443,7 @@ def build_editor_view(project: Project, node_index: int, *, read_only: bool = Fa
                 episode_slots.append(_outline_episode_slot(n, filled=False))
         episode_slots.sort(key=lambda e: e["episodeNumber"])
         framework_ready = stage_rough_outline_ready(payload) or _outline_framework_ready(payload)
-        node_cost = BillingService.get_node_coin_cost(4)
+        node_cost = resolve_coin_cost("drama.plot-architect")
         next_start = 1
         while next_start in filled_nums and next_start <= total_eps:
             next_start += 1
@@ -536,7 +537,7 @@ def build_editor_view(project: Project, node_index: int, *, read_only: bool = Fa
                 )
             )
         batch = max(1, int(getattr(settings, "FUSION_LLM_EPISODE_BATCH", 2)))
-        node_cost = BillingService.get_node_coin_cost(5)
+        node_cost = resolve_coin_cost("drama.script-writer")
         generated = len(episodes)
         next_start = 1
         if episodes:
@@ -975,7 +976,7 @@ def compute_outline_batch_range(
     if from_episode > to_episode:
         raise ValueError("无效的集数范围")
 
-    cost = BillingService.get_node_coin_cost(4)
+    cost = resolve_coin_cost("drama.plot-architect")
     return from_episode, to_episode, cost
 
 
@@ -993,7 +994,7 @@ def compute_outline_fill_all_range(project: Project) -> Tuple[int, int, int]:
         start += 1
     if start > total:
         raise ValueError("全部集纲已生成完毕")
-    cost = BillingService.get_node_coin_cost(4)
+    cost = resolve_coin_cost("drama.plot-architect")
     return start, total, cost
 
 
@@ -1034,7 +1035,7 @@ def compute_script_batch_range(
         raise ValueError("无效的集数范围")
 
     count = to_episode - from_episode + 1
-    unit = BillingService.get_node_coin_cost(5)
+    unit = resolve_coin_cost("drama.script-writer")
     cost = unit
     return from_episode, to_episode, cost
 

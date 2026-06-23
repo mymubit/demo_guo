@@ -168,7 +168,7 @@ def run_character_gate(payload: dict) -> Dict[str, Any]:
 
 
 def _episode_texts(payload: dict) -> List[tuple[int, str]]:
-    from ..fusion.fusion_pipeline import scripts_result_to_markdown
+    from ..script_format import scripts_result_to_markdown
 
     rows: List[tuple[int, str]] = []
     merged = scripts_result_to_markdown(payload)

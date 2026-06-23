@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
   getDramaProject,
   getDramaRoles,
@@ -8,6 +9,7 @@ import {
   runRole,
   getEpisodeList,
 } from '../../services/drama';
+import DramaPresentation from '../../components/drama/presentation/DramaPresentation';
 
 const DEPT_LABELS = {
   strategy: '战略选题部',
@@ -48,6 +50,7 @@ export default function WorkspacePage() {
     queryFn: () => getDramaProject(projectId),
   });
   const project = projectRes?.data || projectRes;
+  const project = projectRes?.id ? projectRes : projectRes?.data;
 
   const { data: progressRes } = useQuery({
     queryKey: ['drama-progress', projectId],
@@ -55,6 +58,15 @@ export default function WorkspacePage() {
     refetchInterval: 5000,
   });
   const progress = progressRes?.data;
+    refetchInterval: (query) => {
+      const roles = query.state.data?.roles || query.state.data?.data?.roles || [];
+      const hasRunning = roles.some(
+        (r) => r.execution?.status === 'running' || r.execution?.status === 'pending',
+      );
+      return hasRunning ? 2000 : 5000;
+    },
+  });
+  const progress = progressRes?.roles ? progressRes : progressRes?.data;
 
   const { data: rolesRes } = useQuery({
     queryKey: ['drama-roles'],
@@ -70,6 +82,7 @@ export default function WorkspacePage() {
   });
   const episodeProgress = progress?.episode_progress;
   const completedEpisodes = episodesRes?.data?.completed_episodes || episodeProgress?.completed || 0;
+  const departments = rolesRes?.departments || rolesRes?.data?.departments || [];
 
   const runMut = useMutation({
     mutationFn: ({ projId, roleId, options = {} }) => runRole(projId, roleId, options),
@@ -137,6 +150,12 @@ export default function WorkspacePage() {
             <span className={project.track_mode === 'fast' ? 'text-indigo-600' : 'text-purple-600'}>
               {project.track_mode === 'fast' ? '⚡快速通道' : '🎬专家通道'}
             </span>
+            {progress?.current_stage_display && (
+              <>
+                <span>·</span>
+                <span className="text-gray-600">{progress.current_stage_display}</span>
+              </>
+            )}
           </div>
           {/* 角色进度 */}
           <div className="mb-2">
@@ -231,6 +250,8 @@ export default function WorkspacePage() {
             projectId={projectId}
             roleId={selectedRole}
             allRoles={allRoles}
+            departments={departments}
+            roleProgress={roleStatusMap[selectedRole]}
             onRun={handleRunRole}
             runLoading={runMut.isPending && runMut.variables?.roleId === selectedRole}
             completedSet={completedSet}
@@ -639,6 +660,55 @@ function RoleDetailPanel({ projectId, roleId, allRoles, onRun, runLoading, compl
         ) : (
           <div className="text-center py-8 text-sm text-gray-400">
             点击「执行此角色」后，输出内容将在此实时流式显示
+      {/* 执行结果 */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium text-gray-700">执行输出</h3>
+          {statusCfg && (
+            <span className={`text-xs px-2 py-0.5 rounded ${statusCfg.color}`}>
+              {statusCfg.icon} {statusCfg.label}
+            </span>
+          )}
+        </div>
+
+        {isRunning && (
+          <div className="flex items-center gap-3 py-6 text-blue-600 text-sm">
+            <span className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full" />
+            AI 正在生成内容，请稍候…
+          </div>
+        )}
+
+        {!isRunning && execStatus === 'failed' && (
+          <div className="rounded-lg bg-red-50 border border-red-100 p-4 text-sm text-red-700">
+            <p className="font-medium mb-1">执行失败</p>
+            <p className="text-red-600 whitespace-pre-wrap">{execution?.error_message || '未知错误'}</p>
+          </div>
+        )}
+
+        {!isRunning && execStatus === 'success' && outputKeys.length > 0 && (
+          <div className="space-y-4">
+            {execution?.elapsed_seconds != null && (
+              <p className="text-xs text-gray-400">
+                耗时 {execution.elapsed_seconds.toFixed(1)}s
+                {execution.total_tokens ? ` · ${execution.total_tokens} tokens` : ''}
+              </p>
+            )}
+            <DramaPresentation
+              views={outputViews}
+              rawArtifacts={outputArtifacts}
+            />
+          </div>
+        )}
+
+        {!isRunning && !execStatus && (
+          <div className="text-center py-8 text-gray-400 text-sm">
+            点击「执行角色」开始生成内容
+          </div>
+        )}
+
+        {!isRunning && execStatus === 'success' && outputKeys.length === 0 && (
+          <div className="text-center py-8 text-gray-400 text-sm">
+            执行已完成，暂无输出产物
           </div>
         )}
       </div>

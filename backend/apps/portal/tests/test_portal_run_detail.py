@@ -24,7 +24,6 @@ class PortalRunDetailSecurityTests(TestCase):
             theme="sweet-pet",
             core_idea="测试 prompt 隐藏",
             episode_count=10,
-            fusion_status=Project.FUSION_DRAFT,
         )
         self.run = AgentExecutionRun.objects.create(
             project=self.project,

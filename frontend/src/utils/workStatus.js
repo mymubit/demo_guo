@@ -1,13 +1,16 @@
-/** C 端「我的作品」状态展示 — 与后台 Project.status 对齐 */
+/** C 端「我的作品」状态展示 — Drama 阶段对齐 */
 
-export const FUSION_STATUS_LABELS = {
-  draft: '立项中',
-  planning: '策划中',
-  writing: '撰写中',
-  reviewing: '质检中',
-  scoring: '评分中',
-  ready: '可发布',
-  blocked: '需修改',
+export const DRAMA_STAGE_LABELS = {
+  strategy: '战略选题',
+  worldbuilding: '世界构建',
+  plot_design: '剧情设计',
+  writing: '剧本创作',
+  review: '评审质控',
+  polish: '修改润色',
+  production: '制作宣发',
+  compliance: '合规审查',
+  delivered: '已交付',
+  ready: '可交付',
 }
 
 /** 将 API status 规范为卡片用 key */
@@ -18,7 +21,7 @@ export function normalizeWorkStatus(raw, work = {}) {
   if (raw === 'failed') return 'failed'
   if (raw === 'completed') return 'completed'
   if (raw === 'pending') {
-    if (work.pipeline_mode === 'workspace' && (progress > 0 || work.has_scripts)) {
+    if (progress > 0 || work.has_scripts) {
       return 'generating'
     }
     return 'draft'
@@ -73,11 +76,12 @@ export function getWorkStatusMeta(statusKey, work = {}) {
 
   if (key === 'generating' && progress > 0 && progress < 100) {
     hint = `已完成约 ${progress}%`
-  } else if (key === 'generating' && work.fusion_status) {
-    const fusionLabel = FUSION_STATUS_LABELS[work.fusion_status]
-    if (fusionLabel) hint = fusionLabel
-  } else if (key === 'draft' && work.pipeline_mode === 'workspace') {
-    hint = '点击进入工作台，从步骤 1 开始创作'
+  } else if (key === 'generating') {
+    const stage = work.current_stage || work.drama?.current_stage
+    const stageLabel = stage ? DRAMA_STAGE_LABELS[stage] : ''
+    if (stageLabel) hint = stageLabel
+  } else if (key === 'draft') {
+    hint = '点击进入 Drama 工作台开始创作'
   }
 
   return { ...base, key, progress, hint }

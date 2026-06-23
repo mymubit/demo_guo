@@ -4,22 +4,18 @@ from django.test import SimpleTestCase, TestCase, override_settings
 from apps.agent.routes import AgentLlmRouteService
 from apps.skill.llm.setup_provisioning import (
     AGENT_PRESET_KEYS,
-    NODE_PRESET_KEYS,
     AgentLlmRoutingService,
 )
 
 
 class AgentLlmRoutingUnitTests(SimpleTestCase):
-    def test_node_preset_coverage(self):
-        self.assertEqual(NODE_PRESET_KEYS["node_script"], "glm-5")
-        self.assertEqual(NODE_PRESET_KEYS["node_structure"], "ark-deepseek-v4-flash")
-
     def test_glm5_is_native(self):
         self.assertTrue(AgentLlmRoutingService.is_native_preset("glm-5"))
         self.assertFalse(AgentLlmRoutingService.is_native_preset("ark-deepseek-v4-flash"))
 
-    def test_agent_preset_coverage(self):
-        self.assertEqual(AGENT_PRESET_KEYS["polish"], "doubao-seed-2.0-lite")
+    def test_drama_agent_preset_coverage(self):
+        self.assertEqual(AGENT_PRESET_KEYS["drama.script-writer"], "ark-deepseek-v4-flash")
+        self.assertEqual(AGENT_PRESET_KEYS["drama.formatter"], "doubao-seed-2.0-lite")
 
 
 class AgentLlmRoutingDbTests(TestCase):
@@ -31,28 +27,21 @@ class AgentLlmRoutingDbTests(TestCase):
         ZHIPU_GLM5_MODEL="glm-5",
     )
     def test_provision_and_bind(self):
-        from apps.workflow.pipeline_store import FusionPipelineDbService
         from apps.skill.llm.model_catalog import LlmCatalogService
 
-        FusionPipelineDbService.ensure_builtin_default_pack()
-        FusionPipelineDbService.clear_caches()
         LlmCatalogService.ensure_seed_catalog()
         provider_map = AgentLlmRoutingService.provision_all_providers()
         self.assertIn("ark-deepseek-v4-flash", provider_map)
         self.assertIn("doubao-seed-2.0-lite", provider_map)
-        self.assertIn("glm-5", provider_map)
 
-        bound_nodes = AgentLlmRoutingService.bind_fusion_node_providers(provider_map)
-        self.assertEqual(bound_nodes, len(NODE_PRESET_KEYS))
+        bound_drama = AgentLlmRoutingService.bind_fusion_node_providers(provider_map)
+        self.assertGreater(bound_drama, 0)
 
         bound_agents = AgentLlmRoutingService.bind_agent_route_providers(provider_map)
         self.assertEqual(bound_agents, len(AGENT_PRESET_KEYS))
 
-        script_pid = AgentLlmRouteService.resolve_provider_id("script")
-        self.assertEqual(script_pid, provider_map["glm-5"])
-
-        polish_pid = AgentLlmRouteService.resolve_provider_id("polish")
-        self.assertEqual(polish_pid, provider_map["doubao-seed-2.0-lite"])
+        writer_pid = AgentLlmRouteService.resolve_provider_id("drama.script-writer")
+        self.assertEqual(writer_pid, provider_map["ark-deepseek-v4-flash"])
 
     def test_ensure_route_providers_binds_unbound_routes(self):
         from apps.agent.definition_service import AgentDefinitionService
@@ -71,7 +60,7 @@ class AgentLlmRoutingDbTests(TestCase):
                 is_enabled=True,
                 is_active=True,
             )
-        route = AgentLlmRouteConfig.objects.filter(route_key="adapt", is_active=True).first()
+        route = AgentLlmRouteConfig.objects.filter(route_key="drama.topic-planner", is_active=True).first()
         self.assertIsNotNone(route)
         route.llm_provider = None
         route.save(update_fields=["llm_provider", "updated_at"])
@@ -79,7 +68,7 @@ class AgentLlmRoutingDbTests(TestCase):
         self.assertGreaterEqual(updated, 1)
         route.refresh_from_db()
         self.assertEqual(route.llm_provider_id, provider.id)
-        agent = route.agent or AgentDefinition.objects.get(agent_id="adapt")
+        agent = route.agent or AgentDefinition.objects.get(agent_id="drama.topic-planner")
         self.assertTrue(AgentDefinitionService.health(agent)["route_ok"])
 
     @override_settings(

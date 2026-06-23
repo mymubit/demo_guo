@@ -54,10 +54,6 @@ def submit(user, data: dict) -> Tuple[Project, int]:
         global_market=data.get("global_market", "domestic"),
         user_membership=current_membership,
         pipeline_mode=Project.MODE_WORKSPACE,
-        pipeline_pack=None,
-        fusion_status=Project.FUSION_DRAFT,
-        current_node_index=0,
-        total_nodes=0,
         progress_percent=0,
         title=catalog.theme_display_name(data["theme"]) or data["theme"],
         total_duration_minutes=0,
@@ -83,9 +79,6 @@ def submit(user, data: dict) -> Tuple[Project, int]:
         save_artifact(project, "project_brief", brief_payload)
     except Exception as exc:  # noqa: BLE001
         logger.warning("[Creation] 写入 project_brief 产物失败: %s", exc)
-
-    project.fusion_status = Project.FUSION_DRAFT
-    project.save(update_fields=["fusion_status", "updated_at"])
 
     project.rendered_progress_html = _render_progress_html(project)
     project.save(update_fields=["rendered_progress_html"])
