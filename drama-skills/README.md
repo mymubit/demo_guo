@@ -1,228 +1,126 @@
 # Drama Skills — AI短剧创作技能库 v3.0
 
-> **36 个专业角色 · 8 个职能部门 · 双轨模式 · 三平台兼容 · 四轨道自我进化**
-> 
-> 整合三个分支：`ScriptForge`（主库+Tier1规则体系）+ `dramaskill`（节点系统+参考库）+ `dramaskilltrae`（39个专业技能）
+> **12个精简角色 · 8核心+4复合 · 四轴题材矩阵 · 山音方法论深度集成**
 >
-> **快速通道**（8角色）→ **专家通道**（全36角色） · 详见 `drama-master/SKILL.md`
+> v3.0 相比 v2.0 的核心变化：
+> - 从 35 个角色精简到 **12 个**（删除功能重叠的旧角色，整合为 4 个复合角色）
+> - 四轴题材矩阵取代固定选项（情感轴/身份轴/冲突轴/世界观，625+种组合）
+> - 山音三个仓库方法论（横截面/双轨节奏/九列分镜/Ghost-Lie-Flaw）深度落地到每个角色
 
 ---
 
 ## 安装说明
 
-| 平台 | 技能文件夹路径 | 使用方式 |
+| 平台 | 技能文件夹路径 | 触发方式 |
 |------|--------------|---------|
-| **Cursor** | `.cursor/skills/<技能名>/` | `@技能名` 触发 |
-| **Codex** | `.codex/<技能名>/` 或直接引用 | `[角色]` 触发 |
-| **Trae** | 项目根目录技能文件夹 | 自然语言触发 |
+| **Cursor** | `.cursor/skills/<技能名>/` | `@技能名` |
+| **Codex** | `.codex/<技能名>/` | `[角色]` |
+| **Trae** | 项目根目录技能文件夹 | 自然语言 |
 
-**快速安装**：将 `drama-skills/` 下的任意技能文件夹（如 `drama-master/`）直接复制到对应平台的技能目录下即可。
+**快速安装**：将 `drama-master/` 复制到平台技能目录，即可通过 `@drama-master` 访问所有角色。
 
 ---
 
-## 部门架构（27 个角色）
+## 角色架构（12个）
 
 ```
-drama-master（总入口）
-│
-├── dept-01-strategy/      战略选题部（5人）
-│   ├── drama-market-radar          市场雷达（宏观趋势）
-│   ├── drama-formula-analyst       爆款公式师（轻量预估）
-│   ├── drama-topic-planner         选题策划官
-│   ├── drama-project-reviewer      立项复审官
-│   └── drama-lapian-analyst        拉片分析师（具体作品深度分析）
-│
-├── dept-02-worldbuilding/ 世界构建部（3人）
-│   ├── drama-world-architect       世界架构师
-│   ├── drama-character-designer    人设设计师
-│   └── drama-dream-analyst         梦境指标师
-│
-├── dept-03-plot-engine/   剧情引擎部（7人）
-│   ├── drama-emotion-architect     情绪架构师【大纲前·蓝图】← ScriptForge
-│   ├── drama-plot-architect        情节架构师【大纲阶段·结构】
-│   ├── drama-hook-designer         钩子设计师
-│   ├── drama-conflict-engine       冲突引擎师
-│   ├── drama-reversal-master       反转大师
-│   ├── drama-rhythm-designer       节奏设计师【大纲阶段·曲线规划】
-│   └── drama-psychology-architect  心理框架师
-│
-├── dept-04-writing/       创作执行部（4人）
-│   ├── drama-script-writer         剧本执笔师
-│   ├── drama-dialogue-expert       对白专家
-│   ├── drama-scene-director        场景导演【创作阶段镜头指导】
-│   └── drama-ip-adapter            IP改编师（小说改编/原创/衍生）
-│
-├── dept-05-review/        评审质控部（4人）
-│   ├── drama-script-reviewer       审稿官
-│   ├── drama-reader-reviewer       读者视角官
-│   ├── drama-emotion-auditor       情绪审计官
-│   └── drama-quality-reporter      质量报告官
-│
-├── dept-06-polish/        修改润色部（5人）
-│   ├── drama-script-editor         修稿师
-│   ├── drama-pacing-optimizer      节奏优化师（集内时长调整）
-│   ├── drama-formatter             格式规范师
-│   ├── drama-word-governor         字数治理官✨（首集900-1100/其余700-900）
-│   └── drama-style-guardian        风格一致性官✨（防长剧风格漂移）
-│
-├── dept-07-production/    制作宣发部（3人）
-│   ├── drama-visual-producer       视觉生产官
-│   ├── drama-storyboard-director   分镜导演
-│   └── drama-marketing-officer     营销策划官
-│
-└── dept-08-ops/           合规总编室（3人）
-    ├── drama-compliance-guard      合规守卫
-    ├── drama-delivery-packer       交付打包官✨（生成交付包·项目终点）
-    └── drama-evolution-analyst     进化分析师
+⚡ 核心必需（8个，所有项目必须执行）
+◈ 增强复合（4个，按需选用）
+
+⚡ 选题策划官     drama-topic-planner      四轴题材矩阵+横截面理论+戏剧动作公式
+◈ 市场分析师     drama-market-analyst     市场分析+爆款公式+六维拉片（整合4个旧角色）
+⚡ 世界架构师     drama-world-architect    世界观设定
+⚡ 人设设计师     drama-character-designer Want/Need + Ghost/Lie/Flaw + 矛盾性设计
+⚡ 情节架构师     drama-plot-architect     六阶段结构+分集大纲+双轨节奏
+◈ 叙事工程师     drama-narrative-engineer 情绪蓝图+四级钩子+冲突升级+反转体系（整合6个旧角色）
+⚡ 剧本执笔师     drama-script-writer      横截面执行+McKee价值转变+记忆检查点
+⚡ 审稿官        drama-script-reviewer    格式+横截面检验+McKee完整框架+双轨节奏检验
+⚡ 质量报告官    drama-quality-reporter   8维度评分（含扣分点+分集评估）
+◈ 精修大师       drama-polish-master      台词AI腔检测+修稿+格式+字数+风格+九列分镜（整合7个旧角色）
+◈ 制作发行师    drama-production-pack    视觉锚点+分镜+营销+交付+Story-to-Game（整合5个旧角色）
+⚡ 合规守卫       drama-compliance-guard   P0/P1/P2三级合规+九维风险检测
 ```
 
 ---
 
-## 完整创作链路
+## 快速开始
+
+### 快速通道（8步，适合初次创作）
 
 ```
-市场雷达 → 爆款公式师 → 选题策划官
-         ↓
-    立项复审官（通过才继续）
-         ↓
-世界架构师 → 人设设计师 → 梦境指标师
-         ↓
-情节架构师 → 钩子设计师 + 冲突引擎师 + 反转大师 + 节奏设计师 + 心理框架师
-         ↓
-剧本执笔师（对白专家 + 场景导演 协作）
-         ↓
-审稿官 + 读者视角官 + 情绪审计官 → 质量报告官
-         ↓
-[不达标] → 修稿师 → 节奏优化师 → 格式规范师 → 返回审稿官
-[达标]   → 视觉生产官 + 分镜导演 + 营销策划官
-         ↓
-合规守卫（最终把关）
-         ↓
-进化分析师（记录灵感，更新知识库）
+1. @drama-topic-planner  → 输入题材方向（四轴矩阵或创意），获得立项简报
+2. @drama-world-architect → 世界观设定文档
+3. @drama-character-designer → Ghost/Lie/Flaw人物小传
+4. @drama-plot-architect → 分集大纲（双轨节奏标注）
+5. @drama-script-writer episode_range=1-5 → 第1-5集剧本+记忆检查点
+   @drama-script-writer episode_range=6-10 → 第6-10集... （每批5集）
+6. @drama-script-reviewer → 格式+McKee+横截面+节奏全面审查
+7. @drama-quality-reporter → 8维度质量评分报告
+8. @drama-compliance-guard → 合规检测报告
 ```
 
----
-
-## 易混淆角色分工速查
-
-| 组 | 角色 | 时机/定位 |
-|----|------|---------|
-| 情绪三角 | 情绪架构师 | **大纲前**：设计QDN/8节点情绪蓝图 |
-| | 节奏设计师 | **大纲中**：规划EV/ET/TP情绪曲线，双轨标注 |
-| | 情绪审计官 | **剧本后**：检测实际值与蓝图的偏差 |
-| 节奏两层 | 节奏设计师 | 全剧宏观情绪节律（集级别） |
-| | 节奏优化师 | 集内场景时长微调（场景级别）|
-| 镜头两层 | 场景导演 | **创作阶段**：镜头语言指导+AI Prompt |
-| | 分镜导演 | **制作阶段**：正式九列分镜表 |
-| 市场两维 | 市场雷达 | 宏观趋势（哪个题材热/平台偏好） |
-| | 拉片分析师 | 具体作品深度解析（某部剧的6维度）|
-| 梦境两层 | 爆款公式师 | 选题阶段**轻量预估**（概念级）|
-| | 梦境指标师 | 世界+人设完成后**深度检测**（熔断级）|
-
----
-
-## 进化系统（四轨道）
-
-| 轨道 | 触发 | 内容 |
-|------|------|------|
-| **轨道一：技能规则** | 评分低于阈值 | 更新角色SKILL.md → PR审批 |
-| **轨道二：灵感归档** | 创作中随时 | 钩子/反转/对白/结构 → `inspirations/` |
-| **轨道三：外部摄入** | 用户提交内容 | PDF/公众号/GitHub等 → `knowledge/` |
-| **轨道四：新模式** | 拉片/摄入发现 | 全新规律 → 验证后升级为规则 |
-
-**外部内容提交方式**：参见 `INTAKE_PROTOCOL.md`（支持GitHub/PDF/公众号/小红书/Word）
-
-详见 `EVOLUTION_LOG.md` 和 `dept-08-ops/drama-evolution-analyst/SKILL.md`。
-
----
-
-## 网站集成指南
-
-本技能体系设计了清晰的 **输入/输出契约**，可直接映射到网站 API：
+### 专家通道（完整12角色）
 
 ```
-每个技能 SKILL.md 中包含：
-- input_schema: 输入字段定义
-- output_schema: 输出字段定义
-- 调用示例（可直接封装为 API endpoint）
-```
-
-网站搭建建议：
-1. 每个部门对应一个工作面板（workflow stage）
-2. 每个角色对应一个 AI 节点
-3. 角色间数据流向即为 API 调用链
-4. `quality-reporter` 的 JSON 输出可直接用于前端评分展示
-
-参考：ScriptForge 后端的 Agent 编排模式（brief→structure→character→outline→script→review→score 链路）
-
----
-
-## 文件结构说明
-
-```
-drama-skills/
-├── README.md                 本文件
-├── EVOLUTION_LOG.md          四轨道进化日志
-├── INTAKE_PROTOCOL.md        外部内容摄入协议
-├── drama-master/             总入口技能
-├── drama-intake/             外部内容摄入器
-│
-├── dept-01-strategy/         战略选题部（5人）
-│   └── drama-lapian-analyst/ 拉片分析师 ← dramaskill node-9
-├── dept-02-worldbuilding/    世界构建部（3人）
-├── dept-03-plot-engine/      剧情引擎部（7人）
-│   └── drama-emotion-architect/ 情绪架构师 ← ScriptForge
-├── dept-04-writing/          创作执行部（3人）
-├── dept-05-review/           评审质控部（4人）
-├── dept-06-polish/           修改润色部（3人）
-├── dept-07-production/       制作宣发部（3人）
-└── dept-08-ops/              合规总编室（2人）
-│
-├── inspirations/
-│   ├── hooks.md              钩子灵感库（含预置示例）
-│   ├── reversals.md          反转灵感库（含预置示例）
-│   ├── dialogues.md          金句对白库（含预置示例）
-│   ├── structures.md         结构创新库（含预置示例）
-│   └── new-patterns.md       新模式发现库（待填充）
-│
-└── knowledge/
-    ├── market-insights.md    市场洞察知识库（来自外部摄入）
-    └── knowledge-sections.md ScriptForge Tier1规则区块索引
+选题前：@drama-market-analyst → 市场分析+爆款评估+拉片研究
+大纲后：@drama-narrative-engineer → 叙事深度强化
+剧本后：@drama-polish-master → 一站式精修（台词/格式/分镜）
+定稿后：@drama-production-pack → 全套制作发行物料
 ```
 
 ---
 
-## 三分支整合说明
+## 四轴题材矩阵
 
-### ScriptForge（主库）贡献
-- Tier1知识区块体系（17个区块，见 `knowledge/knowledge-sections.md`）
-- `emotion_architect` Agent → 情绪架构师角色
-- ai_field_prompts（拉片分析AI字段）
-- Django 后端技能进化引擎（`RuleEvolutionProposal`）
+| 维度 | 选项 |
+|------|------|
+| **情感轴** | 复仇爽感 / 爱情甜虐 / 治愈共鸣 / 悬疑烧脑 / 野心逐权 |
+| **身份轴** | 豪门精英 / 普通女性 / 隐藏大佬 / 重生觉醒 / 跨世界者 |
+| **冲突轴** | 家族内斗 / 职场博弈 / 情感纠葛 / 身份秘密 / 生存竞争 |
+| **世界观** | 当代都市 / 古代宫廷 / 架空仙侠 / 近未来 / 海外异地 |
 
-### dramaskill（节点版）贡献
-- Node-9 拉片分析6维度框架 → 拉片分析师角色
-- "发现新模式"机制 → 轨道四（新模式发现）
-- 5大参考JSON库（hook-library/reversal-patterns等）→ 灵感库预置内容
+**高潜力创新组合示例（对立面法）：**
 
-### dramaskilltrae（Trae版）贡献
-- 39个专业技能（钩子设计师/反转大师/合规守卫等）
-- drama-master-suite 编排架构
-- 梦境三指标理论（dream-indicators）
-- 八维评分体系（evaluation-scorer）
+```
+🔝 重生觉醒 × 复仇爽感 × 家族内斗 × 古代宫廷 → 经典爆款
+💡 普通女性 × 爱情甜虐 × 身份秘密 × 当代都市 → 高代入感
+✨ 治愈共鸣 × 重生觉醒 × 职场博弈 × 当代都市 → 女性成长
+🔥 悬疑烧脑 × 隐藏大佬 × 情感纠葛 × 当代都市 → 甜宠×悬疑
+🌟 野心逐权 × 跨世界者 × 家族内斗 × 古代宫廷 → 古装×权谋
+```
 
-## 与 dramaskilltrae 的对应关系
+---
 
-| 本库角色 | 对应 dramaskilltrae 技能 | 新增内容 |
-|---------|------------------------|---------|
-| drama-master | drama-master-suite | 简化启动流程 |
-| drama-market-radar | drama-smart-search | 新增趋势分析 |
-| drama-formula-analyst | drama-dream-indicators | 新增公式匹配 |
-| drama-hook-designer | drama-plot-hook-designer | S/A/B/C 钩子分级 |
-| drama-reversal-master | drama-plot-reversal-engine | 第二反转引擎 |
-| drama-conflict-engine | drama-plot-conflict-engine | 冲突升级协议 |
-| drama-rhythm-designer | drama-plot-rhythm-engine | 节奏诊断 |
-| drama-psychology-architect | drama-plot-psychology-framework | 梦境理论 |
-| drama-quality-reporter | drama-evaluation-scorer | 八维评分 |
-| drama-compliance-guard | drama-compliance-gate | 多模式合规 |
-| drama-evolution-analyst | 新增 | 灵感归档+技能进化 |
+## 核心方法论来源
+
+| 仓库 | Stars | 核心贡献 | 落地角色 |
+|------|-------|---------|---------|
+| shanyin-screenwriting-master | 459⭐ | 横截面理论/戏剧动作/Ghost-Lie-Flaw/McKee/双轨节奏 | topic-planner/script-writer/character-designer/script-reviewer |
+| shanyin-director-master | 251⭐ | 九列分镜/551镜头统计/叙事目的写法 | polish-master/production-pack |
+| Story-to-game | 292⭐ | 剧本→互动游戏转化工具链 | production-pack |
+
+---
+
+## 知识库
+
+`knowledge/` 目录包含所有专业参考资料：
+
+```
+shanyin-screenwriting-methodology.md  山音超级编剧大师方法论
+shanyin-director-methodology.md       山音超级导演大师方法论
+story-to-game.md                      Story-to-Game 工具链
+douyin-formulas.md                    抖音爆款公式库
+tier4-compliance.md                   合规红线清单
+scoring-presets.md                    质量评分标准
+...
+```
+
+---
+
+## 进化日志
+
+详见 `EVOLUTION_LOG.md`
+
+---
+
+*Drama Skills v3.0 · 12个角色 · 整合山音三大仓库方法论*
