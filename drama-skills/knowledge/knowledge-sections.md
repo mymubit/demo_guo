@@ -69,19 +69,19 @@
 | philosophy | drama-topic-planner (立项哲学) |
 | rhythm_rules | drama-rhythm-designer |
 | episode_structure | drama-plot-architect |
-| episode_emotion_8nodes | drama-emotion-architect |
+| episode_emotion_8nodes | drama-narrative-engineer |
 | foreshadowing_rules | drama-reversal-master（伏笔部分） |
 | scoring | drama-quality-reporter |
-| quantitative_constraints | drama-formatter + drama-script-writer |
-| writing_prohibitions | drama-script-editor + drama-dialogue-expert |
+| quantitative_constraints | drama-polish-master + drama-script-writer |
+| writing_prohibitions | drama-polish-master + drama-polish-master |
 | writing_requirements | drama-script-writer |
-| information_asymmetry_mechanics | drama-hook-designer + drama-psychology-architect |
-| emotion_externalization_dict | drama-emotion-architect + drama-dialogue-expert |
-| ai_tone_forbidden | drama-dialogue-expert |
-| qdn_emotion_model | drama-emotion-architect |
-| format_standard | drama-formatter |
-| hook_effectiveness | drama-hook-designer |
-| dialogue_quality | drama-dialogue-expert |
+| information_asymmetry_mechanics | drama-narrative-engineer + drama-narrative-engineer |
+| emotion_externalization_dict | drama-narrative-engineer + drama-polish-master |
+| ai_tone_forbidden | drama-polish-master |
+| qdn_emotion_model | drama-narrative-engineer |
+| format_standard | drama-polish-master |
+| hook_effectiveness | drama-narrative-engineer |
+| dialogue_quality | drama-polish-master |
 | payment_checkpoint_3card | drama-formula-analyst |
 
 ---

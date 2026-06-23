@@ -2,7 +2,7 @@
 
 > **来源**：ScriptForge `backend/apps/skill/config/portal/skill_settings.py` BUILTIN_THEMES
 > 
-> **使用方式**：创作开始前，根据题材选取对应参数，传递给 drama-plot-architect 和 drama-emotion-architect。
+> **使用方式**：创作开始前，根据题材选取对应参数，传递给 drama-plot-architect 和 drama-narrative-engineer。
 
 ---
 

@@ -77,7 +77,15 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [   {   'agent_id': 'drama.topic-pla
                          '× Conflict有不可回避性 = 强戏剧性。【立项简报必须包含】- 一句话核心创意（主角+处境+Goal+最大Conflict，≤50字）- '
                          '横截面切入点（第1集第1场戏的最大张力是什么）- 题材定位（维度组合标签：情感轴×身份轴×冲突轴×世界观）- 三大差异化卖点（与同类题材的不同之处）- '
                          '目标受众画像（年龄/性别/情感诉求）- 梦境三指标预估（安全感/满足感/真实感，各10分制）- 爆款潜力评级（S/A/B，含理由）- 创作风险提示若 core_idea '
-                         '已提供，以此为核心并找到最佳横截面；若只有维度标签，自主设计最具爆款潜力的方向。必须输出合法JSON对象，遵循project-brief.v1 schema。',
+                         '已提供，以此为核心并找到最佳横截面；若只有维度标签，自主设计最具爆款潜力的方向。必须输出合法JSON对象，遵循project-brief.v1 schema。\n'
+                         '\n'
+                         '【IP改编模式（原ip-adapter能力，用[adapt]触发）】\n'
+                         '触发条件：用户提供已有IP（小说/剧本）时，切换到以下模式之一。\n'
+                         'adapt模式（小说→剧本）：文本预处理（清洗水印/作者语/重复段落）→ 集数压缩（100-200万字→60-80集，50-100万字→30-50集）→ '
+                         '保留核心情感冲突+人物弧光+标志性场景 → 输出改编计划\n'
+                         'reference模式（参考原创）：提取结构指纹（节奏/冲突类型/反转时机）→ 创作全新内容，原创度>90% → 防止实质性相似\n'
+                         'derivative模式（衍生续集）：继承原作人物风格（OOC防护：角色性格不得颠覆）→ 设计续集/前传/番外 → 输出衍生项目简报\n'
+                         '原创度规则参考：knowledge/originality-rules.md（六类保护：角色名/标题/情节/台词/AI漫剧/出海）',
         'tier': 1,
         'workspace_order': 103},
     {   'agent_id': 'drama.world-architect',
@@ -112,7 +120,15 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [   {   'agent_id': 'drama.topic-pla
                          "弧光必须）**Ghost（前史创伤）：过去一件具体的事，至今影响角色的所有行为。解释了为什么有这个Want，为什么看不见自己的Need。Lie（角色相信的谎言）：因Ghost形成的错误世界观。不是坏人，是受伤的人。如'我不能信任任何人'/'只有强者才值得被爱'。Flaw（性格缺陷）：由Lie引发的、导致悲剧的行为模式。弧光=角色从Lie中醒来，接受了真相。**第三层：矛盾性（好角色必须有至少一层矛盾）**外在强大 "
                          'vs 内在脆弱 / 表面冷漠 vs 心存渴望 / 说恨 vs '
                          '行爱矛盾性制造层次感，让观众有持续探索的理由。**关系网络设计**所有关系都要基于Lie的冲突：反派的Lie与主角的Lie往往是同一类但镜像的扭曲。主角≤2人（否则情感投入被稀释），核心配角2-4人，总上限6个需要记忆关系的角色。**短剧特殊要求**竖屏9:16约束：每个角色的核心特征需要能在15秒内被视觉化识别（服装/神态/标志性动作）。每个角色设计音色标签（给AI配音使用）：语速/音色/标志性语气词。必须输出合法JSON对象，遵循character-bible.v1 '
-                         'schema。',
+                         'schema。\n'
+                         '\n'
+                         '[梦境三指标深度检测（内嵌·原dream-analyst能力）]\n'
+                         '人设设计完成后，必须执行以下检测。安全感<7则阻断后续创作。\n'
+                         "安全感（0-10，<7触发熔断）：主角所有行为是否能用'自卫/正义/保护'解释?反派是否有>=3个明确恶行?\n"
+                         '满足感密度（基准>0.8/集）：爽点+甜点+强悬念点之和/总集数\n'
+                         '真实感（0-10）：核心矛盾是否接地气?主角面对困境的第一反应是否符合普通人本能?\n'
+                         '输出dream_check字段：{safety: {score, is_blocking}, satisfaction: {density}, reality: {score}}\n'
+                         "若safety.is_blocking=true，必须返回'梦境安全感不足，禁止进入下一阶段'。",
         'tier': 1,
         'workspace_order': 202},
     {   'agent_id': 'drama.plot-architect',
@@ -168,7 +184,14 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [   {   'agent_id': 'drama.topic-pla
                          '计划第X集回扣【双轨节奏】本集：情节[松/中/紧] × 情感[轻/中/重] → 下集建议：[方向]必须输出合法JSON对象，遵循episode-scripts.v1 '
                          'schema。JSON结构：{"episodes":[{"episode_number":1,"title":"集标题","script":"剧本全文","word_count":850,"dialogue_ratio":0.38,"scene_count":2,"memory_checkpoint":{"characters":{},"active_clues":[],"unfulfilled_foreshadowing":[],"rhythm":""}}]}\n'
                          '\n'
-                         '[LR-008上下文加载] 逐集生成只加载上一集全文+角色状态快照+伏笔列表，不加载全部历史。记忆检查点输出即下一集的角色状态快照。',
+                         '[LR-008上下文加载] 逐集生成只加载上一集全文+角色状态快照+伏笔列表，不加载全部历史。记忆检查点输出即下一集的角色状态快照。\n'
+                         '\n'
+                         '【写作期视觉提示（可选输出，原scene-director能力）】\n'
+                         '用户要求时，为关键场景生成AI视频/图像prompt（不同于分镜，是写作辅助）：\n'
+                         '情绪-景别对应：愤怒→特写急推/悲伤→近景慢推/对峙→正反打/惊喜→全景拉远\n'
+                         '竖屏9:16：单镜3-8秒/主体居中/字幕安全区下25%\n'
+                         'Prompt格式：[景别],[角色+动作+情绪],[光线],[风格],竖屏9:16\n'
+                         '仅在有[visual]标记时触发，默认不输出（避免增加token消耗）。',
         'tier': 1,
         'workspace_order': 401},
     {   'agent_id': 'drama.script-reviewer',
@@ -192,7 +215,14 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [   {   'agent_id': 'drama.topic-pla
                          'schema。报告结构：{"format_issues":[], "invalid_scenes":[], "logic_issues":[], "rhythm_check":{}, '
                          '"overall_verdict":"pass/fail"}\n'
                          '\n'
-                         '[G-Eval] 每层检查先分析再打分，禁止直接给结论。[FER格式错误率] FER=错误数/场景总数；FER<5%合格，>=5%不合格。',
+                         '[G-Eval] 每层检查先分析再打分，禁止直接给结论。[FER格式错误率] FER=错误数/场景总数；FER<5%合格，>=5%不合格。\n'
+                         '\n'
+                         '【第五层：情绪曲线审计（原emotion-auditor能力）】\n'
+                         '剧本完成后，逐集提取实际情绪值（EV/ET），对照大纲规划，识别偏差。\n'
+                         '疲软区间识别：连续3+集EV在5-6之间=疲软，必须标记并给出修复建议。\n'
+                         '精确修复建议格式：{episode_range, issue, fix_action: {插入事件类型, insert_position}}\n'
+                         "危机深度验证：阶段4 ET必须<=2，ET>3则标记'危机不够深'。\n"
+                         '审计报告包含：emotion_audit[]逐集数据 + weak_zones[] + crisis_depth + fixes_needed[]',
         'tier': 1,
         'workspace_order': 501},
     {   'agent_id': 'drama.quality-reporter',
@@ -238,7 +268,15 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [   {   'agent_id': 'drama.topic-pla
                          '振荡（部分升部分降）：停止，交给用户\n'
                          '硬上限：剧本最多 3 轮自动修正，超限必须交给人工\n'
                          '\n'
-                         '必须输出合法JSON对象，遵循quality-report.v1 schema。',
+                         '必须输出合法JSON对象，遵循quality-report.v1 schema。\n'
+                         '\n'
+                         '【G-Eval读者视角子模块（原reader-reviewer能力）】\n'
+                         '以目标受众（25-35岁女性）角度评估：\n'
+                         "第1集留存率预测：主角是否让观众产生'想保护ta'或'ta就是我'的感觉?\n"
+                         '弃剧风险点识别：主角决策不合理/节奏连续2集无高点/反转靠巧合/结局预感过早\n'
+                         "付费转化预测：付费卡点是否在'关键秘密即将揭晓/重要人物生死未定/情感决定时刻'\n"
+                         "情感共鸣评估：每个重要场景让观众产生了什么情绪反应?如果'没什么感觉'则场景需要强化\n"
+                         '输出reader_review字段：{retention_forecast, churn_risks[], paid_conversion, emotion_resonance[]}',
         'tier': 1,
         'workspace_order': 504},
     {   'agent_id': 'drama.compliance-guard',
