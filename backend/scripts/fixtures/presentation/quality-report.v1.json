@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "runId": "014302e8-5586-42a5-b603-0d21d9295c51",
+    "agentId": "drama.quality-reporter",
+    "generatedAt": "2026-06-23T01:46:16.833787+00:00",
+    "overwriteMode": "replace",
+    "promptVersion": "v1",
+    "schemaVersion": "quality-report.v1"
+  },
+  "rating": "S",
+  "scores": {
+    "人物塑造": 14,
+    "对白质量": 14,
+    "情绪曲线": 14,
+    "格式规范": 12,
+    "梦境指标": 5,
+    "钩子效果": 10,
+    "商业可行性": 5,
+    "结构完整性": 19
+  },
+  "details": {
+    "hook_effect": "每集末尾都设置强钩子悬念，留存率拉满，满分10分",
+    "emotion_curve": "全剧情绪起伏节奏适配抖音短剧用户观看习惯，每集都有悬念点，情绪张力充足，得分14分",
+    "format_issues": "共存在5处台词情绪标注缺失/不统一问题，占格式规范总分15%的20%扣分项，最终得分12分",
+    "dialogue_quality": "对白符合人物身份设定，冲突场景台词张力强，仅少量未标注情绪的台词不影响整体表达，得分14分",
+    "structure_issues": "30集剧本结构完整，从潜入复仇到最终收网闭环完整，仅存在1处无效重复内容，扣1分，最终得分19分",
+    "dream_safety_index": "无违规梦境相关内容，梦境安全感为10，满分5分",
+    "commercial_potential": "家庭复仇赛道适配抖音流量逻辑，爽点密集完播率高，商业变现潜力充足，满分5分",
+    "character_performance": "主角阿晴隐忍聪慧的复仇形象立体，反派三人的猜忌内斗逻辑自洽，人物弧光完整，得分14分"
+  },
+  "total_score": 93,
+  "artifact_key": "quality_report",
+  "fuse_triggered": false,
+  "schema_version": "quality-report.v1"
+}

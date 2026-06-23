@@ -1,0 +1,53 @@
+{
+  "_meta": {
+    "runId": "a80ef52d-b989-44f3-8a10-845e1d494d5a",
+    "agentId": "drama.evolution-analyst",
+    "generatedAt": "2026-06-22T08:54:24.235434+00:00",
+    "overwriteMode": "replace",
+    "promptVersion": "v1",
+    "schemaVersion": "evolution-proposal.v1"
+  },
+  "artifact_key": "evolution_proposal",
+  "轨道一_技能进化提案": {
+    "SKILL更新提案": [
+      {
+        "priority": "低",
+        "update_content": "新增抖音爽剧格式校验兜底规则：全量场景头生成后自动二次校验，强制匹配「序号 日/夜 内/外 场景名」标准格式，所有△镜头标记前自动补全【镜头类型】前缀，彻底消除格式类低级瑕疵",
+        "target_skill_file": "drama.formatter.SKILL.md"
+      },
+      {
+        "priority": "低",
+        "update_content": "新增3集超短爽剧冗余场景自动裁剪规则：单集时长严格锁定3.5-4.5分钟区间，反派嘶吼、重复嘲讽类无效场景自动压缩至25秒以内，避免节奏拖沓影响用户留存",
+        "target_skill_file": "drama.script-writer.SKILL.md"
+      }
+    ],
+    "低分维度识别结果": [],
+    "共性缺陷模式判定": "本次质量报告所有维度得分均≥87，无低于70分的低分维度，仅存在1处格式小瑕疵和1个冗余无效场景的非核心问题"
+  },
+  "轨道二_灵感归档条目": [
+    {
+      "core_logic": "开篇30秒直接甩出退婚甩红手印羞辱女主的强冲突，女主不做多余辩解，一通电话直接冻结对方亿级融资，把传统甜宠剧前3集才解锁的隐藏身份直接在第一集前1分钟落地，爽感密度拉满",
+      "hook_mechanism": "退婚当场即时反杀钩子",
+      "applicable_scene": "抖音都市逆袭类短剧开篇钩子设计",
+      "source_script_position": "第1集1-1至1-4场景"
+    },
+    {
+      "core_logic": "男女主互为隔空博弈三年的对手，同时也是互相托底扶持的匿名贵人，没有传统霸总剧的信息差错位，两人记忆点完全对等，从对立到知己的情感转变完全自洽",
+      "applicable_scene": "双强甜宠类短剧人物关系设定",
+      "reversal_mechanism": "双向匿名身份反转",
+      "source_script_position": "第2集2-5至2-6场景"
+    },
+    {
+      "core_logic": "全网黑料爆雷后，男女主无需线下碰面沟通，几乎同时按下发送键上传实锤，两条实锤内容卡点差不到0.01秒，同步登顶热搜前二，把双强默契的人设用极致视觉化的方式呈现",
+      "applicable_scene": "商战逆袭类短剧核心反转桥段设计",
+      "structure_innovation": "0.01秒同步卡点反杀结构",
+      "source_script_position": "第3集3-2场景"
+    },
+    {
+      "core_logic": "每集末尾配置一句口语化强记忆点的反差金句：第1集「你嫌我穷掏不出首付，我冻你融资掏不出裤兜」、第2集「博弈三年的对手，转头发现是互相托底的网友」、第3集「别人退婚给你发好人卡，我退婚直接给你发合作请柬」，完全适配抖音用户二次传播属性",
+      "applicable_scene": "所有竖屏短剧单集收尾记忆点设计",
+      "classic_dialogue": "三集对应金句体系",
+      "source_script_position": "三集末尾金句模块"
+    }
+  ]
+}

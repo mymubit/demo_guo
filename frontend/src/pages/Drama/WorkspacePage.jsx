@@ -66,7 +66,7 @@ export default function WorkspacePage() {
     queryFn: getDramaRoles,
     staleTime: 5 * 60 * 1000,
   });
-  const departments = rolesRes?.data?.departments || [];
+  const departments = rolesRes?.departments || rolesRes?.data?.departments || [];
 
   // 分集进度
   const { data: episodesRes } = useQuery({
@@ -239,10 +239,8 @@ export default function WorkspacePage() {
         )}
         {selectedRole ? (
           <RoleDetailPanel
-            projectId={projectId}
             roleId={selectedRole}
             allRoles={allRoles}
-            departments={departments}
             roleProgress={roleStatusMap[selectedRole]}
             onRun={handleRunRole}
             runLoading={runMut.isPending && runMut.variables?.roleId === selectedRole}
@@ -251,8 +249,18 @@ export default function WorkspacePage() {
             lastExecResult={runMut.data?.data}
           />
         ) : (
-          <WelcomePanel project={project} progress={progress} episodeProgress={episodeProgress} completedEpisodes={completedEpisodes} />
+          <WelcomePanel
+            project={project}
+            progress={progress}
+            episodeProgress={episodeProgress}
+            completedEpisodes={completedEpisodes}
+            rolesByTier={rolesByTier}
+            completedSet={completedSet}
+            roleStatusMap={roleStatusMap}
+            onSelectRole={setSelectedRole}
+          />
         )}
+        </div>
       </main>
     </div>
   );
@@ -354,7 +362,7 @@ function FastTrackView({ roles, completedSet, roleStatusMap, selectedRole, onSel
 
 // ─── 单个角色条目 ─────────────────────────────────────────────────────────────
 function RoleItem({ role, isCompleted, execution, isSelected, onSelect, showDeptTag }) {
-  const execStatus = execution?.status || (isCompleted ? 'success' : 'pending');
+  const execStatus = execution?.status ?? 'pending';
   const statusCfg = EXEC_STATUS[execStatus] || EXEC_STATUS.pending;
   const tier = role.tier || (role.is_fast_track ? 1 : 2);
   const tierCfg = TIER_CONFIG[tier] || TIER_CONFIG[2];
@@ -385,33 +393,102 @@ function RoleItem({ role, isCompleted, execution, isSelected, onSelect, showDept
 }
 
 // ─── 欢迎面板 ────────────────────────────────────────────────────────────────
-function WelcomePanel({ project, progress, episodeProgress, completedEpisodes }) {
+function WelcomePanel({
+  project,
+  progress,
+  completedEpisodes,
+  rolesByTier,
+  completedSet,
+  roleStatusMap,
+  onSelectRole,
+}) {
   const completionRate = progress?.completion_rate || 0;
   const totalEp = project?.total_episodes || 0;
+  const coreRoles = rolesByTier[1] || [];
+  const recommendRoles = rolesByTier[2] || [];
+  const coreDone = coreRoles.filter((r) => completedSet.has(r.agent_id)).length;
 
   return (
-    <div className="max-w-2xl">
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-4">
-        <h2 className="text-xl font-bold text-gray-900 mb-1">{project?.title}</h2>
-        <p className="text-sm text-gray-500 mb-4">
-          {totalEp}集 · {project?.track_mode === 'fast' ? '快速通道' : '专家通道'} · {project?.target_platform}
-        </p>
+    <div className="w-full space-y-6">
+      {/* 顶部概览 */}
+      <div className="relative overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 p-6 lg:p-8 text-white shadow-sm">
+        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
+        <div className="absolute -bottom-20 right-1/3 h-40 w-40 rounded-full bg-purple-400/20 blur-3xl" />
+        <div className="relative">
+          <p className="text-indigo-200 text-sm mb-1">短剧创作工作台</p>
+          <h2 className="text-2xl lg:text-3xl font-bold mb-2">{project?.title}</h2>
+          <p className="text-indigo-100 text-sm mb-6">
+            {totalEp} 集 · {project?.track_mode === 'fast' ? '⚡ 快速通道' : '🎬 专家通道'}
+            {project?.target_platform ? ` · ${project.target_platform}` : ''}
+            {progress?.current_stage_display ? ` · ${progress.current_stage_display}` : ''}
+          </p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+            <HeroStat label="角色完成度" value={`${completionRate}%`} sub={`${coreDone}/${coreRoles.length} 核心角色`} />
+            <HeroStat label="已生成集数" value={`${completedEpisodes}/${totalEp}`} sub="剧本进度" />
+            <HeroStat label="质量等级" value={project?.quality_scores?.grade || '—'} sub="综合评分" />
+            <HeroStat
+              label="当前通道"
+              value={project?.track_mode === 'fast' ? '快速' : '专家'}
+              sub={`${(rolesByTier[1]?.length || 0) + (rolesByTier[2]?.length || 0) + (rolesByTier[3]?.length || 0)} 个可用角色`}
+            />
+          </div>
+        </div>
+      </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-5">
-          <StatCard label="角色完成度" value={`${completionRate}%`} color="indigo" />
-          <StatCard label="已生成集数" value={`${completedEpisodes}/${totalEp}`} color="purple" />
-          <StatCard label="质量等级" value={project?.quality_scores?.grade || '—'} color="green" />
+      {totalEp >= 50 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-800">
+          <strong>📌 大体量剧本建议：</strong>此项目共 {totalEp} 集，建议采用
+          <strong> 分批生成策略</strong>（每批 5–10 集）：大纲先行 → 分批执行剧本执笔师 → 每批完成后质检 → 低于 75 分自动重写。
+        </div>
+      )}
+
+      <div className="grid lg:grid-cols-5 gap-6">
+        {/* 如何开始 */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <h3 className="text-base font-semibold text-gray-900 mb-4">如何开始</h3>
+          <div className="space-y-4">
+            <Step n={1} title="从左侧选择「核心必需」层的角色" desc="蓝色角色是所有项目必须执行的，按顺序执行效果最佳" />
+            <Step n={2} title="执行角色生成内容" desc="查看输入依赖与输出说明，确认依赖满足后点击执行" />
+            <Step n={3} title="分批生成剧本（推荐 5 集/批）" desc="剧本执笔师支持指定集数范围，完成后立即质检" />
+            <Step n={4} title="应用修改建议" desc="审稿官与对白专家的建议可一键应用到原始剧本" />
+          </div>
         </div>
 
-        {/* 100集提示 */}
-        {totalEp >= 50 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700">
-            <strong>📌 大体量剧本建议：</strong>此项目共{totalEp}集，建议采用
-            <strong>分批生成策略</strong>（每批5-10集）：
-            ①大纲先行（1次生成）→ ②分批执行剧本执笔师 → ③每批完成后立即质检 → ④低于75分自动重写
+        {/* 核心角色进度 */}
+        <div className="lg:col-span-3 bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-semibold text-gray-900">核心执行路径</h3>
+            <span className="text-xs text-gray-500">{coreDone}/{coreRoles.length} 已完成</span>
           </div>
-        )}
-      </div>
+          <div className="space-y-2">
+            {coreRoles.map((role, idx) => {
+              const exec = roleStatusMap[role.agent_id]?.execution;
+              const execStatus = exec?.status ?? 'pending';
+              const statusCfg = EXEC_STATUS[execStatus] || EXEC_STATUS.pending;
+              return (
+                <button
+                  key={role.agent_id}
+                  type="button"
+                  onClick={() => onSelectRole(role.agent_id)}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition-colors text-left group"
+                >
+                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 text-xs font-medium flex items-center justify-center">
+                    {idx + 1}
+                  </span>
+                  <span className={`flex-shrink-0 text-sm ${statusCfg.cls}`}>{statusCfg.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium text-gray-800 truncate">{role.name_zh}</div>
+                    {role.dept_name && (
+                      <div className="text-xs text-gray-400 truncate">{role.dept_name}</div>
+                    )}
+                  </div>
+                  <span className="text-xs text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                    进入 →
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
       <div className="bg-white rounded-xl border border-gray-200 p-5">
         <h3 className="text-sm font-semibold text-gray-700 mb-3">创作流程（重构后）</h3>
@@ -431,16 +508,12 @@ function WelcomePanel({ project, progress, episodeProgress, completedEpisodes })
   );
 }
 
-function StatCard({ label, value, color }) {
-  const colors = {
-    indigo: 'bg-indigo-50 text-indigo-700',
-    purple: 'bg-purple-50 text-purple-700',
-    green: 'bg-green-50 text-green-700',
-  };
+function HeroStat({ label, value, sub }) {
   return (
-    <div className={`rounded-lg p-3 ${colors[color]}`}>
-      <div className="text-lg font-bold">{value}</div>
-      <div className="text-xs opacity-70 mt-0.5">{label}</div>
+    <div className="rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-3">
+      <div className="text-xl lg:text-2xl font-bold">{value}</div>
+      <div className="text-xs text-indigo-100 mt-0.5">{label}</div>
+      {sub && <div className="text-[10px] text-indigo-200/80 mt-1">{sub}</div>}
     </div>
   );
 }
@@ -477,17 +550,19 @@ function RoleDetailPanel({ projectId, roleId, allRoles, onRun, runLoading, compl
   const isBatchRole = (RANGE_ROLES.includes(roleId) || COUNT_ROLES.includes(roleId)) && (project?.total_episodes || 0) > 1;
   const isCountMode = COUNT_ROLES.includes(roleId); // 大纲类：用集数而非范围
 
+  const canShowOutput = !isRunning && execStatus === 'success' && outputKeys.length > 0;
+  const showEmptyDone = !isRunning && execStatus === 'success' && outputKeys.length === 0;
+  const showIdle = !isRunning && !execStatus;
+
   return (
-    <div className="max-w-3xl">
-      {/* 角色信息卡 */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-4">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex-1">
+    <div className="w-full flex flex-col min-h-[calc(100vh-4rem)]">
+      {/* 顶部：角色信息与操作 */}
+      <div className="rounded-2xl border border-gray-200/80 bg-white shadow-sm mb-4 overflow-hidden">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-slate-50/80 to-white">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <h2 className="text-xl font-bold text-gray-900">{role.name_zh}</h2>
-              <span className={`text-xs px-2 py-0.5 rounded-full ${tierCfg.color}`}>
-                {tierCfg.label}
-              </span>
+              <h2 className="text-lg font-bold text-gray-900">{role.name_zh}</h2>
+              <span className={`text-xs px-2 py-0.5 rounded-full ${tierCfg.color}`}>{tierCfg.label}</span>
               {role.is_fast_track && (
                 <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">⚡ 快速通道</span>
               )}
@@ -495,7 +570,27 @@ function RoleDetailPanel({ projectId, roleId, allRoles, onRun, runLoading, compl
                 <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">✅ 已完成</span>
               )}
             </div>
-            <p className="text-sm text-gray-600">{role.description}</p>
+            <p className="text-sm text-gray-500 line-clamp-2">{role.description}</p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => onRun(roleId)}
+              disabled={runLoading}
+              className="px-5 py-2.5 bg-indigo-600 text-white text-sm font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+            >
+              {runLoading ? (
+                <><span className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />执行中...</>
+              ) : (
+                `🚀 ${isCompleted ? '重新执行' : '执行此角色'}`
+              )}
+            </button>
+            <a
+              href="/admin/drama-models"
+              className="px-3 py-2.5 border border-gray-200 text-gray-600 text-sm rounded-xl hover:bg-gray-50"
+              title="配置模型"
+            >
+              ⚙️
+            </a>
           </div>
         </div>
 
@@ -570,47 +665,33 @@ function RoleDetailPanel({ projectId, roleId, allRoles, onRun, runLoading, compl
           </div>
         )}
 
-        {/* 输入/输出契约 */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-gray-50 rounded-lg p-3">
-            <h4 className="text-xs font-medium text-gray-500 mb-2">输入依赖</h4>
-            {role.input_contract?.required_artifacts?.length > 0 && (
-              <div className="mb-2">
-                <span className="text-xs text-red-500 font-medium">必需：</span>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {role.input_contract.required_artifacts.map((a) => (
-                    <span key={a} className="text-xs px-1.5 py-0.5 bg-red-50 text-red-600 rounded border border-red-100">{a}</span>
-                  ))}
-                </div>
+          <div className="flex-1 min-w-[220px] rounded-xl bg-gray-50/80 border border-gray-100 px-3 py-3">
+            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-2">输入依赖</h4>
+            {role.input_contract?.required_artifacts?.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {role.input_contract.required_artifacts.map((a) => (
+                  <span key={a} className="text-xs px-2 py-0.5 bg-red-50 text-red-700 rounded-md border border-red-100">{a}</span>
+                ))}
               </div>
-            )}
-            {role.input_contract?.optional_artifacts?.length > 0 && (
-              <div>
-                <span className="text-xs text-gray-400">可选：</span>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {role.input_contract.optional_artifacts.map((a) => (
-                    <span key={a} className="text-xs px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded">{a}</span>
-                  ))}
-                </div>
+            ) : role.input_contract?.optional_artifacts?.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {role.input_contract.optional_artifacts.map((a) => (
+                  <span key={a} className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md">{a}</span>
+                ))}
               </div>
-            )}
-            {!role.input_contract?.required_artifacts?.length && !role.input_contract?.optional_artifacts?.length && (
+            ) : (
               <span className="text-xs text-gray-400">无依赖，可直接执行</span>
             )}
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-3">
-            <h4 className="text-xs font-medium text-gray-500 mb-2">输出产物</h4>
-            <div className="flex flex-wrap gap-1">
+          <div className="flex-1 min-w-[220px] rounded-xl bg-gray-50/80 border border-gray-100 px-3 py-3">
+            <h4 className="text-[11px] font-semibold uppercase tracking-wide text-gray-400 mb-2">输出产物</h4>
+            <div className="flex flex-wrap gap-1.5">
               {role.output_contract?.artifacts?.map((a) => (
-                <span key={a} className="text-xs px-1.5 py-0.5 bg-green-50 text-green-700 rounded border border-green-100">{a}</span>
+                <span key={a} className="text-xs px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100">{a}</span>
               ))}
             </div>
-            <p className="text-xs text-gray-400 mt-2">
-              当前模型：{role.current_model || '跟随全局'}
-            </p>
           </div>
-        </div>
 
         {/* 执行按钮区 */}
         <div className="flex gap-3 pt-3 border-t border-gray-100">

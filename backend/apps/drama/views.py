@@ -108,13 +108,6 @@ class DramaProjectViewSet(ModelViewSet):
             for r in all_role_ids
         ]
 
-        executions = {
-            e.agent_id: e
-            for e in DramaRoleExecution.objects.filter(
-                drama_project=project
-            ).order_by("-created_at")
-        }
-        # 加载最新执行记录（每个角色只取最新一条）
         executions = {}
         for exec_obj in DramaRoleExecution.objects.filter(
             drama_project=project
@@ -126,7 +119,6 @@ class DramaProjectViewSet(ModelViewSet):
             if exec_obj:
                 item["execution"] = DramaRoleExecutionSerializer(exec_obj).data
 
-        # 分集进度（有多少集已有剧本产物）
         episode_artifacts_count = DramaEpisodeArtifact.objects.filter(
             drama_project=project,
             artifact_key=DramaEpisodeArtifact.ArtifactKey.EPISODE_SCRIPT,
@@ -135,24 +127,16 @@ class DramaProjectViewSet(ModelViewSet):
 
         payload = DramaProjectProgressService.build_progress_payload(project)
         payload["roles"] = role_progress
+        payload["episode_progress"] = {
+            "total": project.total_episodes,
+            "completed": episode_artifacts_count,
+            "rate": round(episode_artifacts_count / project.total_episodes * 100, 1)
+            if project.total_episodes > 0 else 0,
+        }
 
         return Response({
             "code": 0,
             "message": "success",
-            "data": {
-                "project_id": str(project.id),
-                "title": project.title,
-                "total_episodes": project.total_episodes,
-                "completion_rate": project.get_completion_rate(),
-                "current_stage": project.current_stage,
-                "roles": role_progress,
-                "episode_progress": {
-                    "total": project.total_episodes,
-                    "completed": episode_artifacts_count,
-                    "rate": round(episode_artifacts_count / project.total_episodes * 100, 1)
-                    if project.total_episodes > 0 else 0,
-                },
-            },
             "data": payload,
         })
 

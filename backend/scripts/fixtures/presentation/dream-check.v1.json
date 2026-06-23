@@ -1,0 +1,23 @@
+{
+  "_meta": {
+    "runId": "1cca7fa6-c64b-4f8f-bc0c-ba69e6b6db0b",
+    "agentId": "drama.dream-analyst",
+    "generatedAt": "2026-06-22T08:28:20.543972+00:00",
+    "overwriteMode": "replace",
+    "promptVersion": "v1",
+    "schemaVersion": "dream-check.v1"
+  },
+  "suggestion": "可直接进入后续分镜创作阶段",
+  "artifact_key": "dream_check",
+  "check_result": "pass",
+  "detail_feedback": {
+    "absolute_safety": "女主全程坚守商业底线无道德瑕疵，反派均为急功近利的逐利者无极端暴力设定，完全符合熔断级安全要求，无安全风险点",
+    "enhanced_realism": "圈层分层、创投圈身份匿名、豪门联姻攀附资源等设定贴合当下沪城商业圈层真实生态，矛盾点均来自现实中常见的嫌贫爱富、职场圈层歧视等接地气场景",
+    "efficient_satisfaction": "3集内覆盖退婚羞辱、身份亮明反杀、双强联手官宣3个核心爽点，爽感密度达1.0/集，远超≥0.8的要求，满足抖音短剧快节奏爽点需求"
+  },
+  "dimension_scores": {
+    "absolute_safety": 9,
+    "enhanced_realism": 8,
+    "efficient_satisfaction": 9
+  }
+}

@@ -52,7 +52,12 @@ def present_artifact(artifact_key: str, schema_version: str, payload: Any) -> di
     if presenter:
         result = presenter(artifact_key, payload)
     else:
-        result = present_generic(artifact_key, payload, schema_version=schema_version)
+        result = view(
+            artifact_key,
+            schema_version,
+            [],
+            summary=f"未注册展示器：{schema_version}",
+        )
     result["blocks"] = sanitize_blocks(result.get("blocks") or [])
     if result.get("summary"):
         result["summary"] = sanitize_display_string(str(result["summary"]))[:240]

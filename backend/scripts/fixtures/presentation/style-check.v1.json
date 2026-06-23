@@ -1,0 +1,28 @@
+{
+  "_meta": {
+    "runId": "58964071-744f-49c5-a278-da1507d6eb8a",
+    "agentId": "drama.style-guardian",
+    "generatedAt": "2026-06-22T08:46:20.248307+00:00",
+    "overwriteMode": "replace",
+    "promptVersion": "v1",
+    "schemaVersion": "style-check.v1"
+  },
+  "drama_type": "overbearing-ceo 现代都市甜宠逆袭抖音爽剧",
+  "artifact_key": "style_check",
+  "final_verification": "全剧集风格完全对齐第1集基准规范，无P1/P2类风格漂移问题，可直接进入后续生产环节",
+  "drift_repair_record": [],
+  "style_drift_detection_result": {
+    "emotional_tone_check": {
+      "detail": "全剧爽甜交织的逆袭情绪底色全程维持一致，从退婚羞辱的压抑铺垫到逐层反杀的爽感释放、双向奔赴的甜感落地，风格连贯无漂移",
+      "check_status": "pass"
+    },
+    "narrative_style_check": {
+      "detail": "描述细节密度、动作情绪外化方式、抖音爽剧快节奏卡点规则全程对齐第1集基准风格，核心冲突/反转/情感高峰场景延伸时长、冗余场景压缩逻辑完全符合3.5-4.5分钟单集时长要求，钩子占比达标",
+      "check_status": "pass"
+    },
+    "personality_language_check": {
+      "detail": "全3集人物台词均保留口语化爽感表达，无标志性口头禅消失、句式突变、情绪表达割裂或书面化AI腔问题，角色刻薄/冷冽/娇嗲的语言风格全程统一",
+      "check_status": "pass"
+    }
+  }
+}

@@ -1,0 +1,231 @@
+{
+  "_meta": {
+    "runId": "c2b2663c-355b-474d-bf3e-c42e07ba9099",
+    "agentId": "drama.emotion-auditor",
+    "generatedAt": "2026-06-22T08:42:03.606228+00:00",
+    "overwriteMode": "replace",
+    "promptVersion": "v1",
+    "schemaVersion": "emotion-audit.v1"
+  },
+  "artifact_key": "emotion_audit",
+  "audit_result": {
+    "repair_suggestions": [
+      {
+        "insert_event": "补充顾景明带着白若曦厚着脸皮凑到二人身边，假意递名片攀关系试图蹭合作资源，还故意嘴贱调侃苏晚“刚勾搭上陆总就忘了之前跪舔我的样子”，陆沉渊直接侧身把苏晚挡在身后，冷着脸把名片直接扔进旁边的碎纸机，撂下一句“顾氏的合作资格永久拉黑”，苏晚被他护在身后忍不住笑出声的完整桥段，将对应情绪值拉回4.9的蓝图目标线，填补当前的情绪缺口",
+        "target_episode": 2,
+        "insert_position": "2-5 原空缺桥段位置"
+      },
+      {
+        "insert_event": "补充二人在上传完所有实锤后，站在峰会后台落地窗边短暂独处的桥段：苏晚指尖摩挲着父亲留下的旧怀表，第一次主动说出当年父亲被构陷跳楼前给自己留遗言的细节，陆沉渊也掏出自己当年被旁支夺权时攥皱的半张创业合影，袒露自己多年不敢信任旁人的心理防线，二人指尖相碰互相拍了拍对方的手背完成情绪共情，将对应情绪值拉回7.8的蓝图目标线，填补当前的情绪断层，让后续的告白和官宣逻辑更顺滑",
+        "target_episode": 3,
+        "insert_position": "3-4 原空缺桥段位置"
+      }
+    ],
+    "continuous_plateau_zone": [],
+    "over_deviation_episodes": [
+      {
+        "episodeNumber": 2,
+        "deviation_nodes": [
+          {
+            "node_index": 5,
+            "emotion_tag": "醋意拉扯",
+            "actual_value": 2.2,
+            "target_value": 4.9,
+            "deviation_gap": 2.7
+          }
+        ]
+      },
+      {
+        "episodeNumber": 3,
+        "deviation_nodes": [
+          {
+            "node_index": 4,
+            "emotion_tag": "坦诚卸防",
+            "actual_value": 2.7,
+            "target_value": 7.8,
+            "deviation_gap": 5.1
+          }
+        ]
+      }
+    ],
+    "episode_emotion_extraction": [
+      {
+        "emotion_tp": [
+          {
+            "trigger_event": "苏晚收起怯态，将退婚纸揉成团扔进香槟杯，拨通特助电话冻结顾家融资",
+            "position_node_index": 4
+          }
+        ],
+        "episodeNumber": 1,
+        "emotion_peak_ev": {
+          "value": 9.6,
+          "trigger_event": "顾景明、白若曦当众下跪求饶，苏晚亮明身份完成首轮反杀"
+        },
+        "emotion_valley_et": {
+          "value": 3.1,
+          "trigger_event": "苏晚伪装普通身份站在订婚宴现场刻意放低姿态"
+        },
+        "actual_emotion_nodes": [
+          {
+            "node_index": 1,
+            "emotion_tag": "伪装隐忍",
+            "actual_value": 3.1
+          },
+          {
+            "node_index": 2,
+            "emotion_tag": "当众羞辱",
+            "actual_value": 7.7
+          },
+          {
+            "node_index": 3,
+            "emotion_tag": "错愕反转",
+            "actual_value": 6.6
+          },
+          {
+            "node_index": 4,
+            "emotion_tag": "身份碾压",
+            "actual_value": 9.4
+          },
+          {
+            "node_index": 5,
+            "emotion_tag": "打脸爽感",
+            "actual_value": 9.6
+          },
+          {
+            "node_index": 6,
+            "emotion_tag": "初遇对峙",
+            "actual_value": 5.5
+          },
+          {
+            "node_index": 7,
+            "emotion_tag": "悬念拉扯",
+            "actual_value": 6.0
+          },
+          {
+            "node_index": 8,
+            "emotion_tag": "收尾钩子",
+            "actual_value": 4.9
+          }
+        ]
+      },
+      {
+        "emotion_tp": [
+          {
+            "trigger_event": "二人发现各自笔记上的同款手绘星标，确认对方就是多年前暗中帮助自己的匿名好心人",
+            "position_node_index": 4
+          }
+        ],
+        "episodeNumber": 2,
+        "emotion_peak_ev": {
+          "value": 7.6,
+          "trigger_event": "二人独处核对过往线索，确认彼此是隔空扶持多年的匿名同行"
+        },
+        "emotion_valley_et": {
+          "value": 2.2,
+          "trigger_event": "原剧本完全删除了顾景明凑上前攀关系被怼的醋意拉扯桥段，对应情绪完全缺失"
+        },
+        "actual_emotion_nodes": [
+          {
+            "node_index": 1,
+            "emotion_tag": "商业交锋",
+            "actual_value": 6.2
+          },
+          {
+            "node_index": 2,
+            "emotion_tag": "势均力敌",
+            "actual_value": 7.3
+          },
+          {
+            "node_index": 3,
+            "emotion_tag": "意外解围",
+            "actual_value": 5.8
+          },
+          {
+            "node_index": 4,
+            "emotion_tag": "暧昧松动",
+            "actual_value": 6.7
+          },
+          {
+            "node_index": 5,
+            "emotion_tag": "醋意拉扯",
+            "actual_value": 2.2
+          },
+          {
+            "node_index": 6,
+            "emotion_tag": "深夜独处",
+            "actual_value": 7.6
+          },
+          {
+            "node_index": 7,
+            "emotion_tag": "心动试探",
+            "actual_value": 7.0
+          },
+          {
+            "node_index": 8,
+            "emotion_tag": "悬念钩子",
+            "actual_value": 5.7
+          }
+        ]
+      },
+      {
+        "emotion_tp": [
+          {
+            "trigger_event": "二人同步上传顾白两家财务造假实锤，直接完成对反派的全面清算",
+            "position_node_index": 3
+          }
+        ],
+        "episodeNumber": 3,
+        "emotion_peak_ev": {
+          "value": 9.7,
+          "trigger_event": "全场资本大佬集体起立鼓掌，反派彻底垮台"
+        },
+        "emotion_valley_et": {
+          "value": 2.7,
+          "trigger_event": "原剧本完全删除了二人在落地前袒露过往创伤的桥段，对应情绪严重缺失"
+        },
+        "actual_emotion_nodes": [
+          {
+            "node_index": 1,
+            "emotion_tag": "危机爆发",
+            "actual_value": 7.5
+          },
+          {
+            "node_index": 2,
+            "emotion_tag": "并肩作战",
+            "actual_value": 8.1
+          },
+          {
+            "node_index": 3,
+            "emotion_tag": "全面碾压",
+            "actual_value": 9.2
+          },
+          {
+            "node_index": 4,
+            "emotion_tag": "坦诚卸防",
+            "actual_value": 2.7
+          },
+          {
+            "node_index": 5,
+            "emotion_tag": "甜度飙升",
+            "actual_value": 8.4
+          },
+          {
+            "node_index": 6,
+            "emotion_tag": "公开官宣",
+            "actual_value": 9.5
+          },
+          {
+            "node_index": 7,
+            "emotion_tag": "终极爽甜",
+            "actual_value": 9.7
+          },
+          {
+            "node_index": 8,
+            "emotion_tag": "圆满落地",
+            "actual_value": 8.8
+          }
+        ]
+      }
+    ]
+  }
+}
