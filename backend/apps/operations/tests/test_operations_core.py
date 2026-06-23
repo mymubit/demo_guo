@@ -105,56 +105,39 @@ class ContentQualityTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(phone="13800001003", password="x")
         now = timezone.now()
-        from apps.drama.models import DramaProject, DramaRoleExecution
+        from apps.drama.constants import DramaStage
+        from apps.drama.models import DramaRoleExecution
 
         self.p1 = Project.objects.create(
             user=self.user, title="p1", theme="t1", episode_count=10,
             pipeline_mode=Project.MODE_WORKSPACE,
             creation_entry="from-scratch", user_edit_count=5, final_export_count=2,
-            created_at=now - timedelta(days=2),
-        )
-        DramaProject.objects.create(
-            id=self.p1.id,
-            project_id=self.p1.id,
-            user=self.user,
-            title="p1",
-            genre_code="t1",
-            total_episodes=10,
+            track_mode="fast",
             delivery_status="delivered",
-            current_stage=DramaProject.Stage.DELIVERED,
+            drama_stage=DramaStage.DELIVERED,
+            core_idea="p1",
+            created_at=now - timedelta(days=2),
         )
         self.p2 = Project.objects.create(
             user=self.user, title="p2", theme="t2", episode_count=8,
             pipeline_mode=Project.MODE_WORKSPACE,
             creation_entry="from-outline", user_edit_count=3, final_export_count=0,
+            track_mode="fast",
+            drama_stage=DramaStage.WRITING,
+            core_idea="p2",
             created_at=now - timedelta(days=1),
-        )
-        DramaProject.objects.create(
-            id=self.p2.id,
-            project_id=self.p2.id,
-            user=self.user,
-            title="p2",
-            genre_code="t2",
-            total_episodes=8,
-            current_stage=DramaProject.Stage.WRITING,
         )
         self.p3 = Project.objects.create(
             user=self.user, title="p3", theme="t3", episode_count=5,
             pipeline_mode=Project.MODE_WORKSPACE,
             creation_entry="from-scratch", user_edit_count=0, final_export_count=0,
+            track_mode="fast",
+            drama_stage=DramaStage.WRITING,
+            core_idea="p3",
             abandoned_at=now - timedelta(days=1), created_at=now - timedelta(days=3),
         )
-        dp3 = DramaProject.objects.create(
-            id=self.p3.id,
-            project_id=self.p3.id,
-            user=self.user,
-            title="p3",
-            genre_code="t3",
-            total_episodes=5,
-            current_stage=DramaProject.Stage.WRITING,
-        )
         DramaRoleExecution.objects.create(
-            drama_project=dp3,
+            project=self.p3,
             agent_id="drama.topic-planner",
             agent_name_zh="?????",
             status=DramaRoleExecution.Status.FAILED,
@@ -197,22 +180,16 @@ class ContentQualityTests(TestCase):
         self.assertEqual(self.p1.final_export_count, 3)
 
     def test_detect_and_mark_abandoned_marks_7d_old(self):
-        from apps.drama.models import DramaProject
+        from apps.drama.constants import DramaStage
 
         old = Project.objects.create(
             user=self.user, title="old", theme="t", episode_count=5,
             pipeline_mode=Project.MODE_WORKSPACE,
             creation_entry="from-scratch",
+            track_mode="fast",
+            drama_stage=DramaStage.WRITING,
+            core_idea="old",
             created_at=timezone.now() - timedelta(days=20),
-        )
-        DramaProject.objects.create(
-            id=old.id,
-            project_id=old.id,
-            user=self.user,
-            title="old",
-            genre_code="t",
-            total_episodes=5,
-            current_stage=DramaProject.Stage.WRITING,
         )
         count = detect_and_mark_abandoned(days=7)
         self.assertGreaterEqual(count, 1)

@@ -2,11 +2,15 @@
 """Drama 执行产物展示服务。"""
 from __future__ import annotations
 
+import logging
 from typing import Any, Dict
 
 from apps.agent.definition_service import AgentDefinitionService
 from apps.drama.models import DramaRoleExecution
+from apps.drama.presentation.base import view
 from apps.drama.presentation.presenters import present_artifact
+
+logger = logging.getLogger(__name__)
 
 
 def build_role_output_views(
@@ -38,7 +42,16 @@ def build_role_output_views(
         if payload in (None, {}, []):
             continue
         schema = schema_by_key.get(key) or _infer_schema_version(key, payload)
-        views[key] = present_artifact(key, schema, payload)
+        try:
+            views[key] = present_artifact(key, schema, payload)
+        except Exception:  # noqa: BLE001
+            logger.exception("[DramaPresentation] 产物展示失败 artifact=%s schema=%s", key, schema)
+            views[key] = view(
+                key,
+                schema,
+                [],
+                summary="展示暂不可用，请查看原始 JSON",
+            )
     return views
 
 
@@ -64,5 +77,7 @@ def _infer_schema_version(artifact_key: str, payload: Any) -> str:
         "quality_report": "quality-report.v1",
         "compliance_report": "compliance-report.v1",
         "marketing_kit": "marketing-kit.v1",
+        "market_report": "market-report.v1",
+        "narrative_plan": "narrative-plan.v1",
     }
     return fallback.get(artifact_key, "generic.v1")

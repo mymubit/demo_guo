@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { createDramaProject, getDramaProjects } from '../../services/drama';
+import { createDramaProject } from '../../services/drama';
+import { works as worksApi } from '../../services/api';
+import { normalizeWorkItem } from '../../services/adapters/businessAdapters';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 // ─── 多维度题材矩阵（破除固定选项限制，支持创新组合）────────────────────────
@@ -68,9 +70,12 @@ const INNOVATIVE_COMBOS = [
   { label: '职场逆袭×情感治愈', code: 'career-healing',dims: { emotion:'healing', identity:'ordinary', conflict:'workplace', world:'modern' }, heat: '🌟 长尾用户' },
 ];
 
-// 根据维度选择生成 genre_code
-function genreCodeFromDims(dims) {
-  return Object.values(dims).filter(Boolean).join('-');
+const GENRE_DIM_ORDER = ['emotion', 'identity', 'conflict', 'world'];
+const THEME_MAX_LENGTH = 64;
+
+// 根据维度选择生成 theme 代码（固定轴顺序，避免 Object.values 顺序不稳定）
+function themeCodeFromDims(dims) {
+  return GENRE_DIM_ORDER.map((axis) => dims[axis]).filter(Boolean).join('-');
 }
 
 const PLATFORM_OPTIONS = [
@@ -79,6 +84,23 @@ const PLATFORM_OPTIONS = [
   { value: 'weixin', label: '微信小程序' },
   { value: 'all', label: '通用' },
 ];
+
+function mapWorkToWorkspace(work) {
+  if (!work) return null;
+  return {
+    id: work.project_id,
+    project_id: work.project_id,
+    title: work.title,
+    theme: work.theme,
+    episode_count: work.episode_count ?? work.episodes,
+    target_platform: work.target_platform || 'douyin',
+    track_mode: work.track_mode || 'fast',
+    drama_stage: work.drama_stage || '',
+    completion_rate: Math.min(100, Number(work.completion_rate ?? work.progress_percent) || 0),
+    delivery_status: work.delivery_status || 'pending',
+    quality_scores: work.quality_scores,
+  };
+}
 
 /** 创作中心首页 */
 export default function DramaIndex() {
@@ -89,19 +111,18 @@ export default function DramaIndex() {
   const [dimSelections, setDimSelections] = useState({});
   const [form, setForm] = useState({
     title: '',
-    genre_code: '',
-    total_episodes: 30,
+    theme: '',
+    episode_count: 30,
     target_platform: 'douyin',
     track_mode: 'fast',
     core_idea: '',
   });
 
-  // 根据矩阵选择动态生成 genre_code
-  const computedGenreCode = useMemo(() => {
-    if (genreMode === 'free') return form.genre_code;
-    if (genreMode === 'preset') return form.genre_code;
-    return genreCodeFromDims(dimSelections);
-  }, [genreMode, dimSelections, form.genre_code]);
+  const computedTheme = useMemo(() => {
+    if (genreMode === 'free') return form.theme;
+    if (genreMode === 'preset') return form.theme;
+    return themeCodeFromDims(dimSelections);
+  }, [genreMode, dimSelections, form.theme]);
 
   const selectDim = (axis, value) => {
     setDimSelections(prev => ({ ...prev, [axis]: prev[axis] === value ? undefined : value }));
@@ -109,26 +130,30 @@ export default function DramaIndex() {
 
   const applyCombo = (combo) => {
     setDimSelections(combo.dims);
-    setForm(f => ({ ...f, genre_code: combo.code }));
+    setForm(f => ({ ...f, theme: combo.code }));
   };
 
   const { data: projectsRes } = useQuery({
-    queryKey: ['drama-projects'],
-    queryFn: getDramaProjects,
+    queryKey: ['drama-projects', 'works-unified'],
+    queryFn: async () => {
+      const result = await worksApi.list(1, 'all', 100, { scope: 'drama', ordering: 'newest' });
+      return (result.items || []).map(normalizeWorkItem).map(mapWorkToWorkspace).filter(Boolean);
+    },
   });
-  const projects = Array.isArray(projectsRes)
-    ? projectsRes
-    : Array.isArray(projectsRes?.data)
-      ? projectsRes.data
-      : [];
+  const projects = Array.isArray(projectsRes) ? projectsRes : [];
 
   const createMut = useMutation({
     mutationFn: createDramaProject,
     onSuccess: (res) => {
-      queryClient.invalidateQueries(['drama-projects']);
-      const id = res?.data?.data?.id || res?.data?.id;
-      if (id) navigate(`/drama/workspace/${id}`);
+      queryClient.invalidateQueries({ queryKey: ['drama-projects'] });
+      queryClient.invalidateQueries({ queryKey: ['works'] });
+      const project = res?.data ?? res;
+      const id = project?.id;
       setShowNew(false);
+      if (!id) {
+        toast.error('项目已创建，但未返回项目 ID，请从列表进入');
+        return;
+      }
       navigate(`/drama/workspace/${id}`);
     },
     onError: (err) => {
@@ -138,7 +163,19 @@ export default function DramaIndex() {
 
   const handleCreate = (e) => {
     e.preventDefault();
-    createMut.mutate({ ...form, genre_code: computedGenreCode || 'custom' });
+    const themeCode = (computedTheme || 'custom').trim();
+    if (themeCode.length > THEME_MAX_LENGTH) {
+      toast.error(`题材代码过长（${themeCode.length}/${THEME_MAX_LENGTH}），请减少维度选择或使用预设组合`);
+      return;
+    }
+    createMut.mutate({
+      title: form.title,
+      theme: themeCode,
+      episode_count: form.episode_count,
+      target_platform: form.target_platform,
+      track_mode: form.track_mode,
+      core_idea: form.core_idea,
+    });
   };
 
   return (
@@ -148,7 +185,7 @@ export default function DramaIndex() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-gray-900">短剧创作工作室</h1>
-            <p className="text-sm text-gray-500 mt-0.5">36个专业角色 · 双轨创作模式 · AI驱动</p>
+            <p className="text-sm text-gray-500 mt-0.5">12个专业角色 · 双轨创作模式 · AI驱动</p>
           </div>
           <button
             onClick={() => setShowNew(true)}
@@ -166,7 +203,7 @@ export default function DramaIndex() {
             <div className="flex items-center gap-2 mb-2">
               <span className="text-xl">⚡</span>
               <h3 className="font-semibold text-gray-900">快速通道</h3>
-              <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full">8角色</span>
+              <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full">8核心角色</span>
             </div>
             <p className="text-sm text-gray-500">适合：初次创作、快速验证、10集以内</p>
             <p className="text-sm text-gray-400 mt-1">立项→世界构建→人设→大纲→剧本→审稿→评分→合规</p>
@@ -175,7 +212,7 @@ export default function DramaIndex() {
             <div className="flex items-center gap-2 mb-2">
               <span className="text-xl">🎬</span>
               <h3 className="font-semibold text-gray-900">专家通道</h3>
-              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">36角色</span>
+              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">12角色</span>
             </div>
             <p className="text-sm text-gray-500">适合：商业精品、30集+长剧、精细化创作</p>
             <p className="text-sm text-gray-400 mt-1">8个职能部门全流程，每个环节都有专业角色</p>
@@ -240,7 +277,7 @@ export default function DramaIndex() {
                         {INNOVATIVE_COMBOS.map(combo => (
                           <button key={combo.code} type="button" onClick={() => applyCombo(combo)}
                             className={`text-xs px-2 py-1.5 rounded-lg border transition-all ${
-                              computedGenreCode === combo.code
+                              computedTheme === combo.code
                                 ? 'bg-indigo-600 text-white border-indigo-600'
                                 : 'bg-white text-gray-700 border-gray-200 hover:border-indigo-400'
                             }`}>
@@ -289,8 +326,8 @@ export default function DramaIndex() {
                 {genreMode === 'preset' && (
                   <div className="grid grid-cols-2 gap-2">
                     {INNOVATIVE_COMBOS.map(combo => (
-                      <button key={combo.code} type="button" onClick={() => { applyCombo(combo); setForm(f=>({...f,genre_code:combo.code})); }}
-                        className={`p-2 rounded-lg border text-left text-sm transition-all ${form.genre_code===combo.code?'bg-indigo-50 border-indigo-400':'border-gray-200 hover:border-indigo-300'}`}>
+                      <button key={combo.code} type="button" onClick={() => { applyCombo(combo); setForm(f=>({...f,theme:combo.code})); }}
+                        className={`p-2 rounded-lg border text-left text-sm transition-all ${form.theme===combo.code?'bg-indigo-50 border-indigo-400':'border-gray-200 hover:border-indigo-300'}`}>
                         <div className="font-medium text-gray-800">{combo.label}</div>
                         <div className="text-xs text-gray-400 mt-0.5">{combo.heat}</div>
                       </button>
@@ -301,7 +338,7 @@ export default function DramaIndex() {
                 {/* 自由输入模式 */}
                 {genreMode === 'free' && (
                   <div>
-                    <input value={form.genre_code} onChange={(e) => setForm({...form, genre_code: e.target.value})}
+                    <input value={form.theme} onChange={(e) => setForm({...form, theme: e.target.value})}
                       placeholder="自定义题材标签，如：都市×悬疑×女主觉醒"
                       className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" />
                     <p className="text-xs text-gray-400 mt-1">自由描述你的题材方向，选题策划官会依据此输入生成更精准的立项建议</p>
@@ -313,8 +350,8 @@ export default function DramaIndex() {
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">总集数</label>
-                  <input type="number" min={5} max={200} value={form.total_episodes}
-                    onChange={(e) => setForm({ ...form, total_episodes: +e.target.value })}
+                  <input type="number" min={5} max={200} value={form.episode_count}
+                    onChange={(e) => setForm({ ...form, episode_count: +e.target.value })}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
                 </div>
                 <div>
@@ -328,8 +365,8 @@ export default function DramaIndex() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">创作模式</label>
                   <select value={form.track_mode} onChange={(e) => setForm({ ...form, track_mode: e.target.value })}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                    <option value="fast">⚡ 快速（8角色）</option>
-                    <option value="expert">🎬 专家（35角色）</option>
+                    <option value="fast">⚡ 快速（8核心角色）</option>
+                    <option value="expert">🎬 专家（12角色）</option>
                   </select>
                 </div>
               </div>
@@ -363,7 +400,7 @@ export default function DramaIndex() {
 }
 
 function ProjectCard({ project, onClick }) {
-  const completionRate = project.completion_rate || 0;
+  const completionRate = Math.min(100, Number(project.completion_rate) || 0);
   const gradeColor = {
     S: 'text-yellow-600 bg-yellow-50',
     A: 'text-green-600 bg-green-50',
@@ -383,7 +420,7 @@ function ProjectCard({ project, onClick }) {
         <div>
           <h3 className="font-semibold text-gray-900 line-clamp-1">{project.title}</h3>
           <p className="text-xs text-gray-400 mt-0.5">
-            {project.total_episodes}集 · {project.target_platform === 'douyin' ? '抖音' : project.target_platform}
+            {project.episode_count}集 · {project.target_platform === 'douyin' ? '抖音' : project.target_platform}
           </p>
         </div>
         {grade && overallScore && (

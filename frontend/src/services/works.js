@@ -13,6 +13,7 @@ export const works = {
         status: apiStatus && apiStatus !== 'all' ? apiStatus : undefined,
         q: options.q || undefined,
         ordering: options.ordering || undefined,
+        scope: options.scope || undefined,
       },
     })
     const result = normalizeListResult(data, normalizeWorkItem)

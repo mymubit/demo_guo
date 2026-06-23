@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # apps/common/pagination.py
 # 自定义分页类
 

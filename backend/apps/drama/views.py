@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Drama Skills API Views。"""
+"""Drama Skills API Views?"""
 from __future__ import annotations
+
+import logging
 
 from django.db import transaction
 from rest_framework import status
@@ -10,91 +12,138 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from apps.drama.models import DramaEpisodeArtifact, DramaEpisodeQuality, DramaProject, DramaRoleExecution
+from apps.creation.models import Project
+from apps.drama.constants import DramaTrackMode
+from apps.drama.models import DramaEpisodeArtifact, DramaEpisodeQuality, DramaRoleExecution
 from apps.drama.serializers import (
-    DramaProjectCreateSerializer,
-    DramaProjectSerializer,
+    DramaWorkspaceCreateSerializer,
+    DramaWorkspaceSerializer,
     DramaRoleExecutionSerializer,
     ModelConfigSerializer,
     WordCountValidateSerializer,
 )
 from apps.drama.services import DramaQualityService, DramaRoleService, DramaWordCountService
 
+logger = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
-# 角色列表
+# ????
 # ---------------------------------------------------------------------------
 
 class DramaRoleListView(APIView):
-    """获取36个角色列表，按部门分组。"""
+    """???? drama ?????12?????????"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        from apps.drama.defaults import DRAMA_VISIBLE_ROLES
+
         data = DramaRoleService.get_all_roles_grouped()
+        total = sum(len(d["roles"]) for d in data)
+        composite_count = sum(
+            1 for dept in data for role in dept["roles"] if role.get("is_composite")
+        )
         return Response({
             "code": 0,
             "message": "success",
             "data": {
                 "departments": data,
-                "total_roles": sum(len(d["roles"]) for d in data),
+                "total_roles": total,
+                "visible_roles": len(DRAMA_VISIBLE_ROLES),
                 "fast_track_count": 8,
+                "composite_count": composite_count,
             },
         })
 
 
 # ---------------------------------------------------------------------------
-# 项目管理
+# ????
 # ---------------------------------------------------------------------------
 
-class DramaProjectViewSet(ModelViewSet):
-    """Drama Project CRUD + 进度查询。"""
+class DramaWorkspaceViewSet(ModelViewSet):
+    """Drama Project CRUD + ?????"""
     permission_classes = [IsAuthenticated]
-    serializer_class = DramaProjectSerializer
+    serializer_class = DramaWorkspaceSerializer
 
     def get_queryset(self):
-        return DramaProject.objects.filter(user=self.request.user).order_by("-created_at")
+        return Project.objects.filter(
+            user=self.request.user,
+            track_mode__in=[DramaTrackMode.FAST, DramaTrackMode.EXPERT],
+        ).order_by("-created_at")
+
+    def list(self, request, *args, **kwargs):
+        """? /api/works/?scope=drama ????? Project + Drama ?????"""
+        from apps.creation.services.works import build_user_work_list_page
+
+        try:
+            page = max(1, int(request.query_params.get("page", 1)))
+        except (TypeError, ValueError):
+            page = 1
+        try:
+            page_size = min(100, max(1, int(request.query_params.get("page_size", 100))))
+        except (TypeError, ValueError):
+            page_size = 100
+
+        payload = build_user_work_list_page(
+            request.user,
+            page=page,
+            page_size=page_size,
+            scope="drama",
+            ordering="newest",
+        )
+        return Response(
+            {
+                "code": 0,
+                "message": "success",
+                "data": payload["items"],
+                "pagination": payload["pagination"],
+            }
+        )
 
     def create(self, request):
-        ser = DramaProjectCreateSerializer(data=request.data)
+        ser = DramaWorkspaceCreateSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
         d = ser.validated_data
 
         with transaction.atomic():
             shared_id = d.get("project_id") or __import__("uuid").uuid4()
-            project = DramaProject.objects.create(
+            project = Project.objects.create(
                 id=shared_id,
                 user=request.user,
-                project_id=shared_id,
                 title=d["title"],
-                genre_code=d["genre_code"],
-                total_episodes=d["total_episodes"],
+                theme=d["theme"],
+                episode_count=d["episode_count"],
                 target_platform=d["target_platform"],
                 track_mode=d["track_mode"],
-            )
-            from apps.drama.services import DramaRoleRunService
-
-            DramaRoleRunService.ensure_creation_project(
-                project,
-                core_idea=d.get("core_idea") or "",
+                drama_stage="strategy",
+                pipeline_mode=Project.MODE_WORKSPACE,
+                creation_entry="from-scratch",
+                core_idea=(d.get("core_idea") or d["title"]).strip(),
             )
 
         return Response(
-            {"code": 0, "message": "success", "data": DramaProjectSerializer(project).data},
+            {"code": 0, "message": "success", "data": DramaWorkspaceSerializer(project).data},
             status=status.HTTP_201_CREATED,
         )
 
     @action(detail=True, methods=["get"], url_path="progress")
     def progress(self, request, pk=None):
-        """获取项目进度（哪些角色已完成，含三层分级信息）。"""
+        """????????????????????????"""
         project = self.get_object()
-        from apps.drama.defaults import DRAMA_FAST_TRACK_ROLES, DRAMA_ROLE_DEFAULTS
+        from apps.drama.defaults import DRAMA_FAST_TRACK_ROLES, DRAMA_ROLE_DEFAULTS, DRAMA_VISIBLE_ROLES
+        from apps.drama.progress_service import DramaProgressService
+        from apps.drama.services import DramaRoleRunService
+
+        DramaRoleRunService.fail_stale_active_executions(project)
+        DramaProgressService.recompute_project_state(project)
+        project.refresh_from_db()
 
         if project.track_mode == "fast":
-            all_role_ids = DRAMA_FAST_TRACK_ROLES
+            all_role_ids = list(DRAMA_VISIBLE_ROLES)
         else:
             all_role_ids = [r["agent_id"] for r in DRAMA_ROLE_DEFAULTS]
 
-        # tier信息映射
+        # tier????
         tier_map = {r["agent_id"]: r.get("tier", 3) for r in DRAMA_ROLE_DEFAULTS}
 
         completed = set(project.completed_roles or [])
@@ -110,7 +159,7 @@ class DramaProjectViewSet(ModelViewSet):
 
         executions = {}
         for exec_obj in DramaRoleExecution.objects.filter(
-            drama_project=project
+            project=project
         ).order_by("-created_at"):
             if exec_obj.agent_id not in executions:
                 executions[exec_obj.agent_id] = exec_obj
@@ -120,18 +169,17 @@ class DramaProjectViewSet(ModelViewSet):
                 item["execution"] = DramaRoleExecutionSerializer(exec_obj).data
 
         episode_artifacts_count = DramaEpisodeArtifact.objects.filter(
-            drama_project=project,
+            project=project,
             artifact_key=DramaEpisodeArtifact.ArtifactKey.EPISODE_SCRIPT,
         ).values("episode_number").distinct().count()
-        from apps.drama.progress_service import DramaProjectProgressService
 
-        payload = DramaProjectProgressService.build_progress_payload(project)
+        payload = DramaProgressService.build_progress_payload(project)
         payload["roles"] = role_progress
         payload["episode_progress"] = {
-            "total": project.total_episodes,
+            "total": project.episode_count,
             "completed": episode_artifacts_count,
-            "rate": round(episode_artifacts_count / project.total_episodes * 100, 1)
-            if project.total_episodes > 0 else 0,
+            "rate": round(episode_artifacts_count / project.episode_count * 100, 1)
+            if project.episode_count > 0 else 0,
         }
 
         return Response({
@@ -143,106 +191,126 @@ class DramaProjectViewSet(ModelViewSet):
     @action(detail=True, methods=["post"], url_path=r"run/(?P<role_id>[^/]+)")
     def run_role(self, request, pk=None, role_id=None):
         """
-        触发某个角色执行。
+        ?????????
 
-        请求体参数（可选）：
-        - episode_range: str  如 "1-5"，指定生成集数范围（script-writer / plot-architect 使用）
-        - episode_count: int  总集数（用于 plot-architect）
-        - custom_params: dict  角色特定参数
+        ??????????
+        - episode_range: str  ? "1-5"??????????script-writer / plot-architect ???
+        - episode_count: int  ?????? plot-architect?
+        - custom_params: dict  ??????
         - priority: str  "normal" | "high"
         """
         project = self.get_object()
 
         from apps.agent.models import AgentDefinition
+        from apps.drama.services import DramaRoleRunService
+
+        DramaRoleRunService.fail_stale_active_executions(project)
+
         agent = AgentDefinition.objects.filter(
             agent_id=role_id, category="drama_skills", is_enabled=True
         ).first()
         if not agent:
             return Response(
-                {"code": 404, "message": f"角色 {role_id} 不存在或未启用"},
+                {"code": 404, "message": f"?? {role_id} ???????"},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # 读取执行参数
         episode_range = request.data.get("episode_range", "")
-        episode_count = request.data.get("episode_count", project.total_episodes)
-        custom_params = request.data.get("custom_params", {})
+        episode_count = request.data.get("episode_count", project.episode_count)
+        custom_params = request.data.get("custom_params") or {}
 
-        # 解析 episode_range
         ep_start, ep_end = None, None
         if episode_range and "-" in str(episode_range):
             try:
                 parts = str(episode_range).split("-")
                 ep_start = int(parts[0])
                 ep_end = int(parts[1])
-                # 校验范围合法性
-                if ep_start < 1 or ep_end > project.total_episodes or ep_start > ep_end:
+                if ep_start < 1 or ep_end > project.episode_count or ep_start > ep_end:
                     return Response(
-                        {"code": 4001, "message": f"集数范围 {episode_range} 不合法（项目共{project.total_episodes}集）"},
+                        {"code": 4001, "message": f"???? {episode_range} ???????{project.episode_count}??"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
             except (ValueError, IndexError):
                 return Response(
-                    {"code": 4001, "message": f"集数范围格式错误，应为 '开始集-结束集'，如 '1-5'"},
+                    {"code": 4001, "message": "??????????? '???-???'?? '1-5'"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        # 创建执行记录
-        with transaction.atomic():
-            exec_record = DramaRoleExecution.objects.create(
-                drama_project=project,
-                agent_id=role_id,
-                agent_name_zh=agent.name_zh,
-                status=DramaRoleExecution.Status.PENDING,
-                input_artifacts={
-                    "episode_range": episode_range or None,
-                    "episode_start": ep_start,
-                    "episode_end": ep_end,
-                    "episode_count": episode_count,
-                    "custom_params": custom_params,
-                },
+        run_params = DramaRoleRunService.build_run_params(project)
+        if ep_start and ep_end:
+            run_params["episode_range"] = str(episode_range)
+            run_params["episode_start"] = ep_start
+            run_params["episode_end"] = ep_end
+            run_params["episode_from"] = ep_start
+            run_params["episode_to"] = ep_end
+        if episode_count:
+            run_params["episode_count"] = int(episode_count)
+        if isinstance(custom_params, dict):
+            run_params.update(custom_params)
+
+        try:
+            exec_record, is_new = DramaRoleRunService.enqueue_role_run(
+                project,
+                role_id,
+                request.user,
+                params=run_params,
+            )
+        except ValueError as exc:
+            return Response(
+                {"code": 4002, "message": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("[DramaRun] enqueue failed project=%s role=%s", project.id, role_id)
+            return Response(
+                {"code": 5001, "message": f"???????{exc}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        # 构建用户可读的执行说明
         if ep_start and ep_end:
-            scope_desc = f"第{ep_start}-{ep_end}集（共{ep_end - ep_start + 1}集）"
+            scope_desc = f"\u7b2c{ep_start}-{ep_end}\u96c6\uff08\u5171{ep_end - ep_start + 1}\u96c6\uff09"
         elif role_id == "drama.plot-architect":
-            scope_desc = f"全部{episode_count}集大纲"
+            scope_desc = f"\u5171{episode_count}\u96c6\u5927\u7eb2"
         else:
-            scope_desc = "整体执行"
+            scope_desc = "\u6574\u4f53\u6267\u884c"
 
-        # 分集计划同步更新
         from apps.drama.models import DramaEpisodePlan
         if ep_start and ep_end:
             DramaEpisodePlan.objects.filter(
-                drama_project=project,
+                project=project,
                 episode_number__gte=ep_start,
                 episode_number__lte=ep_end,
                 status__in=["pending", "fail"],
             ).update(status=DramaEpisodePlan.EpisodeStatus.QUEUED)
 
+        message = (
+            f"{agent.name_zh} \u5df2\u63d0\u4ea4\u6267\u884c \u00b7 {scope_desc}"
+            if is_new
+            else f"{agent.name_zh} \u4ecd\u5728\u6267\u884c\u4e2d"
+        )
+
         return Response({
             "code": 0,
-            "message": f"「{agent.name_zh}」已加入执行队列 — {scope_desc}",
+            "message": message,
             "data": {
                 "project_id": str(project.id),
                 "role_id": role_id,
                 "role_name": agent.name_zh,
                 "execution_id": str(exec_record.id),
-                "status": "queued",
+                "status": exec_record.status,
                 "scope": scope_desc,
                 "episode_range": episode_range or None,
-                "tip": "实际LLM执行需配置模型后生效，当前记录已建立可追踪" if not episode_range else None,
+                "is_new": is_new,
             },
         })
 
 
 # ---------------------------------------------------------------------------
-# 字数验证
+# ????
 # ---------------------------------------------------------------------------
 
 class WordCountValidateView(APIView):
-    """字数验证接口。"""
+    """???????"""
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -258,11 +326,11 @@ class WordCountValidateView(APIView):
 
 
 # ---------------------------------------------------------------------------
-# Token/计费统计
+# Token/????
 # ---------------------------------------------------------------------------
 
 class TokenStatsView(APIView):
-    """Token 用量统计。"""
+    """Token ?????"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -276,15 +344,15 @@ class TokenStatsView(APIView):
 
 
 # ---------------------------------------------------------------------------
-# 模型配置（仅管理员）
+# ??????????
 # ---------------------------------------------------------------------------
 
 class ModelConfigView(APIView):
-    """每个角色的LLM模型配置。"""
+    """?????LLM?????"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """获取所有角色的当前模型配置。"""
+        """??????????????"""
         from apps.agent.models import AgentLlmRouteConfig
         from apps.skill.models import LlmProvider
 
@@ -317,10 +385,10 @@ class ModelConfigView(APIView):
         })
 
     def put(self, request):
-        """更新某个角色的模型配置。"""
+        """????????????"""
         if not request.user.is_staff:
             return Response(
-                {"code": 403, "message": "需要管理员权限"},
+                {"code": 403, "message": "???????"},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -334,7 +402,7 @@ class ModelConfigView(APIView):
             route = AgentLlmRouteConfig.objects.get(route_key=d["agent_id"])
         except AgentLlmRouteConfig.DoesNotExist:
             return Response(
-                {"code": 404, "message": f"角色 {d['agent_id']} 不存在"},
+                {"code": 404, "message": f"?? {d['agent_id']} ???"},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -345,7 +413,7 @@ class ModelConfigView(APIView):
                 route.llm_provider = provider
             except LlmProvider.DoesNotExist:
                 return Response(
-                    {"code": 404, "message": f"Provider {d['provider_id']} 不存在"},
+                    {"code": 404, "message": f"Provider {d['provider_id']} ???"},
                     status=status.HTTP_404_NOT_FOUND,
                 )
         else:
@@ -356,30 +424,34 @@ class ModelConfigView(APIView):
         route.max_completion_tokens = d.get("max_completion_tokens", 8000)
         route.save(update_fields=["llm_provider", "temperature", "max_completion_tokens"])
 
-        return Response({"code": 0, "message": "配置已更新"})
+        return Response({"code": 0, "message": "?????"})
 
 
 # ---------------------------------------------------------------------------
-# 评分雷达数据
+# ??????
 # ---------------------------------------------------------------------------
 
 class QualityRadarView(APIView):
-    """获取项目8维度评分雷达数据（含扣分点和改进建议）。"""
+    """????8????????????????????"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request, project_id):
         try:
-            project = DramaProject.objects.get(id=project_id, user=request.user)
-        except DramaProject.DoesNotExist:
-            return Response({"code": 404, "message": "项目不存在"}, status=404)
+            project = Project.objects.get(
+                id=project_id,
+                user=request.user,
+                track_mode__in=[DramaTrackMode.FAST, DramaTrackMode.EXPERT],
+            )
+        except Project.DoesNotExist:
+            return Response({"code": 404, "message": "?????"}, status=404)
 
         episode_number = request.query_params.get("episode")
 
         if episode_number:
-            # 分集质量评估
+            # ??????
             try:
                 eq = DramaEpisodeQuality.objects.get(
-                    drama_project=project,
+                    project=project,
                     episode_number=int(episode_number),
                 )
                 scores = eq.scores
@@ -388,18 +460,18 @@ class QualityRadarView(APIView):
                 scores = {}
                 word_count_result = None
         else:
-            # 整剧整体评估
+            # ??????
             scores = project.quality_scores or {}
             word_count_result = None
 
-        # 构建详细报告（含扣分点）
+        # ????????????
         detailed = DramaQualityService.build_detailed_quality_report(
             scores=scores,
             episode_number=int(episode_number) if episode_number else None,
             word_count_result=word_count_result,
         )
 
-        # 雷达图数据（维度分数）
+        # ???????????
         radar_data = [
             {
                 "dimension": d["name"],
@@ -410,9 +482,9 @@ class QualityRadarView(APIView):
             for d in DramaQualityService.DIMENSIONS
         ]
 
-        # 分集概况（如果有多集评估数据）
+        # ???????????????
         episode_qualities = list(
-            DramaEpisodeQuality.objects.filter(drama_project=project)
+            DramaEpisodeQuality.objects.filter(project=project)
             .values("episode_number", "scores")
             .order_by("episode_number")
         )
@@ -427,30 +499,30 @@ class QualityRadarView(APIView):
                 "grade": detailed["grade"],
                 "grade_desc": detailed["grade_desc"],
                 "radar": radar_data,
-                # 新增：详细维度报告（含扣分点和建议）
+                # ??????????????????
                 "dimensions": detailed["dimensions"],
                 "all_issues": detailed["all_issues"],
                 "error_count": detailed["error_count"],
                 "warning_count": detailed["warning_count"],
                 "top_suggestions": detailed["top_suggestions"],
-                # 分集概况
+                # ????
                 "series_summary": series_summary,
             },
         })
 
 
 class EpisodeQualityView(APIView):
-    """分集质量评估接口（提交/查询单集评估结果）。"""
+    """???????????/??????????"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request, project_id):
-        """获取所有集的质量评估概况列表。"""
+        """???????????????"""
         try:
-            project = DramaProject.objects.get(id=project_id, user=request.user)
-        except DramaProject.DoesNotExist:
-            return Response({"code": 404, "message": "项目不存在"}, status=404)
+            project = Project.objects.get(id=project_id, user=request.user)
+        except Project.DoesNotExist:
+            return Response({"code": 404, "message": "?????"}, status=404)
 
-        qualities = DramaEpisodeQuality.objects.filter(drama_project=project).order_by("episode_number")
+        qualities = DramaEpisodeQuality.objects.filter(project=project).order_by("episode_number")
         results = []
         for eq in qualities:
             results.append({
@@ -470,7 +542,7 @@ class EpisodeQualityView(APIView):
             "message": "success",
             "data": {
                 "project_id": str(project.id),
-                "total_episodes": project.total_episodes,
+                "total_episodes": project.episode_count,
                 "evaluated_count": len(results),
                 "episodes": results,
             },
@@ -478,17 +550,17 @@ class EpisodeQualityView(APIView):
 
     def post(self, request, project_id):
         """
-        提交单集质量评估结果（由质量报告官角色执行后调用）。
+        ??????????????????????????
 
-        质量审查完成后，自动触发关联修复角色：
-        - 格式/台词/结构问题 → drama.polish-master（精修大师）
-        - 情绪/节奏/钩子问题 → drama.narrative-engineer（叙事工程师）
-        这些建议作为 pending_suggestions 返回，由用户确认后应用。
+        ???????????????????
+        - ??/??/???? ? drama.polish-master??????
+        - ??/??/???? ? drama.narrative-engineer???????
+        ?????? pending_suggestions ????????????
         """
         try:
-            project = DramaProject.objects.get(id=project_id, user=request.user)
-        except DramaProject.DoesNotExist:
-            return Response({"code": 404, "message": "项目不存在"}, status=404)
+            project = Project.objects.get(id=project_id, user=request.user)
+        except Project.DoesNotExist:
+            return Response({"code": 404, "message": "?????"}, status=404)
 
         episode_number = request.data.get("episode_number")
         scores = request.data.get("scores", {})
@@ -498,21 +570,21 @@ class EpisodeQualityView(APIView):
         auto_trigger_fixes = request.data.get("auto_trigger_fixes", True)
 
         if not episode_number:
-            return Response({"code": 4001, "message": "episode_number 不能为空"}, status=400)
+            return Response({"code": 4001, "message": "episode_number ????"}, status=400)
 
-        # 构建详细质量报告（含扣分点）
+        # ??????????????
         detailed_report = DramaQualityService.build_detailed_quality_report(
             scores=scores,
             episode_number=int(episode_number),
             word_count_result=word_count_result,
         )
-        # 将详细issues合并到存储
+        # ???issues?????
         if not issues and detailed_report.get("all_issues"):
             issues = detailed_report["all_issues"]
 
         with transaction.atomic():
             eq, created = DramaEpisodeQuality.objects.update_or_create(
-                drama_project=project,
+                project=project,
                 episode_number=int(episode_number),
                 defaults={
                     "scores": scores,
@@ -523,18 +595,18 @@ class EpisodeQualityView(APIView):
                 },
             )
 
-        # 自动触发关联修复建议
+        # ??????????
         pending_suggestions = []
         if auto_trigger_fixes and issues:
-            # 按问题类型路由到对应修复角色
+            # ??????????????
             FIX_ROLE_MAP = {
-                # 所有格式/台词/结构/节奏问题统一路由到精修大师（整合了原7个修复角色）
-                "format":     {"role": "drama.polish-master", "role_name": "精修大师", "priority": 1},
-                "dialogue":   {"role": "drama.polish-master", "role_name": "精修大师", "priority": 1},
-                "structure":  {"role": "drama.polish-master", "role_name": "精修大师", "priority": 2},
-                "emotion":    {"role": "drama.narrative-engineer", "role_name": "叙事工程师", "priority": 2},
-                "character":  {"role": "drama.polish-master", "role_name": "精修大师", "priority": 2},
-                "hooks":      {"role": "drama.narrative-engineer", "role_name": "叙事工程师", "priority": 3},
+                # ????/??/??/??????????????????7??????
+                "format":     {"role": "drama.polish-master", "role_name": "????", "priority": 1},
+                "dialogue":   {"role": "drama.polish-master", "role_name": "????", "priority": 1},
+                "structure":  {"role": "drama.polish-master", "role_name": "????", "priority": 2},
+                "emotion":    {"role": "drama.narrative-engineer", "role_name": "?????", "priority": 2},
+                "character":  {"role": "drama.polish-master", "role_name": "????", "priority": 2},
+                "hooks":      {"role": "drama.narrative-engineer", "role_name": "?????", "priority": 3},
             }
 
             triggered_roles = set()
@@ -544,7 +616,7 @@ class EpisodeQualityView(APIView):
                      if False), None  # placeholder
                 ) if False else None
 
-                # 通过维度名称推断 key
+                # ???????? key
                 dim_name = issue.get("dimension", "")
                 dim_key = next(
                     (d["key"] for d in DramaQualityService.DIMENSIONS if d["name"] == dim_name),
@@ -559,25 +631,25 @@ class EpisodeQualityView(APIView):
                             "trigger_role": role_id,
                             "trigger_role_name": fix_info["role_name"],
                             "priority": fix_info["priority"],
-                            "reason": f"检测到{dim_name}问题，建议执行{fix_info['role_name']}",
+                            "reason": f"???{dim_name}???????{fix_info['role_name']}",
                             "issues": [i for i in issues if i.get("dimension") == dim_name],
                             "episode_number": int(episode_number),
-                            "status": "pending",  # pending → confirmed → applied
+                            "status": "pending",  # pending ? confirmed ? applied
                         })
 
-            # 按优先级排序
+            # ??????
             pending_suggestions.sort(key=lambda x: x["priority"])
 
         return Response({
             "code": 0,
-            "message": "质量评估已保存",
+            "message": "???????",
             "data": {
                 "episode_number": eq.episode_number,
                 "overall_score": eq.get_overall_score(),
                 "grade": eq.get_grade(),
                 "created": created,
                 "detailed_report": detailed_report,
-                # 自动触发的修复角色建议
+                # ???????????
                 "pending_fix_suggestions": pending_suggestions,
                 "fix_suggestion_count": len(pending_suggestions),
             },
@@ -585,24 +657,24 @@ class EpisodeQualityView(APIView):
 
 
 class EpisodeArtifactView(APIView):
-    """分集产物接口（剧本内容读写 + 建议应用）。"""
+    """????????????? + ??????"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request, project_id):
-        """获取指定集、指定产物类型的最新内容。"""
+        """??????????????????"""
         try:
-            project = DramaProject.objects.get(id=project_id, user=request.user)
-        except DramaProject.DoesNotExist:
-            return Response({"code": 404, "message": "项目不存在"}, status=404)
+            project = Project.objects.get(id=project_id, user=request.user)
+        except Project.DoesNotExist:
+            return Response({"code": 404, "message": "?????"}, status=404)
 
         episode_number = request.query_params.get("episode")
         artifact_key = request.query_params.get("key", "episode_script")
 
         if not episode_number:
-            # 返回所有集的摘要列表
+            # ??????????
             episodes = (
                 DramaEpisodeArtifact.objects.filter(
-                    drama_project=project,
+                    project=project,
                     artifact_key=artifact_key,
                 )
                 .order_by("episode_number", "-version")
@@ -615,23 +687,23 @@ class EpisodeArtifactView(APIView):
                 "data": {
                     "artifact_key": artifact_key,
                     "episodes": list(episodes),
-                    "total_episodes": project.total_episodes,
+                    "total_episodes": project.episode_count,
                     "completed_episodes": DramaEpisodeArtifact.objects.filter(
-                        drama_project=project, artifact_key=artifact_key,
+                        project=project, artifact_key=artifact_key,
                     ).values("episode_number").distinct().count(),
                 },
             })
 
-        # 返回具体集的内容
+        # ????????
         try:
             artifact = DramaEpisodeArtifact.objects.filter(
-                drama_project=project,
+                project=project,
                 episode_number=int(episode_number),
                 artifact_key=artifact_key,
             ).order_by("-version").first()
 
             if not artifact:
-                return Response({"code": 404, "message": f"第{episode_number}集暂无内容"}, status=404)
+                return Response({"code": 404, "message": f"?{episode_number}?????"}, status=404)
 
             return Response({
                 "code": 0,
@@ -652,11 +724,11 @@ class EpisodeArtifactView(APIView):
             return Response({"code": 500, "message": str(e)}, status=500)
 
     def post(self, request, project_id):
-        """应用修改建议到某集剧本（生成新版本）。"""
+        """???????????????????"""
         try:
-            project = DramaProject.objects.get(id=project_id, user=request.user)
-        except DramaProject.DoesNotExist:
-            return Response({"code": 404, "message": "项目不存在"}, status=404)
+            project = Project.objects.get(id=project_id, user=request.user)
+        except Project.DoesNotExist:
+            return Response({"code": 404, "message": "?????"}, status=404)
 
         episode_number = request.data.get("episode_number")
         artifact_key = request.data.get("artifact_key", "episode_script")
@@ -664,11 +736,11 @@ class EpisodeArtifactView(APIView):
         agent_id = request.data.get("agent_id", "drama.polish-master")
 
         if not episode_number:
-            return Response({"code": 4001, "message": "episode_number 不能为空"}, status=400)
+            return Response({"code": 4001, "message": "episode_number ????"}, status=400)
 
-        # 获取当前版本
+        # ??????
         current = DramaEpisodeArtifact.objects.filter(
-            drama_project=project,
+            project=project,
             episode_number=int(episode_number),
             artifact_key=artifact_key,
         ).order_by("-version").first()
@@ -676,7 +748,7 @@ class EpisodeArtifactView(APIView):
         current_content = current.content if current else {}
         current_version = current.version if current else 0
 
-        # 应用建议
+        # ????
         result = DramaQualityService.apply_suggestions_to_episode(
             current_content=str(current_content),
             suggestions=suggestions,
@@ -685,11 +757,11 @@ class EpisodeArtifactView(APIView):
 
         with transaction.atomic():
             new_artifact = DramaEpisodeArtifact.objects.create(
-                drama_project=project,
+                project=project,
                 episode_number=int(episode_number),
                 artifact_key=artifact_key,
                 version=current_version + 1,
-                content=current_content,  # TODO: 替换为LLM修改后的内容
+                content=current_content,  # TODO: ???LLM??????
                 diff_summary=result["diff_summary"],
                 produced_by_agent=agent_id,
                 word_count=current.word_count if current else 0,
@@ -697,7 +769,7 @@ class EpisodeArtifactView(APIView):
 
         return Response({
             "code": 0,
-            "message": "建议已应用，新版本已保存",
+            "message": "????????????",
             "data": {
                 "episode_number": new_artifact.episode_number,
                 "new_version": new_artifact.version,
@@ -710,45 +782,45 @@ class EpisodeArtifactView(APIView):
 
 
 # ---------------------------------------------------------------------------
-# 分集生成计划（解决100集token爆炸问题）
+# ?????????100?token?????
 # ---------------------------------------------------------------------------
 
 class GenerationPlanView(APIView):
     """
-    全局生成计划管理。
+    ?????????
 
-    核心设计思路：
-    - 100集剧本不能一次性生成（token爆炸 + 质量无法控制）
-    - 分批生成（默认5集/批），每批完成后立即质检
-    - 质量gate（默认75分），不通过则触发重写（最多2次）
-    - 支持断点续写（任何时候中断，下次从最后成功集继续）
+    ???????
+    - 100???????????token?? + ???????
+    - ???????5?/????????????
+    - ??gate???75??????????????2??
+    - ?????????????????????????
     """
     permission_classes = [IsAuthenticated]
 
     def get(self, request, project_id):
-        """获取当前生成计划和进度。"""
+        """????????????"""
         try:
-            project = DramaProject.objects.get(id=project_id, user=request.user)
-        except DramaProject.DoesNotExist:
-            return Response({"code": 404, "message": "项目不存在"}, status=404)
+            project = Project.objects.get(id=project_id, user=request.user)
+        except Project.DoesNotExist:
+            return Response({"code": 404, "message": "?????"}, status=404)
 
         from apps.drama.models import DramaEpisodePlan, DramaGenerationPlan
 
-        # 获取或估算生成计划
-        plan = DramaGenerationPlan.objects.filter(drama_project=project).first()
+        # ?????????
+        plan = DramaGenerationPlan.objects.filter(project=project).first()
         episode_plans = list(
-            DramaEpisodePlan.objects.filter(drama_project=project)
+            DramaEpisodePlan.objects.filter(project=project)
             .values("episode_number", "status", "quality_score",
                     "quality_gate_passed", "batch_number", "rewrite_count", "actual_tokens")
             .order_by("episode_number")
         )
 
-        # 计算批次进度
-        total_ep = project.total_episodes
+        # ??????
+        total_ep = project.episode_count
         batch_size = plan.batch_size if plan else 5
-        total_batches = -(-total_ep // batch_size)  # 向上取整
+        total_batches = -(-total_ep // batch_size)  # ????
 
-        # 各状态统计
+        # ?????
         status_counts = {}
         for ep in episode_plans:
             s = ep["status"]
@@ -756,11 +828,11 @@ class GenerationPlanView(APIView):
 
         done_count = status_counts.get("done", 0) + status_counts.get("pass", 0)
 
-        # Token和时间估算
+        # Token?????
         avg_tokens = (
             sum(ep["actual_tokens"] for ep in episode_plans if ep["actual_tokens"] > 0)
             // max(1, sum(1 for ep in episode_plans if ep["actual_tokens"] > 0))
-        ) or 12000  # 默认12000 tokens/集
+        ) or 12000  # ??12000 tokens/?
 
         remaining = total_ep - done_count
         estimated_minutes = round(remaining * avg_tokens / 800 / 60, 1)
@@ -773,7 +845,7 @@ class GenerationPlanView(APIView):
                 "total_episodes": total_ep,
                 "batch_size": batch_size,
                 "total_batches": total_batches,
-                "plan_status": plan.get_status_display() if plan else "未创建",
+                "plan_status": plan.get_status_display() if plan else "???",
                 "quality_gate": {
                     "enabled": plan.quality_gate_enabled if plan else True,
                     "threshold": plan.quality_gate_score if plan else 75.0,
@@ -789,10 +861,10 @@ class GenerationPlanView(APIView):
                     "avg_tokens_per_episode": avg_tokens,
                     "estimated_remaining_tokens": remaining * avg_tokens,
                     "estimated_remaining_minutes": estimated_minutes,
-                    "tip": f"约{int(estimated_minutes)}分钟，建议按批次执行（每批{batch_size}集）",
+                    "tip": f"?{int(estimated_minutes)}?????????????{batch_size}??",
                 },
                 "episode_plans": episode_plans,
-                # 分批建议
+                # ????
                 "batch_suggestions": GenerationPlanView._get_batch_suggestions(
                     total_ep, batch_size, done_count, status_counts
                 ),
@@ -801,7 +873,7 @@ class GenerationPlanView(APIView):
 
     @staticmethod
     def _get_batch_suggestions(total_ep, batch_size, done_count, status_counts):
-        """生成分批执行建议。"""
+        """?????????"""
         remaining = total_ep - done_count
         if remaining <= 0:
             return []
@@ -810,30 +882,30 @@ class GenerationPlanView(APIView):
         if total_ep > 50:
             suggestions.append({
                 "type": "strategy",
-                "title": f"建议分{-(-remaining//batch_size)}批生成剩余{remaining}集",
-                "desc": f"每批{batch_size}集，完成后立即质检，低于75分自动触发重写",
+                "title": f"???{-(-remaining//batch_size)}?????{remaining}?",
+                "desc": f"??{batch_size}????????????75???????",
             })
         if status_counts.get("fail", 0) > 0:
             suggestions.append({
                 "type": "warning",
-                "title": f"有{status_counts['fail']}集质检不通过",
-                "desc": "建议先处理不通过的集数，再继续生成新集",
+                "title": f"?{status_counts['fail']}??????",
+                "desc": "???????????????????",
             })
         fail_count = status_counts.get("fail", 0) + status_counts.get("rewrite", 0)
         if fail_count > total_ep * 0.3:
             suggestions.append({
                 "type": "quality",
-                "title": "质检通过率偏低",
-                "desc": "建议提高生成参数（temperature调低）或检查角色prompt配置",
+                "title": "???????",
+                "desc": "?????????temperature????????prompt??",
             })
         return suggestions
 
     def post(self, request, project_id):
-        """创建或更新生成计划，并初始化分集计划。"""
+        """???????????????????"""
         try:
-            project = DramaProject.objects.get(id=project_id, user=request.user)
-        except DramaProject.DoesNotExist:
-            return Response({"code": 404, "message": "项目不存在"}, status=404)
+            project = Project.objects.get(id=project_id, user=request.user)
+        except Project.DoesNotExist:
+            return Response({"code": 404, "message": "?????"}, status=404)
 
         from apps.drama.models import DramaEpisodePlan, DramaGenerationPlan
 
@@ -842,14 +914,14 @@ class GenerationPlanView(APIView):
         auto_proceed = bool(request.data.get("auto_proceed", False))
 
         if batch_size < 1 or batch_size > 20:
-            return Response({"code": 4001, "message": "每批集数应为1-20"}, status=400)
+            return Response({"code": 4001, "message": "??????1-20"}, status=400)
 
         with transaction.atomic():
             plan, _ = DramaGenerationPlan.objects.update_or_create(
-                drama_project=project,
+                project=project,
                 defaults={
                     "batch_size": batch_size,
-                    "total_batches": -(-project.total_episodes // batch_size),
+                    "total_batches": -(-project.episode_count // batch_size),
                     "quality_gate_enabled": True,
                     "quality_gate_score": quality_gate_score,
                     "auto_proceed_on_pass": auto_proceed,
@@ -857,19 +929,19 @@ class GenerationPlanView(APIView):
                 },
             )
 
-            # 初始化所有集的计划（只创建尚未存在的）
+            # ???????????????????
             existing = set(
-                DramaEpisodePlan.objects.filter(drama_project=project)
+                DramaEpisodePlan.objects.filter(project=project)
                 .values_list("episode_number", flat=True)
             )
             new_plans = [
                 DramaEpisodePlan(
-                    drama_project=project,
+                    project=project,
                     episode_number=ep_num,
                     batch_number=((ep_num - 1) // batch_size) + 1,
                     quality_gate_threshold=quality_gate_score,
                 )
-                for ep_num in range(1, project.total_episodes + 1)
+                for ep_num in range(1, project.episode_count + 1)
                 if ep_num not in existing
             ]
             if new_plans:
@@ -877,9 +949,9 @@ class GenerationPlanView(APIView):
 
         return Response({
             "code": 0,
-            "message": "生成计划已创建",
+            "message": "???????",
             "data": {
-                "total_episodes": project.total_episodes,
+                "total_episodes": project.episode_count,
                 "batch_size": batch_size,
                 "total_batches": plan.total_batches,
                 "quality_gate_score": quality_gate_score,
@@ -887,8 +959,8 @@ class GenerationPlanView(APIView):
                 "batch_schedule": [
                     {
                         "batch": i + 1,
-                        "episodes": f"{i*batch_size+1}-{min((i+1)*batch_size, project.total_episodes)}",
-                        "count": min(batch_size, project.total_episodes - i * batch_size),
+                        "episodes": f"{i*batch_size+1}-{min((i+1)*batch_size, project.episode_count)}",
+                        "count": min(batch_size, project.episode_count - i * batch_size),
                     }
                     for i in range(plan.total_batches)
                 ],

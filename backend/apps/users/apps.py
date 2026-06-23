@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 用户模块的 AppConfig 配置
 """

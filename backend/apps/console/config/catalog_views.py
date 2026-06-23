@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """Admin config center APIs."""
 import secrets
 from datetime import timedelta

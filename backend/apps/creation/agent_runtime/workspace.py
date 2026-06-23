@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import annotations
 
 from typing import Any, Dict, List
@@ -62,9 +63,9 @@ def build_independent_workspace(project: Project) -> Dict[str, Any]:
     agent_items = filter_agents_for_workspace(agent_items, getattr(project, "creation_entry", "") or "from-scratch")
     entry_plan = get_entry_plan(getattr(project, "creation_entry", "") or "from-scratch")
     can_download = "episode_scripts" in artifact_keys
-    from apps.drama.progress_service import DramaProjectProgressService
+    from apps.drama.progress_service import DramaProgressService
 
-    can_share = DramaProjectProgressService.is_deliverable(project) and can_download
+    can_share = DramaProgressService.is_deliverable(project) and can_download
     has_running_agent = AgentExecutionRun.objects.filter(
         project=project,
         status=AgentExecutionRun.STATUS_RUNNING,

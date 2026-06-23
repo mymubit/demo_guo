@@ -3,7 +3,6 @@
 创作入口规划 — drama.* 新体系。
 
 根据用户的创作入口类型，推荐对应的 drama.* 角色执行顺序。
-旧的 from-scratch/from-novel/from-outline 逻辑已更新为 drama.* 体系。
 """
 from __future__ import annotations
 
@@ -33,44 +32,51 @@ class DramaEntryPlan:
         "optional_agents": [],
     }
 
-    # 专家通道：按部门分阶段
+    # 专家通道：12个可见角色，按部门分阶段
     EXPERT_TRACK_PLAN = {
         "entry_type": "expert_track",
         "label": "专家通道",
-        "description": "36个专业角色，8个职能部门，适合商业精品项目",
+        "description": "12个可见角色（8核心+4复合），适合商业精品项目",
         "phases": [
             {
                 "phase": "strategy",
                 "label": "战略选题",
+                "agents": ["drama.topic-planner", "drama.market-analyst"],
             },
             {
                 "phase": "worldbuilding",
                 "label": "世界构建",
-                "agents": ["drama.world-architect", "drama.character-designer",
+                "agents": ["drama.world-architect", "drama.character-designer"],
             },
             {
                 "phase": "plot_design",
                 "label": "剧情引擎",
+                "agents": ["drama.plot-architect", "drama.narrative-engineer"],
             },
             {
                 "phase": "writing",
                 "label": "创作执行",
+                "agents": ["drama.script-writer"],
             },
             {
                 "phase": "review",
                 "label": "评审质控",
+                "agents": ["drama.script-reviewer", "drama.quality-reporter"],
             },
             {
                 "phase": "polish",
                 "label": "修改润色",
+                "agents": ["drama.polish-master"],
             },
             {
                 "phase": "production",
                 "label": "制作宣发",
+                "agents": ["drama.production-pack"],
             },
             {
                 "phase": "compliance",
                 "label": "合规交付",
+                "agents": ["drama.compliance-guard"],
             },
         ],
     }
@@ -81,6 +87,7 @@ class DramaEntryPlan:
         "label": "IP改编",
         "description": "小说/原著改编专用通道",
         "recommended_agents": [
+            "drama.topic-planner",
             "drama.world-architect",
             "drama.character-designer",
             "drama.plot-architect",
@@ -88,10 +95,9 @@ class DramaEntryPlan:
             "drama.script-reviewer",
             "drama.quality-reporter",
             "drama.compliance-guard",
-    "drama.market-analyst",
-    "drama.narrative-engineer",
-    "drama.polish-master",
-    "drama.production-pack",
+            "drama.narrative-engineer",
+            "drama.polish-master",
+            "drama.production-pack",
         ],
     }
 

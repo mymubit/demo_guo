@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated migration: WorkflowTemplate 工作流模板表
 
 import uuid

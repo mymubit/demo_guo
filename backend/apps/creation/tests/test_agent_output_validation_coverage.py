@@ -70,6 +70,113 @@ class AgentOutputValidationCoverageTests(TestCase):
         _validate_review_report(body3)
         self.assertIs(body3["passed"], True)
 
+    def test_narrative_plan_normalizes_legacy_field_names(self):
+        from apps.creation.agent_runtime.output_schema_validation import (
+            _validate_narrative_plan,
+            normalize_narrative_plan,
+        )
+
+        user_payload = {
+            "narrative_core": "主线",
+            "episode_narratives": [
+                {
+                    "episode_id": "E001",
+                    "narrative_focus": "开篇",
+                    "key_beat_chain": ["0-30s：穿越"],
+                    "emotion_delivery": "恐慌到爽感",
+                    "rhythm_control": "快节奏开篇",
+                }
+            ],
+            "opening_package_verification": "开篇校验通过",
+        }
+        normalize_narrative_plan(user_payload)
+        self.assertEqual(user_payload["narrative_core_objective"], "主线")
+        self.assertEqual(user_payload["narrative_consistency_check"], "开篇校验通过")
+        episode = user_payload["episode_narrative_designs"][0]
+        self.assertEqual(episode["narrative_beat_timing"], ["0-30s：穿越"])
+        self.assertEqual(episode["audience_emotion_design"], "恐慌到爽感")
+        self.assertEqual(episode["key_narrative_techniques"][0], "快节奏开篇")
+        _validate_narrative_plan(user_payload)
+
+    def test_narrative_plan_coerces_string_beat_timing_and_mechanics(self):
+        from apps.creation.agent_runtime.output_schema_validation import (
+            _validate_narrative_plan,
+            normalize_narrative_plan,
+        )
+
+        body = {
+            "narrative_core_objective": "开篇",
+            "narrative_mechanics": ["「数字可视化」叙事机制：头顶战力数字全程展示"],
+            "episode_narrative_designs": [
+                {
+                    "episode_id": "E001",
+                    "narrative_focus": "穿越",
+                    "narrative_beat_timing": "0-30s：穿越；1min：系统绑定",
+                }
+            ],
+        }
+        normalize_narrative_plan(body)
+        self.assertEqual(body["narrative_mechanics"][0]["mechanism_type"], "「数字可视化」叙事机制")
+        self.assertEqual(len(body["episode_narrative_designs"][0]["narrative_beat_timing"]), 2)
+        _validate_narrative_plan(body)
+
+    def test_narrative_plan_accepts_canonical_schema(self):
+        from apps.creation.agent_runtime.output_schema_validation import _validate_narrative_plan
+
+        body = {
+            "narrative_core_objective": "5集开篇逆袭",
+            "target_episode_range": "E001-E005",
+            "episode_narrative_designs": [
+                {
+                    "episode_id": "E001",
+                    "narrative_focus": "穿越觉醒",
+                    "audience_emotion_design": "恐慌到爽感",
+                    "narrative_beat_timing": ["0-30s：穿越落地", "1min30s：系统绑定"],
+                }
+            ],
+            "narrative_consistency_check": "开篇五节点完整",
+        }
+        _validate_narrative_plan(body)
+
+    def test_validate_output_accepts_narrative_engineer_payload(self):
+        agent = AgentDefinitionService.get_runnable("drama.narrative-engineer")
+        output = {
+            "narrative_plan": {
+                "narrative_core_objective": "开篇五集",
+                "episode_narrative_designs": [
+                    {"episode_id": "E001", "narrative_focus": "穿越"},
+                ],
+            }
+        }
+        result = IndependentAgentService.validate_output(agent, output)
+        self.assertIn("narrative_plan", result)
+
+    def test_validate_output_accepts_narrative_engineer_legacy_payload_after_normalize(self):
+        agent = AgentDefinitionService.get_runnable("drama.narrative-engineer")
+        output = {
+            "narrative_plan": {
+                "narrative_core": "主线",
+                "episode_narratives": [{"episode_id": "E001", "narrative_focus": "开篇"}],
+                "opening_package_verification": "ok",
+            }
+        }
+        result = IndependentAgentService.validate_output(agent, output)
+        body = result["narrative_plan"]
+        self.assertEqual(body["narrative_core_objective"], "主线")
+        self.assertEqual(body["narrative_consistency_check"], "ok")
+
+    def test_validate_output_rejects_narrative_engineer_legacy_payload(self):
+        from apps.creation.agent_runtime.independent_service import AgentRuntimeError
+
+        agent = AgentDefinitionService.get_runnable("drama.narrative-engineer")
+        output = {
+            "narrative_plan": {
+                "episode_narratives": [{"episode_id": "E001", "narrative_focus": "开篇"}],
+            }
+        }
+        with self.assertRaises(AgentRuntimeError):
+            IndependentAgentService.validate_output(agent, output)
+
     def test_load_knowledge_respects_budget(self):
         """绑定超大/过多知识时，注入总量受 max_prompt_tokens 预算约束。"""
         from apps.agent.models import AgentKnowledgeBinding, AgentKnowledgeItem

@@ -55,9 +55,9 @@ class RuleEvolutionService:
             overall_score__lt=70,
             updated_at__gte=cutoff_date,
         )
-        from apps.drama.progress_service import DramaProjectProgressService
+        from apps.drama.progress_service import DramaProgressService
 
-        blocked_ids = DramaProjectProgressService.blocked_project_ids()
+        blocked_ids = DramaProgressService.blocked_project_ids()
         if blocked_ids:
             low_score_projects = low_score_projects.exclude(id__in=blocked_ids)
 

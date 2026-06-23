@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import uuid
 import django.db.models.deletion
 import django.utils.timezone

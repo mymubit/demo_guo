@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """创作服务辅助函数。"""
 
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied

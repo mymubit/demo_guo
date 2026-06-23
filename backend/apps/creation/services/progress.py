@@ -1,4 +1,5 @@
-"""创作进度查询。"""
+# -*- coding: utf-8 -*-
+"""???????"""
 
 import logging
 from datetime import timedelta
@@ -26,28 +27,25 @@ def _latest_execution_run_summary(project: Project) -> dict | None:
 
 
 def _drama_progress_fields(project: Project) -> dict:
-    from apps.drama.progress_service import DramaProjectProgressService
+    from apps.drama.progress_service import DramaProgressService
 
-    drama = DramaProjectProgressService.find_drama_project(project.id)
-    if not drama:
+    if not project.is_drama_workspace:
         return {
-            "current_stage": "",
-            "current_stage_text": "",
+            "drama_stage": "",
+            "drama_stage_display": "",
             "track_mode": "",
             "delivery_status": "",
-            "drama_project_id": "",
         }
     return {
-        "current_stage": drama.current_stage,
-        "current_stage_text": DramaProjectProgressService.drama_stage_label(drama.current_stage),
-        "track_mode": drama.track_mode,
-        "delivery_status": drama.delivery_status or "",
-        "drama_project_id": str(drama.id),
+        "drama_stage": project.drama_stage,
+        "drama_stage_display": project.get_drama_stage_display(),
+        "track_mode": project.track_mode,
+        "delivery_status": project.delivery_status or "",
     }
 
 
 def get_progress(project_id: str, user) -> dict:
-    """查询创作进度（项目状态 + Drama 阶段 + 最近一次 Agent 运行摘要）。"""
+    """??????????? + Drama ?? + ???? Agent ??????"""
     project = _get_user_project(project_id, user)
 
     rendered_progress_html = _render_progress_html(project)
@@ -77,7 +75,7 @@ def get_progress(project_id: str, user) -> dict:
                 )
             download_token_str = dl.token
         except Exception as exc:  # noqa: BLE001
-            logger.warning("[Creation] 生成下载 token 失败: %s", exc)
+            logger.warning("[Creation] ???? token ??: %s", exc)
 
     score_summary = None
     if project.overall_score is not None or project.grade:

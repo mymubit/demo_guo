@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import annotations
 
 import json
@@ -18,13 +19,17 @@ from apps.agent.models import AgentDefinition, AgentKnowledgeBinding
 from apps.creation.artifact_service import get_artifact, save_artifact
 from apps.creation.models import AgentExecutionRun, Project, ProjectFusionArtifact
 from apps.creation.monitoring.execution_run_service import AgentExecutionRunService
-from apps.creation.agent_runtime.episode_merge import merge_episodes_by_number
+from apps.creation.agent_runtime.episode_merge import (
+    merge_episode_designs_by_number,
+    merge_episodes_by_number,
+)
 from apps.skill.llm.chat import LlmService
 from apps.skill.llm.usage_log import llm_usage_scope
 from apps.skill.models import LlmUsageLog
 
 TEMPLATE_PATH_VAR_RE = re.compile(r"\{\{\s*([\w.]+)\s*\}\}")
-EPISODE_ARTIFACT_KEYS = frozenset({"episode_scripts", "series_outline"})
+EPISODE_ARTIFACT_KEYS = frozenset({"episode_scripts", "series_outline", "polished_script"})
+NARRATIVE_PLAN_ARTIFACT_KEY = "narrative_plan"
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +52,7 @@ def estimate_tokens(text: str) -> int:
 def extract_json_object(text: str) -> Dict[str, Any]:
     raw = (text or "").strip()
     if not raw:
-        raise AgentRuntimeError("模型返回空内容")
+        raise AgentRuntimeError("???????")
     candidates = [raw]
     fenced = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", raw, flags=re.S)
     if fenced:
@@ -58,8 +63,8 @@ def extract_json_object(text: str) -> Dict[str, Any]:
         candidates.append(raw[start : end + 1])
     last_error = ""
     for candidate in candidates:
-        # 先严格解析；失败后用 strict=False 兜底，容忍真实 LLM 偶发的
-        # 字符串内裸控制字符（如未转义的换行/制表符）。
+        # ?????????? strict=False ??????? LLM ???
+        # ?????????????????/?????
         for strict in (True, False):
             try:
                 parsed = json.loads(candidate, strict=strict)
@@ -67,16 +72,16 @@ def extract_json_object(text: str) -> Dict[str, Any]:
                 last_error = str(exc)
                 continue
             if not isinstance(parsed, dict):
-                raise AgentRuntimeError("模型输出 JSON 顶层必须是对象")
+                raise AgentRuntimeError("???? JSON ???????")
             return parsed
-    raise AgentRuntimeError(f"模型输出不是合法 JSON：{last_error}")
+    raise AgentRuntimeError(f"???????? JSON?{last_error}")
 
 
 class IndependentAgentService:
     @staticmethod
     def assert_project_owner(project: Project, user) -> None:
         if project.user_id != getattr(user, "id", None) and not getattr(user, "is_staff", False):
-            raise PermissionDenied("无权操作该项目")
+            raise PermissionDenied("???????")
 
     @staticmethod
     def running_run(project: Project) -> AgentExecutionRun | None:
@@ -88,7 +93,7 @@ class IndependentAgentService:
         ).update(
             status=AgentExecutionRun.STATUS_FAILED,
             finished_at=timezone.now(),
-            error_message="运行超时，已自动标记失败",
+            error_message="????????????",
         )
         return (
             AgentExecutionRun.objects.filter(project=project, status=AgentExecutionRun.STATUS_RUNNING)
@@ -120,7 +125,7 @@ class IndependentAgentService:
             if payload not in (None, {}, []):
                 artifacts[key] = payload
         if missing:
-            raise AgentRuntimeError(f"缺少输入产物: {', '.join(missing)}")
+            raise AgentRuntimeError(f"??????: {', '.join(missing)}")
         payload = {
             "project": project_payload,
             "artifacts": artifacts,
@@ -134,7 +139,7 @@ class IndependentAgentService:
 
     @staticmethod
     def _attach_reference_materials(project: Project, input_payload: Dict[str, Any]) -> None:
-        """合并素材库注入内容；失败时降级，不阻断 Agent 运行。"""
+        """??????????????????? Agent ???"""
         try:
             from apps.creation.library.models import ReferenceMaterial, ReferenceMaterialInjection
             from apps.creation.library.services import MaterialInjectionService
@@ -184,13 +189,13 @@ class IndependentAgentService:
             if fragments:
                 input_payload["reference_materials"] = fragments
         except Exception as exc:
-            logger.warning("[IndependentAgent] 素材注入降级: %s", exc)
+            logger.warning("[IndependentAgent] ??????: %s", exc)
 
-    # 单条知识未显式限长时的默认上限（字符）
+    # ???????????????????
     DEFAULT_KNOWLEDGE_CHARS_PER_BINDING = 4000
 
-    # 知识注入默认策略：校验器/Schema 仅供校验层使用，不进入 prompt；
-    # 参考剧本/示例属于「按相关性精选」内容，每类限量；规则/限制类不限量（由预算兜底）。
+    # ????????????/Schema ??????????? prompt?
+    # ????/??????????????????????/??????????????
     DEFAULT_INJECTION_POLICY: Dict[str, Any] = {
         "excluded_categories": ["validator", "schema"],
         "category_caps": {"reference_script": 2, "example": 3, "knowledge": 8},
@@ -198,7 +203,7 @@ class IndependentAgentService:
 
     @classmethod
     def _injection_policy(cls, agent: AgentDefinition) -> Dict[str, Any]:
-        """合并全局默认策略与 Agent 自定义注入策略（后台可配置）。"""
+        """????????? Agent ???????????????"""
         policy: Dict[str, Any] = {
             "excluded_categories": list(cls.DEFAULT_INJECTION_POLICY["excluded_categories"]),
             "category_caps": dict(cls.DEFAULT_INJECTION_POLICY["category_caps"]),
@@ -214,7 +219,7 @@ class IndependentAgentService:
 
     @staticmethod
     def _knowledge_matches_project(knowledge: AgentKnowledgeItem, project: Project | None) -> bool:
-        """相关性匹配：维度白名单为空=通用；非空则需命中项目对应值。"""
+        """?????????????=???????????????"""
         if project is None:
             return True
 
@@ -245,7 +250,7 @@ class IndependentAgentService:
             policy.get("max_total_chars") or max(4000, int(max_prompt_tokens * 4 * 0.35))
         )
 
-        # 1. 过滤：仅保留可作为 prompt 上下文、且与当前项目相关的知识
+        # 1. ????????? prompt ???????????????
         candidates = []
         for binding in AgentDefinitionService.enabled_bindings(agent):
             if binding.binding_type in (
@@ -264,7 +269,7 @@ class IndependentAgentService:
                 continue
             candidates.append(binding)
 
-        # 2. 跨源去重（同类同标题视为重复，保留排序靠前者）
+        # 2. ???????????????????????
         seen_signatures = set()
         per_category_count: Dict[str, int] = {}
         selected = []
@@ -273,7 +278,7 @@ class IndependentAgentService:
             signature = (str(knowledge.category).lower(), str(knowledge.title).strip().lower())
             if signature in seen_signatures:
                 continue
-            # 3. 每类别 Top-N（candidates 已按 order_index/priority 排序，靠前即更高优先）
+            # 3. ??? Top-N?candidates ?? order_index/priority ???????????
             category = str(knowledge.category)
             cap = caps.get(category)
             if cap is not None and per_category_count.get(category, 0) >= int(cap):
@@ -282,7 +287,7 @@ class IndependentAgentService:
             per_category_count[category] = per_category_count.get(category, 0) + 1
             selected.append(binding)
 
-        # 4. 组装并按总预算兜底截断
+        # 4. ???????????
         rows = []
         used_chars = 0
         for binding in selected:
@@ -354,11 +359,11 @@ class IndependentAgentService:
     @classmethod
     def _render_template(cls, template: str, context: Dict[str, Any]) -> str:
         roots = cls._template_roots(context)
-        # 仅校验模板自身是否残留无法解析的占位符：剥离所有合法变量后再检测，
-        # 避免注入的产物内容本身含有 {{ }} 时被误判为渲染失败。
+        # ?????????????????????????????????
+        # ????????????? {{ }} ??????????
         template_skeleton = TEMPLATE_PATH_VAR_RE.sub("", template)
         if "{{" in template_skeleton or "}}" in template_skeleton:
-            raise AgentRuntimeError("Prompt 模板变量渲染失败")
+            raise AgentRuntimeError("Prompt ????????")
 
         def _replace_path_var(match: re.Match[str]) -> str:
             path = match.group(1).strip()
@@ -430,17 +435,17 @@ class IndependentAgentService:
         lines = []
         rejects = notes.get("rejects") or []
         if rejects:
-            lines.append("用户曾拒绝以下方向，请勿重复：" + "；".join(str(x) for x in rejects[:20]))
+            lines.append("???????????????" + "?".join(str(x) for x in rejects[:20]))
         prefs = notes.get("style_preferences") or []
         if prefs:
-            lines.append("风格偏好：" + "、".join(str(x) for x in prefs[:20]))
+            lines.append("?????" + "?".join(str(x) for x in prefs[:20]))
         guidance = notes.get("character_guidance") or ""
         if guidance:
-            lines.append(f"角色指导：{guidance}")
+            lines.append(f"?????{guidance}")
         if not lines:
             return user_prompt
         block = "\n".join(lines)
-        return f"{user_prompt}\n\n【项目记忆】\n{block}"
+        return f"{user_prompt}\n\n??????\n{block}"
 
     @classmethod
     def _build_skill_rules_snippet(cls, agent: AgentDefinition, input_payload: Dict[str, Any]) -> str:
@@ -479,39 +484,46 @@ class IndependentAgentService:
             system_prompt = f"{system_prompt}\n\n{rules_snippet}".strip() if system_prompt else rules_snippet
         return system_prompt, user_prompt, prompt.version
 
-    # 各产物 schema 的强制输出字段说明，防止 LLM 自由发挥字段名导致校验失败
+    # ??? schema ???????????? LLM ?????????????
     SCHEMA_FIELD_HINTS: Dict[str, str] = {
         "episode-scripts.v1": (
-            "payload 必须包含 episodes 数组，每个元素含 episodeNumber（数字）与剧本正文字段。"
+            "payload ???? episodes ???????? episodeNumber????????????"
         ),
         "review-report.v1": (
-            "payload 必须包含布尔字段 passed（true=通过，false=不通过），"
-            "可选 issues 数组与布尔 pacingPassed；不要用 reviewResult/overallStatus 等替代字段名。"
+            "payload ???????? passed?true=???false=?????"
+            "?? issues ????? pacingPassed???? reviewResult/overallStatus ???????"
         ),
         "script-score-report.v1": (
-            "payload 必须包含 overallScore（数字）或 grade（等级字符串）。"
+            "payload ???? overallScore????? grade????????"
         ),
         "marketing-kit.v1": (
-            "payload 的 titles/clipHooks/posterSlogans 若提供必须为数组。"
+            "payload ? titles/clipHooks/posterSlogans ?????????"
         ),
         "insight-report.v1": (
-            "payload 至少包含 layer1_peel / layer2_mirror / layer3_invert 中的一个对象。"
+            "payload ???? layer1_peel / layer2_mirror / layer3_invert ???????"
         ),
-        "polish-log.v1": "payload 的 suggestions 若提供必须为数组。",
+        "polish-log.v1": "payload ? suggestions ?????????",
+        "narrative-plan.v1": (
+            "payload ?????????narrative_core_objective?target_episode_range?? E001-E005??"
+            "episode_narrative_designs?????narrative_mechanics???????narrative_consistency_check?"
+            "?? narrative_core?episode_narratives?opening_package_verification?"
+            "episode_narrative_designs ???? episode_id?narrative_focus?audience_emotion_design?"
+            "narrative_beat_timing??????????????????"
+        ),
     }
 
     @classmethod
     def _artifact_key_hint(cls, agent: AgentDefinition) -> str:
-        """注入契约允许的 artifact_key 取值与产物字段规范，防止 LLM 自创结构。"""
+        """??????? artifact_key ???????????? LLM ?????"""
         contract = agent.output_contract or {}
         allowed = [str(k) for k in contract.get("artifacts") or []]
         if not allowed:
             return ""
         default_key = getattr(agent, "default_output_artifact_key", "") or allowed[0]
         parts = [
-            "artifact_key 字段只能取以下契约值之一，禁止自行命名或拼接主题："
+            "artifact_key ?????????????????????????"
             + " / ".join(allowed)
-            + f"；若只输出单个产物，artifact_key 必须使用 {default_key}。"
+            + f"??????????artifact_key ???? {default_key}?"
         ]
         schema_hint = cls.SCHEMA_FIELD_HINTS.get(str(contract.get("schema_version") or ""))
         if schema_hint:
@@ -523,15 +535,15 @@ class IndependentAgentService:
         contract = agent.output_contract or {}
         allowed = [str(k) for k in contract.get("artifacts") or []]
         if not allowed:
-            raise AgentRuntimeError("Agent 缺少输出契约")
+            raise AgentRuntimeError("Agent ??????")
         if "payload" in output and isinstance(output.get("payload"), dict):
             default_key = getattr(agent, "default_output_artifact_key", "") or allowed[0]
             artifact_key = str(output.get("artifact_key") or default_key).strip()
             if artifact_key not in allowed:
-                # 真实 LLM 偶发自创 key（如用主题拼 slug），回退到契约默认 key；
-                # 产物结构正确性由后续 schema 校验把关，避免整链路因命名问题失败。
+                # ?? LLM ???? key?????? slug????????? key?
+                # ?????????? schema ??????????????????
                 logger.warning(
-                    "[Agent] %s 输出 artifact_key 非法已回退: %s -> %s",
+                    "[Agent] %s ?? artifact_key ?????: %s -> %s",
                     agent.agent_id,
                     artifact_key,
                     default_key,
@@ -564,10 +576,16 @@ class IndependentAgentService:
         return normalized
 
     @staticmethod
-    def _episode_range_from_run(run: AgentExecutionRun) -> Tuple[int | None, int | None]:
-        params = run.run_params or {}
-        ep_from = run.batch_from or params.get("episode_from") or params.get("script_from")
-        ep_to = run.batch_to or params.get("episode_to") or params.get("script_to")
+    def _resolve_episode_bounds(
+        params: Dict[str, Any],
+        run: AgentExecutionRun | None = None,
+    ) -> Tuple[int | None, int | None]:
+        if run is not None:
+            if run.batch_from is not None and run.batch_to is not None:
+                return int(run.batch_from), int(run.batch_to)
+            params = dict(run.run_params or {})
+        ep_from = params.get("episode_from") or params.get("episode_start") or params.get("script_from")
+        ep_to = params.get("episode_to") or params.get("episode_end") or params.get("script_to")
         try:
             from_ep = int(ep_from) if ep_from is not None else None
         except (TypeError, ValueError):
@@ -576,7 +594,21 @@ class IndependentAgentService:
             to_ep = int(ep_to) if ep_to is not None else None
         except (TypeError, ValueError):
             to_ep = None
+        if from_ep is None and to_ep is None:
+            ep_range = params.get("episode_range")
+            if ep_range and "-" in str(ep_range):
+                try:
+                    parts = str(ep_range).split("-", 1)
+                    from_ep = int(parts[0].strip())
+                    to_ep = int(parts[1].strip())
+                except (TypeError, ValueError, IndexError):
+                    from_ep = None
+                    to_ep = None
         return from_ep, to_ep
+
+    @staticmethod
+    def _episode_range_from_run(run: AgentExecutionRun) -> Tuple[int | None, int | None]:
+        return IndependentAgentService._resolve_episode_bounds({}, run=run)
 
     @classmethod
     def _merge_artifact_body(
@@ -602,6 +634,39 @@ class IndependentAgentService:
             )
             for field, value in body.items():
                 if field not in {"episodes", "_meta"}:
+                    merged[field] = value
+            return merged
+        if artifact_key == NARRATIVE_PLAN_ARTIFACT_KEY:
+            merged_base = dict(existing or {})
+            ep_from, ep_to = cls._episode_range_from_run(run)
+            designs = body.get("episode_narrative_designs") or []
+            merged = merge_episode_designs_by_number(
+                merged_base,
+                designs if isinstance(designs, list) else [],
+                episode_from=ep_from,
+                episode_to=ep_to,
+            )
+            for field, value in body.items():
+                if field in {"episode_narrative_designs", "_meta", "target_episode_range"}:
+                    continue
+                if field == "narrative_mechanics" and isinstance(value, list):
+                    existing_mech = list(merged.get("narrative_mechanics") or [])
+                    seen = {
+                        str(item.get("mechanism_type") or "").strip()
+                        for item in existing_mech
+                        if isinstance(item, dict)
+                    }
+                    for item in value:
+                        if not isinstance(item, dict):
+                            continue
+                        key = str(item.get("mechanism_type") or "").strip()
+                        if key and key in seen:
+                            continue
+                        existing_mech.append(item)
+                        if key:
+                            seen.add(key)
+                    merged["narrative_mechanics"] = existing_mech
+                else:
                     merged[field] = value
             return merged
         if artifact_key == "polish_log":
@@ -655,17 +720,7 @@ class IndependentAgentService:
 
     @staticmethod
     def _script_batch_bounds(params: Dict[str, Any]) -> Tuple[int | None, int | None]:
-        ep_from = params.get("episode_from") or params.get("script_from")
-        ep_to = params.get("episode_to") or params.get("script_to")
-        try:
-            from_ep = int(ep_from) if ep_from is not None else None
-        except (TypeError, ValueError):
-            from_ep = None
-        try:
-            to_ep = int(ep_to) if ep_to is not None else None
-        except (TypeError, ValueError):
-            to_ep = None
-        return from_ep, to_ep
+        return IndependentAgentService._resolve_episode_bounds(params)
 
     @staticmethod
     def _resolve_overwrite_mode(agent: AgentDefinition, params: Dict[str, Any]) -> str:
@@ -690,7 +745,7 @@ class IndependentAgentService:
         prepared = cls._prepare_prompt(locked_project, agent, run_params)
         if not prepared["within_limit"]:
             raise AgentRuntimeError(
-                f"预计输入 tokens 超过上限: {prepared['estimated_prompt_tokens']}/{prepared['max_prompt_tokens']}"
+                f"???? tokens ????: {prepared['estimated_prompt_tokens']}/{prepared['max_prompt_tokens']}"
             )
         input_payload = prepared["input_payload"]
         prompt_version = prepared["prompt_version"]
@@ -802,13 +857,12 @@ class IndependentAgentService:
 
     @staticmethod
     def _compute_progress_percent(project: Project) -> int:
-        """按 Drama 或核心产物完成度估算进度（0-100）。"""
+        """? Drama ?????????????0-100??"""
         try:
-            from apps.drama.progress_service import DramaProjectProgressService
+            from apps.drama.progress_service import DramaProgressService
 
-            drama = DramaProjectProgressService.find_drama_project(project.id)
-            if drama:
-                return int(drama.get_completion_rate())
+            if project.is_drama_workspace:
+                return int(project.get_completion_rate())
         except Exception:  # noqa: BLE001
             pass
         if get_artifact(project, "episode_scripts"):

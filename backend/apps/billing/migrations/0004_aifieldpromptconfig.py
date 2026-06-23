@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated manually for AiFieldPromptConfig
 
 import uuid

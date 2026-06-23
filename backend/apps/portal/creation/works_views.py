@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 我的作品 API 视图
 
@@ -32,6 +33,7 @@ from apps.creation.serializers import (
 from apps.creation.script_export import export_work
 from apps.common.user_messages import safe_api_message
 from apps.creation.services import CreationService
+from apps.creation.services.works import build_user_work_list_page
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +77,7 @@ class WorkListView(APIView):
         status_filter = request.GET.get("status", "").strip()
         keyword = request.GET.get("q", "").strip()
         ordering = request.GET.get("ordering", "newest").strip()
+        scope = request.GET.get("scope", "").strip()
         try:
             page = max(1, int(request.GET.get("page", "1")))
         except ValueError:
@@ -84,55 +87,22 @@ class WorkListView(APIView):
         except ValueError:
             page_size = 20
 
-        # 获取当前用户的作品列表
-        qs = CreationService.list_user_projects(
+        payload = build_user_work_list_page(
             request.user,
-            status_filter or None,
+            page=page,
+            page_size=page_size,
+            status_filter=status_filter or None,
             keyword=keyword,
             ordering=ordering,
+            scope=scope,
         )
-        total = qs.count()
-
-        # 分页
-        start = (page - 1) * page_size
-        end = start + page_size
-        items_qs = list(qs[start:end])
-
-        drama_map = {}
-        try:
-            from apps.drama.progress_service import DramaProjectProgressService
-
-            drama_map = DramaProjectProgressService.batch_by_creation_ids(
-                [p.id for p in items_qs]
-            )
-        except Exception:  # noqa: BLE001
-            drama_map = {}
-
-        for project in items_qs:
-            if (
-                project.pipeline_mode == Project.MODE_WORKSPACE
-                and project.execution_status == Project.STATUS_RUNNING
-            ):
-                CreationService._reconcile_project_running_state(project)
-
-        # 传入 model 实例给 Serializer（SerializerMethodField 会读取 obj.get_status_display）
-        items = ProjectListSerializer(
-            instance=items_qs, many=True, context={"drama_map": drama_map}
-        )
-
-        total_pages = (total + page_size - 1) // page_size if page_size > 0 else 0
 
         return Response(
             {
                 "code": 0,
                 "message": "success",
-                "data": items.data,
-                "pagination": {
-                    "total": total,
-                    "page": page,
-                    "page_size": page_size,
-                    "total_pages": total_pages,
-                },
+                "data": payload["items"],
+                "pagination": payload["pagination"],
             },
             status=status.HTTP_200_OK,
         )
@@ -180,13 +150,14 @@ class WorkDetailView(APIView):
         try:
             data = CreationService.get_project_detail(project_id, request.user)
             try:
-                from apps.drama.progress_service import DramaProjectProgressService
+                from apps.drama.progress_service import DramaProgressService
 
-                drama = DramaProjectProgressService.find_drama_project(project_id)
-                if drama:
-                    data["drama"] = DramaProjectProgressService.build_admin_summary(drama)
-                    data["drama_workspace_url"] = f"/drama/workspace/{drama.id}"
-                    data["progress_percent"] = int(drama.get_completion_rate())
+                from apps.creation.models import Project
+                ws_project = Project.objects.filter(id=project_id, user=request.user).first()
+                if ws_project and ws_project.is_drama_workspace:
+                    data["drama"] = DramaProgressService.build_admin_summary(ws_project)
+                    data["drama_workspace_url"] = f"/drama/workspace/{ws_project.id}"
+                    data["progress_percent"] = int(ws_project.get_completion_rate())
             except Exception:  # noqa: BLE001
                 pass
         except PermissionDenied as exc:

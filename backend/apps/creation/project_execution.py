@@ -23,12 +23,11 @@ def _project_has_running_run(project: Project) -> bool:
     ).exists():
         return True
     try:
-        from apps.drama.models import DramaProject, DramaRoleExecution
+        from apps.drama.models import DramaRoleExecution
 
-        drama = DramaProject.objects.filter(project_id=project.id).first()
-        if drama:
+        if project.is_drama_workspace:
             return DramaRoleExecution.objects.filter(
-                drama_project=drama,
+                project=project,
                 status=DramaRoleExecution.Status.RUNNING,
             ).exists()
     except Exception:  # noqa: BLE001
@@ -38,11 +37,10 @@ def _project_has_running_run(project: Project) -> bool:
 
 def _drama_awaiting_review(project: Project) -> bool:
     try:
-        from apps.drama.models import DramaProject
-        from apps.drama.progress_service import DramaProjectProgressService
+        from apps.drama.constants import DramaStage
+        from apps.drama.progress_service import DramaProgressService
 
-        drama = DramaProjectProgressService.find_drama_project(project.id)
-        if drama and drama.current_stage == DramaProject.Stage.REVIEW:
+        if project.is_drama_workspace and project.drama_stage == DramaStage.REVIEW:
             return True
     except Exception:  # noqa: BLE001
         pass
@@ -56,11 +54,11 @@ def derive_execution_status(project: Project) -> str:
     if _project_has_scripts(project):
         return Project.STATUS_COMPLETED
     try:
-        from apps.drama.progress_service import DramaProjectProgressService
+        from apps.drama.progress_service import DramaProgressService
 
-        if DramaProjectProgressService.is_deliverable(project):
+        if DramaProgressService.is_deliverable(project):
             return Project.STATUS_COMPLETED
-        if DramaProjectProgressService.has_blocking_failure(project):
+        if DramaProgressService.has_blocking_failure(project):
             return Project.STATUS_FAILED
     except Exception:  # noqa: BLE001
         pass
@@ -84,9 +82,9 @@ def filter_projects_by_execution_status(qs: QuerySet, status: str) -> QuerySet:
     if not status:
         return qs
 
-    from apps.drama.progress_service import DramaProjectProgressService
+    from apps.drama.progress_service import DramaProgressService
 
-    running_ids = list(DramaProjectProgressService.in_progress_project_ids())
+    running_ids = list(DramaProgressService.in_progress_project_ids())
     if not running_ids:
         running_ids = list(
             AgentExecutionRun.objects.filter(
@@ -96,8 +94,8 @@ def filter_projects_by_execution_status(qs: QuerySet, status: str) -> QuerySet:
     script_ids = ProjectFusionArtifact.objects.filter(
         artifact_key="episode_scripts"
     ).values_list("project_id", flat=True)
-    deliverable_ids = DramaProjectProgressService.deliverable_project_ids()
-    blocked_ids = DramaProjectProgressService.blocked_project_ids()
+    deliverable_ids = DramaProgressService.deliverable_project_ids()
+    blocked_ids = DramaProgressService.blocked_project_ids()
     failed_ids = AgentExecutionRun.objects.filter(
         status=AgentExecutionRun.STATUS_FAILED
     ).values_list("project_id", flat=True)
@@ -111,18 +109,20 @@ def filter_projects_by_execution_status(qs: QuerySet, status: str) -> QuerySet:
             id__in=script_ids
         ).exclude(id__in=deliverable_ids)
     if status == Project.STATUS_AWAITING:
-        from apps.drama.models import DramaProject
+        from apps.drama.constants import DramaStage
 
-        review_pids = DramaProject.objects.filter(
-            current_stage=DramaProject.Stage.REVIEW
-        ).values_list("project_id", flat=True)
+        review_pids = Project.objects.filter(
+            drama_stage=DramaStage.REVIEW,
+            track_mode__in=["fast", "expert"],
+        ).values_list("id", flat=True)
         return qs.filter(id__in=review_pids).exclude(id__in=running_ids)
     if status == Project.STATUS_PENDING:
-        from apps.drama.models import DramaProject
+        from apps.drama.constants import DramaStage
 
-        review_pids = DramaProject.objects.filter(
-            current_stage=DramaProject.Stage.REVIEW
-        ).values_list("project_id", flat=True)
+        review_pids = Project.objects.filter(
+            drama_stage=DramaStage.REVIEW,
+            track_mode__in=["fast", "expert"],
+        ).values_list("id", flat=True)
         return (
             qs.exclude(id__in=running_ids)
             .exclude(id__in=script_ids)

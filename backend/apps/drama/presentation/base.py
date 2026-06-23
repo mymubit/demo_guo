@@ -86,12 +86,83 @@ def steps_block(title: str, items: List[dict]) -> dict:
     return {"type": "steps", "title": title, "items": items}
 
 
+def split_labeled_line(text: str, *, default_title: str | None = None) -> tuple[str | None, str]:
+    """将「标题：正文」格式的单行文本拆成展示用标题与正文；无分隔符时仅返回正文。
+
+    default_title 为历史参数，已废弃且始终忽略，避免旧代码热重载时报错。
+    """
+    _ = default_title
+    line = str(text or "").strip()
+    for sep in ("：", ":"):
+        if sep in line:
+            head, _, tail = line.partition(sep)
+            if head.strip() and tail.strip():
+                return head.strip(), tail.strip()
+    return None, line
+
+
+def build_labeled_step_items(texts: list, *, limit: int = 12) -> List[dict]:
+    """将字符串列表转为 steps block 条目，自动识别「标题：正文」。"""
+    items: List[dict] = []
+    for idx, raw in enumerate(texts[:limit], 1):
+        text = str(raw).strip()
+        if not text:
+            continue
+        title: str | None = None
+        body = text
+        for sep in ("：", ":"):
+            if sep not in text:
+                continue
+            head, _, tail = text.partition(sep)
+            if head.strip() and tail.strip():
+                title = head.strip()
+                body = tail.strip()
+                break
+        item: dict = {"index": idx, "body": body}
+        if title:
+            item["title"] = title
+        items.append(item)
+    return items
+
+
 def stage_outlines_block(title: str, stages: List[dict]) -> dict:
     return {"type": "stage_outlines", "title": title, "stages": stages}
 
 
 def metrics_block(title: str, items: List[dict]) -> dict:
     return {"type": "metrics", "title": title, "items": items}
+
+
+def market_report_block(
+    *,
+    drama_name: str = "",
+    metrics: Optional[List[dict]] = None,
+    sections: Optional[List[dict]] = None,
+) -> dict:
+    return {
+        "type": "market_report",
+        "drama_name": drama_name,
+        "metrics": metrics or [],
+        "sections": sections or [],
+    }
+
+
+def narrative_plan_block(
+    *,
+    core_objective: str = "",
+    target_range: str = "",
+    mechanics: Optional[List[dict]] = None,
+    episodes: Optional[List[dict]] = None,
+    consistency_check: str = "",
+) -> dict:
+    return {
+        "type": "narrative_plan",
+        "core_objective": core_objective,
+        "target_range": target_range,
+        "mechanics": mechanics or [],
+        "episodes": episodes or [],
+        "consistency_check": consistency_check,
+    }
 
 
 def outline_overview_block(
@@ -543,15 +614,26 @@ def parse_episode_script_content(content: Any) -> tuple[List[dict], str]:
     return beats, embedded_checkpoint
 
 
-CHARACTER_PROFILE_FIELD_GROUPS: tuple[tuple[str, ...], ...] = (
-    ("surface_want", "want"),
-    ("deep_need", "need"),
-    ("lie",),
-    ("flaw",),
-    ("ghost",),
-    ("character_arc",),
-    ("timbre_tag", "voice_tag"),
+CHARACTER_PROFILE_FIELDS: tuple[str, ...] = (
+    "role_type",
+    "surface_desire",
+    "deep_need",
+    "character_flaw",
+    "core_fear",
+    "arc",
+    "voice_tag",
 )
+
+
+def space_card_item(text: str, *, fallback_title: str) -> dict:
+    """从「名称：描述」解析场景/空间卡片。"""
+    line = str(text or "").strip()
+    if not line:
+        return {"title": fallback_title, "body": ""}
+    title, body = split_labeled_line(line)
+    if title and body:
+        return {"title": title, "body": body}
+    return {"title": fallback_title, "body": line}
 
 
 def build_character_id_map(body: dict) -> dict[str, str]:
@@ -570,32 +652,27 @@ def build_character_id_map(body: dict) -> dict[str, str]:
     return id_map
 
 
-CHARACTER_ROLE_KEYS = ("role_position", "identity", "role_type")
+CHARACTER_ROLE_KEY = "role_type"
 
 
 def resolve_character_role(char: dict) -> str:
-    for key in CHARACTER_ROLE_KEYS:
-        val = char.get(key)
-        if val in (None, "", [], {}):
-            continue
-        text = str(val).strip()
-        if any("\u4e00" <= ch <= "\u9fff" for ch in text):
-            return text
-        localized = localize_phrase_label(text) or localize_role_label(text)
-        if localized:
-            return localized
-    return ""
+    val = char.get(CHARACTER_ROLE_KEY)
+    if val in (None, "", [], {}):
+        return ""
+    text = str(val).strip()
+    if any("\u4e00" <= ch <= "\u9fff" for ch in text):
+        return text
+    localized = localize_phrase_label(text) or localize_role_label(text)
+    return localized or ""
 
 
 def character_profile_title(char: dict) -> str:
-    name = str(char.get("name") or "未命名")
-    role = resolve_character_role(char)
-    return f"{name} · {role}" if role else name
+    return str(char.get("name") or "未命名")
 
 
 def _format_character_field_value(key: str, val: Any) -> str:
     if isinstance(val, dict):
-        if key in ("arc", "character_arc"):
+        if key == "arc":
             parts = []
             for sub_key, sub_val in val.items():
                 if sub_val in (None, "", [], {}):
@@ -605,36 +682,44 @@ def _format_character_field_value(key: str, val: Any) -> str:
                 return "\n".join(parts)
         formatted = format_inline_dict(val)
         return formatted if formatted else format_scalar(val)
-    if isinstance(val, str) and key in ("role_type", "role"):
-        localized = localize_role_label(val)
-        return localized if localized else format_scalar(val)
+    if isinstance(val, str) and key == "role_type":
+        localized = localize_role_label(val) or localize_phrase_label(val)
+        return localized or format_scalar(val)
     return format_scalar(val)
 
 
 def character_profile_rows(char: dict) -> List[dict]:
     rows: List[dict] = []
-    for aliases in CHARACTER_PROFILE_FIELD_GROUPS:
-        for key in aliases:
-            val = char.get(key)
-            if val not in (None, "", [], {}):
-                rows.append({"key": label(key), "value": _format_character_field_value(key, val)})
-                break
+    for key in CHARACTER_PROFILE_FIELDS:
+        val = char.get(key)
+        if val not in (None, "", [], {}):
+            rows.append({"key": label(key), "value": _format_character_field_value(key, val)})
     return rows
+
+
+def _character_role_row_labels() -> set[str]:
+    return {label(CHARACTER_ROLE_KEY)}
 
 
 def character_roster_entries(chars: Any) -> List[dict]:
     if not isinstance(chars, list):
         return []
+    role_row_labels = _character_role_row_labels()
     entries: List[dict] = []
     for char in chars[:20]:
         if not isinstance(char, dict):
             continue
+        role_label = resolve_character_role(char)
         rows = character_profile_rows(char)
-        if not rows:
+        if role_label:
+            rows = [row for row in rows if row["key"] not in role_row_labels]
+        if not rows and not role_label:
             continue
         entries.append(
             {
                 "title": character_profile_title(char),
+                "badge": str(char.get("character_id") or "").strip() or None,
+                "role_label": role_label or None,
                 "rows": rows,
             }
         )
@@ -648,6 +733,11 @@ def relationship_graph_entries(network: Any, *, id_map: dict[str, str] | None = 
             "title": card["title"],
             "subtitle": card.get("subtitle") or "",
             "body": card.get("body") or "",
+            "source_name": card.get("source_name") or "",
+            "target_name": card.get("target_name") or "",
+            "relationship_type": card.get("relationship_type") or card.get("subtitle") or "",
+            "core_conflict": card.get("core_conflict") or "",
+            "interaction_rule": card.get("interaction_rule") or "",
         }
         for card in cards
     ]
@@ -671,8 +761,14 @@ def relationship_network_cards(network: Any, *, id_map: dict[str, str] | None = 
         if not isinstance(item, dict):
             continue
         pair = item.get("character_pair") or []
+        source = ""
+        target = ""
         if isinstance(pair, list) and pair:
             names = [display_ref(x) for x in pair[:2] if display_ref(x)]
+            if len(names) >= 1:
+                source = names[0]
+            if len(names) >= 2:
+                target = names[1]
             title = " ↔ ".join(names)
         else:
             source = display_ref(item.get("source_id"))
@@ -681,15 +777,19 @@ def relationship_network_cards(network: Any, *, id_map: dict[str, str] | None = 
         if not title:
             title = str(item.get("name") or "关系")
         rel_display = relationship_type_label(item)
-        body_parts = [
-            str(item.get("core_conflict") or ""),
-            str(item.get("interaction_rule") or ""),
-        ]
+        core_conflict = str(item.get("core_conflict") or "").strip()
+        interaction_rule = str(item.get("interaction_rule") or "").strip()
+        body_parts = [core_conflict, interaction_rule]
         cards.append(
             {
                 "title": title,
                 "subtitle": rel_display,
                 "body": "\n".join(p for p in body_parts if p)[:800],
+                "source_name": source,
+                "target_name": target,
+                "relationship_type": rel_display,
+                "core_conflict": core_conflict,
+                "interaction_rule": interaction_rule,
             }
         )
     return cards
@@ -722,8 +822,6 @@ def storyboard_to_cards(items: List[dict]) -> List[dict]:
         )
     return cards
 
-
-_STAGE_KEY_RE = re.compile(r"^stage_(\d+)$")
 
 _EPISODE_SEGMENT_KEYS = ("opening", "development", "climax", "resolution")
 
@@ -758,7 +856,7 @@ def a_level_reverse_cards(points: List[dict]) -> List[dict]:
     for item in points[:12]:
         if not isinstance(item, dict):
             continue
-        ep_no = item.get("episode_num") or item.get("episode_id") or ""
+        ep_no = item.get("episode_id") or ""
         content = str(item.get("reverse_content") or "").strip()
         if not content:
             continue
@@ -773,12 +871,20 @@ def a_level_reverse_cards(points: List[dict]) -> List[dict]:
 
 
 _EPISODE_RANGE_RE = re.compile(r"^(\d+)\s*-\s*(\d+)$")
+_CHINESE_EPISODE_RANGE_RE = re.compile(
+    r"第?\s*(\d+)\s*集?\s*[-–—~至到]\s*第?\s*(\d+)\s*集?",
+    re.IGNORECASE,
+)
+_EPISODE_ID_NUM_RE = re.compile(r"(?:E|EP|e|ep)?(\d+)")
 
 
 def parse_episode_range(text: Any) -> tuple[int, int] | None:
     if text in (None, "", [], {}):
         return None
-    match = _EPISODE_RANGE_RE.match(str(text).strip())
+    raw = str(text).strip()
+    match = _EPISODE_RANGE_RE.match(raw)
+    if not match:
+        match = _CHINESE_EPISODE_RANGE_RE.search(raw)
     if not match:
         return None
     start, end = int(match.group(1)), int(match.group(2))
@@ -788,11 +894,36 @@ def parse_episode_range(text: Any) -> tuple[int, int] | None:
 
 
 def episode_outline_number(item: dict, *, fallback: int = 1) -> int:
-    raw = item.get("episode_id") or item.get("episode_num") or fallback
+    raw = item.get("episode_id")
+    if raw in (None, "", [], {}):
+        return fallback
+    if isinstance(raw, int):
+        return raw
+    text = str(raw).strip()
+    match = _EPISODE_ID_NUM_RE.search(text)
+    if match:
+        return int(match.group(1))
     try:
-        return int(raw)
+        return int(text)
     except (TypeError, ValueError):
         return fallback
+
+
+def _normalize_episode_segments(item: dict) -> tuple[dict | None, str, Any]:
+    """解析 series-outline.v1 分集四段结构与情绪标记。"""
+    segments_raw = item.get("four_segment_structure")
+    hook = str(item.get("end_hook") or "").strip()
+    emotion_src = item.get("emotion_markers")
+
+    if not isinstance(segments_raw, dict):
+        return None, hook, emotion_src
+
+    segments = {
+        key: val
+        for key, val in segments_raw.items()
+        if val not in (None, "", [], {})
+    }
+    return segments or None, hook, emotion_src
 
 
 def episode_outline_card_item(item: dict, *, fallback_index: int = 0) -> dict | None:
@@ -800,10 +931,9 @@ def episode_outline_card_item(item: dict, *, fallback_index: int = 0) -> dict | 
         return None
     ep_no = episode_outline_number(item, fallback=fallback_index + 1)
     ep_name = str(item.get("episode_name") or "").strip()
-    hook = str(item.get("ending_hook") or "").strip()
-    segments = item.get("four_part_structure")
+    segments, hook, emotion_src = _normalize_episode_segments(item)
     structure = _episode_segment_sections(segments)
-    emotions = _episode_emotion_sections(item.get("emotion_beat"))
+    emotions = _episode_emotion_sections(emotion_src)
     sections = structure + emotions
     if not sections and not hook:
         return None
@@ -820,19 +950,23 @@ def episode_outline_card_item(item: dict, *, fallback_index: int = 0) -> dict | 
     }
 
 
-def stage_narrative_definitions(stage_narrative: dict) -> List[dict]:
-    """解析带 episode_range 的 six_stage_narrative（stage_N 形态）。"""
-    if not isinstance(stage_narrative, dict):
+def stage_narrative_list_definitions(stage_narrative: list) -> List[dict]:
+    """解析 six_stage_narrative 数组形态（stage_id / episode_range / core_task）。"""
+    if not isinstance(stage_narrative, list):
         return []
-    stages: List[tuple[int, dict]] = []
-    for key, val in stage_narrative.items():
-        match = _STAGE_KEY_RE.match(str(key))
-        if not match or not isinstance(val, dict):
+    stages: List[dict] = []
+    for index, val in enumerate(stage_narrative):
+        if not isinstance(val, dict):
             continue
         ep_range = parse_episode_range(val.get("episode_range"))
         if not ep_range:
             continue
         start, end = ep_range
+        stage_num = index + 1
+        stage_id = str(val.get("stage_id") or "").strip()
+        stage_match = re.match(r"^S(\d+)$", stage_id, re.IGNORECASE)
+        if stage_match:
+            stage_num = int(stage_match.group(1))
         points = val.get("key_plot_points") or []
         highlights = [
             str(point).strip()
@@ -840,26 +974,27 @@ def stage_narrative_definitions(stage_narrative: dict) -> List[dict]:
             if str(point).strip()
         ][:8]
         stages.append(
-            (
-                int(match.group(1)),
-                {
-                    "index": int(match.group(1)),
-                    "title": str(val.get("stage_name") or f"第{match.group(1)}段").strip(),
-                    "subtitle": f"第{start}-{end}集",
-                    "episode_start": start,
-                    "episode_end": end,
-                    "summary": str(val.get("core_goal") or "").strip(),
-                    "highlights": highlights,
-                },
-            )
+            {
+                "index": stage_num,
+                "title": str(val.get("stage_name") or f"第{stage_num}段").strip(),
+                "subtitle": f"第{start}-{end}集",
+                "episode_start": start,
+                "episode_end": end,
+                "summary": str(val.get("core_task") or "").strip(),
+                "highlights": highlights,
+            }
         )
-    stages.sort(key=lambda item: item[0])
-    return [item[1] for item in stages]
+    stages.sort(key=lambda item: item["index"])
+    return stages
 
 
-def build_stage_grouped_outlines(stage_narrative: dict, outlines: List[dict]) -> List[dict]:
+def build_stage_grouped_outlines(stage_narrative: Any, outlines: List[dict]) -> List[dict]:
     """按六阶段 episode_range 将分集大纲分组。"""
-    definitions = stage_narrative_definitions(stage_narrative)
+    definitions = (
+        stage_narrative_list_definitions(stage_narrative)
+        if isinstance(stage_narrative, list)
+        else []
+    )
     if not definitions or not isinstance(outlines, list):
         return []
 

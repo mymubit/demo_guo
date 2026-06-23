@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated migration: FusionPipelinePack 灰度分流与 LLM 版本兼容性字段扩展
 
 from django.db import migrations, models

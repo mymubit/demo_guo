@@ -41,7 +41,7 @@ AGENT_STREAM_CONFIG: Dict[str, Dict[str, Any]] = {
     # drama.* 新体系
     "drama.script-writer": {"kind": "episode_scripts", "array_keys": ("episodes",)},
     "drama.polish-master": {"kind": "polished_script", "array_keys": ("episodes",)},
-    "drama.narrative-engineer": {"kind": "narrative_plan", "array_keys": ("episodes",)},
+    "drama.narrative-engineer": {"kind": "narrative_plan", "array_keys": ("episode_narrative_designs",)},
     "drama.market-analyst": {"kind": "market_report", "array_keys": ()},
     "drama.production-pack": {"kind": "production_package", "array_keys": ()},
     "drama.plot-architect": {"kind": "series_outline", "array_keys": ("episodes", "stages")},

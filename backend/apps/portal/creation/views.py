@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 创作 API 视图
 
@@ -534,5 +535,4 @@ class CreationAgentQualityAlertAckView(APIView):
 
     def post(self, request, project_id: str, node_index: int):
         return legacy_workspace_gone_response()
-
 

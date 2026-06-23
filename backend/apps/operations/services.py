@@ -100,10 +100,10 @@ def dashboard_slo_cards() -> dict:
     # 开放告警数（待处理）
     open_alerts = AlertEvent.objects.filter(status=AlertEvent.Status.OPEN).count()
 
-    from apps.drama.progress_service import DramaProjectProgressService
+    from apps.drama.progress_service import DramaProgressService
 
-    running_projects = len(set(DramaProjectProgressService.in_progress_project_ids()))
-    failed_projects = len(set(DramaProjectProgressService.blocked_project_ids()))
+    running_projects = len(set(DramaProgressService.in_progress_project_ids()))
+    failed_projects = len(set(DramaProgressService.blocked_project_ids()))
 
     data = {
         "as_of": now.isoformat(),
@@ -401,10 +401,10 @@ def sample_projects_for_feedback(*, days: int = 7, limit: int = 20) -> list[dict
     now = timezone.now()
     threshold_dt = now - timedelta(days=days)
 
-    from apps.drama.progress_service import DramaProjectProgressService
+    from apps.drama.progress_service import DramaProgressService
 
-    deliverable_ids = set(DramaProjectProgressService.deliverable_project_ids())
-    blocked_ids = set(DramaProjectProgressService.blocked_project_ids())
+    deliverable_ids = set(DramaProgressService.deliverable_project_ids())
+    blocked_ids = set(DramaProgressService.blocked_project_ids())
 
     qs = Project.objects.filter(
         created_at__gte=threshold_dt,

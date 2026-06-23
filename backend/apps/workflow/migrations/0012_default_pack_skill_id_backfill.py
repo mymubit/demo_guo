@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # 数据修正：把默认 short-drama-v1 pack 中 5 个创作节点的 skill_id 补齐
 # 历史数据创建时 skill_id 为空、runner_path 指向旧 workspace_bridge，
 # 新引擎 SkillBridge 现优先按 skill_id 路由到 SkillInvoker。

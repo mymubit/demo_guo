@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # P2-1 阶段：为 7 个创作业务技能注册到 AgentSkillDefinition
 # 让 SkillBridge 通过 skill_id 路由到 SkillInvoker.invoke()
 #

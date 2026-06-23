@@ -1,12 +1,24 @@
 import { useMemo, useState } from 'react'
 import {
   AlertTriangle,
+  BarChart3,
   BookOpen,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Clapperboard,
+  Clock,
+  DollarSign,
   FileText,
+  Globe2,
+  Heart,
+  Lightbulb,
+  Link2,
+  ShieldAlert,
   Sparkles,
+  Target,
+  TrendingUp,
+  Users,
   XCircle,
   Zap,
 } from 'lucide-react'
@@ -40,6 +52,22 @@ function MetricsBlock({ block }) {
 }
 
 function HeroBlock({ block }) {
+  if (block.variant === 'brief') {
+    return (
+      <div className="rounded-2xl border border-indigo-100/90 bg-gradient-to-br from-indigo-50/60 via-white to-violet-50/40 px-6 py-5 shadow-sm">
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="h-4 w-4 text-indigo-500 shrink-0" />
+          <p className="text-xs font-semibold tracking-wide text-indigo-600">
+            {block.title || '核心创意'}
+          </p>
+        </div>
+        <p className="text-base sm:text-[17px] text-gray-900 leading-8 font-medium whitespace-pre-wrap">
+          {block.subtitle}
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="relative overflow-hidden rounded-xl border border-indigo-100 bg-gradient-to-br from-indigo-50 via-white to-violet-50 px-5 py-4 shadow-sm">
       <Sparkles className="absolute right-4 top-4 h-5 w-5 text-indigo-200" />
@@ -57,7 +85,63 @@ function KvBlock({ block }) {
   const rows = block.rows || []
   if (!rows.length) return null
 
-  const isTwoColumn = block.layout === 'columns_2'
+  const isEmbedded = block.variant === 'embedded'
+  const isTwoColumn = !isEmbedded && block.layout === 'columns_2'
+
+  const rowList = (
+    <dl
+      className={
+        isTwoColumn
+          ? 'grid gap-3 p-4 sm:grid-cols-2'
+          : isEmbedded
+            ? 'divide-y divide-gray-100'
+            : 'divide-y divide-gray-100'
+      }
+    >
+      {rows.map((row, index) => {
+        const isLong = String(row.value || '').length > 120
+        const spanFull = isTwoColumn && isLong
+        return (
+          <div
+            key={`${block.title || 'kv'}-${row.key}-${index}`}
+            className={
+              isTwoColumn
+                ? `rounded-lg border border-gray-100 bg-gray-50/40 px-4 py-3.5 hover:bg-gray-50/80 transition-colors ${
+                    spanFull ? 'sm:col-span-2' : ''
+                  }`
+                : isEmbedded
+                  ? `px-5 py-3.5 ${index > 0 ? 'border-t border-gray-100' : ''}`
+                  : `px-5 py-4 ${isLong ? 'bg-white' : 'hover:bg-gray-50/60'} transition-colors`
+            }
+          >
+            {isEmbedded ? (
+              <div className="flex flex-col gap-1 sm:flex-row sm:gap-5">
+                <dt className="sm:w-24 shrink-0 text-xs font-semibold text-gray-500">{row.key}</dt>
+                <dd className="flex-1 min-w-0 text-sm text-gray-800 leading-7 whitespace-pre-wrap break-words">
+                  {row.value}
+                </dd>
+              </div>
+            ) : (
+              <>
+                <dt className="text-xs font-semibold text-indigo-600 mb-2">{row.key}</dt>
+                <dd
+                  className={`text-sm text-gray-800 leading-7 whitespace-pre-wrap break-words ${
+                    isLong ? 'pl-3 border-l-2 border-indigo-100' : ''
+                  }`}
+                >
+                  {row.value}
+                </dd>
+              </>
+            )}
+          </div>
+        )
+      })}
+    </dl>
+  )
+
+  if (isEmbedded) {
+    return rowList
+  }
 
   return (
     <section className="w-full rounded-xl border border-gray-200/80 overflow-hidden bg-white shadow-sm">
@@ -66,39 +150,7 @@ function KvBlock({ block }) {
           <SectionTitle>{block.title}</SectionTitle>
         </div>
       ) : null}
-      <dl
-        className={
-          isTwoColumn
-            ? 'grid gap-3 p-4 sm:grid-cols-2'
-            : 'divide-y divide-gray-100'
-        }
-      >
-        {rows.map((row, index) => {
-          const isLong = String(row.value || '').length > 120
-          const spanFull = isTwoColumn && isLong
-          return (
-            <div
-              key={`${block.title || 'kv'}-${row.key}-${index}`}
-              className={
-                isTwoColumn
-                  ? `rounded-lg border border-gray-100 bg-gray-50/40 px-4 py-3.5 hover:bg-gray-50/80 transition-colors ${
-                      spanFull ? 'sm:col-span-2' : ''
-                    }`
-                  : `px-5 py-4 ${isLong ? 'bg-white' : 'hover:bg-gray-50/60'} transition-colors`
-              }
-            >
-              <dt className="text-xs font-semibold text-indigo-600 mb-2">{row.key}</dt>
-              <dd
-                className={`text-sm text-gray-800 leading-7 whitespace-pre-wrap ${
-                  isLong && !isTwoColumn ? 'pl-3 border-l-2 border-indigo-100' : ''
-                } ${isTwoColumn && isLong ? 'pl-3 border-l-2 border-indigo-100' : ''}`}
-              >
-                {row.value}
-              </dd>
-            </div>
-          )
-        })}
-      </dl>
+      {rowList}
     </section>
   )
 }
@@ -131,30 +183,70 @@ function ListBlock({ block }) {
   )
 }
 
-function StepsBlock({ block }) {
+function CalloutBlock({ block }) {
+  const isWarning = block.variant === 'warning'
+  const isAccent = block.variant === 'accent'
   return (
-    <section>
+    <section
+      className={`rounded-xl border px-5 py-4 shadow-sm ${
+        isWarning
+          ? 'border-amber-200/90 bg-amber-50/70'
+          : isAccent
+            ? 'border-violet-200/90 bg-violet-50/50'
+            : 'border-indigo-100 bg-indigo-50/40'
+      }`}
+    >
+      {block.title ? (
+        <div className="mb-2.5">
+          <SectionTitle>{block.title}</SectionTitle>
+        </div>
+      ) : null}
+      <p className="text-sm text-gray-800 leading-7 whitespace-pre-wrap">{block.text}</p>
+    </section>
+  )
+}
+
+function StepsBlock({ block }) {
+  const isWarning = block.variant === 'warning'
+  const badgeClass = isWarning ? 'bg-amber-500' : 'bg-indigo-600'
+  const cardClass = isWarning ? 'border-amber-200/80' : 'border-gray-200/80'
+
+  return (
+    <section className="w-full">
       {block.title ? <SectionTitle>{block.title}</SectionTitle> : null}
-      <ol className={`space-y-3 ${block.title ? 'mt-3' : ''}`}>
+      <ol className={`w-full list-none m-0 p-0 space-y-3 ${block.title ? 'mt-4' : ''}`}>
         {(block.items || []).map((item) => (
-          <li key={`step-${item.index}-${item.title}`} className="flex gap-3">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-sm font-bold text-white shadow-sm">
+          <li
+            key={`step-${item.index}-${item.title || item.body?.slice(0, 32) || 'body'}`}
+            className="flex w-full min-w-0 gap-3 items-start"
+          >
+            <span
+              className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white shadow-sm ${badgeClass}`}
+            >
               {item.index}
             </span>
-            <div className="min-w-0 flex-1 rounded-xl border border-gray-200/80 bg-white px-4 py-3 shadow-sm">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-semibold text-gray-900">{item.title}</p>
-                {item.subtitle ? (
-                  <span className="rounded-md bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700">
-                    {item.subtitle}
-                  </span>
-                ) : null}
-              </div>
-              {item.body ? (
-                <p className="mt-2 text-sm text-gray-700 leading-7 whitespace-pre-wrap border-l-2 border-indigo-100 pl-3">
+            <div
+              className={`min-w-0 flex-1 basis-0 rounded-xl border bg-white px-4 py-3.5 shadow-sm ${cardClass}`}
+            >
+              {item.title ? (
+                <div className="space-y-2">
+                  <p className="text-sm font-semibold text-gray-900 break-words">{item.title}</p>
+                  {item.subtitle ? (
+                    <span className="inline-block rounded-md bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700">
+                      {item.subtitle}
+                    </span>
+                  ) : null}
+                  {item.body ? (
+                    <p className="text-sm text-gray-700 leading-7 whitespace-pre-wrap break-words">
+                      {item.body}
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-800 leading-7 whitespace-pre-wrap break-words">
                   {item.body}
                 </p>
-              ) : null}
+              )}
             </div>
           </li>
         ))}
@@ -182,34 +274,32 @@ function OutlineOverviewBlock({ block }) {
   if (!block.total_episodes && !hasChecks && !hasReverses) return null
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-sm">
-      <div className="grid lg:grid-cols-[auto_1fr] divide-y lg:divide-y-0 lg:divide-x divide-gray-100">
+    <section className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm">
+      <div className="grid divide-y lg:grid-cols-[auto_1fr] lg:divide-x lg:divide-y-0 divide-gray-100">
         {block.total_episodes ? (
-          <div className="flex items-center gap-4 px-5 py-4 lg:px-6 lg:py-5 lg:min-w-[140px]">
-            <div>
-              <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">总集数</p>
-              <p className="text-3xl font-bold text-gray-900 tabular-nums leading-none mt-1">
+          <div className="flex items-center justify-center gap-4 bg-gradient-to-br from-indigo-50/80 to-white px-6 py-5 lg:min-w-[150px]">
+            <div className="text-center">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-indigo-600/80">总集数</p>
+              <p className="mt-1 text-4xl font-bold tabular-nums leading-none text-gray-900">
                 {block.total_episodes}
               </p>
             </div>
           </div>
         ) : null}
 
-        <div className="divide-y divide-gray-100 min-w-0">
+        <div className="min-w-0 divide-y divide-gray-100">
           {hasChecks ? (
-            <div className="px-5 py-4 space-y-3">
+            <div className="space-y-3 px-5 py-4">
               <p className="text-xs font-semibold text-gray-500">节奏校验</p>
               {(block.checks || []).map((check, index) => (
-                <div key={`check-${index}`} className="flex gap-3">
-                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                    <CheckCircle2 className="h-3 w-3" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-500">{check.label}</p>
-                    <p className="mt-0.5 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
-                      {check.text}
-                    </p>
-                  </div>
+                <div
+                  key={`check-${index}`}
+                  className="rounded-xl border border-emerald-100/80 bg-emerald-50/30 px-3.5 py-3"
+                >
+                  <p className="text-xs font-semibold text-emerald-800">{check.label}</p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-gray-800 whitespace-pre-wrap break-words">
+                    {check.text}
+                  </p>
                 </div>
               ))}
             </div>
@@ -265,19 +355,29 @@ function EpisodeEmotionRow({ emotions }) {
   )
 }
 
-function EpisodeStructureGrid({ structure }) {
+function EpisodeStructureTimeline({ structure }) {
   const items = (structure || []).filter(Boolean)
   if (!items.length) return null
 
   return (
-    <div className="grid sm:grid-cols-2 gap-2">
+    <ol className="relative space-y-0">
       {items.map((part, index) => (
-        <div key={`part-${index}`} className="rounded-lg bg-gray-50/80 px-3 py-2.5 border border-gray-100/80">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-gray-400">{part.label}</p>
-          <p className="mt-1 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{part.text}</p>
-        </div>
+        <li key={`part-${part.label}-${index}`} className="relative flex gap-3 pb-3 last:pb-0">
+          <div className="flex flex-col items-center shrink-0 pt-1.5">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-[10px] font-bold text-indigo-700">
+              {index + 1}
+            </span>
+            {index < items.length - 1 ? (
+              <span className="mt-1 w-px flex-1 min-h-[12px] bg-indigo-100" aria-hidden />
+            ) : null}
+          </div>
+          <div className="min-w-0 flex-1 rounded-lg border border-gray-100 bg-gray-50/60 px-3 py-2.5">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-indigo-600/90">{part.label}</p>
+            <p className="mt-1 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap break-words">{part.text}</p>
+          </div>
+        </li>
       ))}
-    </div>
+    </ol>
   )
 }
 
@@ -288,54 +388,67 @@ function EpisodeOutlineCard({ item, compact = false }) {
   const emotions = item.emotions?.length
     ? item.emotions
     : (item.sections || []).filter((s) => emotionKey(s.label))
+  const episodeNo = item.episode_no || item.title?.match(/第(\d+)集/)?.[1]
 
   return (
     <article
-      className={`rounded-lg border border-gray-200 bg-white ${
-        compact ? 'px-3.5 py-3' : 'px-4 py-3.5 shadow-sm'
+      className={`rounded-xl border border-gray-200/80 bg-white overflow-hidden ${
+        compact ? 'shadow-sm' : 'shadow-sm'
       }`}
     >
-      <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <h6 className="text-sm font-semibold text-gray-900">{item.title}</h6>
+      <div className="flex gap-3 border-b border-gray-100 bg-gradient-to-r from-slate-50/80 to-white px-4 py-3">
+        {episodeNo ? (
+          <div className="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
+            <span className="text-[9px] font-medium uppercase leading-none opacity-80">EP</span>
+            <span className="text-sm font-bold tabular-nums leading-none mt-0.5">{episodeNo}</span>
+          </div>
+        ) : null}
+        <div className="min-w-0 flex-1">
+          <h6 className="text-sm font-semibold text-gray-900 break-words">{item.title}</h6>
+        </div>
       </div>
 
-      {item.subtitle ? (
-        <blockquote className="mt-2.5 border-l-[3px] border-amber-400 bg-amber-50/50 px-3 py-2 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap not-italic">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-700/80 block mb-0.5">
-            集末钩子
-          </span>
-          {item.subtitle}
-        </blockquote>
-      ) : null}
-
-      {emotions.length > 0 ? (
-        <div className={item.subtitle ? 'mt-3' : 'mt-2.5'}>
-          <EpisodeEmotionRow emotions={emotions} />
-        </div>
-      ) : null}
-
-      {structure.length > 0 ? (
-        <div className="mt-3">
-          <EpisodeStructureGrid structure={structure} />
-        </div>
-      ) : null}
-
-      {(item.tags || []).filter(Boolean).length > 0 ? (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {item.tags.filter(Boolean).map((tag, tagIndex) => (
-            <span
-              key={`${item.title}-tag-${tagIndex}`}
-              className="rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700"
-            >
-              {tag}
+      <div className={compact ? 'px-3.5 py-3 space-y-3' : 'px-4 py-3.5 space-y-3'}>
+        {item.subtitle ? (
+          <blockquote className="rounded-lg border-l-[3px] border-amber-400 bg-amber-50/60 px-3 py-2.5 not-italic">
+            <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-amber-700/90">
+              集末钩子
             </span>
-          ))}
-        </div>
-      ) : null}
+            <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap break-words">{item.subtitle}</p>
+          </blockquote>
+        ) : null}
 
-      {item.body ? (
-        <p className="mt-2 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{item.body}</p>
-      ) : null}
+        {emotions.length > 0 ? (
+          <div>
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">情绪标记</p>
+            <EpisodeEmotionRow emotions={emotions} />
+          </div>
+        ) : null}
+
+        {structure.length > 0 ? (
+          <div>
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">四段结构</p>
+            <EpisodeStructureTimeline structure={structure} />
+          </div>
+        ) : null}
+
+        {(item.tags || []).filter(Boolean).length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {item.tags.filter(Boolean).map((tag, tagIndex) => (
+              <span
+                key={`${item.title}-tag-${tagIndex}`}
+                className="rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        {item.body ? (
+          <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap break-words">{item.body}</p>
+        ) : null}
+      </div>
     </article>
   )
 }
@@ -450,7 +563,7 @@ function StageOutlinesBlock({ block }) {
                           {stage.summary ? (
                             <div>
                               <p className="text-[11px] font-semibold uppercase tracking-wide text-indigo-600/90">
-                                阶段目标
+                                阶段说明
                               </p>
                               <p className="mt-1.5 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
                                 {stage.summary}
@@ -504,8 +617,133 @@ function StageOutlinesBlock({ block }) {
   )
 }
 
+function BriefProfileCard({ item }) {
+  return (
+    <article className="rounded-xl border border-gray-200/80 bg-white px-5 py-4 shadow-sm h-full flex flex-col min-w-0">
+      <p className="text-xs font-semibold text-indigo-600 mb-2.5 break-words">{item.title}</p>
+      <p className="text-sm text-gray-700 leading-7 whitespace-pre-wrap break-words flex-1">{item.body}</p>
+    </article>
+  )
+}
+
+function characterInitial(name) {
+  const text = String(name || '').trim()
+  if (!text) return '?'
+  return text.charAt(0)
+}
+
+function parseRelationshipNames(item) {
+  if (item.source_name && item.target_name) {
+    return { source: item.source_name, target: item.target_name }
+  }
+  const parts = String(item.title || '').split(/\s*↔\s*/)
+  if (parts.length >= 2) {
+    return { source: parts[0].trim(), target: parts[1].trim() }
+  }
+  return { source: item.title || '角色 A', target: '' }
+}
+
+function roleBadgeClass(roleLabel) {
+  const text = String(roleLabel || '')
+  if (/反派|对立|死敌|BOSS|敌人|督军|观测者/.test(text)) {
+    return 'bg-rose-50 text-rose-700 border-rose-100'
+  }
+  if (/配角|配角|辅助|战友|老兵/.test(text)) {
+    return 'bg-sky-50 text-sky-700 border-sky-100'
+  }
+  if (/女主|男主|主角|核心/.test(text)) {
+    return 'bg-indigo-50 text-indigo-700 border-indigo-100'
+  }
+  return 'bg-gray-50 text-gray-700 border-gray-100'
+}
+
+function CharacterNode({ name }) {
+  if (!name) return null
+  return (
+    <div className="flex min-w-0 flex-1 flex-col items-center gap-2">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full border border-indigo-200/70 bg-gradient-to-br from-indigo-50 to-violet-100 text-lg font-bold text-indigo-700 shadow-sm">
+        {characterInitial(name)}
+      </div>
+      <p className="max-w-[130px] text-center text-sm font-semibold leading-snug text-gray-900 break-words">
+        {name}
+      </p>
+    </div>
+  )
+}
+
+function RelationshipCard({ item }) {
+  const { source, target } = parseRelationshipNames(item)
+  const relType = item.relationship_type || item.subtitle || ''
+  const coreConflict = item.core_conflict || (!item.interaction_rule ? item.body : '')
+  const interactionRule = item.interaction_rule || ''
+
+  return (
+    <article className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm">
+      <div className="border-b border-gray-100 bg-gradient-to-r from-slate-50/80 via-white to-violet-50/40 px-5 py-5">
+        <div className="flex items-center justify-center gap-4 sm:gap-8">
+          <CharacterNode name={source} />
+          <div className="flex shrink-0 flex-col items-center gap-2 px-1">
+            <div className="flex items-center gap-1 text-indigo-300">
+              <span className="h-px w-6 bg-indigo-200" />
+              <Link2 className="h-4 w-4 shrink-0" />
+              <span className="h-px w-6 bg-indigo-200" />
+            </div>
+            {relType ? (
+              <span className="max-w-[150px] rounded-full border border-violet-100 bg-violet-50 px-3 py-1 text-center text-xs font-semibold leading-snug text-violet-800">
+                {relType}
+              </span>
+            ) : (
+              <span className="text-[11px] text-gray-400">人物关系</span>
+            )}
+          </div>
+          <CharacterNode name={target} />
+        </div>
+      </div>
+
+      {coreConflict || interactionRule ? (
+        <div className="space-y-4 px-5 py-4">
+          {coreConflict ? (
+            <div className="rounded-xl border border-amber-100/80 bg-amber-50/40 px-4 py-3.5">
+              <p className="mb-1.5 text-[11px] font-semibold tracking-wide text-amber-700">核心冲突</p>
+              <p className="text-sm leading-7 text-gray-800 whitespace-pre-wrap break-words">{coreConflict}</p>
+            </div>
+          ) : null}
+          {interactionRule ? (
+            <div className="rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-3.5">
+              <p className="mb-1.5 text-[11px] font-semibold tracking-wide text-gray-500">互动规则</p>
+              <p className="text-sm leading-7 text-gray-700 whitespace-pre-wrap break-words">{interactionRule}</p>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </article>
+  )
+}
+
 function CardsBlock({ block }) {
   const isStack = block.layout === 'stack'
+  const isProfileGrid = block.variant === 'profile'
+  const gridClass = block.layout === 'grid_3'
+    ? 'grid-cols-1 lg:grid-cols-3'
+    : block.layout === 'grid_2'
+      ? 'grid-cols-1 md:grid-cols-2'
+      : isStack
+        ? 'grid-cols-1'
+        : 'sm:grid-cols-2'
+
+  if (isProfileGrid) {
+    return (
+      <section>
+        {block.title ? <SectionTitle>{block.title}</SectionTitle> : null}
+        <div className={`grid gap-4 ${gridClass} ${block.title ? 'mt-4' : ''}`}>
+          {(block.items || []).map((item, index) => (
+            <BriefProfileCard key={`${item.title}-${index}`} item={item} />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section>
       {block.title ? <SectionTitle>{block.title}</SectionTitle> : null}
@@ -1278,20 +1516,436 @@ function CharacterRosterBlock({ block }) {
   const characters = block.characters || []
   if (!characters.length) return null
   return (
-    <section className="space-y-4">
+    <section className="w-full space-y-4">
       <SectionTitle>角色档案</SectionTitle>
       {characters.map((char, index) => (
-        <KvBlock
-          key={`char-${index}`}
-          block={{ title: char.title, rows: char.rows || [], layout: 'columns_2' }}
-        />
+        <article
+          key={`char-${char.badge || char.title}-${index}`}
+          className="w-full min-w-0 overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm"
+        >
+          <header className="flex flex-wrap items-center gap-2 border-b border-gray-100 bg-gradient-to-r from-slate-50 to-white px-5 py-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-indigo-200/60 bg-indigo-50 text-sm font-bold text-indigo-700">
+              {characterInitial(char.title)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h6 className="text-base font-semibold text-gray-900 break-words">{char.title}</h6>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                {char.role_label ? (
+                  <span
+                    className={`rounded-md border px-2 py-0.5 text-[11px] font-medium ${roleBadgeClass(char.role_label)}`}
+                  >
+                    {char.role_label}
+                  </span>
+                ) : null}
+                {char.badge ? (
+                  <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">
+                    {char.badge}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          </header>
+          {(char.rows || []).length ? (
+            <KvBlock block={{ rows: char.rows || [], variant: 'embedded' }} />
+          ) : null}
+        </article>
       ))}
     </section>
   )
 }
 
 function RelationshipGraphBlock({ block }) {
-  return <CardsBlock block={{ title: '关系网络', items: block.items || [], layout: 'stack' }} />
+  const items = block.items || []
+  if (!items.length) return null
+  return (
+    <section className="w-full space-y-4">
+      <div>
+        <SectionTitle>
+          <span className="inline-flex items-center gap-2">
+            <Users className="h-4 w-4 text-indigo-500" />
+            人物关系网络
+          </span>
+        </SectionTitle>
+        <p className="mt-2 text-sm leading-relaxed text-gray-500">
+          展示角色之间的定位关系与剧情冲突，便于快速把握人物对立与联盟。
+        </p>
+      </div>
+      <div className="mt-2 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {items.map((item, index) => (
+          <RelationshipCard key={`rel-${item.source_name || item.title}-${index}`} item={item} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+const MARKET_SECTION_STYLES = {
+  indigo: {
+    icon: TrendingUp,
+    header: 'from-indigo-50/90 to-white',
+    border: 'border-indigo-100/80',
+    iconBg: 'bg-indigo-100 text-indigo-600',
+  },
+  violet: {
+    icon: Target,
+    header: 'from-violet-50/90 to-white',
+    border: 'border-violet-100/80',
+    iconBg: 'bg-violet-100 text-violet-600',
+  },
+  emerald: {
+    icon: DollarSign,
+    header: 'from-emerald-50/90 to-white',
+    border: 'border-emerald-100/80',
+    iconBg: 'bg-emerald-100 text-emerald-600',
+  },
+  amber: {
+    icon: ShieldAlert,
+    header: 'from-amber-50/90 to-white',
+    border: 'border-amber-100/80',
+    iconBg: 'bg-amber-100 text-amber-600',
+  },
+}
+
+const MARKET_ITEM_STYLES = {
+  default: 'border-gray-100 bg-white',
+  highlight: 'border-emerald-100 bg-gradient-to-br from-emerald-50/70 to-white',
+  warning: 'border-amber-200/80 bg-amber-50/50',
+  accent: 'border-violet-200/80 bg-violet-50/40',
+}
+
+function MarketReportItem({ item }) {
+  const variant = item.variant || 'default'
+  const styleClass = MARKET_ITEM_STYLES[variant] || MARKET_ITEM_STYLES.default
+  return (
+    <article className={`rounded-xl border px-4 py-3.5 shadow-sm ${styleClass}`}>
+      <h6 className="text-xs font-semibold text-gray-600 mb-2">{item.title}</h6>
+      <p className="text-sm text-gray-800 leading-7 whitespace-pre-wrap break-words">{item.body}</p>
+    </article>
+  )
+}
+
+function MarketReportSection({ section }) {
+  const tone = MARKET_SECTION_STYLES[section.tone] || MARKET_SECTION_STYLES.indigo
+  const Icon = tone.icon
+  const items = section.items || []
+  if (!items.length) return null
+
+  const isRiskSection = section.tone === 'amber'
+
+  return (
+    <section className={`overflow-hidden rounded-2xl border shadow-sm ${tone.border}`}>
+      <header className={`flex items-center gap-3 border-b px-5 py-4 bg-gradient-to-r ${tone.header} ${tone.border}`}>
+        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${tone.iconBg}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <h5 className="text-sm font-semibold text-gray-900">{section.title}</h5>
+      </header>
+      <div className={`p-4 ${isRiskSection ? 'grid gap-3 sm:grid-cols-2' : 'space-y-3'}`}>
+        {items.map((item, index) => (
+          <MarketReportItem key={`${section.title}-${item.title}-${index}`} item={item} />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function MarketReportBlock({ block }) {
+  const metrics = block.metrics || []
+  const sections = block.sections || []
+  if (!block.drama_name && !metrics.length && !sections.length) return null
+
+  return (
+    <article className="space-y-5">
+      <header className="overflow-hidden rounded-2xl border border-indigo-100/90 bg-gradient-to-br from-indigo-600 via-indigo-600 to-violet-600 px-6 py-6 text-white shadow-md">
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
+            <BarChart3 className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-indigo-100">市场分析报告</p>
+            {block.drama_name ? (
+              <h3 className="mt-1.5 text-xl font-bold leading-snug break-words sm:text-2xl">
+                {block.drama_name}
+              </h3>
+            ) : null}
+          </div>
+        </div>
+        {metrics.length ? (
+          <div className="mt-5 flex flex-wrap gap-2">
+            {metrics.map((item, index) => {
+              const isLong = String(item.value || '').length > 8
+              return (
+                <div
+                  key={`metric-${item.label}-${index}`}
+                  className="rounded-xl border border-white/20 bg-white/10 px-3.5 py-2 backdrop-blur-sm"
+                >
+                  <p className="text-[10px] font-medium uppercase tracking-wide text-indigo-100">
+                    {item.label}
+                  </p>
+                  <p
+                    className={`mt-0.5 font-semibold text-white break-words ${
+                      isLong ? 'text-sm leading-snug' : 'text-lg tabular-nums'
+                    }`}
+                  >
+                    {item.value}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+        ) : null}
+      </header>
+
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        {sections
+          .filter((section) => section.tone !== 'amber' && section.tone !== 'emerald')
+          .map((section, index) => (
+            <MarketReportSection key={`market-sec-${section.title}-${index}`} section={section} />
+          ))}
+      </div>
+
+      {sections
+        .filter((section) => section.tone === 'emerald')
+        .map((section, index) => (
+          <MarketReportSection key={`market-commercial-${index}`} section={section} />
+        ))}
+
+      {sections
+        .filter((section) => section.tone === 'amber')
+        .map((section, index) => (
+          <MarketReportSection key={`market-risk-${index}`} section={section} />
+        ))}
+    </article>
+  )
+}
+
+function NarrativeBeatTimeline({ beats, beatTimeline }) {
+  const items = (beats || []).length
+    ? beats
+    : (beatTimeline || []).map((beat) => {
+        const match = String(beat).match(/^([^：:]+)[：:]([\s\S]+)$/)
+        if (match) {
+          return { time: match[1].trim(), content: match[2].trim() }
+        }
+        return { time: '', content: String(beat) }
+      })
+  if (!items.length) return null
+
+  return (
+    <ol className="relative space-y-0">
+      {items.map((beat, index) => {
+        const isLast = index === items.length - 1
+        return (
+          <li key={`beat-${index}`} className="relative flex gap-3 pb-4 last:pb-0">
+            <div className="flex flex-col items-center shrink-0 w-5 pt-1">
+              <span className="h-2.5 w-2.5 rounded-full bg-indigo-500 ring-4 ring-indigo-100" />
+              {!isLast ? <span className="w-px flex-1 min-h-[12px] bg-indigo-100 mt-1" aria-hidden /> : null}
+            </div>
+            <div className="min-w-0 flex-1 -mt-0.5">
+              {beat.time ? (
+                <span className="inline-flex rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-bold tabular-nums text-indigo-700">
+                  {beat.time}
+                </span>
+              ) : null}
+              <p className={`text-sm leading-relaxed text-gray-800 break-words ${beat.time ? 'mt-1.5' : ''}`}>
+                {beat.content}
+              </p>
+            </div>
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+
+function NarrativeMechanicCard({ item, index }) {
+  return (
+    <article className="relative overflow-hidden rounded-xl border border-violet-100 bg-white px-4 py-3.5 shadow-sm">
+      <span className="absolute left-0 top-0 bottom-0 w-1 bg-violet-500" aria-hidden />
+      <div className="pl-2">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-500">机制 {index + 1}</p>
+        <h6 className="mt-1 text-sm font-semibold text-violet-950 break-words">{item.title}</h6>
+        <p className="mt-2 text-sm leading-7 text-gray-700 whitespace-pre-wrap break-words">{item.body}</p>
+      </div>
+    </article>
+  )
+}
+
+function NarrativeEpisodeCard({ episode, isLast }) {
+  const hasBeats = (episode.beats || episode.beat_timeline || []).length > 0
+  const hasMeta = (episode.techniques || []).length > 0 || (episode.worldview_points || []).length > 0
+
+  return (
+    <article className="relative flex gap-4">
+      <div className="flex flex-col items-center shrink-0 w-10 pt-1">
+        <span className="flex h-10 w-10 flex-col items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm">
+          <span className="text-[9px] font-medium uppercase leading-none opacity-80">EP</span>
+          <span className="text-sm font-bold tabular-nums leading-none mt-0.5">{episode.episode_no}</span>
+        </span>
+        {!isLast ? <span className="w-px flex-1 min-h-4 bg-violet-200 my-2" aria-hidden /> : null}
+      </div>
+
+      <div className={`min-w-0 flex-1 ${isLast ? '' : 'pb-6'}`}>
+        <div className="overflow-hidden rounded-xl border border-gray-200/90 bg-white shadow-sm">
+          <div className="border-b border-gray-100 bg-gradient-to-r from-slate-50 to-white px-4 py-3.5">
+            <p className="text-sm font-semibold text-gray-900">{episode.title}</p>
+            {episode.focus ? (
+              <p className="mt-1.5 text-sm leading-relaxed text-gray-600 break-words">{episode.focus}</p>
+            ) : null}
+          </div>
+
+          <div className="space-y-4 px-4 py-4">
+            {episode.emotion_design ? (
+              <div className="rounded-xl border border-rose-100 bg-gradient-to-br from-rose-50/80 to-white px-4 py-3">
+                <p className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-rose-600">
+                  <Heart className="h-3.5 w-3.5" />
+                  观众情绪设计
+                </p>
+                <p className="text-sm leading-7 text-gray-800 whitespace-pre-wrap break-words">
+                  {episode.emotion_design}
+                </p>
+              </div>
+            ) : null}
+
+            {hasBeats ? (
+              <div>
+                <p className="mb-3 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+                  <Clock className="h-3.5 w-3.5" />
+                  竖屏节拍时间轴
+                </p>
+                <NarrativeBeatTimeline beats={episode.beats} beatTimeline={episode.beat_timeline} />
+              </div>
+            ) : null}
+
+            {hasMeta ? (
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                {(episode.techniques || []).length ? (
+                  <div className="rounded-lg border border-violet-100/80 bg-violet-50/30 px-3.5 py-3">
+                    <p className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-violet-600">
+                      <Lightbulb className="h-3.5 w-3.5" />
+                      关键叙事技法
+                    </p>
+                    <ul className="space-y-1.5">
+                      {episode.techniques.map((item, index) => (
+                        <li key={`tech-${index}`} className="flex gap-2 text-sm leading-relaxed text-gray-800">
+                          <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-violet-400" />
+                          <span className="break-words">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                {(episode.worldview_points || []).length ? (
+                  <div className="rounded-lg border border-sky-100/80 bg-sky-50/30 px-3.5 py-3">
+                    <p className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-sky-600">
+                      <Globe2 className="h-3.5 w-3.5" />
+                      世界观传递点
+                    </p>
+                    <ul className="space-y-1.5">
+                      {episode.worldview_points.map((item, index) => (
+                        <li
+                          key={`world-${index}`}
+                          className="text-sm leading-relaxed text-gray-700 break-words"
+                        >
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function NarrativePlanBlock({ block }) {
+  const episodes = block.episodes || []
+  const mechanics = block.mechanics || []
+
+  if (!block.core_objective && !block.target_range && !mechanics.length && !episodes.length) {
+    return null
+  }
+
+  return (
+    <article className="space-y-6">
+      <header className="overflow-hidden rounded-2xl border border-violet-100/90 bg-gradient-to-br from-violet-600 via-violet-600 to-indigo-600 px-6 py-6 text-white shadow-md">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm">
+              <Clapperboard className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-wider text-violet-100">叙事工程方案</p>
+              {block.target_range ? (
+                <span className="mt-2 inline-flex rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-semibold">
+                  {block.target_range}
+                </span>
+              ) : null}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {episodes.length ? (
+              <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium">
+                {episodes.length} 集设计
+              </span>
+            ) : null}
+            {mechanics.length ? (
+              <span className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium">
+                {mechanics.length} 项机制
+              </span>
+            ) : null}
+          </div>
+        </div>
+        {block.core_objective ? (
+          <p className="mt-4 text-sm sm:text-[15px] leading-8 text-white/95 whitespace-pre-wrap break-words">
+            {block.core_objective}
+          </p>
+        ) : null}
+      </header>
+
+      {mechanics.length ? (
+        <section>
+          <SectionTitle>叙事机制</SectionTitle>
+          <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
+            {mechanics.map((item, index) => (
+              <NarrativeMechanicCard key={`mech-${item.title}-${index}`} item={item} index={index} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {episodes.length ? (
+        <section>
+          <SectionTitle>分集叙事设计</SectionTitle>
+          <p className="mt-1 text-xs text-gray-500">按集数纵向浏览，每集含情绪曲线与竖屏节拍</p>
+          <div className="mt-4 space-y-0">
+            {episodes.map((episode, index) => (
+              <NarrativeEpisodeCard
+                key={`narr-ep-${episode.episode_no}`}
+                episode={episode}
+                isLast={index === episodes.length - 1}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {block.consistency_check ? (
+        <section className="rounded-xl border border-emerald-200/80 bg-emerald-50/50 px-5 py-4 shadow-sm">
+          <div className="mb-2 flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+            <p className="text-sm font-semibold text-emerald-900">叙事一致性校验</p>
+          </div>
+          <p className="text-sm leading-7 text-gray-800 whitespace-pre-wrap break-words">{block.consistency_check}</p>
+        </section>
+      ) : null}
+    </article>
+  )
 }
 
 function WorldSectionsBlock({ block }) {
@@ -1444,6 +2098,8 @@ export function PresentationBlock({ block }) {
       return <CharacterRosterBlock block={block} />
     case 'relationship_graph':
       return <RelationshipGraphBlock block={block} />
+    case 'callout':
+      return <CalloutBlock block={block} />
     case 'world_sections':
       return <WorldSectionsBlock block={block} />
     case 'assessment_report':
@@ -1452,6 +2108,10 @@ export function PresentationBlock({ block }) {
       return <EpisodeMetricsListBlock block={block} />
     case 'deliverable_sections':
       return <DeliverableSectionsBlock block={block} />
+    case 'market_report':
+      return <MarketReportBlock block={block} />
+    case 'narrative_plan':
+      return <NarrativePlanBlock block={block} />
     default:
       return null
   }
@@ -1461,17 +2121,24 @@ export function DramaPresentationCard({ view, raw }) {
   const [showRaw, setShowRaw] = useState(false)
   if (!view) return null
 
+  const heroBlock = view.blocks?.[0]
+  const summaryDuplicatesHero =
+    heroBlock?.type === 'hero' &&
+    view.summary &&
+    heroBlock.subtitle &&
+    String(view.summary).trim() === String(heroBlock.subtitle).trim()
+
   return (
     <article className="overflow-hidden">
-      <header className="flex items-start justify-between gap-4 mb-4">
+      <header className="flex items-start justify-between gap-4 mb-5 pb-4 border-b border-gray-100">
         <div className="flex items-start gap-3 min-w-0">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
             <FileText className="h-5 w-5" />
           </div>
           <div className="min-w-0">
             <h4 className="text-base font-semibold text-gray-900">{view.label || view.artifact_key}</h4>
-            {view.summary ? (
-              <p className="mt-1 text-sm text-gray-500 leading-relaxed">{view.summary}</p>
+            {view.summary && !summaryDuplicatesHero ? (
+              <p className="mt-1 text-sm text-gray-500 leading-relaxed line-clamp-2">{view.summary}</p>
             ) : null}
           </div>
         </div>
@@ -1485,7 +2152,7 @@ export function DramaPresentationCard({ view, raw }) {
         </button>
       </header>
 
-      <div className="space-y-5 w-full max-w-none">
+      <div className="space-y-6 w-full max-w-none">
         {(view.blocks || []).map((block, index) => (
           <PresentationBlock key={`${view.artifact_key}-${block.type}-${index}`} block={block} />
         ))}

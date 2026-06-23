@@ -56,7 +56,7 @@ export default function ProjectOpsSummary({ data, compact = false, onTabChange, 
             <p className="text-xs text-indigo-300/90 mt-1">
               {data.drama_trace.track_mode_display || data.drama_trace.track_mode}
               {' · '}
-              {data.drama_trace.current_stage_display || data.drama_trace.current_stage}
+              {data.drama_trace.drama_stage_display || data.drama_trace.drama_stage}
               {' · '}
               完成 {data.drama_trace.completion_rate ?? 0}%
             </p>
@@ -116,7 +116,7 @@ export default function ProjectOpsSummary({ data, compact = false, onTabChange, 
               : data.progress_percent != null
                 ? `${data.progress_percent}%`
                 : '—' },
-          { label: 'Drama 阶段', value: data.drama_trace?.current_stage_display || '—' },
+          { label: 'Drama 阶段', value: data.drama_trace?.drama_stage_display || '—' },
           { label: '评分', value: score },
           {
             label: 'Agent 执行',

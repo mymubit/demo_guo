@@ -2,6 +2,7 @@
 """各 schema_version 专用产物展示器。"""
 from __future__ import annotations
 
+import re
 from typing import Any, List
 
 from apps.drama.presentation.base import (
@@ -25,6 +26,8 @@ from apps.drama.presentation.base import (
     dict_to_kv_rows,
     emotion_externalization_cards,
     episode_metrics_list_block,
+    episode_outline_card_item,
+    episode_outline_number,
     format_deviation_node,
     format_emotion_marker,
     format_emotion_node_line,
@@ -34,12 +37,15 @@ from apps.drama.presentation.base import (
     label,
     list_block,
     list_block_from_items,
+    market_report_block,
     metrics_block,
+    narrative_plan_block,
     nested_check_rows,
     normalize_payload,
     normalize_review_issues,
     outline_overview_block,
     paragraph_block,
+    parse_episode_range,
     parse_episode_script_content,
     plan_items_block,
     plan_overview_block,
@@ -52,11 +58,262 @@ from apps.drama.presentation.base import (
     rows_from_dict,
     script_episodes_block,
     stage_outlines_block,
+    build_labeled_step_items,
+    split_labeled_line,
+    space_card_item,
+    steps_block,
     storyboard_to_cards,
     view,
     visual_prompt_episode_blocks,
-    world_sections_block,
 )
+from apps.drama.presentation.text_localize import localize_phrase_label
+
+
+def _string_list(val: Any) -> list[str]:
+    if not isinstance(val, list):
+        return []
+    return [str(item).strip() for item in val if str(item or "").strip()]
+
+
+def _format_episode_range_display(text: Any) -> str:
+    raw = str(text or "").strip()
+    if not raw:
+        return ""
+    ep_span = re.match(r"^(?:E|EP|e|ep)?(\d+)\s*[-–—~至到]\s*(?:E|EP|e|ep)?(\d+)$", raw)
+    if ep_span:
+        return f"第{int(ep_span.group(1))}-{int(ep_span.group(2))}集"
+    parsed = parse_episode_range(raw)
+    if parsed:
+        return f"第{parsed[0]}-{parsed[1]}集"
+    return raw
+
+
+def _narrative_string_list(items: Any, *, limit: int = 12) -> List[str]:
+    if isinstance(items, str):
+        items = _coerce_string_list_from_presenter(items)
+    if not isinstance(items, list):
+        return []
+    return [str(item).strip() for item in items[:limit] if str(item or "").strip()]
+
+
+def _coerce_string_list_from_presenter(value: str) -> List[str]:
+    text = str(value or "").strip()
+    if not text:
+        return []
+    if "；" in text or ";" in text:
+        parts = re.split(r"[；;]+", text)
+        return [part.strip() for part in parts if part.strip()]
+    return [text]
+
+
+def _parse_narrative_mechanic_item(item: Any) -> dict | None:
+    if isinstance(item, dict):
+        title = str(item.get("mechanism_type") or "叙事机制").strip()
+        detail = str(item.get("implementation_details") or "").strip()
+        if title or detail:
+            return {"title": title or "叙事机制", "body": detail}
+        return None
+    text = str(item or "").strip()
+    if not text:
+        return None
+    if "：" in text:
+        title, _, detail = text.partition("：")
+        return {"title": title.strip() or "叙事机制", "body": detail.strip()}
+    if ":" in text:
+        title, _, detail = text.partition(":")
+        return {"title": title.strip() or "叙事机制", "body": detail.strip()}
+    return {"title": "叙事机制", "body": text}
+
+
+def _parse_narrative_beats(raw: Any, *, limit: int = 12) -> List[dict]:
+    beats: List[dict] = []
+    for text in _narrative_string_list(raw, limit=limit):
+        match = re.match(r"^([^：:]+)[：:]([\s\S]+)$", text)
+        if match:
+            beats.append({"time": match.group(1).strip(), "content": match.group(2).strip()})
+        else:
+            beats.append({"time": "", "content": text})
+    return beats
+
+
+def present_narrative_plan(artifact_key: str, payload: Any) -> dict:
+    body = normalize_payload(payload)
+    if not isinstance(body, dict):
+        return view(artifact_key, "narrative-plan.v1", [])
+
+    core_objective = str(body.get("narrative_core_objective") or "").strip()
+    target_range = _format_episode_range_display(body.get("target_episode_range"))
+
+    mechanics: List[dict] = []
+    for item in body.get("narrative_mechanics") or []:
+        parsed = _parse_narrative_mechanic_item(item)
+        if parsed:
+            mechanics.append(parsed)
+
+    episodes: List[dict] = []
+    for index, item in enumerate(body.get("episode_narrative_designs") or []):
+        if not isinstance(item, dict):
+            continue
+        ep_no = episode_outline_number(item, fallback=index + 1)
+        focus = str(item.get("narrative_focus") or "").strip()
+        episodes.append(
+            {
+                "episode_no": ep_no,
+                "title": f"第{ep_no}集",
+                "focus": focus,
+                "emotion_design": str(item.get("audience_emotion_design") or "").strip(),
+                "beats": _parse_narrative_beats(item.get("narrative_beat_timing"), limit=10),
+                "beat_timeline": _narrative_string_list(item.get("narrative_beat_timing"), limit=10),
+                "techniques": _narrative_string_list(item.get("key_narrative_techniques"), limit=8),
+                "worldview_points": _narrative_string_list(item.get("worldview_delivery_points"), limit=8),
+            }
+        )
+
+    consistency = str(body.get("narrative_consistency_check") or "").strip()
+    blocks: List[dict] = []
+    if core_objective or target_range or mechanics or episodes or consistency:
+        blocks.append(
+            narrative_plan_block(
+                core_objective=core_objective,
+                target_range=target_range,
+                mechanics=mechanics,
+                episodes=episodes,
+                consistency_check=consistency,
+            )
+        )
+
+    summary_parts = [part for part in (target_range, core_objective[:80] if core_objective else "") if part]
+    summary = " · ".join(summary_parts[:2])
+    return view(artifact_key, "narrative-plan.v1", blocks, summary=summary)
+
+
+def _market_display_value(key: str, val: Any) -> str:
+    if val in (None, "", [], {}):
+        return ""
+    if key == "target_platform":
+        text = str(val).strip()
+        return label(text) or text
+    if key == "core_genre":
+        text = str(val).strip()
+        if not text:
+            return ""
+        localized = localize_phrase_label(text)
+        if localized:
+            return localized
+        parts = []
+        for part in text.split("-"):
+            part = part.strip()
+            if not part:
+                continue
+            parts.append(localize_phrase_label(part) or label(part) or part)
+        if parts:
+            return " · ".join(parts)
+    return format_scalar(val)
+
+
+def present_market_report(artifact_key: str, payload: Any) -> dict:
+    body = normalize_payload(payload)
+    if not isinstance(body, dict):
+        return view(artifact_key, "market-report.v1", [])
+
+    basic = body.get("drama_basic_info")
+    drama_name = ""
+    metrics: List[dict] = []
+    if isinstance(basic, dict):
+        drama_name = str(basic.get("drama_name") or "").strip()
+        if basic.get("total_episodes") is not None:
+            metrics.append({"label": "总集数", "value": format_scalar(basic["total_episodes"])})
+        platform = basic.get("target_platform")
+        if platform not in (None, "", [], {}):
+            metrics.append(
+                {"label": "目标平台", "value": _market_display_value("target_platform", platform)}
+            )
+        genre = basic.get("core_genre")
+        if genre not in (None, "", [], {}):
+            metrics.append({"label": "核心题材", "value": _market_display_value("core_genre", genre)})
+
+    sections: List[dict] = []
+
+    platform_analysis = body.get("platform_market_analysis")
+    if isinstance(platform_analysis, dict):
+        platform_items: List[dict] = []
+        for key in (
+            "target_audience_portrait",
+            "Douyin_short_drama_current_trend",
+            "douyin_short_drama_current_trend",
+        ):
+            val = platform_analysis.get(key)
+            if val in (None, "", [], {}):
+                continue
+            platform_items.append({"title": label(key), "body": _market_display_value(key, val)})
+        if platform_items:
+            sections.append({"title": "平台市场分析", "tone": "indigo", "items": platform_items})
+
+    competitiveness = body.get("core_project_competitiveness_analysis")
+    if isinstance(competitiveness, dict):
+        comp_items: List[dict] = []
+        for key in ("IP_foundation", "genre_matching_degree"):
+            val = competitiveness.get(key)
+            if val not in (None, "", [], {}):
+                comp_items.append({"title": label(key), "body": format_scalar(val)})
+        if comp_items:
+            sections.append({"title": "项目竞争力", "tone": "violet", "items": comp_items})
+
+    commercial = body.get("commercial_operation_forecast")
+    if isinstance(commercial, dict):
+        commercial_items: List[dict] = []
+        for key in ("expected_data_performance", "derivative_expansion_path"):
+            val = commercial.get(key)
+            if val in (None, "", [], {}):
+                continue
+            commercial_items.append(
+                {
+                    "title": label(key),
+                    "body": _market_display_value(key, val),
+                    "variant": "highlight" if key == "expected_data_performance" else "default",
+                }
+            )
+        if commercial_items:
+            sections.append({"title": "商业运营预测", "tone": "emerald", "items": commercial_items})
+
+    risk = body.get("risk_warning_and_suggestion")
+    if isinstance(risk, dict):
+        risk_items: List[dict] = []
+        content_risk = risk.get("content_risk_avoidance")
+        if isinstance(content_risk, str) and content_risk.strip():
+            risk_items.append(
+                {
+                    "title": label("content_risk_avoidance"),
+                    "body": content_risk.strip(),
+                    "variant": "warning",
+                }
+            )
+        release = risk.get("release_strategy_suggestion")
+        if isinstance(release, str) and release.strip():
+            risk_items.append(
+                {
+                    "title": label("release_strategy_suggestion"),
+                    "body": release.strip(),
+                    "variant": "accent",
+                }
+            )
+        if risk_items:
+            sections.append({"title": "风险提示与建议", "tone": "amber", "items": risk_items})
+
+    blocks: List[dict] = []
+    if drama_name or metrics or sections:
+        blocks.append(
+            market_report_block(
+                drama_name=drama_name,
+                metrics=metrics,
+                sections=sections,
+            )
+        )
+
+    summary_parts = [part for part in (drama_name, metrics[0]["value"] if metrics else "") if part]
+    summary = " · ".join(summary_parts[:2])
+    return view(artifact_key, "market-report.v1", blocks, summary=summary)
+
 
 def present_market_analysis(artifact_key: str, payload: Any) -> dict:
     body = normalize_payload(payload)
@@ -163,19 +420,43 @@ def present_project_brief(artifact_key: str, payload: Any) -> dict:
         return view(artifact_key, "project-brief.v1", blocks)
 
     core = str(body.get("core_idea") or "").strip()
+    project_name = str(body.get("title") or "").strip()
     if core:
-        blocks.append({"type": "hero", "title": "立项简报", "subtitle": core})
+        blocks.append(
+            {
+                "type": "hero",
+                "title": project_name or "核心创意",
+                "subtitle": core,
+                "variant": "brief",
+            }
+        )
 
-    append_scalar_kv(
-        blocks,
-        body,
-        ("genre_positioning", "target_audience", "dream_index_forecast"),
-        "项目定位",
+    positioning_fields = (
+        ("genre_positioning", "genre_positioning"),
+        ("target_audience", "target_audience"),
+        ("dream_index_forecast", "dream_index_forecast"),
     )
+    positioning_cards: List[dict] = []
+    for label_key, field_key in positioning_fields:
+        val = str(body.get(field_key) or "").strip()
+        if val:
+            positioning_cards.append({"title": label(label_key), "body": val})
+    if positioning_cards:
+        blocks.append(
+            {
+                "type": "cards",
+                "title": "项目定位",
+                "variant": "profile",
+                "layout": "grid_3",
+                "items": positioning_cards,
+            }
+        )
 
-    selling = body.get("three_differentiated_selling_points")
-    if isinstance(selling, list) and selling:
-        blocks.append(list_block("三大差异化卖点", [str(x).strip() for x in selling[:12] if str(x).strip()]))
+    selling = _string_list(body.get("differentiated_selling_points"))
+    if selling:
+        step_items = build_labeled_step_items(selling)
+        if step_items:
+            blocks.append(steps_block("差异化卖点", step_items))
 
     return view(artifact_key, "project-brief.v1", blocks, summary=core)
 
@@ -275,40 +556,113 @@ def present_world_setting(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "world-setting.v1", blocks)
 
-    sections: List[dict] = []
-    era = body.get("era_background")
-    if isinstance(era, str) and era.strip():
-        sections.append({"title": "时代背景", "kind": "paragraph", "text": era.strip()})
+    era = str(body.get("era_background") or "").strip()
+    if era:
+        blocks.append(
+            {
+                "type": "hero",
+                "title": label("era_background"),
+                "subtitle": era,
+                "variant": "brief",
+            }
+        )
+
+    spaces = _string_list(body.get("core_spaces"))
+    if spaces:
+        space_items = [
+            space_card_item(text, fallback_title=f"核心场景 {idx}")
+            for idx, text in enumerate(spaces[:8], 1)
+        ]
+        layout = "grid_3" if len(space_items) >= 3 else "grid_2" if len(space_items) == 2 else "stack"
+        blocks.append(
+            {
+                "type": "cards",
+                "title": label("core_spaces"),
+                "variant": "profile",
+                "layout": layout,
+                "items": space_items,
+            }
+        )
 
     power = body.get("power_structure")
-    if isinstance(power, list) and power:
-        if all(isinstance(x, str) for x in power):
-            sections.append({"title": "权力结构", "kind": "list", "items": [str(x) for x in power[:20]]})
+    if isinstance(power, str) and power.strip():
+        blocks.append(
+            {
+                "type": "cards",
+                "title": label("power_structure"),
+                "variant": "profile",
+                "layout": "stack",
+                "items": [{"title": "结构说明", "body": power.strip()}],
+            }
+        )
+    elif isinstance(power, dict) and power:
+        power_items = [
+            {"title": str(name), "body": format_scalar(desc)}
+            for name, desc in power.items()
+            if desc not in (None, "", [], {})
+        ]
+        if power_items:
+            layout = "grid_2" if len(power_items) >= 2 else "stack"
+            blocks.append(
+                {
+                    "type": "cards",
+                    "title": label("power_structure"),
+                    "variant": "profile",
+                    "layout": layout,
+                    "items": power_items,
+                }
+            )
+    elif isinstance(power, list) and power:
+        step_items = build_labeled_step_items(power)
+        if step_items:
+            blocks.append(steps_block(label("power_structure"), step_items))
+
+    special_rules = _string_list(body.get("special_rules"))
+    if special_rules:
+        if len(special_rules) == 1:
+            blocks.append(
+                {
+                    "type": "callout",
+                    "title": label("special_rules"),
+                    "text": special_rules[0],
+                    "variant": "accent",
+                }
+            )
         else:
-            items = format_list_items(power, limit=20)
-            if items:
-                sections.append({"title": "权力结构", "kind": "list", "items": items})
+            step_items = build_labeled_step_items(special_rules)
+            if step_items:
+                blocks.append(steps_block(label("special_rules"), step_items))
 
-    rules = body.get("core_rules")
-    if isinstance(rules, list) and rules:
-        sections.append({"title": "核心规则", "kind": "list", "items": [str(x) for x in rules[:12]]})
+    rules = _string_list(body.get("core_world_rules"))
+    if rules:
+        step_items = build_labeled_step_items(rules)
+        if step_items:
+            blocks.append(steps_block(label("core_world_rules"), step_items))
 
-    special = body.get("special_rules")
-    if isinstance(special, str) and special.strip():
-        sections.append({"title": "特殊规则", "kind": "paragraph", "text": special.strip()})
+    taboo = body.get("taboo_constraints")
+    if isinstance(taboo, str) and taboo.strip():
+        blocks.append(
+            {
+                "type": "callout",
+                "title": label("taboo_constraints"),
+                "text": taboo.strip(),
+                "variant": "warning",
+            }
+        )
+    elif isinstance(taboo, list) and taboo:
+        step_items = build_labeled_step_items(taboo)
+        if step_items:
+            blocks.append(
+                {
+                    "type": "steps",
+                    "title": label("taboo_constraints"),
+                    "variant": "warning",
+                    "items": step_items,
+                }
+            )
 
-    constraints = body.get("taboo_constraints")
-    if isinstance(constraints, list) and constraints:
-        sections.append({"title": "禁忌约束", "kind": "list", "items": [str(x) for x in constraints[:12]]})
-
-    core_space = body.get("core_space")
-    if isinstance(core_space, str) and core_space.strip():
-        sections.append({"title": "核心场景", "kind": "paragraph", "text": core_space.strip()})
-
-    if sections:
-        blocks.append(world_sections_block(sections))
-
-    return view(artifact_key, "world-setting.v1", blocks)
+    summary = era or (spaces[0][:240] if spaces else "")
+    return view(artifact_key, "world-setting.v1", blocks, summary=summary)
 
 
 def present_character_bible(artifact_key: str, payload: Any) -> dict:
@@ -416,21 +770,36 @@ def present_series_outline(artifact_key: str, payload: Any) -> dict:
     if not isinstance(body, dict):
         return view(artifact_key, "series-outline.v1", blocks)
 
-    rhythm = body.get("rhythm_control")
+    rhythm = body.get("rhythm_dual_track_validation")
     rhythm_checks: List[dict] = []
     reverse_cards: List[dict] = []
     if isinstance(rhythm, dict):
-        crisis = rhythm.get("crisis_depth_check")
-        if isinstance(crisis, str) and crisis.strip():
-            rhythm_checks.append({"label": label("crisis_depth_check"), "text": crisis.strip()})
-        platform = rhythm.get("emotion_platform_check")
-        if isinstance(platform, str) and platform.strip():
-            rhythm_checks.append({"label": label("emotion_platform_check"), "text": platform.strip()})
+        rhythm_field_keys = (
+            "crisis_depth_check",
+            "emotion_platform_check",
+            "plot_rhythm_check",
+            "emotion_rhythm_check",
+            "interaction_design_verification",
+        )
+        for key in rhythm_field_keys:
+            val = rhythm.get(key)
+            if isinstance(val, str) and val.strip():
+                rhythm_checks.append({"label": label(key), "text": val.strip()})
         reverse_points = rhythm.get("a_level_reverse_points") or []
         if isinstance(reverse_points, list):
             reverse_cards = a_level_reverse_cards(reverse_points)
 
+    outlines = body.get("episode_outlines")
     total_episodes = body.get("total_episodes")
+    if total_episodes in (None, "", [], {}) and isinstance(outlines, list) and outlines:
+        ep_numbers = [
+            episode_outline_number(item, fallback=index + 1)
+            for index, item in enumerate(outlines)
+            if isinstance(item, dict)
+        ]
+        if ep_numbers:
+            total_episodes = max(ep_numbers)
+
     if (
         total_episodes not in (None, "", [], {})
         or rhythm_checks
@@ -445,12 +814,34 @@ def present_series_outline(artifact_key: str, payload: Any) -> dict:
         )
         summary = rhythm_checks[0]["text"][:240] if rhythm_checks else ""
 
-    outlines = body.get("episode_outlines")
     stage_narrative = body.get("six_stage_narrative")
-    if isinstance(outlines, list) and isinstance(stage_narrative, dict):
+    if isinstance(outlines, list) and stage_narrative:
         grouped = build_stage_grouped_outlines(stage_narrative, outlines)
         if grouped:
             blocks.append(stage_outlines_block("分集大纲", grouped))
+        elif outlines:
+            flat_cards = [
+                card
+                for index, item in enumerate(outlines[:40])
+                if isinstance(item, dict)
+                and (card := episode_outline_card_item(item, fallback_index=index))
+            ]
+            if flat_cards:
+                blocks.append(
+                    stage_outlines_block(
+                        "分集大纲",
+                        [
+                            {
+                                "index": 1,
+                                "title": "全剧分集",
+                                "subtitle": f"共 {len(flat_cards)} 集",
+                                "summary": "",
+                                "highlights": [],
+                                "episodes": flat_cards,
+                            }
+                        ],
+                    )
+                )
 
     return view(artifact_key, "series-outline.v1", blocks, summary=summary)
 
@@ -1307,6 +1698,7 @@ def present_evolution_proposal(artifact_key: str, payload: Any) -> dict:
 
 SCHEMA_PRESENTERS = {
     "market-analysis.v1": present_market_analysis,
+    "market-report.v1": present_market_report,
     "formula-analysis.v1": present_formula_analysis,
     "project-brief.v1": present_project_brief,
     "project-review.v1": present_project_review,
@@ -1316,6 +1708,7 @@ SCHEMA_PRESENTERS = {
     "dream-check.v1": present_dream_check,
     "emotion-blueprint.v1": present_emotion_blueprint,
     "series-outline.v1": present_series_outline,
+    "narrative-plan.v1": present_narrative_plan,
     "hook-plan.v1": present_hook_plan,
     "conflict-plan.v1": present_conflict_plan,
     "reversal-plan.v1": present_reversal_plan,

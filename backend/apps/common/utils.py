@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # apps/common/utils.py
 # 通用工具函数集合
 

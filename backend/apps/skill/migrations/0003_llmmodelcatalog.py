@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated manually — LlmModelCatalog + LlmProvider advanced fields
 
 import uuid

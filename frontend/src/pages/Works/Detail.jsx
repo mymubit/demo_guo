@@ -241,7 +241,7 @@ export default function WorksDetail() {
                 <div className={cn('inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold', statusInfo.cls)}>
                   {statusInfo.text}
                 </div>
-                {(work.current_stage === 'ready' || work.drama?.delivery_status === 'ready') && (
+                {(work.drama_stage === 'ready' || work.drama?.delivery_status === 'ready') && (
                   <div className="inline-flex items-center rounded-full bg-green-500/15 px-3 py-1 text-xs font-semibold text-green-400">
                     可发布
                   </div>

@@ -74,3 +74,31 @@ class PortalWorksApiTests(TestCase):
         resp = client.get("/api/works/")
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data["code"], 401)
+
+    def test_works_scope_drama_matches_drama_project_list(self):
+        pid = "66666666-6666-6666-6666-666666666666"
+        Project.objects.create(
+            id=pid,
+            user=self.user,
+            title="drama-linked",
+            theme="sweet-pet",
+            episode_count=12,
+            track_mode="fast",
+            pipeline_mode=Project.MODE_WORKSPACE,
+            creation_entry="from-scratch",
+            core_idea="drama test",
+        )
+
+        works_resp = self.client.get("/api/works/?scope=drama&page_size=50")
+        drama_resp = self.client.get("/api/drama/projects/")
+
+        self.assertEqual(works_resp.status_code, 200)
+        self.assertEqual(drama_resp.status_code, 200)
+        works_ids = {item["project_id"] for item in works_resp.data["data"]}
+        drama_ids = {item["project_id"] for item in drama_resp.data["data"]}
+        self.assertIn(pid, works_ids)
+        self.assertEqual(works_ids, drama_ids)
+        works_item = next(item for item in works_resp.data["data"] if item["project_id"] == pid)
+        drama_item = next(item for item in drama_resp.data["data"] if item["project_id"] == pid)
+        self.assertEqual(works_item["completion_rate"], drama_item["completion_rate"])
+        self.assertEqual(works_item["progress_percent"], drama_item["progress_percent"])

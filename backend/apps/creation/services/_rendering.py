@@ -1,4 +1,5 @@
-"""HTML 预渲染工具（前端直接插入 DOM）。"""
+# -*- coding: utf-8 -*-
+"""HTML ???????????? DOM??"""
 
 import logging
 from html import escape
@@ -9,14 +10,13 @@ logger = logging.getLogger(__name__)
 
 
 def _render_progress_html(project: Project) -> str:
-    """渲染项目进度卡片（Drama 工作台，不再展示 legacy 5 步主链）。"""
+    """?????????Drama ???????? legacy 5 ?????"""
     status_text = dict(Project.STATUS_CHOICES).get(
         project.execution_status, project.execution_status
     )
-    from apps.drama.progress_service import DramaProjectProgressService
+    from apps.drama.progress_service import DramaProgressService
 
-    drama = DramaProjectProgressService.find_drama_project(project.id)
-    stage = (drama.current_stage if drama else "") or "—"
+    stage = project.get_drama_stage_display() if project.is_drama_workspace else "?"
     return (
         f'<div class="creation-progress-card" data-project-id="{project.id}">'
         f'<div class="progress-header">'
@@ -24,7 +24,7 @@ def _render_progress_html(project: Project) -> str:
         f'<span class="progress-percent">{project.progress_percent}%</span>'
         f"</div>"
         f'<div class="progress-bar"><div class="progress-fill" style="width:{project.progress_percent}%"></div></div>'
-        f'<div class="progress-stage">当前阶段：{escape(stage)}</div>'
+        f'<div class="progress-stage">?????{escape(stage)}</div>'
         f"</div>"
     )
 
@@ -55,15 +55,15 @@ def _render_result_html(project: Project) -> str:
         if resolve_scripts(project):
             return build_script_display_html(project)
     except Exception as exc:  # noqa: BLE001
-        logger.warning("[Creation] 从 artifact 构建结果 HTML 失败: %s", exc)
+        logger.warning("[Creation] ? artifact ???? HTML ??: %s", exc)
 
-    title = project.title or f"未命名剧本 · {project.theme}"
+    title = project.title or ("theme: " + str(project.theme))
     return (
         f'<div class="creation-result-card" data-project-id="{project.id}">'
         f'<h3 class="result-title">{escape(title)}</h3>'
-        f'<p class="result-meta">题材：{escape(project.theme)} · 集数：{project.episode_count} 集</p>'
+        f'<p class="result-meta">theme: {escape(project.theme)} / episodes: {project.episode_count}</p>'
         f'<div class="result-watermark" style="opacity:.5;font-size:12px;">'
-        f"仅供 {project.user_id} 查看 · 含数字水印，禁止二次传播"
+        f"user {project.user_id}"
         f"</div>"
         f"</div>"
     )
@@ -71,7 +71,7 @@ def _render_result_html(project: Project) -> str:
 
 def _render_share_html(share: ShareLink) -> str:
     project = share.project
-    title = share.custom_title or project.title or f"未命名剧本 · {project.theme}"
+    title = share.custom_title or project.title or f"????? ? {project.theme}"
     wm = f"share-{share.token[:12]}"
 
     try:
@@ -88,7 +88,7 @@ def _render_share_html(share: ShareLink) -> str:
                 )
             return html
     except Exception as exc:  # noqa: BLE001
-        logger.warning("[Creation] 分享页可读 HTML 构建失败: %s", exc)
+        logger.warning("[Creation] ????? HTML ????: %s", exc)
 
     try:
         from ..script_delivery import build_script_display_html, resolve_scripts
@@ -96,12 +96,12 @@ def _render_share_html(share: ShareLink) -> str:
         if resolve_scripts(project):
             return build_script_display_html(project, watermark_token=wm)
     except Exception as exc:  # noqa: BLE001
-        logger.warning("[Creation] 分享页剧本 HTML 构建失败: %s", exc)
+        logger.warning("[Creation] ????? HTML ????: %s", exc)
 
     return (
         f'<div class="creation-share-card" data-share-token="{escape(share.token[:12])}">'
         f"<h2>{escape(title)}</h2>"
-        f"<p>题材：{escape(project.theme)} · 集数：{project.episode_count}</p>"
-        f'<p style="opacity:.6;font-size:12px;">水印 {escape(wm)}</p>'
+        f"<p>???{escape(project.theme)} ? ???{project.episode_count}</p>"
+        f'<p style="opacity:.6;font-size:12px;">?? {escape(wm)}</p>'
         f"</div>"
     )

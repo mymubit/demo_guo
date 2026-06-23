@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated manually — 主链步骤已合并至 skill.FusionPipelineNode
 from django.db import migrations
 

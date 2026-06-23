@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated migration: FusionPipelinePack 版本管理字段扩展
 
 import django.db.models.deletion

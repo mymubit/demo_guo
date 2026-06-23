@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated manually for volcano_key_type on LlmProvider
 
 from django.db import migrations, models

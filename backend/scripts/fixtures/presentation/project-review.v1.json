@@ -7,17 +7,14 @@
     "promptVersion": "v1",
     "schemaVersion": "project-review.v1"
   },
-  "artifact_key": "project_review",
-  "project_content": {
-    "total_score": 93,
-    "review_notes": [
-      "目标受众定位精准，完全匹配抖音平台18-35岁女性核心用户内容偏好，短平快爽点设计适配碎片化观看场景，流量与商业化预期具备较高合理性",
-      "3集超短体量制作门槛低，拍摄周期短、成本可控，人设与剧情框架清晰可落地，无复杂特效或高难度场景需求，创作执行难度极低",
-      "项目内容未涉及违规导向元素，符合竖屏短剧内容监管要求，不存在高合规风险点"
-    ],
-    "review_conclusion": "通过",
-    "compliance_risk_score": 28,
-    "market_feasibility_score": 27,
-    "creation_feasibility_score": 38
-  }
+  "total_score": 93,
+  "review_notes": [
+    "目标受众定位精准，完全匹配抖音平台18-35岁女性核心用户内容偏好，短平快爽点设计适配碎片化观看场景，流量与商业化预期具备较高合理性",
+    "3集超短体量制作门槛低，拍摄周期短、成本可控，人设与剧情框架清晰可落地，无复杂特效或高难度场景需求，创作执行难度极低",
+    "项目内容未涉及违规导向元素，符合竖屏短剧内容监管要求，不存在高合规风险点"
+  ],
+  "review_conclusion": "通过",
+  "compliance_risk_score": 28,
+  "market_feasibility_score": 27,
+  "creation_feasibility_score": 38
 }

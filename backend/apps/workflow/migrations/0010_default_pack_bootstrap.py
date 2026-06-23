@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # P1-2 阶段：数据引导 —— 为短剧创作场景创建默认 FusionPipelinePack + Nodes
 # 覆盖创作主链 5 节点：brief / structure / character / outline / script
 # 每个节点通过 skill_id 路由到 SkillInvoker.invoke()

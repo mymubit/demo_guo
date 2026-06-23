@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from django.test import SimpleTestCase, override_settings
 
 from apps.monitoring.models import AlertRule

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """业务 API 失败采集：解析响应 code、分级日志、写入监控表。"""
 
 from __future__ import annotations

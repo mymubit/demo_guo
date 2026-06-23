@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Django 后台管理配置
 

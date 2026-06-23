@@ -74,18 +74,12 @@ class AdminCreationProjectsTests(TestCase):
         self.assertNotIn("skill_id", items[0]["latest_failed_run"])
 
     def test_list_filter_has_failed_run(self):
-        from apps.drama.models import DramaProject, DramaRoleExecution
+        from apps.drama.models import DramaRoleExecution
 
-        dp = DramaProject.objects.create(
-            id=self.project.id,
-            project_id=self.project.id,
-            user=self.user,
-            title=self.project.title,
-            genre_code=self.project.theme,
-            total_episodes=self.project.episode_count,
-        )
+        self.project.track_mode = "fast"
+        self.project.save(update_fields=["track_mode"])
         DramaRoleExecution.objects.create(
-            drama_project=dp,
+            project=self.project,
             agent_id="drama.topic-planner",
             agent_name_zh="选题策划官",
             status=DramaRoleExecution.Status.FAILED,
@@ -96,14 +90,9 @@ class AdminCreationProjectsTests(TestCase):
             title="无失败",
             theme="test",
             episode_count=10,
-        )
-        DramaProject.objects.create(
-            id=other.id,
-            project_id=other.id,
-            user=self.user,
-            title="无失败",
-            genre_code="test",
-            total_episodes=10,
+            track_mode="fast",
+            pipeline_mode=Project.MODE_WORKSPACE,
+            core_idea="test",
         )
         self.client.force_authenticate(user=self.admin)
         res = self.client.get("/api/admin/creation/projects/", {"has_failed_run": "true"})
@@ -172,18 +161,12 @@ class AdminCreationProjectsTests(TestCase):
         self.assertFalse(Project.objects.filter(id=pid).exists())
 
     def test_admin_delete_running_blocked(self):
-        from apps.drama.models import DramaProject, DramaRoleExecution
+        from apps.drama.models import DramaRoleExecution
 
-        dp = DramaProject.objects.create(
-            id=self.project.id,
-            project_id=self.project.id,
-            user=self.user,
-            title=self.project.title,
-            genre_code=self.project.theme,
-            total_episodes=self.project.episode_count,
-        )
+        self.project.track_mode = "fast"
+        self.project.save(update_fields=["track_mode"])
         DramaRoleExecution.objects.create(
-            drama_project=dp,
+            project=self.project,
             agent_id="drama.topic-planner",
             agent_name_zh="选题策划官",
             status=DramaRoleExecution.Status.RUNNING,

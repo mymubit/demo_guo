@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated migration: operations 运营监控中心
 # - CreationFeedback 用户反馈
 # - OperationsDailyCache 聚合缓存

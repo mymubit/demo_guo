@@ -95,7 +95,7 @@ export function CreationCenterPage() {
             items={[
               {
                 label: 'Drama 项目',
-                value: agentOps.drama_projects ?? summary.creation_projects ?? 0,
+                value: agentOps.workspace_projects ?? agentOps.workspace_project_count ?? summary.creation_projects ?? 0,
               },
               {
                 label: '今日 Agent 执行',

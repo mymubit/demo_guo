@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # P0-3 阶段：为 FusionPipelineNode 新增 skill_id 字段，
 # 用于 SkillBridge 路由（通过 skill_id 找到 AgentSkillDefinition 并调用 LLM）。
 #

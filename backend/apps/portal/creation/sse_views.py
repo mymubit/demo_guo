@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-"""SSE 实时进度推送
+"""SSE ??????
 
-接口：GET /api/creation/projects/{project_id}/progress/stream/
+???GET /api/creation/projects/{project_id}/progress/stream/
 
-客户端通过 EventSource 订阅项目创作进度，替代自适应 HTTP 轮询。
-每 3 秒推送一次最新状态，项目完成/失败后发送终止事件后关闭连接。
+????? EventSource ?????????????? HTTP ???
+? 3 ??????????????/???????????????
 
-SSE 事件格式：
+SSE ?????
   event: progress
-  data: {"status": "running", "progress_percent": 60, "current_stage": "plot-architect", ...}
+  data: {"status": "running", "progress_percent": 60, "drama_stage": "plot_design", ...}
 
   event: done
   data: {"status": "completed", ...}
@@ -16,10 +16,10 @@ SSE 事件格式：
   event: error
   data: {"status": "failed", "error_message": "..."}
 
-注意：
-  - 依赖 WSGI 服务器支持流式响应（Gunicorn 默认支持，uwsgi 需配置）
-  - Nginx 需关闭 proxy_buffering 或设置 X-Accel-Buffering: no
-  - 最大持续时间 5 分钟（CLIENT_TIMEOUT_SECONDS），超时后重连
+???
+  - ?? WSGI ??????????Gunicorn ?????uwsgi ????
+  - Nginx ??? proxy_buffering ??? X-Accel-Buffering: no
+  - ?????? 5 ???CLIENT_TIMEOUT_SECONDS???????
 """
 from __future__ import annotations
 
@@ -37,25 +37,24 @@ from apps.creation.models import Project
 logger = logging.getLogger(__name__)
 
 POLL_INTERVAL_SECONDS = 3
-CLIENT_TIMEOUT_SECONDS = 300  # 5 分钟后关闭，客户端自动重连
+CLIENT_TIMEOUT_SECONDS = 300  # 5 ?????????????
 
 
 def _build_event(event_type: str, data: dict) -> str:
-    """构造 SSE 事件文本"""
+    """?? SSE ????"""
     payload = json.dumps(data, ensure_ascii=False)
     return f"event: {event_type}\ndata: {payload}\n\n"
 
 
 def _serialize_project_state(project: Project) -> dict:
-    """提取客户端需要的进度字段"""
-    from apps.drama.progress_service import DramaProjectProgressService
+    """????????????"""
+    from apps.drama.progress_service import DramaProgressService
 
-    drama = DramaProjectProgressService.find_drama_project(project.id)
     return {
         "project_id": str(project.id),
         "status": project.execution_status,
-        "current_stage": drama.current_stage if drama else "",
-        "delivery_status": (drama.delivery_status if drama else "") or "",
+        "drama_stage": project.drama_stage if project.is_drama_workspace else "",
+        "delivery_status": (project.delivery_status if project.is_drama_workspace else "") or "",
         "progress_percent": project.progress_percent,
         "error_message": project.error_message or "",
         "updated_at": project.updated_at.isoformat(),
@@ -63,17 +62,17 @@ def _serialize_project_state(project: Project) -> dict:
 
 
 def _progress_stream(project_id: str, user) -> Generator[str, None, None]:
-    """生成器：持续产生 SSE 事件"""
+    """???????? SSE ??"""
     deadline = time.time() + CLIENT_TIMEOUT_SECONDS
 
-    # 首次发送心跳，让客户端知道连接已建立
+    # ??????????????????
     yield ": heartbeat\n\n"
 
     while time.time() < deadline:
         try:
             project = Project.objects.get(id=project_id, user=user)
         except Project.DoesNotExist:
-            yield _build_event("error", {"message": "项目不存在或无权访问"})
+            yield _build_event("error", {"message": "??????????"})
             return
 
         state_data = _serialize_project_state(project)
@@ -87,12 +86,12 @@ def _progress_stream(project_id: str, user) -> Generator[str, None, None]:
         yield _build_event("progress", state_data)
         time.sleep(POLL_INTERVAL_SECONDS)
 
-    # 超时：发送 timeout 事件让客户端决定是否重连
-    yield _build_event("timeout", {"message": "SSE 连接超时，请重连"})
+    # ????? timeout ????????????
+    yield _build_event("timeout", {"message": "SSE ????????"})
 
 
 class CreationProgressStreamView(APIView):
-    """SSE 进度流接口
+    """SSE ?????
 
     GET /api/creation/projects/{project_id}/progress/stream/
     """
@@ -102,15 +101,15 @@ class CreationProgressStreamView(APIView):
     def get(self, request, project_id: str = ""):
         user = request.user
 
-        # 权限预检：项目必须存在且属于当前用户
+        # ??????????????????
         if not Project.objects.filter(id=project_id, user=user).exists():
             from apps.console.responses import api_fail
-            return api_fail("项目不存在或无权访问", code=404)
+            return api_fail("??????????", code=404)
 
         response = StreamingHttpResponse(
             streaming_content=_progress_stream(project_id, user),
             content_type="text/event-stream; charset=utf-8",
         )
         response["Cache-Control"]    = "no-cache"
-        response["X-Accel-Buffering"] = "no"   # 关闭 Nginx 缓冲
+        response["X-Accel-Buffering"] = "no"   # ?? Nginx ??
         return response

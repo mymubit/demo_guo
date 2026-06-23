@@ -5,6 +5,7 @@ from django.test import TestCase
 from apps.creation.models import Project
 from apps.creation.agent_runtime.episode_merge import (
     filter_episodes_by_range,
+    merge_episode_designs_by_number,
     merge_episodes_by_number,
 )
 from apps.creation.workspace.workspace_editor import compute_outline_batch_range
@@ -39,6 +40,29 @@ class OutlineEpisodeBatchTests(TestCase):
         ]
         kept = filter_episodes_by_range(rows, 1, 2)
         self.assertEqual([e["episodeNumber"] for e in kept], [1])
+
+    def test_merge_episode_designs_by_number_keeps_other_batches(self):
+        existing = {
+            "episode_narrative_designs": [
+                {"episode_id": "E001", "narrative_focus": "第一集"},
+                {"episode_id": "E005", "narrative_focus": "第五集"},
+            ],
+            "target_episode_range": "E001-E005",
+        }
+        incoming = [
+            {"episode_id": "E006", "narrative_focus": "第六集"},
+            {"episode_id": "E010", "narrative_focus": "第十集"},
+            {"episode_id": "E099", "narrative_focus": "越界"},
+        ]
+        merged = merge_episode_designs_by_number(
+            existing,
+            incoming,
+            episode_from=6,
+            episode_to=10,
+        )
+        nums = [item["episode_id"] for item in merged["episode_narrative_designs"]]
+        self.assertEqual(nums, ["E001", "E005", "E006", "E010"])
+        self.assertEqual(merged["target_episode_range"], "E001-E010")
 
     def test_compute_outline_batch_range_skips_placeholder_episodes(self):
         project = Project.objects.create(

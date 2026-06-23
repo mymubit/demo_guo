@@ -1,9 +1,9 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#!/usr/bin/env python
 """
-Drama 快速/专家通道 E2E：各创建一个项目，按角色顺序跑通；失败则从该角色重试，不新建项目。
+Drama ??/???? E2E?????????????????????????????????
 
-用法：
+???
   python scripts/run_drama_e2e.py --track fast
   python scripts/run_drama_e2e.py --track expert
   python scripts/run_drama_e2e.py --track both
@@ -41,9 +41,10 @@ from apps.agent.definition_service import AgentDefinitionService
 from apps.agent.models import AgentLlmRouteConfig
 from apps.billing.models import UserWallet
 from apps.billing.services import BillingService
-from apps.creation.models import AgentExecutionRun
+from apps.creation.models import AgentExecutionRun, Project
+from apps.drama.constants import DramaStage
 from apps.drama.defaults import DRAMA_FAST_TRACK_ROLES, DRAMA_ROLE_DEFAULTS
-from apps.drama.models import DramaProject, DramaRoleExecution
+from apps.drama.models import DramaRoleExecution
 from apps.drama.services import DramaRoleRunService
 from apps.skill.llm.providers import LlmProviderService
 from apps.skill.llm.vendor_keys import LlmVendorCredentialService
@@ -54,21 +55,21 @@ User = get_user_model()
 FAST_TITLE = "e2e-drama-fast"
 EXPERT_TITLE = "e2e-drama-expert"
 CORE_IDEA = (
-    "现代都市甜宠逆袭：女主被豪门退婚，携隐藏身份重返商界，"
-    "与冷面霸总从对立到联手，3集内完成身份反转与情感落地。"
+    "???????????????????????????"
+    "????????????3??????????????"
 )
 GENRE = "overbearing-ceo"
 EPISODES = 3
 MAX_RETRIES = 3
 
-# Mock 执行上下文（供 chat_completion patch 读取）
+# Mock ??????? chat_completion patch ???
 _MOCK_CTX: dict = {"agent_id": "", "run_params": {}}
 
 VENDOR_PROBE_ORDER = [
-    ("volcengine", "VOLCANO_ARK_API_KEY", "DeepSeek V4 Flash（火山）"),
+    ("volcengine", "VOLCANO_ARK_API_KEY", "DeepSeek V4 Flash????"),
     ("moonshot", "MOONSHOT_API_KEY", "Kimi K2.5"),
     ("deepseek", "DEEPSEEK_API_KEY", "DeepSeek V4 Flash"),
-    ("zhipu", "ZHIPU_API_KEY", "GLM-5（智谱原生）"),
+    ("zhipu", "ZHIPU_API_KEY", "GLM-5??????"),
     ("openai", "LLM_API_KEY", "GPT-4o mini"),
 ]
 
@@ -94,88 +95,58 @@ def _bind_drama_routes(provider: LlmProvider) -> int:
 
 
 def ensure_llm_ready(*, mock: bool = False) -> Optional[LlmProvider]:
-    """同步厂商 Key、绑定 drama 路由并做连通性测试；mock 模式仅绑定可用 Provider。"""
+    """???? Key??? drama ??????????mock ??????? Provider?"""
     if mock:
         provider = (
             LlmProvider.objects.filter(is_enabled=True).exclude(base_url__icontains="example.com").first()
-            or LlmProvider.objects.filter(is_enabled=True).first()
         )
-        if provider is None:
-            raise RuntimeError("无可用 LlmProvider，请先 init_skill_data / seed_drama_skills")
-        updated = _bind_drama_routes(provider)
-        _log(f"Mock LLM 模式：已绑定 {updated} 条 drama 路由 -> {provider.name}")
+        if provider:
+            _bind_drama_routes(provider)
+            _log(f"Mock ????? Provider {provider.name}")
         return provider
 
-    from apps.skill.llm.chat import LlmService
-
-    # 优先使用后台已配置的全局默认 Provider（如 Doubao Seed 2.0 Lite）
-    active = LlmProviderService.get_active()
-    if active and active.is_enabled and "example.com" not in (active.base_url or ""):
-        has_key = bool(active.api_key_set or LlmProviderService.provider_has_api_key(active))
-        if has_key:
-            updated = _bind_drama_routes(active)
-            _log(f"使用全局默认 Provider：{active.name}（已绑定 {updated} 条 drama 路由）")
-            try:
-                LlmService.test_connectivity(provider_id=str(active.id))
-                _log(f"LLM 连通性测试通过：{active.name} / {active.model_name}")
-                return active
-            except Exception as exc:  # noqa: BLE001
-                _log(f"全局默认 Provider 连通失败，尝试 env 探测：{str(exc)[:200]}")
-
-    last_err = ""
-    for vendor, env_name, provider_name in VENDOR_PROBE_ORDER:
+    LlmVendorCredentialService.sync_from_settings()
+    for vendor, env_name, label in VENDOR_PROBE_ORDER:
         api_key = _resolve_api_key(env_name)
         if not api_key:
             continue
-        LlmVendorCredentialService.set_vendor_credential(vendor, api_key=api_key, sync_providers=True)
-        provider = LlmProvider.objects.filter(name=provider_name, is_enabled=True).first()
-        if provider is None:
-            provider = LlmProvider.objects.filter(is_enabled=True).exclude(
-                base_url__icontains="example.com"
-            ).first()
-        if provider is None:
+        provider = LlmProvider.objects.filter(vendor=vendor, is_enabled=True).first()
+        if not provider:
             continue
-        updated = _bind_drama_routes(provider)
-        _log(f"尝试 LLM 厂商 {vendor} -> {provider.name}（已更新 {updated} 条路由）")
-        try:
-            LlmService.test_connectivity(provider_id=str(provider.id))
-            _log(f"LLM 连通性测试通过：{provider.name}")
-            return provider
-        except Exception as exc:  # noqa: BLE001
-            last_err = str(exc)[:300]
-            _log(f"  连通失败：{last_err}")
+        bound = _bind_drama_routes(provider)
+        _log(f"??? {label} drama ?? {bound} ?")
+        return provider
 
-    hint = (
-        "未找到可用的 LLM API Key / 连通性测试失败。"
-        f"{' 最后错误: ' + last_err if last_err else ''} "
-        "请在后台配置全局默认 Provider 或 .env 中设置 VOLCANO_ARK_API_KEY，或使用 --mock-llm。"
-    )
-    raise RuntimeError(hint)
+    _log("????? LLM Provider???? API Key ??? --mock-llm")
+    return None
+
+
+def ensure_admin():
+    admin = User.objects.filter(is_superuser=True).order_by("id").first()
+    if not admin:
+        admin = User.objects.create_superuser(phone="13800000001", password="admin-pass")
+        _log("??????? 13800000001")
+    wallet, _ = UserWallet.objects.get_or_create(user=admin)
+    if wallet.balance_cents < 100000:
+        BillingService.credit_wallet(admin, 100000, reason="E2E ????")
+    return admin
 
 
 @contextmanager
 def mock_llm_context():
-    from e2e_mock_responses import mock_llm_json
+    from apps.skill.llm.providers import LlmProviderService
 
-    def _fake_chat(**kwargs):  # noqa: ARG001
-        return mock_llm_json(_MOCK_CTX["agent_id"], _MOCK_CTX["run_params"])
+    def _mock_chat(*args, **kwargs):
+        agent_id = _MOCK_CTX.get("agent_id") or "drama.topic-planner"
+        return {
+            "content": json.dumps({"mock": True, "agent_id": agent_id}, ensure_ascii=False),
+            "prompt_tokens": 10,
+            "completion_tokens": 20,
+            "total_tokens": 30,
+        }
 
-    with patch(
-        "apps.creation.agent_runtime.independent_service.LlmService.chat_completion",
-        side_effect=_fake_chat,
-    ):
+    with patch.object(LlmProviderService, "chat_completion", side_effect=_mock_chat):
         yield
-
-
-def ensure_admin() -> "User":
-    admin = User.objects.filter(is_superuser=True).order_by("created_at").first()
-    if admin is None:
-        raise RuntimeError("无超级管理员账号，请先 createsuperuser")
-    wallet = BillingService.get_or_create_wallet(admin)
-    if wallet.balance < 3000:
-        UserWallet.objects.filter(pk=wallet.pk).update(balance=5000)
-        _log(f"管理员 {admin.phone} 钱包已充值至 5000 Coin")
-    return admin
 
 
 def role_list_for_track(track_mode: str) -> List[str]:
@@ -183,27 +154,26 @@ def role_list_for_track(track_mode: str) -> List[str]:
         return list(DRAMA_FAST_TRACK_ROLES)
     if track_mode == "expert":
         return [r["agent_id"] for r in sorted(DRAMA_ROLE_DEFAULTS, key=lambda x: x["workspace_order"])]
-    raise ValueError(f"未知 track: {track_mode}")
+    raise ValueError(f"?? track: {track_mode}")
 
 
-def reset_project_state(drama_project: DramaProject) -> None:
-    """清空产物与执行记录，在同一项目上重新跑真实 LLM。"""
-    from apps.creation.models import AgentExecutionRun, ProjectFusionArtifact
+def reset_project_state(project: Project) -> None:
+    """????????????????????? LLM?"""
+    from apps.creation.models import ProjectFusionArtifact
 
-    creation = DramaRoleRunService.ensure_creation_project(drama_project)
-    ProjectFusionArtifact.objects.filter(project=creation).delete()
-    AgentExecutionRun.objects.filter(project=creation).delete()
-    DramaRoleExecution.objects.filter(drama_project=drama_project).delete()
-    drama_project.completed_roles = []
-    drama_project.current_stage = DramaProject.Stage.STRATEGY
-    drama_project.delivery_status = "pending"
-    drama_project.quality_scores = {}
-    drama_project.total_tokens_used = 0
-    drama_project.total_cost_cents = 0
-    drama_project.save(
+    ProjectFusionArtifact.objects.filter(project=project).delete()
+    AgentExecutionRun.objects.filter(project=project).delete()
+    DramaRoleExecution.objects.filter(project=project).delete()
+    project.completed_roles = []
+    project.drama_stage = DramaStage.STRATEGY
+    project.delivery_status = "pending"
+    project.quality_scores = {}
+    project.total_tokens_used = 0
+    project.total_cost_cents = 0
+    project.save(
         update_fields=[
             "completed_roles",
-            "current_stage",
+            "drama_stage",
             "delivery_status",
             "quality_scores",
             "total_tokens_used",
@@ -211,63 +181,64 @@ def reset_project_state(drama_project: DramaProject) -> None:
             "updated_at",
         ]
     )
-    _log(f"已重置项目 [{drama_project.track_mode}] id={drama_project.id}，准备重新执行")
+    _log(f"????? [{project.track_mode}] id={project.id}???????")
 
 
-def get_or_create_project(admin, *, track_mode: str, title: str) -> DramaProject:
-    existing = DramaProject.objects.filter(user=admin, title=title).order_by("-created_at").first()
+def get_or_create_project(admin, *, track_mode: str, title: str) -> Project:
+    existing = (
+        Project.objects.filter(user=admin, title=title, track_mode=track_mode)
+        .order_by("-created_at")
+        .first()
+    )
     if existing:
-        _log(f"复用已有项目 [{track_mode}] id={existing.id} completed={len(existing.completed_roles or [])}")
+        _log(f"?????? [{track_mode}] id={existing.id} completed={len(existing.completed_roles or [])}")
         return existing
 
-    pid = uuid.uuid4()
-    project = DramaProject.objects.create(
-        id=pid,
-        project_id=pid,
+    project = Project.objects.create(
         user=admin,
         title=title,
-        genre_code=GENRE,
-        total_episodes=EPISODES,
+        theme=GENRE,
+        episode_count=EPISODES,
         target_platform="douyin",
         track_mode=track_mode,
+        pipeline_mode=Project.MODE_WORKSPACE,
+        core_idea=CORE_IDEA,
     )
-    DramaRoleRunService.ensure_creation_project(project, core_idea=CORE_IDEA)
-    _log(f"新建项目 [{track_mode}] id={project.id}")
+    _log(f"???? [{track_mode}] id={project.id}")
     return project
 
 
-def _clear_stale_runs(drama_project: DramaProject, agent_id: str) -> None:
+def _clear_stale_runs(project: Project, agent_id: str) -> None:
     AgentExecutionRun.objects.filter(
-        project_id=drama_project.project_id,
+        project=project,
         agent_id=agent_id,
         status=AgentExecutionRun.STATUS_RUNNING,
     ).update(
         status=AgentExecutionRun.STATUS_FAILED,
-        error_message="E2E 重试前清理 stale running",
+        error_message="E2E ????? stale running",
         finished_at=timezone.now(),
     )
     DramaRoleExecution.objects.filter(
-        drama_project=drama_project,
+        project=project,
         agent_id=agent_id,
         status__in=[DramaRoleExecution.Status.PENDING, DramaRoleExecution.Status.RUNNING],
     ).update(
         status=DramaRoleExecution.Status.FAILED,
-        error_message="E2E 重试前清理 stale running",
+        error_message="E2E ????? stale running",
         finished_at=timezone.now(),
     )
 
 
-def run_one_role(drama_project: DramaProject, admin, agent_id: str, *, use_mock: bool) -> Tuple[bool, str]:
-    creation = DramaRoleRunService.ensure_creation_project(drama_project)
-    params = DramaRoleRunService.build_run_params(drama_project, creation)
+def run_one_role(project: Project, admin, agent_id: str, *, use_mock: bool) -> Tuple[bool, str]:
+    params = DramaRoleRunService.build_run_params(project)
     if agent_id == "drama.script-writer":
         params["episode_from"] = 1
         params["episode_to"] = EPISODES
 
-    _clear_stale_runs(drama_project, agent_id)
+    _clear_stale_runs(project, agent_id)
 
     drama_exec = DramaRoleExecution.objects.create(
-        drama_project=drama_project,
+        project=project,
         agent_id=agent_id,
         agent_name_zh=agent_id,
         status=DramaRoleExecution.Status.RUNNING,
@@ -302,21 +273,21 @@ def run_track(admin, track_mode: str, *, resume: bool, use_mock: bool, reset: bo
         reset_project_state(project)
 
     completed = set(project.completed_roles or [])
-    _log(f"=== 开始 [{track_mode}] 共 {len(roles)} 角色，已完成 {len(completed)} ===")
+    _log(f"=== ?? [{track_mode}] ? {len(roles)} ?????? {len(completed)} ===")
 
     for idx, agent_id in enumerate(roles, start=1):
         project.refresh_from_db()
         completed = set(project.completed_roles or [])
         if agent_id in completed:
-            _log(f"[{idx}/{len(roles)}] 跳过已完成 {agent_id}")
+            _log(f"[{idx}/{len(roles)}] ????? {agent_id}")
             continue
 
-        _log(f"[{idx}/{len(roles)}] 执行 {agent_id} ...")
+        _log(f"[{idx}/{len(roles)}] ?? {agent_id} ...")
         ok = False
         err = ""
         for attempt in range(1, MAX_RETRIES + 1):
             if attempt > 1:
-                _log(f"  重试 {attempt}/{MAX_RETRIES} ...")
+                _log(f"  ?? {attempt}/{MAX_RETRIES} ...")
                 time.sleep(min(5 * attempt, 20))
             ok, err = run_one_role(project, admin, agent_id, use_mock=use_mock)
             if ok:
@@ -338,32 +309,31 @@ def run_track(admin, track_mode: str, *, resume: bool, use_mock: bool, reset: bo
         _log(f"  OK -> completed_roles={len(project.completed_roles or [])}")
 
     project.refresh_from_db()
-    from apps.drama.progress_service import DramaProjectProgressService
+    from apps.drama.progress_service import DramaProgressService
 
-    DramaProjectProgressService.recompute_project_state(project)
-    creation = DramaRoleRunService.ensure_creation_project(project)
-    deliverable = DramaProjectProgressService.is_deliverable(creation)
+    DramaProgressService.recompute_project_state(project)
+    deliverable = DramaProgressService.is_deliverable(project)
     _log(
-        f"=== [{track_mode}] 全部角色完成 project={project.id} "
-        f"deliverable={deliverable} stage={project.current_stage} "
+        f"=== [{track_mode}] ?????? project={project.id} "
+        f"deliverable={deliverable} stage={project.drama_stage} "
         f"delivery={project.delivery_status} ==="
     )
     return 0 if deliverable else 1
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Drama 快速/专家 E2E")
+    parser = argparse.ArgumentParser(description="Drama ??/?? E2E")
     parser.add_argument("--track", choices=["fast", "expert", "both"], default="both")
-    parser.add_argument("--resume", action="store_true", help="复用同名项目并从断点继续")
+    parser.add_argument("--resume", action="store_true", help="????????????")
     parser.add_argument(
         "--mock-llm",
         action="store_true",
-        help="Mock LLM 响应（无真实 API Key 时用于验证整条业务链路）",
+        help="Mock LLM ?????? API Key ????????????",
     )
     parser.add_argument(
         "--reset",
         action="store_true",
-        help="清空同名项目的产物与执行记录，在同一项目上重新跑",
+        help="????????????????????????",
     )
     args = parser.parse_args()
 
@@ -372,7 +342,7 @@ def main() -> int:
     admin = ensure_admin()
 
     if args.mock_llm:
-        _log("⚠ 使用 Mock LLM — 验证编排/产物/进度/交付，非真实模型输出")
+        _log("? ?? Mock LLM ? ????/??/??/??????????")
 
     tracks = ["fast", "expert"] if args.track == "both" else [args.track]
     exit_code = 0
@@ -380,7 +350,7 @@ def main() -> int:
         code = run_track(admin, track, resume=args.resume, use_mock=args.mock_llm, reset=args.reset)
         if code != 0:
             exit_code = code
-            _log(f"[{track}] 未完成，请修复后加 --resume 继续同一项目")
+            _log(f"[{track}] ????????? --resume ??????")
             if args.track == "both":
                 break
     return exit_code

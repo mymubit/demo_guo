@@ -123,7 +123,7 @@ class Command(BaseCommand):
     ) -> tuple[Any | None, str | None]:
         qs = DramaRoleExecution.objects.filter(status=DramaRoleExecution.Status.SUCCESS)
         if project_id:
-            qs = qs.filter(drama_project_id=project_id)
+            qs = qs.filter(project_id=project_id)
         qs = qs.filter(agent_id=agent_id).order_by("-finished_at", "-created_at")
         for row in qs[:20]:
             artifacts = row.output_artifacts or {}
@@ -132,7 +132,7 @@ class Command(BaseCommand):
                 return payload, str(row.id)
         qs2 = DramaRoleExecution.objects.filter(status=DramaRoleExecution.Status.SUCCESS)
         if project_id:
-            qs2 = qs2.filter(drama_project_id=project_id)
+            qs2 = qs2.filter(project_id=project_id)
         qs2 = qs2.order_by("-finished_at", "-created_at")
         for row in qs2[:100]:
             payload = (row.output_artifacts or {}).get(artifact_key)

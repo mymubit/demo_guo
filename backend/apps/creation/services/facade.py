@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """CreationService 门面 — 静态方法委托至各子模块。"""
 
 from typing import Optional, Tuple
@@ -36,12 +37,14 @@ class CreationService:
         *,
         keyword: str = "",
         ordering: str = "-created_at",
+        scope: str = "",
     ):
         return works.list_user_projects(
             user,
             status_filter,
             keyword=keyword,
             ordering=ordering,
+            scope=scope,
         )
 
     @staticmethod

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """分享链接与剧本下载。"""
 
 import logging
@@ -21,9 +22,9 @@ logger = logging.getLogger(__name__)
 
 
 def _require_deliverable(project: Project) -> None:
-    from apps.drama.progress_service import DramaProjectProgressService
+    from apps.drama.progress_service import DramaProgressService
 
-    if not DramaProjectProgressService.is_deliverable(project):
+    if not DramaProgressService.is_deliverable(project):
         raise PermissionDenied("仅已完成的作品可分享或下载")
 
 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """存量项目 artifact 规则补全（不调用 LLM）。"""
 from __future__ import annotations
 

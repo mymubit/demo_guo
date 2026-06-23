@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated migration: SystemConfigItem 命中率统计字段（运营 M3）
 # 新增 hit_count / hit_24h / last_hit_at
 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """测试环境配置 - 使用 SQLite 内存数据库，无需 PostgreSQL。"""
 import os
 

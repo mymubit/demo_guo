@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated for SensitiveWord append-only table
 import uuid
 

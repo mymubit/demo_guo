@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated manually for agent run concurrency guard
 
 from django.db import migrations, models

@@ -91,18 +91,13 @@ def build_fusion_snapshot(project: Project) -> Dict[str, Any]:
             }
         )
 
-    from apps.drama.progress_service import DramaProjectProgressService
-
-    drama = DramaProjectProgressService.find_drama_project(project.id)
-
+    is_drama = project.is_drama_workspace
     return {
         "project_id": str(project.id),
-        "current_stage": drama.current_stage if drama else "",
-        "current_stage_text": DramaProjectProgressService.drama_stage_label(
-            drama.current_stage if drama else ""
-        ),
-        "delivery_status": (drama.delivery_status if drama else "") or "",
-        "track_mode": drama.track_mode if drama else "",
+        "drama_stage": project.drama_stage if is_drama else "",
+        "drama_stage_display": project.get_drama_stage_display() if is_drama else "",
+        "delivery_status": (project.delivery_status if is_drama else "") or "",
+        "track_mode": project.track_mode if is_drama else "",
         "overall_score": project.overall_score,
         "grade": project.grade,
         "ready_at": project.ready_at.isoformat() if project.ready_at else None,

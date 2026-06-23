@@ -13,50 +13,76 @@ from __future__ import annotations
 AGENT_TIER1_SEED: dict[str, list[str]] = {
     # 战略选题部
     "drama.topic-planner": ["philosophy"],
+    "drama.market-analyst": ["rhythm_rules", "philosophy", "scoring", "episode_structure"],
 
     # 世界构建部
     "drama.world-architect": ["philosophy"],
     "drama.character-designer": ["philosophy", "foreshadowing_rules"],
 
     # 剧情引擎部
-                                 "hook_effectiveness", "emotion_externalization_dict"],
-    "drama.plot-architect": ["episode_structure", "rhythm_rules",
-                              "quantitative_constraints", "foreshadowing_rules",
-                              "qdn_emotion_model", "hook_effectiveness",
-                              "payment_checkpoint_3card"],
-                               "qdn_emotion_model", "episode_emotion_8nodes"],
-                                    "emotion_externalization_dict"],
+    "drama.plot-architect": [
+        "episode_structure",
+        "rhythm_rules",
+        "quantitative_constraints",
+        "foreshadowing_rules",
+        "qdn_emotion_model",
+        "hook_effectiveness",
+        "payment_checkpoint_3card",
+    ],
+    "drama.narrative-engineer": [
+        "episode_emotion_8nodes",
+        "qdn_emotion_model",
+        "hook_effectiveness",
+        "emotion_externalization_dict",
+        "episode_structure",
+        "rhythm_rules",
+        "foreshadowing_rules",
+    ],
 
     # 创作执行部
-    "drama.script-writer": ["episode_structure", "quantitative_constraints",
-                             "writing_prohibitions", "writing_requirements",
-                             "information_asymmetry_mechanics",
-                             "emotion_externalization_dict", "ai_tone_forbidden",
-                             "qdn_emotion_model", "format_standard",
-                             "hook_effectiveness", "episode_emotion_8nodes",
-                             "dialogue_quality"],
-                               "ai_tone_forbidden", "emotion_externalization_dict",
-                               "dialogue_quality"],
+    "drama.script-writer": [
+        "episode_structure",
+        "quantitative_constraints",
+        "writing_prohibitions",
+        "writing_requirements",
+        "information_asymmetry_mechanics",
+        "emotion_externalization_dict",
+        "ai_tone_forbidden",
+        "qdn_emotion_model",
+        "format_standard",
+        "hook_effectiveness",
+        "episode_emotion_8nodes",
+        "dialogue_quality",
+    ],
+    "drama.polish-master": [
+        "writing_prohibitions",
+        "writing_requirements",
+        "ai_tone_forbidden",
+        "emotion_externalization_dict",
+        "dialogue_quality",
+        "rhythm_rules",
+        "quantitative_constraints",
+        "format_standard",
+    ],
 
     # 评审质控部
     "drama.script-reviewer": ["scoring", "format_standard"],
     "drama.quality-reporter": ["scoring"],
 
-    # 修改润色部
-                             "ai_tone_forbidden", "emotion_externalization_dict",
-                             "dialogue_quality"],
-
     # 制作宣发部
+    "drama.production-pack": [
+        "format_standard",
+        "dialogue_quality",
+        "hook_effectiveness",
+        "scoring",
+        "foreshadowing_rules",
+    ],
 
     # 合规总编室
     "drama.compliance-guard": ["scoring"],
 }
 
 # NODE_TIER1_SEED: 节点级映射（与 agent 映射对齐）
-    "drama.market-analyst": ["market_insights", "douyin_formulas", "s_class_standards", "theme_templates"],
-    "drama.narrative-engineer": ["emotion_rhythm_rules", "hook_design", "reversal_patterns", "conflict_engine"],
-    "drama.polish-master": ["dialogue_quality", "format_standard", "word_count_rules", "style_consistency"],
-    "drama.production-pack": ["visual_production", "storyboard_format", "marketing_copy", "compliance_rules"],
 NODE_TIER1_SEED: dict[str, list[str]] = {
     f"node_{k.replace('drama.', '').replace('-', '_')}": v
     for k, v in AGENT_TIER1_SEED.items()

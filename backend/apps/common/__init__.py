@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # apps/common/__init__.py
 # 公共工具模块包初始化文件
 

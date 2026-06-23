@@ -16,7 +16,7 @@ from apps.drama.presentation.normalize import format_scalar
 from apps.drama.presentation.schema_presenters import SCHEMA_PRESENTERS
 from apps.drama.presentation.text_localize import sanitize_blocks, sanitize_display_string
 
-# 向后兼容：测试与其他模块仍可从 presenters 导入
+# 按 schema_version 注册专用展示器
 from apps.drama.presentation.schema_presenters import (  # noqa: F401
     present_character_bible,
     present_compliance_report,

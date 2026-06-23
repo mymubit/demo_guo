@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Django settings for ScriptForge project.
 
@@ -363,7 +364,6 @@ VOLCANO_ARK_BASE_URL = os.getenv(
 VOLCANO_ARK_CODING_BASE_URL = os.getenv(
     "VOLCANO_ARK_CODING_BASE_URL", "https://ark.cn-beijing.volces.com/api/coding/v3"
 )
-# coding_plan | payg — setup / env-setup 创建火山 Provider 时使用
 VOLCANO_ARK_KEY_TYPE = os.getenv("VOLCANO_ARK_KEY_TYPE", "")
 VOLCANO_EP_DEEPSEEK_V4_FLASH = os.getenv("VOLCANO_EP_DEEPSEEK_V4_FLASH", "")
 VOLCANO_EP_DEEPSEEK_V4_PRO = os.getenv("VOLCANO_EP_DEEPSEEK_V4_PRO", "")

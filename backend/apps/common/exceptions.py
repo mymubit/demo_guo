@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # apps/common/exceptions.py
 # 自定义异常及全局异常处理器
 

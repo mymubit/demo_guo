@@ -8,6 +8,7 @@ export function useWorksList({ page = 1, status = 'all', keyword = '', ordering 
       worksApi.list(page, status, pageSize, {
         q: keyword.trim(),
         ordering,
+        scope: 'drama',
       }),
     staleTime: 30_000,
     refetchInterval: (query) => {

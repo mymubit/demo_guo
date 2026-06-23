@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated migration: Project 内容质量统计字段（运营 M2）
 # 新增 user_edit_count / final_export_count / last_edited_at / abandoned_at / is_quality_sampled
 

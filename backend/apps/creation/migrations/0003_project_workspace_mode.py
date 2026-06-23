@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated manually for workspace skill mode
 
 from django.db import migrations, models

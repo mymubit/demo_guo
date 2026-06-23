@@ -4,35 +4,40 @@ from __future__ import annotations
 
 from rest_framework import serializers
 
-from apps.drama.models import DramaProject, DramaRoleExecution
+from apps.creation.models import Project
+from apps.drama.models import DramaRoleExecution
 
 
-class DramaProjectSerializer(serializers.ModelSerializer):
-    completion_rate = serializers.SerializerMethodField()
+class DramaWorkspaceSerializer(serializers.Serializer):
+    """Drama 工作台项目（creation.Project）。"""
+
+    id = serializers.UUIDField(read_only=True)
+    title = serializers.CharField()
+    theme = serializers.CharField()
+    episode_count = serializers.IntegerField()
+    target_platform = serializers.CharField()
+    track_mode = serializers.CharField()
     track_mode_display = serializers.CharField(source="get_track_mode_display", read_only=True)
-    current_stage_display = serializers.CharField(source="get_current_stage_display", read_only=True)
+    drama_stage = serializers.CharField()
+    drama_stage_display = serializers.CharField(source="get_drama_stage_display", read_only=True)
+    completed_roles = serializers.ListField(child=serializers.CharField(), required=False)
+    completion_rate = serializers.SerializerMethodField()
+    word_count_stats = serializers.DictField(required=False)
+    quality_scores = serializers.DictField(required=False)
+    delivery_status = serializers.CharField()
+    total_tokens_used = serializers.IntegerField(read_only=True)
+    total_cost_cents = serializers.IntegerField(read_only=True)
+    created_at = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
 
-    class Meta:
-        model = DramaProject
-        fields = [
-            "id", "project_id", "title", "genre_code", "total_episodes",
-            "target_platform", "track_mode", "track_mode_display",
-            "current_stage", "current_stage_display",
-            "completed_roles", "completion_rate",
-            "word_count_stats", "quality_scores", "delivery_status",
-            "total_tokens_used", "total_cost_cents",
-            "created_at", "updated_at",
-        ]
-        read_only_fields = ["id", "created_at", "updated_at", "total_tokens_used", "total_cost_cents"]
-
-    def get_completion_rate(self, obj: DramaProject) -> float:
+    def get_completion_rate(self, obj: Project) -> float:
         return obj.get_completion_rate()
 
 
-class DramaProjectCreateSerializer(serializers.Serializer):
+class DramaWorkspaceCreateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=128)
-    genre_code = serializers.CharField(max_length=32, default="family-revenge")
-    total_episodes = serializers.IntegerField(default=30, min_value=5, max_value=200)
+    theme = serializers.CharField(max_length=64, default="family-revenge")
+    episode_count = serializers.IntegerField(default=30, min_value=5, max_value=200)
     target_platform = serializers.ChoiceField(
         choices=["douyin", "kuaishou", "weixin", "all"],
         default="douyin",

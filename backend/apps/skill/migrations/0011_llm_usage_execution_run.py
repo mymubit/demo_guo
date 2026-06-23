@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated manually for LLM usage linkage to agent execution runs
 
 import django.db.models.deletion

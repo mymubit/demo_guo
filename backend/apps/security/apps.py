@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 安全模块 AppConfig 配置
 """

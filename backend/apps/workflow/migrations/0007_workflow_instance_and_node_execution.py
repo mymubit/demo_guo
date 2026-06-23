@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # P0 阶段：为 FusionPipelinePack + FusionPipelineNode 补充引擎所需字段，
 # 并新增工作流执行实例表（WorkflowInstance / NodeExecution / NodeExecutionEvent）。
 #

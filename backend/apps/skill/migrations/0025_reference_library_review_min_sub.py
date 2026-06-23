@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated manually — 参考库 DB SSOT + 审查子项最低分
 from django.db import migrations, models
 import uuid

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from django.core.management.base import BaseCommand
 
 from apps.monitoring.services.alerts import evaluate_alert_rules

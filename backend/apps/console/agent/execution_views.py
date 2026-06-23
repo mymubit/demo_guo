@@ -151,11 +151,10 @@ class AgentProjectTraceView(AdminAPIView):
         status, status_text = resolve_admin_status(project)
         drama_trace = None
         try:
-            from apps.drama.progress_service import DramaProjectProgressService
+            from apps.drama.progress_service import DramaProgressService
 
-            drama = DramaProjectProgressService.find_drama_project(project.id)
-            if drama:
-                drama_trace = DramaProjectProgressService.build_trace_payload(drama)
+            if project.is_drama_workspace:
+                drama_trace = DramaProgressService.build_trace_payload(project)
         except Exception:  # noqa: BLE001
             drama_trace = None
         return api_ok(

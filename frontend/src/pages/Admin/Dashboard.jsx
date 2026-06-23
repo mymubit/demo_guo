@@ -727,7 +727,7 @@ export default function Dashboard() {
             <AdminStatGrid
               items={[
                 { label: '创作项目累计', value: summary.total_creations ?? 0, hint: `今日 +${summary.today_creations ?? 0}` },
-                { label: 'Drama 项目', value: agentOps.drama_projects ?? 0, hint: `执行中 ${agentOps.drama_running_projects ?? 0}` },
+                { label: '工作台项目', value: agentOps.workspace_projects ?? agentOps.workspace_project_count ?? 0, hint: `执行中 ${agentOps.drama_running_projects ?? 0}` },
                 { label: '今日角色执行', value: execToday.run_count ?? 0, hint: `失败 ${execToday.failed_count ?? 0}` },
                 {
                   label: '30 天失败率',

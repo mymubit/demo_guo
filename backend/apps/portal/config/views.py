@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """前台公开技能接口（不含管理配置）"""
 import logging
 

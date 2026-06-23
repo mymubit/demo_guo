@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 apps/skill — 技能与配置中枢
 

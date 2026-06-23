@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated migration: AgentSkillDefinition 生命周期与调用协议字段扩展
 
 import django.db.models.deletion

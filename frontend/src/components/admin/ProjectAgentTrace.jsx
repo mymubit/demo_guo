@@ -23,7 +23,7 @@ function DramaBasicFields({ drama }) {
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mb-4">
       {[
         ['创作轨道', drama.track_mode_display || drama.track_mode],
-        ['当前阶段', drama.current_stage_display || drama.current_stage],
+        ['当前阶段', drama.drama_stage_display || drama.drama_stage],
         ['完成度', drama.completion_rate != null ? `${drama.completion_rate}%` : '—'],
         ['交付状态', drama.delivery_status || '—'],
         ['已完成角色', `${(drama.completed_roles || []).length} 个`],
@@ -47,7 +47,7 @@ function DramaTracePanel({ dramaTrace, catalog }) {
     <div className="space-y-4">
       <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-3 text-xs leading-relaxed text-indigo-200/90">
         <span className="font-medium text-indigo-100">Drama 36 角色轨</span>
-        ：按部门顺序执行 drama.* 角色，产物写入 ProjectFusionArtifact，进度以 DramaProject 为 SSOT。
+        ：按部门顺序执行 drama.* 角色，产物写入 ProjectFusionArtifact，进度以 creation.Project 为 SSOT。
         {dramaTrace.track_plan?.label ? ` 当前计划：${dramaTrace.track_plan.label}。` : ''}
       </div>
 

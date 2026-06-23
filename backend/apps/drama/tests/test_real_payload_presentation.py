@@ -34,8 +34,8 @@ class RealPayloadPresentationTests(SimpleTestCase):
                 {
                     "name": "苏晴",
                     "role_type": "main_antagonist",
-                    "want": "夺回控制权",
-                    "voice_tag": "尖细快语速",
+                    "surface_desire": "夺回控制权",
+                    "voice_tag": {"tone": "尖细", "speed": "fast"},
                 }
             ]
         }
@@ -61,41 +61,43 @@ class RealPayloadPresentationTests(SimpleTestCase):
         view = present_artifact("character_bible", "character-bible.v1", payload)
         rel = next(b for b in view["blocks"] if b["type"] == "relationship_graph")
         self.assertIn("前儿媳", rel["items"][0]["subtitle"])
+        item = rel["items"][0]
+        self.assertEqual(item["source_name"], "苏晴")
+        self.assertEqual(item["target_name"], "C002")
+        self.assertEqual(item["interaction_rule"], "前期对立")
 
-    def test_world_setting_world_data_wrapper(self):
+    def test_world_setting_canonical_payload(self):
         payload = {
-            "world_data": {
-                "era_background": "2026年沪城",
-                "power_structure": ["目前掌握权力者：顶层创投决策层"],
-                "core_space": "竖屏近景适配的豪门宴会厅",
-                "core_rules": ["规则一"],
-            }
+            "era_background": "2026年沪城",
+            "power_structure": ["目前掌握权力者：顶层创投决策层"],
+            "core_spaces": ["竖屏近景适配的豪门宴会厅"],
+            "core_world_rules": ["规则一"],
         }
         view = present_artifact("world_setting", "world-setting.v1", payload)
-        block = next(b for b in view["blocks"] if b["type"] == "world_sections")
-        corpus = str(block)
+        types = {b["type"] for b in view["blocks"]}
+        self.assertIn("hero", types)
+        self.assertIn("cards", types)
+        corpus = str(view["blocks"])
         self.assertIn("目前掌握权力者", corpus)
-        self.assertIn("核心场景", corpus)
+        self.assertIn("竖屏近景", corpus)
 
-    def test_emotion_audit_audit_result_wrapper(self):
+    def test_emotion_audit_payload(self):
         payload = {
-            "audit_result": {
-                "over_deviation_episodes": [
-                    {
-                        "episodeNumber": 3,
-                        "deviation_nodes": [
-                            {
-                                "node_index": 1,
-                                "emotion_tag": "EV",
-                                "actual_value": 8,
-                                "target_value": 6,
-                                "deviation_gap": 2,
-                                "trigger_event": "反转揭晓",
-                            }
-                        ],
-                    }
-                ]
-            }
+            "over_deviation_episodes": [
+                {
+                    "episodeNumber": 3,
+                    "deviation_nodes": [
+                        {
+                            "node_index": 1,
+                            "emotion_tag": "EV",
+                            "actual_value": 8,
+                            "target_value": 6,
+                            "deviation_gap": 2,
+                            "trigger_event": "反转揭晓",
+                        }
+                    ],
+                }
+            ]
         }
         view = present_artifact("emotion_audit", "emotion-audit.v1", payload)
         dev_block = next(b for b in view["blocks"] if b.get("title") == "偏离集数")

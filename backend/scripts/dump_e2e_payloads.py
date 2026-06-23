@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""导出每个产物的完整 normalize 后 payload（供 presenter 精确对齐）。"""
+"""????????? normalize ? payload?? presenter ??????"""
 from __future__ import annotations
 
 import json
@@ -14,20 +14,19 @@ import django
 
 django.setup()
 
-from apps.creation.models import ProjectFusionArtifact
-from apps.drama.models import DramaProject
+from apps.creation.models import Project, ProjectFusionArtifact
 from apps.drama.presentation.normalize import normalize_payload
 
 title = sys.argv[1] if len(sys.argv) > 1 else "e2e-drama-expert"
 key_filter = sys.argv[2] if len(sys.argv) > 2 else None
 
-dp = DramaProject.objects.filter(title=title).first()
-if not dp:
+project = Project.objects.filter(title=title).first()
+if not project:
     print("project not found:", title)
     sys.exit(1)
 
 payloads = {}
-qs = ProjectFusionArtifact.objects.filter(project_id=dp.project_id).order_by("artifact_key")
+qs = ProjectFusionArtifact.objects.filter(project=project).order_by("artifact_key")
 if key_filter:
     qs = qs.filter(artifact_key=key_filter)
 

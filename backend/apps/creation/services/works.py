@@ -1,4 +1,5 @@
-"""作品列表、详情、删除与 Agent 操作。"""
+# -*- coding: utf-8 -*-
+"""??????????? Agent ???"""
 
 import logging
 from datetime import timedelta
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_project_detail(project_id: str, user) -> dict:
-    """获取作品详情（与 progress 类似，仅用于作品详情页）。"""
+    """???????? progress ?????????????"""
     project = _get_user_project(project_id, user)
     status, status_text = resolve_admin_status(project)
     detail = {
@@ -50,7 +51,7 @@ def get_project_detail(project_id: str, user) -> dict:
 
         detail["fusion_snapshot"] = build_fusion_snapshot(project)
     except Exception as exc:  # noqa: BLE001
-        logger.warning("[Creation] fusion_snapshot 构建失败: %s", exc)
+        logger.warning("[Creation] fusion_snapshot ????: %s", exc)
     return detail
 
 
@@ -60,14 +61,23 @@ def list_user_projects(
     *,
     keyword: str = "",
     ordering: str = "-created_at",
+    scope: str = "",
 ):
-    """获取用户的创作作品列表。"""
+    """????????????
+
+    scope=drama???? Drama ??????track_mode ? fast/expert??
+    """
     qs = Project.objects.filter(user=user).only(
         "id", "title", "theme", "episode_count", "format_variant",
         "progress_percent", "overall_score",
         "grade", "ready_at", "created_at", "updated_at", "core_idea",
         "pipeline_mode", "creation_entry",
     )
+    scope = (scope or "").strip().lower()
+    if scope == "drama":
+        from apps.drama.constants import DramaTrackMode
+
+        qs = qs.filter(track_mode__in=[DramaTrackMode.FAST, DramaTrackMode.EXPERT])
     if status_filter and status_filter in {
         Project.STATUS_PENDING,
         Project.STATUS_RUNNING,
@@ -91,12 +101,61 @@ def list_user_projects(
     return qs
 
 
+def build_user_work_list_page(
+    user,
+    *,
+    page: int = 1,
+    page_size: int = 20,
+    status_filter: Optional[str] = None,
+    keyword: str = "",
+    ordering: str = "newest",
+    scope: str = "",
+) -> dict:
+    """????????????? / ?????????"""
+    from apps.creation.serializers import ProjectListSerializer
+
+    qs = list_user_projects(
+        user,
+        status_filter,
+        keyword=keyword,
+        ordering=ordering,
+        scope=scope,
+    )
+    total = qs.count()
+    page = max(1, page)
+    page_size = min(100, max(1, page_size))
+    start = (page - 1) * page_size
+    items_qs = list(qs[start : start + page_size])
+
+    for project in items_qs:
+        if (
+            project.pipeline_mode == Project.MODE_WORKSPACE
+            and project.execution_status == Project.STATUS_RUNNING
+        ):
+            _reconcile_project_running_state(project)
+
+    items = ProjectListSerializer(
+        instance=items_qs,
+        many=True,
+    )
+    total_pages = (total + page_size - 1) // page_size if page_size > 0 else 0
+    return {
+        "items": items.data,
+        "pagination": {
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": total_pages,
+        },
+    }
+
+
 def _reconcile_project_running_state(
     project: Project,
     *,
     aggressive: bool = False,
 ) -> Project:
-    """解除遗留 running 锁（Worker 异常退出或事务污染后）。"""
+    """???? running ??Worker ????????????"""
     from ..models import AgentExecutionRun
 
     if aggressive:
@@ -105,20 +164,18 @@ def _reconcile_project_running_state(
             status=AgentExecutionRun.STATUS_RUNNING,
         ).update(
             status=AgentExecutionRun.STATUS_FAILED,
-            error_message="管理员操作前强制解除 running 锁",
+            error_message="?????????? running ?",
         )
         try:
-            from apps.drama.models import DramaProject, DramaRoleExecution
+            from apps.drama.models import DramaRoleExecution
 
-            drama = DramaProject.objects.filter(project_id=project.id).first()
-            if drama:
-                DramaRoleExecution.objects.filter(
-                    drama_project=drama,
-                    status=DramaRoleExecution.Status.RUNNING,
-                ).update(
-                    status=DramaRoleExecution.Status.FAILED,
-                    error_message="管理员操作前强制解除 running 锁",
-                )
+            DramaRoleExecution.objects.filter(
+                project=project,
+                status=DramaRoleExecution.Status.RUNNING,
+            ).update(
+                status=DramaRoleExecution.Status.FAILED,
+                error_message="?????????? running ?",
+            )
         except Exception:  # noqa: BLE001
             pass
         if project.pipeline_mode == Project.MODE_WORKSPACE:
@@ -146,44 +203,24 @@ def _reconcile_project_running_state(
 
 
 def _fail_stale_running(project: Project) -> Project:
-    """Worker 异常退出后，超时 running 视为 stale 并标记失败。"""
-    from ..models import AgentExecutionRun
-
-    threshold = timezone.now() - timedelta(minutes=15)
-    AgentExecutionRun.objects.filter(
-        project=project,
-        status=AgentExecutionRun.STATUS_RUNNING,
-        started_at__lt=threshold,
-    ).update(
-        status=AgentExecutionRun.STATUS_FAILED,
-        error_message="运行超时，系统自动解除 running 锁",
-    )
+    """Worker ???????? running ?? stale ??????"""
     try:
-        from apps.drama.models import DramaProject, DramaRoleExecution
+        from apps.drama.services import DramaRoleRunService
 
-        drama = DramaProject.objects.filter(project_id=project.id).first()
-        if drama:
-            DramaRoleExecution.objects.filter(
-                drama_project=drama,
-                status=DramaRoleExecution.Status.RUNNING,
-                started_at__lt=threshold,
-            ).update(
-                status=DramaRoleExecution.Status.FAILED,
-                error_message="运行超时，系统自动解除 running 锁",
-            )
-    except Exception:  # noqa: BLE001
-        pass
+        DramaRoleRunService.fail_stale_active_executions(project)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("[Creation] fail_stale_active_executions failed: %s", exc)
     return project
 
 
 @transaction.atomic
 def delete_user_project(project_id: str, user) -> dict:
-    """删除用户作品（级联移除节点、产物、剧本文件与分享链接，不可恢复）。"""
+    """?????????????????????????????????"""
     project = _get_user_project(project_id, user)
     project = _fail_stale_running(project)
     project = _reconcile_project_running_state(project, aggressive=False)
     if project.execution_status == Project.STATUS_RUNNING:
-        raise PermissionDenied("创作进行中，请等待完成或失败后再删除")
+        raise PermissionDenied("??????????????????")
     title = (project.title or "")[:200]
     project.delete()
     return {"project_id": str(project_id), "title": title, "deleted": True}
@@ -191,16 +228,16 @@ def delete_user_project(project_id: str, user) -> dict:
 
 @transaction.atomic
 def admin_delete_project(project_id: str) -> dict:
-    """运营后台删除创作项目（级联删除，不可恢复）。"""
+    """??????????????????????"""
     try:
         project = Project.objects.select_for_update().get(pk=project_id)
     except Project.DoesNotExist:
-        raise PermissionDenied("项目不存在")
+        raise PermissionDenied("?????")
     project = _fail_stale_running(project)
     project = _reconcile_project_running_state(project, aggressive=False)
     if project.execution_status == Project.STATUS_RUNNING:
-        raise PermissionDenied("创作进行中，请等待完成或失败后再删除")
-    title = (project.title or project.theme or "未命名")[:200]
+        raise PermissionDenied("??????????????????")
+    title = (project.title or project.theme or "???")[:200]
     project.delete()
     return {"project_id": str(project_id), "title": title, "deleted": True}
 
@@ -213,7 +250,7 @@ def apply_work_polish(
     apply_all: bool = False,
     patch_script_fields: bool = False,
 ) -> dict:
-    """作品页：用户确认后应用润色建议。"""
+    """????????????????"""
     project = _get_user_project(project_id, user)
     from ..polish_apply import apply_polish_suggestions
 

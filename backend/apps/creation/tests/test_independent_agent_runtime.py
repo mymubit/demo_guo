@@ -136,6 +136,58 @@ class IndependentAgentMergePersistTests(TestCase):
         self.assertEqual(by_num[3], "?3?")
         self.assertNotIn(99, by_num)
 
+    def test_persist_merge_narrative_plan_keeps_previous_batches(self):
+        save_artifact(
+            self.project,
+            "narrative_plan",
+            {
+                "target_episode_range": "E001-E005",
+                "episode_narrative_designs": [
+                    {"episode_id": "E001", "narrative_focus": "第一集"},
+                    {"episode_id": "E005", "narrative_focus": "第五集"},
+                ],
+            },
+        )
+        agent = AgentDefinitionService.get_runnable("drama.narrative-engineer")
+        self.run.status = AgentExecutionRun.STATUS_COMPLETED
+        self.run.save(update_fields=["status"])
+        run = AgentExecutionRun.objects.create(
+            project=self.project,
+            user=self.user,
+            agent_id="drama.narrative-engineer",
+            status=AgentExecutionRun.STATUS_COMPLETED,
+            batch_from=6,
+            batch_to=10,
+            overwrite_mode="merge",
+            run_params={"episode_start": 6, "episode_end": 10, "episode_range": "6-10"},
+        )
+        IndependentAgentService.persist_agent_output(
+            self.project,
+            agent,
+            run,
+            {
+                "narrative_plan": {
+                    "target_episode_range": "E006-E010",
+                    "narrative_core_objective": "6-10集强化",
+                    "episode_narrative_designs": [
+                        {"episode_id": "E006", "narrative_focus": "第六集"},
+                        {"episode_id": "E010", "narrative_focus": "第十集"},
+                    ],
+                }
+            },
+            prompt_version="v1",
+        )
+        merged = get_artifact(self.project, "narrative_plan") or {}
+        ids = [item["episode_id"] for item in merged.get("episode_narrative_designs") or []]
+        self.assertEqual(ids, ["E001", "E005", "E006", "E010"])
+        self.assertEqual(merged.get("target_episode_range"), "E001-E010")
+
+    def test_resolve_episode_bounds_reads_episode_start_end(self):
+        from_ep, to_ep = IndependentAgentService._resolve_episode_bounds(
+            {"episode_start": 6, "episode_end": 10, "episode_range": "6-10"}
+        )
+        self.assertEqual((from_ep, to_ep), (6, 10))
+
 
 class IndependentAgentTemplateTests(TestCase):
     def setUp(self):

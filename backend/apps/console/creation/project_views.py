@@ -47,13 +47,11 @@ def _project_ops_row(
     status, status_text = resolve_admin_status(project)
     drama_summary = None
     try:
-        from apps.drama.progress_service import DramaProjectProgressService
+        from apps.drama.progress_service import DramaProgressService
 
-        drama = DramaProjectProgressService.find_drama_project(project.id)
-        if drama:
-            drama_summary = DramaProjectProgressService.build_admin_summary(drama)
-            if drama.get_completion_rate() is not None:
-                exec_summary = {**exec_summary, "drama_completion_rate": drama.get_completion_rate()}
+        if project.is_drama_workspace:
+            drama_summary = DramaProgressService.build_admin_summary(project)
+            exec_summary = {**exec_summary, "drama_completion_rate": project.get_completion_rate()}
     except Exception:  # noqa: BLE001
         drama_summary = None
     row = {
@@ -93,9 +91,9 @@ def _project_ops_row(
 def build_creation_ops_alerts() -> Dict[str, int]:
     """Dashboard / 创作中心待办计数（Drama SSOT）。"""
     from apps.drama.models import DramaRoleExecution
-    from apps.drama.progress_service import DramaProjectProgressService
+    from apps.drama.progress_service import DramaProgressService
 
-    facets = DramaProjectProgressService.build_admin_facets()
+    facets = DramaProgressService.build_admin_facets()
     feedback_open = 0
     try:
         from apps.operations.services import feedback_summary
@@ -124,12 +122,11 @@ def build_agent_ops_dashboard(*, stats_limit: int = 200) -> Dict[str, Any]:
     """Dashboard Agent 运营摘要。"""
     from apps.agent.runtime import get_agent_registry
     from apps.creation.monitoring.execution_run_service import AgentExecutionRunService
-    from apps.drama.models import DramaProject
-    from apps.drama.progress_service import DramaProjectProgressService
+    from apps.drama.progress_service import DramaProgressService
 
     registry = get_agent_registry()
     execution = AgentExecutionRunService.dashboard_payload(days=30)
-    drama = DramaProjectProgressService.dashboard_payload(days=30)
+    drama = DramaProgressService.dashboard_payload(days=30)
     execution["drama"] = drama
 
     # Drama 角色轨优先作为 Dashboard Agent 统计源
@@ -159,7 +156,7 @@ def build_agent_ops_dashboard(*, stats_limit: int = 200) -> Dict[str, Any]:
 
     return {
         "registry_version": (registry.get("_meta") or {}).get("version") or "drama_skills",
-        "workspace_projects": DramaProject.objects.count(),
+        "workspace_projects": DramaProgressService.workspace_projects_qs().count(),
         "drama_projects": drama.get("drama_project_count", 0),
         "drama_running_projects": drama.get("active_project_count", 0),
         "from_reference_projects": Project.objects.filter(creation_entry="from-reference").count(),
@@ -192,9 +189,9 @@ class AdminCreationProjectListView(APIView):
             page_size = 20
 
         qs = Project.objects.select_related("user").order_by("-updated_at")
-        from apps.drama.progress_service import DramaProjectProgressService
+        from apps.drama.progress_service import DramaProgressService
 
-        qs = DramaProjectProgressService.filter_creation_projects(
+        qs = DramaProgressService.filter_workspace_projects(
             qs,
             status_filter=status_filter,
             track_mode=track_mode,
@@ -237,7 +234,7 @@ class AdminCreationProjectListView(APIView):
         }
         facets = None
         if (request.query_params.get("facets") or "").strip().lower() in ("1", "true", "yes"):
-            facets = DramaProjectProgressService.build_admin_facets()
+            facets = DramaProgressService.build_admin_facets()
 
         response = api_ok(items)
         response.data["pagination"] = pagination

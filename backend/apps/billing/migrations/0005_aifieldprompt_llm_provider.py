@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated manually — per-field AI LLM provider override
 
 import django.db.models.deletion

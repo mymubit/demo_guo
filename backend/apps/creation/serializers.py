@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
 """
-创作模块序列化器
+????????
 
-核心安全原则：
-- 绝不暴露原始剧本数据结构
-- 所有剧本内容以预渲染 HTML 片段形式返回
-- 进度与结果仅提供状态 + HTML，不解析内部结构
+???????
+- ????????????
+- ?????????? HTML ??????
+- ?????????? + HTML????????
 """
 
 import re
@@ -15,73 +16,73 @@ from .models import Project, ScriptWork, ShareLink
 
 
 # ============================================================
-# 创作提交请求
+# ??????
 # ============================================================
 class CreationSubmitSerializer(serializers.Serializer):
-    """提交创作请求
+    """??????
 
-    仅接受用户输入的创作参数，内部校验会员状态与创作次数。
+    ???????????????????????????
     """
 
     theme = serializers.CharField(
         max_length=64,
         error_messages={
-            "blank": "请选择题材",
-            "max_length": "题材代码过长",
+            "blank": "?????",
+            "max_length": "??????",
         },
-        help_text="题材代码，如 family-revenge / overbearing-ceo",
+        help_text="?????? family-revenge / overbearing-ceo",
     )
     core_idea = serializers.CharField(
         max_length=1000,
         error_messages={
-            "blank": "请填写核心创意",
-            "max_length": "核心创意最多 1000 字",
+            "blank": "???????",
+            "max_length": "?????? 1000 ?",
         },
-        help_text="一句话核心创意描述",
+        help_text="?????????",
     )
     episode_count = serializers.IntegerField(
         min_value=10,
         max_value=500,
         default=30,
         error_messages={
-            "min_value": "集数至少 10 集",
-            "max_value": "集数最多 500 集",
+            "min_value": "???? 10 ?",
+            "max_value": "???? 500 ?",
         },
-        help_text="剧本集数（10-500）",
+        help_text="?????10-500?",
     )
     format_variant = serializers.ChoiceField(
-        choices=[("A", "变体 A"), ("B", "变体 B"), ("C", "变体 C"), ("D", "变体 D")],
+        choices=[("A", "?? A"), ("B", "?? B"), ("C", "?? C"), ("D", "?? D")],
         default="B",
-        help_text="输出格式变体，默认 B",
+        help_text="????????? B",
     )
     audience = serializers.CharField(
         max_length=200,
         required=False,
         allow_blank=True,
         default="",
-        help_text="目标受众描述（可选）",
+        help_text="??????????",
     )
     reference_work = serializers.CharField(
         max_length=2000,
         required=False,
         allow_blank=True,
         default="",
-        help_text="参考作品（可选）",
+        help_text="????????",
     )
     outline_text = serializers.CharField(
         required=False,
         allow_blank=True,
         default="",
-        help_text="已有分集大纲（from-outline）",
+        help_text="???????from-outline?",
     )
     novel_text = serializers.CharField(
         required=False,
         allow_blank=True,
         default="",
-        help_text="小说原文（novel-adaptation）",
+        help_text="?????novel-adaptation?",
     )
     ip_sequel_mode = serializers.ChoiceField(
-        choices=[("sequel", "续作"), ("prequel", "前传"), ("spin-off", "衍生")],
+        choices=[("sequel", "??"), ("prequel", "??"), ("spin-off", "??")],
         required=False,
         allow_blank=True,
         default="sequel",
@@ -90,13 +91,13 @@ class CreationSubmitSerializer(serializers.Serializer):
         required=False,
         allow_blank=True,
         default="",
-        help_text="IP 须保持的规则说明",
+        help_text="IP ????????",
     )
     target_platform = serializers.CharField(
         max_length=32,
         default="douyin",
         required=False,
-        help_text="平台代码，合法值见 GET /api/creation/fusion/catalog/",
+        help_text="????????? GET /api/creation/fusion/catalog/",
     )
     episode_duration_minutes = serializers.FloatField(
         min_value=0.5,
@@ -110,36 +111,36 @@ class CreationSubmitSerializer(serializers.Serializer):
         required=False,
     )
     budget_level = serializers.ChoiceField(
-        choices=[("low", "低预算"), ("medium", "中预算"), ("high", "高预算")],
+        choices=[("low", "???"), ("medium", "???"), ("high", "???")],
         default="medium",
         required=False,
     )
     global_market = serializers.ChoiceField(
-        choices=[("domestic", "国内"), ("global", "出海")],
+        choices=[("domestic", "??"), ("global", "??")],
         default="domestic",
         required=False,
     )
     pipeline_mode = serializers.ChoiceField(
         choices=[
-            ("workspace", "技能工作台"),
-            ("auto", "一键生成"),
-            ("step", "分步掌控"),
+            ("workspace", "?????"),
+            ("auto", "????"),
+            ("step", "????"),
         ],
         default="workspace",
         required=False,
-        help_text="workspace=按技能模块；auto=后台连续执行；step=每节点暂停待确认",
+        help_text="workspace=??????auto=???????step=????????",
     )
 
     def validate_theme(self, value):
-        """题材代码校验：允许 小写字母、数字、连字符"""
+        """????????? ???????????"""
         if not re.match(r"^[a-z][a-z0-9-]{1,62}[a-z0-9]$", value):
-            raise serializers.ValidationError("题材代码格式不正确")
+            raise serializers.ValidationError("?????????")
         return value
 
     def validate_core_idea(self, value):
         value = value.strip()
         if len(value) < 5:
-            raise serializers.ValidationError("核心创意描述过短")
+            raise serializers.ValidationError("????????")
         return value
 
     def validate_creation_entry(self, value):
@@ -148,7 +149,7 @@ class CreationSubmitSerializer(serializers.Serializer):
 
         allowed = set(CreationFormOverrideService.allowed_creation_entries())
         if value not in allowed:
-            raise serializers.ValidationError("创作入口不在后台配置范围内")
+            raise serializers.ValidationError("?????????????")
         return value
 
     def validate(self, attrs):
@@ -160,10 +161,10 @@ class CreationSubmitSerializer(serializers.Serializer):
         required_fields = validation.get("requiredFields") if isinstance(validation, dict) else {}
         errors = {}
         field_labels = {
-            "reference_work": "参考作品说明",
-            "outline_text": "分集大纲",
-            "novel_text": "小说原文",
-            "ip_keep_rules": "IP 约束",
+            "reference_work": "??????",
+            "outline_text": "????",
+            "novel_text": "????",
+            "ip_keep_rules": "IP ??",
         }
         for field, rule in (required_fields or {}).items():
             if not isinstance(rule, dict):
@@ -171,70 +172,69 @@ class CreationSubmitSerializer(serializers.Serializer):
             min_length = int(rule.get("minLength") or 1)
             label = rule.get("label") or field_labels.get(field) or field
             if len((attrs.get(field) or "").strip()) < min_length:
-                errors[field] = f"{label}至少 {min_length} 字"
+                errors[field] = f"{label}?? {min_length} ?"
         if errors:
             raise serializers.ValidationError(errors)
         return attrs
 
 
 # ============================================================
-# 提交创作的返回结果
+# ?????????
 # ============================================================
 class CreationSubmitResultSerializer(serializers.Serializer):
-    """提交创作成功返回
+    """????????
 
-    只返回 project_id 与预计时长，不暴露任何原始数据结构。
+    ??? project_id ??????????????????
     """
 
-    project_id = serializers.CharField(help_text="项目ID")
+    project_id = serializers.CharField(help_text="??ID")
     estimated_minutes = serializers.IntegerField(
-        help_text="预计完成时长（分钟）"
+        help_text="??????????"
     )
-    status = serializers.CharField(help_text="项目状态", required=False)
-    workspace_url = serializers.CharField(help_text="工作台地址", required=False)
+    status = serializers.CharField(help_text="????", required=False)
+    workspace_url = serializers.CharField(help_text="?????", required=False)
 
 
 # ============================================================
-# 创作进度响应
+# ??????
 # ============================================================
 class ProjectProgressSerializer(serializers.Serializer):
-    """进度查询响应
+    """??????
 
-    安全设计：
-    - 仅返回状态和预渲染 HTML 片段
-    - 绝不包含任何原始剧本数据结构
-    - 完成时额外返回一次性下载 token（15 分钟有效）
+    ?????
+    - ????????? HTML ??
+    - ??????????????
+    - ???????????? token?15 ?????
     """
 
     status = serializers.CharField(help_text="pending / running / awaiting / completed / failed")
-    status_text = serializers.CharField(help_text="状态中文描述")
-    progress_percent = serializers.IntegerField(help_text="进度百分比 0-100")
+    status_text = serializers.CharField(help_text="??????")
+    progress_percent = serializers.IntegerField(help_text="????? 0-100")
     rendered_progress_html = serializers.CharField(
-        help_text="预渲染的进度卡片 HTML 片段"
+        help_text="???????? HTML ??"
     )
     rendered_result_html = serializers.CharField(
         required=False,
         allow_blank=True,
         default="",
-        help_text="完成时返回：预渲染的剧本结果 HTML（含水印）",
+        help_text="?????????????? HTML?????",
     )
     download_token = serializers.CharField(
         required=False,
         allow_blank=True,
         default="",
-        help_text="一次性下载 token，15 分钟有效",
+        help_text="????? token?15 ????",
     )
     error_message = serializers.CharField(
         required=False,
         allow_blank=True,
         default="",
-        help_text="失败时的错误信息（用户可读）",
+        help_text="??????????????",
     )
-    current_stage = serializers.CharField(required=False, allow_blank=True, default="")
-    current_stage_text = serializers.CharField(required=False, allow_blank=True, default="")
+    drama_stage = serializers.CharField(required=False, allow_blank=True, default="")
+    drama_stage_display = serializers.CharField(required=False, allow_blank=True, default="")
     track_mode = serializers.CharField(required=False, allow_blank=True, default="")
     delivery_status = serializers.CharField(required=False, allow_blank=True, default="")
-    drama_project_id = serializers.CharField(required=False, allow_blank=True, default="")
     overall_score = serializers.FloatField(required=False, allow_null=True)
     grade = serializers.CharField(required=False, allow_blank=True, default="")
     ready_at = serializers.DateTimeField(required=False, allow_null=True)
@@ -242,71 +242,74 @@ class ProjectProgressSerializer(serializers.Serializer):
     score_summary = serializers.DictField(required=False, allow_null=True)
     pipeline_mode = serializers.CharField(required=False, default="auto")
     latest_execution_run = serializers.DictField(required=False, allow_null=True)
-    created_at = serializers.DateTimeField(help_text="任务提交时间")
-    updated_at = serializers.DateTimeField(help_text="最近更新时间")
+    created_at = serializers.DateTimeField(help_text="??????")
+    updated_at = serializers.DateTimeField(help_text="??????")
 
 
 # ============================================================
-# 作品列表
+# ????
 # ============================================================
 class ProjectListSerializer(serializers.Serializer):
-    """我的作品列表项序列化器
+    """???????????
 
-    仅展示元信息（标题、状态、创建时间、集数等），
-    绝不包含任何剧本正文内容。
+    ???????????????????????
+    ?????????????
     """
 
-    project_id = serializers.CharField(source="id", help_text="项目ID")
-    title = serializers.CharField(help_text="剧本标题")
-    theme = serializers.CharField(help_text="题材")
-    episode_count = serializers.IntegerField(help_text="集数")
-    format_variant = serializers.CharField(help_text="输出格式变体")
-    status = serializers.SerializerMethodField(help_text="项目状态")
-    status_text = serializers.SerializerMethodField(help_text="状态中文描述")
-    progress_percent = serializers.IntegerField(help_text="进度百分比")
+    project_id = serializers.CharField(source="id", help_text="??ID")
+    title = serializers.CharField(help_text="????")
+    theme = serializers.CharField(help_text="??")
+    episode_count = serializers.IntegerField(help_text="??")
+    format_variant = serializers.CharField(help_text="??????")
+    status = serializers.SerializerMethodField(help_text="????")
+    status_text = serializers.SerializerMethodField(help_text="??????")
+    progress_percent = serializers.IntegerField(help_text="?????")
     overall_score = serializers.FloatField(required=False, allow_null=True)
     grade = serializers.CharField(required=False, allow_blank=True, default="")
     ready_at = serializers.DateTimeField(required=False, allow_null=True)
-    created_at = serializers.DateTimeField(help_text="创建时间")
-    updated_at = serializers.DateTimeField(help_text="更新时间")
+    created_at = serializers.DateTimeField(help_text="????")
+    updated_at = serializers.DateTimeField(help_text="????")
 
-    core_idea = serializers.SerializerMethodField(help_text="核心创意摘要")
-    pipeline_mode = serializers.CharField(help_text="创作模式")
+    core_idea = serializers.SerializerMethodField(help_text="??????")
+    pipeline_mode = serializers.CharField(help_text="????")
     creation_entry = serializers.CharField(
-        required=False, allow_blank=True, default="", help_text="创作入口"
+        required=False, allow_blank=True, default="", help_text="????"
     )
-    drama_project_id = serializers.SerializerMethodField(help_text="Drama 项目 ID")
-    drama_workspace_url = serializers.SerializerMethodField(help_text="Drama 工作台链接")
-    track_mode = serializers.SerializerMethodField(help_text="创作轨道")
-    current_stage = serializers.SerializerMethodField(help_text="当前阶段")
-
-    def _get_drama(self, obj):
-        drama_map = self.context.get("drama_map") or {}
-        return drama_map.get(obj.id) or drama_map.get(getattr(obj, "id", None))
-
-    def get_drama_project_id(self, obj) -> str:
-        drama = self._get_drama(obj)
-        return str(drama.id) if drama else ""
+    drama_workspace_url = serializers.SerializerMethodField(help_text="Drama ?????")
+    track_mode = serializers.CharField(required=False, allow_blank=True, default="", help_text="????")
+    drama_stage = serializers.CharField(required=False, allow_blank=True, default="", help_text="????")
+    drama_stage_display = serializers.CharField(required=False, allow_blank=True, default="", help_text="????")
+    completion_rate = serializers.FloatField(required=False, help_text="Drama ???")
+    delivery_status = serializers.CharField(required=False, allow_blank=True, default="", help_text="????")
+    target_platform = serializers.CharField(required=False, allow_blank=True, default="", help_text="????")
 
     def get_drama_workspace_url(self, obj) -> str:
-        drama = self._get_drama(obj)
-        if drama:
-            return f"/drama/workspace/{drama.id}"
+        if not obj.is_drama_workspace:
+            return ""
         return f"/drama/workspace/{obj.id}"
-
-    def get_track_mode(self, obj) -> str:
-        drama = self._get_drama(obj)
-        return drama.track_mode if drama else ""
-
-    def get_current_stage(self, obj) -> str:
-        drama = self._get_drama(obj)
-        return drama.current_stage if drama else ""
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        drama = self._get_drama(instance)
-        if drama:
-            data["progress_percent"] = int(drama.get_completion_rate())
+        if instance.is_drama_workspace:
+            rate = instance.get_completion_rate()
+            data["progress_percent"] = int(min(100, max(0, rate)))
+            data["completion_rate"] = rate
+            data["delivery_status"] = instance.delivery_status or "pending"
+            data["target_platform"] = instance.target_platform or ""
+            data["track_mode"] = instance.track_mode
+            data["drama_stage"] = instance.drama_stage
+            data["drama_stage_display"] = instance.get_drama_stage_display()
+            if instance.quality_scores:
+                data["quality_scores"] = instance.quality_scores
+        else:
+            progress = int(data.get("progress_percent") or 0)
+            data["completion_rate"] = progress
+            data["delivery_status"] = ""
+            data["target_platform"] = instance.target_platform or ""
+            data["track_mode"] = ""
+            data["drama_stage"] = ""
+            data["drama_stage_display"] = ""
+            data["drama_workspace_url"] = ""
         return data
 
     def get_status(self, obj) -> str:
@@ -319,90 +322,90 @@ class ProjectListSerializer(serializers.Serializer):
         text = (obj.core_idea or "").strip()
         if len(text) <= 320:
             return text
-        return text[:320] + "…"
+        return text[:320] + "?"
 
 
 # ============================================================
-# 生成分享链接
+# ??????
 # ============================================================
 class ShareCreateSerializer(serializers.Serializer):
-    """生成分享链接请求"""
+    """????????"""
 
     project_id = serializers.CharField(
         required=False,
-        help_text="项目ID（可通过 URL 路径传入）",
+        help_text="??ID???? URL ?????",
     )
     view_limit = serializers.IntegerField(
         required=False,
         min_value=1,
         max_value=1000,
         default=100,
-        help_text="最大查看次数，默认 100",
+        help_text="????????? 100",
     )
     valid_days = serializers.IntegerField(
         required=False,
         min_value=1,
         max_value=30,
         default=7,
-        help_text="有效天数（1-30），默认 7",
+        help_text="?????1-30???? 7",
     )
     allow_download = serializers.BooleanField(
         required=False,
         default=False,
-        help_text="是否允许在分享页下载",
+        help_text="??????????",
     )
     custom_title = serializers.CharField(
         required=False,
         allow_blank=True,
         max_length=200,
         default="",
-        help_text="自定义分享标题（可选）",
+        help_text="???????????",
     )
 
 
 class ShareCreateResultSerializer(serializers.Serializer):
-    """生成分享链接返回"""
+    """????????"""
 
-    share_id = serializers.CharField(help_text="分享记录ID")
-    share_token = serializers.CharField(help_text="分享 token（用于构造 URL）")
+    share_id = serializers.CharField(help_text="????ID")
+    share_token = serializers.CharField(help_text="?? token????? URL?")
     share_url = serializers.CharField(
-        help_text="完整分享链接（前端域名 + /share/{token}）"
+        help_text="??????????? + /share/{token}?"
     )
-    expires_at = serializers.DateTimeField(help_text="过期时间")
-    view_limit = serializers.IntegerField(help_text="最大查看次数")
-    allow_download = serializers.BooleanField(help_text="是否允许下载")
+    expires_at = serializers.DateTimeField(help_text="????")
+    view_limit = serializers.IntegerField(help_text="??????")
+    allow_download = serializers.BooleanField(help_text="??????")
     custom_title = serializers.CharField(
         required=False, allow_blank=True, default="",
-        help_text="自定义分享标题",
+        help_text="???????",
     )
 
 
 # ============================================================
-# 下载参数（URL 路径参数用，非 body 校验）
+# ?????URL ??????? body ???
 # ============================================================
 class DownloadFormatSerializer(serializers.Serializer):
-    """下载格式校验"""
+    """??????"""
 
     file_format = serializers.ChoiceField(
         choices=["md", "html", "zip", "pdf"],
         default="md",
-        help_text="下载格式",
+        help_text="????",
     )
 
 
 # ============================================================
-# 分享页面元信息（公开访问用，绝不暴露创作数据结构）
+# ?????????????????????????
 # ============================================================
 class ShareViewSerializer(serializers.Serializer):
-    """分享页面元信息"""
+    """???????"""
 
-    title = serializers.CharField(help_text="分享标题")
-    author_nickname = serializers.CharField(help_text="创建者昵称")
-    created_at = serializers.DateTimeField(help_text="分享创建时间")
-    expires_at = serializers.DateTimeField(help_text="过期时间")
-    remain_views = serializers.IntegerField(help_text="剩余可查看次数")
-    allow_download = serializers.BooleanField(help_text="是否允许下载")
-    # 预渲染的分享页 HTML 片段，含水印，前端直接插入
+    title = serializers.CharField(help_text="????")
+    author_nickname = serializers.CharField(help_text="?????")
+    created_at = serializers.DateTimeField(help_text="??????")
+    expires_at = serializers.DateTimeField(help_text="????")
+    remain_views = serializers.IntegerField(help_text="???????")
+    allow_download = serializers.BooleanField(help_text="??????")
+    # ??????? HTML ?????????????
     rendered_share_html = serializers.CharField(
-        help_text="预渲染的分享页 HTML 内容（含水印）"
+        help_text="??????? HTML ???????"
     )

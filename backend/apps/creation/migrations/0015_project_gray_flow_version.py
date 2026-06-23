@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated migration: Project 灰度工作流版本追踪字段扩展
 
 from django.db import migrations, models

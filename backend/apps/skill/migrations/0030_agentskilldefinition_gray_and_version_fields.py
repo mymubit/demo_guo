@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated migration: AgentSkillDefinition 灰度分流与兼容性字段扩展
 
 from django.db import migrations, models

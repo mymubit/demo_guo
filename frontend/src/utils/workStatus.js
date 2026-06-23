@@ -77,7 +77,7 @@ export function getWorkStatusMeta(statusKey, work = {}) {
   if (key === 'generating' && progress > 0 && progress < 100) {
     hint = `已完成约 ${progress}%`
   } else if (key === 'generating') {
-    const stage = work.current_stage || work.drama?.current_stage
+    const stage = work.drama_stage || work.drama?.drama_stage
     const stageLabel = stage ? DRAMA_STAGE_LABELS[stage] : ''
     if (stageLabel) hint = stageLabel
   } else if (key === 'draft') {

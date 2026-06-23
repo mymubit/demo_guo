@@ -89,7 +89,7 @@ function activeQuickFilterId(status, hasFailedRun) {
 
 function isProjectBusy(row) {
   const busyStages = ['writing', 'review', 'polish', 'production', 'compliance', 'plot_design']
-  const stage = row.drama?.current_stage || row.status
+  const stage = row.drama?.drama_stage || row.status
   return busyStages.includes(stage)
 }
 
@@ -183,7 +183,7 @@ export default function CreationProjectsPage() {
 
   const spotlightProjects = useMemo(() => {
     if (!items?.length) return []
-    const running = items.find((p) => p.status === 'writing' || p.drama?.current_stage === 'writing')
+    const running = items.find((p) => p.status === 'writing' || p.drama?.drama_stage === 'writing')
     const completed = items.find((p) => p.status === 'delivered' || p.drama?.delivery_status === 'delivered')
     const picked = []
     if (running) picked.push(running)
@@ -260,7 +260,7 @@ export default function CreationProjectsPage() {
         return (
           <div className="text-xs space-y-0.5 min-w-[100px]">
             <p className="text-indigo-300">{d.track_mode_display || d.track_mode}</p>
-            <p className="text-navy-300">{d.current_stage_display || d.current_stage}</p>
+            <p className="text-navy-300">{d.drama_stage_display || d.drama_stage}</p>
             <p className="text-gold-400/90">{d.completion_rate ?? 0}%</p>
           </div>
         )
@@ -271,8 +271,8 @@ export default function CreationProjectsPage() {
       title: '状态',
       render: (row) => (
         <div className="space-y-1">
-          <AdminBadge tone={STATUS_TONE[row.status] || STATUS_TONE[row.drama?.current_stage] || 'default'}>
-            {row.drama?.current_stage_display || row.status_text || row.status}
+          <AdminBadge tone={STATUS_TONE[row.status] || STATUS_TONE[row.drama?.drama_stage] || 'default'}>
+            {row.drama?.drama_stage_display || row.status_text || row.status}
           </AdminBadge>
           {row.drama?.track_mode_display ? (
             <p className="text-[10px] text-navy-400">{row.drama.track_mode_display}</p>

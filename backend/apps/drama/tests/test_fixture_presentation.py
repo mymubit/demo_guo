@@ -21,7 +21,7 @@ EXPECTED_BLOCK_TYPES: dict[str, set[str]] = {
     "quality-report.v1": {"quality_report"},
     "compliance-report.v1": {"compliance_report"},
     "character-bible.v1": {"character_roster", "relationship_graph"},
-    "world-setting.v1": {"world_sections"},
+    "world-setting.v1": {"hero", "cards", "steps", "callout"},
     "project-review.v1": {"assessment_report"},
     "dream-check.v1": {"assessment_report"},
     "style-check.v1": {"assessment_report"},
@@ -124,13 +124,17 @@ class FixturePresentationTests(SimpleTestCase):
         rel = next(b for b in view["blocks"] if b["type"] == "relationship_graph")
         self.assertGreaterEqual(len(roster["characters"]), 1)
         self.assertTrue(any("↔" in item["title"] for item in rel["items"]))
+        first_rel = rel["items"][0]
+        self.assertTrue(first_rel.get("source_name"))
+        self.assertTrue(first_rel.get("target_name"))
+        self.assertTrue(first_rel.get("core_conflict"))
 
-    def test_emotion_audit_nested_audit_result(self):
+    def test_emotion_audit_fixture(self):
         payload = self._load_fixture("emotion-audit.v1")
         view = present_artifact("emotion_audit", "emotion-audit.v1", payload)
         self.assertTrue(any(b["type"] == "episode_metrics_list" for b in view["blocks"]))
 
-    def test_project_brief_project_content(self):
+    def test_project_brief_fixture(self):
         payload = self._load_fixture("project-brief.v1")
         view = present_artifact("project_brief", "project-brief.v1", payload)
         self.assertEqual(view["blocks"][0]["type"], "hero")
@@ -157,7 +161,7 @@ class FixturePresentationTests(SimpleTestCase):
                     violations.append(ast.get_source_segment(source, node) or "or-get chain")
         self.assertFalse(violations, msg=f"field alias chains: {violations[:5]}")
 
-    def test_market_analysis_data_wrapper(self):
+    def test_market_analysis_fixture(self):
         payload = self._load_fixture("market-analysis.v1")
         view = present_artifact("market_analysis", "market-analysis.v1", payload)
         self.assertIn("metrics", {b["type"] for b in view["blocks"]})

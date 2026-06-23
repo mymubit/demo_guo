@@ -1,4 +1,4 @@
-# -*- coding: utf-8
+# -*- coding: utf-8 -*-
 """SkillRuleConfig hybrid 模式下 content vs Item hash 校验（skill-agent/15 M4）。"""
 from __future__ import annotations
 

@@ -30,24 +30,40 @@ class WorkDeleteTests(TestCase):
         self.assertFalse(Project.objects.filter(id=pid).exists())
 
     def test_delete_running_blocked(self):
-        from apps.drama.models import DramaProject, DramaRoleExecution
+        from apps.drama.models import DramaRoleExecution
 
-        dp = DramaProject.objects.create(
-            id=self.project.id,
-            project_id=self.project.id,
-            user=self.user,
-            title=self.project.title,
-            genre_code=self.project.theme,
-            total_episodes=self.project.episode_count,
-        )
+        self.project.track_mode = "fast"
+        self.project.pipeline_mode = Project.MODE_WORKSPACE
+        self.project.save(update_fields=["track_mode", "pipeline_mode"])
         DramaRoleExecution.objects.create(
-            drama_project=dp,
+            project=self.project,
+            agent_id="drama.topic-planner",
+            agent_name_zh="选题策划官",
+            status=DramaRoleExecution.Status.RUNNING,
+            started_at=timezone.now(),
+        )
+        with self.assertRaises(PermissionDenied):
+            CreationService.delete_user_project(str(self.project.id), self.user)
+
+    def test_delete_stale_drama_execution_without_started_at(self):
+        from apps.drama.models import DramaRoleExecution
+
+        self.project.track_mode = "fast"
+        self.project.pipeline_mode = Project.MODE_WORKSPACE
+        self.project.save(update_fields=["track_mode", "pipeline_mode"])
+        exec_obj = DramaRoleExecution.objects.create(
+            project=self.project,
             agent_id="drama.topic-planner",
             agent_name_zh="选题策划官",
             status=DramaRoleExecution.Status.RUNNING,
         )
-        with self.assertRaises(PermissionDenied):
-            CreationService.delete_user_project(str(self.project.id), self.user)
+        DramaRoleExecution.objects.filter(id=exec_obj.id).update(
+            created_at=timezone.now() - timedelta(minutes=30),
+        )
+        pid = str(self.project.id)
+        result = CreationService.delete_user_project(pid, self.user)
+        self.assertTrue(result.get("deleted"))
+        self.assertFalse(Project.objects.filter(id=pid).exists())
 
     def test_delete_stale_workspace_running_unlocks(self):
         from apps.creation.models import AgentExecutionRun

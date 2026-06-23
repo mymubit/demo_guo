@@ -108,7 +108,7 @@ export default function ScriptsPage() {
             <button onClick={() => navigate(`/drama/workspace/${projectId}`)} className="text-gray-400 hover:text-gray-700 text-xl">←</button>
             <div>
               <h1 className="font-bold text-gray-900">《{project.title}》</h1>
-              <p className="text-xs text-gray-400">{project.total_episodes}集 · {completedCount}集已生成</p>
+              <p className="text-xs text-gray-400">{project.episode_count}集 · {completedCount}集已生成</p>
             </div>
           </div>
           <div className="flex gap-2">
@@ -127,7 +127,7 @@ export default function ScriptsPage() {
         <div className="w-44 flex-shrink-0">
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden sticky top-16">
             <div className="px-3 py-2 bg-gray-50 border-b text-xs font-medium text-gray-600">
-              分集（{completedCount}/{project.total_episodes}）
+              分集（{completedCount}/{project.episode_count}）
             </div>
             <div className="max-h-[calc(100vh-120px)] overflow-y-auto">
               {completedCount === 0 && <div className="p-3 text-xs text-gray-400 text-center">暂无已生成的集数</div>}
@@ -161,7 +161,7 @@ export default function ScriptsPage() {
               radar={radar}
               episode={selectedEpisode}
               qualityList={qualityList}
-              totalEpisodes={project.total_episodes}
+              totalEpisodes={project.episode_count}
               projectTitle={project.title}
               reportRef={reportRef}
             />

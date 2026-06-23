@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """独立 Agent 定义、种子数据与健康检查 — drama.* 新体系。"""
 from __future__ import annotations
 

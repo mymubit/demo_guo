@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated manually — 主链 LLM 配置已合并至 FusionPipelineNode
 from django.db import migrations
 

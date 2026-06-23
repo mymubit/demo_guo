@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # apps/agent/services.py
 # Agent 服务门面层 — drama.* 体系
 from __future__ import annotations

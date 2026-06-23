@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # P1 阶段：为 FusionPipelineNode 增加 extra_config 字段与三类编排 runner_type
 #
 # 背景：

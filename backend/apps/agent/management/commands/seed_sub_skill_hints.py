@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 将硬编码的 _SUB_SKILL_SYSTEM_HINTS 写入 AgentRegistryConfig（DB），
 使运营可在管理后台直接修改子技能提示词，无需改代码重新部署。

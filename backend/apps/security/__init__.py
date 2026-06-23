@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 ScriptForge 安全模块
 

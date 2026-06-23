@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 """为已完成项目补写 ScriptWork 与展示 HTML。"""
 from django.core.management.base import BaseCommand
 
 from apps.creation.models import Project
 from apps.creation.script_delivery import persist_script_works
-from apps.drama.progress_service import DramaProjectProgressService
+from apps.drama.progress_service import DramaProgressService
 
 
 class Command(BaseCommand):
@@ -14,7 +15,7 @@ class Command(BaseCommand):
         parser.add_argument("--limit", type=int, default=50, help="最多处理条数")
 
     def handle(self, *args, **options):
-        deliverable_ids = DramaProjectProgressService.deliverable_project_ids()
+        deliverable_ids = DramaProgressService.deliverable_project_ids()
         qs = Project.objects.filter(id__in=deliverable_ids).order_by("-completed_at")
         if options["project_id"]:
             qs = qs.filter(id=options["project_id"])

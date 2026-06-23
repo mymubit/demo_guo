@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # 删除 legacy Project.status 列，运营态统一 fusion_status
 
 from django.db import migrations, models

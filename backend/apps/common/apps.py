@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # apps/common/apps.py
 # 公共工具模块 AppConfig
 

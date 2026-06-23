@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Settings 入口：根据 DJANGO_ENV 环境变量自动选择 development 或 production 配置。
 

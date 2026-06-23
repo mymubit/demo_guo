@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """创作任务提交。
 
 独立 Agent 架构下，本模块只负责创建 Project 与初始 project_brief 产物。

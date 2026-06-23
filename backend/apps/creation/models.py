@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 创作模块数据模型
 
@@ -228,6 +229,52 @@ class Project(models.Model):
         help_text="运营分析/反馈抽样的标记位，避免重复抽样",
     )
 
+    # ── Drama 工作台扩展（原 drama_project 表，合并至单表）────────────────
+    track_mode = models.CharField(
+        "创作轨道",
+        max_length=16,
+        blank=True,
+        default="",
+        help_text="fast / expert；空表示非 Drama 工作台项目",
+    )
+    drama_stage = models.CharField(
+        "Drama 当前阶段",
+        max_length=32,
+        blank=True,
+        default="strategy",
+        help_text="Drama 工作台阶段代码",
+    )
+    completed_roles = models.JSONField(
+        "已完成 Drama 角色",
+        default=list,
+        blank=True,
+    )
+    word_count_stats = models.JSONField(
+        "分集字数统计",
+        default=dict,
+        blank=True,
+    )
+    quality_scores = models.JSONField(
+        "Drama 8维评分",
+        default=dict,
+        blank=True,
+    )
+    delivery_status = models.CharField(
+        "交付状态",
+        max_length=16,
+        blank=True,
+        default="pending",
+        help_text="pending / ready / delivered",
+    )
+    total_tokens_used = models.IntegerField(
+        "累计 Token 消耗",
+        default=0,
+    )
+    total_cost_cents = models.IntegerField(
+        "累计费用（分）",
+        default=0,
+    )
+
     class Meta:
         verbose_name = "创作项目"
         verbose_name_plural = verbose_name
@@ -246,6 +293,62 @@ class Project(models.Model):
 
     def get_status_display(self) -> str:
         return dict(self.STATUS_CHOICES).get(self.execution_status, self.execution_status or "—")
+
+    @property
+    def is_drama_workspace(self) -> bool:
+        from apps.drama.constants import DramaTrackMode
+
+        return self.track_mode in (DramaTrackMode.FAST, DramaTrackMode.EXPERT)
+
+    def get_completion_rate(self) -> float:
+        """Drama 工作台完成率（按轨道有效角色计，封顶 100%）。"""
+        if not self.is_drama_workspace:
+            return float(min(100, max(0, self.progress_percent or 0)))
+        from apps.drama.progress_service import DramaProgressService
+
+        track_roles = DramaProgressService.list_track_agent_ids(self)
+        if not track_roles:
+            from apps.drama.constants import DramaTrackMode
+            from apps.drama.defaults import DRAMA_FAST_TRACK_ROLES, DRAMA_ROLE_DEFAULTS
+
+            if self.track_mode == DramaTrackMode.FAST:
+                track_roles = list(DRAMA_FAST_TRACK_ROLES)
+            else:
+                track_roles = [r["agent_id"] for r in DRAMA_ROLE_DEFAULTS]
+
+        expected = set(track_roles)
+        completed = set(self.completed_roles or []) & expected
+        total = len(expected)
+        if total <= 0:
+            return 0.0
+        return round(min(100.0, len(completed) / total * 100), 1)
+
+    def normalized_completed_roles(self) -> list[str]:
+        """仅保留当前轨道内的已完成角色。"""
+        if not self.is_drama_workspace:
+            return list(self.completed_roles or [])
+        from apps.drama.progress_service import DramaProgressService
+
+        allowed = set(DramaProgressService.list_track_agent_ids(self))
+        if not allowed:
+            return list(dict.fromkeys(self.completed_roles or []))
+        return [rid for rid in (self.completed_roles or []) if rid in allowed]
+
+    def get_drama_stage_display(self) -> str:
+        from apps.drama.constants import DramaStage
+
+        for value, label in DramaStage.choices:
+            if value == self.drama_stage:
+                return label
+        return self.drama_stage or ""
+
+    def get_track_mode_display(self) -> str:
+        from apps.drama.constants import DramaTrackMode
+
+        for value, label in DramaTrackMode.choices:
+            if value == self.track_mode:
+                return label
+        return self.track_mode or ""
 
     def __str__(self) -> str:
         return f"[{self.get_status_display()}] {self.id.hex[:8]} - {self.theme}"

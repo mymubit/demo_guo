@@ -17,15 +17,15 @@ ABANDON_DAYS = 7
 
 
 def _deliverable_project_ids():
-    from apps.drama.progress_service import DramaProjectProgressService
+    from apps.drama.progress_service import DramaProgressService
 
-    return list(DramaProjectProgressService.deliverable_project_ids())
+    return list(DramaProgressService.deliverable_project_ids())
 
 
 def _blocked_project_ids():
-    from apps.drama.progress_service import DramaProjectProgressService
+    from apps.drama.progress_service import DramaProgressService
 
-    return list(DramaProjectProgressService.blocked_project_ids())
+    return list(DramaProgressService.blocked_project_ids())
 
 
 def record_user_edit(project: Project) -> Project:
@@ -147,14 +147,16 @@ def content_quality_funnel(days: int = 30) -> dict:
 
 def stuck_projects(days: int = 3, limit: int = 50) -> list[dict]:
     """卡点人群：>= days 天未交付 + 未弃用。"""
-    from apps.drama.models import DramaProject
+    from apps.drama.constants import DramaStage, DramaTrackMode
 
     threshold_dt = timezone.now() - timedelta(days=days)
     deliverable = set(_deliverable_project_ids())
-    drama_pids = DramaProject.objects.exclude(
+    drama_pids = Project.objects.filter(
+        track_mode__in=[DramaTrackMode.FAST, DramaTrackMode.EXPERT],
+    ).exclude(
         Q(delivery_status__in=("ready", "delivered"))
-        | Q(current_stage=DramaProject.Stage.DELIVERED)
-    ).values_list("project_id", flat=True)
+        | Q(drama_stage=DramaStage.DELIVERED)
+    ).values_list("id", flat=True)
 
     qs = Project.objects.filter(
         id__in=drama_pids,

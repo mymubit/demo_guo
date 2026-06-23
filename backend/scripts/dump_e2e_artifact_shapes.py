@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""导出 Drama E2E 项目各产物真实 payload 结构，供 presenter 对齐。"""
+"""?? Drama E2E ??????? payload ???? presenter ???"""
 from __future__ import annotations
 
 import json
@@ -17,9 +17,8 @@ import django
 
 django.setup()
 
-from apps.creation.models import ProjectFusionArtifact
+from apps.creation.models import Project, ProjectFusionArtifact
 from apps.drama.defaults import DRAMA_ROLE_DEFAULTS
-from apps.drama.models import DramaProject
 from apps.drama.presentation.normalize import normalize_payload
 
 
@@ -30,7 +29,7 @@ def _shape(value: Any, depth: int = 0, max_depth: int = 3) -> Any:
         if isinstance(value, list):
             return [f"__list[{len(value)}]__"]
         if isinstance(value, str):
-            return value[:80] + ("…" if len(value) > 80 else "")
+            return value[:80] + ("�" if len(value) > 80 else "")
         return type(value).__name__
 
     if isinstance(value, dict):
@@ -39,9 +38,9 @@ def _shape(value: Any, depth: int = 0, max_depth: int = 3) -> Any:
         if not value:
             return []
         sample = value[0]
-        return [_shape(sample, depth + 1, max_depth), f"…共{len(value)}项"]
+        return [_shape(sample, depth + 1, max_depth), f"�?{len(value)}?"]
     if isinstance(value, str):
-        return value[:120] + ("…" if len(value) > 120 else "")
+        return value[:120] + ("�" if len(value) > 120 else "")
     return value
 
 
@@ -56,12 +55,12 @@ def main() -> None:
 
     report: dict[str, Any] = {}
     for title in titles:
-        dp = DramaProject.objects.filter(title=title).first()
-        if not dp:
+        project = Project.objects.filter(title=title).first()
+        if not project:
             print(f"skip: {title} not found")
             continue
         project_report = {}
-        for artifact in ProjectFusionArtifact.objects.filter(project_id=dp.project_id).order_by("artifact_key"):
+        for artifact in ProjectFusionArtifact.objects.filter(project=project).order_by("artifact_key"):
             body = normalize_payload(artifact.payload)
             project_report[artifact.artifact_key] = {
                 "schema_version": schema_by_key.get(artifact.artifact_key),

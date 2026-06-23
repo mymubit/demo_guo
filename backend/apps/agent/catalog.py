@@ -68,12 +68,13 @@ def get_workspace_catalog(project_id: str, user_id: int) -> Dict[str, Any]:
     用于 C 端工作台页面渲染。
     """
     try:
-        from apps.drama.models import DramaProject
-        from django.db.models import Q
+        from apps.creation.models import Project
+        from apps.drama.constants import DramaTrackMode
 
-        project = DramaProject.objects.filter(
-            Q(id=project_id) | Q(project_id=project_id),
+        project = Project.objects.filter(
+            id=project_id,
             user_id=user_id,
+            track_mode__in=[DramaTrackMode.FAST, DramaTrackMode.EXPERT],
         ).first()
 
         track_mode = project.track_mode if project else "fast"

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated migration: CreationTask 统一任务表 + Project 状态同步
 
 import uuid

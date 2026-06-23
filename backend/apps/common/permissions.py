@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # apps/common/permissions.py
 # 自定义权限类
 

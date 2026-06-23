@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated manually: ensure sub_skill_id has DB default for legacy INSERT paths
 
 from django.db import migrations, models

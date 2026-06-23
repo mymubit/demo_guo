@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ﻿"""
 创作后台任务（Django 6 @task + dj_queue / Postgres）
 

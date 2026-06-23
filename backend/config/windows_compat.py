@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Windows 本地开发兼容（dj_queue 依赖 Unix 的 fcntl / SIGQUIT）。
 

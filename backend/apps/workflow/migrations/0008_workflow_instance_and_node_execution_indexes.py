@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # P0-1 阶段：为 workflow_instance 和 workflow_node_execution 补充生产级复合索引，
 # 以及 FusionPipelinePack 的 is_active + pack_status 复合索引（管理后台查询优化）。
 #

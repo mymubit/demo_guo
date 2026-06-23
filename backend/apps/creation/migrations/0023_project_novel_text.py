@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated manually for novel_text field on Project
 
 from django.db import migrations, models

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # P2-2/3 阶段：为 NodeExecution 补充：
 #   1) retry_count —— 节点级重试次数（重试策略由 cfg.runtime_config.retry_policy 控制）
 #   2) fallback_skill_id —— 失败时的降级 skill_id（为空时使用 SkillInvoker 的 fallback）

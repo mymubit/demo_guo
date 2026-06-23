@@ -1,4 +1,4 @@
-# -*- coding: utf-8
+# -*- coding: utf-8 -*-
 """从 dict 列表提取卡片展示字段。"""
 from __future__ import annotations
 

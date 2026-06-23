@@ -1,5 +1,5 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#!/usr/bin/env python
 """真实 LLM Key 冒烟：顺序跑通 9-Agent 链路。无 Key 时自动跳过。"""
 from __future__ import annotations
 

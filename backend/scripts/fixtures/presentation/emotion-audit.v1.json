@@ -8,8 +8,7 @@
     "schemaVersion": "emotion-audit.v1"
   },
   "artifact_key": "emotion_audit",
-  "audit_result": {
-    "repair_suggestions": [
+  "repair_suggestions": [
       {
         "insert_event": "补充顾景明带着白若曦厚着脸皮凑到二人身边，假意递名片攀关系试图蹭合作资源，还故意嘴贱调侃苏晚“刚勾搭上陆总就忘了之前跪舔我的样子”，陆沉渊直接侧身把苏晚挡在身后，冷着脸把名片直接扔进旁边的碎纸机，撂下一句“顾氏的合作资格永久拉黑”，苏晚被他护在身后忍不住笑出声的完整桥段，将对应情绪值拉回4.9的蓝图目标线，填补当前的情绪缺口",
         "target_episode": 2,
@@ -227,5 +226,4 @@
         ]
       }
     ]
-  }
 }

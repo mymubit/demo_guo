@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Generated manually — Agent LLM 路由与节点 max_tokens
 
 import django.db.models.deletion

@@ -459,4 +459,3 @@ def refund_coins(
         entry_type=CoinLedger.TYPE_REFUND,
     )
 
-

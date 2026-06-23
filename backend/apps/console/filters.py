@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # apps/console/filters.py
 # 后台管理 API 过滤器集合
 #
