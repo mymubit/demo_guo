@@ -23,9 +23,9 @@ const DEPT_LABELS = {
 };
 
 const TIER_CONFIG = {
-  1: { label: '核心必需', badge: '必须', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500', priority: '必执行' },
-  2: { label: '优化推荐', badge: '推荐', color: 'bg-green-100 text-green-700', dot: 'bg-green-500', priority: '按需执行' },
-  3: { label: '专项增强', badge: '可选', color: 'bg-gray-100 text-gray-600', dot: 'bg-gray-400', priority: '特需执行' },
+  1: { label: '核心必需', badge: '必须', color: 'bg-blue-100 text-blue-700', dot: 'bg-blue-500', priority: '必执行', desc: '8个快速通道角色，所有项目都要执行' },
+  2: { label: '增强复合', badge: '增强', color: 'bg-purple-100 text-purple-700', dot: 'bg-purple-500', priority: '按需执行', desc: '4个复合角色，每个整合多项专业能力' },
+  3: { label: '专项', badge: '专项', color: 'bg-gray-100 text-gray-500', dot: 'bg-gray-300', priority: '特需', desc: '已整合进复合角色，后台自动调用' },
 };
 
 const EXEC_STATUS = {
@@ -50,23 +50,16 @@ export default function WorkspacePage() {
     queryFn: () => getDramaProject(projectId),
   });
   const project = projectRes?.data || projectRes;
-  const project = projectRes?.id ? projectRes : projectRes?.data;
 
   const { data: progressRes } = useQuery({
     queryKey: ['drama-progress', projectId],
     queryFn: () => getProjectProgress(projectId),
-    refetchInterval: 5000,
-  });
-  const progress = progressRes?.data;
     refetchInterval: (query) => {
-      const roles = query.state.data?.roles || query.state.data?.data?.roles || [];
-      const hasRunning = roles.some(
-        (r) => r.execution?.status === 'running' || r.execution?.status === 'pending',
-      );
-      return hasRunning ? 2000 : 5000;
+      const roles = query.state.data?.data?.roles || [];
+      return roles.some((r) => r.execution?.status === 'running') ? 2000 : 5000;
     },
   });
-  const progress = progressRes?.roles ? progressRes : progressRes?.data;
+  const progress = progressRes?.data;
 
   const { data: rolesRes } = useQuery({
     queryKey: ['drama-roles'],
@@ -82,7 +75,6 @@ export default function WorkspacePage() {
   });
   const episodeProgress = progress?.episode_progress;
   const completedEpisodes = episodesRes?.data?.completed_episodes || episodeProgress?.completed || 0;
-  const departments = rolesRes?.departments || rolesRes?.data?.departments || [];
 
   const runMut = useMutation({
     mutationFn: ({ projId, roleId, options = {} }) => runRole(projId, roleId, options),
@@ -364,8 +356,8 @@ function FastTrackView({ roles, completedSet, roleStatusMap, selectedRole, onSel
 function RoleItem({ role, isCompleted, execution, isSelected, onSelect, showDeptTag }) {
   const execStatus = execution?.status || (isCompleted ? 'success' : 'pending');
   const statusCfg = EXEC_STATUS[execStatus] || EXEC_STATUS.pending;
-  const tier = role.tier || (role.is_fast_track ? 1 : 3);
-  const tierCfg = TIER_CONFIG[tier];
+  const tier = role.tier || (role.is_fast_track ? 1 : 2);
+  const tierCfg = TIER_CONFIG[tier] || TIER_CONFIG[2];
 
   return (
     <button
@@ -379,6 +371,7 @@ function RoleItem({ role, isCompleted, execution, isSelected, onSelect, showDept
         <div className="flex items-center gap-1">
           <span className="text-sm text-gray-800 truncate">{role.name_zh}</span>
           {tier === 1 && <span className="text-xs text-blue-400">⚡</span>}
+          {role.is_composite && <span className="text-xs text-purple-400">◈</span>}
         </div>
         {showDeptTag && role.dept_name && (
           <span className="text-xs text-gray-400">{role.dept_name}</span>
@@ -421,12 +414,17 @@ function WelcomePanel({ project, progress, episodeProgress, completedEpisodes })
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 className="text-sm font-semibold text-gray-700 mb-3">如何开始</h3>
+        <h3 className="text-sm font-semibold text-gray-700 mb-3">创作流程（重构后）</h3>
         <div className="space-y-2">
-          <Step n={1} title="从左侧选择「核心必需」层的角色" desc="8个蓝色角色是所有项目必须执行的，按顺序执行效果最佳" />
-          <Step n={2} title="执行角色生成内容" desc="点击角色，查看输入依赖和输出说明，确认依赖已满足后点击执行" />
-          <Step n={3} title="分批生成剧本（推荐5集/批）" desc="剧本执笔师支持指定集数范围，建议每批5集，完成后立即质检" />
-          <Step n={4} title="应用修改建议" desc="审稿官和对白专家的建议可直接一键应用到原始剧本，生成新版本" />
+          <Step n={1} title="执行8个核心角色（⚡蓝色）" desc="按顺序：立项→世界观→人设→大纲→剧本→审稿→质量→合规。这8个角色已深度整合山音方法论。" />
+          <Step n={2} title="分批生成剧本（每批5集）" desc="剧本执笔师严格执行：首集900-1100字，其余700-900字，台词≥35%，场景≤3个。" />
+          <Step n={3} title="按需选择复合角色（◈紫色）" desc="4个复合角色各自整合了5-6项专业能力：市场分析师/叙事工程师/精修大师/制作发行师。" />
+          <Step n={4} title="查看质量报告并应用修改" desc="质量报告包含：雷达图+情绪曲线+8维扣分详情+汇总报告。建议可一键应用。" />
+        </div>
+
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg text-xs text-blue-700 border border-blue-100">
+          <strong>角色架构说明：</strong>原来35个角色已重组为12个可见角色（8核心+4复合）。
+          旧的23个散碎角色的能力已整合到复合角色中，使用更简单，质量更高。
         </div>
       </div>
     </div>
@@ -639,76 +637,25 @@ function RoleDetailPanel({ projectId, roleId, allRoles, onRun, runLoading, compl
           </a>
         </div>
 
-        {/* 专项层角色提示 */}
-        {tier === 3 && (
-          <div className="mt-3 p-2 bg-gray-50 rounded text-xs text-gray-500">
-            💡 此角色属于「专项增强」层，在完成核心必需角色后按需使用，可显著提升特定方面的质量。
+        {/* 复合角色说明 */}
+        {role.is_composite && (
+          <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-100 text-xs text-purple-700">
+            <div className="font-semibold mb-1">◈ 复合增强角色</div>
+            <p>此角色整合了多项专业能力，单次执行即可完成原本需要多个角色才能完成的工作。</p>
+            <p className="mt-1 text-purple-500">在完成8个核心角色后，按需选择此角色进行深度增强。</p>
           </div>
         )}
       </div>
-
-      {/* 输出区（占位，实际输出需SSE流式填充） */}
-      <div className="bg-white rounded-xl border border-gray-200 p-5">
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">执行输出</h3>
-        {isCompleted ? (
-          <div className="text-sm text-gray-600 bg-green-50 rounded-lg p-3">
-            ✅ 此角色已完成执行。
-            <span className="text-indigo-600 cursor-pointer ml-1 hover:underline" onClick={() => {}}>
-              查看最新产物 →
-            </span>
-          </div>
-        ) : (
-          <div className="text-center py-8 text-sm text-gray-400">
-            点击「执行此角色」后，输出内容将在此实时流式显示
-      {/* 执行结果 */}
+      {/* 执行输出区 */}
       <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-gray-700">执行输出</h3>
-          {statusCfg && (
-            <span className={`text-xs px-2 py-0.5 rounded ${statusCfg.color}`}>
-              {statusCfg.icon} {statusCfg.label}
-            </span>
-          )}
-        </div>
-
-        {isRunning && (
-          <div className="flex items-center gap-3 py-6 text-blue-600 text-sm">
-            <span className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full" />
-            AI 正在生成内容，请稍候…
-          </div>
-        )}
-
-        {!isRunning && execStatus === 'failed' && (
-          <div className="rounded-lg bg-red-50 border border-red-100 p-4 text-sm text-red-700">
-            <p className="font-medium mb-1">执行失败</p>
-            <p className="text-red-600 whitespace-pre-wrap">{execution?.error_message || '未知错误'}</p>
-          </div>
-        )}
-
-        {!isRunning && execStatus === 'success' && outputKeys.length > 0 && (
-          <div className="space-y-4">
-            {execution?.elapsed_seconds != null && (
-              <p className="text-xs text-gray-400">
-                耗时 {execution.elapsed_seconds.toFixed(1)}s
-                {execution.total_tokens ? ` · ${execution.total_tokens} tokens` : ''}
-              </p>
-            )}
-            <DramaPresentation
-              views={outputViews}
-              rawArtifacts={outputArtifacts}
-            />
-          </div>
-        )}
-
-        {!isRunning && !execStatus && (
+        <h3 className="text-sm font-medium text-gray-700 mb-3">执行输出</h3>
+        {!isCompleted ? (
           <div className="text-center py-8 text-gray-400 text-sm">
             点击「执行角色」开始生成内容
           </div>
-        )}
-
-        {!isRunning && execStatus === 'success' && outputKeys.length === 0 && (
-          <div className="text-center py-8 text-gray-400 text-sm">
-            执行已完成，暂无输出产物
+        ) : (
+          <div className="text-sm text-gray-600 bg-green-50 rounded-lg p-3">
+            ✅ 此角色已完成执行。{lastExecResult?.scope && `范围：${lastExecResult.scope}`}
           </div>
         )}
       </div>

@@ -212,36 +212,31 @@ class DramaRoleService:
     @staticmethod
     def get_all_roles_grouped() -> List[Dict[str, Any]]:
         """
-        获取35个角色，按部门分组，并附加三层分级信息。
+        获取可见角色（12个）按部门分组。
 
-        tier字段说明：
-          1 = 核心必需（快速通道8个，任何项目必做）
-          2 = 优化推荐（约12个，能显著提升质量）
-          3 = 专项增强（约15个，特定需求时选用）
+        重构后只展示：
+        - 8个核心必需角色（tier=1，快速通道）
+        - 4个新复合增强角色（tier=2，整合了原先27个散碎角色）
+        旧的散碎tier2/3角色已合并进复合角色，不再单独展示。
         """
         from apps.agent.models import AgentDefinition, AgentLlmRouteConfig
         from apps.drama.defaults import (
-            DRAMA_DEPARTMENTS, DRAMA_FAST_TRACK_ROLES, DRAMA_ROLE_DEFAULTS,
+            DRAMA_DEPARTMENTS, DRAMA_FAST_TRACK_ROLES,
+            DRAMA_ROLE_DEFAULTS, DRAMA_VISIBLE_ROLES,
         )
 
-        # 从 defaults 中获取 tier 信息（tier字段在defaults中已定义）
         tier_map = {r["agent_id"]: r.get("tier", 3) for r in DRAMA_ROLE_DEFAULTS}
+        dept_map = {r["agent_id"]: r.get("dept", "") for r in DRAMA_ROLE_DEFAULTS}
 
-        agents = {
-            a.agent_id: a
-            for a in AgentDefinition.objects.filter(category="drama_skills").select_related()
+        COMPOSITE_ROLES = {
+            "drama.market-analyst", "drama.narrative-engineer",
+            "drama.polish-master", "drama.production-pack",
         }
-            DRAMA_DEPARTMENTS,
-            DRAMA_FAST_TRACK_ROLES,
-            DRAMA_ROLE_DEFAULTS,
-        )
 
-        defaults_by_id = {role["agent_id"]: role for role in DRAMA_ROLE_DEFAULTS}
-
+        # 只加载可见的12个角色
         agents = list(
             AgentDefinition.objects.filter(
-                agent_id__startswith="drama.",
-                is_enabled=True,
+                agent_id__in=DRAMA_VISIBLE_ROLES,
             ).order_by("workspace_order", "agent_id")
         )
 
@@ -252,41 +247,37 @@ class DramaRoleService:
             ).select_related("llm_provider")
         }
 
-        def resolve_dept_code(agent: AgentDefinition) -> str | None:
-            ui_schema = agent.ui_schema if isinstance(agent.ui_schema, dict) else {}
-            dept_code = ui_schema.get("dept")
-            if dept_code:
-                return dept_code
-            meta = defaults_by_id.get(agent.agent_id)
-            return meta.get("dept") if meta else None
-
         result = []
         for dept in sorted(DRAMA_DEPARTMENTS, key=lambda d: d["order"]):
             dept_roles = []
             for agent in agents:
-                if resolve_dept_code(agent) != dept["code"]:
+                agent_id = agent.agent_id
+                # 通过 defaults 的 dept_map 找部门（复合角色也在 defaults 里）
+                resolved_dept = dept_map.get(agent_id) or (
+                    agent.ui_schema.get("dept") if isinstance(agent.ui_schema, dict) else None
+                )
+                if resolved_dept != dept["code"]:
                     continue
 
-                agent_id = agent.agent_id
                 route = routes.get(agent_id)
                 model_name = "未配置"
                 if route and route.llm_provider:
                     model_name = route.llm_provider.name
-
-                tier = tier_map.get(agent_id, 3)
                 elif route and route.display_name:
                     model_name = route.display_name
 
+                tier = tier_map.get(agent_id, 2)
+
                 dept_roles.append({
                     "agent_id": agent_id,
-                    # 只返回中文名，不再暴露英文name字段
                     "name_zh": agent.name_zh,
                     "description": agent.description,
                     "workspace_order": agent.workspace_order,
                     "is_fast_track": agent_id in DRAMA_FAST_TRACK_ROLES,
+                    "is_composite": agent_id in COMPOSITE_ROLES,
                     "tier": tier,
-                    "tier_label": DramaRoleService.TIER_LABELS[tier]["name"],
-                    "tier_color": DramaRoleService.TIER_LABELS[tier]["color"],
+                    "tier_label": DramaRoleService.TIER_LABELS.get(tier, {}).get("name", "增强复合"),
+                    "tier_color": DramaRoleService.TIER_LABELS.get(tier, {}).get("color", "green"),
                     "is_enabled": agent.is_enabled,
                     "current_model": model_name,
                     "input_contract": agent.input_contract,
@@ -299,16 +290,10 @@ class DramaRoleService:
                     "dept_code": dept["code"],
                     "dept_name": dept["name_zh"],
                     "dept_order": dept["order"],
-                    "roles": sorted(dept_roles, key=lambda r: (r["tier"], r["workspace_order"])),
-                    "tier_summary": {
-                        1: sum(1 for r in dept_roles if r["tier"] == 1),
-                        2: sum(1 for r in dept_roles if r["tier"] == 2),
-                        3: sum(1 for r in dept_roles if r["tier"] == 3),
-                    },
+                    "roles": sorted(dept_roles, key=lambda r: r["workspace_order"]),
                 })
 
         return result
-
     @staticmethod
     def get_token_stats(user_id: Optional[int] = None, days: int = 30) -> Dict[str, Any]:
         """

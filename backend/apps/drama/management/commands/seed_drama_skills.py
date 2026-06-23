@@ -12,7 +12,9 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from apps.agent.models import AgentDefinition, AgentLlmRouteConfig, AgentPromptVersion
-from apps.drama.defaults import DRAMA_DEPARTMENTS, DRAMA_FAST_TRACK_ROLES, DRAMA_ROLE_DEFAULTS
+from apps.drama.defaults import (
+    DRAMA_DEPARTMENTS, DRAMA_FAST_TRACK_ROLES, DRAMA_ROLE_DEFAULTS, DRAMA_VISIBLE_ROLES,
+)
 
 
 class Command(BaseCommand):
@@ -36,8 +38,13 @@ class Command(BaseCommand):
         force = options["force"]
         dry_run = options["dry_run"]
 
+        visible_count = len(DRAMA_VISIBLE_ROLES)
+        total_count = len(DRAMA_ROLE_DEFAULTS)
         self.stdout.write(f"开始种入 drama-skills 角色 (force={force}, dry_run={dry_run})")
-        self.stdout.write(f"共 {len(DRAMA_ROLE_DEFAULTS)} 个角色，{len(DRAMA_DEPARTMENTS)} 个部门")
+        self.stdout.write(
+            f"总计 {total_count} 个角色（可见 {visible_count} 个：8核心+4复合，"
+            f"其余 {total_count - visible_count} 个标记hidden不在UI展示）"
+        )
 
         if dry_run:
             for role in DRAMA_ROLE_DEFAULTS:
@@ -72,7 +79,14 @@ class Command(BaseCommand):
                     "ui_schema": {
                         "dept": role["dept"],
                         "is_fast_track": is_fast_track,
+                        "is_composite": agent_id in {
+                            "drama.market-analyst", "drama.narrative-engineer",
+                            "drama.polish-master", "drama.production-pack",
+                        },
+                        "is_visible": agent_id in DRAMA_VISIBLE_ROLES,
+                        "hidden": role.get("hidden", False),
                         "dept_order": role["workspace_order"] // 100,
+                        "tier": role.get("tier", 3),
                     },
                 }
 
