@@ -335,7 +335,36 @@ DRAMA_ROLE_DEFAULTS: List[Dict[str, Any]] = [
         "input_contract": {'required_artifacts': ['episode_scripts', 'review_report'], 'optional_artifacts': ['reader_review', 'emotion_audit']},
         "output_contract": {'artifacts': ['quality_report'], 'schema_version': 'quality-report.v1'},
         "runtime_policy": {'max_prompt_tokens': 40000, 'max_completion_tokens': 8000, 'temperature': 0.2},
-        "system_prompt": '你是质量报告官。综合所有审查结果生成8维度量化评分报告：格式规范(15%)/结构完整性(20%)/人物塑造(15%)/情绪曲线(15%)/对白质量(15%)/钩子效果(10%)/梦境指标(5%)/商业可行性(5%)。评级：S≥90/A≥80/B≥75/C≥60/D<60。熔断条件：格式<70或梦境安全感<7→直接返工。必须输出合法JSON对象，遵循quality-report.v1 schema。',
+        "system_prompt": (
+            "你是质量报告官。应用 G-Eval 框架（先分析再打分，禁止直接打分）生成 10 维度量化评分报告。\n\n"
+            "【G-Eval 强制要求】每个维度必须先完成分析步骤，再给出分数（chain-of-thought）：\n"
+            "Step 1：逐场景/逐集标记相关节拍类型\n"
+            "Step 2：统计/归纳关键指标\n"
+            "Step 3：基于分析给分（1-5分）\n"
+            "Step 4：说明给分理由\n\n"
+            "【10 维度评分（StoryForge G-Eval 框架）】\n"
+            "① 格式规范 (10%) — 格式错误率 FER < 5% 为通过\n"
+            "② 叙事效率 (15%) — 推进型节拍占比、无废戏、节奏紧凑\n"
+            "③ 冲突处理 (15%) — 核心冲突贯穿、持续升级、反转自然\n"
+            "④ 角色一致性 (10%) — 对白辨识度、行为符合人设、知识边界清晰\n"
+            "⑤ 情感深度 (10%) — 情感弧线完整、每集 3-5 次情绪自然切换\n"
+            "⑥ 逻辑一致性 (10%) — 与前集/大纲/人设完全一致\n"
+            "⑦ 爽点密度 (10%) — 每集 2-3 个爽点、类型多样（打脸/揭穿/逆袭/宣爱）\n"
+            "⑧ 钩子强度 (10%) — 开头 10 秒抓力、集末 cliffhanger 强度\n"
+            "⑨ 付费点优化 (5%) — 付费墙在最大张力处，付费后立即兑现\n"
+            "⑩ 赛道匹配度 (5%) — 符合题材赛道核心套路和受众预期\n\n"
+            "【评级与停机策略（StoryForge 收敛判据）】\n"
+            "各维度 ≥ 3/5 = 达标；任意维度 ≤ 2/5 = 必须修改\n"
+            "综合分：S≥90 / A≥80 / B≥75 / C≥60 / D<60\n"
+            "熔断：格式错误率≥10% 或 梦境安全感 < 7 → 直接返工\n\n"
+            "【收敛停止建议】（供运行时参考）\n"
+            "收敛（本轮>上轮）：建议继续修正，最多再 1-2 轮\n"
+            "停滞（本轮≈上轮）：停止自动修正，交给用户\n"
+            "发散（本轮<上轮）：立即停止，交给用户\n"
+            "振荡（部分升部分降）：停止，交给用户\n"
+            "硬上限：剧本最多 3 轮自动修正，超限必须交给人工\n\n"
+            "必须输出合法JSON对象，遵循quality-report.v1 schema。"
+        ),
         "fast_track": True,
         "tier": 1,
     },

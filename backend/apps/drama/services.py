@@ -377,24 +377,28 @@ class DramaRoleService:
 class DramaQualityService:
     """质量评估服务 — 扣分点分析 + 分集评估 + 建议应用。"""
 
-    # 8维度定义（中文，含权重和评分标准）
+    # 10维度定义（升级自 StoryForge G-Eval 框架，原8维补充付费点优化+赛道匹配度）
     DIMENSIONS = [
-        {"key": "format",     "name": "格式规范", "weight": 0.15,
-         "desc": "场景头/台词格式/△标记/字数达标"},
-        {"key": "structure",  "name": "结构完整", "weight": 0.20,
-         "desc": "六阶段覆盖/四段式/转折点密度"},
-        {"key": "character",  "name": "人物塑造", "weight": 0.15,
-         "desc": "人物一致性/弧光/Ghost-Lie-Flaw体现"},
-        {"key": "emotion",    "name": "情绪曲线", "weight": 0.15,
-         "desc": "情绪起伏/高潮深度/低谷后的回升"},
-        {"key": "dialogue",   "name": "对白质量", "weight": 0.15,
-         "desc": "台词占比/差异化/潜台词/AI腔检测"},
-        {"key": "hooks",      "name": "钩子效果", "weight": 0.10,
-         "desc": "开篇黄金30秒/集末悬念/钩子密度"},
-        {"key": "dream",      "name": "梦境指标", "weight": 0.05,
-         "desc": "安全感/满足感/真实感三指标"},
-        {"key": "commercial", "name": "商业可行", "weight": 0.05,
-         "desc": "付费卡点/平台适配/受众匹配度"},
+        {"key": "format",     "name": "格式规范",   "weight": 0.10,
+         "desc": "场景头/台词格式/△标记/字数达标/格式错误率FER<5%"},
+        {"key": "narrative",  "name": "叙事效率",   "weight": 0.15,
+         "desc": "推进型节拍占比/无废戏/节奏紧凑/进入-升级-退出结构"},
+        {"key": "conflict",   "name": "冲突处理",   "weight": 0.15,
+         "desc": "核心冲突贯穿全剧/持续升级/反转自然/解决有力"},
+        {"key": "character",  "name": "角色一致性", "weight": 0.10,
+         "desc": "对白辨识度/行为符合人设/知识边界清晰/Ghost-Lie-Flaw体现"},
+        {"key": "emotion",    "name": "情感深度",   "weight": 0.10,
+         "desc": "情感弧线完整/每集3-5次情绪切换/复杂情绪/自然"},
+        {"key": "logic",      "name": "逻辑一致性", "weight": 0.10,
+         "desc": "与前集/大纲/人设一致/无逻辑断裂/记忆检查点匹配"},
+        {"key": "satisfaction","name": "爽点密度",  "weight": 0.10,
+         "desc": "每集2-3个爽点/类型多样（打脸/揭穿/逆袭/宣爱）"},
+        {"key": "hooks",      "name": "钩子强度",   "weight": 0.10,
+         "desc": "开头10秒抓力/集末cliffhanger强度/付费墙前钩子极强"},
+        {"key": "paywall",    "name": "付费点优化", "weight": 0.05,
+         "desc": "付费墙位于最大张力处/付费后立即兑现/S级付费设计"},
+        {"key": "genre_fit",  "name": "赛道匹配度", "weight": 0.05,
+         "desc": "符合题材赛道核心套路/受众预期匹配/平台特性适配"},
     ]
 
     # 各维度的常见问题模板（不同严重级别）

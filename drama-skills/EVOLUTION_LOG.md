@@ -155,3 +155,66 @@
 - drama-rhythm-designer v2.1：单轨→双轨（情节节奏×情感节奏）
 - drama-script-reviewer v2.1：新增McKee价值转变检验
 - drama-script-writer v2.1：新增记忆检查点机制（防多集前后矛盾）
+
+---
+
+## StoryForge 汲取记录（2026-06-23）
+
+**来源**：https://github.com/zhiyuzi/StoryForge（5 stars · @zhiyuzi · MIT）
+**项目定位**：基于 Claude Code 的故事生成 Agent Runtime，用 Harness Engineering 处理不确定性下的计算
+
+### 核心价值（与山音方法论互补）
+
+山音 = 内容质量方法论（怎么写好）
+StoryForge = 运行时控制工程（如何把生成过程做成可控系统）
+
+### 汲取的关键机制
+
+1. **Harness Engineering 概念** → 写入 storyforge-runtime-methodology.md
+   - 不确定性下计算的四个特征
+   - 修正过程不保证单调提升的应对策略
+
+2. **硬卡点机制** → 落地到 drama-master SKILL.md
+   - 没有梗概确认 → 拒绝生成剧本
+   - 没有大纲 → 拒绝执行剧本执笔
+   - P0/P1合规未通过 → 拒绝交付
+
+3. **生成/评估角色隔离** → 落地到 drama-master SKILL.md
+   - 执笔师不能自评，必须由审稿官/质量报告官独立评估
+
+4. **收敛停止策略** → 落地到 quality-reporter system_prompt
+   - 四种趋势：收敛/停滞/发散/振荡 → 不同处理策略
+   - 硬上限：剧本最多3轮自动修正
+
+5. **G-Eval框架（先分析再打分）** → 落地到 quality-reporter system_prompt
+   - 强制 chain-of-thought：逐集分析 → 统计 → 打分 → 说明理由
+
+6. **10维度评分升级** → 落地到 services.py DramaQualityService.DIMENSIONS
+   - 补充第⑨维：付费点优化（付费墙在最大张力处）
+   - 补充第⑩维：赛道匹配度（符合题材核心套路）
+   - 重新命名：structure→narrative（叙事效率）、emotion→emotion depth（情感深度）
+
+7. **逐集上下文加载策略** → 落地到 learned-rules.md LR-008
+   - 只加载上一集全文 + 角色状态快照 + 伏笔列表
+   - 避免100集剧本的Token爆炸
+
+8. **跨项目经验规则（Learned Rules）** → 新建 knowledge/learned-rules.md
+   - 直接采用 StoryForge 的 LR-001~LR-005 五条已验证规则
+   - 扩展添加 LR-006~LR-010（G-Eval规则+双轨节奏规则）
+
+9. **并行分支对比机制** → 记录到 drama-master SKILL.md（未来功能）
+
+### 新增知识文件
+
+- `knowledge/storyforge-runtime-methodology.md` — 完整方法论
+- `knowledge/learned-rules.md` — 跨项目经验规则（10条）
+
+### 对现有系统的升级
+
+| 组件 | 升级内容 |
+|------|---------|
+| quality-reporter prompt | G-Eval框架+10维度+收敛停止策略 |
+| DramaQualityService.DIMENSIONS | 8维→10维 |
+| ScriptsPage.jsx DIM_META | 8维→10维 |
+| drama-master SKILL.md | 硬卡点+角色隔离+100集分批策略 |
+| learned-rules.md (新) | 10条跨项目经验规则 |

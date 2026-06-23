@@ -25,19 +25,21 @@ const SEVERITY_STYLES = {
   info:    { icon: '💡', label: '参考建议', cls: 'text-blue-700 bg-blue-50 border-blue-200' },
 };
 
-// 8维度中文+简称
+// 10维度（升级自 StoryForge G-Eval 框架）
 const DIM_META = {
-  format:     { name: '格式规范', abbr: '格式', color: '#6366f1', subItems: ['场景头格式','台词格式','△标记','字数达标','台词占比','场景数量'] },
-  structure:  { name: '结构完整', abbr: '结构', color: '#8b5cf6', subItems: ['六阶段覆盖','四段式完整','转折密度','集末钩子','主支线平衡'] },
-  character:  { name: '人物塑造', abbr: '人物', color: '#ec4899', subItems: ['性格一致性','人物弧光','Ghost-Lie-Flaw','反派动机','次要角色'] },
-  emotion:    { name: '情绪曲线', abbr: '情绪', color: '#f59e0b', subItems: ['情绪峰值强度','低谷合理性','情绪节律','爽感密度','情绪外化'] },
-  dialogue:   { name: '对白质量', abbr: '对白', color: '#10b981', subItems: ['台词占比','差异化风格','潜台词设计','AI腔检测','金句密度'] },
-  hooks:      { name: '钩子效果', abbr: '钩子', color: '#f97316', subItems: ['开篇30秒','集末悬念','钩子密度','不可预测性','信息差设计'] },
-  dream:      { name: '梦境指标', abbr: '梦境', color: '#06b6d4', subItems: ['安全感指数','满足感密度','真实感强度'] },
-  commercial: { name: '商业可行', abbr: '商业', color: '#84cc16', subItems: ['付费卡点','平台适配','受众匹配','可持续追剧性'] },
+  format:      { name: '格式规范',   abbr: '格式', color: '#6366f1', subItems: ['场景头格式','台词格式','△标记','字数达标','台词占比','场景数量'] },
+  narrative:   { name: '叙事效率',   abbr: '叙事', color: '#8b5cf6', subItems: ['推进型节拍占比','无废戏','节奏紧凑','进入-升级-退出'] },
+  conflict:    { name: '冲突处理',   abbr: '冲突', color: '#ec4899', subItems: ['核心冲突贯穿','持续升级','反转自然','解决有力'] },
+  character:   { name: '角色一致性', abbr: '角色', color: '#f59e0b', subItems: ['对白辨识度','行为符合人设','知识边界','Ghost/Lie/Flaw'] },
+  emotion:     { name: '情感深度',   abbr: '情感', color: '#10b981', subItems: ['情感弧线完整','每集3-5次情绪','复杂情绪','切换自然'] },
+  logic:       { name: '逻辑一致性', abbr: '逻辑', color: '#f97316', subItems: ['与前集一致','与大纲一致','记忆检查点匹配','无逻辑断裂'] },
+  satisfaction:{ name: '爽点密度',   abbr: '爽感', color: '#06b6d4', subItems: ['每集2-3个爽点','打脸','揭穿','逆袭','宣爱','类型多样'] },
+  hooks:       { name: '钩子强度',   abbr: '钩子', color: '#84cc16', subItems: ['开头10秒抓力','集末cliffhanger','付费墙前钩子极强'] },
+  paywall:     { name: '付费点优化', abbr: '付费', color: '#ef4444', subItems: ['付费墙在最大张力处','付费后立即兑现','S级付费设计'] },
+  genre_fit:   { name: '赛道匹配度', abbr: '赛道', color: '#a855f7', subItems: ['符合赛道套路','受众预期匹配','平台特性适配'] },
 };
 
-const DIM_KEYS = ['format','structure','character','emotion','dialogue','hooks','dream','commercial'];
+const DIM_KEYS = ['format','narrative','conflict','character','emotion','logic','satisfaction','hooks','paywall','genre_fit'];
 
 /** 剧本查看器 + 深度质量报告 */
 export default function ScriptsPage() {
