@@ -497,10 +497,8 @@ class EpisodeQualityView(APIView):
         提交单集质量评估结果（由质量报告官角色执行后调用）。
 
         质量审查完成后，自动触发关联修复角色：
-        - 格式/台词问题 → drama.formatter（格式规范师）
-        - 对白质量问题 → drama.dialogue-expert（对白专家）
-        - 情绪/结构问题 → drama.script-editor（修稿师）
-        - 字数问题     → drama.word-governor（字数治理官）
+        - 格式/台词/结构问题 → drama.polish-master（精修大师）
+        - 情绪/节奏/钩子问题 → drama.narrative-engineer（叙事工程师）
         这些建议作为 pending_suggestions 返回，由用户确认后应用。
         """
         try:
@@ -546,12 +544,13 @@ class EpisodeQualityView(APIView):
         if auto_trigger_fixes and issues:
             # 按问题类型路由到对应修复角色
             FIX_ROLE_MAP = {
-                "format": {"role": "drama.formatter", "role_name": "格式规范师", "priority": 1},
-                "dialogue": {"role": "drama.dialogue-expert", "role_name": "对白专家", "priority": 2},
-                "structure": {"role": "drama.script-editor", "role_name": "修稿师", "priority": 2},
-                "emotion": {"role": "drama.script-editor", "role_name": "修稿师", "priority": 3},
-                "character": {"role": "drama.script-editor", "role_name": "修稿师", "priority": 3},
-                "hooks": {"role": "drama.hook-designer", "role_name": "钩子设计师", "priority": 3},
+                # 所有格式/台词/结构/节奏问题统一路由到精修大师（整合了原7个修复角色）
+                "format":     {"role": "drama.polish-master", "role_name": "精修大师", "priority": 1},
+                "dialogue":   {"role": "drama.polish-master", "role_name": "精修大师", "priority": 1},
+                "structure":  {"role": "drama.polish-master", "role_name": "精修大师", "priority": 2},
+                "emotion":    {"role": "drama.narrative-engineer", "role_name": "叙事工程师", "priority": 2},
+                "character":  {"role": "drama.polish-master", "role_name": "精修大师", "priority": 2},
+                "hooks":      {"role": "drama.narrative-engineer", "role_name": "叙事工程师", "priority": 3},
             }
 
             triggered_roles = set()
@@ -678,7 +677,7 @@ class EpisodeArtifactView(APIView):
         episode_number = request.data.get("episode_number")
         artifact_key = request.data.get("artifact_key", "episode_script")
         suggestions = request.data.get("suggestions", [])
-        agent_id = request.data.get("agent_id", "drama.script-editor")
+        agent_id = request.data.get("agent_id", "drama.polish-master")
 
         if not episode_number:
             return Response({"code": 4001, "message": "episode_number 不能为空"}, status=400)

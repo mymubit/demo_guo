@@ -25,7 +25,7 @@ FAST_TRACK_AGENT_PHASE: Dict[str, str] = {
     "drama.compliance-guard": DramaProject.Stage.COMPLIANCE,
 }
 
-DELIVERY_AGENT_IDS = frozenset({"drama.delivery-packer", "drama.compliance-guard"})
+DELIVERY_AGENT_IDS = frozenset({"drama.production-pack", "drama.compliance-guard"})
 QUALITY_AGENT_ID = "drama.quality-reporter"
 
 
@@ -109,7 +109,7 @@ class DramaProjectProgressService:
     @classmethod
     def resolve_delivery_status(cls, drama_project: DramaProject) -> str:
         completed = set(drama_project.completed_roles or [])
-        if "drama.delivery-packer" in completed:
+        if "drama.production-pack" in completed:
             return "delivered"
         if DELIVERY_AGENT_IDS & completed:
             return "ready"

@@ -154,12 +154,31 @@ class Command(BaseCommand):
                 except Exception as exc:  # noqa: BLE001
                     self.stdout.write(self.style.ERROR(f"  ❌ 失败: {agent_id} - {exc}"))
 
+        # ── 清理数据库中不再属于 DRAMA_ROLE_DEFAULTS 的旧角色 ──
+        self.stdout.write("")
+        self.stdout.write("正在清理已废弃的旧角色…")
+        current_ids = {r["agent_id"] for r in DRAMA_ROLE_DEFAULTS}
+        stale_agents = AgentDefinition.objects.filter(
+            category="drama_skills",
+            agent_id__startswith="drama.",
+        ).exclude(agent_id__in=current_ids)
+
+        deleted_agent_count = 0
+        for stale in stale_agents:
+            # 同时清理关联的路由配置和提示词版本
+            AgentLlmRouteConfig.objects.filter(route_key=stale.agent_id).delete()
+            AgentLlmRouteConfig.objects.filter(agent=stale).delete()
+            stale.delete()
+            deleted_agent_count += 1
+            self.stdout.write(self.style.WARNING(f"  🗑️  删除: {stale.agent_id} ({stale.name_zh})"))
+
         self.stdout.write("")
         self.stdout.write(self.style.SUCCESS(
-            f"完成！创建 {created_count} 个，更新 {updated_count} 个，跳过 {skipped_count} 个"
+            f"完成！创建 {created_count} 个，更新 {updated_count} 个，跳过 {skipped_count} 个，"
+            f"清理 {deleted_agent_count} 个废弃角色"
         ))
+        self.stdout.write(f"当前可用角色: {len(DRAMA_ROLE_DEFAULTS)} 个")
         self.stdout.write(f"快速通道角色: {len(DRAMA_FAST_TRACK_ROLES)} 个")
-        self.stdout.write(f"专家通道总计: {len(DRAMA_ROLE_DEFAULTS)} 个")
 
 
 def _build_user_prompt_template(role: dict) -> str:

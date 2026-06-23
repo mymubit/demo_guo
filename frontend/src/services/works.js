@@ -35,6 +35,6 @@ export const works = {
     return request('GET', '/api/works/stats/')
   },
   applyPolish(projectId, options = {}) {
-    return request('POST', `/api/works/${projectId}/agents/drama.script-editor/apply/`, { data: options })
+    return request('POST', `/api/works/${projectId}/agents/drama.polish-master/apply/`, { data: options })
   },
 }

@@ -302,7 +302,7 @@ function SuggestionsPanel({ episode, quality, applyMut, onClose }) {
         <p className="text-xs text-gray-400">应用后生成新版本（原版本保留），需配置 LLM 才能自动修改</p>
         <button
           disabled={selected.length === 0 || applyMut.isPending}
-          onClick={() => applyMut.mutate({ episodeNumber: episode, suggestions: issues.filter(i => selected.includes(i.id)), agentId: 'drama.script-editor' })}
+          onClick={() => applyMut.mutate({ episodeNumber: episode, suggestions: issues.filter(i => selected.includes(i.id)), agentId: 'drama.polish-master' })}
           className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg disabled:opacity-40 hover:bg-indigo-700 whitespace-nowrap"
         >
           {applyMut.isPending ? '应用中...' : `应用已选（${selected.length}条）`}

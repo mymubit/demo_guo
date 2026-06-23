@@ -471,8 +471,7 @@ function RoleDetailPanel({ projectId, roleId, allRoles, onRun, runLoading, compl
   const tierCfg = TIER_CONFIG[tier];
 
   // 需要指定集数范围的角色
-  const RANGE_ROLES = ['drama.script-writer', 'drama.dialogue-expert', 'drama.hook-designer',
-                       'drama.storyboard-director', 'drama.pacing-optimizer'];
+  const RANGE_ROLES = ['drama.script-writer', 'drama.polish-master', 'drama.narrative-engineer', 'drama.production-pack'];
   // 需要指定总集数的角色（生成全剧大纲）
   const COUNT_ROLES = ['drama.plot-architect'];
   const isBatchRole = (RANGE_ROLES.includes(roleId) || COUNT_ROLES.includes(roleId)) && (project?.total_episodes || 0) > 1;
