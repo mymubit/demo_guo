@@ -41,7 +41,7 @@ export default function App() {
             title: 'sf-toast-title',
             description: 'sf-toast-description',
             actionButton: 'bg-gold-400 text-navy-950 hover:bg-gold-300',
-            cancelButton: 'bg-slate-800 text-navy-200 hover:bg-slate-700',
+            cancelButton: 'bg-navy-800 text-slate-300 hover:bg-navy-700',
             closeButton: 'sf-toast-close',
             success: 'sf-toast-success',
             error: 'sf-toast-error',

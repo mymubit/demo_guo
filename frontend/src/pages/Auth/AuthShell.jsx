@@ -1,4 +1,4 @@
-﻿import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { ShieldCheck, Sparkles } from 'lucide-react'
 import { Badge } from '@/components/ui'
 import { ICON } from '@/constants/iconSizes'
@@ -14,13 +14,13 @@ const TABS = [
 
 export default function AuthShell({ activeTab, title, subtitle, children }) {
   return (
-    <div className="relative min-h-[calc(100vh-4.25rem)] grid grid-cols-1 bg-gray-50 lg:grid-cols-2">
-      <div className="relative hidden overflow-hidden lg:block bg-brand-600">
+    <div className="relative min-h-[calc(100vh-4.25rem)] grid grid-cols-1 bg-navy-950 lg:grid-cols-2">
+      <div className="relative hidden overflow-hidden lg:block bg-navy-900">
         <div
-          className="absolute inset-0 bg-cover bg-center opacity-30"
+          className="absolute inset-0 bg-cover bg-center opacity-20"
           style={{ backgroundImage: `url(${AUTH_BG})` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-700/90 to-brand-900/95" />
+        <div className="absolute inset-0 bg-gradient-to-br from-gold-900/20 via-navy-950/80 to-navy-950" />
         <div className="relative z-10 flex h-full flex-col justify-between p-12 text-white">
           <div>
             <Badge tone="gold" size="md">
@@ -31,11 +31,11 @@ export default function AuthShell({ activeTab, title, subtitle, children }) {
               <br />
               变成可被拍摄的剧本。
             </h2>
-            <p className="mt-3 max-w-md text-brand-100">
-              7 节点主链 · 4 题材格式 · 数字水印 · 全流程 8–12 分钟
+            <p className="mt-3 max-w-md text-slate-300">
+              12 位专业角色 · 8 阶段创作流程 · 数字水印 · 全流程 8–12 分钟
             </p>
           </div>
-          <div className="space-y-2 text-sm text-brand-100">
+          <div className="space-y-3 text-sm text-slate-400">
             <div className="flex items-center gap-2">
               <ShieldCheck className={ICON.md} /> 端到端加密 · 原始数据不出端
             </div>
@@ -46,16 +46,16 @@ export default function AuthShell({ activeTab, title, subtitle, children }) {
         </div>
       </div>
 
-      <div className="relative z-10 flex items-center justify-center bg-white p-8 md:p-12">
+      <div className="relative z-10 flex items-center justify-center bg-navy-900/50 backdrop-blur-sm p-8 md:p-12">
         <div className="w-full max-w-sm">
-          <div className="mb-7 flex gap-1 rounded-full border border-gray-200 bg-gray-50 p-1">
+          <div className="mb-7 flex gap-1 rounded-full border border-white/10 bg-white/5 p-1">
             {TABS.map((tab) => (
               <Link
                 key={tab.key}
                 to={tab.to}
                 className={cn(
-                  'flex-1 rounded-full px-3 py-1.5 text-center text-sm font-medium transition-colors',
-                  activeTab === tab.key ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900',
+                  'flex-1 rounded-full px-3 py-2 text-center text-sm font-medium transition-colors',
+                  activeTab === tab.key ? 'bg-white/10 text-white shadow-sm' : 'text-slate-400 hover:text-white',
                 )}
               >
                 {tab.label}
@@ -63,8 +63,8 @@ export default function AuthShell({ activeTab, title, subtitle, children }) {
             ))}
           </div>
 
-          <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
-          {subtitle ? <p className="mt-1 text-sm text-gray-500">{subtitle}</p> : null}
+          <h1 className="text-2xl font-bold text-white">{title}</h1>
+          {subtitle ? <p className="mt-1 text-sm text-slate-400">{subtitle}</p> : null}
 
           <div className="mt-6">{children}</div>
         </div>

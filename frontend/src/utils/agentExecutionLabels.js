@@ -3,8 +3,7 @@
 import { resolveSkillId } from '@/utils/skillTerm'
 
 export const AGENT_ID_LABELS = {
-  // drama.* 新体系（36个角色）
-  
+  // drama.* 新体系（12个角色）
   
   'drama.topic-planner': '选题策划官',
   

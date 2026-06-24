@@ -1,7 +1,7 @@
-import { FileX, Search, Lock, WifiOff, PlusCircle } from 'lucide-react'
-import Button from '@/components/ui/Button'
-import { cn } from '@/utils/cn'
-import { renderLucideIcon } from '@/utils/renderLucideIcon'
+import { FileX, Search, Lock, WifiOff, PlusCircle, AlertTriangle } from 'lucide-react';
+import Button from '@/components/ui/Button';
+import { cn } from '@/utils/cn';
+import { renderLucideIcon } from '@/utils/renderLucideIcon';
 
 const presets = {
   'no-data': {
@@ -27,9 +27,14 @@ const presets = {
   'empty-create': {
     icon: PlusCircle,
     title: '还没有内容',
-    description: '点击下方按钮创建第一项',
+    description: '点击下方按钮创建第一个项目',
   },
-}
+  'error': {
+    icon: AlertTriangle,
+    title: '加载失败',
+    description: '数据加载出错，请稍后重试',
+  },
+};
 
 export default function EmptyState({
   type = 'no-data',
@@ -38,45 +43,58 @@ export default function EmptyState({
   action,
   actionLabel,
   onAction,
+  secondaryAction,
+  secondaryActionLabel,
+  onSecondaryAction,
   icon,
   className,
   compact = false,
 }) {
-  const preset = presets[type] || presets['no-data']
-  const iconSizeClass = cn(compact ? 'w-6 h-6' : 'w-8 h-8', 'text-gray-400')
-  const actionContent =
-    action ||
-    (actionLabel && onAction ? (
-      <Button variant="brand" size="sm" onClick={onAction}>
-        {actionLabel}
-      </Button>
-    ) : null)
+  const preset = presets[type] || presets['no-data'];
+  const iconSizeClass = cn(compact ? 'w-8 h-8' : 'w-12 h-12', 'text-slate-500');
+  
+  const actionContent = action || (actionLabel && onAction ? (
+    <Button variant="gold" size="sm" onClick={onAction}>
+      {actionLabel}
+    </Button>
+  ) : null);
+
+  const secondaryActionContent = secondaryAction || (secondaryActionLabel && onSecondaryAction ? (
+    <Button variant="secondary" size="sm" onClick={onSecondaryAction}>
+      {secondaryActionLabel}
+    </Button>
+  ) : null);
 
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center text-center',
-        compact ? 'py-8' : 'py-16',
+        'flex flex-col items-center justify-center text-center py-12 sm:py-16',
+        compact ? 'py-8' : 'py-12 sm:py-16',
         className,
       )}
     >
       <div
         className={cn(
-          'rounded-2xl bg-gray-100 flex items-center justify-center mb-4',
-          compact ? 'w-12 h-12' : 'w-16 h-16',
+          'rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-5',
+          compact ? 'w-14 h-14' : 'w-20 h-20',
         )}
       >
         {renderLucideIcon(icon || preset.icon, iconSizeClass)}
       </div>
-      <h3 className={cn('font-semibold text-gray-900 mb-1', compact ? 'text-sm' : 'text-base')}>
+      <h3 className={cn('font-semibold text-white mb-2', compact ? 'text-base' : 'text-lg')}>
         {title || preset.title}
       </h3>
-      <p className={cn('text-gray-500 mb-4', compact ? 'text-xs' : 'text-sm')}>
+      <p className={cn('text-slate-400 max-w-sm', compact ? 'text-xs' : 'text-sm')}>
         {description || preset.description}
       </p>
-      {actionContent ? <div className="mt-2">{actionContent}</div> : null}
+      {(actionContent || secondaryActionContent) && (
+        <div className="mt-6 flex items-center gap-3 flex-wrap justify-center">
+          {actionContent}
+          {secondaryActionContent}
+        </div>
+      )}
     </div>
-  )
+  );
 }
 
 export function EmptyStateWithButton({
@@ -93,11 +111,8 @@ export function EmptyStateWithButton({
       title={title}
       description={description}
       className={className}
-      action={
-        <Button variant="brand" size="sm" onClick={onClick}>
-          {buttonText}
-        </Button>
-      }
+      actionLabel={buttonText}
+      onAction={onClick}
     />
-  )
+  );
 }
