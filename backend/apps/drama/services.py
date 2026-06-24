@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Drama Skills ??????"""
+"""Drama Skills 服务层"""
 from __future__ import annotations
 
 import logging
@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 
 
 class DramaWordCountService:
-    """?????? ? ??????????"""
+    """字数校验服务 - 单集剧本格式校验"""
 
-    # ????????? dramaskilltrae skill-thresholds.json?
+    # 字数阈值配置，参考 dramaskilltrae skill-thresholds.json
     FIRST_EPISODE_MIN = 900
     FIRST_EPISODE_MAX = 1100
     OTHER_EPISODE_MIN = 700
@@ -25,7 +25,7 @@ class DramaWordCountService:
     DIALOGUE_RATIO_MIN = 0.28
     MAX_SCENES = 3
 
-    # ???????????AI????????
+    # 需要过滤的非剧本内容模式（AI备注、系统提示等）
     NON_SCRIPT_PATTERNS = [
         r"```.*?```",
         r"<!--.*?-->",
@@ -47,7 +47,7 @@ class DramaWordCountService:
 
     @classmethod
     def clean_non_script(cls, content: str) -> str:
-        """????????????????"""
+        """清理非剧本内容（AI备注、代码块、注释等）"""
         cleaned = content
         for pattern in cls.NON_SCRIPT_PATTERNS:
             cleaned = re.sub(pattern, "", cleaned, flags=re.DOTALL)
@@ -55,32 +55,32 @@ class DramaWordCountService:
 
     @classmethod
     def count_cjk(cls, text: str) -> int:
-        """??CJK????????????"""
+        """统计CJK中日韩字符数量（中文为主）"""
         return sum(1 for c in text if '\u4e00' <= c <= '\u9fff' or '\u3400' <= c <= '\u4dbf')
 
     @classmethod
     def count_dialogue_cjk(cls, text: str) -> int:
-        """???????CJK?????"""
+        """统计对话中的CJK字数"""
         dialogues = cls.DIALOGUE_PATTERN.findall(text)
         return sum(cls.count_cjk(d) for d in dialogues)
 
     @classmethod
     def count_scenes(cls, text: str) -> int:
-        """???????"""
+        """统计场景数量"""
         return len(cls.SCENE_HEAD_PATTERN.findall(text))
 
     @classmethod
     def validate_episode(cls, content: str, episode_number: int) -> Dict[str, Any]:
         """
-        ???????????
+        校验单集剧本格式合规性
 
-        ?????
+        返回格式：
         {
             "episode": 1,
-            "word_count": {"total": 1050, "target_range": [900, 1100], "status": "???"},
-            "dialogue_ratio": {"count": 320, "ratio": "30.5%", "target": "?28%", "status": "???"},
-            "scene_count": {"count": 2, "target": "1-3", "status": "???"},
-            "overall": "??",
+            "word_count": {"total": 1050, "target_range": [900, 1100], "status": "正常"},
+            "dialogue_ratio": {"count": 320, "ratio": "30.5%", "target": "≥28%", "status": "正常"},
+            "scene_count": {"count": 2, "target": "1-3", "status": "正常"},
+            "overall": "达标",
             "recommendations": []
         }
         """
@@ -90,16 +90,16 @@ class DramaWordCountService:
         dialogue_cjk = cls.count_dialogue_cjk(cleaned)
         scene_count = cls.count_scenes(cleaned)
 
-        # ????
+        # 字数阈值
         if episode_number == 1:
             min_words, max_words = cls.FIRST_EPISODE_MIN, cls.FIRST_EPISODE_MAX
         else:
             min_words, max_words = cls.OTHER_EPISODE_MIN, cls.OTHER_EPISODE_MAX
 
-        # ????
+        # 对话占比
         dialogue_ratio = dialogue_cjk / total_cjk if total_cjk > 0 else 0
 
-        # ??
+        # 合规判断
         word_ok = min_words <= total_cjk <= max_words
         dialogue_ok = dialogue_ratio >= cls.DIALOGUE_RATIO_MIN
         scene_ok = 1 <= scene_count <= cls.MAX_SCENES
@@ -179,16 +179,16 @@ class DramaWordCountService:
     @classmethod
     def validate_all_episodes(cls, episodes: Dict[int, str]) -> Dict[str, Any]:
         """
-        ???????????
+        批量校验所有剧集
 
-        ???
+        参数：
         - episodes: {episode_number: content}
 
-        ???
+        返回：
         {
             "summary": {"total": 30, "pass": 28, "fail": 2, "avg_words": 835},
-            "episodes": [????],
-            "issues": [???????]
+            "episodes": [单集结果],
+            "issues": [问题汇总]
         }
         """
         reports = []
@@ -223,18 +223,18 @@ class DramaWordCountService:
 
 
 class DramaRoleService:
-    """Drama Skills ???????"""
+    """Drama Skills 角色查询服务"""
 
-    # ????????????????
+    # 层级标签配置
     TIER_LABELS = {
-        1: {"name": "????", "desc": "?????????????", "color": "blue"},
-        2: {"name": "????", "desc": "?????????????", "color": "green"},
-        3: {"name": "????", "desc": "??????????????", "color": "gray"},
+        1: {"name": "核心层", "desc": "快速通道必备角色，每个项目必须执行", "color": "blue"},
+        2: {"name": "增强层", "desc": "复合增强角色，专家模式默认展示", "color": "green"},
+        3: {"name": "专业层", "desc": "细分专业角色，按需手动调用", "color": "gray"},
     }
 
     @staticmethod
     def ensure_visible_roles() -> int:
-        """?? DB ???? 12 ??? drama ?????????????? seed??"""
+        """确保 DB 中存在 12 个可见 drama 角色，不存在时执行 seed"""
         from apps.agent.definition_service import AgentDefinitionService
         from apps.agent.models import AgentDefinition
         from apps.drama.defaults import DRAMA_VISIBLE_ROLES
@@ -249,18 +249,18 @@ class DramaRoleService:
             return 0
 
         created = AgentDefinitionService.ensure_defaults()
-        # seed_drama_skills ????? prompt/?????????????
+        # seed_drama_skills 会补充 prompt/契约等完整配置
         return max(created, len(missing))
 
     @staticmethod
     def get_all_roles_grouped() -> List[Dict[str, Any]]:
         """
-        ???????12????????
+        获取按部门分组的12个可见角色
 
-        ???????
-        - 8????????tier=1??????
-        - 4?????????tier=2??????27??????
-        ????tier2/3??????????????????
+        角色分组规则：
+        - 8个快速通道核心角色（tier=1），蓝色标签
+        - 4个复合增强角色（tier=2），绿色标签；其余27个旧角色隐藏
+        注意：tier2/3的旧角色不展示，但后台保留数据用于历史兼容
         """
         DramaRoleService.ensure_visible_roles()
         from apps.agent.models import AgentDefinition, AgentLlmRouteConfig
@@ -277,7 +277,7 @@ class DramaRoleService:
             "drama.polish-master", "drama.production-pack",
         }
 
-        # ??????12???
+        # 只查询可见的12个角色
         agents = list(
             AgentDefinition.objects.filter(
                 agent_id__in=DRAMA_VISIBLE_ROLES,
@@ -296,7 +296,7 @@ class DramaRoleService:
             dept_roles = []
             for agent in agents:
                 agent_id = agent.agent_id
-                # ?? defaults ? dept_map ?????????? defaults ??
+                # 优先使用 defaults 的 dept_map，兼容未同步到 defaults 的数据
                 resolved_dept = dept_map.get(agent_id) or (
                     agent.ui_schema.get("dept") if isinstance(agent.ui_schema, dict) else None
                 )
@@ -304,7 +304,7 @@ class DramaRoleService:
                     continue
 
                 route = routes.get(agent_id)
-                model_name = "???"
+                model_name = "未配置"
                 if route and route.llm_provider:
                     model_name = route.llm_provider.name
                 elif route and route.display_name:
@@ -320,7 +320,7 @@ class DramaRoleService:
                     "is_fast_track": agent_id in DRAMA_FAST_TRACK_ROLES,
                     "is_composite": agent_id in COMPOSITE_ROLES,
                     "tier": tier,
-                    "tier_label": DramaRoleService.TIER_LABELS.get(tier, {}).get("name", "????"),
+                    "tier_label": DramaRoleService.TIER_LABELS.get(tier, {}).get("name", "增强层"),
                     "tier_color": DramaRoleService.TIER_LABELS.get(tier, {}).get("color", "green"),
                     "is_enabled": agent.is_enabled,
                     "current_model": model_name,
@@ -341,9 +341,9 @@ class DramaRoleService:
     @staticmethod
     def get_token_stats(user_id: Optional[int] = None, days: int = 30) -> Dict[str, Any]:
         """
-        ??Token?????
+        获取Token消耗统计
 
-        ?????/??/??????????
+        支持按用户/全局、按角色/按日期维度统计
         """
         from datetime import timedelta
 
@@ -361,7 +361,7 @@ class DramaRoleService:
         if user_id:
             qs = qs.filter(project__user_id=user_id)
 
-        # ??????????values?annotate??????????
+        # 使用values+annotate避免N+1查询问题
         from django.db.models import FloatField, ExpressionWrapper
         by_role = list(
             qs.values("agent_id", "agent_name_zh")
@@ -372,11 +372,11 @@ class DramaRoleService:
             )
             .order_by("-total_tokens")
         )
-        # ????avg_tokens
+        # 补充avg_tokens
         for item in by_role:
             item["avg_tokens"] = (item["total_tokens"] or 0) / max(item["total_calls"], 1)
 
-        # ???????30??
+        # 按日期统计（最近30天）
         from django.db.models.functions import TruncDate
 
         by_day = list(
@@ -390,7 +390,7 @@ class DramaRoleService:
             .order_by("date")
         )
 
-        # ??
+        # 汇总
         totals = qs.aggregate(
             total_tokens=Sum("total_tokens"),
             total_cost_cents=Sum("cost_cents"),
@@ -419,97 +419,97 @@ class DramaRoleService:
 
 
 class DramaQualityService:
-    """?????? ? ????? + ???? + ?????"""
+    """质量评估服务 - 8维度评分 + 问题检测 + 改进建议"""
 
-    # 10???????? StoryForge G-Eval ????8????????+??????
+    # 10个质量维度（基于 StoryForge G-Eval 框架，8个核心维度+2个商业维度）
     DIMENSIONS = [
-        {"key": "format",     "name": "????",   "weight": 0.10,
-         "desc": "???/????/???/????/?????FER<5%"},
-        {"key": "narrative",  "name": "????",   "weight": 0.15,
-         "desc": "???????/???/????/??-??-????"},
-        {"key": "conflict",   "name": "????",   "weight": 0.15,
-         "desc": "????????/????/????/????"},
-        {"key": "character",  "name": "?????", "weight": 0.10,
-         "desc": "?????/??????/??????/Ghost-Lie-Flaw??"},
-        {"key": "emotion",    "name": "????",   "weight": 0.10,
-         "desc": "??????/??3-5?????/????/??"},
-        {"key": "logic",      "name": "?????", "weight": 0.10,
-         "desc": "???/??/????/?????/???????"},
-        {"key": "satisfaction","name": "????",  "weight": 0.10,
-         "desc": "??2-3???/???????/??/??/???"},
-        {"key": "hooks",      "name": "????",   "weight": 0.10,
-         "desc": "??10???/??cliffhanger??/????????"},
-        {"key": "paywall",    "name": "?????", "weight": 0.05,
-         "desc": "??????????/???????/S?????"},
-        {"key": "genre_fit",  "name": "?????", "weight": 0.05,
-         "desc": "??????????/??????/??????"},
+        {"key": "format",     "name": "格式规范",   "weight": 0.10,
+         "desc": "场景标注/人物台词格式/字数控制/对话占比/FER<5%"},
+        {"key": "narrative",  "name": "叙事结构",   "weight": 0.15,
+         "desc": "三幕式完整性/建置-对抗-结局/钩子-转折-高潮布局"},
+        {"key": "conflict",   "name": "戏剧冲突",   "weight": 0.15,
+         "desc": "核心冲突明确度/升级节奏/对抗强度/两难选择"},
+        {"key": "character",  "name": "人物塑造", "weight": 0.10,
+         "desc": "主角弧光/人物区分度/行为合理性/Ghost-Lie-Flaw设计"},
+        {"key": "emotion",    "name": "情绪曲线",   "weight": 0.10,
+         "desc": "情绪起伏设计/每3-5分钟情绪点/共情度/爽点"},
+        {"key": "logic",      "name": "逻辑自洽", "weight": 0.10,
+         "desc": "世界观/动机/因果链/人物行为/常识合理性"},
+        {"key": "satisfaction","name": "爽点密度",  "weight": 0.10,
+         "desc": "每集2-3个爽点/打脸逆袭/甜宠/反转/解压感"},
+        {"key": "hooks",      "name": "钩子设计",   "weight": 0.10,
+         "desc": "开场10秒钩子/集末cliffhanger/付费点钩子强度"},
+        {"key": "paywall",    "name": "付费转化", "weight": 0.05,
+         "desc": "付费卡点位置设计/断更点悬念/S级钩子配置"},
+        {"key": "genre_fit",  "name": "题材适配", "weight": 0.05,
+         "desc": "符合目标题材规范/元素完整度/受众匹配度"},
     ]
 
-    # ??????????????????
+    # 各维度问题模板，按严重等级分级
     ISSUE_TEMPLATES: Dict[str, List[Dict[str, Any]]] = {
         "format": [
-            {"id": "f001", "severity": "error",   "desc": "?????????????",
-             "suggestion": "?\"??\"??????????????"},
-            {"id": "f002", "severity": "error",   "desc": "????????",
-             "suggestion": "????????-?? ????/?/?/?? ?/? ??"},
-            {"id": "f003", "severity": "warning", "desc": "???????????",
-             "suggestion": "???900??????700??????????"},
-            {"id": "f004", "severity": "warning", "desc": "???????????",
-             "suggestion": "???1100??????900???????????"},
-            {"id": "f005", "severity": "warning", "desc": "??????28%",
-             "suggestion": "???????????????????????"},
-            {"id": "f006", "severity": "info",    "desc": "??????3?",
-             "suggestion": "?????????????????3???"},
+            {"id": "f001", "severity": "error",   "desc": "场景标注格式错误",
+             "suggestion": "按\"集-场 日/夜 内/外 地点\"格式标注场景"},
+            {"id": "f002", "severity": "error",   "desc": "台词格式错误",
+             "suggestion": "人物台词格式应为：角色名（情绪/动作）：台词"},
+            {"id": "f003", "severity": "warning", "desc": "字数严重不足",
+             "suggestion": "第一集建议900-1100字，其他集700-900字，增加细节描写"},
+            {"id": "f004", "severity": "warning", "desc": "字数超出过多",
+             "suggestion": "第一集不超过1100字，其他集不超过900字，精简冗余内容"},
+            {"id": "f005", "severity": "warning", "desc": "对话占比低于28%",
+             "suggestion": "增加人物对话，用对话推进剧情，减少旁白和场景描写"},
+            {"id": "f006", "severity": "info",    "desc": "单集场景超过3个",
+             "suggestion": "竖屏短剧建议单集1-3个场景，减少场景切换成本"},
         ],
         "structure": [
-            {"id": "s001", "severity": "error",   "desc": "????????????",
-             "suggestion": "?????????????????????"},
-            {"id": "s002", "severity": "error",   "desc": "?????????????",
-             "suggestion": "??????1??????McKee???"},
-            {"id": "s003", "severity": "warning", "desc": "??3????????????",
-             "suggestion": "????????????????????"},
-            {"id": "s004", "severity": "warning", "desc": "???????",
-             "suggestion": "???????????30%?????????"},
+            {"id": "s001", "severity": "error",   "desc": "缺少开场钩子",
+             "suggestion": "前30秒必须出现强冲突/悬念/反转，抓住观众注意力"},
+            {"id": "s002", "severity": "error",   "desc": "缺少集末悬念或高潮",
+             "suggestion": "参考McKee节拍表，每集结尾留钩子吸引下一集"},
+            {"id": "s003", "severity": "warning", "desc": "前3分钟节奏偏慢无冲突",
+             "suggestion": "加快节奏，快速进入核心冲突，减少铺垫篇幅"},
+            {"id": "s004", "severity": "warning", "desc": "转折密度不足",
+             "suggestion": "建议每3-5分钟一个小转折，提升观看粘性"},
         ],
         "character": [
-            {"id": "c001", "severity": "error",   "desc": "?????????????",
-             "suggestion": "??????????????????"},
-            {"id": "c002", "severity": "warning", "desc": "????????",
-             "suggestion": "??Ghost???????Lie???????Flaw???????Truth?????"},
-            {"id": "c003", "severity": "warning", "desc": "????????",
-             "suggestion": "???????????????????"},
+            {"id": "c001", "severity": "error",   "desc": "主角动机不明确",
+             "suggestion": "明确主角表层目标(Want)和深层需求(Need)，形成张力"},
+            {"id": "c002", "severity": "warning", "desc": "人物弧光不足",
+             "suggestion": "设计Ghost前史创伤→Lie错误认知→Flaw性格缺陷→Truth觉醒弧光"},
+            {"id": "c003", "severity": "warning", "desc": "人物区分度低",
+             "suggestion": "给每个角色独特的语言习惯、标志性动作和价值观"},
         ],
         "emotion": [
-            {"id": "e001", "severity": "error",   "desc": "??????????EV<7?",
-             "suggestion": "????????????????????????"},
-            {"id": "e002", "severity": "warning", "desc": "?????????ET<2??2??",
-             "suggestion": "??????????????????????"},
+            {"id": "e001", "severity": "error",   "desc": "情绪价值不足，爽点EV<7分",
+             "suggestion": "设计打脸/逆袭/甜宠/救赎等强情绪点，满足观众情感需求"},
+            {"id": "e002", "severity": "warning", "desc": "情绪转折点不足，ET<2个/集",
+             "suggestion": "安排至少2次情绪起伏，避免平铺直叙"},
         ],
         "dialogue": [
-            {"id": "d001", "severity": "error",   "desc": "???AI???????????",
-             "suggestion": "?????/??/??/?????????????"},
-            {"id": "d002", "severity": "warning", "desc": "?????????",
-             "suggestion": "???????????????/??/??/???"},
-            {"id": "d003", "severity": "warning", "desc": "?????????????",
-             "suggestion": "\"?????\"????/??/??????????"},
+            {"id": "d001", "severity": "error",   "desc": "台词AI味重，过于书面化",
+             "suggestion": "使用口语化表达，加入语气词、停顿、打断等真实对话元素"},
+            {"id": "d002", "severity": "warning", "desc": "台词过于直白",
+             "suggestion": "增加潜台词、言外之意，通过对话展现人物关系和矛盾"},
+            {"id": "d003", "severity": "warning", "desc": "所有人说话风格相似",
+             "suggestion": "根据\"身份+性格+处境\"设计差异化台词风格"},
         ],
         "hooks": [
-            {"id": "h001", "severity": "error",   "desc": "??30???????????",
-             "suggestion": "?3???????????/??/??????????"},
-            {"id": "h002", "severity": "warning", "desc": "B?????????",
-             "suggestion": "???2-3????A?????????????B?????"},
+            {"id": "h001", "severity": "error",   "desc": "前30秒没有出现强钩子",
+             "suggestion": "开场3秒出冲突/悬念/异常，第一时间抓住观众"},
+            {"id": "h002", "severity": "warning", "desc": "B故事/付费点钩子弱",
+             "suggestion": "在第2-3集/第8-12集设计A故事+ B故事双线钩子，强化付费点"},
         ],
         "dream": [
-            {"id": "dr001", "severity": "error",   "desc": "?????????????",
-             "suggestion": "????????????????\"????\""},
-            {"id": "dr002", "severity": "warning", "desc": "??????????<0.8?/??",
-             "suggestion": "?????0.8???????/??/??/??"},
+            {"id": "dr001", "severity": "error",   "desc": "安全感不足，价值观有问题",
+             "suggestion": "确保正义战胜邪恶，主角行为符合\"自卫/正义/保护\"原则"},
+            {"id": "dr002", "severity": "warning", "desc": "爽点密度不足<0.8个/集",
+             "suggestion": "每集至少0.8个爽点，打脸/甜宠/反转/逆袭交替安排"},
         ],
         "commercial": [
-            {"id": "cm001", "severity": "warning", "desc": "????????",
-             "suggestion": "????S/A/B/C????S???????????"},
-            {"id": "cm002", "severity": "info",    "desc": "????????",
-             "suggestion": "?????3???????????????????????"},
+            {"id": "cm001", "severity": "warning", "desc": "爆款潜力不足",
+             "suggestion": "参考S/A级爆款模板，强化三大差异化卖点和情绪钩子"},
+            {"id": "cm002", "severity": "info",    "desc": "商业元素可加强",
+             "suggestion": "考虑每3集一个小高潮、每10集一个大反转的商业节奏"},
         ],
     }
 
@@ -521,29 +521,29 @@ class DramaQualityService:
         word_count_result: Optional[Dict] = None,
     ) -> Dict[str, Any]:
         """
-        ??????????????
+        构建详细的质量评估报告
 
-        ???
+        参数：
         - scores: {"format": 85, "structure": 80, ...}
-        - episode_number: ???None=???
-        - word_count_result: ??????
+        - episode_number: 单集号，None=全剧汇总
+        - word_count_result: 字数校验结果
 
-        ???
+        返回：
         {
             "overall_score": 82,
             "grade": "A",
             "dimensions": [
                 {
                     "key": "format",
-                    "name": "????",
+                    "name": "格式规范",
                     "score": 85,
                     "weight": 0.15,
                     "issues": [{"severity": "warning", "desc": "...", "suggestion": "..."}],
-                    "summary": "????????2?????"
+                    "summary": "格式规范较好，存在2个小问题"
                 }
             ],
-            "all_issues": [...],  # ????????????
-            "top_suggestions": [...],  # ????3?????
+            "all_issues": [...],  # 所有维度问题汇总
+            "top_suggestions": [...],  # 优先修复的3个建议
         }
         """
         dimensions_result = []
@@ -570,7 +570,7 @@ class DramaQualityService:
             })
             all_issues.extend(dim_issues)
 
-        # ?????
+        # 计算总分
         overall = scores.get("overall") or sum(
             scores.get(d["key"], 0) * d["weight"] for d in cls.DIMENSIONS
         )
@@ -578,18 +578,18 @@ class DramaQualityService:
 
         grade = "S" if overall >= 90 else "A" if overall >= 80 else "B" if overall >= 75 else "C" if overall >= 60 else "D"
 
-        # ??????
+        # 按严重度排序问题
         severity_order = {"error": 0, "warning": 1, "info": 2}
         all_issues_sorted = sorted(all_issues, key=lambda x: severity_order.get(x["severity"], 3))
 
-        # ???3???
+        # 取前3个优先建议
         top_suggestions = [
             {"dimension": i.get("dimension", ""), "suggestion": i["suggestion"], "severity": i["severity"]}
             for i in all_issues_sorted[:3]
             if i.get("severity") in ("error", "warning")
         ]
 
-        # ????????????????
+        # 补充字数统计信息（如果提供）
         word_count_info = None
         if word_count_result:
             word_count_info = {
@@ -620,7 +620,7 @@ class DramaQualityService:
         score: float,
         word_count_result: Optional[Dict] = None,
     ) -> List[Dict[str, Any]]:
-        """????????????????????"""
+        """根据分数和字数结果检测该维度存在的问题"""
         issues = []
         templates = cls.ISSUE_TEMPLATES.get(dimension_key, [])
 
@@ -656,7 +656,7 @@ class DramaQualityService:
         if score == 0:
             return issues
 
-        # ?????????????
+        # 根据分数阈值匹配问题模板
         threshold = 90 if score >= 85 else 80 if score >= 70 else 60 if score >= 50 else 0
         for t in templates:
             sev = t["severity"]
@@ -668,7 +668,7 @@ class DramaQualityService:
             if should_add and not any(i["id"] == t["id"] for i in issues):
                 issues.append({**t, "dimension": cls._dim_name(dimension_key)})
 
-        return issues[:3]  # ????3??????????
+        return issues[:3]  # 每个维度最多返回3个问题
 
     @classmethod
     def _dim_name(cls, key: str) -> str:
@@ -682,29 +682,29 @@ class DramaQualityService:
         error_count = sum(1 for i in issues if i["severity"] == "error")
         warn_count = sum(1 for i in issues if i["severity"] == "warning")
         if score >= 90:
-            return f"{dim_name}??????????"
+            return f"{dim_name}表现优秀，是强项维度"
         if score >= 80:
-            return f"{dim_name}????" + (f"?{warn_count}????" if warn_count else "")
+            return f"{dim_name}良好" + (f"，有{warn_count}个小建议" if warn_count else "")
         if score >= 70:
-            return f"{dim_name}?????" + (f"?{error_count}?????{warn_count}?????" if error_count else f"?{warn_count}?????")
-        return f"{dim_name}???????{error_count}????"
+            return f"{dim_name}基本合格" + (f"，存在{error_count}个错误和{warn_count}个警告" if error_count else f"，有{warn_count}个待改进项")
+        return f"{dim_name}存在较大问题，有{error_count}个严重错误"
 
     @classmethod
     def _grade_desc(cls, grade: str) -> str:
         return {
-            "S": "S\u7ea7 \u00b7 \u7cbe\u54c1\u6807\u6746\uff0c\u53ef\u76f4\u63a5\u4ea4\u4ed8",
-            "A": "A\u7ea7 \u00b7 \u8d28\u91cf\u4f18\u79c0\uff0c\u5c0f\u5e45\u6da6\u8272\u5373\u53ef",
-            "B": "B\u7ea7 \u00b7 \u6574\u4f53\u5408\u683c\uff0c\u5efa\u8bae\u5c40\u90e8\u4f18\u5316",
-            "C": "C\u7ea7 \u00b7 \u5b58\u5728\u660e\u663e\u77ed\u677f\uff0c\u9700\u91cd\u70b9\u4fee\u6539",
-            "D": "D\u7ea7 \u00b7 \u8d28\u91cf\u672a\u8fbe\u6807\uff0c\u5efa\u8bae\u91cd\u5199",
+            "S": "S级 · 精品标杆，可直接交付",
+            "A": "A级 · 质量优秀，小幅润色即可",
+            "B": "B级 · 整体合格，建议局部优化",
+            "C": "C级 · 存在明显短板，需重点修改",
+            "D": "D级 · 质量未达标，建议重写",
         }.get(grade, "")
 
     @classmethod
     def build_series_quality_summary(cls, episode_qualities: List[Dict]) -> Dict[str, Any]:
         """
-        ????????????????????
+        构建全剧质量汇总报告
 
-        ???episode_qualities ?? DramaEpisodeQuality.objects.filter(project=project)
+        参数episode_qualities 来自 DramaEpisodeQuality.objects.filter(project=project)
         """
         if not episode_qualities:
             return {"total_episodes": 0, "evaluated_episodes": 0}
@@ -733,7 +733,7 @@ class DramaQualityService:
         all_overalls = [e["overall"] for e in episode_summaries if e["overall"] > 0]
         series_overall = round(sum(all_overalls) / len(all_overalls), 1) if all_overalls else 0
 
-        # ?????
+        # 薄弱剧集（低于75分）
         weak_episodes = [e for e in episode_summaries if e["overall"] < 75]
 
         return {
@@ -754,17 +754,17 @@ class DramaQualityService:
         agent_id: str,
     ) -> Dict[str, Any]:
         """
-        ??????????????????????
+        应用修改建议到单集剧本（占位实现，待接入LLM）
 
-        ?????????????????LLM?original_content??
-        ??suggestions??????
+        注意：当前为占位逻辑，实际需要调用LLM修改original_content
+        根据suggestions生成新版本内容
 
-        ???
+        返回：
         {
-            "new_content": "????????",
-            "diff_summary": "????",
-            "applied_count": 3,  # ????????
-            "skipped_count": 1,  # ??????
+            "new_content": "修改后的内容",
+            "diff_summary": "修改摘要",
+            "applied_count": 3,  # 已应用建议数
+            "skipped_count": 1,  # 跳过建议数
         }
         """
         applied = []
@@ -776,27 +776,27 @@ class DramaQualityService:
             else:
                 skipped.append(sg)
 
-        # ??????
+        # 生成修改摘要
         error_fixes = [s for s in applied if s.get("severity") == "error"]
         warn_fixes = [s for s in applied if s.get("severity") == "warning"]
 
         diff_parts = []
         if error_fixes:
-            diff_parts.append(f"??{len(error_fixes)}????" + "?".join(s.get("desc", "")[:20] for s in error_fixes[:3]))
+            diff_parts.append(f"修复{len(error_fixes)}个错误：" + "；".join(s.get("desc", "")[:20] for s in error_fixes[:3]))
         if warn_fixes:
-            diff_parts.append(f"??{len(warn_fixes)}????" + "?".join(s.get("desc", "")[:20] for s in warn_fixes[:3]))
+            diff_parts.append(f"优化{len(warn_fixes)}个警告：" + "；".join(s.get("desc", "")[:20] for s in warn_fixes[:3]))
 
         return {
-            "new_content": current_content,  # TODO: ????LLM??
-            "diff_summary": "?".join(diff_parts) if diff_parts else "?????????",
+            "new_content": current_content,  # TODO: 接入LLM修改
+            "diff_summary": "；".join(diff_parts) if diff_parts else "无自动可应用修改",
             "applied_count": len(applied),
             "skipped_count": len(skipped),
             "applied_suggestions": applied,
             "skipped_suggestions": skipped,
-            "note": "?????????????LLM?????LLM??????",
+            "note": "当前为占位逻辑，实际修改需要调用LLM生成新版本内容",
         }
 class DramaRoleRunService:
-    """Drama ???? ? ?? creation.Project ? IndependentAgentService?"""
+    """Drama 角色执行服务 - 对接 creation.Project 和 IndependentAgentService"""
 
     ACTIVE_STATUSES = (
         "pending",
@@ -806,7 +806,7 @@ class DramaRoleRunService:
 
     @staticmethod
     def build_run_params(project) -> Dict[str, Any]:
-        """? Project ???? Agent ?????"""
+        """从 Project 构建 Agent 运行参数"""
         return {
             "core_idea": (project.core_idea or project.title or project.theme).strip(),
             "genre": project.theme,
@@ -837,13 +837,13 @@ class DramaRoleRunService:
 
     @classmethod
     def fail_stale_active_executions(cls, project, *, stale_minutes: int | None = None) -> int:
-        """???????? Agent/Drama ??????????????"""
+        """将超时卡住的 Agent/Drama 执行标记为失败，防止死锁"""
         from apps.creation.models import AgentExecutionRun
         from apps.drama.models import DramaRoleExecution
 
         minutes = stale_minutes if stale_minutes is not None else cls.STALE_ACTIVE_MINUTES
         threshold = timezone.now() - timedelta(minutes=minutes)
-        stale_msg = "??????????? running ?"
+        stale_msg = "执行超时（15分钟无响应），已自动标记为失败"
 
         agent_fixed = AgentExecutionRun.objects.filter(
             project=project,
@@ -876,7 +876,7 @@ class DramaRoleRunService:
 
     @classmethod
     def reconcile_stale_executions(cls, project) -> int:
-        """Agent ???? Drama ? pending/running ?????????"""
+        """将 Agent 已完成但 Drama 仍显示 pending/running 的执行状态同步"""
         from apps.creation.models import AgentExecutionRun
         from apps.drama.models import DramaRoleExecution
 
@@ -917,7 +917,7 @@ class DramaRoleRunService:
 
     @classmethod
     def enqueue_role_run(cls, project, agent_id: str, user, params: Optional[Dict[str, Any]] = None):
-        """??????????????DEBUG ?? worker ??????"""
+        """入队角色执行任务（DEBUG同步模式，worker异步模式）"""
         from django.conf import settings
 
         from apps.agent.definition_service import AgentDefinitionService
@@ -965,7 +965,7 @@ class DramaRoleRunService:
 
     @classmethod
     def execute_role(cls, drama_execution_id: str, agent_run_id: str = "") -> Dict[str, Any]:
-        """??????? IndependentAgentService ??? DramaRoleExecution?"""
+        """执行角色任务，对接 IndependentAgentService 并更新 DramaRoleExecution"""
         from apps.agent.definition_service import AgentDefinitionService
         from apps.creation.agent_runtime.independent_service import IndependentAgentService
         from apps.creation.models import AgentExecutionRun
@@ -1002,13 +1002,13 @@ class DramaRoleRunService:
                 "run_id": str(run.id),
             }
         except Exception as exc:  # noqa: BLE001
-            logger.exception("[DramaRoleRun] ???? execution=%s agent=%s", drama_execution_id, agent_id)
+            logger.exception("[DramaRoleRun] 执行失败 execution=%s agent=%s", drama_execution_id, agent_id)
             cls._mark_failed(drama_exec, str(exc))
             raise
 
     @classmethod
     def sync_from_agent_run(cls, drama_exec, agent_run, project) -> None:
-        """? AgentExecutionRun ????? DramaRoleExecution?"""
+        """将 AgentExecutionRun 状态同步到 DramaRoleExecution"""
         from apps.agent.definition_service import AgentDefinitionService
         from apps.creation.artifact_service import get_artifact
         from apps.creation.models import AgentExecutionRun
@@ -1103,7 +1103,7 @@ class DramaRoleRunService:
         from apps.drama.models import DramaRoleExecution
 
         drama_exec.status = DramaRoleExecution.Status.FAILED
-        drama_exec.error_message = (message or "????")[:2000]
+        drama_exec.error_message = (message or "执行失败")[:2000]
         drama_exec.finished_at = timezone.now()
         if drama_exec.started_at:
             drama_exec.elapsed_seconds = (drama_exec.finished_at - drama_exec.started_at).total_seconds()

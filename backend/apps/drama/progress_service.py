@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Drama ????? / ?? / ?? ? SSOT ? creation.Project?"""
+"""Drama 项目进度 / 阶段 / 交付 状态管理，作为 creation.Project 的 SSOT"""
 from __future__ import annotations
 
 import logging
@@ -29,7 +29,7 @@ QUALITY_AGENT_ID = "drama.quality-reporter"
 
 
 class DramaProgressService:
-    """Drama ???????????????? creation.Project??"""
+    """Drama 项目进度计算与状态同步，写入 creation.Project 字段"""
 
     @staticmethod
     def workspace_projects_qs():
@@ -197,7 +197,7 @@ class DramaProgressService:
         for value, label in DramaStage.choices:
             if value == stage:
                 return label
-        extras = {"ready": "???", "delivered": "???"}
+        extras = {"ready": "待交付", "delivered": "已交付"}
         return extras.get(stage, stage)
 
     @classmethod
@@ -295,17 +295,17 @@ class DramaProgressService:
     def resolve_admin_status(cls, project) -> Tuple[str, str]:
         if project.is_drama_workspace:
             if project.delivery_status == "delivered":
-                return "delivered", "???"
+                return "delivered", "已交付"
             if project.delivery_status == "ready":
-                return "ready", "???"
+                return "ready", "待交付"
             return project.drama_stage, project.get_drama_stage_display()
 
         pct = int(getattr(project, "progress_percent", 0) or 0)
         if pct >= 100:
-            return "delivered", "???"
+            return "delivered", "已完成"
         if pct > 0:
-            return DramaStage.WRITING, "????"
-        return DramaStage.STRATEGY, "????"
+            return DramaStage.WRITING, "创作中"
+        return DramaStage.STRATEGY, "策划中"
 
     @classmethod
     def admin_stage_choices(cls) -> List[Dict[str, str]]:
@@ -313,7 +313,7 @@ class DramaProgressService:
             {"key": stage.value, "label": label}
             for stage, label in DramaStage.choices
         ]
-        rows.append({"key": "ready", "label": "???"})
+        rows.append({"key": "ready", "label": "待交付"})
         return rows
 
     @classmethod

@@ -224,6 +224,7 @@ export default function ScriptsPage() {
               totalEpisodes={project.episode_count}
               projectTitle={project.title}
               reportRef={reportRef}
+              isLoading={radarLoading}
             />
           )}
         </div>
@@ -500,7 +501,7 @@ function SuggestionsPanel({ episode, quality, applyMut, onClose }) {
   );
 }
 
-function QualityReport({ radar, episode, qualityList, totalEpisodes, projectTitle, reportRef }) {
+function QualityReport({ radar, episode, qualityList, totalEpisodes, projectTitle, reportRef, isLoading }) {
   const [expandedDim, setExpandedDim] = useState(null);
   const [reportSection, setReportSection] = useState('overview');
 
@@ -511,6 +512,15 @@ function QualityReport({ radar, episode, qualityList, totalEpisodes, projectTitl
   const overall = radar?.overall_score || 0;
   const grade = radar?.grade || 'D';
   const gradeCfg = GRADE_CONFIG[grade] || GRADE_CONFIG.D;
+
+  if (isLoading) return (
+    <Card padding="xl" className="text-center">
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 className="w-6 h-6 text-brand-500 animate-spin" />
+        <p className="text-slate-500 text-sm">加载质量评估报告中...</p>
+      </div>
+    </Card>
+  );
 
   if (!radar && qualityList.length === 0) return (
     <Card padding="xl" className="text-center">
