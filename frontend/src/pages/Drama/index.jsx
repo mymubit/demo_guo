@@ -434,7 +434,7 @@ export default function DramaIndex() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1.5">
               一句话核心创意
-              <span className="text-slate-400 font-normal font-normal ml-1">（可选，越具体创作质量越高）</span>
+              <span className="text-slate-400 font-normal ml-1">（可选，越具体创作质量越高）</span>
             </label>
             <textarea
               value={form.core_idea}

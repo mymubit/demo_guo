@@ -14,11 +14,41 @@ import { Button, Badge, Card } from '../../components/ui';
 import { ArrowLeft, Loader2, Copy, AlertTriangle, Check, X, CheckCircle2 } from 'lucide-react';
 
 const GRADE_CONFIG = {
-  S: { tone: 'accent', label: 'S · 商业精品' },
-  A: { tone: 'success', label: 'A · 质量优良' },
-  B: { tone: 'brand', label: 'B · 达到基准' },
-  C: { tone: 'warning', label: 'C · 需要优化' },
-  D: { tone: 'danger', label: 'D · 不达标' },
+  S: {
+    tone: 'accent',
+    label: 'S · 商业精品',
+    bgClass: 'bg-accent-50',
+    borderClass: 'border-accent-200',
+    textClass: 'text-accent-700',
+  },
+  A: {
+    tone: 'success',
+    label: 'A · 质量优良',
+    bgClass: 'bg-success-50',
+    borderClass: 'border-success-200',
+    textClass: 'text-success-700',
+  },
+  B: {
+    tone: 'brand',
+    label: 'B · 达到基准',
+    bgClass: 'bg-brand-50',
+    borderClass: 'border-brand-200',
+    textClass: 'text-brand-700',
+  },
+  C: {
+    tone: 'warning',
+    label: 'C · 需要优化',
+    bgClass: 'bg-warning-50',
+    borderClass: 'border-warning-200',
+    textClass: 'text-warning-700',
+  },
+  D: {
+    tone: 'danger',
+    label: 'D · 不达标',
+    bgClass: 'bg-danger-50',
+    borderClass: 'border-danger-200',
+    textClass: 'text-danger-700',
+  },
 };
 
 const SEVERITY_CONFIG = {
@@ -775,7 +805,7 @@ function QualityReport({ radar, episode, qualityList, totalEpisodes, projectTitl
                 <div
                   key={ep}
                   className={`p-1.5 rounded text-center border text-xs ${
-                    gCfg ? `bg-${gCfg.tone}-50 border-${gCfg.tone}-200 text-${gCfg.tone}-700` : 'border-slate-100 bg-slate-50 text-slate-300'
+                    gCfg ? `${gCfg.bgClass} ${gCfg.borderClass} ${gCfg.textClass}` : 'border-slate-100 bg-slate-50 text-slate-300'
                   }`}
                 >
                   <div className="text-slate-500 text-[10px] font-medium">E{ep}</div>
