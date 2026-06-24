@@ -11,7 +11,10 @@ import {
 } from '../../services/drama';
 import DramaPresentation from '../../components/drama/presentation/DramaPresentation';
 import { Button, Badge, Card } from '../../components/ui';
-import { ArrowLeft, Zap, Settings, Play, Loader2 } from 'lucide-react';
+import {
+  ArrowLeft, Zap, Settings, Play, Loader2, ChevronLeft, ChevronRight,
+  BookOpen, BarChart3, PanelLeftClose, PanelLeftOpen,
+} from 'lucide-react';
 
 const DEPT_LABELS = {
   strategy: '战略选题部',
@@ -23,6 +26,17 @@ const DEPT_LABELS = {
   production: '制作宣发部',
   ops: '合规总编室',
 };
+
+const WORKFLOW_STAGES = [
+  { code: 'topic', name: '选题立项', dept: 'strategy', roles: ['drama.creative-planner'] },
+  { code: 'worldbuilding', name: '世界观构建', dept: 'worldbuilding', roles: ['drama.world-builder'] },
+  { code: 'character', name: '人设塑造', dept: 'worldbuilding', roles: ['drama.character-architect'] },
+  { code: 'outline', name: '大纲规划', dept: 'plot_engine', roles: ['drama.plot-architect'] },
+  { code: 'script', name: '剧本创作', dept: 'writing', roles: ['drama.script-writer'] },
+  { code: 'review', name: '审稿评估', dept: 'review', roles: ['drama.script-reviewer'] },
+  { code: 'quality', name: '质量检测', dept: 'review', roles: ['drama.quality-assurance'] },
+  { code: 'compliance', name: '合规终审', dept: 'ops', roles: ['drama.compliance-officer'] },
+];
 
 const TIER_CONFIG = {
   1: { label: '核心必需', badge: '必须', tone: 'brand', dot: 'bg-gold-500', priority: '必执行', desc: '8个快速通道角色，所有项目都要执行' },
@@ -60,6 +74,7 @@ export default function WorkspacePage() {
   const [selectedRole, setSelectedRole] = useState(null);
   const [viewMode, setViewMode] = useState('tier');
   const [execFeedback, setExecFeedback] = useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const feedbackTimerRef = useRef(null);
 
   useEffect(() => {
@@ -161,6 +176,13 @@ export default function WorkspacePage() {
     }
   });
 
+  const currentStageIndex = useMemo(() => {
+    const currentStage = progress?.drama_stage;
+    if (!currentStage) return 0;
+    const idx = WORKFLOW_STAGES.findIndex(s => s.code === currentStage);
+    return idx >= 0 ? idx : WORKFLOW_STAGES.length - 1;
+  }, [progress?.drama_stage]);
+
   const handleRunRole = (roleId, options = {}) => {
     runMut.mutate({ projId: projectId, roleId, options });
     setSelectedRole(roleId);
@@ -198,8 +220,10 @@ export default function WorkspacePage() {
   }
 
   return (
-    <div className="flex h-screen bg-navy-950">
-      <aside className="w-72 bg-navy-900/80 backdrop-blur-xl border-r border-white/10 flex flex-col overflow-hidden">
+    <div className="flex h-screen bg-navy-950 overflow-hidden">
+      <aside
+        className={`${sidebarCollapsed ? 'w-0 opacity-0' : 'w-72 opacity-100'} transition-all duration-300 bg-navy-900/80 backdrop-blur-xl border-r border-white/10 flex flex-col overflow-hidden flex-shrink-0`}
+      >
         <div className="p-4 border-b border-white/5">
           <div className="flex items-center gap-2 mb-2">
             <button
@@ -210,19 +234,21 @@ export default function WorkspacePage() {
               <ArrowLeft className="w-4 h-4" />
             </button>
             <h2 className="font-semibold text-slate-100 text-sm truncate flex-1">{project.title}</h2>
+            <button
+              onClick={() => setSidebarCollapsed(true)}
+              className="text-slate-500 hover:text-slate-300 transition-colors p-1"
+              aria-label="收起侧边栏"
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </button>
           </div>
           <div className="flex items-center gap-2 text-xs text-slate-400 mb-3">
             <span>{project.episode_count}集</span>
             <span>·</span>
             <span className={project.track_mode === 'fast' ? 'text-gold-400 font-medium' : 'text-cyan-400 font-medium'}>
-              {project.track_mode === 'fast' ? '⚡快速通道' : '🎬专家通道'}
+              {project.track_mode === 'fast' ? '⚡快速' : '🎬专家'}
             </span>
           </div>
-          {progress?.drama_stage_display && (
-            <div className="text-xs text-slate-400 mb-3">
-              当前阶段：<span className="text-slate-200 font-medium">{progress.drama_stage_display}</span>
-            </div>
-          )}
 
           <div className="space-y-2.5">
             <div>
@@ -254,9 +280,9 @@ export default function WorkspacePage() {
 
         <div className="px-3 py-2 border-b border-white/5 flex gap-1">
           {[
-            { id: 'tier', label: '分层视图' },
-            { id: 'dept', label: '部门视图' },
-            { id: 'fast', label: '快速通道' },
+            { id: 'tier', label: '分层' },
+            { id: 'dept', label: '部门' },
+            { id: 'fast', label: '快速' },
           ].map((m) => (
             <button
               key={m.id}
@@ -287,52 +313,114 @@ export default function WorkspacePage() {
         <div className="p-3 border-t border-white/5 space-y-2">
           <Button
             variant="brand"
-            className="w-full justify-center"
+            className="w-full justify-center text-sm"
             onClick={() => navigate(`/drama/scripts/${projectId}`)}
+            iconLeft={<BookOpen className="w-4 h-4" />}
           >
-            📖 查看剧本（{completedEpisodes}集）
+            查看剧本（{completedEpisodes}集）
           </Button>
           <Button
             variant="secondary"
-            className="w-full justify-center"
+            className="w-full justify-center text-sm"
             onClick={() => navigate(`/drama/scripts/${projectId}?tab=quality`)}
+            iconLeft={<BarChart3 className="w-4 h-4" />}
           >
-            📊 质量评分报告
+            质量评分报告
           </Button>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto p-6 scrollbar-thin">
-        {execFeedback && (
-          <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium transition-all backdrop-blur-xl ${
-            execFeedback.startsWith('✓') ? 'bg-emerald-500/90 text-white' : 'bg-red-500/90 text-white'
-          }`}>
-            {execFeedback}
+      {sidebarCollapsed && (
+        <button
+          onClick={() => setSidebarCollapsed(false)}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-30 bg-navy-800/90 backdrop-blur-sm border border-white/10 border-l-0 rounded-r-lg p-1.5 text-slate-400 hover:text-gold-300 hover:bg-navy-700/90 transition-all"
+          aria-label="展开侧边栏"
+        >
+          <PanelLeftOpen className="w-4 h-4" />
+        </button>
+      )}
+
+      <main className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-shrink-0 px-4 sm:px-6 py-3 border-b border-white/5 bg-navy-900/50 backdrop-blur-sm">
+          <div className="flex items-center gap-1 overflow-x-auto scrollbar-thin pb-1">
+            {WORKFLOW_STAGES.map((stage, idx) => {
+              const isDone = idx < currentStageIndex;
+              const isCurrent = idx === currentStageIndex;
+              const isFuture = idx > currentStageIndex;
+              const stageRolesCompleted = stage.roles.every(rid => completedSet.has(rid));
+
+              return (
+                <div key={stage.code} className="flex items-center flex-shrink-0">
+                  <button
+                    onClick={() => {
+                      const stageRoleId = stage.roles[0];
+                      if (stageRoleId) setSelectedRole(stageRoleId);
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                      isCurrent
+                        ? 'bg-gold-500 text-navy-950 shadow-gold'
+                        : isDone
+                          ? stageRolesCompleted
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                            : 'bg-gold-500/10 text-gold-400 border border-gold-500/20'
+                          : 'bg-white/5 text-slate-500 border border-white/5 hover:bg-white/10'
+                    }`}
+                  >
+                    <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                      isCurrent
+                        ? 'bg-navy-950 text-gold-400'
+                        : isDone
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-white/10 text-slate-500'
+                    }`}>
+                      {isDone ? '✓' : idx + 1}
+                    </span>
+                    {stage.name}
+                  </button>
+                  {idx < WORKFLOW_STAGES.length - 1 && (
+                    <div className={`w-3 sm:w-6 h-px mx-0.5 ${
+                      isDone ? 'bg-emerald-500/50' : 'bg-white/10'
+                    }`} />
+                  )}
+                </div>
+              );
+            })}
           </div>
-        )}
-        {selectedRole ? (
-          <RoleDetailPanel
-            roleId={selectedRole}
-            allRoles={allRoles}
-            roleProgress={roleStatusMap[selectedRole]}
-            onRun={handleRunRole}
-            runLoading={runMut.isPending && runMut.variables?.roleId === selectedRole}
-            completedSet={completedSet}
-            project={project}
-            lastExecResult={runMut.data?.data ?? runMut.data}
-          />
-        ) : (
-          <WelcomePanel
-            project={project}
-            progress={progress}
-            episodeProgress={episodeProgress}
-            completedEpisodes={completedEpisodes}
-            rolesByTier={rolesByTier}
-            completedSet={completedSet}
-            roleStatusMap={roleStatusMap}
-            onSelectRole={setSelectedRole}
-          />
-        )}
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-thin">
+          {execFeedback && (
+            <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium transition-all backdrop-blur-xl ${
+              execFeedback.startsWith('✓') ? 'bg-emerald-500/90 text-white' : 'bg-red-500/90 text-white'
+            }`}>
+              {execFeedback}
+            </div>
+          )}
+          {selectedRole ? (
+            <RoleDetailPanel
+              roleId={selectedRole}
+              allRoles={allRoles}
+              roleProgress={roleStatusMap[selectedRole]}
+              onRun={handleRunRole}
+              runLoading={runMut.isPending && runMut.variables?.roleId === selectedRole}
+              completedSet={completedSet}
+              project={project}
+              lastExecResult={runMut.data?.data ?? runMut.data}
+            />
+          ) : (
+            <WelcomePanel
+              project={project}
+              progress={progress}
+              episodeProgress={episodeProgress}
+              completedEpisodes={completedEpisodes}
+              rolesByTier={rolesByTier}
+              completedSet={completedSet}
+              roleStatusMap={roleStatusMap}
+              onSelectRole={setSelectedRole}
+              currentStageIndex={currentStageIndex}
+            />
+          )}
+        </div>
       </main>
     </div>
   );
@@ -438,7 +526,6 @@ function RoleItem({ role, isCompleted, execution, isSelected, onSelect, showDept
   const execStatus = execution?.status ?? 'pending';
   const statusCfg = EXEC_STATUS[execStatus] || EXEC_STATUS.pending;
   const tier = role.tier || (role.is_fast_track ? 1 : 2);
-  const tierCfg = TIER_CONFIG[tier] || TIER_CONFIG[2];
 
   const iconColorClass = {
     success: 'text-emerald-400',
@@ -484,12 +571,14 @@ function WelcomePanel({
   completedSet,
   roleStatusMap,
   onSelectRole,
+  currentStageIndex,
 }) {
   const completionRate = progress?.completion_rate || 0;
   const totalEp = project?.episode_count || 0;
   const coreRoles = rolesByTier[1] || [];
   const recommendRoles = rolesByTier[2] || [];
   const coreDone = coreRoles.filter((r) => completedSet.has(r.agent_id)).length;
+  const nextStage = WORKFLOW_STAGES[currentStageIndex] || WORKFLOW_STAGES[0];
 
   return (
     <div className="w-full space-y-6">
@@ -497,23 +586,37 @@ function WelcomePanel({
         <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gold-500/10 blur-3xl" />
         <div className="absolute -bottom-20 right-1/3 h-40 w-40 rounded-full bg-cyan-500/10 blur-3xl" />
         <div className="relative">
-          <p className="text-gold-300/80 text-sm mb-1">短剧创作工作台</p>
+          <div className="flex items-center gap-2 mb-2">
+            <p className="text-gold-300/80 text-sm">短剧创作工作台</p>
+            {progress?.drama_stage_display && (
+              <Badge tone="gold" size="sm" className="bg-gold-500/20 text-gold-300 border-gold-500/30">
+                当前：{progress.drama_stage_display}
+              </Badge>
+            )}
+          </div>
           <h2 className="text-2xl lg:text-3xl font-bold text-white mb-2">{project?.title}</h2>
           <p className="text-slate-400 text-sm mb-6">
             {totalEp} 集 · {project?.track_mode === 'fast' ? '⚡ 快速通道' : '🎬 专家通道'}
             {project?.target_platform ? ` · ${formatPlatform(project.target_platform)}` : ''}
-            {progress?.drama_stage_display ? ` · ${progress.drama_stage_display}` : ''}
           </p>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-5">
             <HeroStat label="角色完成度" value={`${completionRate}%`} sub={`${coreDone}/${coreRoles.length} 核心角色`} />
             <HeroStat label="已生成集数" value={`${completedEpisodes}/${totalEp}`} sub="剧本进度" />
             <HeroStat label="质量等级" value={project?.quality_scores?.grade || '—'} sub="综合评分" />
-            <HeroStat
-              label="角色总数"
-              value="12"
-              sub={`${(rolesByTier[1]?.length || 0) + (rolesByTier[2]?.length || 0)} 个可用角色`}
-            />
+            <HeroStat label="角色总数" value="12" sub="8核心 + 4增强" />
           </div>
+
+          <Button
+            variant="gold"
+            size="lg"
+            iconLeft={<Play className="w-4 h-4" />}
+            onClick={() => {
+              const nextRoleId = nextStage.roles?.[0];
+              if (nextRoleId) onSelectRole(nextRoleId);
+            }}
+          >
+            继续「{nextStage.name}」阶段
+          </Button>
         </div>
       </div>
 
@@ -528,12 +631,43 @@ function WelcomePanel({
 
       <div className="grid lg:grid-cols-5 gap-6">
         <Card padding="lg" className="lg:col-span-2 border-white/10 bg-white/[0.04]">
-          <h3 className="text-base font-semibold text-slate-100 mb-4">如何开始</h3>
-          <div className="space-y-4">
-            <Step n={1} title="从左侧选择「核心必需」层的角色" desc="金色标识角色是所有项目必须执行的，按顺序执行效果最佳" />
-            <Step n={2} title="执行角色生成内容" desc="查看输入依赖与输出说明，确认依赖满足后点击执行" />
-            <Step n={3} title="分批生成剧本（推荐 5 集/批）" desc="剧本执笔师支持指定集数范围，完成后立即质检" />
-            <Step n={4} title="应用修改建议" desc="审稿官与精修大师的建议可一键应用到原始剧本" />
+          <h3 className="text-base font-semibold text-slate-100 mb-4">创作流程</h3>
+          <div className="space-y-3">
+            {WORKFLOW_STAGES.map((stage, idx) => {
+              const isDone = idx < currentStageIndex;
+              const isCurrent = idx === currentStageIndex;
+              const isFuture = idx > currentStageIndex;
+              const stageRoleId = stage.roles[0];
+              return (
+                <button
+                  key={stage.code}
+                  onClick={() => stageRoleId && onSelectRole(stageRoleId)}
+                  className={`w-full flex items-center gap-3 p-2 rounded-lg text-left transition-all ${
+                    isCurrent
+                      ? 'bg-gold-500/10 border border-gold-500/20'
+                      : isDone
+                        ? 'hover:bg-white/5'
+                        : 'opacity-60 hover:opacity-100 hover:bg-white/5'
+                  }`}
+                >
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                    isCurrent
+                      ? 'bg-gold-500 text-navy-950'
+                      : isDone
+                        ? 'bg-emerald-500/20 text-emerald-400'
+                        : 'bg-white/10 text-slate-500'
+                  }`}>
+                    {isDone ? '✓' : idx + 1}
+                  </span>
+                  <span className={`text-sm font-medium flex-1 ${
+                    isCurrent ? 'text-gold-300' : isDone ? 'text-slate-300' : 'text-slate-500'
+                  }`}>
+                    {stage.name}
+                  </span>
+                  {isCurrent && <span className="text-xs text-gold-400 animate-pulse">进行中</span>}
+                </button>
+              );
+            })}
           </div>
         </Card>
 
@@ -580,21 +714,6 @@ function WelcomePanel({
         </Card>
       </div>
 
-      <Card padding="lg" className="border-white/10 bg-white/[0.04]">
-        <h3 className="text-sm font-semibold text-slate-300 mb-3">创作流程</h3>
-        <div className="space-y-2">
-          <Step n={1} title="执行8个核心角色（⚡金色标识）" desc="按顺序：立项→世界观→人设→大纲→剧本→审稿→质量→合规。这8个角色已深度整合山音方法论。" />
-          <Step n={2} title="分批生成剧本（每批5集）" desc="剧本执笔师严格执行：首集900-1100字，其余700-900字，台词≥35%，场景≤3个。" />
-          <Step n={3} title="按需选择复合角色（◈青色标识）" desc="4个复合角色各自整合了5-6项专业能力：市场分析师/叙事工程师/精修大师/制作发行师。" />
-          <Step n={4} title="查看质量报告并应用修改" desc="质量报告包含：雷达图+情绪曲线+10维扣分详情+汇总报告。建议可一键应用。" />
-        </div>
-
-        <div className="mt-4 p-3 bg-gold-500/10 rounded-xl text-xs text-gold-300 border border-gold-500/20">
-          <strong className="font-semibold">角色架构说明：</strong>12 个专业角色 = 8 核心快速通道 + 4 复合增强。
-          左侧「增强复合」分组中可找到市场分析师、叙事工程师、精修大师、制作发行师。
-        </div>
-      </Card>
-
       {recommendRoles.length > 0 && (
         <Card padding="lg" className="border-cyan-500/20 bg-white/[0.04]">
           <div className="flex items-center justify-between mb-4">
@@ -629,20 +748,6 @@ function HeroStat({ label, value, sub }) {
       <div className="text-xl lg:text-2xl font-bold text-white">{value}</div>
       <div className="text-xs text-slate-400 mt-0.5">{label}</div>
       {sub && <div className="text-[10px] text-slate-500 mt-1">{sub}</div>}
-    </div>
-  );
-}
-
-function Step({ n, title, desc }) {
-  return (
-    <div className="flex gap-3">
-      <div className="w-5 h-5 rounded-full bg-gold-500/15 text-gold-300 text-xs font-semibold flex items-center justify-center flex-shrink-0 mt-0.5">
-        {n}
-      </div>
-      <div>
-        <div className="text-sm font-medium text-slate-200">{title}</div>
-        <div className="text-xs text-slate-400 mt-0.5">{desc}</div>
-      </div>
     </div>
   );
 }
@@ -699,7 +804,7 @@ function RoleDetailPanel({
   };
 
   return (
-    <div className="w-full flex flex-col gap-4 min-h-[calc(100vh-4rem)]">
+    <div className="w-full flex flex-col gap-4 min-h-[calc(100vh-12rem)]">
       <Card padding="none" className="overflow-hidden border-white/10 bg-white/[0.04]">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 px-5 py-4 border-b border-white/5 bg-gradient-to-r from-navy-900/80 to-navy-950/60">
           <div className="min-w-0 flex-1">
