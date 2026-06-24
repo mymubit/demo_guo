@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -61,6 +61,15 @@ export default function WorkspacePage() {
   const [selectedRole, setSelectedRole] = useState(null);
   const [viewMode, setViewMode] = useState('tier');
   const [execFeedback, setExecFeedback] = useState(null);
+  const feedbackTimerRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current) {
+        clearTimeout(feedbackTimerRef.current);
+      }
+    };
+  }, []);
 
   const { data: projectRes } = useQuery({
     queryKey: ['drama-project', projectId],
@@ -108,17 +117,19 @@ export default function WorkspacePage() {
       const tip = payload?.is_new === false ? '（已有进行中的任务）' : '';
       toast.success(`${roleName}：${scope}${tip}`);
       setExecFeedback(`✓ ${roleName} — ${scope}${tip}`);
-      setTimeout(() => setExecFeedback(null), 5000);
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+      feedbackTimerRef.current = setTimeout(() => setExecFeedback(null), 5000);
     },
     onError: (err) => {
       const message = err?.message || '未知错误';
       toast.error(`执行失败：${message}`);
       setExecFeedback(`✕ 执行失败：${message}`);
-      setTimeout(() => setExecFeedback(null), 6000);
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+      feedbackTimerRef.current = setTimeout(() => setExecFeedback(null), 6000);
     },
   });
 
-  const completedSet = new Set(project?.completed_roles || []);
+  const completedSet = useMemo(() => new Set(project?.completed_roles || []), [project?.completed_roles]);
 
   const roleStatusMap = {};
   if (progress?.roles) {

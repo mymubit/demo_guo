@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+from datetime import timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 from django.db import transaction
@@ -103,35 +104,44 @@ class DramaWordCountService:
         dialogue_ok = dialogue_ratio >= cls.DIALOGUE_RATIO_MIN
         scene_ok = 1 <= scene_count <= cls.MAX_SCENES
 
-        word_status = "???" if word_ok else ("???" if total_cjk < min_words else "????")
-        dialogue_status = "???" if dialogue_ok else "?????"
-        scene_status = "???" if scene_ok else ("??????" if scene_count > cls.MAX_SCENES else "?????")
+        # 使用status_code和ok字段进行判断，避免依赖中文字符串匹配
+        word_status_code = "normal" if word_ok else ("too_short" if total_cjk < min_words else "too_long")
+        word_status = "正常" if word_ok else ("字数不足" if total_cjk < min_words else "字数过多")
+        dialogue_status_code = "normal" if dialogue_ok else "too_low"
+        dialogue_status = "正常" if dialogue_ok else "对话占比偏低"
+        scene_status_code = "normal" if scene_ok else ("too_many" if scene_count > cls.MAX_SCENES else "too_few")
+        scene_status = "正常" if scene_ok else ("场景数过多" if scene_count > cls.MAX_SCENES else "场景数过少")
 
         recommendations = []
         if not word_ok:
             if total_cjk < min_words:
                 deficit = min_words - total_cjk
                 recommendations.append(
-                    f"??????{deficit}???????????????????????????/??????"
+                    f"字数不足{deficit}字，建议增加剧情细节、人物对话或心理描写，控制在{min_words}-{max_words}字"
                 )
             else:
                 surplus = total_cjk - max_words
                 recommendations.append(
-                    f"??????{surplus}??????????????????????????????"
+                    f"字数超出{surplus}字，建议精简冗余描写、合并重复场景，控制在{min_words}-{max_words}字"
                 )
 
         if not dialogue_ok:
             actual_pct = f"{dialogue_ratio:.1%}"
             recommendations.append(
-                f"???????{actual_pct}<28%???????????????????????????"
+                f"对话占比{actual_pct}低于28%，建议增加人物互动和对话推进剧情，适当减少旁白描述"
             )
 
         if scene_count > cls.MAX_SCENES:
             recommendations.append(
-                f"???????{scene_count}>3????????????????"
+                f"场景数量{scene_count}超过3个，建议合并场景或减少场景切换，单集控制在1-3个场景内"
+            )
+        elif scene_count < 1:
+            recommendations.append(
+                "未识别到有效场景，请按照'1-1 日 内 地点'格式标注场景"
             )
 
-        overall = "??" if (word_ok and dialogue_ok and scene_ok) else "???"
+        overall_code = "pass" if (word_ok and dialogue_ok and scene_ok) else "needs_improvement"
+        overall = "达标" if (word_ok and dialogue_ok and scene_ok) else "需优化"
 
         return {
             "episode": episode_number,
@@ -141,19 +151,27 @@ class DramaWordCountService:
                 "deviation": total_cjk - min_words if total_cjk < min_words else (
                     total_cjk - max_words if total_cjk > max_words else 0
                 ),
+                "ok": word_ok,
+                "status_code": word_status_code,
                 "status": word_status,
             },
             "dialogue_ratio": {
                 "dialogue_count": dialogue_cjk,
                 "ratio": f"{dialogue_ratio:.1%}",
-                "target": f"?{cls.DIALOGUE_RATIO_MIN:.0%}",
+                "ratio_value": dialogue_ratio,
+                "target": f"≥{cls.DIALOGUE_RATIO_MIN:.0%}",
+                "ok": dialogue_ok,
+                "status_code": dialogue_status_code,
                 "status": dialogue_status,
             },
             "scene_count": {
                 "count": scene_count,
                 "target": f"1-{cls.MAX_SCENES}",
+                "ok": scene_ok,
+                "status_code": scene_status_code,
                 "status": scene_status,
             },
+            "overall_code": overall_code,
             "overall": overall,
             "recommendations": recommendations,
         }
@@ -182,7 +200,7 @@ class DramaWordCountService:
             report = cls.validate_episode(content, ep_num)
             reports.append(report)
             total_words += report["word_count"]["total"]
-            if report["overall"] == "??":
+            if report["overall_code"] == "pass":
                 pass_count += 1
             else:
                 issues.append({"episode": ep_num, "issues": report["recommendations"]})
@@ -611,29 +629,29 @@ class DramaQualityService:
             dlg = word_count_result.get("dialogue_ratio", {})
             sc = word_count_result.get("scene_count", {})
 
-            if "???" in wc.get("status", ""):
+            if wc.get("status_code") == "too_short":
                 t = next((t for t in templates if t["id"] == "f003"), None)
                 if t:
                     deficit = abs(wc.get("deviation", 0))
-                    issues.append({**t, "dimension": "????",
-                                   "desc": f"??????{deficit}??"})
-            elif "????" in wc.get("status", ""):
+                    issues.append({**t, "dimension": "格式规范",
+                                   "desc": f"字数不足{deficit}字"})
+            elif wc.get("status_code") == "too_long":
                 t = next((t for t in templates if t["id"] == "f004"), None)
                 if t:
                     surplus = abs(wc.get("deviation", 0))
-                    issues.append({**t, "dimension": "????",
-                                   "desc": f"??????{surplus}??"})
+                    issues.append({**t, "dimension": "格式规范",
+                                   "desc": f"字数超出{surplus}字"})
 
-            if "?????" in dlg.get("status", ""):
+            if dlg.get("status_code") == "too_low":
                 t = next((t for t in templates if t["id"] == "f005"), None)
                 if t:
-                    issues.append({**t, "dimension": "????",
-                                   "desc": f"?????????{dlg.get('ratio', '')}???28%?"})
+                    issues.append({**t, "dimension": "格式规范",
+                                   "desc": f"对话占比{dlg.get('ratio', '')}低于28%"})
 
-            if "??????" in sc.get("status", ""):
+            if sc.get("status_code") == "too_many":
                 t = next((t for t in templates if t["id"] == "f006"), None)
                 if t:
-                    issues.append({**t, "dimension": "????"})
+                    issues.append({**t, "dimension": "格式规范"})
 
         if score == 0:
             return issues
@@ -824,7 +842,7 @@ class DramaRoleRunService:
         from apps.drama.models import DramaRoleExecution
 
         minutes = stale_minutes if stale_minutes is not None else cls.STALE_ACTIVE_MINUTES
-        threshold = timezone.now() - timezone.timedelta(minutes=minutes)
+        threshold = timezone.now() - timedelta(minutes=minutes)
         stale_msg = "??????????? running ?"
 
         agent_fixed = AgentExecutionRun.objects.filter(

@@ -7,7 +7,7 @@ import logging
 from django.db import transaction
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
@@ -331,13 +331,16 @@ class WordCountValidateView(APIView):
 
 class TokenStatsView(APIView):
     """Token ?????"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         days = int(request.query_params.get("days", 30))
         user_only = request.query_params.get("user_only", "true").lower() == "true"
 
-        user_id = request.user.id if user_only else None
+        if user_only:
+            user_id = request.user.id
+        else:
+            user_id = None
         data = DramaRoleService.get_token_stats(user_id=user_id, days=days)
 
         return Response({"code": 0, "message": "success", "data": data})
@@ -349,7 +352,7 @@ class TokenStatsView(APIView):
 
 class ModelConfigView(APIView):
     """?????LLM?????"""
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
         """??????????????"""
@@ -386,12 +389,6 @@ class ModelConfigView(APIView):
 
     def put(self, request):
         """????????????"""
-        if not request.user.is_staff:
-            return Response(
-                {"code": 403, "message": "???????"},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
         ser = ModelConfigSerializer(data=request.data)
         ser.is_valid(raise_exception=True)
         d = ser.validated_data
@@ -422,7 +419,8 @@ class ModelConfigView(APIView):
         route.model_name = d.get("model_name", "")
         route.temperature = d.get("temperature", 0.7)
         route.max_completion_tokens = d.get("max_completion_tokens", 8000)
-        route.save(update_fields=["llm_provider", "temperature", "max_completion_tokens"])
+        route.is_active = d.get("is_active", True)
+        route.save(update_fields=["llm_provider", "model_name", "temperature", "max_completion_tokens", "is_active", "updated_at"])
 
         return Response({"code": 0, "message": "?????"})
 

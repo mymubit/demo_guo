@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -10,7 +10,7 @@ import {
   applyEpisodeSuggestions,
 } from '../../services/drama';
 import { Button, Badge, Card } from '../../components/ui';
-import { ArrowLeft, Loader2, Copy, AlertTriangle, Check, X } from 'lucide-react';
+import { ArrowLeft, Loader2, Copy, AlertTriangle, Check, X, CheckCircle2 } from 'lucide-react';
 
 const GRADE_CONFIG = {
   S: { tone: 'accent', label: 'S · 商业精品' },
@@ -21,9 +21,9 @@ const GRADE_CONFIG = {
 };
 
 const SEVERITY_CONFIG = {
-  error:   { tone: 'danger',  icon: '✕', label: '必须修复' },
-  warning: { tone: 'warning', icon: '⚠', label: '建议优化' },
-  info:    { tone: 'info',    icon: '💡', label: '参考建议' },
+  error:   { tone: 'danger',  icon: '✕', label: '必须修复', bgClass: 'bg-danger-50', borderClass: 'border-danger-200' },
+  warning: { tone: 'warning', icon: '⚠', label: '建议优化', bgClass: 'bg-warning-50', borderClass: 'border-warning-200' },
+  info:    { tone: 'info',    icon: '💡', label: '参考建议', bgClass: 'bg-info-50', borderClass: 'border-info-200' },
 };
 
 const DIM_META = {
@@ -31,12 +31,12 @@ const DIM_META = {
   narrative:   { name: '叙事效率',   abbr: '叙事', color: 'var(--brand-700)', subItems: ['推进型节拍占比','无废戏','节奏紧凑','进入-升级-退出'] },
   conflict:    { name: '冲突处理',   abbr: '冲突', color: 'var(--accent-600)', subItems: ['核心冲突贯穿','持续升级','反转自然','解决有力'] },
   character:   { name: '角色一致性', abbr: '角色', color: 'var(--accent-700)', subItems: ['对白辨识度','行为符合人设','知识边界','Ghost/Lie/Flaw'] },
-  emotion:     { name: '情感深度',   abbr: '情感', color: '#10b981', subItems: ['情感弧线完整','每集3-5次情绪','复杂情绪','切换自然'] },
-  logic:       { name: '逻辑一致性', abbr: '逻辑', color: '#f97316', subItems: ['与前集一致','与大纲一致','记忆检查点匹配','无逻辑断裂'] },
-  satisfaction:{ name: '爽点密度',   abbr: '爽感', color: '#06b6d4', subItems: ['每集2-3个爽点','打脸','揭穿','逆袭','宣爱','类型多样'] },
-  hooks:       { name: '钩子强度',   abbr: '钩子', color: '#84cc16', subItems: ['开头10秒抓力','集末cliffhanger','付费墙前钩子极强'] },
-  paywall:     { name: '付费点优化', abbr: '付费', color: '#ef4444', subItems: ['付费墙在最大张力处','付费后立即兑现','S级付费设计'] },
-  genre_fit:   { name: '赛道匹配度', abbr: '赛道', color: '#a855f7', subItems: ['符合赛道套路','受众预期匹配','平台特性适配'] },
+  emotion:     { name: '情感深度',   abbr: '情感', color: 'var(--success-600)', subItems: ['情感弧线完整','每集3-5次情绪','复杂情绪','切换自然'] },
+  logic:       { name: '逻辑一致性', abbr: '逻辑', color: 'var(--warning-600)', subItems: ['与前集一致','与大纲一致','记忆检查点匹配','无逻辑断裂'] },
+  satisfaction:{ name: '爽点密度',   abbr: '爽感', color: 'var(--info-600)', subItems: ['每集2-3个爽点','打脸','揭穿','逆袭','宣爱','类型多样'] },
+  hooks:       { name: '钩子强度',   abbr: '钩子', color: 'var(--success-700)', subItems: ['开头10秒抓力','集末cliffhanger','付费墙前钩子极强'] },
+  paywall:     { name: '付费点优化', abbr: '付费', color: 'var(--danger-600)', subItems: ['付费墙在最大张力处','付费后立即兑现','S级付费设计'] },
+  genre_fit:   { name: '赛道匹配度', abbr: '赛道', color: 'var(--accent-500)', subItems: ['符合赛道套路','受众预期匹配','平台特性适配'] },
 };
 
 const DIM_KEYS = ['format','narrative','conflict','character','emotion','logic','satisfaction','hooks','paywall','genre_fit'];
@@ -195,8 +195,20 @@ export default function ScriptsPage() {
 
 function ScriptView({ episode, content, applyMut, qualityList }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [copied, setCopied] = useState(false);
   const quality = qualityList.find((q) => q.episode_number === episode);
   const gradeCfg = quality?.grade ? GRADE_CONFIG[quality.grade] : null;
+
+  const handleCopy = async () => {
+    if (!content?.content) return;
+    try {
+      await navigator.clipboard.writeText(content.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('复制失败:', err);
+    }
+  };
 
   if (!episode) return (
     <Card padding="xl" className="text-center">
@@ -236,8 +248,13 @@ function ScriptView({ episode, content, applyMut, qualityList }) {
                 {quality.error_count}个问题需修复
               </Button>
             )}
-            <Button variant="secondary" iconLeft={<Copy className="w-4 h-4" />}>
-              复制
+            <Button
+              variant="secondary"
+              onClick={handleCopy}
+              iconLeft={copied ? <Check className="w-4 h-4 text-success-600" /> : <Copy className="w-4 h-4" />}
+              disabled={!content?.content}
+            >
+              {copied ? '已复制' : '复制'}
             </Button>
           </div>
         </div>
@@ -299,28 +316,52 @@ function ScriptRenderer({ content }) {
 
 function SuggestionsPanel({ episode, quality, applyMut, onClose }) {
   const [selected, setSelected] = useState([]);
-  const issues = [
-    { id:'i1', severity:'error',   dimension:'格式规范', desc:`第${episode}集台词占比偏低（当前~22%，需≥35%）`,   suggestion:'增加角色对峙台词行，减少△动作描述' },
-    { id:'i2', severity:'error',   dimension:'格式规范', desc:'场景数量超出限制（超过3个）',                       suggestion:'合并相邻功能相近的小场景' },
-    { id:'i3', severity:'warning', dimension:'对白质量', desc:'检测到"因此"/"不得不"等AI腔用词',                  suggestion:'改用口语化短句，避免书面用语' },
-    { id:'i4', severity:'warning', dimension:'钩子效果', desc:'集末缺少有效悬念钩子',                             suggestion:'在末场景添加新威胁或未解谜题' },
-    { id:'i5', severity:'info',    dimension:'情绪曲线', desc:'本集情绪平台期过长（3场以上无明显起伏）',           suggestion:'在中段插入小冲突打破情绪平台' },
-  ].slice(0, Math.min(quality.issue_count || 3, 5));
 
-  const toggleAll = () => setSelected(selected.length === issues.length ? [] : issues.map(i => i.id));
+  const realIssues = useMemo(() => {
+    const allIssues = quality?.all_issues || [];
+    const topSuggestions = quality?.top_suggestions || [];
+    if (allIssues.length > 0) return allIssues;
+    if (topSuggestions.length > 0) {
+      return topSuggestions.map((s, idx) => ({
+        id: `ts-${idx}`,
+        severity: s.severity || 'warning',
+        dimension: s.dimension || '综合建议',
+        desc: s.desc || s.suggestion || '',
+        suggestion: s.suggestion || '',
+      }));
+    }
+    return [];
+  }, [quality]);
+
+  const toggleAll = () => setSelected(selected.length === realIssues.length ? [] : realIssues.map(i => i.id));
+
+  useEffect(() => {
+    setSelected([]);
+  }, [episode]);
+
+  if (realIssues.length === 0) {
+    return (
+      <Card padding="lg" className="border-success-200 bg-success-50/30">
+        <div className="flex items-center gap-2 text-success-700">
+          <CheckCircle2 className="w-5 h-5" />
+          <span className="font-medium">本集无待修复问题，质量达标</span>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card padding="none" className="border-warning-300 shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 bg-warning-50 border-b border-warning-200">
         <h4 className="text-sm font-semibold text-warning-800">
-          第{episode}集 — 修改建议（{issues.length}条）
+          第{episode}集 — 修改建议（{realIssues.length}条）
         </h4>
         <div className="flex gap-3 items-center">
           <button
             onClick={toggleAll}
             className="text-xs text-warning-700 hover:underline font-medium"
           >
-            {selected.length === issues.length ? '取消全选' : '全选'}
+            {selected.length === realIssues.length ? '取消全选' : '全选'}
           </button>
           <button
             onClick={onClose}
@@ -332,8 +373,9 @@ function SuggestionsPanel({ episode, quality, applyMut, onClose }) {
         </div>
       </div>
       <div className="divide-y divide-slate-100">
-        {issues.map((issue) => {
-          const cfg = SEVERITY_CONFIG[issue.severity];
+        {realIssues.map((issue) => {
+          const sevKey = issue.severity || 'warning';
+          const cfg = SEVERITY_CONFIG[sevKey] || SEVERITY_CONFIG.warning;
           const isSelected = selected.includes(issue.id);
           return (
             <label
@@ -358,7 +400,9 @@ function SuggestionsPanel({ episode, quality, applyMut, onClose }) {
                   <span className="text-xs text-slate-400">{issue.dimension}</span>
                 </div>
                 <p className="text-sm text-slate-800">{issue.desc}</p>
-                <p className="text-xs text-slate-500 mt-0.5">→ {issue.suggestion}</p>
+                {issue.suggestion && (
+                  <p className="text-xs text-slate-500 mt-0.5">→ {issue.suggestion}</p>
+                )}
               </div>
             </label>
           );
@@ -372,7 +416,7 @@ function SuggestionsPanel({ episode, quality, applyMut, onClose }) {
           isLoading={applyMut.isPending}
           onClick={() => applyMut.mutate({
             episodeNumber: episode,
-            suggestions: issues.filter(i => selected.includes(i.id)),
+            suggestions: realIssues.filter(i => selected.includes(i.id)),
             agentId: 'drama.polish-master',
           })}
         >
@@ -564,35 +608,20 @@ function QualityReport({ radar, episode, qualityList, totalEpisodes, projectTitl
 
                   {expandedDim === key && (
                     <div className="px-4 pb-4 pt-2 border-t border-slate-100">
-                      <div className="grid grid-cols-2 gap-2 mb-3">
-                        {meta.subItems.map((sub, idx) => {
-                          const subScore = score > 0
-                            ? Math.max(40, Math.min(100, score + (idx % 3 === 0 ? -8 : idx % 3 === 1 ? 5 : -3)))
-                            : 0;
-                          const scoreColor = subScore >= 80
-                            ? 'text-success-600'
-                            : subScore >= 60
-                            ? 'text-warning-600'
-                            : 'text-danger-600';
-                          const barColor = subScore >= 80
-                            ? 'bg-success-500'
-                            : subScore >= 60
-                            ? 'bg-warning-500'
-                            : 'bg-danger-500';
-                          return (
-                            <div key={sub} className="flex items-center gap-2 text-xs">
-                              <span className="text-slate-600 w-24 truncate">{sub}</span>
-                              <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full rounded-full ${barColor}`}
-                                  style={{ width: `${subScore}%` }}
-                                />
-                              </div>
-                              <span className={`font-semibold w-6 text-right ${scoreColor}`}>{subScore}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
+                      {dim?.issues?.length > 0 ? (
+                        <div className="mb-3">
+                          <div className="text-xs text-slate-500 mb-2">评估要点：{meta.subItems.join(' / ')}</div>
+                        </div>
+                      ) : score > 0 ? (
+                        <div className="mb-3 p-2.5 bg-success-50 rounded-lg text-success-700 text-sm flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>本维度各项评估要点均达标</span>
+                        </div>
+                      ) : (
+                        <div className="mb-3 p-2.5 bg-slate-50 rounded-lg text-slate-500 text-sm">
+                          本维度尚未进行细粒度评估
+                        </div>
+                      )}
 
                       {dim?.summary && (
                         <p className="text-sm text-slate-700 mb-3 p-2.5 bg-slate-50 rounded-lg">{dim.summary}</p>
@@ -602,9 +631,10 @@ function QualityReport({ radar, episode, qualityList, totalEpisodes, projectTitl
                         <div className="space-y-2">
                           <h5 className="text-xs font-semibold text-slate-500 uppercase tracking-wide">本维度问题</h5>
                           {dim.issues.map((issue, idx) => {
-                            const cfg = SEVERITY_CONFIG[issue.severity];
+                            const sevKey = issue.severity || 'warning';
+                            const cfg = SEVERITY_CONFIG[sevKey] || SEVERITY_CONFIG.warning;
                             return (
-                              <div key={idx} className={`p-3 rounded-lg border text-sm bg-${cfg.tone}-50 border-${cfg.tone}-200`}>
+                              <div key={idx} className={`p-3 rounded-lg border text-sm ${cfg.bgClass} ${cfg.borderClass}`}>
                                 <div className="flex items-center gap-1.5 mb-1">
                                   <Badge tone={cfg.tone} size="sm">{cfg.icon} {cfg.label}</Badge>
                                 </div>
