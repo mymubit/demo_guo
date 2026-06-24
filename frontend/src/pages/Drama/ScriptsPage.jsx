@@ -52,36 +52,51 @@ export default function ScriptsPage() {
   const [selectedEpisode, setSelectedEpisode] = useState(null);
   const reportRef = useRef(null);
 
-  const { data: projectRes } = useQuery({
+  const { data: projectRes, isLoading: projectLoading, isError: projectError, error: projectErrorMsg } = useQuery({
     queryKey: ['drama-project', projectId],
     queryFn: () => getDramaProject(projectId),
+    onError: (err) => {
+      toast.error(`加载项目失败：${err?.message || '请刷新重试'}`);
+    },
   });
   const project = projectRes?.data || projectRes;
 
-  const { data: episodesRes } = useQuery({
+  const { data: episodesRes, isLoading: episodesLoading, isError: episodesError } = useQuery({
     queryKey: ['drama-episodes', projectId],
     queryFn: () => getEpisodeList(projectId),
+    onError: (err) => {
+      toast.error(`加载剧集列表失败：${err?.message || '请刷新重试'}`);
+    },
   });
   const episodes = episodesRes?.data?.episodes || [];
   const completedCount = episodesRes?.data?.completed_episodes || 0;
 
-  const { data: qualityListRes } = useQuery({
+  const { data: qualityListRes, isLoading: qualityLoading, isError: qualityError } = useQuery({
     queryKey: ['drama-episode-quality-list', projectId],
     queryFn: () => getEpisodeQualityList(projectId),
+    onError: (err) => {
+      toast.error(`加载质量报告失败：${err?.message || '请刷新重试'}`);
+    },
   });
   const qualityList = qualityListRes?.data?.episodes || [];
 
-  const { data: radarRes } = useQuery({
+  const { data: radarRes, isLoading: radarLoading } = useQuery({
     queryKey: ['drama-quality-radar', projectId, selectedEpisode],
     queryFn: () => getQualityRadar(projectId, selectedEpisode),
     enabled: tab === 'quality',
+    onError: (err) => {
+      toast.error(`加载质量雷达失败：${err?.message || '请刷新重试'}`);
+    },
   });
   const radar = radarRes?.data;
 
-  const { data: episodeContentRes } = useQuery({
+  const { data: episodeContentRes, isLoading: contentLoading, isError: contentError } = useQuery({
     queryKey: ['drama-episode-content', projectId, selectedEpisode],
     queryFn: () => getEpisodeContent(projectId, selectedEpisode),
     enabled: !!selectedEpisode && tab === 'scripts',
+    onError: (err) => {
+      toast.error(`加载剧本内容失败：${err?.message || '请刷新重试'}`);
+    },
   });
   const episodeContent = episodeContentRes?.data;
 
@@ -100,11 +115,25 @@ export default function ScriptsPage() {
     },
   });
 
-  if (!project) return (
-    <div className="flex items-center justify-center h-64">
-      <Loader2 className="w-6 h-6 text-brand-500 animate-spin" />
-    </div>
-  );
+  if (projectLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
+        <Loader2 className="w-6 h-6 text-brand-500 animate-spin" />
+        <p className="text-slate-500 text-sm">加载项目中...</p>
+      </div>
+    );
+  }
+
+  if (projectError || !project) {
+    return (
+      <Card padding="xl" className="max-w-md mx-auto mt-20 text-center">
+        <div className="text-4xl mb-3">⚠️</div>
+        <h3 className="font-semibold text-slate-900 mb-2">加载失败</h3>
+        <p className="text-slate-500 text-sm mb-4">{projectErrorMsg?.message || '项目不存在或您无权访问'}</p>
+        <Button variant="brand" onClick={() => navigate('/drama')}>返回创作中心</Button>
+      </Card>
+    );
+  }
 
   const totalScore = radar?.overall_score || 0;
   const grade = radar?.grade || '—';
@@ -184,6 +213,8 @@ export default function ScriptsPage() {
               content={episodeContent}
               applyMut={applyMut}
               qualityList={qualityList}
+              isLoading={contentLoading}
+              isError={contentError}
             />
           ) : (
             <QualityReport
@@ -201,7 +232,7 @@ export default function ScriptsPage() {
   );
 }
 
-function ScriptView({ episode, content, applyMut, qualityList }) {
+function ScriptView({ episode, content, applyMut, qualityList, isLoading, isError }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [copied, setCopied] = useState(false);
   const copyTimerRef = useRef(null);
@@ -232,6 +263,30 @@ function ScriptView({ episode, content, applyMut, qualityList }) {
     <Card padding="xl" className="text-center">
       <div className="text-4xl mb-3">📖</div>
       <p className="text-slate-400">从左侧选择集数查看剧本内容</p>
+    </Card>
+  );
+
+  if (isLoading) return (
+    <Card padding="xl" className="text-center">
+      <div className="flex flex-col items-center gap-3">
+        <Loader2 className="w-6 h-6 text-brand-500 animate-spin" />
+        <p className="text-slate-500 text-sm">加载第{episode}集剧本中...</p>
+      </div>
+    </Card>
+  );
+
+  if (isError) return (
+    <Card padding="xl" className="text-center">
+      <div className="text-4xl mb-3">⚠️</div>
+      <p className="text-slate-500 text-sm mb-3">加载剧本失败，请稍后重试</p>
+      <Button variant="secondary" size="sm" onClick={() => window.location.reload()}>刷新页面</Button>
+    </Card>
+  );
+
+  if (!content) return (
+    <Card padding="xl" className="text-center">
+      <div className="text-4xl mb-3">📭</div>
+      <p className="text-slate-500 text-sm">第{episode}集剧本尚未生成</p>
     </Card>
   );
 

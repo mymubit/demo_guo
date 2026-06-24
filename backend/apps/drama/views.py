@@ -696,7 +696,7 @@ class EpisodeArtifactView(APIView):
             ).order_by("-version").first()
 
             if not artifact:
-                return Response({"code": 404, "message": f"?{episode_number}?????"}, status=404)
+                return Response({"code": 404, "message": f"第{episode_number}集剧本不存在"}, status=404)
 
             return Response({
                 "code": 0,
@@ -713,8 +713,14 @@ class EpisodeArtifactView(APIView):
                     "updated_at": artifact.updated_at.isoformat(),
                 },
             })
+        except DramaEpisodeArtifact.DoesNotExist:
+            return Response({"code": 404, "message": f"第{episode_number}集剧本不存在"}, status=404)
+        except (TypeError, ValueError) as e:
+            logger.warning("Invalid episode_number parameter: %s", e)
+            return Response({"code": 400, "message": "参数错误：episode_number必须是有效数字"}, status=400)
         except Exception as e:
-            return Response({"code": 500, "message": str(e)}, status=500)
+            logger.exception("Error fetching episode artifact project=%s episode=%s", project_id, episode_number)
+            return Response({"code": 500, "message": "获取剧本内容失败，请稍后重试"}, status=500)
 
     def post(self, request, project_id):
         """???????????????????"""

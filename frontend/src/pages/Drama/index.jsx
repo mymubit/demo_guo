@@ -6,7 +6,7 @@ import { works as worksApi } from '../../services/api';
 import { normalizeWorkItem } from '../../services/adapters/businessAdapters';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Badge, Card, EmptyState, Modal } from '../../components/ui';
-import { Plus, Sparkles, Film, Zap, Palette } from 'lucide-react';
+import { Plus, Sparkles, Film, Zap, Palette, Loader2 } from 'lucide-react';
 
 const GENRE_MATRIX = {
   emotion: {
@@ -124,11 +124,14 @@ export default function DramaIndex() {
     setForm(f => ({ ...f, theme: combo.code }));
   };
 
-  const { data: projectsRes } = useQuery({
+  const { data: projectsRes, isLoading: projectsLoading, isError: projectsError } = useQuery({
     queryKey: ['drama-projects', 'works-unified'],
     queryFn: async () => {
       const result = await worksApi.list(1, 'all', 100, { scope: 'drama', ordering: 'newest' });
       return (result.items || []).map(normalizeWorkItem).map(mapWorkToWorkspace).filter(Boolean);
+    },
+    onError: (err) => {
+      toast.error(`加载项目列表失败：${err?.message || '请刷新重试'}`);
     },
   });
   const projects = Array.isArray(projectsRes) ? projectsRes : [];

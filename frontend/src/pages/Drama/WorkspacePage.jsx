@@ -71,10 +71,13 @@ export default function WorkspacePage() {
     };
   }, []);
 
-  const { data: projectRes } = useQuery({
+  const { data: projectRes, isLoading: projectLoading, isError: projectError } = useQuery({
     queryKey: ['drama-project', projectId],
     queryFn: () => getDramaProject(projectId),
     enabled: Boolean(projectId && projectId !== 'undefined'),
+    onError: (err) => {
+      toast.error(`加载项目失败：${err?.message || '请刷新重试'}`);
+    },
   });
   const project = projectRes?.data ?? projectRes;
 
@@ -86,6 +89,9 @@ export default function WorkspacePage() {
       const roles = query.state.data?.roles || [];
       return roles.some((r) => r.execution?.status === 'running') ? 2000 : 5000;
     },
+    onError: (err) => {
+      toast.error(`加载进度失败：${err?.message || '将自动重试'}`);
+    },
   });
   const progress = progressRes?.data ?? progressRes;
 
@@ -94,6 +100,9 @@ export default function WorkspacePage() {
     queryFn: getDramaRoles,
     staleTime: 60 * 1000,
     refetchOnMount: 'always',
+    onError: (err) => {
+      toast.error(`加载角色列表失败：${err?.message || '请刷新重试'}`);
+    },
   });
   const departments = rolesRes?.departments || rolesRes?.data?.departments || [];
 
@@ -101,6 +110,9 @@ export default function WorkspacePage() {
     queryKey: ['drama-episodes', projectId],
     queryFn: () => getEpisodeList(projectId),
     enabled: Boolean(projectId && projectId !== 'undefined'),
+    onError: (err) => {
+      toast.error(`加载剧集进度失败：${err?.message || '将自动重试'}`);
+    },
   });
   const episodeProgress = progress?.episode_progress;
   const completedEpisodes = episodesRes?.data?.completed_episodes || episodeProgress?.completed || 0;
@@ -162,11 +174,23 @@ export default function WorkspacePage() {
     );
   }
 
-  if (!project) {
+  if (projectLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="flex flex-col items-center justify-center h-64 gap-3">
         <Loader2 className="w-6 h-6 text-brand-500 animate-spin" />
+        <p className="text-slate-500 text-sm">加载工作台中...</p>
       </div>
+    );
+  }
+
+  if (projectError || !project) {
+    return (
+      <Card padding="xl" className="max-w-md mx-auto mt-20 text-center">
+        <div className="text-4xl mb-3">⚠️</div>
+        <h3 className="font-semibold text-slate-900 mb-2">加载失败</h3>
+        <p className="text-slate-500 text-sm mb-4">项目不存在或您无权访问</p>
+        <Button variant="brand" onClick={() => navigate('/drama')}>返回创作中心</Button>
+      </Card>
     );
   }
 
