@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Drama Services ?????? - DramaWordCountService / DramaQualityService"""
+"""Drama Services 单元测试 - DramaWordCountService / DramaQualityService"""
 from django.test import TestCase
 
 from apps.drama.services import DramaQualityService, DramaWordCountService
 
 
 class DramaWordCountServiceTests(TestCase):
-    """??????"""
+    """字数校验服务测试"""
 
     def test_clean_non_script_removes_code_blocks(self):
         content = "正常内容\n```python\nprint('test')\n```\n更多内容"
@@ -72,7 +72,7 @@ class DramaWordCountServiceTests(TestCase):
 
 
 class DramaQualityServiceTests(TestCase):
-    """??????"""
+    """质量评估服务测试"""
 
     def test_dimensions_have_expected_structure(self):
         dims = DramaQualityService.DIMENSIONS

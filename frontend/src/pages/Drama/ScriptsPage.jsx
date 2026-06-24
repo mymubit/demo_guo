@@ -133,11 +133,18 @@ export default function ScriptsPage() {
   const applyMut = useMutation({
     mutationFn: ({ episodeNumber, suggestions, agentId }) =>
       applyEpisodeSuggestions(projectId, episodeNumber, suggestions, agentId),
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries(['drama-episode-content', projectId, selectedEpisode]);
       queryClient.invalidateQueries(['drama-episode-quality-list', projectId]);
       queryClient.invalidateQueries(['drama-quality-radar', projectId, selectedEpisode]);
-      toast.success('修改建议已提交应用，请稍候查看更新后的剧本');
+      const featureStatus = res?.data?.data?.feature_status;
+      if (featureStatus === 'placeholder') {
+        toast.info('修改建议已记录', {
+          description: '自动修改剧本功能开发中，暂未实际修改内容',
+        });
+      } else {
+        toast.success('修改建议已提交应用，请稍候查看更新后的剧本');
+      }
     },
     onError: (err) => {
       const message = err?.message || '应用建议失败，请稍后重试';

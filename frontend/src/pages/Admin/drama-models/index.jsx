@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { getModelConfig, updateModelConfig, getTokenStats } from '../../../services/drama';
+import { Button, Card } from '../../../components/ui';
+import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 
 const DEPT_COLORS = {
-  strategy: 'bg-blue-50 text-blue-700',
-  worldbuilding: 'bg-green-50 text-green-700',
-  plot_engine: 'bg-purple-50 text-purple-700',
-  writing: 'bg-yellow-50 text-yellow-700',
-  review: 'bg-orange-50 text-orange-700',
-  polish: 'bg-pink-50 text-pink-700',
-  production: 'bg-indigo-50 text-indigo-700',
-  ops: 'bg-red-50 text-red-700',
+  strategy: { badge: 'bg-blue-100 text-blue-700', border: 'border-blue-100' },
+  worldbuilding: { badge: 'bg-green-100 text-green-700', border: 'border-green-100' },
+  plot_engine: { badge: 'bg-purple-100 text-purple-700', border: 'border-purple-100' },
+  writing: { badge: 'bg-yellow-100 text-yellow-700', border: 'border-yellow-100' },
+  review: { badge: 'bg-orange-100 text-orange-700', border: 'border-orange-100' },
+  polish: { badge: 'bg-pink-100 text-pink-700', border: 'border-pink-100' },
+  production: { badge: 'bg-indigo-100 text-indigo-700', border: 'border-indigo-100' },
+  ops: { badge: 'bg-red-100 text-red-700', border: 'border-red-100' },
 };
 
 const DEPT_NAMES = {
@@ -24,6 +27,33 @@ const DEPT_NAMES = {
   ops: '合规总编室',
 };
 
+function LoadingState() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 gap-3">
+      <Loader2 className="w-8 h-8 text-brand-500 animate-spin" />
+      <p className="text-slate-500 text-sm">加载中...</p>
+    </div>
+  );
+}
+
+function ErrorState({ message, onRetry }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 gap-4">
+      <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center">
+        <AlertCircle className="w-7 h-7 text-red-500" />
+      </div>
+      <div className="text-center">
+        <p className="text-slate-800 font-medium">加载失败</p>
+        <p className="text-slate-500 text-sm mt-1">{message || '请检查网络后重试'}</p>
+      </div>
+      <Button variant="outline" size="sm" onClick={onRetry} className="gap-2">
+        <RefreshCw className="w-4 h-4" />
+        重新加载
+      </Button>
+    </div>
+  );
+}
+
 /** 模型配置管理面板 */
 export default function DramaModelsAdmin() {
   const queryClient = useQueryClient();
@@ -31,16 +61,28 @@ export default function DramaModelsAdmin() {
   const [editForm, setEditForm] = useState({});
   const [activeTab, setActiveTab] = useState('models');
 
-  const { data: configRes } = useQuery({
+  const {
+    data: configRes,
+    isLoading: configLoading,
+    isError: configError,
+    refetch: refetchConfig,
+    error: configErrorObj,
+  } = useQuery({
     queryKey: ['drama-model-config'],
     queryFn: getModelConfig,
   });
   const configs = configRes?.data?.data?.configs || [];
   const providers = configRes?.data?.data?.available_providers || [];
 
-  const { data: statsRes } = useQuery({
+  const {
+    data: statsRes,
+    isLoading: statsLoading,
+    isError: statsError,
+    refetch: refetchStats,
+  } = useQuery({
     queryKey: ['drama-token-stats'],
     queryFn: () => getTokenStats(30),
+    enabled: activeTab === 'stats',
   });
   const stats = statsRes?.data?.data;
 
@@ -49,6 +91,12 @@ export default function DramaModelsAdmin() {
     onSuccess: () => {
       queryClient.invalidateQueries(['drama-model-config']);
       setEditingRole(null);
+      toast.success('模型配置已更新');
+    },
+    onError: (err) => {
+      toast.error('保存失败', {
+        description: err?.message || '请稍后重试',
+      });
     },
   });
 
@@ -63,6 +111,11 @@ export default function DramaModelsAdmin() {
     });
   };
 
+  const handleCancel = () => {
+    setEditingRole(null);
+    setEditForm({});
+  };
+
   const handleSave = () => {
     updateMut.mutate({
       ...editForm,
@@ -73,16 +126,15 @@ export default function DramaModelsAdmin() {
   // 按部门分组
   const grouped = {};
   configs.forEach((c) => {
-    const dept = c.agent_id.replace('drama.', '').split('-')[0];
-    // 简单通过agent_id前缀猜测部门
     let deptKey = 'strategy';
-    if (c.display_name?.includes('世界') || c.display_name?.includes('人设') || c.display_name?.includes('梦境')) deptKey = 'worldbuilding';
-    else if (c.display_name?.includes('情节') || c.display_name?.includes('钩子') || c.display_name?.includes('冲突') || c.display_name?.includes('反转') || c.display_name?.includes('节奏') || c.display_name?.includes('心理') || c.display_name?.includes('情绪架构')) deptKey = 'plot_engine';
-    else if (c.display_name?.includes('剧本执笔') || c.display_name?.includes('对白') || c.display_name?.includes('场景') || c.display_name?.includes('IP改编')) deptKey = 'writing';
-    else if (c.display_name?.includes('审稿') || c.display_name?.includes('读者') || c.display_name?.includes('情绪审') || c.display_name?.includes('质量报告')) deptKey = 'review';
-    else if (c.display_name?.includes('修稿') || c.display_name?.includes('节奏优化') || c.display_name?.includes('格式') || c.display_name?.includes('字数') || c.display_name?.includes('风格')) deptKey = 'polish';
-    else if (c.display_name?.includes('视觉') || c.display_name?.includes('分镜') || c.display_name?.includes('后期') || c.display_name?.includes('营销')) deptKey = 'production';
-    else if (c.display_name?.includes('合规') || c.display_name?.includes('交付') || c.display_name?.includes('进化')) deptKey = 'ops';
+    const name = c.display_name || '';
+    if (name.includes('世界') || name.includes('人设') || name.includes('梦境')) deptKey = 'worldbuilding';
+    else if (name.includes('情节') || name.includes('钩子') || name.includes('冲突') || name.includes('反转') || name.includes('节奏') || name.includes('心理') || name.includes('情绪架构')) deptKey = 'plot_engine';
+    else if (name.includes('剧本执笔') || name.includes('对白') || name.includes('场景') || name.includes('IP改编')) deptKey = 'writing';
+    else if (name.includes('审稿') || name.includes('读者') || name.includes('情绪审') || name.includes('质量报告')) deptKey = 'review';
+    else if (name.includes('修稿') || name.includes('节奏优化') || name.includes('格式') || name.includes('字数') || name.includes('风格')) deptKey = 'polish';
+    else if (name.includes('视觉') || name.includes('分镜') || name.includes('后期') || name.includes('营销')) deptKey = 'production';
+    else if (name.includes('合规') || name.includes('交付') || name.includes('进化')) deptKey = 'ops';
 
     if (!grouped[deptKey]) grouped[deptKey] = [];
     grouped[deptKey].push(c);
@@ -99,13 +151,17 @@ export default function DramaModelsAdmin() {
           <div className="flex gap-2">
             <button
               onClick={() => setActiveTab('models')}
-              className={`px-4 py-2 text-sm rounded-lg ${activeTab === 'models' ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-200 text-gray-700'}`}
+              className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+                activeTab === 'models' ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+              }`}
             >
               模型配置
             </button>
             <button
               onClick={() => setActiveTab('stats')}
-              className={`px-4 py-2 text-sm rounded-lg ${activeTab === 'stats' ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-200 text-gray-700'}`}
+              className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+                activeTab === 'stats' ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+              }`}
             >
               Token统计
             </button>
@@ -113,101 +169,122 @@ export default function DramaModelsAdmin() {
         </div>
 
         {activeTab === 'models' ? (
-          <div className="space-y-4">
-            {Object.entries(grouped).map(([deptKey, deptConfigs]) => (
-              <div key={deptKey} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                <div className={`px-5 py-3 flex items-center gap-2 border-b border-gray-100`}>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${DEPT_COLORS[deptKey] || 'bg-gray-100 text-gray-600'}`}>
-                    {DEPT_NAMES[deptKey] || deptKey}
-                  </span>
-                  <span className="text-xs text-gray-400">{deptConfigs.length}个角色</span>
-                </div>
-                <table className="w-full">
-                  <tbody>
-                    {deptConfigs.map((config) => (
-                      <tr key={config.agent_id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50">
-                        <td className="px-5 py-3 w-48">
-                          <div className="text-sm font-medium text-gray-900">{config.display_name?.split(' (')[0]}</div>
-                          <div className="text-xs text-gray-400">{config.agent_id}</div>
-                        </td>
-                        <td className="px-4 py-3">
-                          {editingRole === config.agent_id ? (
-                            <div className="flex items-center gap-2">
-                              <select
-                                value={editForm.provider_id}
-                                onChange={(e) => setEditForm({ ...editForm, provider_id: e.target.value })}
-                                className="border border-gray-200 rounded px-2 py-1 text-xs"
-                              >
-                                <option value="">-- 使用全局配置 --</option>
-                                {providers.map((p) => (
-                                  <option key={p.id} value={p.id}>{p.name}</option>
-                                ))}
-                              </select>
-                              <input
-                                value={editForm.model_name}
-                                onChange={(e) => setEditForm({ ...editForm, model_name: e.target.value })}
-                                placeholder="模型名称（如 gpt-4o）"
-                                className="border border-gray-200 rounded px-2 py-1 text-xs w-40"
-                              />
-                            </div>
-                          ) : (
-                            <span className="text-sm text-gray-600">{config.provider_name || '全局默认'}</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3">
-                          {editingRole === config.agent_id ? (
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="number"
-                                min={0}
-                                max={2}
-                                step={0.1}
-                                value={editForm.temperature}
-                                onChange={(e) => setEditForm({ ...editForm, temperature: +e.target.value })}
-                                className="border border-gray-200 rounded px-2 py-1 text-xs w-16"
-                              />
-                              <span className="text-xs text-gray-400">温度</span>
-                            </div>
-                          ) : (
-                            <span className="text-xs text-gray-400">T={config.temperature}</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          {editingRole === config.agent_id ? (
-                            <div className="flex justify-end gap-2">
-                              <button
-                                onClick={() => setEditingRole(null)}
-                                className="text-xs px-3 py-1 border border-gray-200 rounded text-gray-600"
-                              >
-                                取消
-                              </button>
-                              <button
-                                onClick={handleSave}
-                                disabled={updateMut.isPending}
-                                className="text-xs px-3 py-1 bg-indigo-600 text-white rounded disabled:opacity-50"
-                              >
-                                {updateMut.isPending ? '保存中...' : '保存'}
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => handleEdit(config)}
-                              className="text-xs px-3 py-1 border border-gray-200 rounded text-gray-600 hover:bg-gray-50"
-                            >
-                              修改
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <TokenStatsPanel stats={stats} />
-        )}
+          configLoading ? (
+            <LoadingState />
+          ) : configError ? (
+            <ErrorState message={configErrorObj?.message} onRetry={refetchConfig} />
+          ) : (
+            <div className="space-y-4">
+              {Object.entries(grouped).map(([deptKey, deptConfigs]) => {
+                const deptStyle = DEPT_COLORS[deptKey] || DEPT_COLORS.strategy;
+                return (
+                  <Card key={deptKey} className={`overflow-hidden ${deptStyle.border}`} padding="none">
+                    <div className={`px-5 py-3 flex items-center gap-2 border-b border-gray-100 bg-gray-50`}>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${deptStyle.badge}`}>
+                        {DEPT_NAMES[deptKey] || deptKey}
+                      </span>
+                      <span className="text-xs text-gray-400">{deptConfigs.length}个角色</span>
+                    </div>
+                    <table className="w-full">
+                      <tbody>
+                        {deptConfigs.map((config) => (
+                          <tr key={config.agent_id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors">
+                            <td className="px-5 py-3 w-56">
+                              <div className="text-sm font-medium text-gray-900">{config.display_name?.split(' (')[0]}</div>
+                              <div className="text-xs text-gray-400">{config.agent_id}</div>
+                            </td>
+                            <td className="px-4 py-3">
+                              {editingRole === config.agent_id ? (
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <select
+                                    value={editForm.provider_id}
+                                    onChange={(e) => setEditForm({ ...editForm, provider_id: e.target.value })}
+                                    className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                                  >
+                                    <option value="">-- 使用全局配置 --</option>
+                                    {providers.map((p) => (
+                                      <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                  </select>
+                                  <input
+                                    value={editForm.model_name}
+                                    onChange={(e) => setEditForm({ ...editForm, model_name: e.target.value })}
+                                    placeholder="模型名称（如 gpt-4o）"
+                                    className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                                  />
+                                </div>
+                              ) : (
+                                <span className="text-sm text-gray-600">{config.provider_name || '全局默认'}</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 w-40">
+                              {editingRole === config.agent_id ? (
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={2}
+                                    step={0.1}
+                                    value={editForm.temperature}
+                                    onChange={(e) => setEditForm({ ...editForm, temperature: +e.target.value })}
+                                    className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm w-20 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                                  />
+                                  <span className="text-xs text-gray-400">温度</span>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-gray-400">T={config.temperature}</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 text-right w-32">
+                              {editingRole === config.agent_id ? (
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleCancel}
+                                    disabled={updateMut.isPending}
+                                  >
+                                    取消
+                                  </Button>
+                                  <Button
+                                    variant="brand"
+                                    size="sm"
+                                    onClick={handleSave}
+                                    disabled={updateMut.isPending}
+                                    className="gap-1.5"
+                                  >
+                                    {updateMut.isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                    {updateMut.isPending ? '保存中...' : '保存'}
+                                  </Button>
+                                </div>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEdit(config)}
+                                >
+                                  修改
+                                </Button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </Card>
+                );
+              })}
+            </div>
+          )
+        ) : activeTab === 'stats' ? (
+          statsLoading ? (
+            <LoadingState />
+          ) : statsError ? (
+            <ErrorState onRetry={refetchStats} />
+          ) : (
+            <TokenStatsPanel stats={stats} />
+          )
+        ) : null}
       </div>
     </div>
   );
@@ -225,7 +302,6 @@ function TokenStatsPanel({ stats }) {
 
   return (
     <div className="space-y-4">
-      {/* 总计卡片 */}
       <div className="grid grid-cols-4 gap-4">
         {[
           { label: '总Token消耗', value: (stats.totals?.total_tokens || 0).toLocaleString(), icon: '🔤' },
@@ -233,32 +309,31 @@ function TokenStatsPanel({ stats }) {
           { label: '总费用', value: `¥${stats.totals?.total_cost_yuan || 0}`, icon: '💰' },
           { label: '统计周期', value: `${stats.period_days}天`, icon: '📅' },
         ].map(({ label, value, icon }) => (
-          <div key={label} className="bg-white rounded-xl border border-gray-200 p-4">
+          <Card key={label} padding="lg" className="text-center">
             <div className="text-2xl mb-1">{icon}</div>
             <div className="text-xl font-bold text-gray-900">{value}</div>
             <div className="text-xs text-gray-500">{label}</div>
-          </div>
+          </Card>
         ))}
       </div>
 
-      {/* 按角色统计 */}
-      <div className="bg-white rounded-xl border border-gray-200">
-        <div className="px-5 py-3 border-b border-gray-100">
+      <Card padding="none" className="overflow-hidden">
+        <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
           <h3 className="text-sm font-medium text-gray-700">各角色Token消耗（Top 20）</h3>
         </div>
         <table className="w-full">
           <thead>
-            <tr className="text-xs text-gray-400 bg-gray-50">
-              <th className="px-5 py-2 text-left">角色</th>
-              <th className="px-4 py-2 text-right">调用次数</th>
-              <th className="px-4 py-2 text-right">总Token</th>
-              <th className="px-4 py-2 text-right">均Token</th>
-              <th className="px-4 py-2 text-right">费用（元）</th>
+            <tr className="text-xs text-gray-400 bg-gray-50/50">
+              <th className="px-5 py-2 text-left font-medium">角色</th>
+              <th className="px-4 py-2 text-right font-medium">调用次数</th>
+              <th className="px-4 py-2 text-right font-medium">总Token</th>
+              <th className="px-4 py-2 text-right font-medium">均Token</th>
+              <th className="px-4 py-2 text-right font-medium">费用（元）</th>
             </tr>
           </thead>
           <tbody>
             {(stats.by_role || []).map((r) => (
-              <tr key={r.agent_id} className="border-b border-gray-50 hover:bg-gray-50">
+              <tr key={r.agent_id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                 <td className="px-5 py-2.5 text-sm text-gray-700">{r.agent_name_zh || r.agent_id}</td>
                 <td className="px-4 py-2.5 text-sm text-right text-gray-600">{r.total_calls}</td>
                 <td className="px-4 py-2.5 text-sm text-right text-gray-600">{(r.total_tokens || 0).toLocaleString()}</td>
@@ -273,7 +348,7 @@ function TokenStatsPanel({ stats }) {
             )}
           </tbody>
         </table>
-      </div>
+      </Card>
     </div>
   );
 }

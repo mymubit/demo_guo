@@ -788,7 +788,7 @@ class EpisodeArtifactView(APIView):
                 episode_number=int(episode_number),
                 artifact_key=artifact_key,
                 version=current_version + 1,
-                content=current_content,  # TODO: 接入LLM修改逻辑
+                content=current_content,
                 diff_summary=result["diff_summary"],
                 produced_by_agent=agent_id,
                 word_count=current.word_count if current else 0,
@@ -796,14 +796,15 @@ class EpisodeArtifactView(APIView):
 
         return Response({
             "code": 0,
-            "message": "修改建议已接收，正在生成新版本",
+            "message": "修改建议功能开发中，当前为占位实现，暂未实际修改剧本内容",
             "data": {
                 "episode_number": new_artifact.episode_number,
                 "new_version": new_artifact.version,
                 "diff_summary": result["diff_summary"],
                 "applied_count": result["applied_count"],
                 "skipped_count": result["skipped_count"],
-                "note": result.get("note", ""),
+                "feature_status": "placeholder",
+                "note": "剧本自动修改功能待接入LLM后开放，当前仅记录修改建议",
             },
         })
 

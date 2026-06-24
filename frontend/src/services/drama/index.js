@@ -53,11 +53,6 @@ export const validateWordCount = (content, episodeNumber) =>
     data: { content, episode_number: episodeNumber },
   });
 
-export const validateAllWordCounts = (episodes) =>
-  request('POST', '/api/drama/validate/word-count/batch/', {
-    data: { episodes },
-  });
-
 // ─── Token 统计 ────────────────────────────────────────────────────────────────
 export const getTokenStats = (days = 30) =>
   request('GET', '/api/drama/stats/token/', { params: { days } });

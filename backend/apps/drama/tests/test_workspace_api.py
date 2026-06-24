@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Drama ??? API ????????? / ???? / ????"""
+"""Drama 工作区 API 单元测试 - 角色列表 / 创建项目 / 进度查询"""
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
@@ -72,7 +72,7 @@ class DramaWorkspaceApiTests(TestCase):
                 "episode_count": 40,
                 "target_platform": "douyin",
                 "track_mode": "fast",
-                "core_idea": "????",
+                "core_idea": "职场治愈测试创意",
             },
             format="json",
         )
