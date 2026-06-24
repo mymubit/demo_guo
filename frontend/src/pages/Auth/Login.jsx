@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Phone, Lock, Eye, EyeOff, LogIn } from 'lucide-react'
@@ -62,11 +62,11 @@ export default function Login() {
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <label className="block text-sm font-medium text-gray-600">密码</label>
+            <label className="block text-sm font-medium text-slate-300">密码</label>
             <button
               type="button"
               onClick={() => toast.info('请联系客服或使用手机号重置密码')}
-              className="text-sm text-brand-600 transition-colors hover:text-gold-300"
+              className="text-sm text-gold-400 transition-colors hover:text-gold-300"
             >
               忘记密码？
             </button>
@@ -84,7 +84,7 @@ export default function Login() {
             <button
               type="button"
               onClick={() => setShowPwd(!showPwd)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-brand-600"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 transition-colors hover:text-gold-400"
             >
               {showPwd ? <EyeOff className={ICON.lg} /> : <Eye className={ICON.lg} />}
             </button>
@@ -103,9 +103,9 @@ export default function Login() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-gray-500">
+      <p className="mt-6 text-center text-sm text-slate-400">
         还没有账号？{' '}
-        <Link to="/register" className="font-semibold text-brand-600 transition-colors hover:text-gold-300">
+        <Link to="/register" className="font-semibold text-gold-400 transition-colors hover:text-gold-300">
           立即注册
         </Link>
       </p>

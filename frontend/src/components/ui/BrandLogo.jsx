@@ -5,14 +5,11 @@ import { BRAND_GRADIENT, BRAND_SHADOW } from '@/constants/brand'
 import { ICON } from '@/constants/iconSizes'
 
 const SIZE_MAP = {
-  sm: { box: 'w-10 h-10', icon: ICON.lg, film: 'text-white' },
+  sm: { box: 'w-10 h-10 rounded-xl', icon: ICON.lg, film: 'text-navy-950' },
   md: { box: 'w-12 h-12 rounded-2xl', icon: ICON.xl, film: 'text-navy-950' },
-  lg: { box: 'w-16 h-16 rounded-2xl', icon: 'w-8 h-8', film: 'text-white' },
+  lg: { box: 'w-16 h-16 rounded-2xl', icon: 'w-8 h-8', film: 'text-navy-950' },
 }
 
-/**
- * @param {'consumer'|'admin'} variant — C 端金色 / 运营紫色
- */
 export default function BrandLogo({
   variant = 'consumer',
   size = 'sm',
@@ -26,10 +23,14 @@ export default function BrandLogo({
   const gradient = BRAND_GRADIENT[variant] || BRAND_GRADIENT.consumer
   const shadow = BRAND_SHADOW[variant] || BRAND_SHADOW.consumer
 
+  const isAdmin = variant === 'admin'
+  const titleColor = isAdmin ? 'text-white' : 'text-gold-400 group-hover:text-gold-300'
+  const subtitleColor = 'text-slate-400'
+
   const box = (
     <motion.div
       whileHover={interactive ? { rotate: 10, scale: 1.08 } : undefined}
-      className={`${s.box} rounded-xl flex items-center justify-center shrink-0`}
+      className={`${s.box} flex items-center justify-center shrink-0`}
       style={{ background: gradient, boxShadow: shadow }}
     >
       <Film className={`${s.icon} ${s.film}`} />
@@ -41,12 +42,12 @@ export default function BrandLogo({
       {box}
       {showText && (
         <div className="min-w-0">
-          <span className="text-xl font-bold text-gray-900">
-            <span className="text-brand-600">ScriptForge</span>
+          <span className={`text-xl font-bold transition-colors ${titleColor}`}>
+            ScriptForge
             {subtitle ? (
-              <span className="text-gray-500 ml-1 text-sm font-normal">{subtitle}</span>
+              <span className={`ml-1 text-sm font-normal ${subtitleColor}`}>{subtitle}</span>
             ) : (
-              <span className="text-gray-500 ml-1 text-sm font-normal">AI</span>
+              <span className={`ml-1 text-sm font-normal ${subtitleColor}`}>AI</span>
             )}
           </span>
         </div>

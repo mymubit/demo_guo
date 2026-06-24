@@ -25,9 +25,8 @@ const DEPT_LABELS = {
 };
 
 const TIER_CONFIG = {
-  1: { label: '核心必需', badge: '必须', tone: 'brand', dot: 'bg-brand-500', priority: '必执行', desc: '8个快速通道角色，所有项目都要执行' },
-  2: { label: '增强复合', badge: '增强', tone: 'accent', dot: 'bg-accent-500', priority: '按需执行', desc: '4个复合角色，每个整合多项专业能力' },
-  3: { label: '专项', badge: '专项', tone: 'default', dot: 'bg-slate-300', priority: '特需', desc: '已整合进复合角色，后台自动调用' },
+  1: { label: '核心必需', badge: '必须', tone: 'brand', dot: 'bg-gold-500', priority: '必执行', desc: '8个快速通道角色，所有项目都要执行' },
+  2: { label: '增强复合', badge: '增强', tone: 'accent', dot: 'bg-cyan-400', priority: '按需执行', desc: '4个复合角色，每个整合多项专业能力' },
 };
 
 const PLATFORM_LABELS = {
@@ -149,13 +148,17 @@ export default function WorkspacePage() {
   }
 
   const allRoles = departments.flatMap((d) =>
-    d.roles.map((r) => ({ ...r, dept_name: DEPT_LABELS[d.dept_code] || d.dept_name }))
+    d.roles
+      .filter(r => !r.hidden && (r.tier === 1 || r.tier === 2 || r.fast_track))
+      .map((r) => ({ ...r, dept_name: DEPT_LABELS[d.dept_code] || d.dept_name }))
   );
 
-  const rolesByTier = { 1: [], 2: [], 3: [] };
+  const rolesByTier = { 1: [], 2: [] };
   sortByWorkspaceOrder(allRoles).forEach((r) => {
     const tier = r.tier || (r.is_fast_track ? 1 : 2);
-    (rolesByTier[tier] || rolesByTier[2]).push(r);
+    if (tier === 1 || tier === 2) {
+      (rolesByTier[tier] || rolesByTier[2]).push(r);
+    }
   });
 
   const handleRunRole = (roleId, options = {}) => {
@@ -165,7 +168,7 @@ export default function WorkspacePage() {
 
   if (!projectId || projectId === 'undefined') {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3 text-slate-500">
+      <div className="flex flex-col items-center justify-center h-64 gap-3 text-slate-400">
         <p>无效的项目地址，请从创作中心重新进入。</p>
         <Button variant="brand" onClick={() => navigate('/drama')}>
           返回创作中心
@@ -177,70 +180,70 @@ export default function WorkspacePage() {
   if (projectLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3">
-        <Loader2 className="w-6 h-6 text-brand-500 animate-spin" />
-        <p className="text-slate-500 text-sm">加载工作台中...</p>
+        <Loader2 className="w-6 h-6 text-gold-500 animate-spin" />
+        <p className="text-slate-400 text-sm">加载工作台中...</p>
       </div>
     );
   }
 
   if (projectError || !project) {
     return (
-      <Card padding="xl" className="max-w-md mx-auto mt-20 text-center">
+      <Card padding="xl" className="max-w-md mx-auto mt-20 text-center border-white/10 bg-white/[0.04]">
         <div className="text-4xl mb-3">⚠️</div>
-        <h3 className="font-semibold text-slate-900 mb-2">加载失败</h3>
-        <p className="text-slate-500 text-sm mb-4">项目不存在或您无权访问</p>
+        <h3 className="font-semibold text-slate-100 mb-2">加载失败</h3>
+        <p className="text-slate-400 text-sm mb-4">项目不存在或您无权访问</p>
         <Button variant="brand" onClick={() => navigate('/drama')}>返回创作中心</Button>
       </Card>
     );
   }
 
   return (
-    <div className="flex h-screen bg-slate-25">
-      <aside className="w-72 bg-white border-r border-slate-200 flex flex-col overflow-hidden">
-        <div className="p-4 border-b border-slate-100">
+    <div className="flex h-screen bg-navy-950">
+      <aside className="w-72 bg-navy-900/80 backdrop-blur-xl border-r border-white/10 flex flex-col overflow-hidden">
+        <div className="p-4 border-b border-white/5">
           <div className="flex items-center gap-2 mb-2">
             <button
               onClick={() => navigate('/drama')}
-              className="text-slate-400 hover:text-slate-600 transition-colors p-1 -ml-1"
+              className="text-slate-500 hover:text-slate-300 transition-colors p-1 -ml-1"
               aria-label="返回"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <h2 className="font-semibold text-slate-900 text-sm truncate flex-1">{project.title}</h2>
+            <h2 className="font-semibold text-slate-100 text-sm truncate flex-1">{project.title}</h2>
           </div>
-          <div className="flex items-center gap-2 text-xs text-slate-500 mb-3">
+          <div className="flex items-center gap-2 text-xs text-slate-400 mb-3">
             <span>{project.episode_count}集</span>
             <span>·</span>
-            <span className={project.track_mode === 'fast' ? 'text-brand-600 font-medium' : 'text-accent-600 font-medium'}>
+            <span className={project.track_mode === 'fast' ? 'text-gold-400 font-medium' : 'text-cyan-400 font-medium'}>
               {project.track_mode === 'fast' ? '⚡快速通道' : '🎬专家通道'}
             </span>
           </div>
           {progress?.drama_stage_display && (
-            <div className="text-xs text-slate-500 mb-3">
-              当前阶段：<span className="text-slate-700 font-medium">{progress.drama_stage_display}</span>
+            <div className="text-xs text-slate-400 mb-3">
+              当前阶段：<span className="text-slate-200 font-medium">{progress.drama_stage_display}</span>
             </div>
           )}
 
           <div className="space-y-2.5">
             <div>
-              <div className="flex justify-between text-xs text-slate-400 mb-1">
+              <div className="flex justify-between text-xs text-slate-500 mb-1">
                 <span>角色完成度</span>
-                <span className="text-slate-600 font-medium">{progress?.completion_rate || 0}%</span>
+                <span className="text-slate-300 font-medium">{progress?.completion_rate || 0}%</span>
               </div>
-              <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-brand-500 rounded-full transition-all" style={{ width: `${progress?.completion_rate || 0}%` }} />
+              <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div className="h-full bg-gradient-to-r from-gold-400 to-gold-600 rounded-full transition-all" style={{ width: `${progress?.completion_rate || 0}%` }} />
               </div>
             </div>
 
             {project.episode_count > 0 && (
               <div>
-                <div className="flex justify-between text-xs text-slate-400 mb-1">
+                <div className="flex justify-between text-xs text-slate-500 mb-1">
                   <span>集数完成</span>
-                  <span className="text-slate-600 font-medium">{completedEpisodes}/{project.episode_count}集</span>
+                  <span className="text-slate-300 font-medium">{completedEpisodes}/{project.episode_count}集</span>
                 </div>
-                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-accent-500 rounded-full transition-all"
+                    className="h-full bg-gradient-to-r from-cyan-400 to-cyan-600 rounded-full transition-all"
                     style={{ width: `${(completedEpisodes / project.episode_count) * 100}%` }}
                   />
                 </div>
@@ -249,7 +252,7 @@ export default function WorkspacePage() {
           </div>
         </div>
 
-        <div className="px-3 py-2 border-b border-slate-100 flex gap-1">
+        <div className="px-3 py-2 border-b border-white/5 flex gap-1">
           {[
             { id: 'tier', label: '分层视图' },
             { id: 'dept', label: '部门视图' },
@@ -260,8 +263,8 @@ export default function WorkspacePage() {
               onClick={() => setViewMode(m.id)}
               className={`flex-1 text-xs py-1.5 rounded-lg transition-all font-medium ${
                 viewMode === m.id
-                  ? 'bg-brand-100 text-brand-700'
-                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                  ? 'bg-gold-500/15 text-gold-300'
+                  : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
               }`}
             >
               {m.label}
@@ -269,7 +272,7 @@ export default function WorkspacePage() {
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto py-1">
+        <div className="flex-1 overflow-y-auto py-1 scrollbar-thin">
           {viewMode === 'tier' && (
             <TierView roles={rolesByTier} completedSet={completedSet} roleStatusMap={roleStatusMap} selectedRole={selectedRole} onSelect={setSelectedRole} />
           )}
@@ -281,7 +284,7 @@ export default function WorkspacePage() {
           )}
         </div>
 
-        <div className="p-3 border-t border-slate-100 space-y-2">
+        <div className="p-3 border-t border-white/5 space-y-2">
           <Button
             variant="brand"
             className="w-full justify-center"
@@ -299,10 +302,10 @@ export default function WorkspacePage() {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto p-6">
+      <main className="flex-1 overflow-y-auto p-6 scrollbar-thin">
         {execFeedback && (
-          <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium transition-all ${
-            execFeedback.startsWith('✓') ? 'bg-success-600 text-white' : 'bg-danger-600 text-white'
+          <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium transition-all backdrop-blur-xl ${
+            execFeedback.startsWith('✓') ? 'bg-emerald-500/90 text-white' : 'bg-red-500/90 text-white'
           }`}>
             {execFeedback}
           </div>
@@ -336,11 +339,11 @@ export default function WorkspacePage() {
 }
 
 function TierView({ roles, completedSet, roleStatusMap, selectedRole, onSelect }) {
-  const [collapsed, setCollapsed] = useState({ 3: true });
+  const [collapsed, setCollapsed] = useState({});
 
   return (
     <>
-      {[1, 2, 3].map((tier) => {
+      {[1, 2].map((tier) => {
         const tierRoles = roles[tier] || [];
         if (tierRoles.length === 0) return null;
         const cfg = TIER_CONFIG[tier];
@@ -348,19 +351,19 @@ function TierView({ roles, completedSet, roleStatusMap, selectedRole, onSelect }
         const isCollapsed = collapsed[tier];
 
         return (
-          <div key={tier} className="border-b border-slate-100 last:border-0">
+          <div key={tier} className="border-b border-white/5 last:border-0">
             <button
               onClick={() => setCollapsed((c) => ({ ...c, [tier]: !c[tier] }))}
-              className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-slate-50 transition-colors"
+              className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-white/5 transition-colors"
             >
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
-                <span className="text-xs font-semibold text-slate-700">{cfg.label}</span>
+                <span className="text-xs font-semibold text-slate-300">{cfg.label}</span>
                 <Badge tone={cfg.tone} size="sm">{cfg.priority}</Badge>
               </div>
-              <div className="flex items-center gap-2 text-xs text-slate-400">
-                <span className="font-medium text-slate-600">{completedCount}/{tierRoles.length}</span>
-                <span className="text-slate-400">{isCollapsed ? '▸' : '▾'}</span>
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <span className="font-medium text-slate-300">{completedCount}/{tierRoles.length}</span>
+                <span className="text-slate-500">{isCollapsed ? '▸' : '▾'}</span>
               </div>
             </button>
 
@@ -385,23 +388,27 @@ function TierView({ roles, completedSet, roleStatusMap, selectedRole, onSelect }
 function DeptView({ departments, completedSet, roleStatusMap, selectedRole, onSelect }) {
   return (
     <>
-      {departments.map((dept) => (
-        <div key={dept.dept_code} className="py-1">
-          <div className="px-4 py-1.5 text-xs font-semibold text-slate-400 uppercase tracking-wide">
-            {dept.dept_name}
+      {departments.map((dept) => {
+        const deptRoles = dept.roles.filter(r => !r.hidden && (r.tier === 1 || r.tier === 2 || r.fast_track));
+        if (deptRoles.length === 0) return null;
+        return (
+          <div key={dept.dept_code} className="py-1">
+            <div className="px-4 py-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              {dept.dept_name}
+            </div>
+            {deptRoles.map((role) => (
+              <RoleItem
+                key={role.agent_id}
+                role={role}
+                isCompleted={completedSet.has(role.agent_id)}
+                execution={roleStatusMap[role.agent_id]?.execution}
+                isSelected={selectedRole === role.agent_id}
+                onSelect={onSelect}
+              />
+            ))}
           </div>
-          {dept.roles.map((role) => (
-            <RoleItem
-              key={role.agent_id}
-              role={role}
-              isCompleted={completedSet.has(role.agent_id)}
-              execution={roleStatusMap[role.agent_id]?.execution}
-              isSelected={selectedRole === role.agent_id}
-              onSelect={onSelect}
-            />
-          ))}
-        </div>
-      ))}
+        );
+      })}
     </>
   );
 }
@@ -409,7 +416,7 @@ function DeptView({ departments, completedSet, roleStatusMap, selectedRole, onSe
 function FastTrackView({ roles, completedSet, roleStatusMap, selectedRole, onSelect }) {
   return (
     <div className="py-2">
-      <div className="px-4 py-1.5 text-xs font-semibold text-brand-600 uppercase tracking-wide flex items-center gap-1.5">
+      <div className="px-4 py-1.5 text-xs font-semibold text-gold-400 uppercase tracking-wide flex items-center gap-1.5">
         <Zap className="w-3 h-3" />
         快速通道 · 8个核心角色
       </div>
@@ -434,17 +441,17 @@ function RoleItem({ role, isCompleted, execution, isSelected, onSelect, showDept
   const tierCfg = TIER_CONFIG[tier] || TIER_CONFIG[2];
 
   const iconColorClass = {
-    success: 'text-success-600',
-    running: 'text-brand-500 animate-pulse',
-    failed: 'text-danger-500',
-    pending: 'text-slate-400',
+    success: 'text-emerald-400',
+    running: 'text-gold-400 animate-pulse',
+    failed: 'text-red-400',
+    pending: 'text-slate-500',
   }[statusCfg.tone];
 
   return (
     <button
       onClick={() => onSelect(role.agent_id)}
-      className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-slate-50 transition-colors ${
-        isSelected ? 'bg-brand-50/70 border-r-2 border-brand-500' : ''
+      className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-white/5 transition-colors ${
+        isSelected ? 'bg-gold-500/10 border-r-2 border-gold-500' : ''
       }`}
     >
       <span className={`text-sm w-4 text-center flex-shrink-0 font-medium ${iconColorClass}`}>
@@ -452,12 +459,12 @@ function RoleItem({ role, isCompleted, execution, isSelected, onSelect, showDept
       </span>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className="text-sm text-slate-800 truncate font-medium">{role.name_zh}</span>
-          {tier === 1 && <Zap className="w-3 h-3 text-brand-400 flex-shrink-0" />}
-          {role.is_composite && <span className="text-xs text-accent-500 flex-shrink-0">◈</span>}
+          <span className="text-sm text-slate-200 truncate font-medium">{role.name_zh}</span>
+          {tier === 1 && <Zap className="w-3 h-3 text-gold-400 flex-shrink-0" />}
+          {role.is_composite && <span className="text-xs text-cyan-400 flex-shrink-0">◈</span>}
         </div>
         {showDeptTag && role.dept_name && (
-          <span className="text-xs text-slate-400">{role.dept_name}</span>
+          <span className="text-xs text-slate-500">{role.dept_name}</span>
         )}
       </div>
       {isCompleted && (
@@ -486,13 +493,13 @@ function WelcomePanel({
 
   return (
     <div className="w-full space-y-6">
-      <div className="relative overflow-hidden rounded-2xl border border-brand-200 bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 p-6 lg:p-8 text-white shadow-sm">
-        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
-        <div className="absolute -bottom-20 right-1/3 h-40 w-40 rounded-full bg-accent-400/20 blur-3xl" />
+      <div className="relative overflow-hidden rounded-2xl border border-gold-500/20 bg-gradient-to-br from-gold-600/20 via-navy-900 to-navy-950 p-6 lg:p-8 shadow-gold/5">
+        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gold-500/10 blur-3xl" />
+        <div className="absolute -bottom-20 right-1/3 h-40 w-40 rounded-full bg-cyan-500/10 blur-3xl" />
         <div className="relative">
-          <p className="text-brand-200 text-sm mb-1">短剧创作工作台</p>
-          <h2 className="text-2xl lg:text-3xl font-bold mb-2">{project?.title}</h2>
-          <p className="text-brand-100 text-sm mb-6">
+          <p className="text-gold-300/80 text-sm mb-1">短剧创作工作台</p>
+          <h2 className="text-2xl lg:text-3xl font-bold text-white mb-2">{project?.title}</h2>
+          <p className="text-slate-400 text-sm mb-6">
             {totalEp} 集 · {project?.track_mode === 'fast' ? '⚡ 快速通道' : '🎬 专家通道'}
             {project?.target_platform ? ` · ${formatPlatform(project.target_platform)}` : ''}
             {progress?.drama_stage_display ? ` · ${progress.drama_stage_display}` : ''}
@@ -502,17 +509,17 @@ function WelcomePanel({
             <HeroStat label="已生成集数" value={`${completedEpisodes}/${totalEp}`} sub="剧本进度" />
             <HeroStat label="质量等级" value={project?.quality_scores?.grade || '—'} sub="综合评分" />
             <HeroStat
-              label="当前通道"
-              value={project?.track_mode === 'fast' ? '快速' : '专家'}
-              sub={`${(rolesByTier[1]?.length || 0) + (rolesByTier[2]?.length || 0) + (rolesByTier[3]?.length || 0)} 个可用角色`}
+              label="角色总数"
+              value="12"
+              sub={`${(rolesByTier[1]?.length || 0) + (rolesByTier[2]?.length || 0)} 个可用角色`}
             />
           </div>
         </div>
       </div>
 
       {totalEp >= 50 && (
-        <Card variant="default" padding="md" className="border-warning-200 bg-warning-50/50">
-          <p className="text-sm text-warning-800">
+        <Card variant="default" padding="md" className="border-amber-500/20 bg-amber-500/5">
+          <p className="text-sm text-amber-300">
             <strong className="font-semibold">📌 大体量剧本建议：</strong>此项目共 {totalEp} 集，建议采用
             <strong> 分批生成策略</strong>（每批 5–10 集）：大纲先行 → 分批执行剧本执笔师 → 每批完成后质检 → 低于 75 分自动重写。
           </p>
@@ -520,20 +527,20 @@ function WelcomePanel({
       )}
 
       <div className="grid lg:grid-cols-5 gap-6">
-        <Card padding="lg" className="lg:col-span-2">
-          <h3 className="text-base font-semibold text-slate-900 mb-4">如何开始</h3>
+        <Card padding="lg" className="lg:col-span-2 border-white/10 bg-white/[0.04]">
+          <h3 className="text-base font-semibold text-slate-100 mb-4">如何开始</h3>
           <div className="space-y-4">
-            <Step n={1} title="从左侧选择「核心必需」层的角色" desc="品牌色角色是所有项目必须执行的，按顺序执行效果最佳" />
+            <Step n={1} title="从左侧选择「核心必需」层的角色" desc="金色标识角色是所有项目必须执行的，按顺序执行效果最佳" />
             <Step n={2} title="执行角色生成内容" desc="查看输入依赖与输出说明，确认依赖满足后点击执行" />
             <Step n={3} title="分批生成剧本（推荐 5 集/批）" desc="剧本执笔师支持指定集数范围，完成后立即质检" />
             <Step n={4} title="应用修改建议" desc="审稿官与精修大师的建议可一键应用到原始剧本" />
           </div>
         </Card>
 
-        <Card padding="lg" className="lg:col-span-3">
+        <Card padding="lg" className="lg:col-span-3 border-white/10 bg-white/[0.04]">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-slate-900">核心执行路径</h3>
-            <span className="text-xs text-slate-500">{coreDone}/{coreRoles.length} 已完成</span>
+            <h3 className="text-base font-semibold text-slate-100">核心执行路径</h3>
+            <span className="text-xs text-slate-400">{coreDone}/{coreRoles.length} 已完成</span>
           </div>
           <div className="space-y-2">
             {coreRoles.map((role, idx) => {
@@ -541,29 +548,29 @@ function WelcomePanel({
               const execStatus = exec?.status ?? 'pending';
               const statusCfg = EXEC_STATUS[execStatus] || EXEC_STATUS.pending;
               const iconColorClass = {
-                success: 'text-success-600',
-                running: 'text-brand-500 animate-pulse',
-                failed: 'text-danger-500',
-                pending: 'text-slate-400',
+                success: 'text-emerald-400',
+                running: 'text-gold-400 animate-pulse',
+                failed: 'text-red-400',
+                pending: 'text-slate-500',
               }[statusCfg.tone];
               return (
                 <button
                   key={role.agent_id}
                   type="button"
                   onClick={() => onSelectRole(role.agent_id)}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-brand-200 hover:bg-brand-50/50 transition-all text-left group"
+                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-white/10 hover:border-gold-500/30 hover:bg-gold-500/5 transition-all text-left group"
                 >
-                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-brand-100 text-brand-700 text-xs font-semibold flex items-center justify-center">
+                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-gold-500/15 text-gold-300 text-xs font-semibold flex items-center justify-center">
                     {idx + 1}
                   </span>
                   <span className={`flex-shrink-0 text-base font-medium ${iconColorClass}`}>{statusCfg.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-slate-800 truncate">{role.name_zh}</div>
+                    <div className="text-sm font-medium text-slate-200 truncate">{role.name_zh}</div>
                     {role.dept_name && (
-                      <div className="text-xs text-slate-400 truncate">{role.dept_name}</div>
+                      <div className="text-xs text-slate-500 truncate">{role.dept_name}</div>
                     )}
                   </div>
-                  <span className="text-xs text-brand-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 font-medium">
+                  <span className="text-xs text-gold-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 font-medium">
                     进入 →
                   </span>
                 </button>
@@ -573,25 +580,25 @@ function WelcomePanel({
         </Card>
       </div>
 
-      <Card padding="lg">
-        <h3 className="text-sm font-semibold text-slate-700 mb-3">创作流程</h3>
+      <Card padding="lg" className="border-white/10 bg-white/[0.04]">
+        <h3 className="text-sm font-semibold text-slate-300 mb-3">创作流程</h3>
         <div className="space-y-2">
-          <Step n={1} title="执行8个核心角色（⚡品牌色）" desc="按顺序：立项→世界观→人设→大纲→剧本→审稿→质量→合规。这8个角色已深度整合山音方法论。" />
+          <Step n={1} title="执行8个核心角色（⚡金色标识）" desc="按顺序：立项→世界观→人设→大纲→剧本→审稿→质量→合规。这8个角色已深度整合山音方法论。" />
           <Step n={2} title="分批生成剧本（每批5集）" desc="剧本执笔师严格执行：首集900-1100字，其余700-900字，台词≥35%，场景≤3个。" />
-          <Step n={3} title="按需选择复合角色（◈强调色）" desc="4个复合角色各自整合了5-6项专业能力：市场分析师/叙事工程师/精修大师/制作发行师。" />
-          <Step n={4} title="查看质量报告并应用修改" desc="质量报告包含：雷达图+情绪曲线+8维扣分详情+汇总报告。建议可一键应用。" />
+          <Step n={3} title="按需选择复合角色（◈青色标识）" desc="4个复合角色各自整合了5-6项专业能力：市场分析师/叙事工程师/精修大师/制作发行师。" />
+          <Step n={4} title="查看质量报告并应用修改" desc="质量报告包含：雷达图+情绪曲线+10维扣分详情+汇总报告。建议可一键应用。" />
         </div>
 
-        <div className="mt-4 p-3 bg-brand-50 rounded-xl text-xs text-brand-700 border border-brand-100">
-          <strong className="font-semibold">角色架构说明：</strong>12 个可见角色 = 8 核心 + 4 复合增强。
+        <div className="mt-4 p-3 bg-gold-500/10 rounded-xl text-xs text-gold-300 border border-gold-500/20">
+          <strong className="font-semibold">角色架构说明：</strong>12 个专业角色 = 8 核心快速通道 + 4 复合增强。
           左侧「增强复合」分组中可找到市场分析师、叙事工程师、精修大师、制作发行师。
         </div>
       </Card>
 
       {recommendRoles.length > 0 && (
-        <Card padding="lg" className="border-accent-100">
+        <Card padding="lg" className="border-cyan-500/20 bg-white/[0.04]">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-slate-900">增强复合角色（按需执行）</h3>
+            <h3 className="text-base font-semibold text-slate-100">增强复合角色（按需执行）</h3>
             <Badge tone="accent" size="sm">◈ {recommendRoles.length} 个</Badge>
           </div>
           <div className="grid sm:grid-cols-2 gap-3">
@@ -600,13 +607,13 @@ function WelcomePanel({
                 key={role.agent_id}
                 type="button"
                 onClick={() => onSelectRole(role.agent_id)}
-                className="text-left p-4 rounded-xl border border-accent-100 hover:border-accent-300 hover:bg-accent-50/50 transition-all"
+                className="text-left p-4 rounded-xl border border-white/10 hover:border-cyan-500/30 hover:bg-cyan-500/5 transition-all"
               >
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-accent-500 text-sm">◈</span>
-                  <span className="font-medium text-slate-900">{role.name_zh}</span>
+                  <span className="text-cyan-400 text-sm">◈</span>
+                  <span className="font-medium text-slate-100">{role.name_zh}</span>
                 </div>
-                <p className="text-xs text-slate-500 line-clamp-2">{role.description}</p>
+                <p className="text-xs text-slate-400 line-clamp-2">{role.description}</p>
               </button>
             ))}
           </div>
@@ -618,10 +625,10 @@ function WelcomePanel({
 
 function HeroStat({ label, value, sub }) {
   return (
-    <div className="rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-3">
-      <div className="text-xl lg:text-2xl font-bold">{value}</div>
-      <div className="text-xs text-brand-100 mt-0.5">{label}</div>
-      {sub && <div className="text-[10px] text-brand-200/80 mt-1">{sub}</div>}
+    <div className="rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 px-4 py-3">
+      <div className="text-xl lg:text-2xl font-bold text-white">{value}</div>
+      <div className="text-xs text-slate-400 mt-0.5">{label}</div>
+      {sub && <div className="text-[10px] text-slate-500 mt-1">{sub}</div>}
     </div>
   );
 }
@@ -629,12 +636,12 @@ function HeroStat({ label, value, sub }) {
 function Step({ n, title, desc }) {
   return (
     <div className="flex gap-3">
-      <div className="w-5 h-5 rounded-full bg-brand-100 text-brand-700 text-xs font-semibold flex items-center justify-center flex-shrink-0 mt-0.5">
+      <div className="w-5 h-5 rounded-full bg-gold-500/15 text-gold-300 text-xs font-semibold flex items-center justify-center flex-shrink-0 mt-0.5">
         {n}
       </div>
       <div>
-        <div className="text-sm font-medium text-slate-800">{title}</div>
-        <div className="text-xs text-slate-500 mt-0.5">{desc}</div>
+        <div className="text-sm font-medium text-slate-200">{title}</div>
+        <div className="text-xs text-slate-400 mt-0.5">{desc}</div>
       </div>
     </div>
   );
@@ -655,8 +662,8 @@ function RoleDetailPanel({
 
   if (!role) {
     return (
-      <Card variant="default" padding="md" className="border-warning-200 bg-warning-50">
-        <p className="text-sm text-warning-800">未找到角色数据，请刷新页面后重试。</p>
+      <Card variant="default" padding="md" className="border-amber-500/20 bg-amber-500/5">
+        <p className="text-sm text-amber-300">未找到角色数据，请刷新页面后重试。</p>
       </Card>
     );
   }
@@ -693,11 +700,11 @@ function RoleDetailPanel({
 
   return (
     <div className="w-full flex flex-col gap-4 min-h-[calc(100vh-4rem)]">
-      <Card padding="none" className="overflow-hidden">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 px-5 py-4 border-b border-slate-100 bg-gradient-to-r from-slate-50/80 to-white">
+      <Card padding="none" className="overflow-hidden border-white/10 bg-white/[0.04]">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 px-5 py-4 border-b border-white/5 bg-gradient-to-r from-navy-900/80 to-navy-950/60">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-              <h2 className="text-lg font-bold text-slate-900">{role.name_zh}</h2>
+              <h2 className="text-lg font-bold text-white">{role.name_zh}</h2>
               <Badge tone={tierCfg.tone} size="sm">{tierCfg.label}</Badge>
               {role.is_fast_track && (
                 <Badge tone="brand" size="sm">⚡ 快速通道</Badge>
@@ -709,7 +716,7 @@ function RoleDetailPanel({
                 <Badge tone="success" size="sm">✓ 已完成</Badge>
               )}
             </div>
-            <p className="text-sm text-slate-500">{role.description}</p>
+            <p className="text-sm text-slate-400">{role.description}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <Button
@@ -722,7 +729,7 @@ function RoleDetailPanel({
             </Button>
             <a
               href="/admin/drama-models"
-              className="p-2.5 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-50 transition-colors"
+              className="p-2.5 border border-white/10 text-slate-400 rounded-xl hover:bg-white/5 transition-colors"
               title="配置模型"
             >
               <Settings className="w-4 h-4" />
@@ -732,30 +739,30 @@ function RoleDetailPanel({
 
         <div className="px-5 py-4 space-y-4">
           {isBatchRole && (
-            <Card padding="md" className="border-accent-100 bg-accent-50/50">
+            <Card padding="md" className="border-cyan-500/20 bg-cyan-500/5">
               {isCountMode ? (
                 <>
-                  <p className="text-xs font-semibold text-accent-700 mb-2">
+                  <p className="text-xs font-semibold text-cyan-300 mb-2">
                     📋 大纲生成配置（将生成全部 {project.episode_count} 集分集大纲）
                   </p>
-                  <p className="text-xs text-accent-600">
+                  <p className="text-xs text-cyan-400/80">
                     分集大纲一次性生成所有集，建议先生成大纲再按需分批写剧本。
                   </p>
                 </>
               ) : (
                 <>
-                  <p className="text-xs font-semibold text-accent-700 mb-2">
+                  <p className="text-xs font-semibold text-cyan-300 mb-2">
                     📌 分集生成配置（共 {project.episode_count} 集，建议每批 5 集）
                   </p>
                   <div className="flex flex-wrap items-center gap-3">
                     <div className="flex items-center gap-2">
-                      <label className="text-xs text-slate-600">生成集数范围</label>
+                      <label className="text-xs text-slate-400">生成集数范围</label>
                       <input
                         type="text"
                         value={episodeRange}
                         onChange={(e) => setEpisodeRange(e.target.value)}
                         placeholder="如：1-5"
-                        className="border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm w-24 focus:ring-2 focus:ring-accent-400 focus:border-accent-400 outline-none transition-all"
+                        className="border border-white/10 bg-white/5 rounded-lg px-2.5 py-1.5 text-sm text-slate-200 w-24 focus:ring-2 focus:ring-gold-500/30 focus:border-gold-500/50 outline-none transition-all"
                       />
                     </div>
                     <div className="flex max-h-24 gap-1.5 overflow-y-auto flex-wrap">
@@ -770,8 +777,8 @@ function RoleDetailPanel({
                             onClick={() => setEpisodeRange(range)}
                             className={`shrink-0 text-xs px-2.5 py-1 rounded-lg border transition-all font-medium ${
                               episodeRange === range
-                                ? 'bg-accent-600 text-white border-accent-600 shadow-sm'
-                                : 'bg-white text-slate-600 border-slate-200 hover:border-accent-400 hover:text-accent-700'
+                                ? 'bg-gold-500 text-navy-950 border-gold-500 shadow-gold'
+                                : 'bg-white/5 text-slate-300 border-white/10 hover:border-gold-500/30 hover:text-gold-300'
                             }`}
                           >
                             {range} 集
@@ -786,8 +793,8 @@ function RoleDetailPanel({
           )}
 
           {lastExecResult?.scope && (
-            <Card padding="md" className="border-success-200 bg-success-50">
-              <p className="text-xs text-success-700 font-medium">
+            <Card padding="md" className="border-emerald-500/20 bg-emerald-500/5">
+              <p className="text-xs text-emerald-300 font-medium">
                 ✓ 上次执行：{lastExecResult.scope}
                 {lastExecResult.execution_id ? ` · ID: ${lastExecResult.execution_id.slice(0, 8)}` : ''}
               </p>
@@ -795,8 +802,8 @@ function RoleDetailPanel({
           )}
 
           <div className="flex flex-col md:flex-row gap-3">
-            <div className="flex-1 rounded-xl bg-slate-50/80 border border-slate-100 px-4 py-3">
-              <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-2">输入依赖</h4>
+            <div className="flex-1 rounded-xl bg-white/[0.03] border border-white/5 px-4 py-3">
+              <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-2">输入依赖</h4>
               {role.input_contract?.required_artifacts?.length > 0 ? (
                 <div className="flex flex-wrap gap-1.5">
                   {role.input_contract.required_artifacts.map((a) => (
@@ -810,12 +817,12 @@ function RoleDetailPanel({
                   ))}
                 </div>
               ) : (
-                <span className="text-xs text-slate-400">无依赖，可直接执行</span>
+                <span className="text-xs text-slate-500">无依赖，可直接执行</span>
               )}
             </div>
 
-            <div className="flex-1 rounded-xl bg-slate-50/80 border border-slate-100 px-4 py-3">
-              <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 mb-2">输出产物</h4>
+            <div className="flex-1 rounded-xl bg-white/[0.03] border border-white/5 px-4 py-3">
+              <h4 className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-2">输出产物</h4>
               <div className="flex flex-wrap gap-1.5">
                 {(role.output_contract?.artifacts || []).map((a) => (
                   <Badge key={a} tone="success" size="sm">{a}</Badge>
@@ -825,8 +832,8 @@ function RoleDetailPanel({
           </div>
 
           {role.is_composite && (
-            <Card padding="md" className="border-accent-100 bg-accent-50/50">
-              <p className="text-xs text-accent-700">
+            <Card padding="md" className="border-cyan-500/20 bg-cyan-500/5">
+              <p className="text-xs text-cyan-300">
                 <strong className="font-semibold">◈ 复合增强角色</strong><br />
                 整合多项专业能力，建议在 8 个核心角色完成后按需执行。
               </p>
@@ -835,16 +842,16 @@ function RoleDetailPanel({
         </div>
       </Card>
 
-      <Card padding="lg" className="flex-1">
-        <h3 className="text-sm font-semibold text-slate-700 mb-3">执行输出</h3>
+      <Card padding="lg" className="flex-1 border-white/10 bg-white/[0.04]">
+        <h3 className="text-sm font-semibold text-slate-300 mb-3">执行输出</h3>
         {isRunning && (
-          <div className="text-center py-8 text-brand-500 text-sm flex items-center justify-center gap-2">
+          <div className="text-center py-8 text-gold-400 text-sm flex items-center justify-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin" />
             正在生成，请稍候…
           </div>
         )}
         {!isRunning && execStatus === 'failed' && (
-          <div className="text-sm text-danger-600 bg-danger-50 rounded-xl p-3 border border-danger-100">
+          <div className="text-sm text-red-300 bg-red-500/10 rounded-xl p-3 border border-red-500/20">
             ✕ 执行失败：{execution?.error_message || '未知错误'}
           </div>
         )}
@@ -852,13 +859,13 @@ function RoleDetailPanel({
           <DramaPresentation views={outputViews} rawArtifacts={execution?.output_artifacts || {}} />
         )}
         {!isRunning && execStatus === 'success' && outputKeys.length === 0 && (
-          <div className="text-sm text-success-700 bg-success-50 rounded-xl p-3 border border-success-100">
+          <div className="text-sm text-emerald-300 bg-emerald-500/10 rounded-xl p-3 border border-emerald-500/20">
             ✓ 执行已完成。
             {lastExecResult?.scope ? ` 范围：${lastExecResult.scope}` : ''}
           </div>
         )}
         {!isRunning && execStatus === 'pending' && (
-          <div className="text-center py-8 text-slate-400 text-sm">
+          <div className="text-center py-8 text-slate-500 text-sm">
             点击「执行此角色」开始生成内容
           </div>
         )}

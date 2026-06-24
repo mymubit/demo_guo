@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
@@ -7,11 +7,11 @@ import {
   Eye,
   EyeOff,
   User,
-  Loader2,
   UserPlus,
   Check,
   AlertCircle,
 } from 'lucide-react'
+import { Button } from '@/components/ui'
 import { useAuthStore } from '@/store/authStore'
 import { auth } from '@/services/api'
 import AuthShell from './AuthShell'
@@ -85,15 +85,15 @@ export default function Register() {
   }
 
   const inputClass = (hasError) =>
-    `sf-control pl-12 ${hasError ? 'border-red-500/60 focus:border-red-500 focus:ring-red-500/20' : ''}`
+    `sf-control pl-12 py-3.5 ${hasError ? 'border-red-500/60 focus:border-red-500 focus:ring-red-500/20' : ''}`
 
   return (
     <AuthShell activeTab="register" title="创建账号" subtitle="注册即送创作币体验">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-600">手机号</label>
+          <label className="mb-2 block text-sm font-medium text-slate-300">手机号</label>
           <div className="relative">
-            <Phone className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <Phone className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
             <input
               type="tel"
               placeholder="请输入 11 位手机号"
@@ -107,11 +107,11 @@ export default function Register() {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-600">
-            密码 <span className="font-normal text-gray-400">(至少 8 位)</span>
+          <label className="mb-2 block text-sm font-medium text-slate-300">
+            密码 <span className="font-normal text-slate-500">(至少 8 位)</span>
           </label>
           <div className="relative">
-            <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
             <input
               type={showPwd ? 'text' : 'password'}
               placeholder="请输入密码"
@@ -122,29 +122,29 @@ export default function Register() {
             <button
               type="button"
               onClick={() => setShowPwd(!showPwd)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-brand-600"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 transition-colors hover:text-gold-400"
             >
               {showPwd ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
           {form.password && (
             <div className="mt-2 flex items-center gap-3">
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-100">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
                 <div
                   className={`h-full transition-all duration-300 ${passwordStrength.color}`}
                   style={{ width: `${(passwordStrength.level / 4) * 100}%` }}
                 />
               </div>
-              <span className="w-12 text-right text-xs text-gray-500">{passwordStrength.label}</span>
+              <span className="w-12 text-right text-xs text-slate-500">{passwordStrength.label}</span>
             </div>
           )}
           {errors.password && <p className="mt-1.5 text-sm text-red-400">{errors.password}</p>}
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-600">确认密码</label>
+          <label className="mb-2 block text-sm font-medium text-slate-300">确认密码</label>
           <div className="relative">
-            <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
             <input
               type={showConfirm ? 'text' : 'password'}
               placeholder="请再次输入密码"
@@ -155,7 +155,7 @@ export default function Register() {
             <button
               type="button"
               onClick={() => setShowConfirm(!showConfirm)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 transition-colors hover:text-brand-600"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 transition-colors hover:text-gold-400"
             >
               {showConfirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
@@ -169,11 +169,11 @@ export default function Register() {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-gray-600">
-            昵称 <span className="font-normal text-gray-400">(可选)</span>
+          <label className="mb-2 block text-sm font-medium text-slate-300">
+            昵称 <span className="font-normal text-slate-500">(可选)</span>
           </label>
           <div className="relative">
-            <User className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            <User className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
             <input
               type="text"
               placeholder="给自己起一个好听的名字"
@@ -186,46 +186,36 @@ export default function Register() {
           {errors.nickname && <p className="mt-1.5 text-sm text-red-400">{errors.nickname}</p>}
         </div>
 
-        <div className="flex items-start gap-2 pt-1 text-xs text-gray-500">
-          <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-brand-600" />
+        <div className="flex items-start gap-2 pt-1 text-xs text-slate-500">
+          <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-gold-400" />
           <span>
             注册即表示您同意我们的
-            <Link to="#" className="mx-0.5 text-brand-600 hover:text-gold-300">
+            <Link to="#" className="mx-0.5 text-gold-400 hover:text-gold-300">
               服务条款
             </Link>
             和
-            <Link to="#" className="mx-0.5 text-brand-600 hover:text-gold-300">
+            <Link to="#" className="mx-0.5 text-gold-400 hover:text-gold-300">
               隐私政策
             </Link>
           </span>
         </div>
 
-        <button
+        <Button
           type="submit"
+          variant="gold"
+          size="lg"
+          isLoading={loading}
+          iconLeft={<UserPlus className="h-5 w-5" />}
+          className="w-full py-4 text-lg"
           disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-xl py-4 text-lg font-bold text-navy-950 transition-all disabled:cursor-not-allowed disabled:opacity-60"
-          style={{
-            background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
-            boxShadow: '0 10px 30px -10px rgba(244, 183, 25, 0.5)',
-          }}
         >
-          {loading ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin" />
-              创建账号中...
-            </>
-          ) : (
-            <>
-              <UserPlus className="h-5 w-5" />
-              立即注册
-            </>
-          )}
-        </button>
+          {loading ? '创建账号中...' : '立即注册'}
+        </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-gray-500">
+      <p className="mt-6 text-center text-sm text-slate-400">
         已有账号？{' '}
-        <Link to="/login" className="font-semibold text-brand-600 transition-colors hover:text-gold-300">
+        <Link to="/login" className="font-semibold text-gold-400 transition-colors hover:text-gold-300">
           立即登录
         </Link>
       </p>

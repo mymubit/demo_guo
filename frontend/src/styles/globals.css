@@ -2,442 +2,103 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ============================================================
-   设计令牌 (Design Tokens) — 通过 CSS 变量驱动
-   目标: 与 tailwind.config.js 中的品牌/语义色板 1:1 对齐
-   新增组件/页面优先使用 Tailwind utility class,
-   不写自定义 CSS (除非特殊效果)
-   ============================================================ */
-
-:root {
-  /* 品牌色 */
-  --sf-brand-500: #6366f1;
-  --sf-brand-600: #4f46e5;
-  --sf-accent-400: #f4b719;
-
-  /* 浅色层级（C 端 dashboard） */
-  --sf-bg: #f9fafb;
-  --sf-surface: #ffffff;
-  --sf-surface-raised: #f3f4f6;
-
-  /* 语义色 */
-  --sf-success: #22c55e;
-  --sf-warning: #f59e0b;
-  --sf-danger: #ef4444;
-  --sf-info: #06b6d4;
-
-  /* 文本色 */
-  --sf-text: #111827;
-  --sf-text-muted: #6b7280;
-  --sf-text-dim: #9ca3af;
-
-  /* 边框/交互 */
-  --sf-border: #e5e7eb;
-  --sf-border-strong: #d1d5db;
-  --sf-focus-ring: rgba(99, 102, 241, 0.25);
-
-  /* 字体 */
-  --sf-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-}
-
-/* 基础样式 — 注意: 所有页面组件使用 Tailwind utility */
-
-html {
-  scroll-behavior: smooth;
-}
-
-body {
-  font-family: var(--sf-font-sans);
-  background: var(--sf-bg);
-  min-height: 100vh;
-  color: var(--sf-text);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-button,
-input,
-textarea,
-select {
-  font-family: inherit;
-  color: var(--sf-text);
-}
-
-select {
-  background-color: #fff;
-  color-scheme: light;
-}
-
-select option {
-  color: #111827;
-  background-color: #fff;
-}
-
-::selection {
-  background: var(--sf-focus-ring);
-  color: var(--sf-text);
-}
-
-/* ========== 自定义滚动条 ========== */
-
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.2);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.4);
-}
-
-/* ========== 自定义动画 ========== */
-
-@keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
+@layer base {
+  :root {
+    --sf-bg: #0a0e1a;
+    --sf-surface: rgba(255, 255, 255, 0.04);
+    --sf-surface-raised: rgba(255, 255, 255, 0.06);
+    --sf-border: rgba(255, 255, 255, 0.08);
+    --sf-border-strong: rgba(255, 255, 255, 0.15);
+    --sf-text: #f1f5f9;
+    --sf-text-muted: #94a3b8;
+    --sf-text-dim: #64748b;
+    --sf-brand: #f4b719;
+    --sf-brand-600: #e0a008;
+    --sf-focus-ring: rgba(244, 183, 25, 0.3);
+    --sf-success: #22c55e;
+    --sf-warning: #f59e0b;
+    --sf-danger: #ef4444;
+    --sf-info: #38bdf8;
+    --sf-font-sans: 'Inter', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+    --sf-font-serif: 'Noto Serif SC', 'Source Han Serif SC', Georgia, serif;
+    --sf-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   }
-  100% {
-    background-position: 1000px 0;
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--sf-font-sans);
+    background: var(--sf-bg);
+    min-height: 100vh;
+    color: var(--sf-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(244, 183, 25, 0.06), transparent),
+      url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+    background-attachment: fixed;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+    color: inherit;
+  }
+
+  select {
+    background-color: rgba(15, 23, 42, 0.8);
+    color-scheme: dark;
+  }
+
+  select option {
+    color: #f1f5f9;
+    background-color: #0f172a;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--sf-text-dim);
+  }
+
+  ::selection {
+    background: rgba(244, 183, 25, 0.25);
+    color: #fff;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(244, 183, 25, 0.3);
   }
 }
-
-@keyframes pulseGlow {
-  0%,
-  100% {
-    box-shadow: 0 0 8px rgba(244, 183, 25, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(244, 183, 25, 0.5);
-  }
-}
-
-/* ============================================================
-   业务专用组件样式 (无通用样式)
-   ============================================================ */
-
-/* 剧本展示 — 与其他文本样式区分 */
-.sf-script-result {
-  color: var(--sf-text);
-  line-height: 1.7;
-  font-size: 0.875rem;
-}
-
-.sf-script-result .ws-section {
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--sf-border);
-}
-
-.sf-script-result .ws-section:last-child {
-  border-bottom: none;
-}
-
-.sf-script-result .ws-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #fff;
-  margin-bottom: 0.5rem;
-}
-
-.sf-script-result .ws-meta,
-.sf-script-result .script-result-meta {
-  font-size: 0.75rem;
-  color: var(--sf-text-muted);
-  margin-bottom: 0.75rem;
-}
-
-.sf-script-result .ws-section-body p {
-  margin-top: 0.25rem;
-  margin-bottom: 0.5rem;
-  line-height: 1.7;
-}
-
-.sf-script-result .ws-section-body strong {
-  color: rgba(244, 183, 25, 0.9);
-  font-weight: 600;
-}
-
-/* 剧本剧集块 */
-.sf-script-result .script-episode,
-.sf-script-rendered .script-episode {
-  margin-bottom: 0.75rem;
-  padding: 0.75rem;
-  border-radius: 0.75rem;
-  background: rgba(15, 23, 42, 0.4);
-  border: 1px solid var(--sf-border);
-}
-
-.sf-script-rendered {
-  color: var(--sf-text);
-  font-size: 0.875rem;
-  line-height: 1.7;
-}
-
-.sf-script-rendered .ws-section {
-  margin-bottom: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--sf-border);
-}
-
-.sf-script-rendered .ws-section:last-child {
-  border-bottom: none;
-}
-
-.sf-script-rendered .ws-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #fff;
-  margin-bottom: 0.5rem;
-}
-
-.sf-script-rendered .ws-section-body p {
-  margin-top: 0.25rem;
-  margin-bottom: 0.5rem;
-  line-height: 1.7;
-}
-
-.sf-script-rendered .ws-section-body strong {
-  color: rgba(244, 183, 25, 0.9);
-  font-weight: 600;
-}
-
-.sf-script-rendered .ws-watermark,
-.sf-script-rendered .script-watermark {
-  font-size: 0.75rem;
-  color: var(--sf-text-dim);
-  margin-top: 1rem;
-}
-
-/* 当前执行节点脉冲 — 与 Tailwind animate-pulse-glow 对齐 */
-.node-active {
-  animation: pulseGlow 2s ease-in-out infinite;
-}
-
-/* ============================================================
-   遗留兼容 — 老代码可能引用以下类,保留为 Tailwind 别名
-   新代码请直接使用 Tailwind utility class, 不要新增下面的类
-   ============================================================ */
 
 @layer components {
-  /* 渐变文字 (复用背景+透明文字) — 新代码请用 bg-gradient-to-r + text-transparent */
-  .gradient-text {
-    background-image: linear-gradient(135deg, #f6d365 0%, #fda085 50%, #fbc2eb 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  .gradient-text-primary {
-    background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  /* 遗留按钮 — 与 ui/Button variant 对齐；新代码优先用 <Button> */
-  .btn-gold {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    border-radius: 0.75rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    background-image: linear-gradient(to right, #f7cb54, #e0a008);
-    color: #0f172a;
-    box-shadow: 0 16px 42px -20px rgba(244, 183, 25, 0.55);
-  }
-
-  .btn-gold:hover:not(:disabled) {
-    background-image: linear-gradient(to right, #fae08f, #f7cb54);
-  }
-
-  .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    border-radius: 0.75rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    background-image: linear-gradient(to right, #6366f1, #4338ca);
-    color: #fff;
-    box-shadow: 0 18px 60px -24px rgba(102, 126, 234, 0.55);
-  }
-
-  .btn-primary:hover:not(:disabled) {
-    box-shadow: 0 20px 52px -28px rgba(0, 0, 0, 0.65);
-    transform: translateY(-2px);
-  }
-
-  .btn-ghost {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    border-radius: 0.75rem;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    border: 1px solid var(--sf-border);
-    background-color: #fff;
-    color: #374151;
-  }
-
-  .btn-ghost:hover:not(:disabled) {
-    border-color: var(--sf-border-strong);
-    background-color: #f9fafb;
-  }
-
-  .btn-gold:disabled,
-  .btn-primary:disabled,
-  .btn-ghost:disabled {
-    pointer-events: none;
-    opacity: 0.55;
-  }
-
-  .btn-gold:focus-visible,
-  .btn-primary:focus-visible,
-  .btn-ghost:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--sf-focus-ring);
-  }
-
-  /* 首页区块标题 — 与 SectionHeader centered 对齐 */
-  .section-title {
-    text-align: center;
-    font-size: 1.875rem;
-    font-weight: 700;
-    line-height: 1.2;
-    letter-spacing: -0.02em;
-    color: #111827;
-  }
-
-  @media (min-width: 768px) {
-    .section-title {
-      font-size: 2.25rem;
-    }
-  }
-
-  .section-subtitle {
-    margin-top: 0.75rem;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 3rem;
-    max-width: 42rem;
-    text-align: center;
-    font-size: 1.125rem;
-    line-height: 1.6;
-    color: #6b7280;
-  }
-
-  /* C 端浅色卡片 */
-  .sf-surface-card {
-    border-radius: 0.75rem;
-    border: 1px solid var(--sf-border);
-    background-color: var(--sf-surface);
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  }
-
-  .sf-feature-card {
-    border-radius: 1rem;
-    border: 1px solid var(--sf-border);
-    background-color: var(--sf-surface);
-    padding: 2rem;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  }
-
-  .sf-feature-card:hover {
-    border-color: #c7d2fe;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
-  }
-
-  /* 可交互元素焦点环 — 与 --sf-focus-ring 变量对齐 */
-  .sf-focus-ring:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--sf-focus-ring);
-  }
-
-  /* 作品创作历程 HTML 渲染 */
-  .sf-progress-rendered {
-    color: #b3c5e1;
-    font-size: 0.875rem;
-    line-height: 1.7;
-  }
-
-  .sf-progress-rendered ol,
-  .sf-progress-rendered ul {
-    margin: 0;
-    padding-left: 1.25rem;
-  }
-
-  .sf-progress-rendered li {
-    margin-bottom: 0.75rem;
-    padding-left: 0.25rem;
-  }
-
-  .sf-progress-rendered li::marker {
-    color: rgba(244, 183, 25, 0.75);
-  }
-
-  .sf-progress-rendered strong,
-  .sf-progress-rendered b {
-    color: #f1f5f9;
-    font-weight: 600;
-  }
-
-  /* Agent 工作台 Markdown 预览 */
-  .node-preview-content {
-    color: #e2e8f0;
-    line-height: 1.7;
-  }
-
-  .node-preview-content h1,
-  .node-preview-content h2,
-  .node-preview-content h3 {
-    color: #fff;
-    font-weight: 700;
-    margin-top: 1.25rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .node-preview-content p {
-    margin-bottom: 0.75rem;
-  }
-
-  .node-preview-content strong {
-    color: rgba(244, 183, 25, 0.9);
-  }
-
-  /* 管理后台面板样式 — 新代码请使用 AdminPanel 组件 */
-  .sf-console-panel {
-    border-radius: 18px;
-    border: 1px solid var(--sf-border);
-    background-color: rgba(15, 23, 42, 0.6);
-  }
-
-  .sf-console-panel-subtle {
-    border-radius: 18px;
-    border: 1px solid var(--sf-border);
-    background-color: rgba(15, 23, 42, 0.4);
-  }
-
-  /* 表单控件 — 与 Tailwind FormControls 组件对齐 */
   .sf-control {
     width: 100%;
     border-radius: 10px;
-    border: 1px solid var(--sf-border);
-    background-color: #fff;
-    color: #111827;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(15, 23, 42, 0.6);
+    color: #f1f5f9;
     padding: 10px 14px;
     font-size: 14px;
     line-height: 1.5;
@@ -445,23 +106,35 @@ select option {
     outline: none;
   }
 
-  .sf-control::placeholder {
-    color: #9ca3af;
-  }
-
   .sf-control:hover:not(:disabled) {
-    border-color: var(--sf-border-strong);
+    border-color: rgba(255, 255, 255, 0.18);
   }
 
   .sf-control:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-    background-color: #fff;
+    border-color: rgba(244, 183, 25, 0.5);
+    box-shadow: 0 0 0 3px rgba(244, 183, 25, 0.12);
+    background-color: rgba(15, 23, 42, 0.8);
   }
 
   .sf-control:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  .sf-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #cbd5e1;
+    margin-bottom: 8px;
+  }
+
+  .sf-help-text {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 8px;
+    line-height: 1.5;
   }
 
   .sf-page-shell {
@@ -472,131 +145,187 @@ select option {
     padding-right: 1.5rem;
   }
 
-  /* 列表/后台工具栏 — 防止 flex 挤压导致中文竖排 */
-  .sf-toolbar {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+  .sf-glass {
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
-  @media (min-width: 640px) {
-    .sf-toolbar {
-      flex-direction: row;
-      flex-wrap: wrap;
-      align-items: center;
-    }
+  .sf-glass-strong {
+    background: rgba(10, 14, 26, 0.8);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
-  .sf-toolbar > input[type='text'],
-  .sf-toolbar-search {
-    min-width: 0;
-    width: 100%;
-    flex: 1 1 100%;
+  .sf-text-gradient-gold {
+    background: linear-gradient(135deg, #f7cb54 0%, #f4b719 50%, #fae08f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
   }
 
-  @media (min-width: 640px) {
-    .sf-toolbar > input[type='text'],
-    .sf-toolbar-search {
-      flex: 1 1 280px;
-      min-width: 220px;
-    }
+  .sf-node-active {
+    animation: pulseGlow 2.5s ease-in-out infinite;
   }
+}
 
-  .sf-toolbar > select,
-  .sf-toolbar > button,
-  .sf-toolbar > label,
-  .sf-toolbar-actions > select,
-  .sf-toolbar-actions > button,
-  .sf-toolbar-actions > a {
-    flex-shrink: 0;
-    white-space: nowrap;
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
   }
+}
 
-  .sf-toolbar > select,
-  .sf-toolbar-actions > select {
-    height: 2.75rem;
-    width: auto;
-    min-width: 8rem;
-  }
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
 
-  .sf-toolbar-actions {
-    display: flex;
-    width: 100%;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.5rem;
-  }
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 8px rgba(244, 183, 25, 0.15); }
+  50% { box-shadow: 0 0 24px rgba(244, 183, 25, 0.4); }
+}
 
-  @media (min-width: 640px) {
-    .sf-toolbar-actions {
-      width: auto;
-      margin-left: auto;
-      flex-wrap: nowrap;
-    }
-  }
+.sf-script-rendered,
+.sf-script-result {
+  color: #e2e8f0;
+  font-size: 0.875rem;
+  line-height: 1.8;
+}
 
-  .sf-label {
-    display: block;
-    font-size: 13px;
-    font-weight: 500;
-    color: #374151;
-    margin-bottom: 8px;
-  }
+.sf-script-rendered .ws-section,
+.sf-script-result .ws-section {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
 
-  .sf-help-text {
-    display: block;
-    font-size: 12px;
-    color: #6b7280;
-    margin-top: 8px;
-    line-height: 1.5;
-  }
+.sf-script-rendered .ws-section:last-child,
+.sf-script-result .ws-section:last-child {
+  border-bottom: none;
+}
 
-  /* Sonner 全局提示 — 浅色主题 */
-  .sf-toast {
-    background: #fff !important;
-    border: 1px solid var(--sf-border) !important;
-    color: var(--sf-text) !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  }
+.sf-script-rendered .ws-title,
+.sf-script-result .ws-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.5rem;
+}
 
-  .sf-toast-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #111827 !important;
-    line-height: 1.45;
-  }
+.sf-script-rendered .ws-section-body p,
+.sf-script-result .ws-section-body p {
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
 
-  .sf-toast-description {
-    font-size: 0.75rem;
-    color: #6b7280 !important;
-    line-height: 1.5;
-  }
+.sf-script-rendered .ws-section-body strong,
+.sf-script-result .ws-section-body strong {
+  color: rgba(244, 183, 25, 0.9);
+  font-weight: 600;
+}
 
-  .sf-toast-close {
-    border: 1px solid var(--sf-border) !important;
-    background: #f9fafb !important;
-    color: #6b7280 !important;
-  }
+.sf-progress-rendered {
+  color: #b3c5e1;
+  font-size: 0.875rem;
+  line-height: 1.7;
+}
 
-  .sf-toast-close:hover {
-    color: #111827 !important;
-  }
+.sf-progress-rendered ol,
+.sf-progress-rendered ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
 
-  .sf-toast-success {
-    border-color: rgba(34, 197, 94, 0.35) !important;
-  }
+.sf-progress-rendered li {
+  margin-bottom: 0.75rem;
+  padding-left: 0.25rem;
+}
 
-  .sf-toast-error {
-    border-color: rgba(239, 68, 68, 0.35) !important;
-  }
+.sf-progress-rendered li::marker {
+  color: rgba(244, 183, 25, 0.75);
+}
 
-  .sf-toast-warning {
-    border-color: rgba(245, 158, 11, 0.35) !important;
-  }
+.sf-progress-rendered strong,
+.sf-progress-rendered b {
+  color: #f1f5f9;
+  font-weight: 600;
+}
 
-  .sf-toast-info {
-    border-color: rgba(6, 182, 212, 0.35) !important;
-  }
+.node-preview-content {
+  color: #e2e8f0;
+  line-height: 1.7;
+}
+
+.node-preview-content h1,
+.node-preview-content h2,
+.node-preview-content h3 {
+  color: #fff;
+  font-weight: 700;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.node-preview-content p {
+  margin-bottom: 0.75rem;
+}
+
+.node-preview-content strong {
+  color: rgba(244, 183, 25, 0.9);
+}
+
+.sf-script-content {
+  color: #e2e8f0;
+  line-height: 1.85;
+  font-size: 15px;
+}
+
+.sf-script-content p {
+  margin-bottom: 1rem;
+}
+
+.sf-script-content h1,
+.sf-script-content h2,
+.sf-script-content h3,
+.sf-script-content h4 {
+  color: #fff;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.sf-script-content .scene-header,
+.sf-script-content .scene-heading,
+.sf-script-content h3 {
+  color: #f4b719;
+  font-weight: 600;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(244, 183, 25, 0.2);
+  margin-top: 2rem;
+}
+
+.sf-script-content .dialogue {
+  padding-left: 2rem;
+  margin: 0.75rem 0;
+}
+
+.sf-script-content .character {
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.sf-script-content .parenthetical {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.sf-script-content .action {
+  color: #cbd5e1;
+}
+
+.sf-script-content strong,
+.sf-script-content b {
+  color: #f4b719;
+  font-weight: 600;
 }

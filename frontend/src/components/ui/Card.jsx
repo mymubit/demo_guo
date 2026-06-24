@@ -3,11 +3,12 @@ import { cn } from '@/utils/cn'
 import { hoverLift } from '@/constants/motion'
 
 const variants = {
-  default: 'border border-gray-200 bg-white shadow-sm',
-  glass: 'border border-gray-200 bg-white shadow-sm',
-  gold: 'rounded-2xl border border-accent-300/50 bg-accent-50 shadow-sm',
-  subtle: 'border border-gray-100 bg-gray-50',
-  flat: 'border border-gray-200 bg-white',
+  default: 'border border-white/8 bg-white/[0.04] backdrop-blur-sm rounded-card shadow-card',
+  glass: 'border border-white/10 bg-white/[0.06] backdrop-blur-md',
+  elevated: 'border border-white/10 bg-slate-900/60 shadow-lg',
+  gold: 'border border-gold-500/20 bg-gold-500/10',
+  subtle: 'border border-white/5 bg-white/[0.02]',
+  flat: 'border border-white/8 bg-white/[0.03]',
 }
 
 const paddings = {
@@ -38,7 +39,7 @@ export default function Card({
         'rounded-xl',
         variants[variant] || variants.default,
         paddings[padding] || paddings.md,
-        interactive && 'transition-shadow hover:shadow-md hover:border-gray-300',
+        interactive && 'transition-all hover:border-gold-500/30 hover:bg-white/[0.08] hover:-translate-y-0.5 hover:shadow-card-hover',
         className,
       )}
       {...props}

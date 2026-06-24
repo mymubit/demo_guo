@@ -173,15 +173,15 @@ export default function DramaIndex() {
   };
 
   return (
-    <div className="min-h-full bg-slate-25">
-      <div className="bg-white border-b border-slate-200 px-6 py-5">
+    <div className="min-h-full bg-navy-950">
+      <div className="bg-navy-900/80 backdrop-blur-xl border-b border-white/10 px-6 py-5">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">短剧创作工作室</h1>
-            <p className="text-sm text-slate-500 mt-1">12个专业角色 · 双轨创作模式 · AI驱动</p>
+            <h1 className="text-xl font-bold text-white">短剧创作工作室</h1>
+            <p className="text-sm text-slate-400 mt-1">12个专业角色 · 双轨创作模式 · AI驱动</p>
           </div>
           <Button
-            variant="brand"
+            variant="gold"
             iconLeft={<Plus className="w-4 h-4" />}
             onClick={() => setShowNew(true)}
           >
@@ -192,40 +192,40 @@ export default function DramaIndex() {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <Card padding="lg" className="border-brand-100 bg-gradient-to-br from-brand-50/50 to-white">
+          <Card variant="glass" padding="lg" className="border-gold-500/20 bg-gradient-to-br from-gold-500/10 to-navy-900/50">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-100 flex items-center justify-center">
-                <Zap className="w-5 h-5 text-brand-600" />
+              <div className="w-10 h-10 rounded-xl bg-gold-500/20 flex items-center justify-center">
+                <Zap className="w-5 h-5 text-gold-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-slate-900">快速通道</h3>
-                <Badge tone="brand" size="sm">8核心角色</Badge>
+                <h3 className="font-semibold text-white">快速通道</h3>
+                <Badge tone="gold" size="sm">8核心角色</Badge>
               </div>
             </div>
-            <p className="text-sm text-slate-500">适合：初次创作、快速验证、10集以内</p>
-            <p className="text-xs text-slate-400 mt-1">立项→世界构建→人设→大纲→剧本→审稿→评分→合规</p>
+            <p className="text-sm text-slate-400">适合：初次创作、快速验证、10集以内</p>
+            <p className="text-xs text-slate-500 mt-1">立项→世界构建→人设→大纲→剧本→审稿→评分→合规</p>
           </Card>
 
-          <Card padding="lg" className="border-accent-100 bg-gradient-to-br from-accent-50/50 to-white">
+          <Card variant="glass" padding="lg" className="border-slate-500/20 bg-gradient-to-br from-slate-800/30 to-navy-900/50">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-accent-100 flex items-center justify-center">
-                <Film className="w-5 h-5 text-accent-600" />
+              <div className="w-10 h-10 rounded-xl bg-slate-700/50 flex items-center justify-center">
+                <Film className="w-5 h-5 text-slate-300" />
               </div>
               <div>
-                <h3 className="font-semibold text-slate-900">专家通道</h3>
-                <Badge tone="accent" size="sm">12角色</Badge>
+                <h3 className="font-semibold text-white">专家通道</h3>
+                <Badge tone="default" size="sm">12角色</Badge>
               </div>
             </div>
-            <p className="text-sm text-slate-500">适合：商业精品、30集+长剧、精细化创作</p>
-            <p className="text-xs text-slate-400 mt-1">8个职能部门全流程，每个环节都有专业角色</p>
+            <p className="text-sm text-slate-400">适合：商业精品、30集+长剧、精细化创作</p>
+            <p className="text-xs text-slate-500 mt-1">8个职能部门全流程，每个环节都有专业角色</p>
           </Card>
         </div>
 
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-slate-800">我的项目</h2>
+            <h2 className="text-base font-semibold text-white">我的项目</h2>
             {projects.length > 0 && (
-              <span className="text-xs text-slate-400">共 {projects.length} 个项目</span>
+              <span className="text-xs text-slate-500">共 {projects.length} 个项目</span>
             )}
           </div>
 
@@ -234,9 +234,9 @@ export default function DramaIndex() {
               type="empty-create"
               title="还没有剧本项目"
               description="点击「新建剧本项目」开始你的短剧创作之旅"
-              icon={<Palette className="w-12 h-12" />}
+              icon={<Palette className="w-12 h-12 text-gold-400" />}
               action={
-                <Button variant="brand" onClick={() => setShowNew(true)}>
+                <Button variant="gold" onClick={() => setShowNew(true)}>
                   新建剧本项目
                 </Button>
               }
@@ -263,22 +263,22 @@ export default function DramaIndex() {
       >
         <form onSubmit={handleCreate} className="space-y-5 pt-2">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              剧名 <span className="text-danger">*</span>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              剧名 <span className="text-red-400">*</span>
             </label>
             <input
               required
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               placeholder="暂定剧名，可后续修改"
-              className="w-full border border-slate-200 rounded-input px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all"
+              className="sf-control px-3 py-2.5"
             />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-slate-700">题材定位</label>
-              <div className="flex gap-1 bg-slate-100 p-0.5 rounded-lg">
+              <label className="text-sm font-medium text-slate-300">题材定位</label>
+              <div className="flex gap-1 bg-white/5 p-0.5 rounded-lg">
                 {[['matrix','矩阵选择'],['preset','快速预设'],['free','自由输入']].map(([m,l]) => (
                   <button
                     key={m}
@@ -286,8 +286,8 @@ export default function DramaIndex() {
                     onClick={() => setGenreMode(m)}
                     className={`px-2.5 py-1 text-xs rounded-md transition-all ${
                       genreMode === m
-                        ? 'bg-white text-brand-700 font-medium shadow-sm'
-                        : 'text-slate-500 hover:text-slate-700'
+                        ? 'bg-gold-500/20 text-gold-300 font-medium shadow-sm'
+                        : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
                     {l}
@@ -298,8 +298,8 @@ export default function DramaIndex() {
 
             {genreMode === 'matrix' && (
               <div className="space-y-3">
-                <div className="bg-brand-50/80 rounded-xl p-4 border border-brand-100">
-                  <p className="text-xs font-semibold text-brand-700 mb-2.5 flex items-center gap-1.5">
+                <div className="bg-gold-500/10 rounded-xl p-4 border border-gold-500/20">
+                  <p className="text-xs font-semibold text-gold-400 mb-2.5 flex items-center gap-1.5">
                     <Sparkles className="w-3.5 h-3.5" />
                     创新组合推荐（对立面法）
                   </p>
@@ -311,8 +311,8 @@ export default function DramaIndex() {
                         onClick={() => applyCombo(combo)}
                         className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${
                           computedTheme === combo.code
-                            ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
-                            : 'bg-white text-slate-700 border-slate-200 hover:border-brand-400 hover:text-brand-700'
+                            ? 'bg-gold-500 text-navy-950 border-gold-500 shadow-sm'
+                            : 'bg-white/5 text-slate-300 border-white/10 hover:border-gold-500/30 hover:text-gold-300'
                         }`}
                       >
                         {combo.heat} · {combo.label}
@@ -324,9 +324,9 @@ export default function DramaIndex() {
                 <div className="grid grid-cols-2 gap-3">
                   {Object.entries(GENRE_MATRIX).map(([axis, config]) => (
                     <div key={axis}>
-                      <div className="text-xs font-semibold text-slate-600 mb-1.5">
+                      <div className="text-xs font-semibold text-slate-400 mb-1.5">
                         {config.label}
-                        <span className="text-slate-400 font-normal ml-1">· {config.hint}</span>
+                        <span className="text-slate-500 font-normal ml-1">· {config.hint}</span>
                       </div>
                       <div className="space-y-1">
                         {config.options.map(opt => (
@@ -336,12 +336,12 @@ export default function DramaIndex() {
                             onClick={() => selectDim(axis, opt.value)}
                             className={`w-full text-left px-2.5 py-2 rounded-lg text-xs border transition-all ${
                               dimSelections[axis] === opt.value
-                                ? 'bg-brand-600 text-white border-brand-600'
-                                : 'bg-white text-slate-700 border-slate-100 hover:border-brand-300 hover:text-brand-700'
+                                ? 'bg-gold-500 text-navy-950 border-gold-500 font-medium'
+                                : 'bg-white/5 text-slate-300 border-white/10 hover:border-gold-500/30 hover:text-gold-300'
                             }`}
                           >
                             <span className="font-medium">{opt.label}</span>
-                            <span className={`ml-1 ${dimSelections[axis] === opt.value ? 'text-brand-100' : 'text-slate-400'}`}>
+                            <span className={`ml-1 ${dimSelections[axis] === opt.value ? 'text-navy-900/70' : 'text-slate-500'}`}>
                               — {opt.desc}
                             </span>
                           </button>
@@ -351,9 +351,9 @@ export default function DramaIndex() {
                   ))}
                 </div>
 
-                <div className="bg-slate-50 rounded-lg px-3 py-2.5 text-xs text-slate-600 border border-slate-100">
+                <div className="bg-white/5 rounded-lg px-3 py-2.5 text-xs text-slate-400 border border-white/10">
                   当前组合：
-                  <span className="font-medium text-brand-700 ml-1">
+                  <span className="font-medium text-gold-400 ml-1">
                     {Object.entries(dimSelections).filter(([,v])=>v).map(([axis,val]) => {
                       const opt = GENRE_MATRIX[axis]?.options.find(o => o.value === val);
                       return opt?.label;
@@ -372,12 +372,12 @@ export default function DramaIndex() {
                     onClick={() => { applyCombo(combo); setForm(f=>({...f,theme:combo.code})); }}
                     className={`p-3 rounded-xl border text-left text-sm transition-all ${
                       form.theme===combo.code
-                        ? 'bg-brand-50 border-brand-400 ring-1 ring-brand-400'
-                        : 'border-slate-200 hover:border-brand-300 hover:bg-brand-50/30'
+                        ? 'bg-gold-500/15 border-gold-500/30 ring-1 ring-gold-500/30'
+                        : 'border-white/10 bg-white/5 hover:border-gold-500/20 hover:bg-gold-500/5'
                     }`}
                   >
-                    <div className="font-medium text-slate-800">{combo.label}</div>
-                    <div className="text-xs text-slate-400 mt-0.5">{combo.heat}</div>
+                    <div className="font-medium text-slate-200">{combo.label}</div>
+                    <div className="text-xs text-slate-500 mt-0.5">{combo.heat}</div>
                   </button>
                 ))}
               </div>
@@ -389,41 +389,41 @@ export default function DramaIndex() {
                   value={form.theme}
                   onChange={(e) => setForm({...form, theme: e.target.value})}
                   placeholder="自定义题材标签，如：都市×悬疑×女主觉醒"
-                  className="w-full border border-slate-200 rounded-input px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all"
+                  className="sf-control px-3 py-2.5 w-full"
                 />
-                <p className="text-xs text-slate-400 mt-1.5">自由描述你的题材方向，选题策划官会依据此输入生成更精准的立项建议</p>
+                <p className="text-xs text-slate-500 mt-1.5">自由描述你的题材方向，选题策划官会依据此输入生成更精准的立项建议</p>
               </div>
             )}
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">总集数</label>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">总集数</label>
               <input
                 type="number"
                 min={5}
                 max={200}
                 value={form.episode_count}
                 onChange={(e) => setForm({ ...form, episode_count: +e.target.value })}
-                className="w-full border border-slate-200 rounded-input px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all"
+                className="sf-control px-3 py-2.5 w-full"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">目标平台</label>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">目标平台</label>
               <select
                 value={form.target_platform}
                 onChange={(e) => setForm({ ...form, target_platform: e.target.value })}
-                className="w-full border border-slate-200 rounded-input px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white"
+                className="sf-control px-3 py-2.5 w-full appearance-none"
               >
                 {PLATFORM_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">创作模式</label>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">创作模式</label>
               <select
                 value={form.track_mode}
                 onChange={(e) => setForm({ ...form, track_mode: e.target.value })}
-                className="w-full border border-slate-200 rounded-input px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all bg-white"
+                className="sf-control px-3 py-2.5 w-full appearance-none"
               >
                 <option value="fast">⚡ 快速（8核心角色）</option>
                 <option value="expert">🎬 专家（12角色）</option>
@@ -432,16 +432,16 @@ export default function DramaIndex() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
               一句话核心创意
-              <span className="text-slate-400 font-normal ml-1">（可选，越具体创作质量越高）</span>
+              <span className="text-slate-500 font-normal ml-1">（可选，越具体创作质量越高）</span>
             </label>
             <textarea
               value={form.core_idea}
               onChange={(e) => setForm({ ...form, core_idea: e.target.value })}
               placeholder="例：被家人抛弃的天才医生，携带前世记忆重生，在宫廷权谋中用现代医术完成复仇"
               rows={2}
-              className="w-full border border-slate-200 rounded-input px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-all resize-none"
+              className="sf-control px-3 py-2.5 w-full resize-none"
             />
           </div>
 
@@ -456,7 +456,7 @@ export default function DramaIndex() {
             </Button>
             <Button
               type="submit"
-              variant="brand"
+              variant="gold"
               className="flex-1"
               isLoading={createMut.isPending}
               iconLeft={<Sparkles className="w-4 h-4" />}
@@ -472,33 +472,25 @@ export default function DramaIndex() {
 
 function ProjectCard({ project, onClick }) {
   const completionRate = Math.min(100, Number(project.completion_rate) || 0);
-  const gradeColor = {
-    S: 'text-accent-700 bg-accent-50 border-accent-200',
-    A: 'text-success-700 bg-success-bg border-success-border',
-    B: 'text-brand-700 bg-brand-50 border-brand-200',
-    C: 'text-warning-700 bg-warning-bg border-warning-border',
-    D: 'text-danger-700 bg-danger-bg border-danger-border',
-  };
-  const grade = project.quality_scores?.grade;
-  const overallScore = project.quality_scores?.overall;
 
   return (
     <Card
       interactive
+      variant="glass"
       padding="lg"
       onClick={onClick}
-      className="cursor-pointer hover:border-brand-300"
+      className="cursor-pointer hover:border-gold-500/30"
     >
       <div className="flex items-start justify-between mb-4">
         <div className="min-w-0 flex-1">
-          <h3 className="font-semibold text-slate-900 line-clamp-1">{project.title}</h3>
-          <p className="text-xs text-slate-400 mt-0.5">
+          <h3 className="font-semibold text-white line-clamp-1">{project.title}</h3>
+          <p className="text-xs text-slate-500 mt-0.5">
             {project.episode_count}集 · {project.target_platform === 'douyin' ? '抖音' : project.target_platform}
           </p>
         </div>
-        {grade && overallScore && (
-          <Badge tone="accent" size="sm" className="flex-shrink-0">
-            {grade}级 {overallScore}分
+        {project.quality_scores?.grade && project.quality_scores?.overall && (
+          <Badge tone="gold" size="sm" className="flex-shrink-0">
+            {project.quality_scores.grade}级 {project.quality_scores.overall}分
           </Badge>
         )}
       </div>
@@ -506,18 +498,18 @@ function ProjectCard({ project, onClick }) {
       <div className="mb-4">
         <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
           <span>完成度</span>
-          <span className="font-medium text-slate-700">{completionRate}%</span>
+          <span className="font-medium text-slate-300">{completionRate}%</span>
         </div>
-        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-brand-500 to-brand-600 rounded-full transition-all"
+            className="h-full bg-gradient-to-r from-gold-400 to-gold-500 rounded-full transition-all shadow-gold/30"
             style={{ width: `${completionRate}%` }}
           />
         </div>
       </div>
 
       <div className="flex items-center justify-between">
-        <Badge tone={project.track_mode === 'fast' ? 'brand' : 'accent'} size="sm">
+        <Badge tone={project.track_mode === 'fast' ? 'gold' : 'default'} size="sm">
           {project.track_mode === 'fast' ? '⚡ 快速通道' : '🎬 专家通道'}
         </Badge>
         <Badge
