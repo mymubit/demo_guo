@@ -1036,45 +1036,46 @@ class DramaRoleRunService:
         else:
             drama_status = DramaRoleExecution.Status.FAILED
 
-        drama_exec.status = drama_status
-        drama_exec.output_artifacts = output_artifacts
-        drama_exec.prompt_tokens = agent_run.prompt_tokens or 0
-        drama_exec.completion_tokens = agent_run.completion_tokens or 0
-        drama_exec.total_tokens = agent_run.total_tokens or 0
-        run_params = (drama_exec.input_artifacts or {}).get("params") or {}
-        try:
-            from apps.creation.agent_runtime.agent_billing import resolve_coin_cost
+        with transaction.atomic():
+            drama_exec.status = drama_status
+            drama_exec.output_artifacts = output_artifacts
+            drama_exec.prompt_tokens = agent_run.prompt_tokens or 0
+            drama_exec.completion_tokens = agent_run.completion_tokens or 0
+            drama_exec.total_tokens = agent_run.total_tokens or 0
+            run_params = (drama_exec.input_artifacts or {}).get("params") or {}
+            try:
+                from apps.creation.agent_runtime.agent_billing import resolve_coin_cost
 
-            drama_exec.cost_cents = resolve_coin_cost(drama_exec.agent_id, run_params)
-        except Exception:  # noqa: BLE001
-            drama_exec.cost_cents = 0
-        input_meta = dict(drama_exec.input_artifacts or {})
-        input_meta["agent_run_id"] = str(agent_run.id)
-        drama_exec.input_artifacts = input_meta
-        drama_exec.llm_provider = agent_run.provider_name or ""
-        drama_exec.llm_model = agent_run.model_name or ""
-        drama_exec.error_message = (agent_run.error_message or "")[:2000]
-        drama_exec.elapsed_seconds = elapsed
-        drama_exec.finished_at = now if drama_status != DramaRoleExecution.Status.RUNNING else None
-        drama_exec.save(
-            update_fields=[
-                "status",
-                "output_artifacts",
-                "prompt_tokens",
-                "completion_tokens",
-                "total_tokens",
-                "cost_cents",
-                "input_artifacts",
-                "llm_provider",
-                "llm_model",
-                "error_message",
-                "elapsed_seconds",
-                "finished_at",
-            ]
-        )
+                drama_exec.cost_cents = resolve_coin_cost(drama_exec.agent_id, run_params)
+            except Exception:  # noqa: BLE001
+                drama_exec.cost_cents = 0
+            input_meta = dict(drama_exec.input_artifacts or {})
+            input_meta["agent_run_id"] = str(agent_run.id)
+            drama_exec.input_artifacts = input_meta
+            drama_exec.llm_provider = agent_run.provider_name or ""
+            drama_exec.llm_model = agent_run.model_name or ""
+            drama_exec.error_message = (agent_run.error_message or "")[:2000]
+            drama_exec.elapsed_seconds = elapsed
+            drama_exec.finished_at = now if drama_status != DramaRoleExecution.Status.RUNNING else None
+            drama_exec.save(
+                update_fields=[
+                    "status",
+                    "output_artifacts",
+                    "prompt_tokens",
+                    "completion_tokens",
+                    "total_tokens",
+                    "cost_cents",
+                    "input_artifacts",
+                    "llm_provider",
+                    "llm_model",
+                    "error_message",
+                    "elapsed_seconds",
+                    "finished_at",
+                ]
+            )
 
-        if drama_status == DramaRoleExecution.Status.SUCCESS:
-            cls._mark_project_role_completed(drama_exec)
+            if drama_status == DramaRoleExecution.Status.SUCCESS:
+                cls._mark_project_role_completed(drama_exec)
 
     @classmethod
     def _mark_project_role_completed(cls, drama_exec) -> None:

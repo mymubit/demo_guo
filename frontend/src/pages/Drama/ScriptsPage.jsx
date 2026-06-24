@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
   getDramaProject,
   getEpisodeList,
@@ -89,6 +90,13 @@ export default function ScriptsPage() {
       applyEpisodeSuggestions(projectId, episodeNumber, suggestions, agentId),
     onSuccess: () => {
       queryClient.invalidateQueries(['drama-episode-content', projectId, selectedEpisode]);
+      queryClient.invalidateQueries(['drama-episode-quality-list', projectId]);
+      queryClient.invalidateQueries(['drama-quality-radar', projectId, selectedEpisode]);
+      toast.success('修改建议已提交应用，请稍候查看更新后的剧本');
+    },
+    onError: (err) => {
+      const message = err?.message || '应用建议失败，请稍后重试';
+      toast.error(`应用失败：${message}`);
     },
   });
 
@@ -196,17 +204,27 @@ export default function ScriptsPage() {
 function ScriptView({ episode, content, applyMut, qualityList }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [copied, setCopied] = useState(false);
+  const copyTimerRef = useRef(null);
   const quality = qualityList.find((q) => q.episode_number === episode);
   const gradeCfg = quality?.grade ? GRADE_CONFIG[quality.grade] : null;
+
+  useEffect(() => {
+    return () => {
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
 
   const handleCopy = async () => {
     if (!content?.content) return;
     try {
       await navigator.clipboard.writeText(content.content);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      toast.success('剧本已复制到剪贴板');
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('复制失败:', err);
+      toast.error('复制失败，请手动选择文本复制');
     }
   };
 
