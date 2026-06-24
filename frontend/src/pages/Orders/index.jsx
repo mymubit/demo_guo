@@ -1,14 +1,14 @@
-﻿import { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Link } from 'react-router-dom'
-import { ChevronRight } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import { orders as ordersApi } from '@/services/api'
-import { SectionHeader, PillFilterGroup, PageContainer } from '@/components/shared/ConsumerSection'
 import OrdersListPanel from '@/components/orders/OrdersListPanel'
-import { PageLoading } from '@/components/ui'
-import { pageEnter } from '@/constants/motion'
+import { Button } from '@/components/ui'
+import PageShell from '@/components/layout/PageShell'
+import EmptyState from '@/components/ui/EmptyState'
+import { cn } from '@/utils/cn'
 
 const FILTER_OPTIONS = [
   { key: 'all', label: '全部' },
@@ -23,6 +23,7 @@ export default function OrdersPage() {
   const [filter, setFilter] = useState('all')
   const [page, setPage] = useState(1)
   const [orderActionLoading, setOrderActionLoading] = useState(null)
+  const [refreshing, setRefreshing] = useState(false)
   const pageSize = 10
 
   const statusParam = filter === 'all' ? undefined : filter
@@ -33,15 +34,15 @@ export default function OrdersPage() {
   const orders = data?.items ?? []
   const pagination = data?.pagination ?? { page: 1, total_pages: 1, total: 0 }
 
-  const filterOptions = useMemo(() => FILTER_OPTIONS.map((item) => item.label), [])
-  const filterLabel = FILTER_OPTIONS.find((item) => item.key === filter)?.label ?? '全部'
-
   const handleRefresh = async () => {
+    setRefreshing(true)
     try {
       await refetch()
       toast.success('订单列表已刷新')
     } catch {
       toast.error('刷新失败')
+    } finally {
+      setRefreshing(false)
     }
   }
 
@@ -85,91 +86,97 @@ export default function OrdersPage() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen py-24">
-        <PageLoading label="加载订单…" />
-      </div>
-    )
-  }
-
   return (
-    <motion.div {...pageEnter} className="relative min-h-screen py-12">
-      <PageContainer width="7xl" className="py-12">
-        <SectionHeader
-          eyebrow="订单"
-          title="我的订单"
-          subtitle="支持按状态筛选，待支付订单可在此完成支付或取消"
-          className="mb-6"
-        />
-
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <PillFilterGroup
-            options={filterOptions}
-            value={filterLabel}
-            onChange={(label) => {
-              const next = FILTER_OPTIONS.find((item) => item.label === label)
-              if (next) {
-                setFilter(next.key)
+    <PageShell
+      title="我的订单"
+      description={`共 ${pagination.total} 条订单记录`}
+      backTo="/"
+      maxWidth="4xl"
+      actions={
+        <Button
+          variant="secondary"
+          iconLeft={<RefreshCw className={`w-4 h-4 ${refreshing || isFetching ? 'animate-spin' : ''}`} />}
+          onClick={handleRefresh}
+          disabled={refreshing || isFetching}
+        >
+          刷新
+        </Button>
+      }
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <div className="flex gap-1 bg-white/5 p-1 rounded-xl border border-white/10 mb-6 overflow-x-auto">
+          {FILTER_OPTIONS.map((item) => (
+            <button
+              key={item.key}
+              onClick={() => {
+                setFilter(item.key)
                 setPage(1)
-              }
-            }}
-          />
-          <Link
-            to="/member"
-            className="inline-flex h-9 items-center gap-1 rounded-xl border border-gray-200 px-3 text-xs text-gray-600 transition-colors hover:bg-white/5"
-          >
-            会员中心
-            <ChevronRight className="h-4 w-4" />
-          </Link>
+              }}
+              className={cn(
+                'px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all',
+                filter === item.key
+                  ? 'bg-gold-500 text-navy-950 shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200'
+              )}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white border border-gray-200 p-6 md:p-8">
-          <OrdersListPanel
-            orders={orders}
-            orderActionLoading={orderActionLoading}
-            onCopyOrderNo={copyOrderNo}
-            onPayOrder={handlePayOrder}
-            onCancelOrder={handleCancelOrder}
-            onRefresh={handleRefresh}
-            refreshing={isFetching}
-            emptyAction={
-              <Link
-                to="/member"
-                className="inline-flex h-9 items-center gap-1 rounded-xl bg-gradient-to-r from-gold-300 to-gold-500 px-3 text-xs font-semibold text-navy-950"
-              >
-                去选购套餐
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            }
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20 gap-2 text-slate-400">
+            <RefreshCw className="w-5 h-5 animate-spin text-gold-400" />
+            加载订单…
+          </div>
+        ) : orders.length === 0 ? (
+          <EmptyState
+            title="暂无订单记录"
+            description={filter === 'all' ? '你还没有任何订单，去充值会员或创作币开始创作吧' : `暂无${FILTER_OPTIONS.find(o => o.key === filter)?.label}订单`}
+            actionLabel="去充值"
+            onAction={() => window.location.href = '/wallet'}
           />
-          {pagination.total_pages > 1 && (
-            <div className="mt-6 flex items-center justify-between gap-3 text-sm text-gray-500">
-              <span>
-                第 {pagination.page} / {pagination.total_pages} 页 · 共 {pagination.total} 条
-              </span>
-              <div className="flex gap-2">
+        ) : (
+          <>
+            <OrdersListPanel
+              orders={orders}
+              orderActionLoading={orderActionLoading}
+              onCopyOrderNo={copyOrderNo}
+              onPayOrder={handlePayOrder}
+              onCancelOrder={handleCancelOrder}
+              showHeader={false}
+              emptyAction={() => window.location.href = '/wallet'}
+            />
+
+            {pagination.total_pages > 1 && (
+              <div className="flex items-center justify-center gap-4 mt-6 pb-8">
                 <button
                   type="button"
-                  disabled={pagination.page <= 1}
+                  disabled={page <= 1 || isFetching}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="rounded-lg border border-gray-200 px-3 py-1.5 disabled:opacity-40"
+                  className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-slate-300 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-40"
                 >
                   上一页
                 </button>
+                <span className="text-sm text-slate-500 tabular-nums">
+                  第 {page} / {pagination.total_pages} 页
+                </span>
                 <button
                   type="button"
-                  disabled={pagination.page >= pagination.total_pages}
+                  disabled={page >= pagination.total_pages || isFetching}
                   onClick={() => setPage((p) => p + 1)}
-                  className="rounded-lg border border-gray-200 px-3 py-1.5 disabled:opacity-40"
+                  className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm text-slate-300 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-40"
                 >
                   下一页
                 </button>
               </div>
-            </div>
-          )}
-        </div>
-      </PageContainer>
-    </motion.div>
+            )}
+          </>
+        )}
+      </motion.div>
+    </PageShell>
   )
 }
