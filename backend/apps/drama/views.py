@@ -334,16 +334,25 @@ class TokenStatsView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        days = int(request.query_params.get("days", 30))
+        try:
+            days = int(request.query_params.get("days", 30))
+            if days < 1 or days > 365:
+                days = 30
+        except (TypeError, ValueError):
+            days = 30
+
         user_only = request.query_params.get("user_only", "true").lower() == "true"
 
-        if user_only:
-            user_id = request.user.id
-        else:
-            user_id = None
-        data = DramaRoleService.get_token_stats(user_id=user_id, days=days)
-
-        return Response({"code": 0, "message": "success", "data": data})
+        try:
+            if user_only:
+                user_id = request.user.id
+            else:
+                user_id = None
+            data = DramaRoleService.get_token_stats(user_id=user_id, days=days)
+            return Response({"code": 0, "message": "success", "data": data})
+        except Exception as e:
+            logger.exception("Error fetching token stats user=%s", request.user.id)
+            return Response({"code": 500, "message": "获取统计数据失败，请稍后重试"}, status=500)
 
 
 # ---------------------------------------------------------------------------
@@ -355,74 +364,80 @@ class ModelConfigView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        """获取所有drama角色的模型配置"""
-        from apps.agent.models import AgentLlmRouteConfig
-        from apps.skill.models import LlmProvider
+        try:
+            from apps.agent.models import AgentLlmRouteConfig
+            from apps.skill.models import LlmProvider
 
-        routes = AgentLlmRouteConfig.objects.filter(
-            route_key__startswith="drama."
-        ).select_related("llm_provider")
+            routes = AgentLlmRouteConfig.objects.filter(
+                route_key__startswith="drama."
+            ).select_related("llm_provider")
 
-        providers = LlmProvider.objects.filter(is_active=True).values("id", "name", "provider_type")
+            providers = LlmProvider.objects.filter(is_active=True).values("id", "name", "provider_type")
 
-        config_data = []
-        for route in routes.order_by("sort_order"):
-            config_data.append({
-                "agent_id": route.route_key,
-                "display_name": route.display_name,
-                "provider_id": route.llm_provider_id,
-                "provider_name": route.llm_provider.name if route.llm_provider else None,
-                "model_name": getattr(route, "model_name", ""),
-                "temperature": route.temperature,
-                "max_completion_tokens": route.max_completion_tokens,
-                "is_active": route.is_active,
+            config_data = []
+            for route in routes.order_by("sort_order"):
+                config_data.append({
+                    "agent_id": route.route_key,
+                    "display_name": route.display_name,
+                    "provider_id": route.llm_provider_id,
+                    "provider_name": route.llm_provider.name if route.llm_provider else None,
+                    "model_name": getattr(route, "model_name", ""),
+                    "temperature": route.temperature,
+                    "max_completion_tokens": route.max_completion_tokens,
+                    "is_active": route.is_active,
+                })
+
+            return Response({
+                "code": 0,
+                "message": "success",
+                "data": {
+                    "configs": config_data,
+                    "available_providers": list(providers),
+                },
             })
-
-        return Response({
-            "code": 0,
-            "message": "success",
-            "data": {
-                "configs": config_data,
-                "available_providers": list(providers),
-            },
-        })
+        except Exception as e:
+            logger.exception("Error fetching model configs")
+            return Response({"code": 500, "message": "获取模型配置失败，请稍后重试"}, status=500)
 
     def put(self, request):
-        """更新单个角色的模型配置"""
-        ser = ModelConfigSerializer(data=request.data)
-        ser.is_valid(raise_exception=True)
-        d = ser.validated_data
-
-        from apps.agent.models import AgentLlmRouteConfig
-
         try:
-            route = AgentLlmRouteConfig.objects.get(route_key=d["agent_id"])
-        except AgentLlmRouteConfig.DoesNotExist:
-            return Response(
-                {"code": 404, "message": f"角色 {d['agent_id']} 不存在"},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+            ser = ModelConfigSerializer(data=request.data)
+            ser.is_valid(raise_exception=True)
+            d = ser.validated_data
 
-        if d.get("provider_id"):
-            from apps.skill.models import LlmProvider
+            from apps.agent.models import AgentLlmRouteConfig
+
             try:
-                provider = LlmProvider.objects.get(id=d["provider_id"])
-                route.llm_provider = provider
-            except LlmProvider.DoesNotExist:
+                route = AgentLlmRouteConfig.objects.get(route_key=d["agent_id"])
+            except AgentLlmRouteConfig.DoesNotExist:
                 return Response(
-                    {"code": 404, "message": f"Provider {d['provider_id']} 不存在"},
+                    {"code": 404, "message": f"角色 {d['agent_id']} 不存在"},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-        else:
-            route.llm_provider = None
 
-        route.model_name = d.get("model_name", "")
-        route.temperature = d.get("temperature", 0.7)
-        route.max_completion_tokens = d.get("max_completion_tokens", 8000)
-        route.is_active = d.get("is_active", True)
-        route.save(update_fields=["llm_provider", "model_name", "temperature", "max_completion_tokens", "is_active", "updated_at"])
+            if d.get("provider_id"):
+                from apps.skill.models import LlmProvider
+                try:
+                    provider = LlmProvider.objects.get(id=d["provider_id"])
+                    route.llm_provider = provider
+                except LlmProvider.DoesNotExist:
+                    return Response(
+                        {"code": 404, "message": f"Provider {d['provider_id']} 不存在"},
+                        status=status.HTTP_404_NOT_FOUND,
+                    )
+            else:
+                route.llm_provider = None
 
-        return Response({"code": 0, "message": "配置已更新"})
+            route.model_name = d.get("model_name", "")
+            route.temperature = d.get("temperature", 0.7)
+            route.max_completion_tokens = d.get("max_completion_tokens", 8000)
+            route.is_active = d.get("is_active", True)
+            route.save(update_fields=["llm_provider", "model_name", "temperature", "max_completion_tokens", "is_active", "updated_at"])
+
+            return Response({"code": 0, "message": "配置已更新"})
+        except Exception as e:
+            logger.exception("Error updating model config")
+            return Response({"code": 500, "message": "更新配置失败，请稍后重试"}, status=500)
 
 
 # ---------------------------------------------------------------------------
@@ -444,69 +459,82 @@ class QualityRadarView(APIView):
             return Response({"code": 404, "message": "项目不存在"}, status=404)
 
         episode_number = request.query_params.get("episode")
+        episode_num_int = None
 
         if episode_number:
-            # 查询单集质量
             try:
-                eq = DramaEpisodeQuality.objects.get(
-                    project=project,
-                    episode_number=int(episode_number),
+                episode_num_int = int(episode_number)
+            except (TypeError, ValueError):
+                return Response(
+                    {"code": 400, "message": "参数错误：episode必须是有效数字"},
+                    status=400,
                 )
-                scores = eq.scores
-                word_count_result = eq.word_count_result
-            except DramaEpisodeQuality.DoesNotExist:
-                scores = {}
+
+            if episode_num_int < 1 or episode_num_int > project.episode_count:
+                return Response(
+                    {"code": 400, "message": f"集数范围无效：必须在1-{project.episode_count}之间"},
+                    status=400,
+                )
+
+        try:
+            if episode_num_int:
+                try:
+                    eq = DramaEpisodeQuality.objects.get(
+                        project=project,
+                        episode_number=episode_num_int,
+                    )
+                    scores = eq.scores
+                    word_count_result = eq.word_count_result
+                except DramaEpisodeQuality.DoesNotExist:
+                    scores = {}
+                    word_count_result = None
+            else:
+                scores = project.quality_scores or {}
                 word_count_result = None
-        else:
-            # 查询全剧汇总
-            scores = project.quality_scores or {}
-            word_count_result = None
 
-        # 构建详细质量报告
-        detailed = DramaQualityService.build_detailed_quality_report(
-            scores=scores,
-            episode_number=int(episode_number) if episode_number else None,
-            word_count_result=word_count_result,
-        )
+            detailed = DramaQualityService.build_detailed_quality_report(
+                scores=scores,
+                episode_number=episode_num_int,
+                word_count_result=word_count_result,
+            )
 
-        # 构建雷达图数据
-        radar_data = [
-            {
-                "dimension": d["name"],
-                "key": d["key"],
-                "score": scores.get(d["key"], 0),
-                "weight": d["weight"],
-            }
-            for d in DramaQualityService.DIMENSIONS
-        ]
+            radar_data = [
+                {
+                    "dimension": d["name"],
+                    "key": d["key"],
+                    "score": scores.get(d["key"], 0),
+                    "weight": d["weight"],
+                }
+                for d in DramaQualityService.DIMENSIONS
+            ]
 
-        # 查询所有单集质量用于汇总趋势
-        episode_qualities = list(
-            DramaEpisodeQuality.objects.filter(project=project)
-            .values("episode_number", "scores")
-            .order_by("episode_number")
-        )
-        series_summary = DramaQualityService.build_series_quality_summary(episode_qualities)
+            episode_qualities = list(
+                DramaEpisodeQuality.objects.filter(project=project)
+                .values("episode_number", "scores")
+                .order_by("episode_number")
+            )
+            series_summary = DramaQualityService.build_series_quality_summary(episode_qualities)
 
-        return Response({
-            "code": 0,
-            "message": "success",
-            "data": {
-                "project_id": str(project.id),
-                "overall_score": detailed["overall_score"],
-                "grade": detailed["grade"],
-                "grade_desc": detailed["grade_desc"],
-                "radar": radar_data,
-                # 详细维度信息，含问题和建议
-                "dimensions": detailed["dimensions"],
-                "all_issues": detailed["all_issues"],
-                "error_count": detailed["error_count"],
-                "warning_count": detailed["warning_count"],
-                "top_suggestions": detailed["top_suggestions"],
-                # 全剧汇总
-                "series_summary": series_summary,
-            },
-        })
+            return Response({
+                "code": 0,
+                "message": "success",
+                "data": {
+                    "project_id": str(project.id),
+                    "overall_score": detailed["overall_score"],
+                    "grade": detailed["grade"],
+                    "grade_desc": detailed["grade_desc"],
+                    "radar": radar_data,
+                    "dimensions": detailed["dimensions"],
+                    "all_issues": detailed["all_issues"],
+                    "error_count": detailed["error_count"],
+                    "warning_count": detailed["warning_count"],
+                    "top_suggestions": detailed["top_suggestions"],
+                    "series_summary": series_summary,
+                },
+            })
+        except Exception as e:
+            logger.exception("Error fetching quality radar project=%s episode=%s", project_id, episode_number)
+            return Response({"code": 500, "message": "获取质量报告失败，请稍后重试"}, status=500)
 
 
 class EpisodeQualityView(APIView):
