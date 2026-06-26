@@ -9,17 +9,6 @@ const DRAMA_AGENT_LABELS = {
   'drama.script-scorer': '剧本评分官',
   'drama.compliance-guard': '合规审查官',
   'drama.delivery-tool': '宣发交付工具',
-  // 历史角色别名
-  'drama.topic-planner': '选题定调官',
-  'drama.market-analyst': '选题定调官',
-  'drama.world-architect': '人物关系官',
-  'drama.character-designer': '人物关系官',
-  'drama.plot-architect': '全剧架构官',
-  'drama.narrative-engineer': '分集设计官',
-  'drama.script-reviewer': '剧本评分官',
-  'drama.quality-reporter': '剧本评分官',
-  'drama.polish-master': '剧本修订官',
-  'drama.production-pack': '宣发交付工具',
 };
 
 /**

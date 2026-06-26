@@ -318,7 +318,7 @@ class DramaWorkspaceViewSet(ModelViewSet):
             scope_desc = "全剧结构（六阶段 / 伏笔等）"
         elif ep_start and ep_end:
             scope_desc = f"第{ep_start}-{ep_end}集（共{ep_end - ep_start + 1}集）"
-        elif role_id == "drama.series-architect":
+        elif agent.default_output_artifact_key == "series_outline":
             scope_desc = f"共{episode_count}集大纲"
         else:
             scope_desc = "整体执行"

@@ -79,7 +79,6 @@ def clear_registry_cache() -> None:
     get_artifact_chunk_map.cache_clear()
     build_agent_stream_config.cache_clear()
     get_composite_agent_ids.cache_clear()
-    get_agent_alias_map.cache_clear()
     from apps.drama.theme_matrix_service import clear_theme_matrix_cache
 
     clear_theme_matrix_cache()
@@ -107,27 +106,6 @@ def get_composite_agent_ids() -> frozenset[str]:
         and str(item.get("role_tier") or "") in {"composite", "tool"}
     }
     return frozenset(composite)
-
-
-@lru_cache(maxsize=1)
-def get_agent_alias_map() -> Dict[str, str]:
-    registry = load_registry()
-    aliases = registry.get("aliases") or {}
-    if not isinstance(aliases, dict):
-        return {}
-    visible = set(get_visible_agent_ids())
-    result: Dict[str, str] = {}
-    for old_id, new_id in aliases.items():
-        old_key = str(old_id or "").strip()
-        new_key = str(new_id or "").strip()
-        if old_key and new_key in visible:
-            result[old_key] = new_key
-    return result
-
-
-def normalize_agent_id(agent_id: str) -> str:
-    key = str(agent_id or "").strip()
-    return get_agent_alias_map().get(key, key)
 
 
 @lru_cache(maxsize=1)

@@ -149,14 +149,3 @@ tools:
 - id: drama-intake
   skill_dir: drama-intake
   description: 外部内容摄入与知识归档
-aliases:
-  drama.topic-planner: drama.topic-director
-  drama.market-analyst: drama.topic-director
-  drama.world-architect: drama.character-relations
-  drama.character-designer: drama.character-relations
-  drama.plot-architect: drama.series-architect
-  drama.narrative-engineer: drama.episode-designer
-  drama.script-reviewer: drama.script-scorer
-  drama.quality-reporter: drama.script-scorer
-  drama.polish-master: drama.revision-master
-  drama.production-pack: drama.delivery-tool

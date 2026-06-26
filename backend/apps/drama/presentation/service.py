@@ -80,9 +80,7 @@ def build_execution_output_views(
     artifacts = resolve_live_output_artifacts(drama_exec)
     if planned_episodes is None and getattr(drama_exec, "project", None):
         planned_episodes = int(drama_exec.project.episode_count or 0) or None
-    if outline_progress is None and drama_exec.agent_id == "drama.series-architect" and getattr(
-        drama_exec, "project", None
-    ):
+    if outline_progress is None and "series_outline" in artifacts and getattr(drama_exec, "project", None):
         from apps.drama.outline_progress import summarize_series_outline_progress
 
         outline_progress = summarize_series_outline_progress(drama_exec.project)

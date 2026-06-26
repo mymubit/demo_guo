@@ -51,7 +51,7 @@
 drama-skill角色 → AgentDefinition → AgentLlmRoute → LlmProvider → 实际模型
 
 示例：
-  drama-plot-architect → agent_id=drama.plot-architect → route: provider=openai, model=gpt-4o
+  drama-series-architect → agent_id=drama.series-architect → route: provider=openai, model=gpt-4o
   drama-script-writer  → agent_id=drama.script-writer  → route: provider=deepseek, model=deepseek-chat
   drama-formatter      → agent_id=drama.formatter      → route: provider=claude, model=claude-3-haiku (轻量任务)
 ```
@@ -87,7 +87,7 @@ class DramaProject(models.Model):
     target_platform = models.CharField(max_length=32, default='douyin')
     genre_code = models.CharField(max_length=32, default='family-revenge')
     word_count_stats = models.JSONField(default=dict)  # 每集字数统计
-    quality_scores = models.JSONField(default=dict)    # 8维评分
+    quality_scores = models.JSONField(default=dict)    # 10维评分
     delivery_status = models.CharField(max_length=16, default='pending')
 ```
 
@@ -134,7 +134,7 @@ POST /api/drama/projects/                 # 创建剧本项目
 POST /api/drama/projects/{id}/run/{role}/ # 执行某个角色
 GET  /api/drama/projects/{id}/progress/   # 项目进度（哪些角色已完成）
 POST /api/drama/validate/word-count/      # 字数验证（输入剧本，返回字数报告）
-GET  /api/drama/projects/{id}/quality/    # 质量报告（8维评分）
+GET  /api/drama/projects/{id}/quality/    # 质量报告（10维评分）
 POST /api/drama/projects/{id}/deliver/    # 触发交付打包
 GET  /api/drama/stats/token/              # Token用量统计
 GET  /api/drama/stats/billing/            # 计费统计（按角色/时间/项目）
@@ -219,7 +219,7 @@ class DramaWordCountService:
 │  ████████ 平均 835字           │                         │
 │  台词占比 32% ✅               │  ─── 字数: 1050 ✅ ───  │
 │                               │  台词: 320字(30.5%) ✅   │
-│  8维评分雷达图                 │  场景: 2个 ✅            │
+│  10维评分雷达图                 │  场景: 2个 ✅            │
 │     格式 88                   │                         │
 │  商业  结构                   │                         │
 │    梦境 人物                  │                         │

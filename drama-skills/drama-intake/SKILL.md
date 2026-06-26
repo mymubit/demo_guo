@@ -174,7 +174,7 @@ Step 5：归档确认
 ```json
 {
   "evolution_proposal": {
-    "target_skill": "drama.narrative-engineer",
+    "target_skill": "drama.episode-designer",
     "change_type": "add_rule",
     "content": "新规律描述",
     "evidence": "来源内容片段",
