@@ -29,7 +29,7 @@ def resolve_live_output_artifacts(
         return artifacts
 
     # 分集大纲：单集表聚合为 series_outline（SSOT）
-    if drama_exec.agent_id == "drama.plot-architect" or "series_outline" in artifacts:
+    if "series_outline" in artifacts:
         from apps.drama.episode_outline_store import aggregate_series_outline
 
         aggregated = aggregate_series_outline(proj)

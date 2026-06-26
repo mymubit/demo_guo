@@ -34,7 +34,7 @@ class EnqueueConcurrencyTests(TransactionTestCase):
 
     def setUp(self):
         AgentDefinitionService.ensure_defaults()
-        _attach_test_llm_provider("drama.topic-planner")
+        _attach_test_llm_provider("drama.topic-director")
         self.user = User.objects.create_user(phone="13900008901", password="test-pass-123")
         grant_test_coins(self.user)
         self.project = Project.objects.create(
@@ -59,7 +59,7 @@ class EnqueueConcurrencyTests(TransactionTestCase):
             try:
                 barrier.wait(timeout=5)
                 results.append(
-                    IndependentAgentService.enqueue_run(self.project, self.user, "drama.topic-planner", {})
+                    IndependentAgentService.enqueue_run(self.project, self.user, "drama.topic-director", {})
                 )
             except Exception as exc:  # noqa: BLE001
                 errors.append(exc)

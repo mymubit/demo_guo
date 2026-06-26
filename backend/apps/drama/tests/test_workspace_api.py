@@ -38,16 +38,16 @@ class DramaWorkspaceApiTests(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
-    def test_roles_api_returns_twelve_visible_roles(self):
+    def test_roles_api_returns_reorganized_visible_roles(self):
         resp = self.client.get("/api/drama/roles/")
         self.assertEqual(resp.status_code, 200)
         body = resp.data
         self.assertEqual(body["code"], 0)
         data = body["data"]
-        self.assertEqual(data["total_roles"], 12)
-        self.assertEqual(data["visible_roles"], 12)
+        self.assertEqual(data["total_roles"], 9)
+        self.assertEqual(data["visible_roles"], 9)
         self.assertEqual(data["fast_track_count"], 8)
-        self.assertEqual(data["composite_count"], 4)
+        self.assertEqual(data["composite_count"], 1)
 
         role_ids = {
             role["agent_id"]
@@ -59,7 +59,7 @@ class DramaWorkspaceApiTests(TestCase):
         tier2 = [
             role for dept in data["departments"] for role in dept["roles"] if role.get("tier") == 2
         ]
-        self.assertEqual(len(tier2), 4)
+        self.assertEqual(len(tier2), 1)
         self.assertTrue(all(role.get("is_composite") for role in tier2))
 
     def test_theme_matrix_api_returns_ssot_config(self):
@@ -109,7 +109,7 @@ class DramaWorkspaceApiTests(TestCase):
         project = Project.objects.get(id=project_id)
         self.assertEqual(project.theme, theme)
 
-    def test_progress_includes_composite_roles_in_fast_track(self):
+    def test_progress_includes_optional_tool_role(self):
         pid = "33333333-3333-3333-3333-333333333333"
         project = _create_drama_project(
             self.user,
@@ -124,16 +124,13 @@ class DramaWorkspaceApiTests(TestCase):
         roles = resp.data["data"]["roles"]
         role_ids = {item["agent_id"] for item in roles}
         self.assertEqual(role_ids, set(DRAMA_VISIBLE_ROLES))
-        composite = [r for r in roles if r["tier"] == 2]
-        self.assertEqual(len(composite), 4)
+        optional_tools = [r for r in roles if r["tier"] == 2]
+        self.assertEqual(len(optional_tools), 1)
 
-    def test_ensure_visible_roles_creates_missing_composite_agents(self):
+    def test_ensure_visible_roles_creates_missing_optional_agent(self):
         AgentDefinition.objects.filter(
             agent_id__in=[
-                "drama.market-analyst",
-                "drama.narrative-engineer",
-                "drama.polish-master",
-                "drama.production-pack",
+                "drama.delivery-tool",
             ]
         ).delete()
         self.assertEqual(
@@ -143,7 +140,7 @@ class DramaWorkspaceApiTests(TestCase):
         DramaRoleService.ensure_visible_roles()
         self.assertEqual(
             AgentDefinition.objects.filter(agent_id__in=DRAMA_VISIBLE_ROLES).count(),
-            12,
+            9,
         )
 
     def test_run_role_enqueues_execution(self):
@@ -168,14 +165,14 @@ class DramaWorkspaceApiTests(TestCase):
             ):
                 with self.settings(DRAMA_ROLE_RUN_SYNC=True):
                     resp = self.client.post(
-                        f"/api/drama/projects/{project.id}/run/drama.topic-planner/",
+                        f"/api/drama/projects/{project.id}/run/drama.topic-director/",
                         {},
                         format="json",
                     )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data["code"], 0)
         payload = resp.data["data"]
-        self.assertEqual(payload["role_id"], "drama.topic-planner")
+        self.assertEqual(payload["role_id"], "drama.topic-director")
         self.assertTrue(payload.get("execution_id"))
         self.assertEqual(payload.get("scope"), "\u6574\u4f53\u6267\u884c")
         mock_enqueue.assert_called_once()

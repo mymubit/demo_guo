@@ -15,18 +15,17 @@ from typing import Any, Dict, List
 # 此处仅作参考，实际路由配置通过 Admin 界面或 seed_drama_skills 管理
 DRAMA_DEFAULT_LLM_ROUTES: List[Dict[str, Any]] = [
     # 高强度创作角色（需要强推理模型）
-    {"route_key": "drama.plot-architect", "display_name": "情节架构师", "max_tokens": 16000, "sort_order": 302},
-    {"route_key": "drama.script-writer", "display_name": "剧本执笔师", "max_tokens": 16000, "sort_order": 401},
-    {"route_key": "drama.quality-reporter", "display_name": "质量报告官", "max_tokens": 8000, "sort_order": 504},
-    {"route_key": "drama.compliance-guard", "display_name": "合规守卫", "max_tokens": 8000, "sort_order": 801},
-    {"route_key": "drama.market-analyst",   "display_name": "市场分析师", "max_tokens": 8000,  "sort_order": 106},
-    {"route_key": "drama.narrative-engineer","display_name": "叙事工程师", "max_tokens": 16000, "sort_order": 308},
-    {"route_key": "drama.polish-master",     "display_name": "精修大师",   "max_tokens": 16000, "sort_order": 601},
-    {"route_key": "drama.production-pack",   "display_name": "制作发行师", "max_tokens": 12000, "sort_order": 701},
+    {"route_key": "drama.series-architect", "display_name": "全剧架构官", "max_tokens": 16000, "sort_order": 301},
+    {"route_key": "drama.episode-designer", "display_name": "分集设计官", "max_tokens": 16000, "sort_order": 302},
+    {"route_key": "drama.script-writer", "display_name": "剧本正文官", "max_tokens": 16000, "sort_order": 401},
+    {"route_key": "drama.revision-master", "display_name": "剧本修订官", "max_tokens": 16000, "sort_order": 501},
+    {"route_key": "drama.script-scorer", "display_name": "剧本评分官", "max_tokens": 8000, "sort_order": 601},
+    {"route_key": "drama.compliance-guard", "display_name": "合规审查官", "max_tokens": 8000, "sort_order": 701},
+    {"route_key": "drama.delivery-tool", "display_name": "宣发交付工具", "max_tokens": 12000, "sort_order": 801},
 
     # 中等强度角色
-    {"route_key": "drama.character-designer", "display_name": "人设设计师", "max_tokens": 10000, "sort_order": 202},
-    {"route_key": "drama.world-architect", "display_name": "世界架构师", "max_tokens": 8000, "sort_order": 201},
+    {"route_key": "drama.topic-director", "display_name": "选题定调官", "max_tokens": 8000, "sort_order": 101},
+    {"route_key": "drama.character-relations", "display_name": "人物关系官", "max_tokens": 10000, "sort_order": 202},
 
     # 轻量角色（适合轻量快速模型）
 ]

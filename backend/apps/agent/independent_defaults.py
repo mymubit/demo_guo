@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Drama Skills 12 角色定义。
+Drama Skills 重组角色定义。
 
 主入口：apps.drama.skills_registry（Git SSOT: drama-skills/registry.yaml）
 种入命令：python manage.py sync_drama_from_git
@@ -13,7 +13,7 @@ from apps.drama.defaults import DRAMA_FAST_TRACK_ROLES, DRAMA_ROLE_DEFAULTS
 
 
 def get_drama_agent_defaults() -> List[Dict[str, Any]]:
-    """获取 drama.* 全部 12 角色定义。"""
+    """获取 drama.* 全部可见角色定义。"""
     return [
         {
             "agent_id": role["agent_id"],

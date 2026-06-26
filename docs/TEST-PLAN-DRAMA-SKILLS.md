@@ -15,7 +15,7 @@
 | 专家通道（35角色端到端）| P0 | 35×8=280 | 功能+接口 |
 | `/api/drama/` API接口 | P0 | 60 | 接口专项 |
 | 字数治理官验证 | P0 | 20 | 接口+边界 |
-| 质量报告（8维评分）| P0 | 24 | 功能+边界 |
+| 质量报告（10维评分）| P0 | 24 | 功能+边界 |
 | 合规守卫检测 | P0 | 15 | 功能+安全 |
 | 前端工作台页面 | P1 | 35 | UI+交互 |
 | 前端剧本展示页 | P1 | 20 | UI+交互 |
@@ -39,7 +39,7 @@
 | ID | 用例标题 | 步骤 | 预期结果 | 优先级 |
 |----|---------|------|---------|--------|
 | FT-001 | 创建快速通道项目 | POST `/api/drama/projects/` `{"title":"测试剧","track_mode":"fast"}` | 返回201，`track_mode=fast`，`completed_roles=[]` | P0 |
-| FT-002 | 选题策划官执行成功 | POST `/api/drama/projects/{id}/run/drama.topic-planner/` | 返回200，状态=queued | P0 |
+| FT-002 | 选题定调官执行成功 | POST `/api/drama/projects/{id}/run/drama.topic-director/` | 返回200，状态=queued | P0 |
 | FT-003 | 8角色顺序执行完成 | 依次执行8个角色 | `completed_roles` 包含所有8个ID，`delivery_status=ready` | P0 |
 | FT-004 | 完成率计算正确 | GET `/api/drama/projects/{id}/progress/` | `completion_rate=100.0`，每个角色`is_completed=true` | P0 |
 | FT-005 | 质量报告生成 | 所有角色完成后 | `quality_scores.overall >= 0`，8个维度均有分值 | P0 |
@@ -84,7 +84,7 @@
 |--------|---------|---------|-----------|
 | `drama.market-radar` | platform, genre_hint | market_analysis | 含题材热度评级、竞品分析、平台口味 |
 | `drama.formula-analyst` | market_analysis | formula_analysis | 含梦境三指标预估、付费卡点框架 |
-| `drama.topic-planner` | core_idea, genre, episode_count | project_brief | 含卖点×3、受众画像、梦境预估 |
+| `drama.topic-director` | core_idea, genre, episode_count | project_brief | 含卖点×3、受众画像、梦境预估 |
 | `drama.project-reviewer` | project_brief | project_review | 含三维评分（市场/创作/合规各30/40/30分） |
 | `drama.lapian-analyst` | drama_content | lapian_report | 含6维度分析结果、可复用模板 |
 
@@ -101,9 +101,9 @@
 
 | 角色ID | 必需输入 | 主要输出 | 关键验证点 |
 |--------|---------|---------|-----------|
-| `drama.world-architect` | project_brief | world_setting | 含settingSummary/rootRules(≤3)/coreNouns/dreamIndicators |
-| `drama.character-designer` | project_brief, world_setting | character_bible | 含Want/Need/Ghost/Lie/Flaw，主角≤2，配角2-4，总≤6 |
-| `drama.dream-analyst` | world_setting, character_bible | dream_check | 含三指标评分，安全感<7时触发熔断 |
+| `drama.character-relations` | project_brief | character_bible | 含settingSummary/rootRules(≤3)/coreNouns/dreamIndicators |
+| `drama.character-relations` | project_brief, character_bible | character_bible | 含Want/Need/Ghost/Lie/Flaw，主角≤2，配角2-4，总≤6 |
+| `drama.dream-analyst` | character_bible, character_bible | dream_check | 含三指标评分，安全感<7时触发熔断 |
 
 **世界构建部专项用例：**
 
@@ -119,7 +119,7 @@
 | 角色ID | 必需输入 | 主要输出 | 关键验证点 |
 |--------|---------|---------|-----------|
 | `drama.emotion-architect` | project_brief, character_bible | emotion_blueprint | 含8节点情绪图，每节点有情绪值(1-10)和外化方式 |
-| `drama.plot-architect` | project_brief, world_setting, character_bible | series_outline | 含六阶段+每集四段式+EV/ET/TP标注+双轨节奏 |
+| `drama.series-architect` | project_brief, character_bible, character_bible | series_outline | 含六阶段+每集四段式+EV/ET/TP标注+双轨节奏 |
 | `drama.hook-designer` | series_outline | hook_plan | 含S/A/B/C四级钩子，至少1个S级，集末钩子≥90%集 |
 | `drama.conflict-engine` | series_outline | conflict_plan | 含四级冲突体系，无连续同质冲突 |
 | `drama.reversal-master` | series_outline | reversal_plan | 含5类反转，S级在55-75%处，反转多样性达标 |
@@ -142,7 +142,7 @@
 
 | 角色ID | 必需输入 | 主要输出 | 关键验证点 |
 |--------|---------|---------|-----------|
-| `drama.script-writer` | series_outline, world_setting, character_bible | episode_scripts | 商业剧本格式，无引号台词，无括号暗示，无心理描写 |
+| `drama.script-writer` | series_outline, character_bible, character_bible | episode_scripts | 商业剧本格式，无引号台词，无括号暗示，无心理描写 |
 | `drama.dialogue-expert` | episode_scripts | episode_scripts | AI腔5大指标全部通过，角色语言有差异化 |
 | `drama.scene-director` | episode_scripts | visual_prompts | 竖屏9:16 Prompt规范，景别/情绪对应正确 |
 | `drama.ip-adapter` | mode+source_content | adaptation_plan+project_brief | 三模式独立测试（adapt/reference/derivative）|
@@ -163,16 +163,16 @@
 
 | 角色ID | 必需输入 | 主要输出 | 关键验证点 |
 |--------|---------|---------|-----------|
-| `drama.script-reviewer` | episode_scripts | review_report | 格式/结构/逻辑三维检查，McKee价值转变验证 |
+| `drama.script-scorer` | episode_scripts | review_report | 格式/结构/逻辑三维检查，McKee价值转变验证 |
 | `drama.reader-reviewer` | episode_scripts, project_brief | reader_review | 追剧意愿/弃剧风险/付费转化三维评估 |
 | `drama.emotion-auditor` | episode_scripts | emotion_audit | 实际EV/ET/TP与蓝图对比，疲软区间报告 |
-| `drama.quality-reporter` | episode_scripts, review_report | quality_report | 8维度综合评分，verdict字段，defects列表 |
+| `drama.script-scorer` | episode_scripts, review_report | quality_report | 10维度综合评分，verdict字段，defects列表 |
 
 **评审质控部专项用例：**
 
 | ID | 用例 | 验证点 | 优先级 |
 |----|------|--------|--------|
-| QR-001 | 8维评分权重之和=100% | format×15+structure×20+...+commercial×5=100 | P0 |
+| QR-001 | 10维评分权重之和=100% | format×15+structure×20+...+commercial×5=100 | P0 |
 | QR-002 | 熔断条件触发 | 格式<70或梦境安全感<7→verdict=重大返工 | P0 |
 | QR-003 | McKee无效场景检测 | script-reviewer识别场景前后价值无变化 | P0 |
 | QR-004 | 读者视角弃剧风险 | reader-reviewer识别连续2集情绪平台为弃剧风险 | P1 |
@@ -235,7 +235,7 @@
 |----|------|--------|--------|
 | CO-001 | P0熔断词触发 | "拐卖"/"未成年犯罪"词出现→overall_result=不通过 | P0 |
 | CO-002 | 犯罪正义收束验证 | 犯罪词≥2处→须有正义词≥2处，否则P1 | P0 |
-| CO-003 | 交付打包四项验证 | world_setting/character_bible/series_outline/episode_scripts全部存在 | P0 |
+| CO-003 | 交付打包四项验证 | character_bible/character_bible/series_outline/episode_scripts全部存在 | P0 |
 | CO-004 | 交付包字数达标 | delivery-packer检测字数未达标→delivery_status=pending（不生成包）| P0 |
 | CO-005 | 进化分析双轨 | evolution-analyst在low_quality时触发技能规则提案，创作亮点触发灵感归档 | P1 |
 | CO-006 | 合规通过后才能打包 | compliance_report=不通过时，delivery-packer拒绝执行 | P0 |
@@ -345,7 +345,7 @@
 | UI-012 | 角色选中状态 | 点击某角色 | 右侧显示详情，左侧选中高亮 | P0 |
 | UI-013 | 已完成角色标记 | completed_roles包含某角色 | ✅图标，绿色背景 | P0 |
 | UI-014 | 执行角色按钮 | 选中角色后点击"执行角色" | 显示加载态，轮询进度 | P0 |
-| UI-015 | 角色依赖展示 | 查看plot-architect | 输入依赖显示project_brief/world_setting/character_bible（红色必需，灰色可选）| P1 |
+| UI-015 | 角色依赖展示 | 查看plot-architect | 输入依赖显示project_brief/character_bible/character_bible（红色必需，灰色可选）| P1 |
 | UI-016 | 输出产物展示 | 角色执行成功 | 输出区显示产物键列表 | P1 |
 | UI-017 | 进度条实时更新 | 执行过程中 | 顶部进度条百分比递增 | P1 |
 | UI-018 | 模型配置链接 | 点击"配置模型" | 跳转到/admin/drama-models | P1 |
@@ -387,7 +387,7 @@
 | ID | 测试场景 | 方法 | 预期结果 | 优先级 |
 |----|---------|------|---------|--------|
 | SEC-001 | 水平越权：访问他人项目 | GET `/api/drama/projects/{他人id}/` | 404，不暴露存在性 | P0 |
-| SEC-002 | 水平越权：执行他人项目角色 | POST `/api/drama/projects/{他人id}/run/drama.topic-planner/` | 404 | P0 |
+| SEC-002 | 水平越权：执行他人项目角色 | POST `/api/drama/projects/{他人id}/run/drama.topic-director/` | 404 | P0 |
 | SEC-003 | 未认证访问所有drama接口 | 无Token请求 | 401 | P0 |
 | SEC-004 | 非管理员修改模型配置 | 普通用户 PUT `/api/drama/models/config/` | 403 | P0 |
 | SEC-005 | JWT过期后重试 | Token过期后发请求 | 401，前端自动跳转登录 | P0 |
@@ -464,7 +464,7 @@
 - [ ] 快速通道8角色端到端流程通过（FT-001~FT-008）
 - [ ] 合规守卫P0熔断词检测通过（CO-001/SEC-013~015）
 - [ ] 字数治理官首集+非首集检测通过（PO-001~002）
-- [ ] 质量报告8维评分权重正确（QR-001）
+- [ ] 质量报告10维评分权重正确（QR-001）
 - [ ] 交付打包四项验证通过（CO-003/CO-004）
 - [ ] 水平越权防护通过（SEC-001/002）
 - [ ] 未认证访问返回401（SEC-003）

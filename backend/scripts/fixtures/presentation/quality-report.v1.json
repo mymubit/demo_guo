@@ -1,7 +1,7 @@
 {
   "_meta": {
     "runId": "014302e8-5586-42a5-b603-0d21d9295c51",
-    "agentId": "drama.quality-reporter",
+    "agentId": "drama.script-scorer",
     "generatedAt": "2026-06-23T01:46:16.833787+00:00",
     "overwriteMode": "replace",
     "promptVersion": "v1",

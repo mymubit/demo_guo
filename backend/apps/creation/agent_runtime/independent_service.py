@@ -129,7 +129,8 @@ class IndependentAgentService:
         if missing:
             raise AgentRuntimeError(f"??????: {', '.join(missing)}")
         params = dict(params or {})
-        if agent.agent_id == "drama.plot-architect":
+        output_artifact_key = str(getattr(agent, "default_output_artifact_key", "") or "")
+        if output_artifact_key == "series_outline":
             from apps.drama.episode_outline_store import (
                 OUTLINE_MODE_EPISODES_ONLY,
                 OUTLINE_MODE_STRUCTURE_ONLY,
@@ -194,12 +195,7 @@ class IndependentAgentService:
                             f"不要重复输出第1-{int(ep_from) - 1}集。"
                         ),
                     )
-        blob_agent_configs = {
-            "drama.narrative-engineer": "narrative_plan",
-            "drama.script-writer": "episode_scripts",
-            "drama.polish-master": "polished_script",
-        }
-        blob_cfg_key = blob_agent_configs.get(agent.agent_id)
+        blob_cfg_key = output_artifact_key
         if blob_cfg_key:
             from apps.drama.artifact_mode import ARTIFACT_MODE_EPISODES_ONLY, ARTIFACT_MODE_STRUCTURE_ONLY
             from apps.drama.episode_artifact_store import (

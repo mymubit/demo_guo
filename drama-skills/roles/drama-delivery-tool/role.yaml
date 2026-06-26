@@ -1,10 +1,10 @@
-agent_id: drama.production-pack
-name: Production Pack
-name_zh: 制作发行师
+agent_id: drama.delivery-tool
+name: Delivery Tool
+name_zh: 宣发交付工具
 dept: production
-role_tier: composite
+role_tier: tool
 fast_track: false
-workspace_order: 701
+workspace_order: 801
 default_output_artifact_key: production_package
 schema_version: production-pack.v1
 modules:
@@ -18,10 +18,11 @@ rule_policy:
   - genre_profile
   - stage_playbook
   max_chars: 2800
-skill_dir: roles/drama-production-pack
+skill_dir: roles/drama-delivery-tool
 input_contract:
   optional_artifacts:
   - project_brief
+  - quality_report
   - compliance_report
   required_artifacts:
   - episode_scripts
@@ -30,4 +31,4 @@ output_contract:
   artifacts:
   - production_package
   schema_version: production-pack.v1
-role: 整合视觉生产+分镜导演+营销策划+交付打包+后期处理五项能力
+role: 可选宣发交付工具，吸收制作发行师能力；仅在需要商业包装、交付检查、投流文案、视觉提示词或互动改编时执行，交付检查必须读取质量报告与合规结果。

@@ -23,13 +23,13 @@ class DramaWorkspaceOrderTests(TestCase):
 
     def test_fast_track_contains_required_roles(self):
         required = [
-            "drama.topic-planner",
-            "drama.world-architect",
-            "drama.character-designer",
-            "drama.plot-architect",
+            "drama.topic-director",
+            "drama.character-relations",
+            "drama.series-architect",
+            "drama.episode-designer",
             "drama.script-writer",
-            "drama.script-reviewer",
-            "drama.quality-reporter",
+            "drama.revision-master",
+            "drama.script-scorer",
             "drama.compliance-guard",
         ]
         for r in required:
@@ -40,9 +40,9 @@ class DramaWorkspaceOrderTests(TestCase):
         self.assertEqual(len(orders), len(set(orders)), "workspace_order 有重复值")
 
     def test_workspace_index_for_known_role(self):
-        self.assertEqual(workspace_index_for_agent("drama.topic-planner"), 103)
+        self.assertEqual(workspace_index_for_agent("drama.topic-director"), 101)
         self.assertEqual(workspace_index_for_agent("drama.script-writer"), 401)
-        self.assertEqual(workspace_index_for_agent("drama.compliance-guard"), 801)
+        self.assertEqual(workspace_index_for_agent("drama.compliance-guard"), 701)
 
     def test_workspace_index_for_unknown_returns_999(self):
         self.assertEqual(workspace_index_for_agent("nonexistent.role"), 999)

@@ -75,7 +75,7 @@ class DramaEpisodeQuality(models.Model):
     )
     episode_number = models.PositiveSmallIntegerField("集号", db_index=True)
     scores = models.JSONField(
-        "8维评分",
+        "10维评分",
         default=dict,
         help_text='{"format":85,"structure":80,"character":75,...,"overall":82}',
     )
@@ -86,7 +86,7 @@ class DramaEpisodeQuality(models.Model):
     )
     word_count_result = models.JSONField("字数验证", default=dict)
     summary = models.TextField("综合评估意见", blank=True, default="")
-    evaluated_by_agent = models.CharField("评估角色", max_length=64, default="drama.quality-reporter")
+    evaluated_by_agent = models.CharField("评估角色", max_length=64, default="drama.script-scorer")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

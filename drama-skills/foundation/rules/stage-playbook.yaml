@@ -2,20 +2,37 @@
 version: "1.0.0"
 tier: 3
 items:
-  - rule_key: t3.drama-plot-architect.episode_structure.six-stage
+  - rule_key: t3.drama-topic-director.project_brief.market-integrated
+    section: philosophy
+    scope_type: agent
+    scope_key: drama.topic-director
+    title: 选题定调必须吸收市场判断
+    priority: 10
+    body: |
+      输出 project_brief 时必须包含故事梗概、市场机会判断、爆款因子、竞品避雷、差异化策略、首集钩子方向、第3-5集付费卡点方向和合规初筛。
+  - rule_key: t3.drama-series-architect.episode_structure.six-stage
     section: episode_structure
     scope_type: agent
-    scope_key: drama.plot-architect
+    scope_key: drama.series-architect
     title: 六阶段集数分配
     priority: 10
     body: |
       SSOT: knowledge/tier3-stage-rules.md
       100集基准：开篇10%/升温20%/高潮20%/转折20%/冲刺15%/结局15%。
-      每集大纲须含 Goal×Conflict、EV/ET/TP、集末钩子、双轨节奏[松/中/紧×轻/中/重]。
-  - rule_key: t3.drama-character-designer.character_rules.density
+      全剧架构只定义六阶段、主支线、关键反转、付费节点分布和伏笔总表，不展开逐集细节。
+  - rule_key: t3.drama-episode-designer.episode_structure.episode-card
+    section: episode_structure
+    scope_type: agent
+    scope_key: drama.episode-designer
+    title: 分集设计卡
+    priority: 10
+    body: |
+      SSOT: knowledge/tier3-stage-rules.md
+      每集设计须含 Goal×Conflict、EV/ET/TP、集首钩子、集末钩子、爽点、反转、付费卡点、伏笔埋设/回扣、双轨节奏[松/中/紧×轻/中/重]。
+  - rule_key: t3.drama-character-relations.character_rules.density
     section: character_rules
     scope_type: agent
-    scope_key: drama.character-designer
+    scope_key: drama.character-relations
     title: 角色密度与弧光
     priority: 10
     body: |
@@ -30,3 +47,19 @@ items:
     body: |
       SSOT: roles/drama-script-writer/tasks/write-episodes.md
       必须指定 episode_range；逐集依赖上一集全文+memory_checkpoint（LR-008）；禁止一次生成全剧。
+  - rule_key: t3.drama-revision-master.writing_requirements.revision-only
+    section: writing_requirements
+    scope_type: agent
+    scope_key: drama.revision-master
+    title: 返修不重设故事
+    priority: 10
+    body: |
+      剧本修订官只能根据评分报告、合规报告或用户指定问题改写文本执行质量；不得推翻已确认的选题、人设、全剧架构和分集设计。
+  - rule_key: t3.drama-script-scorer.scoring.ten-dimension
+    section: scoring
+    scope_type: agent
+    scope_key: drama.script-scorer
+    title: 十维独立评分
+    priority: 10
+    body: |
+      剧本评分官必须作为独立裁判执行十维 G-Eval 评分，覆盖格式、叙事、冲突、角色、情绪、逻辑、爽点、钩子、付费点、赛道匹配；不得参与剧本生成。

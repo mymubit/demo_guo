@@ -3,45 +3,16 @@
 import { resolveSkillId } from '@/utils/skillTerm'
 
 export const AGENT_ID_LABELS = {
-  // drama.* 新体系（12个角色）
-  
-  'drama.topic-planner': '选题策划官',
-  
-  
-  'drama.world-architect': '世界架构师',
-  'drama.character-designer': '人设设计师',
-  
-  
-  'drama.plot-architect': '情节架构师',
-  
-  
-  
-  
-  
-  'drama.script-writer': '剧本执笔师',
-  
-  
-  
-  'drama.script-reviewer': '审稿官',
-  
-  
-  'drama.quality-reporter': '质量报告官',
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  'drama.compliance-guard': '合规守卫',
-  'drama.market-analyst': '市场分析师',
-  'drama.narrative-engineer': '叙事工程师',
-  'drama.polish-master': '精修大师',
-  'drama.production-pack': '制作发行师',
-  
-  
+  // drama.* 重组后体系（6生产+2裁判+1工具）
+  'drama.topic-director': '选题定调官',
+  'drama.character-relations': '人物关系官',
+  'drama.series-architect': '全剧架构官',
+  'drama.episode-designer': '分集设计官',
+  'drama.script-writer': '剧本正文官',
+  'drama.revision-master': '剧本修订官',
+  'drama.script-scorer': '剧本评分官',
+  'drama.compliance-guard': '合规审查官',
+  'drama.delivery-tool': '宣发交付工具',
 }
 
 export const SUB_SKILL_TYPE_LABELS = {

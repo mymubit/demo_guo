@@ -137,7 +137,7 @@ def mock_llm_context():
     from apps.skill.llm.providers import LlmProviderService
 
     def _mock_chat(*args, **kwargs):
-        agent_id = _MOCK_CTX.get("agent_id") or "drama.topic-planner"
+        agent_id = _MOCK_CTX.get("agent_id") or "drama.topic-director"
         return {
             "content": json.dumps({"mock": True, "agent_id": agent_id}, ensure_ascii=False),
             "prompt_tokens": 10,

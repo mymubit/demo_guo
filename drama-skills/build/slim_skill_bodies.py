@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""将 12 角色 SKILL.md 正文瘦身为 v3.1 索引文档（方法论在 foundation/modules/）。"""
+"""将重组角色 SKILL.md 正文瘦身为索引文档（方法论在 foundation/modules/）。"""
 from __future__ import annotations
 
 from pathlib import Path
@@ -13,56 +13,43 @@ REGISTRY = ROOT / "registry.yaml"
 ROLES_DIR = ROOT / "roles"
 
 V31_NOTICE = (
-    "> **v3.1**：规则 SSOT 见 `foundation/rules/`；角色契约 SSOT 见 `./role.yaml`。"
+    "> **v4.0**：规则 SSOT 见 `foundation/rules/`；角色契约 SSOT 见 `./role.yaml`。"
     "本文档仅保留 Cursor 触发方式与 I/O 索引。"
 )
 
 TRIGGERS: Dict[str, List[str]] = {
-    "drama.topic-planner": [
-        "@drama-topic-planner 我想写一部复仇×重生×职场的短剧",
-        "@drama-topic-planner [矩阵] 情感轴=复仇 身份轴=重生 冲突轴=家族 世界观=古代",
-        "@drama-topic-planner [adapt] 将这本小说改编为短剧立项",
+    "drama.topic-director": [
+        "@drama-topic-director 我想写一部复仇×重生×职场的短剧",
     ],
-    "drama.market-analyst": [
-        "@drama-market-analyst 分析当前都市复仇题材市场",
-        "@drama-market-analyst 六维拉片：参考剧《XXX》",
+    "drama.character-relations": [
+        "@drama-character-relations 基于立项简报输出人物关系",
     ],
-    "drama.world-architect": [
-        "@drama-world-architect 基于立项简报构建世界观",
+    "drama.series-architect": [
+        "@drama-series-architect 设计30集全剧架构",
     ],
-    "drama.character-designer": [
-        "@drama-character-designer 设计主角与核心配角人设",
-    ],
-    "drama.plot-architect": [
-        "@drama-plot-architect 输出第1-20集分集大纲",
-        "@drama-plot-architect episode_range=1-10",
-    ],
-    "drama.narrative-engineer": [
-        "@drama-narrative-engineer 基于大纲输出叙事工程方案",
+    "drama.episode-designer": [
+        "@drama-episode-designer episode_range=1-10",
     ],
     "drama.script-writer": [
-        "@drama-script-writer 生成第1-5集剧本",
+        "@drama-script-writer 生成第1-5集正文",
         "@drama-script-writer episode_range=6-10",
     ],
-    "drama.script-reviewer": [
-        "@drama-script-reviewer 审查第1-5集剧本",
+    "drama.revision-master": [
+        "@drama-revision-master episode_range=1-5 focus_areas=dialogue,format",
     ],
-    "drama.quality-reporter": [
-        "@drama-quality-reporter 基于审稿报告输出质量报告",
-    ],
-    "drama.polish-master": [
-        "@drama-polish-master 精修第1-5集剧本",
-    ],
-    "drama.production-pack": [
-        "@drama-production-pack 输出制作发行包",
+    "drama.script-scorer": [
+        "@drama-script-scorer 评分第1-5集剧本",
     ],
     "drama.compliance-guard": [
         "@drama-compliance-guard 合规审查全剧剧本",
     ],
+    "drama.delivery-tool": [
+        "@drama-delivery-tool 输出宣发交付包",
+    ],
 }
 
 EXTRA_READING: Dict[str, List[str]] = {
-    "drama.topic-planner": [
+    "drama.topic-director": [
         "foundation/methodology/cross-section.md",
         "knowledge/originality-rules.md",
     ],
@@ -71,10 +58,10 @@ EXTRA_READING: Dict[str, List[str]] = {
         "foundation/methodology/cross-section.md",
         "foundation/methodology/mckee-value-shift.md",
     ],
-    "drama.script-reviewer": [
+    "drama.script-scorer": [
         "foundation/constraints/script-format.yaml",
     ],
-    "drama.polish-master": [
+    "drama.revision-master": [
         "foundation/constraints/script-format.yaml",
     ],
     "drama.compliance-guard": [

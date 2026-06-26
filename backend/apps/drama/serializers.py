@@ -83,7 +83,9 @@ class DramaRoleExecutionSerializer(serializers.ModelSerializer):
         from apps.drama.presentation.service import build_execution_output_views
 
         outline_progress = None
-        if obj.agent_id == "drama.plot-architect" and getattr(obj, "project", None):
+        artifact_key = getattr(getattr(obj, "agent", None), "default_output_artifact_key", "")
+        artifact_key = artifact_key or (obj.output_artifacts or {}).get("artifact_key")
+        if artifact_key == "series_outline" and getattr(obj, "project", None):
             outline_progress = summarize_series_outline_progress(obj.project)
         return build_execution_output_views(
             obj,

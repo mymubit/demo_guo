@@ -255,7 +255,7 @@ class Project(models.Model):
         blank=True,
     )
     quality_scores = models.JSONField(
-        "Drama 8维评分",
+        "Drama 10维评分",
         default=dict,
         blank=True,
     )
@@ -311,7 +311,6 @@ class Project(models.Model):
             from apps.creation.agent_runtime.entry_plan import DramaEntryPlan
 
             track_roles = DramaEntryPlan.list_agent_ids(track_mode=self.track_mode or "fast")
-
         expected = set(track_roles)
         completed = set(self.completed_roles or []) & expected
         total = len(expected)
@@ -328,7 +327,7 @@ class Project(models.Model):
         allowed = set(DramaProgressService.list_track_agent_ids(self))
         if not allowed:
             return list(dict.fromkeys(self.completed_roles or []))
-        return [rid for rid in (self.completed_roles or []) if rid in allowed]
+        return [rid for rid in dict.fromkeys(self.completed_roles or []) if rid in allowed]
 
     def get_drama_stage_display(self) -> str:
         from apps.drama.constants import DramaStage

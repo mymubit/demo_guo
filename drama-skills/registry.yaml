@@ -1,95 +1,83 @@
 version: 3.1.0
 departments:
 - code: strategy
-  name_zh: 战略选题部
+  name_zh: 选题定调部
   order: 1
 - code: worldbuilding
-  name_zh: 世界构建部
+  name_zh: 人物关系部
   order: 2
 - code: plot_engine
-  name_zh: 剧情引擎部
+  name_zh: 架构设计部
   order: 3
 - code: writing
-  name_zh: 创作执行部
+  name_zh: 正文创作部
   order: 4
 - code: review
-  name_zh: 评审质控部
+  name_zh: 独立评分部
   order: 5
 - code: polish
-  name_zh: 修改润色部
+  name_zh: 返修精修部
   order: 6
-- code: production
-  name_zh: 制作宣发部
-  order: 7
 - code: ops
   name_zh: 合规总编室
+  order: 7
+- code: production
+  name_zh: 宣发交付部
   order: 8
 fast_track_agents:
-- drama.topic-planner
-- drama.world-architect
-- drama.character-designer
-- drama.plot-architect
+- drama.topic-director
+- drama.character-relations
+- drama.series-architect
+- drama.episode-designer
 - drama.script-writer
-- drama.script-reviewer
-- drama.quality-reporter
+- drama.revision-master
+- drama.script-scorer
 - drama.compliance-guard
 roles:
-- agent_id: drama.topic-planner
-  skill_dir: roles/drama-topic-planner
-  name: Topic Planner
-  name_zh: 选题策划官
+- agent_id: drama.topic-director
+  skill_dir: roles/drama-topic-director
+  name: Topic Director
+  name_zh: 选题定调官
   dept: strategy
-  role_tier: core
-  workspace_order: 103
+  role_tier: production
+  workspace_order: 101
   default_output_artifact_key: project_brief
   schema_version: project-brief.v1
-- agent_id: drama.market-analyst
-  skill_dir: roles/drama-market-analyst
-  name: Market Analyst
-  name_zh: 市场分析师
-  dept: strategy
-  role_tier: composite
-  workspace_order: 106
-  default_output_artifact_key: market_report
-  schema_version: market-report.v1
   modules:
   - market-radar
   - formula-analysis
   - tear-down-6d
-- agent_id: drama.world-architect
-  skill_dir: roles/drama-world-architect
-  name: World Architect
-  name_zh: 世界架构师
+- agent_id: drama.character-relations
+  skill_dir: roles/drama-character-relations
+  name: Character Relations
+  name_zh: 人物关系官
   dept: worldbuilding
-  role_tier: core
-  workspace_order: 201
-  default_output_artifact_key: world_setting
-  schema_version: world-setting.v1
-- agent_id: drama.character-designer
-  skill_dir: roles/drama-character-designer
-  name: Character Designer
-  name_zh: 人设设计师
-  dept: worldbuilding
-  role_tier: core
+  role_tier: production
   workspace_order: 202
   default_output_artifact_key: character_bible
   schema_version: character-bible.v1
-- agent_id: drama.plot-architect
-  skill_dir: roles/drama-plot-architect
-  name: Plot Architect
-  name_zh: 情节架构师
+  modules:
+  - psychology-immersion
+- agent_id: drama.series-architect
+  skill_dir: roles/drama-series-architect
+  name: Series Architect
+  name_zh: 全剧架构官
   dept: plot_engine
-  role_tier: core
-  workspace_order: 302
+  role_tier: production
+  workspace_order: 301
   default_output_artifact_key: series_outline
   schema_version: series-outline.v1
-- agent_id: drama.narrative-engineer
-  skill_dir: roles/drama-narrative-engineer
-  name: Narrative Engineer
-  name_zh: 叙事工程师
+  modules:
+  - emotion-blueprint
+  - conflict-escalation
+  - reversal-system
+- agent_id: drama.episode-designer
+  skill_dir: roles/drama-episode-designer
+  name: Episode Designer
+  name_zh: 分集设计官
   dept: plot_engine
-  role_tier: composite
-  workspace_order: 308
+  role_tier: production
+  workspace_order: 302
   default_output_artifact_key: narrative_plan
   schema_version: narrative-plan.v1
   modules:
@@ -97,43 +85,24 @@ roles:
   - hook-system
   - conflict-escalation
   - reversal-system
-  - psychology-immersion
 - agent_id: drama.script-writer
   skill_dir: roles/drama-script-writer
   role_dir: roles/drama-script-writer
   name: Script Writer
-  name_zh: 剧本执笔师
+  name_zh: 剧本正文官
   dept: writing
-  role_tier: core
+  role_tier: production
   workspace_order: 401
   default_output_artifact_key: episode_scripts
   schema_version: episode-scripts.v1
   default_task: write-episodes
-- agent_id: drama.script-reviewer
-  skill_dir: roles/drama-script-reviewer
-  name: Script Reviewer
-  name_zh: 审稿官
-  dept: review
-  role_tier: core
-  workspace_order: 501
-  default_output_artifact_key: review_report
-  schema_version: review-report.v1
-- agent_id: drama.quality-reporter
-  skill_dir: roles/drama-quality-reporter
-  name: Quality Reporter
-  name_zh: 质量报告官
-  dept: review
-  role_tier: core
-  workspace_order: 504
-  default_output_artifact_key: quality_report
-  schema_version: quality-report.v1
-- agent_id: drama.polish-master
-  skill_dir: roles/drama-polish-master
-  name: Polish Master
-  name_zh: 精修大师
+- agent_id: drama.revision-master
+  skill_dir: roles/drama-revision-master
+  name: Revision Master
+  name_zh: 剧本修订官
   dept: polish
-  role_tier: composite
-  workspace_order: 601
+  role_tier: production
+  workspace_order: 501
   default_output_artifact_key: polished_script
   schema_version: polished-script.v1
   modules:
@@ -141,13 +110,31 @@ roles:
   - format-fix
   - word-count-governance
   - storyboard-9col
-- agent_id: drama.production-pack
-  skill_dir: roles/drama-production-pack
-  name: Production Pack
-  name_zh: 制作发行师
-  dept: production
-  role_tier: composite
+- agent_id: drama.script-scorer
+  skill_dir: roles/drama-script-scorer
+  name: Script Scorer
+  name_zh: 剧本评分官
+  dept: review
+  role_tier: judge
+  workspace_order: 601
+  default_output_artifact_key: quality_report
+  schema_version: quality-report.v1
+- agent_id: drama.compliance-guard
+  skill_dir: roles/drama-compliance-guard
+  name: Compliance Guard
+  name_zh: 合规审查官
+  dept: ops
+  role_tier: judge
   workspace_order: 701
+  default_output_artifact_key: compliance_report
+  schema_version: compliance-report.v1
+- agent_id: drama.delivery-tool
+  skill_dir: roles/drama-delivery-tool
+  name: Delivery Tool
+  name_zh: 宣发交付工具
+  dept: production
+  role_tier: tool
+  workspace_order: 801
   default_output_artifact_key: production_package
   schema_version: production-pack.v1
   modules:
@@ -155,15 +142,6 @@ roles:
   - marketing-copy
   - delivery-check
   - story-to-game
-- agent_id: drama.compliance-guard
-  skill_dir: roles/drama-compliance-guard
-  name: Compliance Guard
-  name_zh: 合规守卫
-  dept: ops
-  role_tier: core
-  workspace_order: 801
-  default_output_artifact_key: compliance_report
-  schema_version: compliance-report.v1
 tools:
 - id: drama-master
   skill_dir: drama-master

@@ -1,12 +1,12 @@
 agent_id: drama.script-writer
 name: Script Writer
-name_zh: 剧本执笔师
+name_zh: 剧本正文官
 dept: writing
-role_tier: core
+role_tier: production
 fast_track: true
 workspace_order: 401
-role: 短剧剧本执笔师
-goal: 按商业格式生成指定集数范围的正式剧本，输出含记忆检查点的 JSON
+role: 剧本正文官
+goal: 按分集设计与商业格式生成指定集数范围的正式剧本，输出含记忆检查点、字数统计、台词占比与格式自检的 JSON
 backstory: '你精通竖屏短剧商业剧本格式，严格执行字数/场景/台词约束， 每场戏以 Goal×Conflict 驱动，每场完成 McKee 价值转变，每集输出记忆检查点。
 
   '
@@ -34,11 +34,11 @@ input_contract:
   - emotion_curve
   - hook_plan
   - narrative_plan
+  - project_brief
   params:
   - episode_range
   required_artifacts:
   - series_outline
-  - world_setting
   - character_bible
 output_contract:
   artifacts:

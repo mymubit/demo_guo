@@ -32,11 +32,11 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 class DramaRoleListView(APIView):
-    """获取 drama 所有角色分组列表（12个可见角色）"""
+    """获取 drama 所有角色分组列表（6生产+2裁判+1工具）"""
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        from apps.drama.defaults import DRAMA_VISIBLE_ROLES
+        from apps.drama.defaults import DRAMA_FAST_TRACK_ROLES, DRAMA_VISIBLE_ROLES
 
         data = DramaRoleService.get_all_roles_grouped()
         total = sum(len(d["roles"]) for d in data)
@@ -50,7 +50,7 @@ class DramaRoleListView(APIView):
                 "departments": data,
                 "total_roles": total,
                 "visible_roles": len(DRAMA_VISIBLE_ROLES),
-                "fast_track_count": 8,
+                "fast_track_count": len(DRAMA_FAST_TRACK_ROLES),
                 "composite_count": composite_count,
             },
         })
@@ -227,10 +227,10 @@ class DramaWorkspaceViewSet(ModelViewSet):
         执行指定角色任务
 
         支持的参数：
-        - episode_range: str  例如 "1-5"，指定集数范围（script-writer / plot-architect 支持）
-        - episode_count: int  总集数，给 plot-architect 使用
-        - outline_mode: str  plot-architect 专用：full | episodes_only | structure_only
-        - blob_mode: str  叙事/剧本/润色等分批角色：full | episodes_only | structure_only
+        - episode_range: str  例如 "1-5"，指定集数范围（script-writer / episode-designer 支持）
+        - episode_count: int  总集数，给 series-architect 使用
+        - outline_mode: str  series-architect 专用：full | episodes_only | structure_only
+        - blob_mode: str  分集设计/剧本/返修等分批角色：full | episodes_only | structure_only
         - artifact_mode: str  outline_mode / blob_mode 通用别名
         - custom_params: dict  自定义参数
         - priority: str  "normal" | "high"
@@ -318,7 +318,7 @@ class DramaWorkspaceViewSet(ModelViewSet):
             scope_desc = "全剧结构（六阶段 / 伏笔等）"
         elif ep_start and ep_end:
             scope_desc = f"第{ep_start}-{ep_end}集（共{ep_end - ep_start + 1}集）"
-        elif role_id == "drama.plot-architect":
+        elif agent.default_output_artifact_key == "series_outline":
             scope_desc = f"共{episode_count}集大纲"
         else:
             scope_desc = "整体执行"
@@ -625,11 +625,11 @@ class EpisodeQualityView(APIView):
 
     def post(self, request, project_id):
         """
-        提交单集质量评估结果（由 quality-reporter 角色调用）
+        提交单集质量评估结果（由 script-scorer 角色调用）
 
         会根据问题维度自动推荐修复角色：
-        - 格式/对白/结构/角色问题 → drama.polish-master（润色大师）
-        - 情绪/钩子/节奏问题 → drama.narrative-engineer（叙事工程师）
+        - 格式/对白/结构/角色问题 → drama.revision-master（剧本修订官）
+        - 情绪/钩子/节奏问题 → drama.episode-designer（分集设计官）
         返回 pending_suggestions 供前端展示一键修复建议
         """
         try:
@@ -666,7 +666,7 @@ class EpisodeQualityView(APIView):
                     "issues": issues,
                     "summary": summary,
                     "word_count_result": word_count_result,
-                    "evaluated_by_agent": request.data.get("agent_id", "drama.quality-reporter"),
+                    "evaluated_by_agent": request.data.get("agent_id", "drama.script-scorer"),
                 },
             )
 
@@ -675,13 +675,13 @@ class EpisodeQualityView(APIView):
         if auto_trigger_fixes and issues:
             # 根据问题维度映射到对应修复角色
             FIX_ROLE_MAP = {
-                # 格式/对白/结构/角色问题交给润色大师，优先级1-2
-                "format":     {"role": "drama.polish-master", "role_name": "润色大师", "priority": 1},
-                "dialogue":   {"role": "drama.polish-master", "role_name": "润色大师", "priority": 1},
-                "structure":  {"role": "drama.polish-master", "role_name": "润色大师", "priority": 2},
-                "emotion":    {"role": "drama.narrative-engineer", "role_name": "叙事工程师", "priority": 2},
-                "character":  {"role": "drama.polish-master", "role_name": "润色大师", "priority": 2},
-                "hooks":      {"role": "drama.narrative-engineer", "role_name": "叙事工程师", "priority": 3},
+                # 文本执行问题交给修订官，分集设计问题交给分集设计官。
+                "format":     {"role": "drama.revision-master", "role_name": "剧本修订官", "priority": 1},
+                "dialogue":   {"role": "drama.revision-master", "role_name": "剧本修订官", "priority": 1},
+                "structure":  {"role": "drama.revision-master", "role_name": "剧本修订官", "priority": 2},
+                "emotion":    {"role": "drama.episode-designer", "role_name": "分集设计官", "priority": 2},
+                "character":  {"role": "drama.revision-master", "role_name": "剧本修订官", "priority": 2},
+                "hooks":      {"role": "drama.episode-designer", "role_name": "分集设计官", "priority": 3},
             }
 
             triggered_roles = set()
@@ -809,7 +809,7 @@ class EpisodeArtifactView(APIView):
         episode_number = request.data.get("episode_number")
         artifact_key = request.data.get("artifact_key", "episode_script")
         suggestions = request.data.get("suggestions", [])
-        agent_id = request.data.get("agent_id", "drama.polish-master")
+        agent_id = request.data.get("agent_id", "drama.revision-master")
 
         if not episode_number:
             return Response({"code": 4001, "message": "episode_number 不能为空"}, status=400)

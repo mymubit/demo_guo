@@ -143,7 +143,7 @@ def backfill_episode_outlines_from_legacy(project: Project) -> int:
     items = collect_series_outline_episodes(legacy)
     if not items:
         return 0
-    agent_id = str((legacy.get("_meta") or {}).get("agentId") or "drama.plot-architect")
+    agent_id = str((legacy.get("_meta") or {}).get("agentId") or "drama.series-architect")
     saved = 0
     with transaction.atomic():
         for item in items:

@@ -13,7 +13,7 @@ from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
-SKILL_VERSION = "drama-skills-v3.1"
+SKILL_VERSION = "drama-skills-v4.0"
 
 # 部门 → DramaStage（与 apps.drama.constants.DramaStage 值对齐）
 DEPT_TO_DRAMA_STAGE: Dict[str, str] = {
@@ -27,8 +27,8 @@ DEPT_TO_DRAMA_STAGE: Dict[str, str] = {
     "ops": "compliance",
 }
 
-DELIVERY_AGENT_IDS = frozenset({"drama.production-pack", "drama.compliance-guard"})
-QUALITY_AGENT_ID = "drama.quality-reporter"
+DELIVERY_AGENT_IDS = frozenset({"drama.delivery-tool"})
+QUALITY_AGENT_ID = "drama.script-scorer"
 
 
 def get_drama_skills_root() -> Path:
@@ -103,7 +103,7 @@ def get_composite_agent_ids() -> frozenset[str]:
         for item in (registry.get("roles") or [])
         if isinstance(item, dict)
         and item.get("agent_id")
-        and str(item.get("role_tier") or "") == "composite"
+        and str(item.get("role_tier") or "") in {"composite", "tool"}
     }
     return frozenset(composite)
 
@@ -234,7 +234,7 @@ def get_pipeline_result_key_map() -> Dict[str, str]:
 
 @lru_cache(maxsize=1)
 def load_agent_tier1_sections() -> Dict[str, List[str]]:
-    """解析 knowledge/knowledge-sections.md 中的「12 角色 ↔ Section 映射」表。"""
+    """解析 knowledge/knowledge-sections.md 中的角色 ↔ Section 映射表。"""
     path = get_drama_skills_root() / "knowledge" / "knowledge-sections.md"
     if not path.is_file():
         logger.warning("[skills_registry] knowledge-sections.md 未找到")
@@ -242,7 +242,7 @@ def load_agent_tier1_sections() -> Dict[str, List[str]]:
     mapping: Dict[str, List[str]] = {}
     in_table = False
     for line in path.read_text(encoding="utf-8").splitlines():
-        if "## 12 角色" in line and "Section" in line:
+        if "角色" in line and "Section" in line and line.startswith("## "):
             in_table = True
             continue
         if in_table and line.startswith("## "):
@@ -356,7 +356,7 @@ def build_system_prompt(skill_dir: str, role_yaml: Dict[str, Any]) -> str:
 
 def _resolve_tier(agent_id: str, role_tier: str, fast_track: bool) -> int:
     composite_ids = get_composite_agent_ids()
-    if agent_id in composite_ids or role_tier == "composite":
+    if agent_id in composite_ids or role_tier in {"composite", "tool"}:
         return 2
     if fast_track:
         return 1
@@ -415,7 +415,7 @@ def build_role_default(entry: Dict[str, Any]) -> Dict[str, Any]:
         "system_prompt": build_system_prompt(skill_dir, role_yaml),
         "fast_track": is_fast_track,
         "tier": _resolve_tier(agent_id, role_tier, is_fast_track),
-        "is_composite": agent_id in get_composite_agent_ids() or role_tier == "composite",
+        "is_composite": agent_id in get_composite_agent_ids() or role_tier in {"composite", "tool"},
         "modules": list(merged.get("modules") or []),
         "skill_dir": skill_dir,
         "schema_version": str(
@@ -462,22 +462,23 @@ def _fallback_entry_plan(track_mode: str) -> Dict[str, Any]:
         return {
             "entry_type": "expert_track",
             "label": "专家通道",
-            "description": "12个可见角色（8核心+4复合），适合商业精品项目",
+            "description": "标准主链后追加宣发交付工具，适合商业精品项目",
             "phases": [
-                {"phase": "strategy", "label": "战略选题", "agents": ["drama.topic-planner", "drama.market-analyst"]},
-                {"phase": "worldbuilding", "label": "世界构建", "agents": ["drama.world-architect", "drama.character-designer"]},
-                {"phase": "plot_design", "label": "剧情引擎", "agents": ["drama.plot-architect", "drama.narrative-engineer"]},
-                {"phase": "writing", "label": "创作执行", "agents": ["drama.script-writer"]},
-                {"phase": "review", "label": "评审质控", "agents": ["drama.script-reviewer", "drama.quality-reporter"]},
-                {"phase": "polish", "label": "修改润色", "agents": ["drama.polish-master"]},
+                {"phase": "strategy", "label": "选题定调", "agents": ["drama.topic-director"]},
+                {"phase": "worldbuilding", "label": "人物关系", "agents": ["drama.character-relations"]},
+                {"phase": "plot_design", "label": "全剧架构", "agents": ["drama.series-architect"]},
+                {"phase": "episode_design", "label": "分集设计", "agents": ["drama.episode-designer"]},
+                {"phase": "writing", "label": "正文创作", "agents": ["drama.script-writer"]},
+                {"phase": "polish", "label": "返修精修", "agents": ["drama.revision-master"]},
+                {"phase": "review", "label": "独立评分", "agents": ["drama.script-scorer"]},
                 {"phase": "compliance", "label": "合规审查", "agents": ["drama.compliance-guard"]},
-                {"phase": "production", "label": "制作宣发", "agents": ["drama.production-pack"]},
+                {"phase": "production", "label": "宣发交付", "agents": ["drama.delivery-tool"]},
             ],
         }
     return {
         "entry_type": "fast_track",
-        "label": "快速通道",
-        "description": "8个核心角色，适合初次创作和快速验证",
+        "label": "标准创作通道",
+        "description": "6个生产角色 + 2个独立裁判，适合高效产出剧本并保持质量闭环",
         "recommended_agents": get_fast_track_agent_ids(),
         "optional_agents": [],
     }

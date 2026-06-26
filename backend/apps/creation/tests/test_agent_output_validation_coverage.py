@@ -17,21 +17,20 @@ class AgentOutputValidationCoverageTests(TestCase):
 
     def test_validate_output_accepts_all_chain_artifacts(self):
         cases = {
-            "adapt": (AgentDefinitionService.get_runnable("drama.ip-adapter"), {"adaptation_plan": {}, "project_brief": {}}),
-            "brief": (AgentDefinitionService.get_runnable("drama.topic-planner"), {"project_brief": {}}),
-            "structure": (AgentDefinitionService.get_runnable("drama.plot-architect"), {"structure_plan": {}}),
-            "character": (AgentDefinitionService.get_runnable("drama.character-designer"), {"character_bible": {}}),
-            "outline": (AgentDefinitionService.get_runnable("drama.plot-architect"), {"series_outline": {}}),
+            "brief": (AgentDefinitionService.get_runnable("drama.topic-director"), {"project_brief": {}}),
+            "structure": (AgentDefinitionService.get_runnable("drama.series-architect"), {"structure_plan": {}}),
+            "character": (AgentDefinitionService.get_runnable("drama.character-relations"), {"character_bible": {}}),
+            "outline": (AgentDefinitionService.get_runnable("drama.series-architect"), {"series_outline": {}}),
             "script": (
                 AgentDefinitionService.get_runnable("drama.script-writer"),
                 {"episode_scripts": {"episodes": [{"episodeNumber": 1}]}},
             ),
-            "review": (AgentDefinitionService.get_runnable("drama.script-reviewer"), {"review_report": {"passed": True}}),
+            "review": (AgentDefinitionService.get_runnable("drama.script-scorer"), {"review_report": {"passed": True}}),
             "score": (
-                AgentDefinitionService.get_runnable("drama.quality-reporter"),
+                AgentDefinitionService.get_runnable("drama.script-scorer"),
                 {"script_score_report": {"overallScore": 80}},
             ),
-            "marketing": (AgentDefinitionService.get_runnable("drama.marketing-officer"), {"marketing_kit": {}}),
+            "delivery": (AgentDefinitionService.get_runnable("drama.delivery-tool"), {"production_package": {}}),
         }
         for agent_id, (agent, output) in cases.items():
             with self.subTest(agent_id=agent_id):
@@ -183,7 +182,7 @@ class AgentOutputValidationCoverageTests(TestCase):
         )
 
     def test_validate_output_accepts_narrative_engineer_payload(self):
-        agent = AgentDefinitionService.get_runnable("drama.narrative-engineer")
+        agent = AgentDefinitionService.get_runnable("drama.episode-designer")
         output = {
             "narrative_plan": {
                 "narrative_core_objective": "开篇五集",
@@ -196,7 +195,7 @@ class AgentOutputValidationCoverageTests(TestCase):
         self.assertIn("narrative_plan", result)
 
     def test_validate_output_accepts_narrative_engineer_legacy_payload_after_normalize(self):
-        agent = AgentDefinitionService.get_runnable("drama.narrative-engineer")
+        agent = AgentDefinitionService.get_runnable("drama.episode-designer")
         output = {
             "narrative_plan": {
                 "narrative_core": "主线",
@@ -212,7 +211,7 @@ class AgentOutputValidationCoverageTests(TestCase):
     def test_validate_output_rejects_narrative_engineer_legacy_payload(self):
         from apps.creation.agent_runtime.independent_service import AgentRuntimeError
 
-        agent = AgentDefinitionService.get_runnable("drama.narrative-engineer")
+        agent = AgentDefinitionService.get_runnable("drama.episode-designer")
         output = {
             "narrative_plan": {
                 "episode_narratives": [{"episode_id": "E001", "narrative_focus": "开篇"}],
@@ -255,7 +254,7 @@ class AgentOutputValidationCoverageTests(TestCase):
 
     def test_validate_output_falls_back_when_artifact_key_invalid(self):
         """真实 LLM 自创 artifact_key 时回退到契约默认 key，而非整链失败。"""
-        agent = AgentDefinitionService.get_runnable("drama.ip-adapter")
+        agent = AgentDefinitionService.get_runnable("drama.topic-director")
         output = {
             "artifact_key": "overbearing-ceo-drama-adaptation",
             "payload": {"logline": "x", "tone": "y"},
@@ -286,14 +285,14 @@ class AgentOutputValidationCoverageTests(TestCase):
             IndependentAgentService._render_template("坏模板 {{ 非法 变量 }}", ctx)
 
     def test_render_prompt_injects_allowed_artifact_keys(self):
-        agent = AgentDefinitionService.get_runnable("drama.ip-adapter")
+        agent = AgentDefinitionService.get_runnable("drama.topic-director")
         _, user_prompt, _ = IndependentAgentService.render_agent_prompt(
             agent,
             {"artifacts": {}, "project": {}, "params": {}},
             [],
         )
-        self.assertIn("adaptation_plan", user_prompt)
-        self.assertIn("禁止自行命名", user_prompt)
+        self.assertIn("project_brief", user_prompt)
+        self.assertIn("禁止自创", user_prompt)
 
     def test_resolve_overwrite_mode_reads_params(self):
         agent = AgentDefinitionService.get_runnable("drama.script-writer")

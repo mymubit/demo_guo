@@ -35,7 +35,7 @@ class PortalWorksApiTests(TestCase):
         AgentExecutionRun.objects.create(
             project=self.running,
             user=self.user,
-            agent_id="drama.topic-planner",
+            agent_id="drama.topic-director",
             status=AgentExecutionRun.STATUS_RUNNING,
             run_params={},
         )

@@ -23,9 +23,9 @@ class DramaAgentBillingTests(TestCase):
 
         self.user = User.objects.create_user(phone="13900009901", password="test-pass-123")
         for key, name, cost, order in [
-            ("drama.agent.topic-planner", "选题策划官", 3, 10),
-            ("drama.agent.script-writer", "剧本执笔师", 15, 40),
-            ("drama.agent.quality-reporter", "质量报告官", 6, 50),
+            ("drama.agent.topic-director", "选题定调官", 3, 10),
+            ("drama.agent.script-writer", "剧本正文官", 15, 40),
+            ("drama.agent.script-scorer", "剧本评分官", 6, 50),
         ]:
             ActionPricing.objects.update_or_create(
                 action_key=key,
@@ -42,14 +42,14 @@ class DramaAgentBillingTests(TestCase):
         self.wallet.refresh_from_db()
 
     def test_action_key_format(self):
-        self.assertEqual(agent_action_key("drama.topic-planner"), "drama.agent.topic-planner")
+        self.assertEqual(agent_action_key("drama.topic-director"), "drama.agent.topic-director")
         self.assertEqual(agent_action_key("drama.script-writer"), "drama.agent.script-writer")
-        self.assertEqual(agent_action_key("drama.quality-reporter"), "drama.agent.quality-reporter")
+        self.assertEqual(agent_action_key("drama.script-scorer"), "drama.agent.script-scorer")
 
     def test_get_agent_coin_cost_known_roles(self):
         """兜底函数统一返回 DEFAULT_COIN_COST；真实定价走 BillingService/ActionPricing。"""
         self.assertEqual(get_agent_coin_cost("drama.script-writer"), 5)
-        self.assertEqual(get_agent_coin_cost("drama.topic-planner"), 5)
+        self.assertEqual(get_agent_coin_cost("drama.topic-director"), 5)
 
     def test_get_agent_coin_cost_unknown_uses_default(self):
         cost = get_agent_coin_cost("drama.nonexistent-role")
@@ -57,21 +57,21 @@ class DramaAgentBillingTests(TestCase):
 
     def test_charge_and_refund_idempotent(self):
         run_id = "drama-test-001"
-        cost = charge_agent_run(self.user, "drama.topic-planner", run_id=run_id)
+        cost = charge_agent_run(self.user, "drama.topic-director", run_id=run_id)
         self.assertEqual(cost, 3)
         self.wallet.refresh_from_db()
         self.assertEqual(self.wallet.balance, 97)
         # 幂等：重复扣不再减
-        charge_agent_run(self.user, "drama.topic-planner", run_id=run_id)
+        charge_agent_run(self.user, "drama.topic-director", run_id=run_id)
         self.wallet.refresh_from_db()
         self.assertEqual(self.wallet.balance, 97)
 
-        refunded = refund_agent_run(self.user, "drama.topic-planner", run_id=run_id)
+        refunded = refund_agent_run(self.user, "drama.topic-director", run_id=run_id)
         self.assertEqual(refunded, 3)
         self.wallet.refresh_from_db()
         self.assertEqual(self.wallet.balance, 100)
         # 幂等：重复回补无效
-        refund_agent_run(self.user, "drama.topic-planner", run_id=run_id)
+        refund_agent_run(self.user, "drama.topic-director", run_id=run_id)
         self.wallet.refresh_from_db()
         self.assertEqual(self.wallet.balance, 100)
 
@@ -82,10 +82,10 @@ class DramaAgentBillingTests(TestCase):
 
     def test_resolve_coin_cost_from_db(self):
         """优先从 ActionPricing 读取价格。"""
-        cost = resolve_coin_cost("drama.topic-planner")
+        cost = resolve_coin_cost("drama.topic-director")
         self.assertEqual(cost, 3)  # 与 setUp 中配置一致
 
     def test_resolve_coin_cost_fallback_to_config(self):
         """无 DB 定价时使用兜底 DEFAULT_COIN_COST。"""
-        cost = resolve_coin_cost("drama.character-designer")
+        cost = resolve_coin_cost("drama.character-relations")
         self.assertEqual(cost, 5)

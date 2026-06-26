@@ -33,7 +33,7 @@ def _attach_test_llm_provider(agent_id: str) -> LlmProvider:
 class IndependentAgentEnqueueTests(TestCase):
     def setUp(self):
         AgentDefinitionService.ensure_defaults()
-        _attach_test_llm_provider("drama.topic-planner")
+        _attach_test_llm_provider("drama.topic-director")
         self.user = User.objects.create_user(phone="13900007701", password="test-pass-123")
         grant_test_coins(self.user)
         self.project = Project.objects.create(
@@ -46,11 +46,11 @@ class IndependentAgentEnqueueTests(TestCase):
         )
 
     def test_enqueue_returns_existing_running_without_creating_duplicate(self):
-        first = IndependentAgentService.enqueue_run(self.project, self.user, "drama.topic-planner", {})
+        first = IndependentAgentService.enqueue_run(self.project, self.user, "drama.topic-director", {})
         self.assertTrue(first.created_new_run)
         self.assertTrue(first.should_enqueue)
 
-        second = IndependentAgentService.enqueue_run(self.project, self.user, "drama.topic-planner", {})
+        second = IndependentAgentService.enqueue_run(self.project, self.user, "drama.topic-director", {})
         self.assertFalse(second.created_new_run)
         self.assertFalse(second.should_enqueue)
         self.assertEqual(second.run.id, first.run.id)
@@ -63,7 +63,7 @@ class IndependentAgentEnqueueTests(TestCase):
     def test_run_api_skips_enqueue_when_run_already_running(self, mock_enqueue):
         client = APIClient()
         client.force_authenticate(user=self.user)
-        url = f"/api/creation/projects/{self.project.id}/agents/drama.topic-planner/run/"
+        url = f"/api/creation/projects/{self.project.id}/agents/drama.topic-director/run/"
 
         first = client.post(url, {"params": {}}, format="json")
         self.assertEqual(first.status_code, 200)
@@ -148,13 +148,13 @@ class IndependentAgentMergePersistTests(TestCase):
                 ],
             },
         )
-        agent = AgentDefinitionService.get_runnable("drama.narrative-engineer")
+        agent = AgentDefinitionService.get_runnable("drama.episode-designer")
         self.run.status = AgentExecutionRun.STATUS_COMPLETED
         self.run.save(update_fields=["status"])
         run = AgentExecutionRun.objects.create(
             project=self.project,
             user=self.user,
-            agent_id="drama.narrative-engineer",
+            agent_id="drama.episode-designer",
             status=AgentExecutionRun.STATUS_COMPLETED,
             batch_from=6,
             batch_to=10,
@@ -192,7 +192,7 @@ class IndependentAgentMergePersistTests(TestCase):
 class IndependentAgentTemplateTests(TestCase):
     def setUp(self):
         AgentDefinitionService.ensure_defaults()
-        self.agent = AgentDefinitionService.get_runnable("drama.topic-planner")
+        self.agent = AgentDefinitionService.get_runnable("drama.topic-director")
 
     def test_render_template_supports_dot_path_variables(self):
         context = {
@@ -216,7 +216,7 @@ class IndependentAgentTemplateTests(TestCase):
 class IndependentAgentPreviewTests(TestCase):
     def setUp(self):
         AgentDefinitionService.ensure_defaults()
-        _attach_test_llm_provider("drama.topic-planner")
+        _attach_test_llm_provider("drama.topic-director")
         self.user = User.objects.create_user(phone="13900007704", password="test-pass-123")
         grant_test_coins(self.user)
         self.project = Project.objects.create(
@@ -230,7 +230,7 @@ class IndependentAgentPreviewTests(TestCase):
 
     def test_preview_run_does_not_create_execution_run(self):
         before = AgentExecutionRun.objects.filter(project=self.project).count()
-        preview = IndependentAgentService.preview_run(self.project, "drama.topic-planner", {})
+        preview = IndependentAgentService.preview_run(self.project, "drama.topic-director", {})
         after = AgentExecutionRun.objects.filter(project=self.project).count()
         self.assertEqual(before, after)
         self.assertIn("estimated_prompt_tokens", preview)
@@ -240,7 +240,7 @@ class IndependentAgentPreviewTests(TestCase):
         client = APIClient()
         client.force_authenticate(user=self.user)
         res = client.post(
-            f"/api/creation/projects/{self.project.id}/agents/drama.topic-planner/estimate/",
+            f"/api/creation/projects/{self.project.id}/agents/drama.topic-director/estimate/",
             {"params": {}},
             format="json",
         )
@@ -285,7 +285,7 @@ class IndependentAgentOutputValidationTests(TestCase):
     def setUp(self):
         AgentDefinitionService.ensure_defaults()
         self.script_writer_agent = AgentDefinitionService.get_runnable("drama.script-writer")
-        self.script_reviewer_agent = AgentDefinitionService.get_runnable("drama.script-reviewer")
+        self.script_reviewer_agent = AgentDefinitionService.get_runnable("drama.script-scorer")
 
     def test_validate_output_rejects_empty_episode_scripts(self):
         with self.assertRaises(Exception) as ctx:
@@ -366,7 +366,7 @@ class ReportArtifactEditorViewTests(TestCase):
         save_artifact(
             self.project,
             "review_report",
-            {"agentId": "drama.script-reviewer", "passed": True, "issues": []},
+            {"agentId": "drama.script-scorer", "passed": True, "issues": []},
         )
         view = build_artifact_editor_view(self.project, "review_report")
         self.assertEqual(view["mode"], "review_report")

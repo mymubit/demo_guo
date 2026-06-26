@@ -230,7 +230,7 @@ export default function DramaIndex() {
   return (
     <PageShell
       title="短剧创作工作室"
-      description="12个专业角色协作 · 双轨创作模式 · AI驱动全流程"
+      description="6个生产角色 · 2个独立裁判 · 1个可选交付工具"
       maxWidth="xl"
       actions={
         <Button
@@ -256,7 +256,7 @@ export default function DramaIndex() {
           <div className="text-xs sm:text-sm text-slate-400 mt-1">已完成</div>
         </Card>
         <Card variant="glass" padding="md" className="bg-gradient-to-br from-cyan-500/10 to-transparent border-cyan-500/20">
-          <div className="text-2xl sm:text-3xl font-bold text-cyan-400">12</div>
+          <div className="text-2xl sm:text-3xl font-bold text-cyan-400">9</div>
           <div className="text-xs sm:text-sm text-slate-400 mt-1">专业角色</div>
         </Card>
       </div>
@@ -274,11 +274,11 @@ export default function DramaIndex() {
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 mb-1.5">
-                <h3 className="font-semibold text-white text-lg">快速通道</h3>
+                <h3 className="font-semibold text-white text-lg">标准创作通道</h3>
                 <Badge tone="gold" size="sm">推荐</Badge>
               </div>
-              <p className="text-sm text-slate-400 mb-2">适合：初次创作、快速验证创意、30集以内短剧</p>
-              <p className="text-xs text-slate-500">立项 → 世界构建 → 人设 → 大纲 → 剧本 → 审稿 → 交付</p>
+              <p className="text-sm text-slate-400 mb-2">适合：高效产出、逐批写作、质量闭环</p>
+              <p className="text-xs text-slate-500">选题 → 人物 → 全剧 → 分集 → 正文 → 修订 → 评分 → 合规</p>
             </div>
           </div>
         </Card>
@@ -298,8 +298,8 @@ export default function DramaIndex() {
                 <h3 className="font-semibold text-white text-lg">专家通道</h3>
                 <Badge tone="default" size="sm">全流程</Badge>
               </div>
-              <p className="text-sm text-slate-400 mb-2">适合：商业精品、80集+长剧、精细化打磨</p>
-              <p className="text-xs text-slate-500">8个职能部门 · 12个专业角色 · 多轮评审优化</p>
+              <p className="text-sm text-slate-400 mb-2">适合：商业精品、80集+长剧、宣发交付</p>
+              <p className="text-xs text-slate-500">标准主链 · 独立评分 · 合规终审 · 宣发交付工具</p>
             </div>
           </div>
         </Card>
@@ -401,8 +401,8 @@ export default function DramaIndex() {
                   onChange={(e) => setForm({ ...form, track_mode: e.target.value })}
                   className="sf-control px-4 py-3 w-full appearance-none"
                 >
-                  <option value="fast">⚡ 快速（8核心角色）</option>
-                  <option value="expert">🎬 专家（12角色）</option>
+                  <option value="fast">⚡ 标准（6生产+2裁判）</option>
+                  <option value="expert">🎬 专家（追加宣发交付）</option>
                 </select>
               </div>
             </div>

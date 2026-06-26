@@ -28,7 +28,7 @@ class EpisodeOutlineStoreTests(TestCase):
             theme="t",
             episode_count=60,
         )
-        self.agent = AgentDefinitionService.get_runnable("drama.plot-architect")
+        self.agent = AgentDefinitionService.get_runnable("drama.series-architect")
 
     def test_persist_writes_each_episode_row(self):
         persist_series_outline_output(
@@ -41,7 +41,7 @@ class EpisodeOutlineStoreTests(TestCase):
                     {"episode_num": 10, "goal_conflict": "第10集"},
                 ],
             },
-            agent_id="drama.plot-architect",
+            agent_id="drama.series-architect",
             run_id="run-1",
             episode_from=1,
             episode_to=10,
@@ -60,7 +60,7 @@ class EpisodeOutlineStoreTests(TestCase):
         persist_series_outline_output(
             self.project,
             {"episode_outlines": [{"episode_num": n, "goal_conflict": f"第{n}集"} for n in range(1, 11)]},
-            agent_id="drama.plot-architect",
+            agent_id="drama.series-architect",
             run_id="run-1",
             episode_from=1,
             episode_to=10,
@@ -73,7 +73,7 @@ class EpisodeOutlineStoreTests(TestCase):
                     {"episode_num": 2, "goal_conflict": "错标2"},
                 ],
             },
-            agent_id="drama.plot-architect",
+            agent_id="drama.series-architect",
             run_id="run-2",
             episode_from=11,
             episode_to=20,
@@ -112,7 +112,7 @@ class EpisodeOutlineStoreTests(TestCase):
         persist_series_outline_output(
             self.project,
             {"episode_outlines": [{"episode_num": n, "goal_conflict": f"第{n}集"} for n in range(1, 11)]},
-            agent_id="drama.plot-architect",
+            agent_id="drama.series-architect",
             run_id="run-1",
             episode_from=1,
             episode_to=10,
@@ -130,7 +130,7 @@ class EpisodeOutlineStoreTests(TestCase):
                     {"episode": 12, "core_event": "第12集核心事件"},
                 ],
             },
-            agent_id="drama.plot-architect",
+            agent_id="drama.series-architect",
             run_id="run-schema",
             episode_from=11,
             episode_to=20,
@@ -144,7 +144,7 @@ class EpisodeOutlineStoreTests(TestCase):
             persist_series_outline_output(
                 self.project,
                 {"six_stage_structure": {"opening": {"episode_range": "11-20"}}},
-                agent_id="drama.plot-architect",
+                agent_id="drama.series-architect",
                 run_id="run-empty",
                 episode_from=11,
                 episode_to=20,
@@ -154,7 +154,7 @@ class EpisodeOutlineStoreTests(TestCase):
         run = AgentExecutionRun.objects.create(
             project=self.project,
             user=self.user,
-            agent_id="drama.plot-architect",
+            agent_id="drama.series-architect",
             status=AgentExecutionRun.STATUS_RUNNING,
             batch_from=1,
             batch_to=2,
@@ -189,7 +189,7 @@ class EpisodeOutlineStoreTests(TestCase):
                 "six_stage_structure": {"opening": {"episode_range": "1-6"}},
                 "episode_outlines": [{"episode_num": n, "goal_conflict": f"第{n}集"} for n in range(1, 11)],
             },
-            agent_id="drama.plot-architect",
+            agent_id="drama.series-architect",
             run_id="run-1",
             episode_from=1,
             episode_to=10,
@@ -201,7 +201,7 @@ class EpisodeOutlineStoreTests(TestCase):
                 "foreshadowing_list": [{"content": "新伏笔应被忽略"}],
                 "episode_outlines": [{"episode_num": 11, "goal_conflict": "第11集"}],
             },
-            agent_id="drama.plot-architect",
+            agent_id="drama.series-architect",
             run_id="run-2",
             episode_from=11,
             episode_to=20,
@@ -215,7 +215,7 @@ class EpisodeOutlineStoreTests(TestCase):
         persist_series_outline_output(
             self.project,
             {"episode_outlines": [{"episode_num": 1, "goal_conflict": "已有"}]},
-            agent_id="drama.plot-architect",
+            agent_id="drama.series-architect",
             run_id="run-ep",
             episode_from=1,
             episode_to=1,
@@ -226,7 +226,7 @@ class EpisodeOutlineStoreTests(TestCase):
                 "six_stage_structure": {"opening": {"episode_range": "1-10", "summary": "开篇"}},
                 "foreshadowing_list": [{"content": "伏笔A", "buried": 3, "payoff": 20}],
             },
-            agent_id="drama.plot-architect",
+            agent_id="drama.series-architect",
             run_id="run-struct",
             run_params={"outline_mode": OUTLINE_MODE_STRUCTURE_ONLY},
         )

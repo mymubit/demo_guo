@@ -60,7 +60,7 @@ class AgentLlmRoutingDbTests(TestCase):
                 is_enabled=True,
                 is_active=True,
             )
-        route = AgentLlmRouteConfig.objects.filter(route_key="drama.topic-planner", is_active=True).first()
+        route = AgentLlmRouteConfig.objects.filter(route_key="drama.topic-director", is_active=True).first()
         self.assertIsNotNone(route)
         route.llm_provider = None
         route.save(update_fields=["llm_provider", "updated_at"])
@@ -68,7 +68,7 @@ class AgentLlmRoutingDbTests(TestCase):
         self.assertGreaterEqual(updated, 1)
         route.refresh_from_db()
         self.assertEqual(route.llm_provider_id, provider.id)
-        agent = route.agent or AgentDefinition.objects.get(agent_id="drama.topic-planner")
+        agent = route.agent or AgentDefinition.objects.get(agent_id="drama.topic-director")
         self.assertTrue(AgentDefinitionService.health(agent)["route_ok"])
 
     @override_settings(

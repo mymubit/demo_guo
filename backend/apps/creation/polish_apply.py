@@ -107,7 +107,7 @@ def apply_polish_suggestions(
         project,
         EPISODE_SCRIPTS_CONFIG,
         scripts,
-        agent_id="drama.polish-master",
+        agent_id="drama.revision-master",
         run_id="polish-apply",
         episode_from=None,
         episode_to=None,

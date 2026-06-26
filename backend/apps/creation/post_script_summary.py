@@ -13,10 +13,10 @@ from .display.portal_display import portal_sanitize_review_block, portal_strip_a
 def _build_post_script_chain_display() -> List[str]:
     """drama.* 创作完成后的后续处理角色链。"""
     return [
-        "drama.script-reviewer",
-        "drama.quality-reporter",
-        "drama.polish-master",
-        "drama.production-pack",
+        "drama.script-scorer",
+        "drama.revision-master",
+        "drama.compliance-guard",
+        "drama.delivery-tool",
     ]
 
 

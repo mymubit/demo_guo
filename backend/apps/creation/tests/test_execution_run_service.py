@@ -155,7 +155,7 @@ class AgentExecutionRunServiceTests(TestCase):
         run = AgentExecutionRun.objects.create(
             project=self.project,
             user=self.user,
-            agent_id="drama.topic-planner",
+            agent_id="drama.topic-director",
             status=AgentExecutionRun.STATUS_COMPLETED,
             rendered_prompt_preview="hidden prompt text",
             input_snapshot={
