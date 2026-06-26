@@ -67,7 +67,7 @@ class DramaProgressService:
     @classmethod
     def resolve_delivery_status(cls, project: Project) -> str:
         completed = set(project.completed_roles or [])
-        if "drama.production-pack" in completed:
+        if "drama.delivery-tool" in completed:
             return "delivered"
         if DELIVERY_AGENT_IDS & completed:
             return "ready"

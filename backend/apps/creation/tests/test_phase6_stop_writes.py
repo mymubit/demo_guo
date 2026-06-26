@@ -51,7 +51,7 @@ class LegacyTableRemovedTests(TestCase):
 
         with AgentExecutionRunService.run_scope(
             self.project,
-            agent_id="drama.topic-planner",
+            agent_id="drama.topic-director",
             node_index=1,
         ) as run:
             AgentExecutionRunService.record_sub_skill("test-skill", "executed")

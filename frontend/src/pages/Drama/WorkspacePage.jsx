@@ -30,30 +30,31 @@ import {
 } from 'lucide-react';
 
 const DEPT_LABELS = {
-  strategy: '战略选题部',
-  worldbuilding: '世界构建部',
-  plot_engine: '剧情引擎部',
-  writing: '创作执行部',
-  review: '评审质控部',
-  polish: '修改润色部',
-  production: '制作宣发部',
+  strategy: '选题定调部',
+  worldbuilding: '人物关系部',
+  plot_engine: '架构设计部',
+  writing: '正文创作部',
+  review: '独立评分部',
+  polish: '返修精修部',
+  production: '宣发交付部',
   ops: '合规总编室',
 };
 
 const WORKFLOW_STAGES = [
-  { code: 'strategy', name: '战略选题', dept: 'strategy', roles: ['drama.topic-planner', 'drama.market-analyst'] },
-  { code: 'worldbuilding', name: '世界构建', dept: 'worldbuilding', roles: ['drama.world-architect', 'drama.character-designer'] },
-  { code: 'plot_design', name: '剧情引擎', dept: 'plot_engine', roles: ['drama.plot-architect', 'drama.narrative-engineer'] },
-  { code: 'writing', name: '剧本创作', dept: 'writing', roles: ['drama.script-writer'] },
-  { code: 'review', name: '评审质控', dept: 'review', roles: ['drama.script-reviewer', 'drama.quality-reporter'] },
-  { code: 'polish', name: '修改润色', dept: 'polish', roles: ['drama.polish-master'], expertOnly: true },
+  { code: 'strategy', name: '选题定调', dept: 'strategy', roles: ['drama.topic-director'] },
+  { code: 'worldbuilding', name: '人物关系', dept: 'worldbuilding', roles: ['drama.character-relations'] },
+  { code: 'plot_design', name: '全剧架构', dept: 'plot_engine', roles: ['drama.series-architect'] },
+  { code: 'episode_design', name: '分集设计', dept: 'plot_engine', roles: ['drama.episode-designer'] },
+  { code: 'writing', name: '正文创作', dept: 'writing', roles: ['drama.script-writer'] },
+  { code: 'polish', name: '返修精修', dept: 'polish', roles: ['drama.revision-master'] },
+  { code: 'review', name: '独立评分', dept: 'review', roles: ['drama.script-scorer'] },
   { code: 'compliance', name: '合规审查', dept: 'ops', roles: ['drama.compliance-guard'] },
-  { code: 'production', name: '制作宣发', dept: 'production', roles: ['drama.production-pack'], expertOnly: true },
+  { code: 'production', name: '宣发交付', dept: 'production', roles: ['drama.delivery-tool'], expertOnly: true },
 ];
 
 const TIER_CONFIG = {
-  1: { label: '核心必需', badge: '必须', tone: 'brand', dot: 'bg-gold-500', priority: '必执行', desc: '8个快速通道角色，所有项目都要执行' },
-  2: { label: '增强复合', badge: '增强', tone: 'accent', dot: 'bg-cyan-400', priority: '按需执行', desc: '4个复合角色，每个整合多项专业能力' },
+  1: { label: '主链角色', badge: '主链', tone: 'brand', dot: 'bg-gold-500', priority: '必执行', desc: '6个生产角色 + 2个独立裁判' },
+  2: { label: '可选工具', badge: '工具', tone: 'accent', dot: 'bg-cyan-400', priority: '按需执行', desc: '宣发交付等非默认主链能力' },
 };
 
 const PLATFORM_LABELS = {
@@ -216,10 +217,10 @@ export default function WorkspacePage() {
     setSelectedRole(roleId);
   };
 
-  const isPlotArchitectSelected = selectedRole === 'drama.plot-architect';
+  const isPlotArchitectSelected = selectedRole === 'drama.series-architect';
   const plotArchitectRunning = Boolean(
-    roleStatusMap['drama.plot-architect']?.execution?.status === 'running'
-    || roleStatusMap['drama.plot-architect']?.execution?.status === 'pending',
+    roleStatusMap['drama.series-architect']?.execution?.status === 'running'
+    || roleStatusMap['drama.series-architect']?.execution?.status === 'pending',
   );
 
   const { data: liveOutlineRes } = useQuery({
@@ -554,7 +555,7 @@ function FastTrackView({ roles, completedSet, roleStatusMap, selectedRole, onSel
     <div className="py-2">
       <div className="px-4 py-1.5 text-xs font-semibold text-gold-400 uppercase tracking-wide flex items-center gap-1.5">
         <Zap className="w-3 h-3" />
-        快速通道 · 8个核心角色
+        标准通道 · 6生产 + 2裁判
       </div>
       {(roles || []).map((role) => (
         <RoleItem
@@ -650,10 +651,10 @@ function WelcomePanel({
             {project?.target_platform ? ` · ${formatPlatform(project.target_platform)}` : ''}
           </p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-5">
-            <HeroStat label="角色完成度" value={`${completionRate}%`} sub={`${coreDone}/${coreRoles.length} 核心角色`} />
+            <HeroStat label="角色完成度" value={`${completionRate}%`} sub={`${coreDone}/${coreRoles.length} 主链角色`} />
             <HeroStat label="已生成集数" value={`${completedEpisodes}/${totalEp}`} sub="剧本进度" />
             <HeroStat label="质量等级" value={project?.quality_scores?.grade || '—'} sub="综合评分" />
-            <HeroStat label="角色总数" value="12" sub="8核心 + 4增强" />
+            <HeroStat label="角色总数" value={`${coreRoles.length + recommendRoles.length}`} sub="6生产 + 2裁判 + 工具" />
           </div>
 
           <Button
@@ -865,7 +866,7 @@ function RoleDetailPanel({
 
   const execStatus = agentStatus ?? (completedSet.has(roleId) ? 'success' : 'pending');
   const isRunning = isAgentRunning;
-  const isPlotArchitect = roleId === 'drama.plot-architect';
+  const isPlotArchitect = roleId === 'drama.series-architect';
   const outputViews = execution?.output_views ?? {};
   const outputArtifacts = execution?.output_artifacts ?? {};
   const seriesOutlineArtifact = liveSeriesOutline || outputArtifacts?.series_outline;
@@ -921,7 +922,7 @@ function RoleDetailPanel({
     const payload = {
       episode_count: project.episode_count,
     };
-    if (roleId === 'drama.plot-architect') {
+    if (roleId === 'drama.series-architect') {
       payload.outline_mode = structureRoleCfg.blobMode;
     } else {
       payload.blob_mode = structureRoleCfg.blobMode;

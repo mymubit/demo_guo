@@ -1,0 +1,34 @@
+agent_id: drama.script-scorer
+name: Script Scorer
+name_zh: 剧本评分官
+dept: review
+role_tier: judge
+fast_track: true
+workspace_order: 601
+default_output_artifact_key: quality_report
+schema_version: quality-report.v1
+modules: []
+rule_policy:
+  scopes:
+  - global_core
+  - genre_profile
+  - stage_playbook
+  max_chars: 3200
+skill_dir: roles/drama-script-scorer
+input_contract:
+  optional_artifacts:
+  - project_brief
+  - character_bible
+  - series_outline
+  - narrative_plan
+  - external_script
+  params:
+  - scoring_mode
+  - episode_range
+  required_artifacts:
+  - episode_scripts
+output_contract:
+  artifacts:
+  - quality_report
+  schema_version: quality-report.v1
+role: 独立十维剧本评分裁判，不能参与生成剧本；可评估本项目剧本或用户上传的外部剧本，输出总分、等级、十维评分、证据、扣分原因、返修优先级和是否可继续生成下一批。

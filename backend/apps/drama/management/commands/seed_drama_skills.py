@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-种入 drama-skills 12 角色到 AgentDefinition。
+种入 drama-skills 重组角色到 AgentDefinition。
 
 数据来源：drama-skills/registry.yaml + roles/*/role.yaml + SKILL.md
 
@@ -19,7 +19,7 @@ from apps.drama.skills_registry import SKILL_VERSION, get_composite_agent_ids
 
 
 class Command(BaseCommand):
-    help = "种入 drama-skills 12 个专业角色到 AgentDefinition 表（Git SSOT）。"
+    help = "种入 drama-skills 重组角色到 AgentDefinition 表（Git SSOT）。"
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -48,7 +48,7 @@ class Command(BaseCommand):
 
         if dry_run:
             for role in DRAMA_ROLE_DEFAULTS:
-                track = "⚡快速通道" if role["agent_id"] in DRAMA_FAST_TRACK_ROLES else "  专家通道"
+                track = "⚡标准通道" if role["agent_id"] in DRAMA_FAST_TRACK_ROLES else "  可选工具"
                 self.stdout.write(f"  {track} [{role['dept']:12}] {role['agent_id']:35} {role['name_zh']}")
             self.stdout.write(self.style.SUCCESS("Dry run 完成，未写入任何数据"))
             return

@@ -9,24 +9,16 @@ import AdminMasterDetail, {
 import { AdminPenetrationLink } from '@/components/admin/workbench/AdminWorkbenchKit'
 
 const ROUTE_HINTS = {
-  // drama.* 新体系
-  'drama.topic-planner': '选题策划官 - 立项简报生成',
-  'drama.world-architect': '世界架构师 - 时代背景/空间/权力结构',
-  'drama.character-designer': '人设设计师 - Want/Need/Ghost/Lie/Flaw',
-  'drama.plot-architect': '情节架构师 - 六阶段结构+分集大纲（高Token）',
-  'drama.script-writer': '剧本执笔师 - 正式剧本生成（最高Token）',
-  'drama.market-analyst': '市场分析师 - 市场分析+爆款公式+拉片分析',
-  'drama.narrative-engineer': '叙事工程师 - 情绪+钩子+冲突+反转+节奏综合设计',
-  'drama.polish-master': '精修大师 - 对白/格式/字数/节奏/风格一站式精修',
-  'drama.production-pack': '制作发行师 - 视觉+分镜+营销+交付一站式制作',
-  'drama.script-reviewer': '审稿官 - 格式合规+结构检查',
-  'drama.quality-reporter': '质量报告官 - 8维度综合评分',
-  'drama.compliance-guard': '合规守卫 - P0/P1/P2合规检测',
-
-
-
-
-  'drama.marketing-officer': '营销策划官 - 宣发文案+投流标题',
+  // drama.* 重组体系
+  'drama.topic-director': '选题定调官 - 故事梗概+市场判断+爆款策略',
+  'drama.character-relations': '人物关系官 - 人物小传+关系网+轻量世界规则',
+  'drama.series-architect': '全剧架构官 - 六阶段结构+主支线+伏笔总表',
+  'drama.episode-designer': '分集设计官 - 逐集钩子+爽点+反转+付费卡点',
+  'drama.script-writer': '剧本正文官 - 正式剧本生成（最高Token）',
+  'drama.revision-master': '剧本修订官 - 对白/格式/字数/分镜摘要返修',
+  'drama.script-scorer': '剧本评分官 - 十维 G-Eval 独立评分',
+  'drama.compliance-guard': '合规审查官 - P0/P1/P2合规检测',
+  'drama.delivery-tool': '宣发交付工具 - 视觉+营销+交付检查',
   ai_field: '创作页 AI 字段生成',
 }
 

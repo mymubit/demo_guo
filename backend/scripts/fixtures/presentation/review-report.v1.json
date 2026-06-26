@@ -1,7 +1,7 @@
 {
   "_meta": {
     "runId": "0ac61b95-409e-44f5-aa0b-bbc4e2e7c74f",
-    "agentId": "drama.script-reviewer",
+    "agentId": "drama.script-scorer",
     "generatedAt": "2026-06-22T11:12:28.697345+00:00",
     "overwriteMode": "replace",
     "promptVersion": "v1",

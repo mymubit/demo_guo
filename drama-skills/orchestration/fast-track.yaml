@@ -1,17 +1,18 @@
-# 快速通道 — 8 个核心角色顺序
-version: "1.0.0"
-entry_type: fast_track
-label: 快速通道
-description: 8个核心角色，适合初次创作和快速验证
+# 标准创作通道 — 6 个生产角色 + 2 个独立裁判
+version: "2.0.0"
+entry_type: standard_track
+label: 标准创作通道
+description: 6个生产角色 + 2个独立裁判，适合高效产出剧本并保持质量闭环
 
 recommended_agents:
-  - drama.topic-planner
-  - drama.world-architect
-  - drama.character-designer
-  - drama.plot-architect
+  - drama.topic-director
+  - drama.character-relations
+  - drama.series-architect
+  - drama.episode-designer
   - drama.script-writer
-  - drama.script-reviewer
-  - drama.quality-reporter
+  - drama.revision-master
+  - drama.script-scorer
   - drama.compliance-guard
 
-optional_agents: []
+optional_agents:
+  - drama.delivery-tool

@@ -2,33 +2,35 @@
 version: "1.0.0"
 
 agents:
-  drama.topic-planner:
-    max_completion_tokens: 6000
-    max_prompt_tokens: 12000
-    temperature: 0.7
-  drama.world-architect:
+  drama.topic-director:
     max_completion_tokens: 8000
-    max_prompt_tokens: 20000
-    temperature: 0.8
-  drama.character-designer:
+    max_prompt_tokens: 30000
+    temperature: 0.7
+  drama.character-relations:
     max_completion_tokens: 10000
     max_prompt_tokens: 25000
     temperature: 0.8
-  drama.plot-architect:
+  drama.series-architect:
     max_completion_tokens: 16000
     max_prompt_tokens: 30000
     temperature: 0.7
+    overwrite_mode: merge
+  drama.episode-designer:
+    max_completion_tokens: 16000
+    max_prompt_tokens: 40000
+    temperature: 0.75
     overwrite_mode: merge
   drama.script-writer:
     max_completion_tokens: 16000
     max_prompt_tokens: 40000
     temperature: 0.85
     overwrite_mode: merge
-  drama.script-reviewer:
-    max_completion_tokens: 8000
+  drama.revision-master:
+    max_completion_tokens: 16000
     max_prompt_tokens: 40000
-    temperature: 0.2
-  drama.quality-reporter:
+    temperature: 0.8
+    overwrite_mode: merge
+  drama.script-scorer:
     max_completion_tokens: 8000
     max_prompt_tokens: 40000
     temperature: 0.2
@@ -36,21 +38,7 @@ agents:
     max_completion_tokens: 8000
     max_prompt_tokens: 40000
     temperature: 0.1
-  drama.market-analyst:
-    max_completion_tokens: 8000
-    max_prompt_tokens: 40000
-    temperature: 0.3
-  drama.narrative-engineer:
-    max_completion_tokens: 16000
-    max_prompt_tokens: 40000
-    temperature: 0.7
-    overwrite_mode: merge
-  drama.polish-master:
-    max_completion_tokens: 16000
-    max_prompt_tokens: 40000
-    temperature: 0.8
-    overwrite_mode: merge
-  drama.production-pack:
+  drama.delivery-tool:
     max_completion_tokens: 12000
     max_prompt_tokens: 40000
     temperature: 0.7

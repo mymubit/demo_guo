@@ -30,14 +30,16 @@ TECHNICAL_MARKERS = (
 )
 
 FUSION_NODE_LABELS = {
-    # drama.* 新体系展示名
-    "drama.topic-planner": "选题策划",
-    "drama.world-architect": "世界构建",
-    "drama.character-designer": "人设设计",
-    "drama.plot-architect": "情节大纲",
-    "drama.script-writer": "剧本创作",
-    "drama.quality-reporter": "质量评审",
+    # drama.* 重组体系展示名
+    "drama.topic-director": "选题定调",
+    "drama.character-relations": "人物关系",
+    "drama.series-architect": "全剧架构",
+    "drama.episode-designer": "分集设计",
+    "drama.script-writer": "正文创作",
+    "drama.revision-master": "剧本修订",
+    "drama.script-scorer": "剧本评分",
     "drama.compliance-guard": "合规检测",
+    "drama.delivery-tool": "宣发交付",
 }
 
 _NODE_ERROR_RE = re.compile(r"^(node-\d+-[\w-]+):\s*(.+)$", re.IGNORECASE)
@@ -45,9 +47,9 @@ _UPSTREAM_ARTIFACT_RE = re.compile(r"missing upstream artifact:\s*([\w_]+)", re.
 
 _UPSTREAM_ARTIFACT_LABELS = {
     "project_brief": "立项简报",
-    "world_setting": "世界观设定",
-    "character_bible": "人物小传",
-    "series_outline": "分集大纲",
+    "character_bible": "人物关系",
+    "series_outline": "全剧架构",
+    "narrative_plan": "分集设计",
     "episode_scripts": "剧本正文",
     "emotion_blueprint": "情绪蓝图",
     "emotion_curve": "情绪曲线",

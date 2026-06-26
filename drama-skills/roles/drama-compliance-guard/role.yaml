@@ -1,10 +1,10 @@
 agent_id: drama.compliance-guard
 name: Compliance Guard
-name_zh: 合规守卫
+name_zh: 合规审查官
 dept: ops
-role_tier: core
+role_tier: judge
 fast_track: true
-workspace_order: 801
+workspace_order: 701
 default_output_artifact_key: compliance_report
 schema_version: compliance-report.v1
 modules: []
@@ -13,6 +13,7 @@ rule_policy:
   - global_core
   - genre_profile
   - stage_playbook
+  - compliance_block
   max_chars: 2500
 skill_dir: roles/drama-compliance-guard
 input_contract:
@@ -24,4 +25,4 @@ output_contract:
   artifacts:
   - compliance_report
   schema_version: compliance-report.v1
-role: 多模式内容合规检测（P0熔断/P1强制/P2建议）、犯罪正义收束验证、九维风险评估、平台红线检测
+role: 独立合规审查官，负责 P0/P1/P2、平台红线、价值观、版权/融梗和犯罪正义收束风险；不评价剧本好不好看，只判断是否允许交付。

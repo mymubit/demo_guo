@@ -443,7 +443,7 @@ def build_editor_view(project: Project, node_index: int, *, read_only: bool = Fa
                 episode_slots.append(_outline_episode_slot(n, filled=False))
         episode_slots.sort(key=lambda e: e["episodeNumber"])
         framework_ready = stage_rough_outline_ready(payload) or _outline_framework_ready(payload)
-        node_cost = resolve_coin_cost("drama.plot-architect")
+        node_cost = resolve_coin_cost("drama.series-architect")
         next_start = 1
         while next_start in filled_nums and next_start <= total_eps:
             next_start += 1
@@ -997,7 +997,7 @@ def compute_outline_batch_range(
     if from_episode > to_episode:
         raise ValueError("无效的集数范围")
 
-    cost = resolve_coin_cost("drama.plot-architect")
+    cost = resolve_coin_cost("drama.series-architect")
     return from_episode, to_episode, cost
 
 
@@ -1011,7 +1011,7 @@ def compute_outline_fill_all_range(project: Project) -> Tuple[int, int, int]:
         start += 1
     if start > total:
         raise ValueError("全部集纲已生成完毕")
-    cost = resolve_coin_cost("drama.plot-architect")
+    cost = resolve_coin_cost("drama.series-architect")
     return start, total, cost
 
 

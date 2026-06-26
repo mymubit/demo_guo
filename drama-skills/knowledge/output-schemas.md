@@ -6,18 +6,15 @@
 
 | schema_version | 产物键 | 角色 | 格式 |
 |----------------|--------|------|------|
-| project-brief.v1 | project_brief | drama.topic-planner | JSON |
-| market-report.v1 | market_report | drama.market-analyst | JSON |
-| world-setting.v1 | world_setting | drama.world-architect | JSON / MD |
-| character-bible.v1 | character_bible | drama.character-designer | JSON / MD |
-| series-outline.v1 | series_outline | drama.plot-architect | JSON / MD |
-| narrative-plan.v1 | narrative_plan | drama.narrative-engineer | JSON |
+| project-brief.v1 | project_brief | drama.topic-director | JSON |
+| character-bible.v1 | character_bible | drama.character-relations | JSON / MD |
+| series-outline.v1 | series_outline | drama.series-architect | JSON / MD |
+| narrative-plan.v1 | narrative_plan | drama.episode-designer | JSON |
 | episode-scripts.v1 | episode_scripts | drama.script-writer | JSON |
-| review-report.v1 | review_report | drama.script-reviewer | JSON |
-| quality-report.v1 | quality_report | drama.quality-reporter | JSON |
-| polished-script.v1 | polished_script | drama.polish-master | JSON / MD |
-| production-pack.v1 | production_package | drama.production-pack | JSON / MD |
+| quality-report.v1 | quality_report | drama.script-scorer | JSON |
+| polished-script.v1 | polished_script | drama.revision-master | JSON / MD |
 | compliance-report.v1 | compliance_report | drama.compliance-guard | JSON |
+| production-pack.v1 | production_package | drama.delivery-tool | JSON / MD |
 
 ---
 
@@ -50,29 +47,25 @@
   "hook_concept": "string",
   "commercial_hook": "string",
   "reference_works": ["string"],
-  "compliance_risk": "low|medium|high"
+  "compliance_risk": "low|medium|high",
+  "market_opportunity": "string",
+  "blockbuster_factors": ["string"],
+  "competitor_references": [{"title": "string", "inspiration": "string", "avoidance": "string"}],
+  "differentiation_strategy": "string",
+  "first_episode_hook": "string",
+  "paywall_direction": "string"
 }
 ```
 
-## world-setting.v1（世界观）
+## character-bible.v1（人物关系）
 
 ```json
 {
-  "setting_summary": "string",
-  "root_rules": ["string"],
-  "core_nouns": {"term": "definition"},
-  "dream_indicators": {
-    "safety": "string",
-    "satisfaction": "string",
-    "reality": "string"
-  }
-}
-```
-
-## character-bible.v1（人物小传）
-
-```json
-{
+  "world_rules": {
+    "setting_summary": "string",
+    "root_rules": ["只保留影响人物行动和剧情选择的规则"],
+    "power_structure": "string"
+  },
   "characters": [
     {
       "name": "string",
@@ -82,24 +75,51 @@
       "ghost": "string",
       "lie": "string",
       "flaw": "string",
-      "arc": {"start": "string", "turning_point_1": "string", "turning_point_2": "string", "end": "string"}
+      "arc": {"start": "string", "turning_point_1": "string", "turning_point_2": "string", "end": "string"},
+      "audience_identification": "string",
+      "voice_tag": "string",
+      "visual_anchor": "string"
     }
   ],
   "relationship_map": [{"from": "string", "to": "string", "type": "string"}]
 }
 ```
 
-## series-outline.v1（分集大纲）
+## series-outline.v1（全剧架构）
 
 ```json
 {
   "drama_title": "string",
-  "episodes": [
+  "main_storyline": "string",
+  "six_stage_structure": [
+    {"stage": "string", "episode_range": "1-3", "function": "string", "turning_point": "string"}
+  ],
+  "conflict_escalation_chain": ["string"],
+  "major_reversal_positions": [{"episode": 12, "content": "string"}],
+  "paywall_distribution": [{"episode": 5, "hook": "string"}],
+  "foreshadowing_table": [{"setup_episode": 2, "payoff_episode": 18, "item": "string"}],
+  "series_emotion_curve": [{"episode": 1, "value": 7}]
+}
+```
+
+## narrative-plan.v1（分集设计）
+
+```json
+{
+  "episode_narrative_designs": [
     {
       "episode": 1,
       "title": "string",
       "core_event": "string",
+      "goal_conflict": "string",
       "emotion_intensity": 7,
+      "opening_hook": "string",
+      "ending_hook": "string",
+      "satisfaction_points": ["string"],
+      "reversal": "string",
+      "paywall_hook": "string",
+      "rhythm_tag": "tight-heavy",
+      "foreshadowing": {"setup": ["string"], "payoff": ["string"]},
       "hook_grade": "S|A|B|C",
       "characters": ["string"],
       "emotion_nodes": {
@@ -116,50 +136,29 @@
 
 见 `roles/drama-script-writer/tasks/write-episodes.md` 的 `expected_output` 样例。
 
-## review-report.v1（审稿报告）
-
-```json
-{
-  "schema_version": "review-report.v1",
-  "project_basic_info": {
-    "title": "string",
-    "review_episode_range": "第1-3集",
-    "total_checked_scene_count": 0,
-    "total_checked_word_count": 0
-  },
-  "format_compliance_check": {
-    "compliance_rate": 90,
-    "pass_check_item": ["string"],
-    "minor_violation_item": ["string"]
-  },
-  "g_eval_scoring": {
-    "total_score": 85,
-    "comprehensive_level": "S|A|B|C|D"
-  },
-  "mandatory_modification_list": [{"serial_num": 1, "content": "string"}],
-  "suggested_optimization_list": [{"serial_num": 1, "content": "string"}],
-  "overall_result": "通过|条件通过|需要修改|重大返工"
-}
-```
-
-## quality-report.v1（质量报告）
+## quality-report.v1（十维评分报告）
 
 ```json
 {
   "drama_title": "string",
   "overall_score": 82,
   "grade": "S|A|B|C|D",
+  "can_continue_next_batch": true,
+  "needs_revision": true,
   "dimensions": {
-    "format": {"score": 88, "weight": 0.15, "notes": "string"},
-    "structure": {"score": 85, "weight": 0.20, "notes": "string"},
-    "character": {"score": 78, "weight": 0.15, "notes": "string"},
-    "emotion": {"score": 83, "weight": 0.15, "notes": "string"},
-    "dialogue": {"score": 80, "weight": 0.15, "notes": "string"},
-    "hooks": {"score": 85, "weight": 0.10, "notes": "string"},
-    "dream": {"score": 82, "weight": 0.05, "notes": "string"},
-    "commercial": {"score": 78, "weight": 0.05, "notes": "string"}
+    "format": {"score": 88, "weight": 0.10, "evidence": ["string"], "deductions": ["string"]},
+    "narrative": {"score": 85, "weight": 0.15, "evidence": ["string"], "deductions": ["string"]},
+    "conflict": {"score": 82, "weight": 0.15, "evidence": ["string"], "deductions": ["string"]},
+    "character": {"score": 78, "weight": 0.10, "evidence": ["string"], "deductions": ["string"]},
+    "emotion": {"score": 83, "weight": 0.10, "evidence": ["string"], "deductions": ["string"]},
+    "logic": {"score": 80, "weight": 0.10, "evidence": ["string"], "deductions": ["string"]},
+    "satisfaction": {"score": 84, "weight": 0.10, "evidence": ["string"], "deductions": ["string"]},
+    "hooks": {"score": 85, "weight": 0.10, "evidence": ["string"], "deductions": ["string"]},
+    "paywall": {"score": 78, "weight": 0.05, "evidence": ["string"], "deductions": ["string"]},
+    "genre_fit": {"score": 82, "weight": 0.05, "evidence": ["string"], "deductions": ["string"]}
   },
   "defects": [],
+  "revision_priorities": [{"priority": 1, "target": "string", "suggestion": "string"}],
   "verdict": "通过|条件通过|需要修改|重大返工"
 }
 ```
@@ -183,10 +182,11 @@
 ```
 output/《剧名》/
 ├── 01_立项/project_brief.json
-├── 02_设定/world_setting.md · character_bible.md · series_outline.md
-├── 03_剧本/episode_scripts/
-├── 04_评估/review_report.json · quality_report.json · compliance_report.json
-└── 05_发行/production_package/   （可选，drama.production-pack）
+├── 02_人物/character_bible.json
+├── 03_架构/series_outline.json · narrative_plan.json
+├── 04_剧本/episode_scripts/ · polished_script/
+├── 05_评估/quality_report.json · compliance_report.json
+└── 06_宣发/production_package/   （可选，drama.delivery-tool）
 ```
 
 修改字段时：同步更新本文档、对应 `role.yaml` 的 `schema_version`，并在 `EVOLUTION_LOG.md` 记录。

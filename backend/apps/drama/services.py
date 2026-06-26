@@ -245,8 +245,8 @@ class DramaRoleService:
 
     # 层级标签配置
     TIER_LABELS = {
-        1: {"name": "核心层", "desc": "快速通道必备角色，每个项目必须执行", "color": "blue"},
-        2: {"name": "增强层", "desc": "复合增强角色，专家模式默认展示", "color": "green"},
+        1: {"name": "主链层", "desc": "标准创作通道角色，默认进入完成率", "color": "blue"},
+        2: {"name": "工具层", "desc": "可选宣发交付工具，按需执行", "color": "green"},
         3: {"name": "专业层", "desc": "细分专业角色，按需手动调用", "color": "gray"},
     }
 
@@ -273,11 +273,11 @@ class DramaRoleService:
     @staticmethod
     def get_all_roles_grouped() -> List[Dict[str, Any]]:
         """
-        获取按部门分组的12个可见角色
+        获取按部门分组的重组后可见角色
 
         角色分组规则：
-        - 8个快速通道核心角色（tier=1），蓝色标签
-        - 4个复合增强角色（tier=2），绿色标签
+        - 6个生产角色 + 2个独立裁判（tier=1），蓝色标签
+        - 1个可选交付工具（tier=2），绿色标签
         数据来源：drama-skills/registry.yaml（Git SSOT）
         """
         DramaRoleService.ensure_visible_roles()
@@ -294,7 +294,7 @@ class DramaRoleService:
 
         composite_roles = get_composite_agent_ids()
 
-        # 只查询可见的12个角色
+        # 只查询 registry.yaml 中的可见角色
         agents = list(
             AgentDefinition.objects.filter(
                 agent_id__in=DRAMA_VISIBLE_ROLES,

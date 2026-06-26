@@ -138,7 +138,7 @@ class ContentQualityTests(TestCase):
         )
         DramaRoleExecution.objects.create(
             project=self.p3,
-            agent_id="drama.topic-planner",
+            agent_id="drama.topic-director",
             agent_name_zh="?????",
             status=DramaRoleExecution.Status.FAILED,
             error_message="????",

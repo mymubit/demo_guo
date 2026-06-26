@@ -80,7 +80,7 @@ class AdminCreationProjectsTests(TestCase):
         self.project.save(update_fields=["track_mode"])
         DramaRoleExecution.objects.create(
             project=self.project,
-            agent_id="drama.topic-planner",
+            agent_id="drama.topic-director",
             agent_name_zh="选题策划官",
             status=DramaRoleExecution.Status.FAILED,
             error_message="测试失败",
@@ -167,7 +167,7 @@ class AdminCreationProjectsTests(TestCase):
         self.project.save(update_fields=["track_mode"])
         DramaRoleExecution.objects.create(
             project=self.project,
-            agent_id="drama.topic-planner",
+            agent_id="drama.topic-director",
             agent_name_zh="选题策划官",
             status=DramaRoleExecution.Status.RUNNING,
         )

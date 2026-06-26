@@ -3,34 +3,34 @@
 import { countDisplayableOutlineStages } from '../utils/outlineStructure';
 
 export const BATCH_RANGE_ROLES = [
+  'drama.episode-designer',
   'drama.script-writer',
-  'drama.polish-master',
-  'drama.narrative-engineer',
-  'drama.production-pack',
-  'drama.plot-architect',
+  'drama.revision-master',
+  'drama.delivery-tool',
+  'drama.series-architect',
 ];
 
 /** 支持「全剧结构 / 分集」分离的分批角色 */
 export const STRUCTURE_BATCH_ROLES = {
-  'drama.plot-architect': {
+  'drama.series-architect': {
     progressKey: 'outline',
     structureButtonLabel: '生成全剧结构',
     blobMode: 'structure_only',
   },
-  'drama.narrative-engineer': {
+  'drama.episode-designer': {
     progressKey: 'narrative',
-    structureButtonLabel: '生成全剧叙事框架',
+    structureButtonLabel: '生成分集设计框架',
     blobMode: 'structure_only',
   },
 };
 
 /** roleId -> 进度对象 + 默认 batchSize */
 export const BATCH_ROLE_PROGRESS = {
-  'drama.plot-architect': { progressKey: 'outline', defaultBatchSize: 10 },
+  'drama.series-architect': { progressKey: 'outline', defaultBatchSize: 10 },
+  'drama.episode-designer': { progressKey: 'narrative', defaultBatchSize: 5 },
   'drama.script-writer': { progressKey: 'script', defaultBatchSize: 5 },
-  'drama.polish-master': { progressKey: 'polish', defaultBatchSize: 5 },
-  'drama.narrative-engineer': { progressKey: 'narrative', defaultBatchSize: 5 },
-  'drama.production-pack': { progressKey: 'script', defaultBatchSize: 5 },
+  'drama.revision-master': { progressKey: 'polish', defaultBatchSize: 5 },
+  'drama.delivery-tool': { progressKey: 'script', defaultBatchSize: 5 },
 };
 
 export function getBatchProgressForRole(roleId, batchProgress) {
@@ -44,7 +44,7 @@ export function resolveDefaultEpisodeRange(roleId, projectEpisodeCount, batchPro
   const cfg = BATCH_ROLE_PROGRESS[roleId];
   const batchSize = prog?.batch_size || cfg?.defaultBatchSize || 5;
   if (prog?.suggested_range) return prog.suggested_range;
-  if (roleId === 'drama.plot-architect') return '1-10';
+  if (roleId === 'drama.series-architect') return '1-10';
   const end = Math.min(batchSize, projectEpisodeCount || batchSize);
   return `1-${end}`;
 }
@@ -94,7 +94,7 @@ export function resolveRoleCompletedBadge(roleId, batchProgress, completedSet) {
 export function shouldShowStructureButton(roleId, { batchProgress, rawArtifact, outputView } = {}) {
   const cfg = STRUCTURE_BATCH_ROLES[roleId];
   if (!cfg) return false;
-  if (roleId === 'drama.plot-architect') {
+  if (roleId === 'drama.series-architect') {
     return countDisplayableOutlineStages(rawArtifact, outputView) === 0;
   }
   return !batchProgress?.[cfg.progressKey]?.has_structure;

@@ -129,7 +129,7 @@ class IndependentAgentService:
         if missing:
             raise AgentRuntimeError(f"??????: {', '.join(missing)}")
         params = dict(params or {})
-        if agent.agent_id == "drama.plot-architect":
+        if agent.agent_id == "drama.series-architect":
             from apps.drama.episode_outline_store import (
                 OUTLINE_MODE_EPISODES_ONLY,
                 OUTLINE_MODE_STRUCTURE_ONLY,
@@ -195,9 +195,9 @@ class IndependentAgentService:
                         ),
                     )
         blob_agent_configs = {
-            "drama.narrative-engineer": "narrative_plan",
+            "drama.episode-designer": "narrative_plan",
             "drama.script-writer": "episode_scripts",
-            "drama.polish-master": "polished_script",
+            "drama.revision-master": "polished_script",
         }
         blob_cfg_key = blob_agent_configs.get(agent.agent_id)
         if blob_cfg_key:

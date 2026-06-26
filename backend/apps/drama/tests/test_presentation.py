@@ -150,7 +150,7 @@ class DramaPresentationTests(TestCase):
         )
         exec_row = DramaRoleExecution.objects.create(
             project=self.drama,
-            agent_id="drama.topic-planner",
+            agent_id="drama.topic-director",
             agent_name_zh="选题策划官",
             status=DramaRoleExecution.Status.SUCCESS,
             output_artifacts={"project_brief": {"core_idea": "测试剧", "genre_positioning": "甜宠"}},
@@ -161,7 +161,7 @@ class DramaPresentationTests(TestCase):
         self.assertEqual(build_execution_output_views(exec_row)["project_brief"]["artifact_key"], "project_brief")
 
     def test_build_role_output_views_empty_when_snapshot_missing(self):
-        views = build_role_output_views({}, agent_id="drama.character-designer")
+        views = build_role_output_views({}, agent_id="drama.character-relations")
         self.assertEqual(views, {})
 
     def test_all_schema_presenters_registered(self):

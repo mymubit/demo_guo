@@ -36,11 +36,11 @@ class SeriesOutlineMergePersistTests(TestCase):
                 ],
             },
         )
-        self.agent = AgentDefinitionService.get_runnable("drama.plot-architect")
+        self.agent = AgentDefinitionService.get_runnable("drama.series-architect")
         self.run = AgentExecutionRun.objects.create(
             project=self.project,
             user=self.user,
-            agent_id="drama.plot-architect",
+            agent_id="drama.series-architect",
             status=AgentExecutionRun.STATUS_RUNNING,
             batch_from=11,
             batch_to=20,

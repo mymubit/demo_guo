@@ -1,7 +1,7 @@
 ---
 name: drama-compliance-guard
-version: 3.1.0
-description: 合规守卫：P0/P1/P2 三级合规检测、犯罪正义收束与平台红线审查。Invoke for compliance checking before delivery.
+version: 4.0.0
+description: 合规审查官：P0/P1/P2 三级合规检测、犯罪正义收束、原创性与平台红线审查。Invoke for compliance checking before delivery.
 tags:
 - 合规
 - 价值观
@@ -13,12 +13,12 @@ references:
 - ./role.yaml
 ---
 
-# 合规守卫 v3.1
+# 合规审查官 v4.0
 
-> **v3.1**：规则 SSOT 见 `foundation/rules/`；角色契约 SSOT 见 `./role.yaml`。本文档仅保留 Cursor 触发方式与 I/O 索引。
+> **v4.0**：独立裁判，不参与创作评分，只判断能否交付。
 > 角色配置 SSOT：`./role.yaml`
 
-**职责**：多模式内容合规检测（P0熔断/P1强制/P2建议）、犯罪正义收束验证、九维风险评估、平台红线检测
+**职责**：多模式内容合规检测（P0熔断/P1强制/P2建议）、犯罪正义收束验证、原创性/融梗风险、平台红线检测。
 
 ## 触发方式
 
@@ -33,6 +33,19 @@ references:
 | 输出 | `compliance_report` | schema: `compliance-report.v1` |
 | 输入（必填） | `episode_scripts` | 上游产物 |
 | 参数 | `check_mode` | 运行参数 |
+
+## 标准输出要求
+
+- 总体合规结论
+- P0 阻断项
+- P1 必修项
+- P2 建议项
+- 平台红线风险
+- 犯罪正义收束判断
+- 价值观风险
+- 原创性 / 融梗风险
+- 修改建议
+- 是否允许交付
 
 ## 延伸阅读
 

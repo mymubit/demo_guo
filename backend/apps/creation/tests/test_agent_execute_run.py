@@ -32,7 +32,7 @@ def _attach_test_llm_provider(agent_id: str) -> LlmProvider:
 class AgentExecuteRunTests(TestCase):
     def setUp(self):
         AgentDefinitionService.ensure_defaults()
-        _attach_test_llm_provider("drama.topic-planner")
+        _attach_test_llm_provider("drama.topic-director")
         self.user = User.objects.create_user(phone="13900008801", password="test-pass-123")
         self.project = Project.objects.create(
             user=self.user,
@@ -50,7 +50,7 @@ class AgentExecuteRunTests(TestCase):
         self.run = AgentExecutionRun.objects.create(
             project=self.project,
             user=self.user,
-            agent_id="drama.topic-planner",
+            agent_id="drama.topic-director",
             status=AgentExecutionRun.STATUS_RUNNING,
             run_params={},
             input_snapshot={"project": {}, "artifacts": {}, "params": {}},
@@ -70,7 +70,7 @@ class AgentExecuteRunTests(TestCase):
         mock_chat.return_value = '{"project_brief": {"status": "confirmed", "coreIdea": "task ??"}}'
         payload = run_independent_agent.call(
             str(self.project.id),
-            "drama.topic-planner",
+            "drama.topic-director",
             {},
             run_id=str(self.run.id),
         )
@@ -112,10 +112,10 @@ class ProjectStatusSyncTests(TestCase):
         self.assertEqual(self.project.progress_percent, 100)
 
     def test_enqueue_sets_running_status_not_reverted_to_pending(self):
-        _attach_test_llm_provider("drama.topic-planner")
+        _attach_test_llm_provider("drama.topic-director")
         grant_test_coins(self.user)
         save_artifact(self.project, "project_brief", {"status": "confirmed"})
-        result = IndependentAgentService.enqueue_run(self.project, self.user, "drama.topic-planner", {})
+        result = IndependentAgentService.enqueue_run(self.project, self.user, "drama.topic-director", {})
         self.project.refresh_from_db()
         self.assertTrue(result.created_new_run)
         self.assertEqual(self.project.execution_status, Project.STATUS_RUNNING)

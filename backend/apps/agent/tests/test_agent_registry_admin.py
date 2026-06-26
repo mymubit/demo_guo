@@ -19,11 +19,11 @@ class AgentRegistryConfigServiceTests(TestCase):
         payload = AgentRegistryConfigService.admin_payload()
         self.assertEqual(payload["source"], "drama_definitions")
         self.assertTrue(payload["registry"].get("agents"))
-        self.assertIn("drama.topic-planner", payload["default_tier1_sections_by_agent"])
+        self.assertIn("drama.topic-director", payload["default_tier1_sections_by_agent"])
 
     def test_save_registry_is_disabled(self):
         with self.assertRaises(ValueError):
-            AgentRegistryConfigService.save_registry({"agents": [{"id": "drama.topic-planner"}]})
+            AgentRegistryConfigService.save_registry({"agents": [{"id": "drama.topic-director"}]})
 
 
 class AgentRegistryAdminApiTests(TestCase):
@@ -47,7 +47,7 @@ class AgentRegistryAdminApiTests(TestCase):
     def test_put_agent_registry_returns_410(self):
         resp = self.client.put(
             "/api/admin/agent/registry/",
-            {"registry": {"agents": [{"id": "drama.topic-planner"}]}},
+            {"registry": {"agents": [{"id": "drama.topic-director"}]}},
             format="json",
         )
         self.assertEqual(resp.status_code, 200)

@@ -146,7 +146,7 @@ export default function DramaModelsAdmin() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white">模型配置中心</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">为12个角色分配最合适的LLM模型</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">为重组后的短剧角色分配最合适的LLM模型</p>
           </div>
           <div className="flex gap-2">
             <button

@@ -1,8 +1,8 @@
 ---
 name: drama-master
-version: "3.1.0"
-description: "AI短剧创作总入口 v3.1。12角色·双轨编排·四轴题材·山音方法论。路由至 orchestration/fast-track 或 expert-track。Invoke for full drama workflow or stage routing."
-tags: ["总入口", "创作", "路由", "全流程", "双轨"]
+version: "4.0.0"
+description: "AI短剧创作总入口 v4.0。6个生产角色·2个独立裁判·1个可选交付工具。路由至 orchestration/fast-track 或 expert-track。Invoke for full drama workflow or stage routing."
+tags: ["总入口", "创作", "路由", "全流程", "标准主链"]
 platforms: [cursor, codex, trae]
 input_schema:
   - name: request
@@ -15,9 +15,9 @@ output_schema:
     description: "创作计划（角色分工+执行顺序）"
 ---
 
-# Drama Master — 创作总入口 v3.1
+# Drama Master — 创作总入口 v4.0
 
-> **12 角色 · 双轨编排 · 四轴题材 · Git SSOT**
+> **6 生产角色 · 2 独立裁判 · 1 可选交付工具 · Git SSOT**
 >
 > 流程 SSOT：`orchestration/fast-track.yaml` / `expert-track.yaml`  
 > 角色 SSOT：`registry.yaml` + `roles/*/role.yaml`
@@ -39,31 +39,28 @@ output_schema:
 
 ```
 ① 题材：四轴矩阵（见 `foundation/theme-matrix.yaml`）或一句话创意
-   → topic-planner 输出 genre_matrix + theme_code
+   → topic-director 输出故事定调 + 市场判断 + 爆款策略
 ② 集数规模：10-20 / 30-50 / 50+
 ③ 目标平台：抖音 / 快手 / 小程序 / 通用
 ④ 当前进度：从零 / 有创意 / 有大纲 / 已有剧本
-⑤ 模式：快速通道（8） / 专家通道（12）
+⑤ 模式：标准创作通道（6+2） / 专家通道（追加宣发交付工具）
 ```
 
 ---
 
-## 双轨模式
+## 创作模式
 
-### 快速通道（8 核心角色）
+### 标准创作通道（6 生产 + 2 裁判）
 
 见 `orchestration/fast-track.yaml`。顺序：
 
-选题策划官 → 世界架构师 → 人设设计师 → 情节架构师 → 剧本执笔师（分批）→ 审稿官 → 质量报告官 → 合规守卫
+选题定调官 → 人物关系官 → 全剧架构官 → 分集设计官 → 剧本正文官（分批）→ 剧本修订官 → 剧本评分官 → 合规审查官
 
-### 专家通道（12 角色）
+### 专家通道（标准主链 + 宣发交付）
 
-见 `orchestration/expert-track.yaml`。在快速通道基础上按需增加：
+见 `orchestration/expert-track.yaml`。在标准主链后追加：
 
-- 市场分析师（立项前）
-- 叙事工程师（大纲后）
-- 精修大师（剧本后）
-- 制作发行师（定稿后）
+- 宣发交付工具（定稿后）
 
 ---
 
@@ -71,34 +68,36 @@ output_schema:
 
 | 阶段 | 角色 | 输出 |
 |------|------|------|
-| 战略选题 | market-analyst（可选）→ topic-planner | market_report + project_brief |
-| 世界构建 | world-architect → character-designer | world_setting + character_bible |
-| 剧情设计 | plot-architect → narrative-engineer（可选） | series_outline + narrative_plan |
-| 剧本创作 | script-writer（episode_range 分批） | episode_scripts |
-| 质量审查 | script-reviewer → quality-reporter → compliance-guard | review + quality + compliance |
-| 精修 | polish-master（可选） | polished_script |
-| 发行 | production-pack（可选） | production_package |
+| 选题定调 | topic-director | project_brief |
+| 人物关系 | character-relations | character_bible |
+| 全剧架构 | series-architect | series_outline |
+| 分集设计 | episode-designer | narrative_plan |
+| 正文创作 | script-writer（episode_range 分批） | episode_scripts |
+| 返修精修 | revision-master | polished_script |
+| 独立评分 | script-scorer | quality_report |
+| 合规审查 | compliance-guard | compliance_report |
+| 宣发交付 | delivery-tool（可选） | production_package |
 
 ---
 
 ## 直接调用
 
 ```
-@drama-topic-planner       @drama-world-architect      @drama-character-designer
-@drama-plot-architect      @drama-script-writer        @drama-script-reviewer
-@drama-quality-reporter    @drama-compliance-guard
-@drama-market-analyst      @drama-narrative-engineer   @drama-polish-master
-@drama-production-pack
+@drama-topic-director       @drama-character-relations
+@drama-series-architect     @drama-episode-designer
+@drama-script-writer        @drama-revision-master
+@drama-script-scorer        @drama-compliance-guard
+@drama-delivery-tool
 ```
 
 ---
 
 ## 长剧策略
 
-1. plot-architect 一次出全剧大纲  
-2. narrative-engineer 可选强化  
+1. series-architect 一次出全剧架构
+2. episode-designer 分批输出分集设计
 3. script-writer 每批 ≤5 集（`episode_range=1-5`）  
-4. 每批：reviewer → quality-reporter；低于 B 级重写后再续写  
+4. 每批：script-scorer 十维评分；低于 B 级由 revision-master 返修后再续写
 
 ---
 

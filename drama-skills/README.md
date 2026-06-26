@@ -1,6 +1,6 @@
-# Drama Skills — AI 短剧创作技能库 v3.1
+# Drama Skills — AI 短剧创作技能库 v4.0
 
-> **12 角色 · Git SSOT · 四 Scope 规则 · 双轨编排**
+> **6 生产角色 · 2 独立裁判 · 1 可选交付工具 · Git SSOT**
 
 本仓库是技能体系的唯一真相源（SSOT）。所有可执行规则在 `foundation/rules/`，角色契约在 `roles/*/role.yaml`，全局索引在 `registry.yaml`。
 
@@ -8,7 +8,7 @@
 
 ```
 drama-skills/
-├── registry.yaml                 # 12 角色 + 部门 + 工具 + 快速通道
+├── registry.yaml                 # 重组角色 + 部门 + alias + 标准通道
 ├── foundation/
 │   ├── constraints/              # 数值常量（字数/格式/评分阈值）
 │   ├── theme-matrix.yaml         # 四轴 9^4 + 69 风味标签 + 32 创新组合
@@ -33,29 +33,26 @@ drama-skills/
 .cursor/skills/drama-master/
 ```
 
-触发：`@drama-master` 或 `@drama-plot-architect` 等。
+触发：`@drama-master` 或 `@drama-series-architect` 等。
 
-## 角色一览（12）
+## 角色一览（9）
 
 | agent_id | 中文 | 类型 | 默认产物 |
 |----------|------|------|----------|
-| drama.topic-planner | 选题策划官 | core | project_brief |
-| drama.market-analyst | 市场分析师 | composite | market_report |
-| drama.world-architect | 世界架构师 | core | world_setting |
-| drama.character-designer | 人设设计师 | core | character_bible |
-| drama.plot-architect | 情节架构师 | core | series_outline |
-| drama.narrative-engineer | 叙事工程师 | composite | narrative_plan |
-| drama.script-writer | 剧本执笔师 | core | episode_scripts |
-| drama.script-reviewer | 审稿官 | core | review_report |
-| drama.quality-reporter | 质量报告官 | core | quality_report |
-| drama.polish-master | 精修大师 | composite | polished_script |
-| drama.production-pack | 制作发行师 | composite | production_package |
-| drama.compliance-guard | 合规守卫 | core | compliance_report |
+| drama.topic-director | 选题定调官 | production | project_brief |
+| drama.character-relations | 人物关系官 | production | character_bible |
+| drama.series-architect | 全剧架构官 | production | series_outline |
+| drama.episode-designer | 分集设计官 | production | narrative_plan |
+| drama.script-writer | 剧本正文官 | production | episode_scripts |
+| drama.revision-master | 剧本修订官 | production | polished_script |
+| drama.script-scorer | 剧本评分官 | judge | quality_report |
+| drama.compliance-guard | 合规审查官 | judge | compliance_report |
+| drama.delivery-tool | 宣发交付工具 | tool | production_package |
 
-## 双轨流程
+## 流程
 
-- **快速通道**（8 步）：见 `orchestration/fast-track.yaml`
-- **专家通道**（12 角色分阶段）：见 `orchestration/expert-track.yaml`
+- **标准创作通道**（6 生产 + 2 裁判）：见 `orchestration/fast-track.yaml`
+- **专家通道**（标准主链 + 宣发交付）：见 `orchestration/expert-track.yaml`
 
 ## 改规则 / 加角色
 
@@ -78,8 +75,8 @@ drama-skills/
 | `knowledge/output-schemas.md` | 产物 JSON 字段参考 |
 | `INTAKE_PROTOCOL.md` | 外部内容摄入协议 |
 | `EVOLUTION_LOG.md` | 进化记录 |
-| `ROLE-DESIGN-ANALYSIS.md` | 12 角色设计说明 |
+| `ROLE-DESIGN-ANALYSIS.md` | 历史角色设计说明 |
 
 ---
 
-*Drama Skills v3.1 · Git SSOT · 山音方法论 + 短剧行业规则*
+*Drama Skills v4.0 · Git SSOT · 山音方法论 + 短剧行业规则*

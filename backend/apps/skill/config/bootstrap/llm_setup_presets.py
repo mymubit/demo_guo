@@ -4,13 +4,15 @@
 # drama.* 新体系 LLM 预设（建议按角色重要性配置不同模型）
 DRAMA_PRESET_KEYS: dict[str, str] = {
     # 高强度创作角色 - 推荐强推理模型
-    "drama.plot-architect": "ark-deepseek-v4-flash",
+    "drama.series-architect": "ark-deepseek-v4-flash",
+    "drama.episode-designer": "ark-deepseek-v4-flash",
     "drama.script-writer": "ark-deepseek-v4-flash",
-    "drama.quality-reporter": "ark-deepseek-v4-flash",
+    "drama.script-scorer": "ark-deepseek-v4-flash",
     "drama.compliance-guard": "ark-deepseek-v4-flash",
     # 中等角色 - 通用模型
-    "drama.character-designer": "ark-deepseek-v4-flash",
-    "drama.world-architect": "ark-deepseek-v4-flash",
+    "drama.topic-director": "ark-deepseek-v4-flash",
+    "drama.character-relations": "ark-deepseek-v4-flash",
+    "drama.revision-master": "ark-deepseek-v4-flash",
     # 轻量角色 - 快速低成本模型
 }
 

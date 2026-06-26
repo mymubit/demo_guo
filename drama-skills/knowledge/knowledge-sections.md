@@ -1,6 +1,6 @@
 # 知识规则区块索引（v3.1）
 
-> 规则 SSOT：`foundation/rules/`。本文档说明 **section 名** 与 **12 角色** 的注入关系。
+> 规则 SSOT：`foundation/rules/`。本文档说明 **section 名** 与重组后角色的注入关系。
 > 角色侧通过 `role.yaml` → `rule_policy.scopes` 控制加载哪些 scope。
 
 ## 四 Scope
@@ -14,22 +14,19 @@
 
 长文参考：`knowledge/tier2-genre-rules.md`、`knowledge/tier3-stage-rules.md`、`knowledge/tier4-compliance.md`。
 
-## 12 角色 ↔ Section 映射
+## 重组角色 ↔ Section 映射
 
 | Agent | Sections |
 |-------|----------|
-| drama.topic-planner | philosophy |
-| drama.market-analyst | rhythm_rules, philosophy, scoring, episode_structure, learned_rules |
-| drama.world-architect | philosophy |
-| drama.character-designer | philosophy, foreshadowing_rules, character_rules |
-| drama.plot-architect | episode_structure, rhythm_rules, quantitative_constraints, foreshadowing_rules, qdn_emotion_model, hook_effectiveness, payment_checkpoint_3card, conflict_escalation, learned_rules |
-| drama.narrative-engineer | episode_emotion_8nodes, qdn_emotion_model, hook_effectiveness, emotion_externalization_dict, episode_structure, rhythm_rules, foreshadowing_rules, conflict_escalation, learned_rules |
+| drama.topic-director | philosophy, rhythm_rules, scoring, episode_structure, learned_rules |
+| drama.character-relations | philosophy, foreshadowing_rules, character_rules, emotion_externalization_dict |
+| drama.series-architect | episode_structure, rhythm_rules, foreshadowing_rules, qdn_emotion_model, payment_checkpoint_3card, conflict_escalation, learned_rules |
+| drama.episode-designer | episode_emotion_8nodes, qdn_emotion_model, hook_effectiveness, emotion_externalization_dict, episode_structure, rhythm_rules, foreshadowing_rules, conflict_escalation, payment_checkpoint_3card, learned_rules |
 | drama.script-writer | episode_structure, quantitative_constraints, writing_prohibitions, writing_requirements, information_asymmetry_mechanics, emotion_externalization_dict, ai_tone_forbidden, qdn_emotion_model, format_standard, hook_effectiveness, episode_emotion_8nodes, dialogue_quality, learned_rules |
-| drama.polish-master | writing_prohibitions, writing_requirements, ai_tone_forbidden, emotion_externalization_dict, dialogue_quality, rhythm_rules, quantitative_constraints, format_standard, learned_rules |
-| drama.script-reviewer | scoring, format_standard, learned_rules |
-| drama.quality-reporter | scoring, learned_rules |
-| drama.production-pack | format_standard, dialogue_quality, hook_effectiveness, scoring, foreshadowing_rules, learned_rules |
-| drama.compliance-guard | （主体走 compliance_block scope） |
+| drama.revision-master | writing_prohibitions, writing_requirements, ai_tone_forbidden, emotion_externalization_dict, dialogue_quality, rhythm_rules, quantitative_constraints, format_standard, learned_rules |
+| drama.script-scorer | scoring, format_standard, episode_structure, character_rules, hook_effectiveness, payment_checkpoint_3card, learned_rules |
+| drama.compliance-guard | compliance_block, learned_rules |
+| drama.delivery-tool | format_standard, dialogue_quality, hook_effectiveness, scoring, foreshadowing_rules, learned_rules |
 
 ## Section 定义
 

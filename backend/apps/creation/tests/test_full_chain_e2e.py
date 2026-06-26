@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Drama Skills 快速通道 E2E 测试 — 验证8个核心角色的完整执行链路。
+Drama Skills 标准通道 E2E 测试 — 验证6生产+2裁判的完整执行链路。
 
 旧的 brief/structure/character/outline/script 链路已移除。
 """
@@ -16,25 +16,25 @@ User = get_user_model()
 
 # drama.* 快速通道角色
 FAST_TRACK_AGENTS = [
-    "drama.topic-planner",
-    "drama.world-architect",
-    "drama.character-designer",
-    "drama.plot-architect",
+    "drama.topic-director",
+    "drama.character-relations",
+    "drama.series-architect",
+    "drama.episode-designer",
     "drama.script-writer",
-    "drama.script-reviewer",
-    "drama.quality-reporter",
+    "drama.revision-master",
+    "drama.script-scorer",
     "drama.compliance-guard",
 ]
 
 # 每个角色的期望产物
 AGENT_ARTIFACTS = {
-    "drama.topic-planner": {"project_brief": {"status": "confirmed", "title": "测试剧"}},
-    "drama.world-architect": {"world_setting": {"settingSummary": "测试世界观"}},
-    "drama.character-designer": {"character_bible": {"characters": []}},
-    "drama.plot-architect": {"series_outline": {"episodes": [{"episodeNumber": 1}]}},
+    "drama.topic-director": {"project_brief": {"status": "confirmed", "title": "测试剧"}},
+    "drama.character-relations": {"character_bible": {"characters": []}},
+    "drama.series-architect": {"series_outline": {"six_stage_structure": []}},
+    "drama.episode-designer": {"narrative_plan": {"episode_narrative_designs": []}},
     "drama.script-writer": {"episode_scripts": {"episodes": [{"episodeNumber": 1, "title": "第1集"}]}},
-    "drama.script-reviewer": {"review_report": {"overall": "通过"}},
-    "drama.quality-reporter": {"quality_report": {"overall_score": 82, "grade": "A"}},
+    "drama.revision-master": {"polished_script": {"episodes": [{"episodeNumber": 1, "title": "第1集"}]}},
+    "drama.script-scorer": {"quality_report": {"overall_score": 82, "grade": "A"}},
     "drama.compliance-guard": {"compliance_report": {"overall_result": "通过"}},
 }
 
@@ -66,7 +66,7 @@ class DramaFastTrackE2ETest(TestCase):
             )
 
     def test_fast_track_agents_are_seeded(self):
-        """验证快速通道8个角色已在数据库中。"""
+        """验证标准通道8个角色已在数据库中。"""
         for agent_id in FAST_TRACK_AGENTS:
             exists = AgentDefinition.objects.filter(agent_id=agent_id).exists()
             self.assertTrue(exists, f"drama role {agent_id} 未种入")

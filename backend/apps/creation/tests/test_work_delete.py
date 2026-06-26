@@ -37,7 +37,7 @@ class WorkDeleteTests(TestCase):
         self.project.save(update_fields=["track_mode", "pipeline_mode"])
         DramaRoleExecution.objects.create(
             project=self.project,
-            agent_id="drama.topic-planner",
+            agent_id="drama.topic-director",
             agent_name_zh="选题策划官",
             status=DramaRoleExecution.Status.RUNNING,
             started_at=timezone.now(),
@@ -53,7 +53,7 @@ class WorkDeleteTests(TestCase):
         self.project.save(update_fields=["track_mode", "pipeline_mode"])
         exec_obj = DramaRoleExecution.objects.create(
             project=self.project,
-            agent_id="drama.topic-planner",
+            agent_id="drama.topic-director",
             agent_name_zh="选题策划官",
             status=DramaRoleExecution.Status.RUNNING,
         )
@@ -72,7 +72,7 @@ class WorkDeleteTests(TestCase):
         run = AgentExecutionRun.objects.create(
             project=self.project,
             user=self.user,
-            agent_id="drama.topic-planner",
+            agent_id="drama.topic-director",
             node_index=2,
             status=AgentExecutionRun.STATUS_RUNNING,
             started_at=timezone.now() - timedelta(minutes=20),

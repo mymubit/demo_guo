@@ -17,7 +17,7 @@ class JsonSelfHealTests(TestCase):
     def setUp(self):
         # 创建 drama.* 角色用于测试
         self.agent, _ = AgentDefinition.objects.get_or_create(
-            agent_id="drama.topic-planner",
+            agent_id="drama.topic-director",
             defaults={
                 "name": "Topic Planner",
                 "name_zh": "选题策划官",

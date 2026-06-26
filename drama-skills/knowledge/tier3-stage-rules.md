@@ -6,25 +6,23 @@
 
 ---
 
-## drama.world-architect — 世界观设定
+## drama.topic-director — 选题定调
 
-### 世界观四块（输出 `world_setting`）
+### 标准输出
 
 ```
-settingSummary  → 世界背景摘要（50 字以内）
-rootRules       → 核心规则（≤3 条）
-coreNouns       → 核心名词定义（题材专有词汇）
-dreamIndicators → 梦境三指标预设（安全/满足/现实）
+故事梗概 + 市场机会 + 爆款因子 + 竞品避雷 + 差异化策略
+首集钩子方向 + 第3-5集付费卡点方向 + 合规初筛
 ```
 
 ### 输入 / 输出
 
-- 必填：`project_brief`
-- 输出 schema：`world-setting.v1`
+- 输入：主题 / 故事梗概 / 题材矩阵 / 参考剧
+- 输出 schema：`project-brief.v1`
 
 ---
 
-## drama.character-designer — 人设开发
+## drama.character-relations — 人物关系
 
 ### 角色密度
 
@@ -43,9 +41,16 @@ dreamIndicators → 梦境三指标预设（安全/满足/现实）
 禁止：无触发突变；反派无铺垫洗白；弧光与主题无关
 ```
 
+### 轻量世界规则
+
+```
+只保留会影响人物行动、关系冲突和剧情选择的世界规则。
+普通都市/家庭/职场短剧不得输出冗长世界观文档。
+```
+
 ---
 
-## drama.plot-architect — 结构与分集大纲
+## drama.series-architect — 全剧架构
 
 ### 六阶段集数分配（100 集基准，等比缩放）
 
@@ -60,27 +65,55 @@ dreamIndicators → 梦境三指标预设（安全/满足/现实）
 
 题材配比 override 见 `foundation/rules/genres/*.yaml`。
 
-### 单集大纲六要素（输出 `series_outline`）
+### 全剧架构输出（输出 `series_outline`）
 
 ```
-1. 本集标题
-2. 核心事件（≤20 字）
-3. 情绪强度（1–10）
-4. 钩子类型与描述
-5. 结尾悬念（下集钩子）
-6. 出场角色（2–5 人）
+1. 全剧主线
+2. 六阶段结构
+3. 主线 / 支线安排
+4. 人物弧光落点
+5. 关键反转位置
+6. 付费节点分布
+7. 伏笔总表
+8. 全剧情绪曲线
 ```
 
-### 全剧 / 单集检验
+### 全剧检验
 
 ```
-全剧：每 5 集 ≥1 次 A 级反转；阶段 4 情绪谷底 ≤2；终局 3 集加速
-单集：集末有明确钩子；禁止连续 2 集纯铺垫（峰值 <6）
+每 5 集 ≥1 次 A 级反转；阶段 4 情绪谷底 ≤2；终局 3 集加速。
+全剧架构官不展开逐集细节。
 ```
 
 ---
 
-## drama.script-writer — 分集剧本
+## drama.episode-designer — 分集设计
+
+### 单集设计卡（输出 `narrative_plan`）
+
+```
+1. 本集标题
+2. 核心事件（≤20 字）
+3. Goal × Conflict
+4. 情绪强度（1–10）
+5. 集首钩子
+6. 集末钩子
+7. 爽点与反转
+8. 付费卡点
+9. 伏笔埋设 / 回扣
+10. 双轨节奏
+```
+
+### 单集检验
+
+```
+集末有明确钩子；禁止连续 2 集纯铺垫（峰值 <6）。
+分集设计官不得重写全剧主线和六阶段结构。
+```
+
+---
+
+## drama.script-writer — 剧本正文
 
 细则 SSOT：`roles/drama-script-writer/tasks/write-episodes.md` + `foundation/constraints/script-format.yaml`
 
@@ -105,32 +138,29 @@ dreamIndicators → 梦境三指标预设（安全/满足/现实）
 
 ---
 
-## drama.script-reviewer — 质量审查
+## drama.revision-master — 剧本修订
 
-### 审查顺序
+### 返修边界
 
 ```
-1. 格式合规
-2. 结构（六阶段 + 单集四段式）
-3. 人物逻辑
-4. 情绪曲线
-5. 横截面 / McKee 价值转变
+只能根据评分报告、合规报告或用户指定问题返修文本执行质量。
+不得推翻已确认的选题、人设、全剧架构和分集设计。
 ```
 
-输出：`review_report`（schema: `review-report.v1`）
+输出：`polished_script`（schema: `polished-script.v1`）
 
 ---
 
-## drama.quality-reporter — 质量评分
+## drama.script-scorer — 十维评分
 
 ```
 1. 输出 quality_report（schema: quality-report.v1）
-2. defects 路由至 drama.polish-master（可选）
+2. defects 路由至 drama.revision-master
 3. overall_score < 70 → 记录至 EVOLUTION_LOG，考虑规则补丁
 4. 某维度连续 2 次 < 70 → 提案更新 foundation/rules/
 ```
 
-评分维度 SSOT：`foundation/rules/scoring-core.yaml` + `knowledge/scoring-presets.md`
+评分维度 SSOT：`foundation/constraints/quality-scoring.yaml`
 
 ---
 
