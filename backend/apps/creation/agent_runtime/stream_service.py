@@ -37,18 +37,11 @@ from apps.skill.skills.streaming_json_parser import IncrementalJsonArrayParser, 
 
 logger = logging.getLogger(__name__)
 
-AGENT_STREAM_CONFIG: Dict[str, Dict[str, Any]] = {
-    # drama.* 新体系
-    "drama.script-writer": {"kind": "episode_scripts", "array_keys": ("episodes",)},
-    "drama.polish-master": {"kind": "polished_script", "array_keys": ("episodes",)},
-    "drama.narrative-engineer": {"kind": "narrative_plan", "array_keys": ("episode_narrative_designs",)},
-    "drama.market-analyst": {"kind": "market_report", "array_keys": ()},
-    "drama.production-pack": {"kind": "production_package", "array_keys": ()},
-    "drama.plot-architect": {"kind": "series_outline", "array_keys": ("episodes", "stages")},
-    # artifact_key 直接路由（兼容旧 artifact 存储格式）
-    "episode_scripts": {"kind": "episode_scripts", "array_keys": ("episodes",)},
-    "series_outline": {"kind": "series_outline", "array_keys": ("episodes", "stages")},
-}
+
+def _get_stream_config(agent_id: str) -> Optional[Dict[str, Any]]:
+    from apps.drama.skills_registry import build_agent_stream_config
+
+    return build_agent_stream_config().get(agent_id)
 
 
 def _fallback_provider_ids(route) -> List[str]:
@@ -87,7 +80,7 @@ class AgentStreamService:
                 return int(raw)
             except (TypeError, ValueError):
                 pass
-        cfg = AGENT_STREAM_CONFIG.get(agent_id)
+        cfg = _get_stream_config(agent_id)
         if not cfg:
             return None
         last = last_chunk_index(project, cfg["kind"])
@@ -146,7 +139,7 @@ class AgentStreamService:
                     prepared["user_prompt"],
                 )
 
-            stream_cfg = AGENT_STREAM_CONFIG.get(agent_id)
+            stream_cfg = _get_stream_config(agent_id)
             chunk_kind = resolve_chunk_kind(
                 agent_id,
                 str((agent.output_contract or {}).get("artifacts") or [""])[0],
@@ -303,7 +296,11 @@ class AgentStreamService:
                     max_tokens=max_completion,
                     provider_id=provider_id,
                 )
-                outputs = IndependentAgentService.validate_output(agent, parsed)
+                outputs = IndependentAgentService.validate_output(
+                    agent,
+                    parsed,
+                    run_params=dict(run.run_params or {}),
+                )
                 saved_keys = IndependentAgentService.persist_agent_output(
                     project,
                     agent,

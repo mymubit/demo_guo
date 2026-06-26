@@ -1,0 +1,22 @@
+genre_key: time-travel
+label_zh: 穿越重生
+tier: 2
+items:
+  - rule_key: t2.time-travel.genre_rules.emotion-anchor
+    section: genre_rules
+    scope_type: genre
+    scope_key: time-travel
+    title: 穿越重生·情绪锚点
+    priority: 10
+    body: |
+      SSOT: knowledge/tier2-genre-rules.md · ThemeTemplate time-travel
+      核心情绪：先知信息差/改写命运/时空孤独；古代生存智慧与身份秘密。
+      钩子：先知先觉、改变历史、时空悖论、命运重逢。
+  - rule_key: t2.time-travel.rhythm_rules.act-ratio
+    section: rhythm_rules
+    scope_type: genre
+    scope_key: time-travel
+    title: 阶段配比参考
+    priority: 20
+    body: |
+      六阶段：开篇×1.1、高潮×1.2、转折×1.2；信息差爽感贯穿全剧。

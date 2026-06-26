@@ -62,6 +62,33 @@ class DramaWorkspaceApiTests(TestCase):
         self.assertEqual(len(tier2), 4)
         self.assertTrue(all(role.get("is_composite") for role in tier2))
 
+    def test_theme_matrix_api_returns_ssot_config(self):
+        resp = self.client.get("/api/drama/theme-matrix/")
+        self.assertEqual(resp.status_code, 200)
+        body = resp.data
+        self.assertEqual(body["code"], 0)
+        data = body["data"]
+        self.assertEqual(len(data["dim_order"]), 4)
+        self.assertEqual(len(data["axes"]["emotion"]["options"]), 9)
+        self.assertGreaterEqual(len(data["preset_templates"]), 8)
+        self.assertGreaterEqual(len(data["featured_combos"]), 32)
+        preset_codes = {item["code"] for item in data["preset_templates"]}
+        self.assertIn("family-revenge", preset_codes)
+        combo = data["featured_combos"][0]
+        self.assertTrue(combo["code"])
+        self.assertTrue(combo["label"])
+        self.assertIn("emotion", combo["dims"])
+        flavor = data["flavor_tags"]
+        self.assertGreaterEqual(len(flavor["options"]), 60)
+        self.assertGreaterEqual(len(flavor["groups"]), 10)
+        self.assertEqual(flavor["max_select"], 5)
+
+    def test_theme_matrix_api_requires_auth(self):
+        client = APIClient()
+        resp = client.get("/api/drama/theme-matrix/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["code"], 401)
+
     def test_create_project_accepts_matrix_theme(self):
         theme = "healing-ordinary-workplace-modern"
         resp = self.client.post(

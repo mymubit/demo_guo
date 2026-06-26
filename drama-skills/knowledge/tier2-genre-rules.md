@@ -1,13 +1,13 @@
-# Tier2 品类规范（Genre-Specific Rules）
+# genre_profile 参考（题材规范）
 
-> **来源**：整合 dramaskilltrae `config/` 目录的规则库 JSON 文件
+> **参考长文**；可执行规则 SSOT：`foundation/rules/genres/` + `genre-profile.yaml`
 > 
-> **使用方式**：创作前根据题材选择对应区块，作为 Tier1 的补充约束。
+> **使用方式**：创作前根据题材选择对应区块，作为 global_core 的补充约束。
 > **适用角色**：drama-world-architect / drama-character-designer / drama-plot-architect / drama-dialogue-expert
 
 ---
 
-## 一、情绪锚点库（Tier2-emotion-anchor）
+## 一、情绪锚点库
 
 按题材定位核心情绪共鸣点，确保剧情触发目标受众的真实情绪。
 
@@ -36,7 +36,7 @@
 
 ---
 
-## 二、台词声音差异化规则（Tier2-dialogue-voice）
+## 二、台词声音差异化规则
 
 按角色阶层/职业/情绪状态给出台词写作规范，确保每个角色开口就有识别度。
 
@@ -69,7 +69,7 @@
 
 ---
 
-## 三、角色行为逻辑库（Tier2-character-logic）
+## 三、角色行为逻辑库
 
 按年龄段定义角色的核心命题、决策模式和行为特征，确保人物反应符合人性。
 
@@ -82,7 +82,7 @@
 
 ---
 
-## 四、悬念节奏规则（Tier2-suspense-rhythm）
+## 四、悬念节奏规则
 
 三层悬念结构，确保全程维持追看动力。
 
@@ -114,7 +114,7 @@
 
 ---
 
-## 五、市场适配规则（Tier2-market-adaptation）
+## 五、市场适配规则
 
 ### 钩子电梯测试（合格钩子三要素）
 

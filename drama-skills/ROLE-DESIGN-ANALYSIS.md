@@ -1,184 +1,71 @@
-# 角色体系重新梳理分析报告
+# 12 角色设计说明（v3.1）
 
-> 分析时间：2026-06-22
-> 分析范围：33个创作角色 + 1个drama-master + 1个drama-intake
+> 本文档说明当前 12 角色体系的设计 rationale。配置 SSOT：`registry.yaml` + `roles/*/role.yaml`。
 
----
+## 设计目标
 
-## 一、现有33角色的问题诊断
+1. **覆盖完整短剧流水线**：立项 → 设定 → 大纲 → 剧本 → 审查 → 合规 →（可选）精修与发行
+2. **控制认知负担**：默认 8 步快速通道；4 个 composite 角色按需启用
+3. **规则集中治理**：角色薄、规则厚；不在 12 份 SKILL 正文重复方法论
 
-### 1.1 使用频率分层
+## 角色分层
 
-实际短剧创作中，33个角色的使用频率极不均衡：
+| 类型 | 数量 | 含义 |
+|------|------|------|
+| `core` | 8 | 快速通道必经；每个项目至少走一遍 |
+| `composite` | 4 | 整合多模块能力；专家通道或专项增强 |
 
-| 层级 | 角色 | 典型用法 |
-|------|------|---------|
-| **必经角色（每个项目必用）** | topic-planner/project-reviewer/world-architect/character-designer/plot-architect/script-writer/script-reviewer/quality-reporter/compliance-guard | 全流程标配，缺一不可 |
-| **高频选用（多数项目使用）** | market-radar/formula-analyst/hook-designer/rhythm-designer/dialogue-expert/script-editor/formatter/marketing-officer | 专项增强 |
-| **中频选用（部分项目使用）** | character-designer进阶/lapian-analyst/emotion-architect/conflict-engine/reversal-master/pacing-optimizer/visual-producer/storyboard-director | 深度专项 |
-| **低频工具（按需调用）** | dream-analyst/psychology-architect/reader-reviewer/emotion-auditor/post-processor/ip-adapter/drama-intake/evolution-analyst | 特定需求 |
+## 部门划分（虚拟编组）
 
-### 1.2 三个主要结构性问题
+仅用于导航与 `expert-track.yaml` 分 phase，不影响规则加载逻辑。
 
-**问题A：剧情引擎部（7个）过于精细化**
+| dept | 角色 |
+|------|------|
+| strategy | topic-planner, market-analyst |
+| worldbuilding | world-architect, character-designer |
+| plot_engine | plot-architect, narrative-engineer |
+| writing | script-writer |
+| review | script-reviewer, quality-reporter |
+| polish | polish-master |
+| production | production-pack |
+| ops | compliance-guard |
 
-```
-情绪架构师 + 情节架构师 + 钩子设计师 + 冲突引擎师 + 反转大师 + 节奏设计师 + 心理框架师
+## Composite 与 modules
 
-实际使用中：
-  - 普通创作：只需 情节架构师 + 节奏设计师
-  - 进阶创作：+ 钩子设计师 + 反转大师
-  - 专家模式：全部7个
-  
-问题：初级用户面对7个角色会迷失，不知道该用哪个
-解决方案：不合并，但在drama-master中设计"快速通道"入口
-```
+| 角色 | modules | 能力摘要 |
+|------|---------|----------|
+| market-analyst | market-radar, formula-analysis, tear-down-6d | 市场趋势 + 爆款公式 + 六维拉片 |
+| narrative-engineer | emotion-blueprint, hook-system, conflict-escalation, reversal-system, psychology-immersion | 大纲后叙事深度强化 |
+| polish-master | dialogue-polish, format-fix, word-count-governance, storyboard-9col | 台词/格式/字数/分镜一站式 |
+| production-pack | visual-anchor, marketing-copy, delivery-check, story-to-game | 视觉/营销/交付/互动游戏 |
 
-**问题B：战略选题部（6个）存在概念重叠感**
+模块正文：`modules/*.md`。
 
-```
-市场雷达/爆款公式师/拉片分析师 三者都在"研究市场"
-但已通过上轮冲突修复解决了实质性重叠
-
-问题：IP改编师放在战略选题部不合适
-  - IP改编师的核心工作是"创作"，不是"战略"
-  - 它应该在创作执行部或单独作为"创作入口"
-
-解决方案：把 drama-ip-adapter 从战略选题部移至创作执行部（或单独作为创作变体）
-```
-
-**问题C：三个关键行业标准能力缺失**
+## 产物依赖（Artifact DAG）
 
 ```
-缺失1：字数治理官
-  行业硬标准：首集900-1100字，其余700-900字，台词占比≥28%
-  目前：drama-formatter只做格式，不做字数管控
-
-缺失2：风格一致性官  
-  行业实际问题：30集+长剧，第20集主角说话方式可能与第1集完全不同
-  目前：没有任何角色做跨集风格一致性检查
-
-缺失3：交付打包官
-  行业必需：完成后需要打包02_项目设定+03_完整剧本+04_评估报告→《剧名》交付包.md
-  目前：没有任何角色做这个工作（dramaskilltrae有drama-creator-file-manager处理）
+project_brief
+  → world_setting, character_bible
+    → series_outline
+      → [narrative_plan]
+      → episode_scripts
+        → review_report, quality_report, compliance_report
+        → [polished_script] → [production_package]
 ```
 
----
+各边定义在对应 `role.yaml` 的 `input_contract` / `output_contract`。
 
-## 二、行业经验缺口分析
+## 关键设计决策
 
-### 2.1 短剧行业真实痛点（按重要性排序）
+| 决策 | 理由 |
+|------|------|
+| script-writer 分批 `episode_range` | 控制 token；LR-008 逐集上下文 |
+| compliance-guard 走 compliance_block | P0 熔断独立于创作规则 |
+| 数值不进 SKILL 正文 | 统一引用 `script-format.yaml` |
+| SKILL.md 瘦身 | Cursor 入口；契约以 role.yaml 为准 |
 
-| 排名 | 痛点 | 当前覆盖 | 建议 |
-|------|------|---------|------|
-| 1 | **字数不达标/台词占比不足** | ❌ 缺失 | 新增字数治理官 |
-| 2 | **钩子密度不足（集末无悬念）** | ✅ 有（钩子设计师） | 增强检验标准 |
-| 3 | **AI腔严重（台词不自然）** | ✅ 有（对白专家）| 可强化 |
-| 4 | **长剧风格漂移** | ❌ 缺失 | 新增风格一致性官 |
-| 5 | **交付包不规范** | ❌ 缺失 | 新增交付打包官 |
-| 6 | **反派动机单薄** | ✅ 有（人设设计师）| 已有 |
-| 7 | **中段疲软（10-25集无高潮）** | ✅ 有（节奏设计师）| 已有 |
-| 8 | **合规问题（犯罪无收束）** | ✅ 有（合规守卫）| 已有 |
-| 9 | **付费卡点设计弱** | ✅ 部分（爆款公式师）| 可强化 |
-| 10 | **投流素材不够冲突** | ✅ 有（营销策划官）| 已有 |
+## 扩展指南
 
-### 2.2 行业关键参数（现有角色未覆盖的）
-
-```
-字数标准：
-  首集：900-1100字（CJK纯剧本，不含AI绘图提示词）
-  其余集：700-900字
-  台词占比：≥28%
-  场景数：1-3个/集
-
-质量门槛：
-  个人创作：≥95分（出厂标准）
-  商业出品：≥90分（S级门槛）
-  合格线：≥75分（B级，需优化）
-  熔断线：<60分（D级，终止项目）
-
-付费卡点：
-  开始设置：≥30集的剧才设计付费卡点
-  首个卡点位置：第9-11集
-  S/A级付费点：≥3个/前10集
-
-可拍性：
-  场景数≤3/集，超景集≤20%
-  AI拍性评分≥70（AI漫剧必须评估）
-```
-
----
-
-## 三、合理设计方案
-
-### 3.1 保留现有33个角色（不合并）
-
-理由：每个角色都有其专业价值；合并会损失深度。
-解决"角色太多难以使用"的方式：引入**双轨模式**。
-
-### 3.2 双轨模式（新增到drama-master）
-
-```
-【快速通道 Fast Track】（8个核心角色）
-  topic-planner → world-architect → character-designer → plot-architect
-  → script-writer → script-reviewer → quality-reporter → compliance-guard
-
-  适合：初次创作、快速验证、短集数剧本（10集以内）
-  时间：完整走完约2-4小时
-
-【专家通道 Expert Track】（按需选择全部33+个角色）
-  按部门完整流程，每个环节有专业角色
-  
-  适合：商业项目、30集+长剧、精品化创作
-```
-
-### 3.3 新增3个缺失的关键角色
-
-**新增1：drama-word-governor（字数治理官）**
-- 部门：修改润色部（Dept-06）
-- 职责：每集字数检测（900-1100/700-900）、台词占比检测（≥28%）、字数偏差报告与修复建议
-- 触发：每集剧本写完后自动检测，或用户主动请求
-
-**新增2：drama-style-guardian（风格一致性官）**
-- 部门：修改润色部（Dept-06）
-- 职责：跨集人物语言风格一致性检查、叙事节奏风格一致性、防止风格漂移
-- 触发：完成5集以上后，对照第1集检查是否漂移
-
-**新增3：drama-delivery-packer（交付打包官）**
-- 部门：合规总编室（Dept-08）
-- 职责：检查交付物完整性（02+03+04文件），生成《剧名》交付包.md，输出最终交付清单
-- 触发：质量报告通过+合规通过后，作为最后一步
-
-### 3.4 IP改编师重新归类
-
-将 drama-ip-adapter 从战略选题部（Dept-01）移至创作执行部（Dept-04）。
-
-理由：IP改编师的核心工作是"执行创作"（改编/原创/衍生），不是"战略规划"。
-
----
-
-## 四、修正后的36角色体系（+3新增）
-
-| 部门 | 角色数 | 角色 |
-|------|--------|------|
-| 战略选题部 | 5（-1，ip-adapter移出）| 市场雷达/爆款公式师/选题策划官/立项复审官/拉片分析师 |
-| 世界构建部 | 3 | 世界架构师/人设设计师/梦境指标师 |
-| 剧情引擎部 | 7 | 情绪架构师/情节架构师/钩子设计师/冲突引擎师/反转大师/节奏设计师/心理框架师 |
-| 创作执行部 | 4（+1，ip-adapter移入）| 剧本执笔师/对白专家/场景导演/IP改编师 |
-| 评审质控部 | 4 | 审稿官/读者视角官/情绪审计官/质量报告官 |
-| 修改润色部 | 5（+2新增）| 修稿师/节奏优化师/格式规范师/字数治理官✨/风格一致性官✨ |
-| 制作宣发部 | 4 | 视觉生产官/分镜导演/后期处理官/营销策划官 |
-| 合规总编室 | 3（+1新增）| 合规守卫/交付打包官✨/进化分析师 |
-| 工具 | 1 | drama-intake（外部内容摄入器）|
-
-**合计：36个创作角色（✨=本次新增）**
-
----
-
-## 五、对网站快速搭建的影响
-
-每个角色的 input_schema/output_schema 定义了清晰的API契约。
-新增角色同样遵循此规范，确保网站API层可以直接映射。
-
-**快速通道的8个核心角色 = 网站MVP的最小可行节点集**。
-可以先实现这8个节点的网站功能，后续逐步加入专项角色。
+- **新增 core 角色**：改 `registry.yaml`、新建 `roles/<slug>/`、补充 `stage-playbook.yaml` 条目
+- **新增题材**：`foundation/rules/genres/<code>.yaml` + 更新 `theme-templates.md`
+- **新增 LR**：`foundation/rules/learned-rules.yaml`

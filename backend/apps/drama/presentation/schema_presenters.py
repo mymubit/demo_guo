@@ -16,11 +16,13 @@ from apps.drama.presentation.base import (
     assessment_report_block,
     build_character_id_map,
     build_compliance_report_view,
+    build_episode_outline_batches,
     build_quality_dimensions,
     build_stage_grouped_outlines,
     cards_block,
     character_roster_block,
     character_roster_entries,
+    character_bible_block,
     checks_block,
     deliverable_sections_block,
     dict_to_kv_rows,
@@ -39,6 +41,10 @@ from apps.drama.presentation.base import (
     list_block_from_items,
     market_report_block,
     metrics_block,
+    project_brief_block,
+    score_board_block,
+    series_outline_block,
+    world_setting_block,
     narrative_plan_block,
     nested_check_rows,
     normalize_payload,
@@ -52,6 +58,7 @@ from apps.drama.presentation.base import (
     quality_report_block,
     relationship_graph_block,
     relationship_graph_entries,
+    resolve_character_role,
     reversal_cards,
     review_issues_block,
     review_overview_block,
@@ -211,11 +218,119 @@ def _market_display_value(key: str, val: Any) -> str:
     return format_scalar(val)
 
 
-def present_market_report(artifact_key: str, payload: Any) -> dict:
-    body = normalize_payload(payload)
-    if not isinstance(body, dict):
-        return view(artifact_key, "market-report.v1", [])
+def _is_market_report_composite(body: dict) -> bool:
+    """v3.1 复合输出：market-radar + formula-analysis + tear-down-6d 合并为 market_report。"""
+    return any(
+        key in body
+        for key in (
+            "explosive_index",
+            "hotspot_analysis",
+            "dream_three_indicators",
+            "six_dimensional_deconstruction",
+            "reusable_templates",
+        )
+    )
 
+
+def _present_market_report_composite(artifact_key: str, body: dict) -> dict:
+    blocks: List[dict] = []
+    header_metrics: List[dict] = []
+    sections: List[dict] = []
+
+    explosive = body.get("explosive_index")
+    level = ""
+    comprehensive_score = None
+    if isinstance(explosive, dict):
+        level = str(explosive.get("level") or "").strip()
+        comprehensive_score = explosive.get("comprehensive_score")
+        if level:
+            header_metrics.append({"label": "爆款等级", "value": level})
+        if comprehensive_score is not None:
+            header_metrics.append({"label": "综合得分", "value": format_scalar(comprehensive_score)})
+        dim = explosive.get("dimension_detail")
+        if isinstance(dim, dict) and dim:
+            dimensions = [
+                {"name": label(key), "score": format_scalar(val)}
+                for key, val in dim.items()
+                if val not in (None, "", [], {})
+            ]
+            if dimensions:
+                blocks.append(
+                    score_board_block(
+                        "爆款十维评分",
+                        grade=level,
+                        total=comprehensive_score,
+                        dimensions=dimensions,
+                    )
+                )
+
+    hotspot = body.get("hotspot_analysis")
+    if isinstance(hotspot, dict):
+        heat = hotspot.get("current_track_heat")
+        if heat is not None:
+            header_metrics.append({"label": "赛道热度", "value": format_scalar(heat)})
+        hotspot_items: List[dict] = []
+        for key in ("user_portrait", "platform_demand_spot", "competitive_landscape"):
+            val = hotspot.get(key)
+            if val not in (None, "", [], {}):
+                hotspot_items.append({"title": label(key), "body": format_scalar(val)})
+        if hotspot_items:
+            sections.append({"title": "热点市场分析", "tone": "indigo", "items": hotspot_items})
+
+    dream = body.get("dream_three_indicators")
+    if isinstance(dream, dict):
+        dream_items: List[dict] = []
+        for key in ("dream_sense_score", "pay_willingness_score", "emotional_resonance_score"):
+            val = dream.get(key)
+            if val is not None:
+                dream_items.append({"title": label(key), "body": f"{format_scalar(val)} / 10"})
+        if dream_items:
+            sections.append({"title": "梦境三指标", "tone": "violet", "items": dream_items})
+
+    six_d = body.get("six_dimensional_deconstruction")
+    if isinstance(six_d, dict):
+        six_items: List[dict] = []
+        for key, val in six_d.items():
+            if val not in (None, "", [], {}):
+                six_items.append({"title": label(key), "body": format_scalar(val)})
+        if six_items:
+            sections.append({"title": "六维拉片解构", "tone": "violet", "items": six_items})
+
+    templates = body.get("reusable_templates")
+    if isinstance(templates, list) and templates:
+        template_items: List[dict] = []
+        for idx, tpl in enumerate(templates, start=1):
+            text = str(tpl).strip()
+            if not text:
+                continue
+            template_items.append(
+                {
+                    "title": f"模板 {idx}",
+                    "body": text,
+                    "variant": "highlight" if idx == 1 else "default",
+                }
+            )
+        if template_items:
+            sections.append({"title": "可复用爆款模板", "tone": "emerald", "items": template_items})
+
+    if header_metrics or sections:
+        blocks.append(
+            market_report_block(
+                metrics=header_metrics,
+                sections=sections,
+            )
+        )
+
+    summary_parts = []
+    if level:
+        summary_parts.append(f"爆款 {level}")
+    if comprehensive_score is not None:
+        summary_parts.append(f"得分 {comprehensive_score}")
+    summary = " · ".join(summary_parts)
+    return view(artifact_key, "market-report.v1", blocks, summary=summary)
+
+
+def _present_market_report_legacy(artifact_key: str, body: dict) -> dict:
     basic = body.get("drama_basic_info")
     drama_name = ""
     metrics: List[dict] = []
@@ -313,6 +428,15 @@ def present_market_report(artifact_key: str, payload: Any) -> dict:
     summary_parts = [part for part in (drama_name, metrics[0]["value"] if metrics else "") if part]
     summary = " · ".join(summary_parts[:2])
     return view(artifact_key, "market-report.v1", blocks, summary=summary)
+
+
+def present_market_report(artifact_key: str, payload: Any) -> dict:
+    body = normalize_payload(payload)
+    if not isinstance(body, dict):
+        return view(artifact_key, "market-report.v1", [])
+    if _is_market_report_composite(body):
+        return _present_market_report_composite(artifact_key, body)
+    return _present_market_report_legacy(artifact_key, body)
 
 
 def present_market_analysis(artifact_key: str, payload: Any) -> dict:
@@ -413,12 +537,110 @@ def present_formula_analysis(artifact_key: str, payload: Any) -> dict:
     return view(artifact_key, "formula-analysis.v1", blocks, summary=summary)
 
 
-def present_project_brief(artifact_key: str, payload: Any) -> dict:
-    body = normalize_payload(payload)
-    blocks: List[dict] = []
-    if not isinstance(body, dict):
-        return view(artifact_key, "project-brief.v1", blocks)
+def _is_project_brief_composite(body: dict) -> bool:
+    """v3.1 立项简报：goal_conflict / rating / cross_section 等复合结构。"""
+    return any(
+        key in body
+        for key in (
+            "goal_conflict",
+            "rating",
+            "cross_section_entry",
+            "rhythm_arrangement",
+            "compliance_check",
+            "dream_three_indicators",
+        )
+    )
 
+
+def _present_project_brief_composite(artifact_key: str, body: dict) -> dict:
+    goal = body.get("goal_conflict")
+    if not isinstance(goal, dict):
+        goal = {}
+
+    cross = str(body.get("cross_section_entry") or "").strip()
+    headline = str(goal.get("core_goal") or body.get("core_idea") or "").strip()
+    opening_hook = cross
+
+    metrics: List[dict] = []
+    dream = body.get("dream_three_indicators")
+    if isinstance(dream, dict):
+        for key in ("dream_sense_score", "pay_willingness_score", "emotional_resonance_score"):
+            val = dream.get(key)
+            if val is not None:
+                metrics.append({"label": label(key), "value": f"{format_scalar(val)}/10"})
+
+    sections: List[dict] = []
+    goal_items: List[dict] = []
+    for key, variant in (
+        ("core_goal", "accent"),
+        ("core_conflict", "default"),
+        ("opening_stablish", "highlight"),
+    ):
+        val = goal.get(key)
+        if val not in (None, "", [], {}):
+            title = "核心目标" if key == "core_goal" else label(key)
+            goal_items.append(
+                {
+                    "title": title,
+                    "body": format_scalar(val),
+                    "variant": variant,
+                }
+            )
+    if goal_items:
+        sections.append({"title": "目标与冲突", "tone": "gold", "layout": "stack", "items": goal_items})
+
+    positioning_items: List[dict] = []
+    audience = body.get("target_audience")
+    if audience not in (None, "", [], {}):
+        positioning_items.append(
+            {"title": label("target_audience"), "body": format_scalar(audience), "variant": "highlight"}
+        )
+    rhythm = body.get("rhythm_arrangement")
+    if rhythm not in (None, "", [], {}):
+        positioning_items.append({"title": label("rhythm_arrangement"), "body": format_scalar(rhythm)})
+    compliance = body.get("compliance_check")
+    if compliance not in (None, "", [], {}):
+        positioning_items.append(
+            {"title": label("compliance_check"), "body": format_scalar(compliance), "variant": "accent"}
+        )
+    if positioning_items:
+        sections.append({"title": "项目定位", "tone": "indigo", "layout": "insight", "items": positioning_items})
+
+    hook_ratings: List[dict] = []
+    rating = body.get("rating")
+    if isinstance(rating, dict):
+        for grade_key, grade in (("s_level", "S"), ("a_level", "A"), ("b_level", "B")):
+            val = rating.get(grade_key)
+            if val not in (None, "", [], {}):
+                hook_ratings.append(
+                    {
+                        "grade": grade,
+                        "title": label(grade_key),
+                        "body": format_scalar(val),
+                    }
+                )
+
+    selling_points = build_labeled_step_items(body.get("differentiated_selling_points") or [])
+
+    blocks: List[dict] = []
+    if headline or opening_hook or metrics or sections or hook_ratings or selling_points:
+        blocks.append(
+            project_brief_block(
+                headline=headline,
+                opening_hook=opening_hook,
+                metrics=metrics,
+                sections=sections,
+                hook_ratings=hook_ratings,
+                selling_points=selling_points,
+            )
+        )
+
+    summary = headline[:80] if headline else ""
+    return view(artifact_key, "project-brief.v1", blocks, summary=summary)
+
+
+def _present_project_brief_legacy(artifact_key: str, body: dict) -> dict:
+    blocks: List[dict] = []
     core = str(body.get("core_idea") or "").strip()
     project_name = str(body.get("title") or "").strip()
     if core:
@@ -459,6 +681,15 @@ def present_project_brief(artifact_key: str, payload: Any) -> dict:
             blocks.append(steps_block("差异化卖点", step_items))
 
     return view(artifact_key, "project-brief.v1", blocks, summary=core)
+
+
+def present_project_brief(artifact_key: str, payload: Any) -> dict:
+    body = normalize_payload(payload)
+    if not isinstance(body, dict):
+        return view(artifact_key, "project-brief.v1", [])
+    if _is_project_brief_composite(body):
+        return _present_project_brief_composite(artifact_key, body)
+    return _present_project_brief_legacy(artifact_key, body)
 
 
 def present_project_review(artifact_key: str, payload: Any) -> dict:
@@ -550,12 +781,135 @@ def present_lapian_report(artifact_key: str, payload: Any) -> dict:
     return view(artifact_key, "lapian-report.v1", blocks)
 
 
-def present_world_setting(artifact_key: str, payload: Any) -> dict:
-    body = normalize_payload(payload)
-    blocks: List[dict] = []
-    if not isinstance(body, dict):
-        return view(artifact_key, "world-setting.v1", blocks)
+def _normalize_world_setting_body(body: dict) -> dict:
+    """兼容 v3.1 字段别名：core_space / core_rules / forbidden_constraint。"""
+    out = dict(body)
+    if body.get("core_space") is not None and not body.get("core_spaces"):
+        space = body["core_space"]
+        if isinstance(space, str):
+            out["core_spaces"] = [space] if space.strip() else []
+        elif isinstance(space, list):
+            out["core_spaces"] = space
+    if body.get("core_rules") is not None and not body.get("core_world_rules"):
+        rules = body["core_rules"]
+        out["core_world_rules"] = rules if isinstance(rules, list) else [rules]
+    if body.get("forbidden_constraint") is not None and not body.get("taboo_constraints"):
+        taboo = body["forbidden_constraint"]
+        if isinstance(taboo, list):
+            out["taboo_constraints"] = taboo
+        elif taboo not in (None, "", [], {}):
+            out["taboo_constraints"] = [str(taboo)]
+    return out
 
+
+def _is_world_setting_v31(body: dict) -> bool:
+    return any(
+        key in body
+        for key in ("core_space", "core_rules", "forbidden_constraint")
+    )
+
+
+def _parse_core_space_scenes(text: str) -> tuple[str, List[dict]]:
+    line = str(text or "").strip()
+    if not line:
+        return "", []
+
+    segments = re.split(r"(?=[①②③④⑤⑥⑦⑧⑨⑩])", line)
+    if len(segments) <= 1:
+        title, body = split_labeled_line(line)
+        if title and body:
+            return "", [{"title": title, "body": body}]
+        return "", [{"title": "核心空间", "body": line}]
+
+    intro = segments[0].strip().rstrip("：:").strip()
+    items: List[dict] = []
+    for seg in segments[1:]:
+        seg = seg.strip()
+        if not seg:
+            continue
+        marker = seg[0] if seg[0] in "①②③④⑤⑥⑦⑧⑨⑩" else ""
+        body_text = seg[1:].strip() if marker else seg
+        if not body_text:
+            continue
+        title, body = split_labeled_line(body_text)
+        if title and body:
+            items.append({"title": title, "body": body, "marker": marker})
+        else:
+            items.append(
+                {
+                    "title": f"核心场景 {marker}" if marker else f"核心场景 {len(items) + 1}",
+                    "body": body_text,
+                    "marker": marker,
+                }
+            )
+    return intro, items
+
+
+def _present_world_setting_composite(artifact_key: str, body: dict) -> dict:
+    era = str(body.get("era_background") or "").strip()
+
+    space_intro = ""
+    space_scenes: List[dict] = []
+    core_space = body.get("core_space")
+    if core_space not in (None, "", [], {}):
+        if isinstance(core_space, str):
+            space_intro, space_scenes = _parse_core_space_scenes(core_space)
+        elif isinstance(core_space, list):
+            for idx, item in enumerate(core_space, 1):
+                text = str(item).strip()
+                if not text:
+                    continue
+                _, parsed = _parse_core_space_scenes(text)
+                space_scenes.extend(parsed or [{"title": f"核心场景 {idx}", "body": text}])
+
+    spaces = _string_list(body.get("core_spaces"))
+    if spaces and not space_scenes:
+        for idx, text in enumerate(spaces, 1):
+            card = space_card_item(text, fallback_title=f"核心场景 {idx}")
+            space_scenes.append({"title": card["title"], "body": card["body"]})
+
+    power = body.get("power_structure")
+    power_text = ""
+    if isinstance(power, str):
+        power_text = power.strip()
+    elif isinstance(power, dict) and power:
+        power_text = " · ".join(
+            f"{name}：{format_scalar(desc)}"
+            for name, desc in power.items()
+            if desc not in (None, "", [], {})
+        )
+    elif isinstance(power, list) and power:
+        power_text = "；".join(str(item).strip() for item in power if str(item or "").strip())
+
+    rules_raw = body.get("core_rules") or body.get("core_world_rules")
+    core_rules = build_labeled_step_items(_string_list(rules_raw) if isinstance(rules_raw, list) else [])
+
+    forbidden = body.get("forbidden_constraint") or body.get("taboo_constraints")
+    forbidden_text = ""
+    if isinstance(forbidden, str):
+        forbidden_text = forbidden.strip()
+    elif isinstance(forbidden, list) and forbidden:
+        forbidden_text = "；".join(str(item).strip() for item in forbidden if str(item or "").strip())
+
+    blocks: List[dict] = []
+    if era or space_scenes or power_text or core_rules or forbidden_text:
+        blocks.append(
+            world_setting_block(
+                era_background=era,
+                space_intro=space_intro,
+                space_scenes=space_scenes,
+                power_structure=power_text,
+                core_rules=core_rules,
+                forbidden_constraint=forbidden_text,
+            )
+        )
+
+    summary = era[:80] if era else (space_scenes[0]["body"][:80] if space_scenes else "")
+    return view(artifact_key, "world-setting.v1", blocks, summary=summary)
+
+
+def _present_world_setting_legacy(artifact_key: str, body: dict) -> dict:
+    blocks: List[dict] = []
     era = str(body.get("era_background") or "").strip()
     if era:
         blocks.append(
@@ -665,11 +1019,157 @@ def present_world_setting(artifact_key: str, payload: Any) -> dict:
     return view(artifact_key, "world-setting.v1", blocks, summary=summary)
 
 
+def present_world_setting(artifact_key: str, payload: Any) -> dict:
+    body = normalize_payload(payload)
+    if not isinstance(body, dict):
+        return view(artifact_key, "world-setting.v1", [])
+    body = _normalize_world_setting_body(body)
+    if _is_world_setting_v31(body):
+        return _present_world_setting_composite(artifact_key, body)
+    return _present_world_setting_legacy(artifact_key, body)
+
+
 def present_character_bible(artifact_key: str, payload: Any) -> dict:
     body = normalize_payload(payload)
-    blocks: List[dict] = []
     if not isinstance(body, dict):
-        return view(artifact_key, "character-bible.v1", blocks)
+        return view(artifact_key, "character-bible.v1", [])
+    if _is_character_bible_v31(body):
+        return _present_character_bible_composite(artifact_key, body)
+    return _present_character_bible_legacy(artifact_key, body)
+
+
+def _is_character_bible_v31(body: dict) -> bool:
+    if any(
+        key in body
+        for key in ("relationship_map", "core_supporting_roles", "total_relation_roles", "dream_check")
+    ):
+        return True
+    chars = body.get("characters")
+    if not isinstance(chars, list):
+        return False
+    for char in chars:
+        if isinstance(char, dict) and any(k in char for k in ("Want", "Need", "Ghost", "Lie", "Flaw", "char_id")):
+            return True
+    return False
+
+
+def _normalize_character_card(char: dict, *, role_tier: str, role_label: str = "") -> dict:
+    cid = str(char.get("char_id") or char.get("character_id") or "").strip()
+    age = char.get("age")
+    return {
+        "name": str(char.get("name") or "未命名").strip(),
+        "char_id": cid or None,
+        "role_tier": role_tier,
+        "role_label": role_label or resolve_character_role(char) or "",
+        "age": format_scalar(age) if age not in (None, "", [], {}) else "",
+        "want": str(char.get("Want") or char.get("want") or char.get("surface_desire") or "").strip(),
+        "need": str(char.get("Need") or char.get("need") or char.get("deep_need") or "").strip(),
+        "ghost": str(char.get("Ghost") or char.get("ghost") or char.get("core_fear") or "").strip(),
+        "lie": str(char.get("Lie") or char.get("lie") or "").strip(),
+        "flaw": str(char.get("Flaw") or char.get("flaw") or char.get("character_flaw") or "").strip(),
+        "arc": str(char.get("arc") or "").strip(),
+        "timbre_tag": str(char.get("timbre_tag") or char.get("voice_tag") or "").strip(),
+        "visual_tag": str(char.get("visual_tag") or "").strip(),
+        "relation": str(char.get("relation") or "").strip(),
+    }
+
+
+def _parse_relationship_map_line(text: str) -> dict | None:
+    line = str(text or "").strip()
+    if not line:
+        return None
+    rel_sep = next((sep for sep in ("↔", "←→", "<->") if sep in line), None)
+    if not rel_sep:
+        return {"title": line, "body": "", "source_name": "", "target_name": "", "relationship_type": ""}
+
+    source_part, target_part = line.split(rel_sep, 1)
+    source = source_part.strip()
+    target = target_part.strip()
+    desc = ""
+    for colon in ("：", ":"):
+        if colon in target:
+            target, _, desc = target.partition(colon)
+            target = target.strip()
+            desc = desc.strip()
+            break
+    title = f"{source} ↔ {target}" if source and target else line
+    return {
+        "title": title,
+        "source_name": source,
+        "target_name": target,
+        "body": desc,
+        "relationship_type": desc[:48] if desc else "",
+    }
+
+
+def _present_character_bible_composite(artifact_key: str, body: dict) -> dict:
+    protagonists = [
+        _normalize_character_card(char, role_tier="protagonist", role_label="绝对主角")
+        for char in (body.get("characters") or [])[:4]
+        if isinstance(char, dict)
+    ]
+    supporting = [
+        _normalize_character_card(char, role_tier="supporting", role_label="核心配角")
+        for char in (body.get("core_supporting_roles") or [])[:6]
+        if isinstance(char, dict)
+    ]
+    relation_roles = [
+        _normalize_character_card(char, role_tier="relation", role_label="关系角色")
+        for char in (body.get("total_relation_roles") or [])[:6]
+        if isinstance(char, dict)
+    ]
+
+    relationships: List[dict] = []
+    rel_map = body.get("relationship_map")
+    if isinstance(rel_map, list):
+        for raw in rel_map[:20]:
+            if isinstance(raw, str):
+                parsed = _parse_relationship_map_line(raw)
+                if parsed:
+                    relationships.append(parsed)
+            elif isinstance(raw, dict):
+                relationships.extend(relationship_graph_entries([raw]))
+
+    network = body.get("relationship_network")
+    if network:
+        id_map = build_character_id_map(body)
+        for char in body.get("core_supporting_roles") or []:
+            if isinstance(char, dict):
+                cid = char.get("char_id") or char.get("character_id")
+                name = char.get("name")
+                if cid and name:
+                    id_map[str(cid)] = str(name)
+        relationships.extend(relationship_graph_entries(network, id_map=id_map))
+
+    dream_raw = body.get("dream_check")
+    dream_check: dict = {}
+    if isinstance(dream_raw, dict):
+        dream_check = {
+            "safety_score": dream_raw.get("safety_score"),
+            "is_blocking": dream_raw.get("is_blocking"),
+            "note": str(dream_raw.get("note") or "").strip(),
+        }
+
+    blocks: List[dict] = []
+    if protagonists or supporting or relation_roles or relationships or dream_check:
+        blocks.append(
+            character_bible_block(
+                protagonists=protagonists,
+                supporting_roles=supporting,
+                relation_roles=relation_roles,
+                relationships=relationships,
+                dream_check=dream_check,
+            )
+        )
+
+    names = [c["name"] for c in protagonists if c.get("name")]
+    summary = " · ".join(names[:2])
+    return view(artifact_key, "character-bible.v1", blocks, summary=summary)
+
+
+def _present_character_bible_legacy(artifact_key: str, payload: Any) -> dict:
+    body = payload if isinstance(payload, dict) else {}
+    blocks: List[dict] = []
 
     id_map = build_character_id_map(body)
     roster = character_roster_entries(body.get("characters"))
@@ -763,12 +1263,185 @@ def present_emotion_blueprint(artifact_key: str, payload: Any) -> dict:
     return view(artifact_key, "emotion-blueprint.v1", blocks)
 
 
-def present_series_outline(artifact_key: str, payload: Any) -> dict:
+def present_series_outline(
+    artifact_key: str,
+    payload: Any,
+    *,
+    planned_episodes: int | None = None,
+    outline_progress: dict | None = None,
+) -> dict:
     body = normalize_payload(payload)
+    if not isinstance(body, dict):
+        return view(artifact_key, "series-outline.v1", [])
+    progress_ctx = outline_progress if isinstance(outline_progress, dict) else {}
+    if _is_series_outline_v31(body):
+        return _present_series_outline_composite(
+            artifact_key,
+            body,
+            planned_episodes=planned_episodes,
+            outline_progress=progress_ctx,
+        )
+    return _present_series_outline_legacy(
+        artifact_key,
+        body,
+        planned_episodes=planned_episodes,
+        outline_progress=progress_ctx,
+    )
+
+
+_SERIES_STAGE_DEFS: tuple[tuple[str, str], ...] = (
+    ("opening", "开篇"),
+    ("warming", "升温"),
+    ("climax", "高潮"),
+    ("turning", "转折"),
+    ("sprint", "冲刺"),
+    ("ending", "结局"),
+)
+
+
+def _is_series_outline_v31(body: dict) -> bool:
+    if isinstance(body.get("six_stage_structure"), dict):
+        return True
+    if isinstance(body.get("foreshadowing_list"), list) and body.get("foreshadowing_list"):
+        return True
+    outlines = body.get("episode_outlines")
+    if not isinstance(outlines, list) or not outlines:
+        return False
+    sample = outlines[0] if isinstance(outlines[0], dict) else {}
+    return any(key in sample for key in ("ev_et_tp", "episode_num", "goal_conflict", "dual_track_rhythm", "ending_hook"))
+
+
+def _normalize_foreshadowing_items(items: Any) -> List[dict]:
+    if not isinstance(items, list):
+        return []
+    normalized: List[dict] = []
+    for item in items[:20]:
+        if not isinstance(item, dict):
+            continue
+        content = str(item.get("content") or "").strip()
+        if not content:
+            continue
+        normalized.append(
+            {
+                "type": str(item.get("type") or "").strip(),
+                "content": content,
+                "buried": item.get("episode_buried"),
+                "payoff": item.get("episode_payoff"),
+            }
+        )
+    return normalized
+
+
+def _build_v31_stage_groups(six_stage: dict, episode_cards: List[dict]) -> List[dict]:
+    from apps.drama.series_stage_utils import (
+        CANONICAL_STAGE_KEYS,
+        normalize_six_stage_structure,
+        stage_text_fields,
+    )
+
+    normalized = normalize_six_stage_structure(six_stage if isinstance(six_stage, dict) else {})
+    title_map = dict(_SERIES_STAGE_DEFS)
+    stages: List[dict] = []
+    for idx, key in enumerate(CANONICAL_STAGE_KEYS, 1):
+        val = normalized.get(key)
+        if not isinstance(val, dict):
+            continue
+        if not stage_text_fields(val) and not str(val.get("episode_range") or "").strip():
+            continue
+        ep_range = str(val.get("episode_range") or "").strip()
+        parsed = parse_episode_range(ep_range)
+        stage_eps = []
+        if parsed:
+            start, end = parsed
+            stage_eps = [card for card in episode_cards if start <= card.get("episode_no", 0) <= end]
+        proportion = val.get("proportion")
+        subtitle_parts = [part for part in (ep_range, f"{proportion}%" if proportion is not None else "") if part]
+        stages.append(
+            {
+                "index": idx,
+                "key": key,
+                "title": title_map.get(key, key),
+                "subtitle": " · ".join(subtitle_parts),
+                "summary": stage_text_fields(val),
+                "proportion": proportion,
+                "highlights": [],
+                "episodes": stage_eps,
+            }
+        )
+    return stages
+
+
+def _present_series_outline_composite(
+    artifact_key: str,
+    body: dict,
+    *,
+    planned_episodes: int | None = None,
+    outline_progress: dict | None = None,
+) -> dict:
+    from apps.drama.outline_progress import collect_series_outline_episodes
+
+    progress = outline_progress if isinstance(outline_progress, dict) else {}
+    outline_rows = collect_series_outline_episodes(body)
+    episode_cards: List[dict] = []
+    for index, item in enumerate(outline_rows):
+        if not isinstance(item, dict):
+            continue
+        card = episode_outline_card_item(item, fallback_index=index)
+        if card:
+            episode_cards.append(card)
+
+    planned = planned_episodes or progress.get("planned") or body.get("total_episodes")
+    try:
+        planned = int(planned) if planned not in (None, "", [], {}) else 0
+    except (TypeError, ValueError):
+        planned = 0
+    generated_count = progress.get("generated")
+    if generated_count in (None, "", [], {}):
+        generated_count = len(episode_cards)
+    else:
+        generated_count = int(generated_count)
+
+    six_stage = body.get("six_stage_structure")
+    stages: List[dict] = []
+    if isinstance(six_stage, dict):
+        stages = _build_v31_stage_groups(six_stage, episode_cards)
+
+    foreshadowing = _normalize_foreshadowing_items(body.get("foreshadowing_list"))
+    batch_size = int(progress.get("batch_size") or 10)
+    planned_total = planned or generated_count
+    episode_batches = build_episode_outline_batches(
+        episode_cards,
+        planned=planned_total,
+        batch_size=batch_size,
+    )
+
+    blocks: List[dict] = []
+    if stages or foreshadowing or episode_cards or planned:
+        blocks.append(
+            series_outline_block(
+                total_episodes=planned_total,
+                generated_episodes=generated_count,
+                missing_episodes=progress.get("missing_episodes") or [],
+                suggested_range=str(progress.get("suggested_range") or ""),
+                episode_batches=episode_batches,
+                stages=stages,
+                foreshadowing=foreshadowing,
+                episodes=episode_cards,
+            )
+        )
+
+    summary = ""
+    if stages and stages[0].get("summary"):
+        summary = str(stages[0]["summary"])[:120]
+    elif episode_cards:
+        summary = episode_cards[0].get("subtitle") or episode_cards[0].get("title") or ""
+    return view(artifact_key, "series-outline.v1", blocks, summary=str(summary)[:240])
+
+
+def _present_series_outline_legacy(artifact_key: str, payload: Any) -> dict:
+    body = payload if isinstance(payload, dict) else {}
     blocks: List[dict] = []
     summary = ""
-    if not isinstance(body, dict):
-        return view(artifact_key, "series-outline.v1", blocks)
 
     rhythm = body.get("rhythm_dual_track_validation")
     rhythm_checks: List[dict] = []
@@ -1696,38 +2369,56 @@ def present_evolution_proposal(artifact_key: str, payload: Any) -> dict:
     return view(artifact_key, "evolution-proposal.v1", blocks)
 
 
+def present_polished_script(artifact_key: str, payload: Any) -> dict:
+    """精修剧本 — 结构与 episode-scripts 相同，schema 为 polished-script.v1。"""
+    result = present_episode_scripts(artifact_key, payload)
+    result["schema_version"] = "polished-script.v1"
+    return result
+
+
+def present_production_pack(artifact_key: str, payload: Any) -> dict:
+    """制作发行物料包 — 复用 delivery-pack 展示逻辑。"""
+    result = present_delivery_pack(artifact_key, payload)
+    result["schema_version"] = "production-pack.v1"
+    return result
+
+
 SCHEMA_PRESENTERS = {
-    "market-analysis.v1": present_market_analysis,
-    "market-report.v1": present_market_report,
-    "formula-analysis.v1": present_formula_analysis,
+    # v3.1 十二角色 SSOT
     "project-brief.v1": present_project_brief,
-    "project-review.v1": present_project_review,
-    "lapian-report.v1": present_lapian_report,
+    "market-report.v1": present_market_report,
     "world-setting.v1": present_world_setting,
     "character-bible.v1": present_character_bible,
-    "dream-check.v1": present_dream_check,
-    "emotion-blueprint.v1": present_emotion_blueprint,
     "series-outline.v1": present_series_outline,
     "narrative-plan.v1": present_narrative_plan,
+    "episode-scripts.v1": present_episode_scripts,
+    "review-report.v1": present_review_report,
+    "quality-report.v1": present_quality_report,
+    "polished-script.v1": present_polished_script,
+    "production-pack.v1": present_production_pack,
+    "compliance-report.v1": present_compliance_report,
+    # 历史产物 / fixture 兼容
+    "market-analysis.v1": present_market_analysis,
+    "formula-analysis.v1": present_formula_analysis,
+    "project-review.v1": present_project_review,
+    "lapian-report.v1": present_lapian_report,
+    "dream-check.v1": present_dream_check,
+    "emotion-blueprint.v1": present_emotion_blueprint,
     "hook-plan.v1": present_hook_plan,
     "conflict-plan.v1": present_conflict_plan,
     "reversal-plan.v1": present_reversal_plan,
     "emotion-curve.v1": present_emotion_curve,
     "psychology-guide.v1": present_psychology_guide,
-    "episode-scripts.v1": present_episode_scripts,
     "visual-prompts.v1": present_visual_prompts,
     "adaptation-plan.v1": present_adaptation_plan,
-    "review-report.v1": present_review_report,
     "reader-review.v1": present_reader_review,
     "emotion-audit.v1": present_emotion_audit,
-    "quality-report.v1": present_quality_report,
     "word-count-report.v1": present_word_count_report,
     "style-check.v1": present_style_check,
     "visual-pack.v1": present_visual_pack,
     "storyboard.v1": present_storyboard,
     "post-assets.v1": present_post_assets,
     "marketing-kit.v1": present_marketing_kit,
-    "compliance-report.v1": present_compliance_report,
     "delivery-pack.v1": present_delivery_pack,
     "evolution-proposal.v1": present_evolution_proposal,
 }

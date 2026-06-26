@@ -1,9 +1,9 @@
 # 行业基准数据（Industry Benchmarks 2026）
 
-> **来源**：dramaskill `references/industry-benchmarks.json` v3.0
+> **行业基准参考**
 > 数据源：Grimlab短剧报告2025 + 骨朵传媒白皮书 + 广电总局《微短剧精品创作传播计划》(2026.5.26)
 > 
-> **使用方式**：market-radar（市场分析）、quality-reporter（商业可行性评分）、project-reviewer（立项决策）参考。
+> **使用方式**：drama.market-analyst（市场分析）、drama.quality-reporter（商业可行性评分）、drama.topic-planner（立项决策）参考。
 
 ---
 

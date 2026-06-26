@@ -46,7 +46,7 @@ function DramaTracePanel({ dramaTrace, catalog }) {
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 px-4 py-3 text-xs leading-relaxed text-indigo-200/90">
-        <span className="font-medium text-indigo-100">Drama 36 角色轨</span>
+        <span className="font-medium text-indigo-100">Drama 12 角色轨</span>
         ：按部门顺序执行 drama.* 角色，产物写入 ProjectFusionArtifact，进度以 creation.Project 为 SSOT。
         {dramaTrace.track_plan?.label ? ` 当前计划：${dramaTrace.track_plan.label}。` : ''}
       </div>

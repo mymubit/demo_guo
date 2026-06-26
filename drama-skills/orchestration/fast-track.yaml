@@ -1,0 +1,17 @@
+# 快速通道 — 8 个核心角色顺序
+version: "1.0.0"
+entry_type: fast_track
+label: 快速通道
+description: 8个核心角色，适合初次创作和快速验证
+
+recommended_agents:
+  - drama.topic-planner
+  - drama.world-architect
+  - drama.character-designer
+  - drama.plot-architect
+  - drama.script-writer
+  - drama.script-reviewer
+  - drama.quality-reporter
+  - drama.compliance-guard
+
+optional_agents: []

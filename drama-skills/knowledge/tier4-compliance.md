@@ -1,13 +1,12 @@
-# Tier4 合规熔断规则（Compliance Rules）
+# compliance_block 参考（合规熔断）
 
-> **来源**：整合 ScriptForge `tier4_sections.py`（14个区块）+ dramaskill `config/合规*.json` 文件
-> 
-> **使用方式**：drama-compliance-guard 执行最终合规检测时读取本文档。
-> **适用角色**：drama-compliance-guard（必读）、drama-topic-planner（立项前预检）
+> **参考长文**；可执行规则 SSOT：`foundation/rules/compliance-core.yaml`
+>
+> **使用方式**：drama-compliance-guard 执行合规检测时读取；drama-topic-planner 立项前预检可选。
 
 ---
 
-## Tier4 的14个区块
+## compliance_block 区块
 
 | 区块名 | 说明 | 优先级 |
 |--------|------|--------|
@@ -130,7 +129,7 @@
 
 ## 三阶段合规清单
 
-### 立项阶段（drama-project-reviewer 执行）
+### 立项阶段（`drama.compliance-guard` 执行）
 
 ```
 □ 题材不触P0红线
@@ -146,7 +145,7 @@
 □ 未成年角色处于安全情境
 ```
 
-### 交付阶段（drama-compliance-guard 执行）
+### 交付阶段（`drama.compliance-guard` 执行）
 
 ```
 □ 完整合规检测（P0/P1/P2三级）

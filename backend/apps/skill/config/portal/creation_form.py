@@ -438,7 +438,7 @@ class CreationFormOverrideService:
     def get_public_catalog_base(cls) -> Dict[str, Any]:
         cls.ensure_defaults()
         return {
-            "skillVersion": "drama-skills-v3.0",
+            "skillVersion": "drama-skills-v3.1",
             "configSource": "drama_skills",
             "themes": cls.get_themes(),
             "platforms": cls.get_platforms(),

@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 """
-Drama Skills 36个角色定义。
+Drama Skills 12 角色定义。
 
-主入口：apps.drama.defaults.DRAMA_ROLE_DEFAULTS
-种入命令：python manage.py seed_drama_skills
+主入口：apps.drama.skills_registry（Git SSOT: drama-skills/registry.yaml）
+种入命令：python manage.py sync_drama_from_git
 """
 from __future__ import annotations
 
 from typing import Any, Dict, List
 
+from apps.drama.defaults import DRAMA_FAST_TRACK_ROLES, DRAMA_ROLE_DEFAULTS
+
 
 def get_drama_agent_defaults() -> List[Dict[str, Any]]:
-    """获取 drama.* 全部36角色定义。"""
-    from apps.drama.defaults import DRAMA_FAST_TRACK_ROLES, DRAMA_ROLE_DEFAULTS
-
+    """获取 drama.* 全部 12 角色定义。"""
     return [
         {
             "agent_id": role["agent_id"],
@@ -25,10 +25,13 @@ def get_drama_agent_defaults() -> List[Dict[str, Any]]:
             "input_contract": role.get("input_contract") or {},
             "output_contract": role.get("output_contract") or {},
             "runtime_policy": role.get("runtime_policy") or {},
+            "system_prompt": role.get("system_prompt") or "",
             "enabled": True,
             "ui_schema": {
                 "dept": role["dept"],
                 "is_fast_track": role["agent_id"] in DRAMA_FAST_TRACK_ROLES,
+                "tier": role.get("tier", 1),
+                "is_composite": role.get("is_composite", False),
             },
         }
         for role in DRAMA_ROLE_DEFAULTS
@@ -57,16 +60,5 @@ DEFAULT_USER_PROMPT_TEMPLATE = """请执行 {{ agent.name_zh }}。
 """
 
 AGENT_NAME_ZH_BY_ID: Dict[str, str] = {
-    "drama.topic-planner": "选题策划官",
-    "drama.world-architect": "世界架构师",
-    "drama.character-designer": "人设设计师",
-    "drama.plot-architect": "情节架构师",
-    "drama.script-writer": "剧本执笔师",
-    "drama.script-reviewer": "审稿官",
-    "drama.quality-reporter": "质量报告官",
-    "drama.compliance-guard": "合规守卫",
-    "drama.market-analyst": "市场分析师",
-    "drama.narrative-engineer": "叙事工程师",
-    "drama.polish-master": "精修大师",
-    "drama.production-pack": "制作发行师",
+    role["agent_id"]: role["name_zh"] for role in DRAMA_ROLE_DEFAULTS
 }

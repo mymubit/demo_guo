@@ -10,14 +10,14 @@ from __future__ import annotations
 import logging
 from typing import Any, Dict, List, Optional
 
-from apps.agent.bootstrap.tier1_sections import AGENT_TIER1_SEED
+from apps.agent.bootstrap.tier1_sections import get_agent_tier1_sections
 
 logger = logging.getLogger(__name__)
 
 
 def resolve_tier1_sections_for_agent(agent_id: str) -> List[str]:
     """获取 drama.* Agent 的 Tier1 知识区块列表。"""
-    return AGENT_TIER1_SEED.get(agent_id, [])
+    return get_agent_tier1_sections().get(agent_id, [])
 
 
 def get_agent_prompt_version(agent_id: str) -> Optional[Any]:

@@ -23,8 +23,8 @@ class AgentDefinitionService:
     @staticmethod
     def ensure_defaults() -> int:
         """
-        种入 drama.* 36个角色到 AgentDefinition。
-        推荐使用：python manage.py seed_drama_skills
+        种入 drama.* 12 角色到 AgentDefinition。
+        推荐使用：python manage.py sync_drama_from_git（或 seed_drama_skills）
         """
         drama_defaults = get_drama_agent_defaults()
         created = 0
@@ -60,7 +60,7 @@ class AgentDefinitionService:
                     agent=agent,
                     version="v1",
                     defaults={
-                        "system_prompt": DEFAULT_SYSTEM_PROMPT,
+                        "system_prompt": item.get("system_prompt") or DEFAULT_SYSTEM_PROMPT,
                         "user_prompt_template": DEFAULT_USER_PROMPT_TEMPLATE,
                         "output_format_prompt": "输出必须是 JSON 对象；顶层可用 artifact_key 与 payload，artifact_key 只能取契约声明的产物键，禁止自创。",
                         "constraints_prompt": "不得触发其他 Agent；不得引用外部目录；不得输出非 JSON 文本。",

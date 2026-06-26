@@ -1,0 +1,14 @@
+# genre_profile · 全局 fallback — hybrid 或未匹配 theme_code 时使用
+version: "1.0.0"
+tier: 2
+items:
+  - rule_key: t2.global.genre_profile.emotion-anchor-summary
+    section: genre_rules
+    scope_type: genre
+    scope_key: ""
+    title: 题材情绪锚点（全局摘要）
+    priority: 100
+    body: |
+      SSOT: knowledge/tier2-genre-rules.md
+      未命中具体 theme_code（如 hybrid）时使用本摘要。
+      台词须按阶层/职业/情绪外化；角色决策须符合年龄段逻辑；悬念滚动释放禁止断层。

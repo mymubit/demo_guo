@@ -5,7 +5,7 @@
 
 ---
 
-## 预置示例（来自 dramaskilltrae reversal-patterns-library）
+## 预置示例
 
 ### R001 · 守护者即敌人 · ⭐⭐⭐
 **内容**：一直保护主角的人，最后揭露是幕后推手。

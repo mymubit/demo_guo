@@ -1,0 +1,32 @@
+agent_id: drama.plot-architect
+name: Plot Architect
+name_zh: 情节架构师
+dept: plot_engine
+role_tier: core
+fast_track: true
+workspace_order: 302
+default_output_artifact_key: series_outline
+schema_version: series-outline.v1
+modules: []
+rule_policy:
+  scopes:
+  - global_core
+  - genre_profile
+  - stage_playbook
+  max_chars: 2500
+skill_dir: roles/drama-plot-architect
+input_contract:
+  optional_artifacts:
+  - emotion_blueprint
+  - market_report
+  params:
+  - episode_count
+  required_artifacts:
+  - project_brief
+  - world_setting
+  - character_bible
+output_contract:
+  artifacts:
+  - series_outline
+  schema_version: series-outline.v1
+role: 设计六阶段叙事结构、全剧分集大纲（含情绪节点EV/ET/TP）、主支线规划、双轨节奏标注

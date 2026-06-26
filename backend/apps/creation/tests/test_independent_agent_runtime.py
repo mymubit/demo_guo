@@ -287,17 +287,46 @@ class IndependentAgentOutputValidationTests(TestCase):
         self.script_writer_agent = AgentDefinitionService.get_runnable("drama.script-writer")
         self.script_reviewer_agent = AgentDefinitionService.get_runnable("drama.script-reviewer")
 
-    def test_validate_output_rejects_episode_without_number(self):
+    def test_validate_output_rejects_empty_episode_scripts(self):
         with self.assertRaises(Exception) as ctx:
             IndependentAgentService.validate_output(
                 self.script_writer_agent,
                 {
                     "episode_scripts": {
-                        "episodes": [{"title": "???"}],
+                        "episodes": [],
                     }
                 },
             )
-        self.assertIn("episodeNumber", str(ctx.exception))
+        self.assertIn("episodes", str(ctx.exception))
+
+    def test_validate_output_accepts_episode_num_alias(self):
+        result = IndependentAgentService.validate_output(
+            self.script_writer_agent,
+            {
+                "episode_scripts": {
+                    "episodes": [{"episode_num": 3, "full_script_text": "第三集正文"}],
+                }
+            },
+            run_params={"episode_from": 1, "episode_to": 5},
+        )
+        body = result["episode_scripts"]
+        self.assertEqual(body["episodes"][0]["episodeNumber"], 3)
+
+    def test_validate_output_assigns_batch_episode_numbers(self):
+        result = IndependentAgentService.validate_output(
+            self.script_writer_agent,
+            {
+                "episode_scripts": {
+                    "episodes": [
+                        {"full_script_text": "第一集"},
+                        {"full_script_text": "第二集"},
+                    ],
+                }
+            },
+            run_params={"episode_from": 1, "episode_to": 5},
+        )
+        nums = [ep["episodeNumber"] for ep in result["episode_scripts"]["episodes"]]
+        self.assertEqual(nums, [1, 2])
 
     def test_validate_output_accepts_valid_episode_scripts(self):
         result = IndependentAgentService.validate_output(

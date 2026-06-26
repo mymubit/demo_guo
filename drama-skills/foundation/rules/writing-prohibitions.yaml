@@ -1,0 +1,17 @@
+# global_core · 写作禁止项 — SSOT 与 script-format 对齐
+version: "1.0.0"
+tier: 1
+items:
+  - rule_key: t1.global.writing_prohibitions.format-ssot
+    section: writing_prohibitions
+    title: 格式禁止项
+    priority: 5
+    body: |
+      SSOT: foundation/constraints/script-format.yaml
+      禁止：引号台词；心理描写；方括号场景头；独立【画面】行；"她感到..."类外化。
+  - rule_key: t1.global.writing_prohibitions.ai-emotion
+    section: writing_prohibitions
+    title: 情绪直述禁止
+    priority: 10
+    body: |
+      禁止直接写"我感到/他很愤怒/她很难过"；用动作、停顿、环境、对话节奏外化情绪。

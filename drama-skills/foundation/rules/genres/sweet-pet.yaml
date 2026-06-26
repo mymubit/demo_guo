@@ -1,0 +1,23 @@
+genre_key: sweet-pet
+label_zh: 甜宠虐恋
+tier: 2
+items:
+  - rule_key: t2.sweet-pet.genre_rules.emotion-anchor
+    section: genre_rules
+    scope_type: genre
+    scope_key: sweet-pet
+    title: 甜宠虐恋·情绪锚点
+    priority: 10
+    body: |
+      SSOT: knowledge/tier2-genre-rules.md · ThemeTemplate sweet-pet
+      核心情绪：笨拙心动/成年人恋爱拉扯/双向暗恋；甜虐交替，感情升温。
+      钩子：误会解开、吃醋反转、告白时刻、甜蜜暴击。
+      台词：LR-002 甜宠类不超过3句连续内心独白。
+  - rule_key: t2.sweet-pet.rhythm_rules.act-ratio
+    section: rhythm_rules
+    scope_type: genre
+    scope_key: sweet-pet
+    title: 阶段配比参考
+    priority: 20
+    body: |
+      六阶段占比：15/25/25/15/10/10；反转密度≈0.25；快速进入，甜虐交替。

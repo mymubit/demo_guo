@@ -21,7 +21,9 @@ from apps.creation.models import AgentExecutionRun, Project, ProjectFusionArtifa
 from apps.creation.monitoring.execution_run_service import AgentExecutionRunService
 from apps.creation.agent_runtime.episode_merge import (
     merge_episode_designs_by_number,
+    merge_episode_outlines_by_number,
     merge_episodes_by_number,
+    merge_series_outline_artifact,
 )
 from apps.skill.llm.chat import LlmService
 from apps.skill.llm.usage_log import llm_usage_scope
@@ -126,10 +128,139 @@ class IndependentAgentService:
                 artifacts[key] = payload
         if missing:
             raise AgentRuntimeError(f"??????: {', '.join(missing)}")
+        params = dict(params or {})
+        if agent.agent_id == "drama.plot-architect":
+            from apps.drama.episode_outline_store import (
+                OUTLINE_MODE_EPISODES_ONLY,
+                OUTLINE_MODE_STRUCTURE_ONLY,
+                aggregate_series_outline,
+                resolve_outline_mode,
+            )
+            from apps.creation.artifact_service import get_fusion_meta_payload
+
+            ep_from, ep_to = IndependentAgentService._resolve_episode_bounds(params)
+            existing_meta = get_fusion_meta_payload(project, "series_outline")
+            outline_mode = resolve_outline_mode(
+                params,
+                episode_from=ep_from,
+                existing_meta=existing_meta,
+            )
+            params.setdefault("outline_mode", outline_mode)
+
+            if outline_mode == OUTLINE_MODE_STRUCTURE_ONLY:
+                params.setdefault(
+                    "batch_instruction",
+                    (
+                        "仅生成全剧结构：输出 six_stage_structure（六阶段）、"
+                        "foreshadowing_list（伏笔清单）、rhythm_dual_track_validation 等；"
+                        "不要输出 episode_outlines / episodes 分集数组。"
+                    ),
+                )
+            elif outline_mode == OUTLINE_MODE_EPISODES_ONLY:
+                prior = aggregate_series_outline(project)
+                prior_outlines = prior.get("episode_outlines") or []
+                if prior_outlines:
+                    artifacts["series_outline"] = {
+                        key: value
+                        for key, value in prior.items()
+                        if key != "_meta"
+                    }
+                ep_to_text = str(ep_to) if ep_to is not None else "?"
+                ep_from_text = str(ep_from) if ep_from is not None else "1"
+                params.setdefault(
+                    "batch_instruction",
+                    (
+                        f"续写分集大纲：仅输出第{ep_from_text}-{ep_to_text}集 episode_outlines，"
+                        f"每条必须含 episode_num、goal_conflict、ending_hook、ev_et_tp；"
+                        f"不要重复输出已有集数；"
+                        f"不要输出 six_stage_structure、foreshadowing_list、six_stage_narrative 等全剧结构字段。"
+                    ),
+                )
+            elif ep_from is not None and int(ep_from) > 1:
+                prior = aggregate_series_outline(project)
+                prior_outlines = prior.get("episode_outlines") or []
+                if prior_outlines:
+                    artifacts["series_outline"] = {
+                        key: value
+                        for key, value in prior.items()
+                        if key != "_meta"
+                    }
+                    ep_to_text = str(ep_to) if ep_to is not None else "?"
+                    params.setdefault(
+                        "batch_instruction",
+                        (
+                            f"续写分集大纲：仅输出第{ep_from}-{ep_to_text}集 episode_outlines，"
+                            f"每条必须含 episode_num、goal_conflict、ending_hook、ev_et_tp；"
+                            f"不要重复输出第1-{int(ep_from) - 1}集。"
+                        ),
+                    )
+        blob_agent_configs = {
+            "drama.narrative-engineer": "narrative_plan",
+            "drama.script-writer": "episode_scripts",
+            "drama.polish-master": "polished_script",
+        }
+        blob_cfg_key = blob_agent_configs.get(agent.agent_id)
+        if blob_cfg_key:
+            from apps.drama.artifact_mode import ARTIFACT_MODE_EPISODES_ONLY, ARTIFACT_MODE_STRUCTURE_ONLY
+            from apps.drama.episode_artifact_store import (
+                EPISODE_BLOB_CONFIGS,
+                aggregate_episode_blob,
+                config_supports_structure_mode,
+                resolve_blob_mode,
+            )
+            from apps.creation.artifact_service import get_fusion_meta_payload
+
+            blob_cfg = EPISODE_BLOB_CONFIGS[blob_cfg_key]
+            ep_from, ep_to = IndependentAgentService._resolve_episode_bounds(params)
+            existing_meta = get_fusion_meta_payload(project, blob_cfg.fusion_key)
+            blob_mode = resolve_blob_mode(
+                params,
+                episode_from=ep_from,
+                existing_meta=existing_meta,
+                config=blob_cfg,
+            )
+            params.setdefault("blob_mode", blob_mode)
+
+            if blob_mode == ARTIFACT_MODE_STRUCTURE_ONLY and config_supports_structure_mode(blob_cfg):
+                params.setdefault(
+                    "batch_instruction",
+                    (
+                        "仅生成全剧叙事框架：输出 narrative_core_objective、narrative_mechanics、"
+                        "narrative_consistency_check、opening_package_verification 等；"
+                        "不要输出 episode_narrative_designs 分集数组。"
+                    ),
+                )
+            elif blob_mode == ARTIFACT_MODE_EPISODES_ONLY:
+                prior = aggregate_episode_blob(project, blob_cfg)
+                prior_items = prior.get(blob_cfg.output_list_key) or []
+                if prior_items:
+                    artifacts[blob_cfg.fusion_key] = {
+                        key: value for key, value in prior.items() if key != "_meta"
+                    }
+                ep_to_text = str(ep_to) if ep_to is not None else "?"
+                ep_from_text = str(ep_from) if ep_from is not None else "1"
+                if blob_cfg.fusion_key == "narrative_plan":
+                    params.setdefault(
+                        "batch_instruction",
+                        (
+                            f"续写叙事分集设计：仅输出第{ep_from_text}-{ep_to_text}集 episode_narrative_designs，"
+                            f"每条必须含 episode_id、narrative_focus；不要重复已有集数；"
+                            f"不要输出 narrative_core_objective、narrative_mechanics 等全剧框架字段。"
+                        ),
+                    )
+                else:
+                    params.setdefault(
+                        "batch_instruction",
+                        (
+                            f"续写{'润色剧本' if blob_cfg.fusion_key == 'polished_script' else '剧本'}："
+                            f"仅输出第{ep_from_text}-{ep_to_text}集 {blob_cfg.output_list_key}，"
+                            f"每条必须含 {blob_cfg.number_field} 与正文；不要重复已有集数。"
+                        ),
+                    )
         payload = {
             "project": project_payload,
             "artifacts": artifacts,
-            "params": dict(params or {}),
+            "params": params,
             "required_artifacts": required_artifacts,
             "optional_artifacts": optional_artifacts,
             "agent_notes": dict(getattr(project, "agent_notes", None) or {}),
@@ -510,6 +641,11 @@ class IndependentAgentService:
             "episode_narrative_designs ???? episode_id?narrative_focus?audience_emotion_design?"
             "narrative_beat_timing??????????????????"
         ),
+        "series-outline.v1": (
+            "payload 必须含 episode_outlines 数组；分批任务时仅输出本批集数，"
+            "每条含 episode_num、goal_conflict、ending_hook、ev_et_tp；"
+            "禁止只返回六阶段结构而无分集数组。"
+        ),
     }
 
     @classmethod
@@ -531,11 +667,17 @@ class IndependentAgentService:
         return " ".join(parts)
 
     @staticmethod
-    def validate_output(agent: AgentDefinition, output: Dict[str, Any]) -> Dict[str, Any]:
+    def validate_output(
+        agent: AgentDefinition,
+        output: Dict[str, Any],
+        *,
+        run_params: dict | None = None,
+    ) -> Dict[str, Any]:
         contract = agent.output_contract or {}
         allowed = [str(k) for k in contract.get("artifacts") or []]
         if not allowed:
             raise AgentRuntimeError("Agent ??????")
+        validation_params = dict(run_params or {})
         if "payload" in output and isinstance(output.get("payload"), dict):
             default_key = getattr(agent, "default_output_artifact_key", "") or allowed[0]
             artifact_key = str(output.get("artifact_key") or default_key).strip()
@@ -555,6 +697,7 @@ class IndependentAgentService:
             validate_matched_outputs(
                 matched,
                 schema_version=str(contract.get("schema_version") or ""),
+                run_params=validation_params,
             )
             return matched
         matched = {key: output[key] for key in allowed if key in output and isinstance(output[key], dict)}
@@ -564,6 +707,7 @@ class IndependentAgentService:
             validate_matched_outputs(
                 matched,
                 schema_version=str(contract.get("schema_version") or ""),
+                run_params=validation_params,
             )
             return matched
         normalized = {allowed[0]: output}
@@ -572,6 +716,7 @@ class IndependentAgentService:
         validate_matched_outputs(
             normalized,
             schema_version=str(contract.get("schema_version") or ""),
+            run_params=validation_params,
         )
         return normalized
 
@@ -620,20 +765,43 @@ class IndependentAgentService:
         run: AgentExecutionRun,
     ) -> Dict[str, Any]:
         body = dict(incoming or {})
+        if artifact_key == "series_outline":
+            merged_base = dict(existing or {})
+            ep_from, ep_to = cls._episode_range_from_run(run)
+            return merge_series_outline_artifact(
+                merged_base,
+                body,
+                episode_from=ep_from,
+                episode_to=ep_to,
+            )
         if artifact_key in EPISODE_ARTIFACT_KEYS:
             merged_base = dict(existing or {})
             if not merged_base.get("episodes") and isinstance(body.get("episodes"), list):
                 merged_base.setdefault("nodeId", body.get("nodeId", ""))
                 merged_base.setdefault("projectId", str(run.project_id))
             ep_from, ep_to = cls._episode_range_from_run(run)
-            merged = merge_episodes_by_number(
-                merged_base,
-                body.get("episodes") or [],
-                episode_from=ep_from,
-                episode_to=ep_to,
+            use_outlines = (
+                isinstance(body.get("episode_outlines"), list)
+                or isinstance(merged_base.get("episode_outlines"), list)
             )
+            if use_outlines:
+                merged = merge_episode_outlines_by_number(
+                    merged_base,
+                    body.get("episode_outlines") or [],
+                    episode_from=ep_from,
+                    episode_to=ep_to,
+                )
+                skip_keys = {"episode_outlines", "_meta", "target_episode_range"}
+            else:
+                merged = merge_episodes_by_number(
+                    merged_base,
+                    body.get("episodes") or [],
+                    episode_from=ep_from,
+                    episode_to=ep_to,
+                )
+                skip_keys = {"episodes", "_meta"}
             for field, value in body.items():
-                if field not in {"episodes", "_meta"}:
+                if field not in skip_keys:
                     merged[field] = value
             return merged
         if artifact_key == NARRATIVE_PLAN_ARTIFACT_KEY:
@@ -689,19 +857,57 @@ class IndependentAgentService:
         *,
         prompt_version: str,
     ) -> List[str]:
-        overwrite_mode = (run.overwrite_mode or (agent.runtime_policy or {}).get("overwrite_mode") or "replace").lower()
+        overwrite_mode = cls._resolve_persist_overwrite_mode(run, agent)
         saved = []
         for key, payload in outputs.items():
             body = dict(payload or {})
-            if overwrite_mode == "merge":
-                existing = get_artifact(project, key)
-                if isinstance(existing, dict):
-                    body = cls._merge_artifact_body(
-                        artifact_key=key,
-                        incoming=body,
-                        existing=existing,
-                        run=run,
+            if key == "series_outline":
+                ep_from, ep_to = cls._episode_range_from_run(run)
+                from apps.drama.episode_outline_store import persist_series_outline_output
+
+                try:
+                    persist_series_outline_output(
+                        project,
+                        body,
+                        agent_id=agent.agent_id,
+                        run_id=str(run.id),
+                        episode_from=ep_from,
+                        episode_to=ep_to,
+                        run_params=dict(run.run_params or {}),
                     )
+                except ValueError as exc:
+                    raise AgentRuntimeError(str(exc)) from exc
+                saved.append(key)
+                continue
+            from apps.drama.episode_artifact_store import EPISODE_BLOB_CONFIGS, persist_episode_blob_output
+
+            blob_cfg = EPISODE_BLOB_CONFIGS.get(key)
+            if blob_cfg:
+                ep_from, ep_to = cls._episode_range_from_run(run)
+                try:
+                    persist_episode_blob_output(
+                        project,
+                        blob_cfg,
+                        body,
+                        agent_id=agent.agent_id,
+                        run_id=str(run.id),
+                        episode_from=ep_from,
+                        episode_to=ep_to,
+                        run_params=dict(run.run_params or {}),
+                    )
+                except ValueError as exc:
+                    raise AgentRuntimeError(str(exc)) from exc
+                saved.append(key)
+                continue
+            existing = get_artifact(project, key)
+            should_merge = overwrite_mode == "merge"
+            if should_merge and isinstance(existing, dict):
+                body = cls._merge_artifact_body(
+                    artifact_key=key,
+                    incoming=body,
+                    existing=existing,
+                    run=run,
+                )
             meta = dict(body.get("_meta") or {})
             meta.update(
                 {
@@ -727,7 +933,30 @@ class IndependentAgentService:
         raw = (params or {}).get("overwrite")
         if raw in ("replace", "merge", "append"):
             return str(raw)
-        return (agent.runtime_policy or {}).get("overwrite_mode", "replace")
+        return IndependentAgentService._runtime_overwrite_mode(agent)
+
+    @staticmethod
+    def _runtime_overwrite_mode(agent: AgentDefinition) -> str:
+        policy = agent.runtime_policy or {}
+        mode = policy.get("overwrite_mode")
+        if mode:
+            return str(mode).lower()
+        try:
+            from apps.drama.skills_registry import load_agent_runtime_policies
+
+            yaml_policy = load_agent_runtime_policies().get(agent.agent_id, {})
+            mode = (yaml_policy or {}).get("overwrite_mode")
+            if mode:
+                return str(mode).lower()
+        except Exception:  # noqa: BLE001
+            pass
+        return "replace"
+
+    @staticmethod
+    def _resolve_persist_overwrite_mode(run: AgentExecutionRun, agent: AgentDefinition) -> str:
+        if run.overwrite_mode:
+            return str(run.overwrite_mode).lower()
+        return IndependentAgentService._runtime_overwrite_mode(agent)
 
     @classmethod
     @transaction.atomic
@@ -826,7 +1055,7 @@ class IndependentAgentService:
                 max_tokens=max_completion,
                 provider_id=provider_id,
             )
-            outputs = cls.validate_output(agent, parsed)
+            outputs = cls.validate_output(agent, parsed, run_params=dict(run.run_params or {}))
             with transaction.atomic():
                 saved_keys = cls.persist_agent_output(
                     project,

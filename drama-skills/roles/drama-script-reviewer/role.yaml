@@ -1,0 +1,25 @@
+agent_id: drama.script-reviewer
+name: Script Reviewer
+name_zh: 审稿官
+dept: review
+role_tier: core
+fast_track: true
+workspace_order: 501
+default_output_artifact_key: review_report
+schema_version: review-report.v1
+modules: []
+rule_policy:
+  scopes:
+  - global_core
+  - genre_profile
+  - stage_playbook
+  max_chars: 2500
+skill_dir: roles/drama-script-reviewer
+input_contract:
+  required_artifacts:
+  - episode_scripts
+output_contract:
+  artifacts:
+  - review_report
+  schema_version: review-report.v1
+role: 剧本格式合规检查、结构完整性审查（六阶段/四段式）、人物逻辑一致性核查、McKee价值转变检验

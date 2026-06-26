@@ -138,6 +138,50 @@ class AgentOutputValidationCoverageTests(TestCase):
         }
         _validate_narrative_plan(body)
 
+    def test_episode_scripts_accepts_episode_field_alias(self):
+        from apps.creation.agent_runtime.output_schema_validation import (
+            normalize_episode_scripts,
+            _validate_episode_scripts,
+        )
+
+        body = {
+            "episodes": [
+                {"episode": 2, "script_text": "第二集"},
+            ],
+        }
+        normalize_episode_scripts(body, run_params={"episode_from": 1, "episode_to": 5})
+        _validate_episode_scripts(body, run_params={"episode_from": 1, "episode_to": 5})
+        self.assertEqual(body["episodes"][0]["episodeNumber"], 2)
+
+    def test_narrative_plan_structure_only_skips_episode_designs(self):
+        from apps.creation.agent_runtime.output_schema_validation import _validate_narrative_plan
+
+        body = {
+            "narrative_core_objective": "全剧叙事目标",
+            "narrative_mechanics": [{"mechanism_type": "情绪曲线", "description": "逐集递进"}],
+        }
+        _validate_narrative_plan(body, run_params={"blob_mode": "structure_only"})
+
+    def test_narrative_plan_structure_only_rejects_empty_structure(self):
+        from apps.creation.agent_runtime.independent_service import AgentRuntimeError
+        from apps.creation.agent_runtime.output_schema_validation import _validate_narrative_plan
+
+        with self.assertRaises(AgentRuntimeError):
+            _validate_narrative_plan({}, run_params={"blob_mode": "structure_only"})
+
+    def test_narrative_plan_episodes_only_skips_core_objective(self):
+        from apps.creation.agent_runtime.output_schema_validation import _validate_narrative_plan
+
+        body = {
+            "episode_narrative_designs": [
+                {"episode_id": "E011", "narrative_focus": "续批叙事"},
+            ],
+        }
+        _validate_narrative_plan(
+            body,
+            run_params={"blob_mode": "episodes_only", "episode_from": 11, "episode_to": 15},
+        )
+
     def test_validate_output_accepts_narrative_engineer_payload(self):
         agent = AgentDefinitionService.get_runnable("drama.narrative-engineer")
         output = {

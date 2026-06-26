@@ -22,6 +22,8 @@ class DramaEpisodeArtifact(models.Model):
 
     class ArtifactKey(models.TextChoices):
         EPISODE_SCRIPT = "episode_script", "单集剧本"
+        EPISODE_OUTLINE = "episode_outline", "单集大纲"
+        EPISODE_NARRATIVE = "episode_narrative", "单集叙事方案"
         REVIEW_REPORT = "review_report", "审稿报告"
         QUALITY_REPORT = "quality_report", "质量报告"
         DIALOGUE_NOTES = "dialogue_notes", "对白优化建议"

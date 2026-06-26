@@ -1,96 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Tier1 分区种子 — drama.* 新体系。
+Tier1 分区映射 — 数据来自 drama-skills/knowledge/knowledge-sections.md（Git SSOT）。
 
-旧的 brief/structure/character/outline/script 等 Agent 的 Tier1 映射已移除。
-现在改为 drama.* agent_id → Tier1 区块名 的映射。
-
-Tier1 区块定义：参见 drama-skills/knowledge/knowledge-sections.md
+不再在后端硬编码 section 列表；文件缺失时返回空映射并打日志。
 """
 from __future__ import annotations
 
-# drama.* Agent → Tier1 知识区块映射
-AGENT_TIER1_SEED: dict[str, list[str]] = {
-    # 战略选题部
-    "drama.topic-planner": ["philosophy"],
-    "drama.market-analyst": ["rhythm_rules", "philosophy", "scoring", "episode_structure"],
+import logging
 
-    # 世界构建部
-    "drama.world-architect": ["philosophy"],
-    "drama.character-designer": ["philosophy", "foreshadowing_rules"],
-
-    # 剧情引擎部
-    "drama.plot-architect": [
-        "episode_structure",
-        "rhythm_rules",
-        "quantitative_constraints",
-        "foreshadowing_rules",
-        "qdn_emotion_model",
-        "hook_effectiveness",
-        "payment_checkpoint_3card",
-    ],
-    "drama.narrative-engineer": [
-        "episode_emotion_8nodes",
-        "qdn_emotion_model",
-        "hook_effectiveness",
-        "emotion_externalization_dict",
-        "episode_structure",
-        "rhythm_rules",
-        "foreshadowing_rules",
-    ],
-
-    # 创作执行部
-    "drama.script-writer": [
-        "episode_structure",
-        "quantitative_constraints",
-        "writing_prohibitions",
-        "writing_requirements",
-        "information_asymmetry_mechanics",
-        "emotion_externalization_dict",
-        "ai_tone_forbidden",
-        "qdn_emotion_model",
-        "format_standard",
-        "hook_effectiveness",
-        "episode_emotion_8nodes",
-        "dialogue_quality",
-    ],
-    "drama.polish-master": [
-        "writing_prohibitions",
-        "writing_requirements",
-        "ai_tone_forbidden",
-        "emotion_externalization_dict",
-        "dialogue_quality",
-        "rhythm_rules",
-        "quantitative_constraints",
-        "format_standard",
-    ],
-
-    # 评审质控部
-    "drama.script-reviewer": ["scoring", "format_standard"],
-    "drama.quality-reporter": ["scoring"],
-
-    # 制作宣发部
-    "drama.production-pack": [
-        "format_standard",
-        "dialogue_quality",
-        "hook_effectiveness",
-        "scoring",
-        "foreshadowing_rules",
-    ],
-
-    # 合规总编室
-    "drama.compliance-guard": ["scoring"],
-}
-
-# NODE_TIER1_SEED: 节点级映射（与 agent 映射对齐）
-NODE_TIER1_SEED: dict[str, list[str]] = {
-    f"node_{k.replace('drama.', '').replace('-', '_')}": v
-    for k, v in AGENT_TIER1_SEED.items()
-}
-
-DEFAULT_TIER1_SECTIONS_BY_AGENT = AGENT_TIER1_SEED
-DEFAULT_TIER1_SECTIONS_BY_NODE = NODE_TIER1_SEED
-
+logger = logging.getLogger(__name__)
 
 TIER1_SECTION_LABELS = {
     "philosophy": "创作哲学",
@@ -110,7 +28,47 @@ TIER1_SECTION_LABELS = {
     "episode_emotion_8nodes": "分集情绪八节点",
     "payment_checkpoint_3card": "付费卡点三卡",
     "dialogue_quality": "对话质量",
+    "character_rules": "角色逻辑",
+    "conflict_escalation": "冲突升级",
+    "learned_rules": "经验规则 LR",
 }
+
+
+def get_agent_tier1_sections() -> dict[str, list[str]]:
+    from apps.drama.skills_registry import load_agent_tier1_sections
+
+    sections = load_agent_tier1_sections()
+    if not sections:
+        logger.warning("[tier1_sections] knowledge-sections.md 未解析到映射，Tier1 片段将为空")
+    return sections
+
+
+# 兼容旧 import 名；值为 SSOT 加载结果（非硬编码）
+AGENT_TIER1_SEED: dict[str, list[str]] = {}
+
+
+def _ensure_tier1_loaded() -> dict[str, list[str]]:
+    global AGENT_TIER1_SEED
+    if not AGENT_TIER1_SEED:
+        AGENT_TIER1_SEED = get_agent_tier1_sections()
+    return AGENT_TIER1_SEED
+
+
+NODE_TIER1_SEED: dict[str, list[str]] = {}
+
+
+def _ensure_node_tier1_loaded() -> dict[str, list[str]]:
+    global NODE_TIER1_SEED
+    if not NODE_TIER1_SEED:
+        NODE_TIER1_SEED = {
+            f"node_{agent_id.replace('drama.', '').replace('-', '_')}": sections
+            for agent_id, sections in _ensure_tier1_loaded().items()
+        }
+    return NODE_TIER1_SEED
+
+
+DEFAULT_TIER1_SECTIONS_BY_AGENT = AGENT_TIER1_SEED
+DEFAULT_TIER1_SECTIONS_BY_NODE = NODE_TIER1_SEED
 
 
 def tier1_section_label(section_key: str) -> str:
@@ -130,6 +88,7 @@ def tier1_section_catalog_detail() -> list:
 def resolve_tier1_sections(node_id: str) -> list[str]:
     """按 drama.* agent_id 或 legacy node_id 解析 Tier1 区块。"""
     key = (node_id or "").strip()
-    if key in AGENT_TIER1_SEED:
-        return AGENT_TIER1_SEED[key]
-    return NODE_TIER1_SEED.get(key, [])
+    agent_sections = _ensure_tier1_loaded()
+    if key in agent_sections:
+        return agent_sections[key]
+    return _ensure_node_tier1_loaded().get(key, [])

@@ -1,6 +1,6 @@
 # S级评审标准（S-Class Review Standards）
 
-> **来源**：dramaskill `references/s-class-review-standards.json` v2.0（50个检查项）
+> **参考标准**；与 `foundation/rules/scoring-core.yaml` 对齐
 > 
 > **使用方式**：drama-quality-reporter（最终评分时逐项核对）、drama-script-reviewer（审稿阶段参考）。
 

@@ -1,6 +1,6 @@
 # 评分预设（Scoring Presets）
 
-> **来源**：ScriptForge `backend/apps/skill/config/portal/review_scoring_defaults.py`
+> **参考长文**；可执行规则 SSOT：`foundation/rules/scoring-core.yaml`
 > 
 > **使用方式**：drama-quality-reporter 执行评分时，根据使用场景选择对应预设。
 > 默认使用 `standard` 预设。

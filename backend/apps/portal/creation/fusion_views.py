@@ -48,7 +48,7 @@ class FusionCatalogView(APIView):
 
 
 class AgentCatalogView(APIView):
-    """GET /api/creation/agents/catalog/ — Agent 体系（drama.* 36角色）。"""
+    """GET /api/creation/agents/catalog/ — Agent 体系（drama.* 12 角色）。"""
 
     permission_classes = [AllowAny]
 

@@ -56,6 +56,26 @@ class DramaRoleListView(APIView):
         })
 
 
+class ThemeMatrixView(APIView):
+    """题材四轴矩阵与预设组合（SSOT: drama-skills/foundation/theme-matrix.yaml）"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from apps.drama.theme_matrix_service import build_theme_matrix_ui_config
+
+        config = build_theme_matrix_ui_config()
+        if not config:
+            return Response(
+                {
+                    "code": 50001,
+                    "message": "题材矩阵配置不可用，请检查 drama-skills 同步状态",
+                    "data": None,
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        return Response({"code": 0, "message": "success", "data": config})
+
+
 # ---------------------------------------------------------------------------
 # 工作区
 # ---------------------------------------------------------------------------
@@ -160,7 +180,7 @@ class DramaWorkspaceViewSet(ModelViewSet):
         executions = {}
         for exec_obj in DramaRoleExecution.objects.filter(
             project=project
-        ).order_by("-created_at"):
+        ).select_related("project").order_by("-created_at"):
             if exec_obj.agent_id not in executions:
                 executions[exec_obj.agent_id] = exec_obj
         for item in role_progress:
@@ -168,18 +188,31 @@ class DramaWorkspaceViewSet(ModelViewSet):
             if exec_obj:
                 item["execution"] = DramaRoleExecutionSerializer(exec_obj).data
 
-        episode_artifacts_count = DramaEpisodeArtifact.objects.filter(
-            project=project,
-            artifact_key=DramaEpisodeArtifact.ArtifactKey.EPISODE_SCRIPT,
-        ).values("episode_number").distinct().count()
+        from apps.drama.outline_progress import summarize_series_outline_progress
+        from apps.drama.episode_artifact_store import (
+            EPISODE_SCRIPTS_CONFIG,
+            NARRATIVE_PLAN_CONFIG,
+            POLISHED_SCRIPT_CONFIG,
+            summarize_episode_blob_progress,
+        )
 
         payload = DramaProgressService.build_progress_payload(project)
         payload["roles"] = role_progress
+        payload["outline_progress"] = summarize_series_outline_progress(project)
+        payload["script_progress"] = summarize_episode_blob_progress(
+            project, EPISODE_SCRIPTS_CONFIG, batch_size=5
+        )
+        payload["polish_progress"] = summarize_episode_blob_progress(
+            project, POLISHED_SCRIPT_CONFIG, batch_size=5
+        )
+        payload["narrative_progress"] = summarize_episode_blob_progress(
+            project, NARRATIVE_PLAN_CONFIG, batch_size=5
+        )
+        script_prog = payload["script_progress"]
         payload["episode_progress"] = {
-            "total": project.episode_count,
-            "completed": episode_artifacts_count,
-            "rate": round(episode_artifacts_count / project.episode_count * 100, 1)
-            if project.episode_count > 0 else 0,
+            "total": script_prog["expected"],
+            "completed": script_prog["generated"],
+            "rate": script_prog["completion_rate"],
         }
 
         return Response({
@@ -196,6 +229,9 @@ class DramaWorkspaceViewSet(ModelViewSet):
         支持的参数：
         - episode_range: str  例如 "1-5"，指定集数范围（script-writer / plot-architect 支持）
         - episode_count: int  总集数，给 plot-architect 使用
+        - outline_mode: str  plot-architect 专用：full | episodes_only | structure_only
+        - blob_mode: str  叙事/剧本/润色等分批角色：full | episodes_only | structure_only
+        - artifact_mode: str  outline_mode / blob_mode 通用别名
         - custom_params: dict  自定义参数
         - priority: str  "normal" | "high"
         """
@@ -217,6 +253,8 @@ class DramaWorkspaceViewSet(ModelViewSet):
 
         episode_range = request.data.get("episode_range", "")
         episode_count = request.data.get("episode_count", project.episode_count)
+        outline_mode = request.data.get("outline_mode", "")
+        blob_mode = request.data.get("blob_mode", "") or request.data.get("artifact_mode", "")
         custom_params = request.data.get("custom_params") or {}
 
         ep_start, ep_end = None, None
@@ -245,8 +283,17 @@ class DramaWorkspaceViewSet(ModelViewSet):
             run_params["episode_to"] = ep_end
         if episode_count:
             run_params["episode_count"] = int(episode_count)
+        if outline_mode:
+            run_params["outline_mode"] = str(outline_mode).strip()
+        if blob_mode:
+            run_params["blob_mode"] = str(blob_mode).strip()
         if isinstance(custom_params, dict):
             run_params.update(custom_params)
+
+        is_structure_run = (
+            run_params.get("outline_mode") == "structure_only"
+            or run_params.get("blob_mode") == "structure_only"
+        )
 
         try:
             exec_record, is_new = DramaRoleRunService.enqueue_role_run(
@@ -267,7 +314,9 @@ class DramaWorkspaceViewSet(ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        if ep_start and ep_end:
+        if is_structure_run:
+            scope_desc = "全剧结构（六阶段 / 伏笔等）"
+        elif ep_start and ep_end:
             scope_desc = f"第{ep_start}-{ep_end}集（共{ep_end - ep_start + 1}集）"
         elif role_id == "drama.plot-architect":
             scope_desc = f"共{episode_count}集大纲"

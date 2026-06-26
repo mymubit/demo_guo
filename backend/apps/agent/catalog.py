@@ -22,7 +22,7 @@ def portal_agent_catalog(
     获取创作工作台的 Agent 目录。
 
     参数：
-    - track_mode: "fast"（快速通道，8个）| "expert"（专家通道，36个）
+    - track_mode: "fast"（快速通道，8个）| "expert"（专家通道，12个）
     - genre_code: 可选，题材代码（future use）
 
     返回按部门分组的 Agent 列表。

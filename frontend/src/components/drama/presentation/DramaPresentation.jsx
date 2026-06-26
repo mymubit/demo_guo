@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import {
   AlertTriangle,
   BarChart3,
@@ -8,8 +8,8 @@ import {
   ChevronUp,
   Clapperboard,
   Clock,
-  DollarSign,
   FileText,
+  Flame,
   Globe2,
   Heart,
   Lightbulb,
@@ -22,6 +22,7 @@ import {
   XCircle,
   Zap,
 } from 'lucide-react'
+import { formatPayloadText } from '../../shared/PayloadInspector'
 
 function SectionTitle({ children }) {
   return (
@@ -382,6 +383,15 @@ function EpisodeStructureTimeline({ structure }) {
 }
 
 function EpisodeOutlineCard({ item, compact = false }) {
+  if (item.missing) {
+    return (
+      <article className="rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-5 text-center">
+        <p className="text-sm font-medium text-slate-500">第 {item.episode_no} 集 · 待生成</p>
+        <p className="text-xs text-slate-600 mt-1">在上方选择对应批次后执行情节架构师</p>
+      </article>
+    )
+  }
+
   const structure = item.structure?.length ? item.structure : (item.sections || []).filter(
     (s) => !emotionKey(s.label),
   )
@@ -427,7 +437,9 @@ function EpisodeOutlineCard({ item, compact = false }) {
 
         {structure.length > 0 ? (
           <div>
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500">四段结构</p>
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+              {structure.some((s) => s.label === '目标与冲突' || s.label === '主题推进') ? '本集要点' : '四段结构'}
+            </p>
             <EpisodeStructureTimeline structure={structure} />
           </div>
         ) : null}
@@ -1158,33 +1170,142 @@ function QualityReportBlock({ block }) {
   )
 }
 
+function parseScoreMeta(rawScore) {
+  const text = String(rawScore ?? '').trim()
+  if (!text) return null
+  const fraction = text.match(/^([\d.]+)\s*\/\s*([\d.]+)$/)
+  if (fraction) {
+    const num = Number(fraction[1])
+    const max = Number(fraction[2])
+    if (!Number.isNaN(num) && !Number.isNaN(max) && max > 0) {
+      return { num, max, percent: Math.min(100, Math.round((num / max) * 100)) }
+    }
+  }
+  const num = Number(text)
+  if (Number.isNaN(num)) return null
+  const max = num <= 5 ? 5 : num <= 10 ? 10 : 100
+  return { num, max, percent: Math.min(100, Math.round((num / max) * 100)) }
+}
+
+function scoreBarColor(percent) {
+  if (percent >= 90) return 'bg-emerald-400'
+  if (percent >= 75) return 'bg-gold-400'
+  if (percent >= 60) return 'bg-cyan-400'
+  return 'bg-amber-400'
+}
+
+function gradeBadgeStyle(grade) {
+  const g = String(grade || '').toUpperCase()
+  if (g === 'S') return 'from-amber-300 via-yellow-400 to-orange-400 text-navy-950 shadow-amber-500/30'
+  if (g === 'A') return 'from-gold-400 via-gold-500 to-amber-500 text-navy-950 shadow-gold-500/30'
+  if (g === 'B') return 'from-cyan-400 to-cyan-600 text-navy-950 shadow-cyan-500/20'
+  return 'from-slate-400 to-slate-600 text-white shadow-slate-500/20'
+}
+
 function ScoreBoardBlock({ block }) {
+  const dimensions = block.dimensions || []
+  const totalMeta = parseScoreMeta(block.total)
+  const grade = block.grade
+
   return (
-    <section className="rounded-xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/5 backdrop-blur-sm space-y-4">
-      <div className="flex flex-wrap items-end gap-4">
-        {block.grade ? (
-          <span className="text-4xl font-bold text-gold-400 leading-none">{block.grade}</span>
-        ) : null}
-        {block.total != null ? (
-          <span className="text-sm text-slate-400 pb-1">总分 {block.total}</span>
+    <section className="relative overflow-hidden rounded-2xl border border-gold-500/20 bg-gradient-to-br from-navy-900/90 via-navy-950/95 to-gold-950/30 shadow-xl shadow-black/20">
+      <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-gold-500/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-20 -left-10 h-40 w-40 rounded-full bg-cyan-500/8 blur-3xl" />
+
+      <div className="relative border-b border-white/10 px-6 py-6">
+        <div className="flex flex-wrap items-end gap-5">
+          {grade ? (
+            <div
+              className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-3xl font-black shadow-lg ${gradeBadgeStyle(grade)}`}
+            >
+              {grade}
+            </div>
+          ) : null}
+          <div className="min-w-0 flex-1">
+            {block.title ? (
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-300/80">
+                {block.title}
+              </p>
+            ) : null}
+            {totalMeta ? (
+              <p className="mt-1 text-3xl font-bold tabular-nums leading-none text-white">
+                {totalMeta.num}
+                <span className="ml-1 text-lg font-medium text-slate-400">/ {totalMeta.max}</span>
+              </p>
+            ) : block.total != null ? (
+              <p className="mt-1 text-3xl font-bold tabular-nums text-white">{block.total}</p>
+            ) : null}
+            {totalMeta ? (
+              <p className="mt-2 text-xs text-slate-400">综合得分 {totalMeta.percent}%</p>
+            ) : null}
+          </div>
+          {totalMeta ? (
+            <div className="relative h-14 w-14 shrink-0">
+              <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36" aria-hidden>
+                <circle cx="18" cy="18" r="15.5" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
+                <circle
+                  cx="18"
+                  cy="18"
+                  r="15.5"
+                  fill="none"
+                  stroke="url(#marketScoreGradient)"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                  strokeDasharray={`${totalMeta.percent} 100`}
+                />
+                <defs>
+                  <linearGradient id="marketScoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#fbbf24" />
+                    <stop offset="100%" stopColor="#22d3ee" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-[11px] font-bold text-gold-300">
+                {totalMeta.percent}%
+              </span>
+            </div>
+          ) : null}
+        </div>
+        {block.summary ? (
+          <p className="mt-4 text-sm leading-relaxed text-slate-300 border-l-2 border-gold-500/40 pl-3">
+            {block.summary}
+          </p>
         ) : null}
       </div>
-      {block.summary ? (
-        <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap border-l-2 border-gold-500/30 pl-3">
-          {block.summary}
-        </p>
-      ) : null}
-      {(block.dimensions || []).length > 0 ? (
-        <div className="grid gap-2 sm:grid-cols-2">
-          {block.dimensions.map((row, index) => (
-            <div
-              key={`${row.name}-${index}`}
-              className="flex items-center justify-between rounded-lg bg-white/[0.06] border border-white/10 px-3 py-2.5 text-sm"
-            >
-              <span className="text-slate-300">{row.name}</span>
-              <span className="font-semibold text-white tabular-nums">{row.score}</span>
-            </div>
-          ))}
+
+      {dimensions.length > 0 ? (
+        <div className="relative p-5">
+          <p className="mb-4 px-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+            维度细项
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {dimensions.map((row, index) => {
+              const meta = parseScoreMeta(row.score)
+              const percent = meta?.percent ?? null
+              return (
+                <article
+                  key={`${row.name}-${index}`}
+                  className="group rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3.5 transition-colors hover:border-gold-500/25 hover:bg-white/[0.06]"
+                >
+                  <div className="mb-2.5 flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium text-slate-200">{row.name}</p>
+                    <p className="shrink-0 text-sm font-bold tabular-nums text-white">
+                      {row.score}
+                      {meta ? <span className="text-xs font-medium text-slate-500"> / {meta.max}</span> : null}
+                    </p>
+                  </div>
+                  {percent != null ? (
+                    <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className={`h-full rounded-full transition-all ${scoreBarColor(percent)}`}
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                  ) : null}
+                </article>
+              )
+            })}
+          </div>
         </div>
       ) : null}
     </section>
@@ -1577,44 +1698,176 @@ function RelationshipGraphBlock({ block }) {
 const MARKET_SECTION_STYLES = {
   indigo: {
     icon: TrendingUp,
-    header: 'from-gold-500/10 to-transparent',
+    accent: 'text-gold-400',
+    ring: 'ring-gold-500/20',
+    header: 'from-gold-500/12 via-gold-500/5 to-transparent',
     border: 'border-gold-500/20',
     iconBg: 'bg-gold-500/15 text-gold-400',
+    dot: 'bg-gold-400',
   },
   violet: {
     icon: Target,
-    header: 'from-cyan-500/10 to-transparent',
+    accent: 'text-cyan-400',
+    ring: 'ring-cyan-500/20',
+    header: 'from-cyan-500/12 via-cyan-500/5 to-transparent',
     border: 'border-cyan-500/20',
     iconBg: 'bg-cyan-500/15 text-cyan-400',
+    dot: 'bg-cyan-400',
   },
   emerald: {
-    icon: DollarSign,
-    header: 'from-emerald-500/10 to-transparent',
+    icon: Lightbulb,
+    accent: 'text-emerald-400',
+    ring: 'ring-emerald-500/20',
+    header: 'from-emerald-500/12 via-emerald-500/5 to-transparent',
     border: 'border-emerald-500/20',
     iconBg: 'bg-emerald-500/15 text-emerald-400',
+    dot: 'bg-emerald-400',
   },
   amber: {
     icon: ShieldAlert,
-    header: 'from-amber-500/10 to-transparent',
+    accent: 'text-amber-400',
+    ring: 'ring-amber-500/20',
+    header: 'from-amber-500/12 via-amber-500/5 to-transparent',
     border: 'border-amber-500/20',
     iconBg: 'bg-amber-500/15 text-amber-400',
+    dot: 'bg-amber-400',
   },
 }
 
-const MARKET_ITEM_STYLES = {
-  default: 'border-white/10 bg-white/[0.03]',
-  highlight: 'border-emerald-500/20 bg-gradient-to-br from-emerald-500/8 to-transparent',
-  warning: 'border-amber-500/20 bg-amber-500/8',
-  accent: 'border-cyan-500/20 bg-cyan-500/8',
+function inferMarketSectionLayout(section) {
+  const title = section.title || ''
+  if (title.includes('梦境') || title.includes('指标')) return 'stats'
+  if (title.includes('模板')) return 'templates'
+  if (title.includes('六维') || title.includes('拉片')) return 'timeline'
+  if (title.includes('热点') || title.includes('市场')) return 'insight'
+  return 'stack'
+}
+
+function MarketKpiTile({ label, value, index }) {
+  const isLong = String(value || '').length > 6
+  const accents = [
+    'from-gold-500/15 to-gold-500/5 border-gold-500/25 text-gold-300',
+    'from-cyan-500/15 to-cyan-500/5 border-cyan-500/25 text-cyan-300',
+    'from-emerald-500/15 to-emerald-500/5 border-emerald-500/25 text-emerald-300',
+    'from-violet-500/15 to-violet-500/5 border-violet-500/25 text-violet-300',
+  ]
+  const accent = accents[index % accents.length]
+
+  return (
+    <div className={`rounded-xl border bg-gradient-to-br px-4 py-3.5 ${accent}`}>
+      <p className="text-[10px] font-semibold uppercase tracking-wider opacity-80">{label}</p>
+      <p
+        className={`mt-1.5 font-bold text-white break-words ${
+          isLong ? 'text-sm leading-snug' : 'text-2xl tabular-nums'
+        }`}
+      >
+        {value}
+      </p>
+    </div>
+  )
+}
+
+function MarketStatPill({ item }) {
+  const meta = parseScoreMeta(item.body)
+  if (!meta) {
+    return <MarketReportItem item={item} />
+  }
+
+  return (
+    <div className="flex flex-col items-center rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-transparent px-4 py-5 text-center">
+      <div className="relative mb-3 h-16 w-16">
+        <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36" aria-hidden>
+          <circle cx="18" cy="18" r="15.5" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="2.5" />
+          <circle
+            cx="18"
+            cy="18"
+            r="15.5"
+            fill="none"
+            stroke="#fbbf24"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeDasharray={`${meta.percent} 100`}
+          />
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-lg font-bold tabular-nums text-white">
+          {meta.num}
+        </span>
+      </div>
+      <p className="text-xs font-semibold text-slate-300">{item.title}</p>
+      <p className="mt-0.5 text-[10px] text-slate-500">满分 {meta.max}</p>
+    </div>
+  )
+}
+
+function MarketTemplateCard({ item, index }) {
+  return (
+    <article className="group relative overflow-hidden rounded-xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/8 via-white/[0.03] to-transparent p-4 transition-all hover:border-emerald-500/35 hover:shadow-lg hover:shadow-emerald-500/5">
+      <div className="mb-3 flex items-center gap-3">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 text-sm font-bold text-emerald-300 ring-1 ring-emerald-500/30">
+          {index + 1}
+        </span>
+        <p className="text-xs font-semibold uppercase tracking-wide text-emerald-400/90">{item.title}</p>
+      </div>
+      <p className="text-sm leading-7 text-slate-200 whitespace-pre-wrap break-words pl-11">{item.body}</p>
+    </article>
+  )
+}
+
+function MarketTimelineItem({ item, index, isLast, tone }) {
+  return (
+    <li className="relative flex gap-4 pb-5 last:pb-0">
+      <div className="flex flex-col items-center shrink-0 pt-1">
+        <span className={`flex h-3 w-3 rounded-full ring-4 ${tone.ring} ${tone.dot}`} />
+        {!isLast ? <span className="mt-1 w-px flex-1 min-h-[24px] bg-white/10" aria-hidden /> : null}
+      </div>
+      <article className="min-w-0 flex-1 -mt-0.5 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3.5">
+        <h6 className="text-xs font-semibold text-cyan-300 mb-2">{item.title}</h6>
+        <p className="text-sm text-slate-300 leading-7 whitespace-pre-wrap break-words">{item.body}</p>
+      </article>
+    </li>
+  )
+}
+
+function MarketInsightItem({ item, featured }) {
+  if (featured) {
+    return (
+      <article className="col-span-full rounded-2xl border border-gold-500/25 bg-gradient-to-br from-gold-500/10 via-white/[0.04] to-transparent p-5">
+        <div className="mb-2 flex items-center gap-2">
+          <Users className="h-4 w-4 text-gold-400" />
+          <h6 className="text-xs font-semibold uppercase tracking-wide text-gold-300">{item.title}</h6>
+        </div>
+        <p className="text-[15px] leading-8 text-slate-100 whitespace-pre-wrap break-words">{item.body}</p>
+      </article>
+    )
+  }
+
+  return (
+    <article className="rounded-xl border border-white/10 bg-white/[0.03] p-4 hover:border-gold-500/20 transition-colors">
+      <h6 className="mb-2 flex items-center gap-2 text-xs font-semibold text-slate-400">
+        <Flame className="h-3.5 w-3.5 text-gold-400/80" />
+        {item.title}
+      </h6>
+      <p className="text-sm text-slate-300 leading-7 whitespace-pre-wrap break-words">{item.body}</p>
+    </article>
+  )
 }
 
 function MarketReportItem({ item }) {
   const variant = item.variant || 'default'
-  const styleClass = MARKET_ITEM_STYLES[variant] || MARKET_ITEM_STYLES.default
+  const variantClass =
+    variant === 'highlight'
+      ? 'border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 to-transparent'
+      : variant === 'warning'
+        ? 'border-amber-500/25 bg-amber-500/8'
+        : variant === 'accent'
+          ? 'border-cyan-500/25 bg-cyan-500/8'
+          : 'border-white/10 bg-white/[0.03]'
+
   return (
-    <article className={`rounded-xl border px-4 py-3.5 shadow-lg shadow-black/5 backdrop-blur-sm ${styleClass}`}>
-      <h6 className="text-xs font-semibold text-slate-400 mb-2">{item.title}</h6>
-      <p className="text-sm text-slate-200 leading-7 whitespace-pre-wrap break-words">{item.body}</p>
+    <article className={`relative overflow-hidden rounded-xl border pl-4 pr-4 py-3.5 ${variantClass}`}>
+      <span className="absolute left-0 top-3 bottom-3 w-0.5 rounded-full bg-gradient-to-b from-gold-400/80 to-cyan-400/40" />
+      <h6 className="text-xs font-semibold text-slate-400 mb-2 pl-2">{item.title}</h6>
+      <p className="text-sm text-slate-200 leading-7 whitespace-pre-wrap break-words pl-2">{item.body}</p>
     </article>
   )
 }
@@ -1623,23 +1876,70 @@ function MarketReportSection({ section }) {
   const tone = MARKET_SECTION_STYLES[section.tone] || MARKET_SECTION_STYLES.indigo
   const Icon = tone.icon
   const items = section.items || []
+  const layout = inferMarketSectionLayout(section)
   if (!items.length) return null
 
-  const isRiskSection = section.tone === 'amber'
-
   return (
-    <section className={`overflow-hidden rounded-2xl border shadow-lg shadow-black/5 backdrop-blur-sm ${tone.border}`}>
+    <section className={`overflow-hidden rounded-2xl border shadow-lg shadow-black/10 ${tone.border}`}>
       <header className={`flex items-center gap-3 border-b px-5 py-4 bg-gradient-to-r ${tone.header} ${tone.border}`}>
-        <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${tone.iconBg}`}>
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tone.iconBg}`}>
           <Icon className="h-4 w-4" />
         </div>
-        <h5 className="text-sm font-semibold text-slate-100">{section.title}</h5>
+        <div>
+          <h5 className="text-sm font-semibold text-slate-50">{section.title}</h5>
+          <p className="text-[11px] text-slate-500 mt-0.5">{items.length} 项洞察</p>
+        </div>
       </header>
-      <div className={`p-4 ${isRiskSection ? 'grid gap-3 sm:grid-cols-2' : 'space-y-3'}`}>
-        {items.map((item, index) => (
-          <MarketReportItem key={`${section.title}-${item.title}-${index}`} item={item} />
-        ))}
-      </div>
+
+      {layout === 'stats' ? (
+        <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3">
+          {items.map((item, index) => (
+            <MarketStatPill key={`${section.title}-${item.title}-${index}`} item={item} />
+          ))}
+        </div>
+      ) : null}
+
+      {layout === 'templates' ? (
+        <div className="space-y-3 p-4">
+          {items.map((item, index) => (
+            <MarketTemplateCard key={`${section.title}-${index}`} item={item} index={index} />
+          ))}
+        </div>
+      ) : null}
+
+      {layout === 'timeline' ? (
+        <ol className="p-5 pt-4">
+          {items.map((item, index) => (
+            <MarketTimelineItem
+              key={`${section.title}-${item.title}-${index}`}
+              item={item}
+              index={index}
+              isLast={index === items.length - 1}
+              tone={tone}
+            />
+          ))}
+        </ol>
+      ) : null}
+
+      {layout === 'insight' ? (
+        <div className="grid grid-cols-1 gap-3 p-4 md:grid-cols-2">
+          {items.map((item, index) => (
+            <MarketInsightItem
+              key={`${section.title}-${item.title}-${index}`}
+              item={item}
+              featured={index === 0}
+            />
+          ))}
+        </div>
+      ) : null}
+
+      {layout === 'stack' ? (
+        <div className="space-y-3 p-4">
+          {items.map((item, index) => (
+            <MarketReportItem key={`${section.title}-${item.title}-${index}`} item={item} />
+          ))}
+        </div>
+      ) : null}
     </section>
   )
 }
@@ -1651,65 +1951,825 @@ function MarketReportBlock({ block }) {
 
   return (
     <article className="space-y-5">
-      <header className="overflow-hidden rounded-2xl border border-gold-500/20 bg-gradient-to-br from-gold-600/20 via-navy-900/60 to-cyan-500/10 px-6 py-6 text-white shadow-lg shadow-black/10 backdrop-blur-sm">
-        <div className="flex items-start gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm">
-            <BarChart3 className="h-5 w-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-semibold uppercase tracking-wider text-gold-300/90">市场分析报告</p>
-            {block.drama_name ? (
-              <h3 className="mt-1.5 text-xl font-bold leading-snug break-words sm:text-2xl">
+      {block.drama_name ? (
+        <header className="relative overflow-hidden rounded-2xl border border-gold-500/20 bg-gradient-to-br from-gold-600/20 via-navy-900/70 to-cyan-500/10 px-6 py-6 shadow-xl shadow-black/15">
+          <div className="pointer-events-none absolute -right-10 top-0 h-32 w-32 rounded-full bg-gold-500/10 blur-2xl" />
+          <div className="relative flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/15 backdrop-blur-sm">
+              <BarChart3 className="h-5 w-5 text-gold-300" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-300/90">市场分析报告</p>
+              <h3 className="mt-1.5 text-xl font-bold leading-snug text-white break-words sm:text-2xl">
                 {block.drama_name}
               </h3>
+            </div>
+          </div>
+        </header>
+      ) : null}
+
+      {metrics.length ? (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {metrics.map((item, index) => (
+            <MarketKpiTile key={`metric-${item.label}-${index}`} label={item.label} value={item.value} index={index} />
+          ))}
+        </div>
+      ) : null}
+
+      {sections.map((section, index) => (
+        <MarketReportSection key={`market-sec-${section.title}-${index}`} section={section} />
+      ))}
+    </article>
+  )
+}
+
+const BRIEF_ITEM_VARIANTS = {
+  default: 'border-white/10 bg-white/[0.03]',
+  accent: 'border-cyan-500/25 bg-gradient-to-br from-cyan-500/8 to-transparent',
+  highlight: 'border-gold-500/25 bg-gradient-to-br from-gold-500/10 to-transparent',
+}
+
+const BRIEF_SECTION_STYLES = {
+  gold: {
+    icon: Target,
+    border: 'border-gold-500/20',
+    header: 'from-gold-500/12 via-gold-500/5 to-transparent',
+    iconBg: 'bg-gold-500/15 text-gold-400',
+  },
+  indigo: {
+    icon: Users,
+    border: 'border-cyan-500/20',
+    header: 'from-cyan-500/12 via-cyan-500/5 to-transparent',
+    iconBg: 'bg-cyan-500/15 text-cyan-400',
+  },
+}
+
+function BriefStackItem({ item }) {
+  const styleClass = BRIEF_ITEM_VARIANTS[item.variant] || BRIEF_ITEM_VARIANTS.default
+  return (
+    <article className={`relative overflow-hidden rounded-xl border px-4 py-4 ${styleClass}`}>
+      <span className="absolute left-0 top-3 bottom-3 w-0.5 rounded-full bg-gradient-to-b from-gold-400/80 to-cyan-400/30" />
+      <h6 className="pl-2 text-xs font-semibold uppercase tracking-wide text-gold-300/90">{item.title}</h6>
+      <p className="mt-2 pl-2 text-sm leading-7 text-slate-200 whitespace-pre-wrap break-words">{item.body}</p>
+    </article>
+  )
+}
+
+function BriefHookRatingCard({ item }) {
+  const gradeStyle = gradeBadgeStyle(item.grade)
+  return (
+    <article className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-4 shadow-lg shadow-black/10">
+      <div className="flex items-start gap-3">
+        <span
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-lg font-black shadow-md ${gradeStyle}`}
+        >
+          {item.grade}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold text-slate-400">{item.title}</p>
+          <p className="mt-2 text-sm leading-7 text-slate-200 whitespace-pre-wrap break-words">{item.body}</p>
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function ProjectBriefSection({ section }) {
+  const tone = BRIEF_SECTION_STYLES[section.tone] || BRIEF_SECTION_STYLES.gold
+  const Icon = tone.icon
+  const items = section.items || []
+  const layout = section.layout || 'stack'
+  if (!items.length) return null
+
+  return (
+    <section className={`overflow-hidden rounded-2xl border shadow-lg shadow-black/10 ${tone.border}`}>
+      <header className={`flex items-center gap-3 border-b px-5 py-4 bg-gradient-to-r ${tone.header} ${tone.border}`}>
+        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tone.iconBg}`}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <h5 className="text-sm font-semibold text-slate-50">{section.title}</h5>
+      </header>
+
+      {layout === 'insight' ? (
+        <div className="grid grid-cols-1 gap-3 p-4 md:grid-cols-2">
+          {items.map((item, index) => (
+            <MarketInsightItem
+              key={`${section.title}-${item.title}-${index}`}
+              item={item}
+              featured={index === 0 || item.variant === 'highlight'}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-3 p-4">
+          {items.map((item, index) => (
+            <BriefStackItem key={`${section.title}-${item.title}-${index}`} item={item} />
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function BriefSellingPointItem({ item }) {
+  return (
+    <li className="flex w-full min-w-0 gap-3 items-start">
+      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gold-500 to-amber-600 text-sm font-bold text-navy-950 shadow-lg shadow-gold-500/20">
+        {item.index}
+      </span>
+      <div className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3.5">
+        {item.title ? (
+          <>
+            <p className="text-sm font-semibold text-gold-200 break-words">{item.title}</p>
+            {item.body ? (
+              <p className="mt-2 text-sm leading-7 text-slate-300 whitespace-pre-wrap break-words">{item.body}</p>
+            ) : null}
+          </>
+        ) : (
+          <p className="text-sm leading-7 text-slate-200 whitespace-pre-wrap break-words">{item.body}</p>
+        )}
+      </div>
+    </li>
+  )
+}
+
+function ProjectBriefBlock({ block }) {
+  const metrics = block.metrics || []
+  const sections = block.sections || []
+  const hookRatings = block.hook_ratings || []
+  const sellingPoints = block.selling_points || []
+  if (
+    !block.headline
+    && !block.opening_hook
+    && !metrics.length
+    && !sections.length
+    && !hookRatings.length
+    && !sellingPoints.length
+  ) {
+    return null
+  }
+
+  return (
+    <article className="space-y-6">
+      {block.headline ? (
+        <header className="relative overflow-hidden rounded-2xl border border-gold-500/25 bg-gradient-to-br from-gold-600/15 via-navy-900/85 to-violet-950/25 px-6 py-6 shadow-xl shadow-black/15">
+          <div className="pointer-events-none absolute -right-12 top-0 h-40 w-40 rounded-full bg-gold-500/10 blur-3xl" />
+          <div className="relative flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-gold-500/20">
+              <BookOpen className="h-5 w-5 text-gold-300" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-300/90">立项简报 · 核心目标</p>
+              <h3 className="mt-2 text-lg font-bold leading-8 text-white break-words sm:text-xl">
+                {block.headline}
+              </h3>
+            </div>
+          </div>
+        </header>
+      ) : null}
+
+      {block.opening_hook ? (
+        <div className="relative overflow-hidden rounded-2xl border border-cyan-500/25 bg-gradient-to-r from-cyan-500/10 via-navy-900/50 to-transparent px-5 py-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-500/15 text-cyan-400">
+              <Clapperboard className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-cyan-300">跨段入场 · 开场钩子</p>
+              <p className="mt-2 text-[15px] leading-8 text-slate-100 whitespace-pre-wrap break-words">
+                {block.opening_hook}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {metrics.length ? (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {metrics.map((item, index) => (
+            <MarketStatPill
+              key={`brief-metric-${item.label}-${index}`}
+              item={{ title: item.label, body: item.value }}
+            />
+          ))}
+        </div>
+      ) : null}
+
+      {hookRatings.length ? (
+        <section className="space-y-4">
+          <SectionTitle>S / A / B 钩子评级</SectionTitle>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            {hookRatings.map((item, index) => (
+              <BriefHookRatingCard key={`hook-${item.grade}-${index}`} item={item} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {sections.map((section, index) => (
+        <ProjectBriefSection key={`brief-sec-${section.title}-${index}`} section={section} />
+      ))}
+
+      {sellingPoints.length ? (
+        <section>
+          <SectionTitle>差异化卖点</SectionTitle>
+          <ol className="mt-4 list-none space-y-3 p-0 m-0">
+            {sellingPoints.map((item) => (
+              <BriefSellingPointItem key={`sell-${item.index}-${item.title || item.body?.slice(0, 24)}`} item={item} />
+            ))}
+          </ol>
+        </section>
+      ) : null}
+    </article>
+  )
+}
+
+function WorldSceneCard({ scene, index }) {
+  return (
+    <article className="relative overflow-hidden rounded-2xl border border-cyan-500/20 bg-gradient-to-br from-cyan-500/8 via-white/[0.03] to-transparent p-5">
+      <div className="mb-3 flex items-center gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-500/15 text-sm font-bold text-cyan-300 ring-1 ring-cyan-500/25">
+          {scene.marker || index + 1}
+        </span>
+        <h6 className="text-sm font-semibold text-cyan-200 break-words">{scene.title}</h6>
+      </div>
+      <p className="text-sm leading-7 text-slate-300 whitespace-pre-wrap break-words pl-12">{scene.body}</p>
+    </article>
+  )
+}
+
+function WorldRuleItem({ item }) {
+  return (
+    <li className="flex gap-3 items-start">
+      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-sm font-bold text-white shadow-lg shadow-violet-500/20">
+        {item.index}
+      </span>
+      <div className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3.5">
+        {item.title ? (
+          <>
+            <p className="text-sm font-semibold text-violet-200 break-words">{item.title}</p>
+            {item.body ? (
+              <p className="mt-2 text-sm leading-7 text-slate-300 whitespace-pre-wrap break-words">{item.body}</p>
+            ) : null}
+          </>
+        ) : (
+          <p className="text-sm leading-7 text-slate-200 whitespace-pre-wrap break-words">{item.body}</p>
+        )}
+      </div>
+    </li>
+  )
+}
+
+function WorldSettingBlock({ block }) {
+  const spaceScenes = block.space_scenes || []
+  const coreRules = block.core_rules || []
+  if (
+    !block.era_background
+    && !block.space_intro
+    && !spaceScenes.length
+    && !block.power_structure
+    && !coreRules.length
+    && !block.forbidden_constraint
+  ) {
+    return null
+  }
+
+  return (
+    <article className="space-y-6">
+      {block.era_background ? (
+        <header className="relative overflow-hidden rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-600/15 via-navy-900/85 to-cyan-950/25 px-6 py-6 shadow-xl shadow-black/15">
+          <div className="pointer-events-none absolute -right-12 top-0 h-40 w-40 rounded-full bg-violet-500/10 blur-3xl" />
+          <div className="relative flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-violet-500/20">
+              <Globe2 className="h-5 w-5 text-violet-300" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-300/90">世界观 · 时代背景</p>
+              <p className="mt-2 text-lg font-medium leading-8 text-white whitespace-pre-wrap break-words sm:text-xl">
+                {block.era_background}
+              </p>
+            </div>
+          </div>
+        </header>
+      ) : null}
+
+      {block.space_intro || spaceScenes.length ? (
+        <section className="space-y-4">
+          <SectionTitle>核心空间</SectionTitle>
+          {block.space_intro ? (
+            <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/8 px-4 py-3">
+              <p className="text-sm font-medium text-cyan-200">{block.space_intro}</p>
+            </div>
+          ) : null}
+          {spaceScenes.length ? (
+            <div className={`grid gap-4 ${spaceScenes.length > 1 ? 'lg:grid-cols-2' : 'grid-cols-1'}`}>
+              {spaceScenes.map((scene, index) => (
+                <WorldSceneCard key={`scene-${scene.title}-${index}`} scene={scene} index={index} />
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      {block.power_structure ? (
+        <section className="overflow-hidden rounded-2xl border border-gold-500/20 shadow-lg shadow-black/10">
+          <header className="flex items-center gap-3 border-b border-gold-500/20 bg-gradient-to-r from-gold-500/12 to-transparent px-5 py-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold-500/15 text-gold-400">
+              <Users className="h-4 w-4" />
+            </div>
+            <h5 className="text-sm font-semibold text-slate-50">权力结构</h5>
+          </header>
+          <div className="p-5">
+            <p className="text-sm leading-8 text-slate-200 whitespace-pre-wrap break-words">{block.power_structure}</p>
+          </div>
+        </section>
+      ) : null}
+
+      {coreRules.length ? (
+        <section>
+          <SectionTitle>核心规则</SectionTitle>
+          <ol className="mt-4 list-none space-y-3 p-0 m-0">
+            {coreRules.map((item) => (
+              <WorldRuleItem key={`rule-${item.index}-${item.title || item.body?.slice(0, 24)}`} item={item} />
+            ))}
+          </ol>
+        </section>
+      ) : null}
+
+      {block.forbidden_constraint ? (
+        <div className="relative overflow-hidden rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-red-950/20 to-transparent px-5 py-5">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-400">
+              <ShieldAlert className="h-4 w-4" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-amber-300">禁忌约束</p>
+              <p className="mt-2 text-sm leading-7 text-amber-100/95 whitespace-pre-wrap break-words">
+                {block.forbidden_constraint}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </article>
+  )
+}
+
+const MCKEE_FIELD_STYLES = {
+  want: 'border-gold-500/20 bg-gold-500/8',
+  need: 'border-cyan-500/20 bg-cyan-500/8',
+  ghost: 'border-violet-500/20 bg-violet-500/8',
+  lie: 'border-amber-500/20 bg-amber-500/8',
+  flaw: 'border-rose-500/20 bg-rose-500/8',
+}
+
+const MCKEE_FIELDS = [
+  { key: 'want', label: '表层欲望' },
+  { key: 'need', label: '深层需求' },
+  { key: 'ghost', label: '心魔' },
+  { key: 'lie', label: '错误信念' },
+  { key: 'flaw', label: '缺陷' },
+]
+
+function DreamCheckBanner({ dreamCheck }) {
+  if (!dreamCheck || (!dreamCheck.note && dreamCheck.safety_score == null)) return null
+  const blocking = dreamCheck.is_blocking === true
+  const passed = dreamCheck.is_blocking === false
+
+  return (
+    <div
+      className={`relative overflow-hidden rounded-2xl border px-5 py-4 ${
+        blocking
+          ? 'border-red-500/30 bg-gradient-to-r from-red-500/10 to-transparent'
+          : 'border-emerald-500/25 bg-gradient-to-r from-emerald-500/10 to-transparent'
+      }`}
+    >
+      <div className="flex flex-wrap items-start gap-4">
+        <div
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
+            blocking ? 'bg-red-500/15 text-red-400' : 'bg-emerald-500/15 text-emerald-400'
+          }`}
+        >
+          {blocking ? <XCircle className="h-5 w-5" /> : <CheckCircle2 className="h-5 w-5" />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold text-slate-100">梦境校验</p>
+            {dreamCheck.safety_score != null ? (
+              <span className="rounded-md border border-white/10 bg-white/10 px-2 py-0.5 text-xs font-bold tabular-nums text-white">
+                安全感 {dreamCheck.safety_score}/10
+              </span>
+            ) : null}
+            {passed ? (
+              <span className="text-xs text-emerald-300">未触发熔断 · 可进入后续流程</span>
+            ) : null}
+            {blocking ? <span className="text-xs text-red-300">已触发熔断</span> : null}
+          </div>
+          {dreamCheck.note ? (
+            <p className="mt-2 text-sm leading-7 text-slate-300 whitespace-pre-wrap break-words">{dreamCheck.note}</p>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MckeeCharacterCard({ character, variant }) {
+  const isProtagonist = variant === 'protagonist'
+  const headerBorder = isProtagonist ? 'border-gold-500/25 from-gold-500/12' : 'border-cyan-500/20 from-cyan-500/10'
+  const avatarClass = isProtagonist
+    ? 'border-gold-500/30 bg-gold-500/15 text-gold-300'
+    : 'border-cyan-500/30 bg-cyan-500/15 text-cyan-300'
+
+  const mckeeRows = MCKEE_FIELDS.filter((field) => character[field.key])
+
+  return (
+    <article className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-xl shadow-black/10">
+      <header className={`border-b bg-gradient-to-r to-transparent px-5 py-4 ${headerBorder}`}>
+        <div className="flex items-start gap-3">
+          <div
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border text-lg font-bold ${avatarClass}`}
+          >
+            {characterInitial(character.name)}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <h6 className="text-lg font-bold text-slate-50 break-words">{character.name}</h6>
+              {character.char_id ? (
+                <span className="rounded-md border border-white/10 bg-white/10 px-2 py-0.5 text-[11px] font-medium text-slate-300">
+                  {character.char_id}
+                </span>
+              ) : null}
+              {character.age ? (
+                <span className="text-xs text-slate-500">{character.age} 岁</span>
+              ) : null}
+            </div>
+            {character.role_label ? (
+              <span
+                className={`mt-2 inline-flex rounded-md border px-2 py-0.5 text-[11px] font-medium ${roleBadgeClass(character.role_label)}`}
+              >
+                {character.role_label}
+              </span>
             ) : null}
           </div>
         </div>
-        {metrics.length ? (
-          <div className="mt-5 flex flex-wrap gap-2">
-            {metrics.map((item, index) => {
-              const isLong = String(item.value || '').length > 8
+      </header>
+
+      <div className="space-y-4 p-5">
+        {mckeeRows.length ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {mckeeRows.map((field) => (
+              <div
+                key={`${character.char_id}-${field.key}`}
+                className={`rounded-xl border px-3.5 py-3 ${MCKEE_FIELD_STYLES[field.key]}`}
+              >
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{field.label}</p>
+                <p className="mt-1.5 text-sm leading-7 text-slate-200 whitespace-pre-wrap break-words">
+                  {character[field.key]}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {character.arc ? (
+          <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3.5">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-gold-400/90">人物弧光</p>
+            <p className="mt-2 text-sm leading-7 text-slate-200 whitespace-pre-wrap break-words">{character.arc}</p>
+          </div>
+        ) : null}
+
+        {(character.timbre_tag || character.visual_tag) ? (
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+            {character.timbre_tag ? (
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/20 bg-violet-500/8 px-3 py-1.5 text-xs text-violet-200">
+                <Heart className="h-3.5 w-3.5 shrink-0" />
+                {character.timbre_tag}
+              </span>
+            ) : null}
+            {character.visual_tag ? (
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/8 px-3 py-1.5 text-xs text-cyan-200">
+                <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                {character.visual_tag}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </article>
+  )
+}
+
+function RelationRoleCard({ character }) {
+  return (
+    <article className="rounded-xl border border-violet-500/20 bg-gradient-to-br from-violet-500/8 to-transparent p-4">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-violet-500/30 bg-violet-500/15 text-sm font-bold text-violet-300">
+          {characterInitial(character.name)}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h6 className="text-sm font-semibold text-slate-100">{character.name}</h6>
+            {character.char_id ? (
+              <span className="text-[10px] text-slate-500">{character.char_id}</span>
+            ) : null}
+            {character.age ? <span className="text-[10px] text-slate-500">{character.age}岁</span> : null}
+          </div>
+          {character.relation ? (
+            <p className="mt-2 text-sm leading-7 text-slate-300 whitespace-pre-wrap break-words">{character.relation}</p>
+          ) : null}
+          {character.visual_tag ? (
+            <p className="mt-2 text-xs leading-relaxed text-violet-200/90">{character.visual_tag}</p>
+          ) : null}
+        </div>
+      </div>
+    </article>
+  )
+}
+
+function CharacterBibleBlock({ block }) {
+  const protagonists = block.protagonists || []
+  const supporting = block.supporting_roles || []
+  const relationRoles = block.relation_roles || []
+  const relationships = block.relationships || []
+  const dreamCheck = block.dream_check || {}
+
+  if (
+    !protagonists.length
+    && !supporting.length
+    && !relationRoles.length
+    && !relationships.length
+    && !dreamCheck.note
+  ) {
+    return null
+  }
+
+  return (
+    <article className="space-y-6">
+      <DreamCheckBanner dreamCheck={dreamCheck} />
+
+      {protagonists.length ? (
+        <section className="space-y-4">
+          <SectionTitle>主角档案</SectionTitle>
+          <div className={`grid gap-5 ${protagonists.length > 1 ? 'xl:grid-cols-2' : 'grid-cols-1'}`}>
+            {protagonists.map((character, index) => (
+              <MckeeCharacterCard
+                key={`proto-${character.char_id || character.name}-${index}`}
+                character={character}
+                variant="protagonist"
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {supporting.length ? (
+        <section className="space-y-4">
+          <SectionTitle>核心配角</SectionTitle>
+          <div className="grid gap-5 lg:grid-cols-2">
+            {supporting.map((character, index) => (
+              <MckeeCharacterCard
+                key={`support-${character.char_id || character.name}-${index}`}
+                character={character}
+                variant="supporting"
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {relationRoles.length ? (
+        <section className="space-y-4">
+          <SectionTitle>关系角色</SectionTitle>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {relationRoles.map((character, index) => (
+              <RelationRoleCard key={`rel-role-${character.char_id || character.name}-${index}`} character={character} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {relationships.length ? (
+        <RelationshipGraphBlock block={{ items: relationships }} />
+      ) : null}
+    </article>
+  )
+}
+
+const STAGE_TONE = {
+  opening: 'from-gold-500/20 border-gold-500/30 text-gold-300',
+  warming: 'from-cyan-500/15 border-cyan-500/30 text-cyan-300',
+  climax: 'from-rose-500/15 border-rose-500/30 text-rose-300',
+  turning: 'from-violet-500/15 border-violet-500/30 text-violet-300',
+  sprint: 'from-amber-500/15 border-amber-500/30 text-amber-300',
+  ending: 'from-emerald-500/15 border-emerald-500/30 text-emerald-300',
+}
+
+function SixStageTimeline({ stages }) {
+  if (!stages.length) return null
+  return (
+    <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.15em] text-slate-500">六段结构</p>
+      <div className="flex h-3 overflow-hidden rounded-full bg-white/10">
+        {stages.map((stage) => {
+          const width = Math.max(Number(stage.proportion) || 0, 4)
+          const tone = STAGE_TONE[stage.key] || 'from-slate-500/20 border-slate-500/30'
+          return (
+            <div
+              key={`stage-bar-${stage.key || stage.index}`}
+              className={`h-full bg-gradient-to-r ${tone.split(' ')[0]}`}
+              style={{ width: `${width}%` }}
+              title={`${stage.title} ${stage.subtitle || ''}`}
+            />
+          )
+        })}
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        {stages.map((stage) => {
+          const tone = STAGE_TONE[stage.key] || 'from-slate-500/10 border-white/10 text-slate-300'
+          return (
+            <article
+              key={`stage-meta-${stage.key || stage.index}`}
+              className={`rounded-xl border bg-gradient-to-br to-transparent px-3.5 py-3 ${tone}`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-slate-100">{stage.title}</p>
+                {stage.proportion != null ? (
+                  <span className="text-xs font-bold tabular-nums opacity-80">{stage.proportion}%</span>
+                ) : null}
+              </div>
+              {stage.subtitle ? <p className="mt-1 text-[11px] text-slate-400">{stage.subtitle}</p> : null}
+              {stage.summary ? (
+                <p className="mt-2 text-xs leading-6 text-slate-300 line-clamp-3">{stage.summary}</p>
+              ) : null}
+            </article>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+function ForeshadowingCard({ item }) {
+  return (
+    <article className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3.5">
+      <div className="flex flex-wrap items-center gap-2 mb-2">
+        {item.type ? (
+          <span className="rounded-md border border-violet-500/25 bg-violet-500/10 px-2 py-0.5 text-[11px] font-semibold text-violet-300">
+            {item.type}
+          </span>
+        ) : null}
+        {item.buried != null && item.payoff != null ? (
+          <span className="text-[11px] font-medium text-gold-400 tabular-nums">
+            第{item.buried}集 → 第{item.payoff}集
+          </span>
+        ) : null}
+      </div>
+      <p className="text-sm leading-7 text-slate-300 whitespace-pre-wrap break-words">{item.content}</p>
+    </article>
+  )
+}
+
+function parseRangeStart(rangeLabel) {
+  if (!rangeLabel || typeof rangeLabel !== 'string') return 1
+  const match = rangeLabel.match(/^(\d+)/)
+  return match ? Number(match[1]) : 1
+}
+
+function SeriesOutlineBlock({ block }) {
+  const stages = block.stages || []
+  const foreshadowing = block.foreshadowing || []
+  const allEpisodes = block.episodes || []
+  const batches = block.episode_batches || []
+  const planned = block.total_episodes || 0
+  const generated = block.generated_episodes ?? allEpisodes.length
+  const missingCount = (block.missing_episodes || []).length
+
+  const defaultBatchStart = parseRangeStart(block.suggested_range)
+  const initialBatchIndex = Math.max(
+    0,
+    batches.findIndex((b) => defaultBatchStart >= b.start && defaultBatchStart <= b.end),
+  )
+  const [activeBatchIndex, setActiveBatchIndex] = useState(initialBatchIndex >= 0 ? initialBatchIndex : 0)
+  const [showStages, setShowStages] = useState(false)
+
+  useEffect(() => {
+    const idx = batches.findIndex((b) => defaultBatchStart >= b.start && defaultBatchStart <= b.end)
+    if (idx >= 0) setActiveBatchIndex(idx)
+  }, [block.suggested_range, batches.length, defaultBatchStart])
+
+  const activeBatch = batches[activeBatchIndex] || null
+  const progressPct = planned > 0 ? Math.min(100, Math.round((generated / planned) * 100)) : 0
+
+  if (!stages.length && !foreshadowing.length && !allEpisodes.length && !planned && !batches.length) {
+    return null
+  }
+
+  return (
+    <article className="space-y-6">
+      {planned ? (
+        <div className="rounded-2xl border border-gold-500/20 bg-gradient-to-r from-gold-500/10 to-transparent px-5 py-4 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex items-center gap-4 flex-1">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gold-500/15 text-gold-400">
+                <BookOpen className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-300/90">系列大纲</p>
+                <p className="text-2xl font-bold tabular-nums text-white">
+                  已生成 {generated}
+                  <span className="mx-1 text-sm font-medium text-slate-500">/</span>
+                  {planned}
+                  <span className="ml-1 text-sm font-medium text-slate-400">集</span>
+                </p>
+              </div>
+            </div>
+            {missingCount > 0 ? (
+              <div className="text-xs text-cyan-300/90 bg-cyan-500/10 border border-cyan-500/20 rounded-xl px-3 py-2">
+                尚有 {missingCount} 集待生成
+                {block.suggested_range ? ` · 建议下一批 ${block.suggested_range}` : ''}
+              </div>
+            ) : (
+              <div className="text-xs text-emerald-300/90 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2">
+                分集大纲已全部生成
+              </div>
+            )}
+          </div>
+          <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-gold-500 to-amber-400 transition-all"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {batches.length ? (
+        <section className="space-y-3">
+          <SectionTitle>分集大纲（按批次浏览）</SectionTitle>
+          <div className="flex flex-wrap gap-1.5">
+            {batches.map((batch, index) => {
+              const isActive = index === activeBatchIndex
+              const complete = batch.generated >= batch.total
               return (
-                <div
-                  key={`metric-${item.label}-${index}`}
-                  className="rounded-xl border border-white/15 bg-white/8 px-3.5 py-2 backdrop-blur-sm"
+                <button
+                  key={`outline-batch-${batch.label}`}
+                  type="button"
+                  onClick={() => setActiveBatchIndex(index)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium border transition-all ${
+                    isActive
+                      ? 'bg-gold-500 text-navy-950 border-gold-500 shadow-gold'
+                      : complete
+                        ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 hover:border-emerald-400/50'
+                        : 'bg-white/5 text-slate-300 border-white/10 hover:border-gold-500/30'
+                  }`}
                 >
-                  <p className="text-[10px] font-medium uppercase tracking-wide text-gold-200/90">
-                    {item.label}
-                  </p>
-                  <p
-                    className={`mt-0.5 font-semibold text-white break-words ${
-                      isLong ? 'text-sm leading-snug' : 'text-lg tabular-nums'
-                    }`}
-                  >
-                    {item.value}
-                  </p>
-                </div>
+                  {batch.label} 集
+                  <span className="ml-1 opacity-80">({batch.generated}/{batch.total})</span>
+                </button>
               )
             })}
           </div>
-        ) : null}
-      </header>
+          {activeBatch ? (
+            <div className="space-y-3">
+              <p className="text-xs text-slate-500">
+                当前查看：第 {activeBatch.start}-{activeBatch.end} 集
+                {activeBatch.generated < activeBatch.total
+                  ? ` · 本批已生成 ${activeBatch.generated} 集，其余待补`
+                  : ' · 本批已全部生成'}
+              </p>
+              {activeBatch.episodes.map((ep) => (
+                <EpisodeOutlineCard key={`batch-${activeBatch.label}-ep-${ep.episode_no}`} item={ep} />
+              ))}
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        {sections
-          .filter((section) => section.tone !== 'amber' && section.tone !== 'emerald')
-          .map((section, index) => (
-            <MarketReportSection key={`market-sec-${section.title}-${index}`} section={section} />
-          ))}
-      </div>
+      {stages.length ? (
+        <section className="space-y-3">
+          <button
+            type="button"
+            onClick={() => setShowStages((v) => !v)}
+            className="flex items-center gap-2 text-sm font-semibold text-slate-300 hover:text-white"
+          >
+            {showStages ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            六阶段结构概览
+          </button>
+          {showStages ? <SixStageTimeline stages={stages} /> : null}
+        </section>
+      ) : null}
 
-      {sections
-        .filter((section) => section.tone === 'emerald')
-        .map((section, index) => (
-          <MarketReportSection key={`market-commercial-${index}`} section={section} />
-        ))}
-
-      {sections
-        .filter((section) => section.tone === 'amber')
-        .map((section, index) => (
-          <MarketReportSection key={`market-risk-${index}`} section={section} />
-        ))}
+      {foreshadowing.length ? (
+        <section className="space-y-3">
+          <SectionTitle>伏笔清单</SectionTitle>
+          <div className="grid gap-3 lg:grid-cols-2">
+            {foreshadowing.map((item, index) => (
+              <ForeshadowingCard key={`foreshadow-${item.type}-${index}`} item={item} />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </article>
   )
 }
@@ -2040,6 +3100,7 @@ const BLOCK_RENDERERS = {
   compliance_report: ComplianceReportBlock,
   quality_report: QualityReportBlock,
   scoreboard: ScoreBoardBlock,
+  score_board: ScoreBoardBlock,
   checks: ChecksBlock,
   script_episodes: ScriptEpisodesBlock,
   plan_overview: PlanOverviewBlock,
@@ -2047,6 +3108,10 @@ const BLOCK_RENDERERS = {
   character_roster: CharacterRosterBlock,
   relationship_graph: RelationshipGraphBlock,
   market_report: MarketReportBlock,
+  project_brief: ProjectBriefBlock,
+  world_setting: WorldSettingBlock,
+  character_bible: CharacterBibleBlock,
+  series_outline: SeriesOutlineBlock,
   narrative_plan: NarrativePlanBlock,
   world_sections: WorldSectionsBlock,
   assessment_report: AssessmentReportBlock,
@@ -2070,20 +3135,154 @@ function renderBlock(block, index) {
   return <Renderer key={`${block.type}-${index}`} block={block} />
 }
 
-export default function DramaPresentation({ views, rawArtifacts }) {
-  const blockList = views?.blocks || views?.sections || views?.items || []
+function extractBlockList(view) {
+  if (!view || typeof view !== 'object') return []
+  const list = view.blocks || view.sections || view.items
+  return Array.isArray(list) ? list : []
+}
 
-  if (!blockList.length) {
-    const rawText = rawArtifacts ? Object.values(rawArtifacts).find((v) => typeof v === 'string') : null
-    if (rawText) {
-      return (
-        <div className="rounded-xl border border-white/10 bg-white/[0.04] p-5">
-          <pre className="whitespace-pre-wrap font-sans text-sm text-slate-200 leading-relaxed">
-            {rawText}
-          </pre>
+/** 兼容单 view 与 { artifact_key: view } 两种后端结构 */
+export function normalizeOutputView(views, preferredArtifactKey) {
+  if (!views || typeof views !== 'object') {
+    return { view: null, blockList: [] }
+  }
+
+  const directBlocks = extractBlockList(views)
+  if (directBlocks.length) {
+    return { view: views, blockList: directBlocks }
+  }
+
+  const keys = Object.keys(views).filter((key) => views[key] && typeof views[key] === 'object')
+  if (!keys.length) {
+    return { view: views, blockList: [] }
+  }
+
+  const pickKey = preferredArtifactKey && views[preferredArtifactKey]
+    ? preferredArtifactKey
+    : keys[0]
+
+  if (keys.length === 1 || (preferredArtifactKey && views[preferredArtifactKey])) {
+    const view = views[pickKey]
+    return { view, blockList: extractBlockList(view) }
+  }
+
+  const blockList = keys.flatMap((key) => extractBlockList(views[key]))
+  return { view: views[pickKey], blockList }
+}
+
+function listRawArtifactKeys(rawArtifacts) {
+  if (!rawArtifacts || typeof rawArtifacts !== 'object') return []
+  return Object.keys(rawArtifacts).filter((key) => {
+    const value = rawArtifacts[key]
+    if (value == null || value === '') return false
+    if (typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0) return false
+    return true
+  })
+}
+
+function RawArtifactPanel({ rawArtifacts, artifactKey }) {
+  const artifactKeys = useMemo(() => listRawArtifactKeys(rawArtifacts), [rawArtifacts])
+  const defaultKey = artifactKey && rawArtifacts?.[artifactKey] != null ? artifactKey : artifactKeys[0]
+  const [activeKey, setActiveKey] = useState(defaultKey)
+
+  useEffect(() => {
+    setActiveKey(defaultKey)
+  }, [defaultKey])
+
+  const formatted = formatPayloadText(rawArtifacts?.[activeKey])
+  if (formatted.empty) {
+    return (
+      <div className="text-center py-8 text-slate-500 text-sm">
+        暂无原始输出
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {artifactKeys.length > 1 ? (
+        <div className="flex flex-wrap gap-1.5 rounded-xl border border-white/10 bg-black/20 p-1">
+          {artifactKeys.map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setActiveKey(key)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                activeKey === key
+                  ? 'bg-gold-500/20 text-gold-300 border border-gold-500/30'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+              }`}
+            >
+              {key}
+            </button>
+          ))}
         </div>
-      )
-    }
+      ) : activeKey ? (
+        <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{activeKey}</p>
+      ) : null}
+      <div className="rounded-xl border border-white/10 bg-black/30 overflow-hidden">
+        <pre className="max-h-[min(70vh,720px)] overflow-auto whitespace-pre-wrap break-words p-4 text-[12px] leading-relaxed text-slate-200 font-mono">
+          {formatted.text}
+        </pre>
+      </div>
+      {formatted.truncated ? (
+        <p className="text-xs text-amber-400/80">内容已截断，原始长度 {formatted.length}</p>
+      ) : null}
+    </div>
+  )
+}
+
+function PresentationModeToggle({ mode, onChange, hasStructured }) {
+  return (
+    <div
+      className="inline-flex rounded-xl border border-white/10 bg-black/25 p-1"
+      role="tablist"
+      aria-label="输出展示模式"
+    >
+      <button
+        type="button"
+        role="tab"
+        aria-selected={mode === 'structured'}
+        disabled={!hasStructured}
+        onClick={() => onChange('structured')}
+        className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+          mode === 'structured'
+            ? 'bg-gold-500/20 text-gold-300 border border-gold-500/30'
+            : hasStructured
+              ? 'text-slate-400 hover:text-slate-200'
+              : 'text-slate-600 cursor-not-allowed'
+        }`}
+      >
+        结构化展示
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={mode === 'raw'}
+        onClick={() => onChange('raw')}
+        className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+          mode === 'raw'
+            ? 'bg-gold-500/20 text-gold-300 border border-gold-500/30'
+            : 'text-slate-400 hover:text-slate-200'
+        }`}
+      >
+        原始 JSON
+      </button>
+    </div>
+  )
+}
+
+export default function DramaPresentation({ views, rawArtifacts, artifactKey }) {
+  const { blockList } = normalizeOutputView(views, artifactKey)
+  const hasStructured = blockList.length > 0
+  const hasRaw = listRawArtifactKeys(rawArtifacts).length > 0
+  const [displayMode, setDisplayMode] = useState(hasStructured ? 'structured' : 'raw')
+
+  useEffect(() => {
+    setDisplayMode(hasStructured ? 'structured' : 'raw')
+  }, [artifactKey, hasStructured])
+
+  if (!hasStructured && !hasRaw) {
     return (
       <div className="text-center py-8 text-slate-500 text-sm">
         暂无结构化输出
@@ -2091,9 +3290,28 @@ export default function DramaPresentation({ views, rawArtifacts }) {
     )
   }
 
+  const showStructured = displayMode === 'structured' && hasStructured
+  const showToggle = hasStructured && hasRaw
+
   return (
-    <div className="space-y-5">
-      {blockList.map((block, index) => renderBlock(block, index))}
+    <div className="space-y-4">
+      {showToggle ? (
+        <div className="flex justify-end">
+          <PresentationModeToggle
+            mode={displayMode}
+            onChange={setDisplayMode}
+            hasStructured={hasStructured}
+          />
+        </div>
+      ) : null}
+
+      {showStructured ? (
+        <div className="space-y-6">
+          {blockList.map((block, index) => renderBlock(block, index))}
+        </div>
+      ) : (
+        <RawArtifactPanel rawArtifacts={rawArtifacts} artifactKey={artifactKey} />
+      )}
     </div>
   )
 }

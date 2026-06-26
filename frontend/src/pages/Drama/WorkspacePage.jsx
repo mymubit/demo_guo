@@ -9,11 +9,24 @@ import {
   runRole,
   getEpisodeList,
 } from '../../services/drama';
+import { creation } from '../../services/creation';
 import DramaPresentation from '../../components/drama/presentation/DramaPresentation';
+import PlotArchitectOutput from '../../components/drama/PlotArchitectOutput';
+import {
+  BATCH_RANGE_ROLES,
+  BATCH_ROLE_PROGRESS,
+  getBatchProgressForRole,
+  resolveDefaultEpisodeRange,
+  resolveExecuteButtonLabel,
+  resolveRoleCompletedBadge,
+  resolveRunKindFromParams,
+  STRUCTURE_BATCH_ROLES,
+  shouldShowStructureButton,
+} from '../../utils/dramaBatchRoleUi';
 import { Button, Badge, Card } from '../../components/ui';
 import {
   ArrowLeft, Zap, Settings, Play, Loader2, ChevronLeft, ChevronRight,
-  BookOpen, BarChart3, PanelLeftClose, PanelLeftOpen,
+  BookOpen, BarChart3, PanelLeftClose, PanelLeftOpen, Layers,
 } from 'lucide-react';
 
 const DEPT_LABELS = {
@@ -28,14 +41,14 @@ const DEPT_LABELS = {
 };
 
 const WORKFLOW_STAGES = [
-  { code: 'topic', name: '选题立项', dept: 'strategy', roles: ['drama.creative-planner'] },
-  { code: 'worldbuilding', name: '世界观构建', dept: 'worldbuilding', roles: ['drama.world-builder'] },
-  { code: 'character', name: '人设塑造', dept: 'worldbuilding', roles: ['drama.character-architect'] },
-  { code: 'outline', name: '大纲规划', dept: 'plot_engine', roles: ['drama.plot-architect'] },
-  { code: 'script', name: '剧本创作', dept: 'writing', roles: ['drama.script-writer'] },
-  { code: 'review', name: '审稿评估', dept: 'review', roles: ['drama.script-reviewer'] },
-  { code: 'quality', name: '质量检测', dept: 'review', roles: ['drama.quality-assurance'] },
-  { code: 'compliance', name: '合规终审', dept: 'ops', roles: ['drama.compliance-officer'] },
+  { code: 'strategy', name: '战略选题', dept: 'strategy', roles: ['drama.topic-planner', 'drama.market-analyst'] },
+  { code: 'worldbuilding', name: '世界构建', dept: 'worldbuilding', roles: ['drama.world-architect', 'drama.character-designer'] },
+  { code: 'plot_design', name: '剧情引擎', dept: 'plot_engine', roles: ['drama.plot-architect', 'drama.narrative-engineer'] },
+  { code: 'writing', name: '剧本创作', dept: 'writing', roles: ['drama.script-writer'] },
+  { code: 'review', name: '评审质控', dept: 'review', roles: ['drama.script-reviewer', 'drama.quality-reporter'] },
+  { code: 'polish', name: '修改润色', dept: 'polish', roles: ['drama.polish-master'], expertOnly: true },
+  { code: 'compliance', name: '合规审查', dept: 'ops', roles: ['drama.compliance-guard'] },
+  { code: 'production', name: '制作宣发', dept: 'production', roles: ['drama.production-pack'], expertOnly: true },
 ];
 
 const TIER_CONFIG = {
@@ -72,6 +85,7 @@ export default function WorkspacePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedRole, setSelectedRole] = useState(null);
+  const [pendingRunKind, setPendingRunKind] = useState(null);
   const [viewMode, setViewMode] = useState('tier');
   const [execFeedback, setExecFeedback] = useState(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -108,6 +122,12 @@ export default function WorkspacePage() {
     },
   });
   const progress = progressRes?.data ?? progressRes;
+  const batchProgress = useMemo(() => ({
+    outline: progress?.outline_progress,
+    script: progress?.script_progress,
+    polish: progress?.polish_progress,
+    narrative: progress?.narrative_progress,
+  }), [progress]);
 
   const { data: rolesRes } = useQuery({
     queryKey: ['drama-roles'],
@@ -137,6 +157,7 @@ export default function WorkspacePage() {
       queryClient.invalidateQueries(['drama-progress', projectId]);
       queryClient.invalidateQueries(['drama-episodes', projectId]);
       queryClient.invalidateQueries(['drama-project', projectId]);
+      queryClient.invalidateQueries(['drama-series-outline', projectId]);
       const payload = res?.data ?? res;
       const roleName = payload?.role_name || '角色';
       const scope = payload?.scope || '已提交执行';
@@ -147,6 +168,7 @@ export default function WorkspacePage() {
       feedbackTimerRef.current = setTimeout(() => setExecFeedback(null), 5000);
     },
     onError: (err) => {
+      setPendingRunKind(null);
       const message = err?.message || '未知错误';
       toast.error(`执行失败：${message}`);
       setExecFeedback(`✕ 执行失败：${message}`);
@@ -176,17 +198,37 @@ export default function WorkspacePage() {
     }
   });
 
+  const workflowStages = useMemo(() => {
+    const isExpert = project?.track_mode === 'expert';
+    return WORKFLOW_STAGES.filter((stage) => !stage.expertOnly || isExpert);
+  }, [project?.track_mode]);
+
   const currentStageIndex = useMemo(() => {
-    const currentStage = progress?.drama_stage;
+    const currentStage = progress?.drama_stage || project?.drama_stage;
     if (!currentStage) return 0;
-    const idx = WORKFLOW_STAGES.findIndex(s => s.code === currentStage);
-    return idx >= 0 ? idx : WORKFLOW_STAGES.length - 1;
-  }, [progress?.drama_stage]);
+    const idx = workflowStages.findIndex((s) => s.code === currentStage);
+    return idx >= 0 ? idx : workflowStages.length - 1;
+  }, [progress?.drama_stage, project?.drama_stage, workflowStages]);
 
   const handleRunRole = (roleId, options = {}) => {
+    setPendingRunKind(resolveRunKindFromParams(options));
     runMut.mutate({ projId: projectId, roleId, options });
     setSelectedRole(roleId);
   };
+
+  const isPlotArchitectSelected = selectedRole === 'drama.plot-architect';
+  const plotArchitectRunning = Boolean(
+    roleStatusMap['drama.plot-architect']?.execution?.status === 'running'
+    || roleStatusMap['drama.plot-architect']?.execution?.status === 'pending',
+  );
+
+  const { data: liveOutlineRes } = useQuery({
+    queryKey: ['drama-series-outline', projectId],
+    queryFn: () => creation.artifact(projectId, 'series_outline'),
+    enabled: Boolean(projectId && isPlotArchitectSelected),
+    refetchInterval: plotArchitectRunning ? 3000 : false,
+  });
+  const liveSeriesOutline = liveOutlineRes?.data ?? liveOutlineRes ?? null;
 
   if (!projectId || projectId === 'undefined') {
     return (
@@ -343,7 +385,7 @@ export default function WorkspacePage() {
       <main className="flex-1 flex flex-col overflow-hidden">
         <div className="flex-shrink-0 px-4 sm:px-6 py-3 border-b border-white/5 bg-navy-900/50 backdrop-blur-sm">
           <div className="flex items-center gap-1 overflow-x-auto scrollbar-thin pb-1">
-            {WORKFLOW_STAGES.map((stage, idx) => {
+            {workflowStages.map((stage, idx) => {
               const isDone = idx < currentStageIndex;
               const isCurrent = idx === currentStageIndex;
               const isFuture = idx > currentStageIndex;
@@ -377,7 +419,7 @@ export default function WorkspacePage() {
                     </span>
                     {stage.name}
                   </button>
-                  {idx < WORKFLOW_STAGES.length - 1 && (
+                  {idx < workflowStages.length - 1 && (
                     <div className={`w-3 sm:w-6 h-px mx-0.5 ${
                       isDone ? 'bg-emerald-500/50' : 'bg-white/10'
                     }`} />
@@ -402,9 +444,14 @@ export default function WorkspacePage() {
               allRoles={allRoles}
               roleProgress={roleStatusMap[selectedRole]}
               onRun={handleRunRole}
-              runLoading={runMut.isPending && runMut.variables?.roleId === selectedRole}
+              isSubmitting={runMut.isPending && runMut.variables?.roleId === selectedRole}
+              pendingRunKind={pendingRunKind}
+              onRunKindClear={() => setPendingRunKind(null)}
               completedSet={completedSet}
               project={project}
+              batchProgress={batchProgress}
+              outlineProgress={progress?.outline_progress}
+              liveSeriesOutline={liveSeriesOutline}
               lastExecResult={runMut.data?.data ?? runMut.data}
             />
           ) : (
@@ -418,6 +465,7 @@ export default function WorkspacePage() {
               roleStatusMap={roleStatusMap}
               onSelectRole={setSelectedRole}
               currentStageIndex={currentStageIndex}
+              workflowStages={workflowStages}
             />
           )}
         </div>
@@ -572,13 +620,15 @@ function WelcomePanel({
   roleStatusMap,
   onSelectRole,
   currentStageIndex,
+  workflowStages,
 }) {
   const completionRate = progress?.completion_rate || 0;
   const totalEp = project?.episode_count || 0;
   const coreRoles = rolesByTier[1] || [];
   const recommendRoles = rolesByTier[2] || [];
   const coreDone = coreRoles.filter((r) => completedSet.has(r.agent_id)).length;
-  const nextStage = WORKFLOW_STAGES[currentStageIndex] || WORKFLOW_STAGES[0];
+  const stages = workflowStages?.length ? workflowStages : WORKFLOW_STAGES;
+  const nextStage = stages[currentStageIndex] || stages[0];
 
   return (
     <div className="w-full space-y-6">
@@ -633,7 +683,7 @@ function WelcomePanel({
         <Card padding="lg" className="lg:col-span-2 border-white/10 bg-white/[0.04]">
           <h3 className="text-base font-semibold text-slate-100 mb-4">创作流程</h3>
           <div className="space-y-3">
-            {WORKFLOW_STAGES.map((stage, idx) => {
+            {stages.map((stage, idx) => {
               const isDone = idx < currentStageIndex;
               const isCurrent = idx === currentStageIndex;
               const isFuture = idx > currentStageIndex;
@@ -757,13 +807,36 @@ function RoleDetailPanel({
   allRoles,
   roleProgress,
   onRun,
-  runLoading,
+  isSubmitting,
+  pendingRunKind,
+  onRunKindClear,
   completedSet,
   project,
+  batchProgress,
+  outlineProgress,
+  liveSeriesOutline,
   lastExecResult,
 }) {
   const role = allRoles.find((r) => r.agent_id === roleId);
-  const [episodeRange, setEpisodeRange] = useState('1-5');
+  const roleBatchProgress = getBatchProgressForRole(roleId, batchProgress);
+  const batchMeta = BATCH_ROLE_PROGRESS[roleId];
+  const defaultBatchSize = roleBatchProgress?.batch_size || batchMeta?.defaultBatchSize || 5;
+  const OUTLINE_BATCH_SIZE = outlineProgress?.batch_size || 10;
+  const suggestedRange = resolveDefaultEpisodeRange(
+    roleId,
+    project?.episode_count || 0,
+    batchProgress,
+  );
+  const [episodeRange, setEpisodeRange] = useState(suggestedRange);
+
+  useEffect(() => {
+    const next = resolveDefaultEpisodeRange(
+      roleId,
+      project?.episode_count || 0,
+      batchProgress,
+    );
+    if (next) setEpisodeRange(next);
+  }, [roleId, batchProgress, project?.episode_count, roleBatchProgress?.suggested_range, roleBatchProgress?.generated]);
 
   if (!role) {
     return (
@@ -777,31 +850,88 @@ function RoleDetailPanel({
   const tier = role.tier || (role.is_fast_track ? 1 : 2);
   const tierCfg = TIER_CONFIG[tier] || TIER_CONFIG[2];
   const execution = roleProgress?.execution;
-  const execStatus = runLoading
-    ? 'running'
-    : (execution?.status ?? (isCompleted ? 'success' : 'pending'));
-  const isRunning = execStatus === 'running';
-  const outputViews = execution?.output_views ?? {};
-  const outputKeys = Object.keys(outputViews).filter(Boolean);
+  const agentStatus = execution?.status;
+  const isAgentRunning = agentStatus === 'running' || agentStatus === 'pending';
+  const serverRunKind = resolveRunKindFromParams(execution?.run_params || {});
+  const activeRunKind = isAgentRunning || isSubmitting ? (pendingRunKind || serverRunKind) : null;
+  const isStructureRunning = Boolean(activeRunKind === 'structure' && (isAgentRunning || isSubmitting));
+  const isBatchRunning = Boolean(activeRunKind === 'episodes' && (isAgentRunning || isSubmitting));
 
-  const RANGE_ROLES = [
-    'drama.script-writer',
-    'drama.polish-master',
-    'drama.narrative-engineer',
-    'drama.production-pack',
-  ];
-  const COUNT_ROLES = ['drama.plot-architect'];
+  useEffect(() => {
+    if (!isAgentRunning && !isSubmitting) {
+      onRunKindClear?.();
+    }
+  }, [isAgentRunning, isSubmitting, onRunKindClear]);
+
+  const execStatus = agentStatus ?? (completedSet.has(roleId) ? 'success' : 'pending');
+  const isRunning = isAgentRunning;
+  const isPlotArchitect = roleId === 'drama.plot-architect';
+  const outputViews = execution?.output_views ?? {};
+  const outputArtifacts = execution?.output_artifacts ?? {};
+  const seriesOutlineArtifact = liveSeriesOutline || outputArtifacts?.series_outline;
+  const structureRoleCfg = STRUCTURE_BATCH_ROLES[roleId];
+  const showStructureButton = shouldShowStructureButton(roleId, {
+    batchProgress,
+    rawArtifact: seriesOutlineArtifact,
+    outputView: outputViews?.series_outline,
+  });
+  const structureButtonLabel = structureRoleCfg?.structureButtonLabel || '生成全剧结构';
+  const outputKeys = Object.keys(outputViews).filter(Boolean);
+  const artifactKeys = Object.keys(outputArtifacts).filter(Boolean);
+  const hasOutput = outputKeys.length > 0 || artifactKeys.length > 0;
+
   const isBatchRole =
-    (RANGE_ROLES.includes(roleId) || COUNT_ROLES.includes(roleId))
-    && (project?.episode_count || 0) > 1;
-  const isCountMode = COUNT_ROLES.includes(roleId);
+    BATCH_RANGE_ROLES.includes(roleId) && (project?.episode_count || 0) > 1;
+
+  const hasExecutedBefore = Boolean(
+    hasOutput
+    || execution?.status === 'success'
+    || execution?.status === 'failed'
+    || execution?.finished_at,
+  );
+  const showRoleCompletedBadge = resolveRoleCompletedBadge(roleId, batchProgress, completedSet);
+
+  const executeButtonLabel = resolveExecuteButtonLabel({
+    runLoading: isSubmitting,
+    isAgentRunning: isBatchRunning,
+    runKind: 'episodes',
+    hasExecutedBefore,
+    isBatchRole,
+    episodeRange,
+    roleProgress: roleBatchProgress,
+  });
+
+  const structureButtonBusy = isSubmitting && pendingRunKind === 'structure';
+  const structureButtonRunning = isStructureRunning;
+  const structureButtonText = structureButtonBusy || structureButtonRunning
+    ? '结构生成中…'
+    : (showStructureButton ? structureButtonLabel : '重新生成全剧结构');
+
+  const SCRIPT_BATCH_SIZE = defaultBatchSize;
 
   const handleExecute = () => {
     onRun(roleId, {
-      episode_range: isBatchRole && !isCountMode ? episodeRange : undefined,
-      episode_count: isCountMode ? project.episode_count : undefined,
+      episode_range: isBatchRole ? episodeRange : undefined,
+      episode_count: isPlotArchitect ? project.episode_count : undefined,
     });
   };
+
+  const handleGenerateStructure = () => {
+    if (!structureRoleCfg) return;
+    const payload = {
+      episode_count: project.episode_count,
+    };
+    if (roleId === 'drama.plot-architect') {
+      payload.outline_mode = structureRoleCfg.blobMode;
+    } else {
+      payload.blob_mode = structureRoleCfg.blobMode;
+    }
+    onRun(roleId, payload);
+  };
+
+  const runningBannerText = isStructureRunning
+    ? '正在生成全剧结构（六阶段、伏笔等），分集大纲不会改动，您仍可浏览下方集数地图。'
+    : `正在生成第 ${episodeRange} 集大纲，完成后地图将自动更新…`;
 
   return (
     <div className="w-full flex flex-col gap-4 min-h-[calc(100vh-12rem)]">
@@ -817,20 +947,39 @@ function RoleDetailPanel({
               {role.is_composite && (
                 <Badge tone="accent" size="sm">◈ 复合增强</Badge>
               )}
-              {isCompleted && (
+              {showRoleCompletedBadge && (
                 <Badge tone="success" size="sm">✓ 已完成</Badge>
               )}
             </div>
             <p className="text-sm text-slate-400">{role.description}</p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {isPlotArchitect ? (
+              <Button
+                variant="brand"
+                onClick={handleGenerateStructure}
+                disabled={structureButtonBusy || structureButtonRunning}
+                iconLeft={(structureButtonBusy || structureButtonRunning) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />}
+              >
+                {structureButtonText}
+              </Button>
+            ) : showStructureButton ? (
+              <Button
+                variant="brand"
+                onClick={handleGenerateStructure}
+                disabled={structureButtonBusy || structureButtonRunning}
+                iconLeft={(structureButtonBusy || structureButtonRunning) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />}
+              >
+                {structureButtonText}
+              </Button>
+            ) : null}
             <Button
               variant="brand"
               onClick={handleExecute}
-              disabled={runLoading}
-              iconLeft={runLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
+              disabled={(isSubmitting && pendingRunKind === 'episodes') || isBatchRunning}
+              iconLeft={(isSubmitting && pendingRunKind === 'episodes') || isBatchRunning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
             >
-              {runLoading ? '执行中...' : isCompleted ? '重新执行' : '执行此角色'}
+              {executeButtonLabel}
             </Button>
             <a
               href="/admin/drama-models"
@@ -845,20 +994,79 @@ function RoleDetailPanel({
         <div className="px-5 py-4 space-y-4">
           {isBatchRole && (
             <Card padding="md" className="border-cyan-500/20 bg-cyan-500/5">
-              {isCountMode ? (
+              {isPlotArchitect ? (
                 <>
                   <p className="text-xs font-semibold text-cyan-300 mb-2">
-                    📋 大纲生成配置（将生成全部 {project.episode_count} 集分集大纲）
+                    📋 分集大纲分批生成（全剧共 {project.episode_count} 集，建议每批 {OUTLINE_BATCH_SIZE} 集）
                   </p>
-                  <p className="text-xs text-cyan-400/80">
-                    分集大纲一次性生成所有集，建议先生成大纲再按需分批写剧本。
+                  <p className="text-xs text-cyan-400/80 mb-3">
+                    已生成 {outlineProgress?.generated ?? 0} 集，新批次会合并进已有大纲，不会覆盖其他集数。
                   </p>
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <label className="text-xs text-slate-400">生成集数范围</label>
+                      <input
+                        type="text"
+                        value={episodeRange}
+                        onChange={(e) => setEpisodeRange(e.target.value)}
+                        placeholder="如：11-20"
+                        className="border border-white/10 bg-white/5 rounded-lg px-2.5 py-1.5 text-sm text-slate-200 w-24 focus:ring-2 focus:ring-gold-500/30 focus:border-gold-500/50 outline-none transition-all"
+                      />
+                    </div>
+                    <div className="flex max-h-24 gap-1.5 overflow-y-auto flex-wrap">
+                      {Array.from({ length: Math.ceil(project.episode_count / OUTLINE_BATCH_SIZE) }, (_, i) => {
+                        const start = i * OUTLINE_BATCH_SIZE + 1;
+                        const end = Math.min((i + 1) * OUTLINE_BATCH_SIZE, project.episode_count);
+                        const range = `${start}-${end}`;
+                        return (
+                          <button
+                            key={range}
+                            type="button"
+                            onClick={() => setEpisodeRange(range)}
+                            className={`shrink-0 text-xs px-2.5 py-1 rounded-lg border transition-all font-medium ${
+                              episodeRange === range
+                                ? 'bg-gold-500 text-navy-950 border-gold-500 shadow-gold'
+                                : 'bg-white/5 text-slate-300 border-white/10 hover:border-gold-500/30 hover:text-gold-300'
+                            }`}
+                          >
+                            {range} 集
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {isPlotArchitect ? (
+                    <div className="mt-4 pt-4 border-t border-amber-500/25 flex flex-col sm:flex-row sm:items-center gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-amber-300">
+                          六阶段叙事结构{showStructureButton ? ' · 未生成' : ''}
+                        </p>
+                        <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                          与上方分集批次独立；单独执行不会覆盖已有 {outlineProgress?.generated ?? 0} 集分集大纲。
+                        </p>
+                      </div>
+                      <Button
+                        variant="brand"
+                        onClick={handleGenerateStructure}
+                        disabled={structureButtonBusy || structureButtonRunning}
+                        iconLeft={(structureButtonBusy || structureButtonRunning) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Layers className="w-4 h-4" />}
+                        className="shrink-0"
+                      >
+                        {structureButtonText}
+                      </Button>
+                    </div>
+                  ) : null}
                 </>
               ) : (
                 <>
                   <p className="text-xs font-semibold text-cyan-300 mb-2">
-                    📌 分集生成配置（共 {project.episode_count} 集，建议每批 5 集）
+                    📌 分集生成配置（共 {project.episode_count} 集，建议每批 {SCRIPT_BATCH_SIZE} 集）
                   </p>
+                  {roleBatchProgress?.generated > 0 ? (
+                    <p className="text-xs text-cyan-400/80 mb-3">
+                      已生成 {roleBatchProgress.generated} 集，新批次会合并进已有内容，不会覆盖其他集数。
+                    </p>
+                  ) : null}
                   <div className="flex flex-wrap items-center gap-3">
                     <div className="flex items-center gap-2">
                       <label className="text-xs text-slate-400">生成集数范围</label>
@@ -871,9 +1079,9 @@ function RoleDetailPanel({
                       />
                     </div>
                     <div className="flex max-h-24 gap-1.5 overflow-y-auto flex-wrap">
-                      {Array.from({ length: Math.ceil(project.episode_count / 5) }, (_, i) => {
-                        const start = i * 5 + 1;
-                        const end = Math.min((i + 1) * 5, project.episode_count);
+                      {Array.from({ length: Math.ceil(project.episode_count / SCRIPT_BATCH_SIZE) }, (_, i) => {
+                        const start = i * SCRIPT_BATCH_SIZE + 1;
+                        const end = Math.min((i + 1) * SCRIPT_BATCH_SIZE, project.episode_count);
                         const range = `${start}-${end}`;
                         return (
                           <button
@@ -948,32 +1156,62 @@ function RoleDetailPanel({
       </Card>
 
       <Card padding="lg" className="flex-1 border-white/10 bg-white/[0.04]">
-        <h3 className="text-sm font-semibold text-slate-300 mb-3">执行输出</h3>
-        {isRunning && (
+        {!isPlotArchitect ? (
+          <h3 className="text-sm font-semibold text-slate-300 mb-3">执行输出</h3>
+        ) : null}
+        {isRunning && !isPlotArchitect ? (
           <div className="text-center py-8 text-gold-400 text-sm flex items-center justify-center gap-2">
             <Loader2 className="w-4 h-4 animate-spin" />
             正在生成，请稍候…
           </div>
-        )}
+        ) : null}
         {!isRunning && execStatus === 'failed' && (
-          <div className="text-sm text-red-300 bg-red-500/10 rounded-xl p-3 border border-red-500/20">
+          <div className="text-sm text-red-300 bg-red-500/10 rounded-xl p-3 border border-red-500/20 mb-4">
             ✕ 执行失败：{execution?.error_message || '未知错误'}
           </div>
         )}
-        {!isRunning && execStatus === 'success' && outputKeys.length > 0 && (
-          <DramaPresentation views={outputViews} rawArtifacts={execution?.output_artifacts || {}} />
+        {isPlotArchitect && execStatus !== 'failed' && (
+          <>
+            {(isStructureRunning || isBatchRunning) ? (
+              <div className={`mb-4 flex items-center gap-2 text-sm rounded-xl px-4 py-2.5 border ${
+                isStructureRunning
+                  ? 'text-amber-200 bg-amber-500/10 border-amber-500/25'
+                  : 'text-gold-400 bg-gold-500/10 border-gold-500/20'
+              }`}>
+                <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                {runningBannerText}
+              </div>
+            ) : null}
+            <PlotArchitectOutput
+              rawArtifact={seriesOutlineArtifact}
+              outputView={outputViews.series_outline}
+              outlineProgress={outlineProgress}
+              totalEpisodes={project?.episode_count || 60}
+              batchSize={OUTLINE_BATCH_SIZE}
+              onSelectRange={setEpisodeRange}
+              onGenerateStructure={isPlotArchitect ? handleGenerateStructure : undefined}
+              structureLoading={structureButtonBusy || structureButtonRunning}
+            />
+          </>
         )}
-        {!isRunning && execStatus === 'success' && outputKeys.length === 0 && (
+        {!isRunning && !isPlotArchitect && execStatus === 'success' && hasOutput && (
+          <DramaPresentation
+            views={outputViews}
+            rawArtifacts={outputArtifacts}
+            artifactKey={role.default_output_artifact_key || role.output_contract?.artifacts?.[0]}
+          />
+        )}
+        {!isRunning && !isPlotArchitect && execStatus === 'success' && !hasOutput ? (
           <div className="text-sm text-emerald-300 bg-emerald-500/10 rounded-xl p-3 border border-emerald-500/20">
             ✓ 执行已完成。
             {lastExecResult?.scope ? ` 范围：${lastExecResult.scope}` : ''}
           </div>
-        )}
-        {!isRunning && execStatus === 'pending' && (
+        ) : null}
+        {!isRunning && !isPlotArchitect && execStatus === 'pending' ? (
           <div className="text-center py-8 text-slate-500 text-sm">
-            点击「执行此角色」开始生成内容
+            点击「开始执行」生成内容
           </div>
-        )}
+        ) : null}
       </Card>
     </div>
   );

@@ -310,6 +310,11 @@ SCRIPT_FORGE_ASSET_ROOT = os.getenv(
     "SCRIPT_FORGE_ASSET_ROOT",
     str(BASE_DIR / "apps" / "skill" / "assets"),
 )
+# drama-skills Git SSOT（角色 registry、规则 foundation/rules、编排 orchestration）
+DRAMA_SKILLS_ROOT = os.getenv(
+    "DRAMA_SKILLS_ROOT",
+    str(BASE_DIR.parent / "drama-skills"),
+)
 FUSION_SKILL_ENABLED = False
 CREATION_FUSION_WORK_DIR = os.getenv(
     "CREATION_FUSION_WORK_DIR",

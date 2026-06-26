@@ -1,0 +1,18 @@
+# IP 改编入口 — 在快速通道基础上追加增强角色
+version: "1.0.0"
+entry_type: ip_adapt
+label: IP改编
+description: 小说/原著改编专用通道
+
+recommended_agents:
+  - drama.topic-planner
+  - drama.world-architect
+  - drama.character-designer
+  - drama.plot-architect
+  - drama.narrative-engineer
+  - drama.script-writer
+  - drama.script-reviewer
+  - drama.quality-reporter
+  - drama.polish-master
+  - drama.compliance-guard
+  - drama.production-pack

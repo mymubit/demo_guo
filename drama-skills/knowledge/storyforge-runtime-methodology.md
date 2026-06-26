@@ -1,11 +1,6 @@
 # StoryForge Runtime 方法论
 
-> **来源**：https://github.com/zhiyuzi/StoryForge（5 stars · MIT · 作者 @zhiyuzi）
-> **摄取时间**：2026-06-23
->
-> **核心命题**：用 Harness Engineering 处理不确定性下的计算。
-> 与山音方法论的区别：山音关注"怎么写好"，StoryForge 关注"如何把生成过程做成可控系统"。
-> 两者互补——内容质量 + 运行时控制。
+> **参考方法论**（外部仓库 StoryForge，与本库互补：本库管「写什么」，StoryForge 管「生成过程怎么控」）
 
 ---
 

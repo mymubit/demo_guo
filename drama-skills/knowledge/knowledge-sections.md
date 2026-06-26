@@ -1,91 +1,61 @@
-# 知识规则区块索引（四Tier完整体系）
+# 知识规则区块索引（v3.1）
 
-> 来源：ScriptForge `tier1_sections.py` + `tier4_sections.py` + dramaskill `nodes/` + `config/`
->
-> 四个 Tier 完整覆盖从"创作哲学"到"合规熔断"的全部规则。
+> 规则 SSOT：`foundation/rules/`。本文档说明 **section 名** 与 **12 角色** 的注入关系。
+> 角色侧通过 `role.yaml` → `rule_policy.scopes` 控制加载哪些 scope。
 
----
+## 四 Scope
 
-## 四Tier概览
+| Scope | YAML 标记 | 目录/文件 | 说明 |
+|-------|-----------|-----------|------|
+| `global_core` | `tier: 1` | `foundation/rules/*.yaml`（根级） | 全题材通用铁律 |
+| `genre_profile` | `tier: 2` | `foundation/rules/genres/*.yaml` | 按 `theme_code` 过滤（由 `theme-matrix.yaml` 解析） |
+| `stage_playbook` | `tier: 3` | `foundation/rules/stage-playbook.yaml` | 按 `scope_key=agent_id` |
+| `compliance_block` | `tier: 4` | `foundation/rules/compliance-core.yaml` | 合规熔断 |
 
-| Tier | 名称 | 范围 | 知识文件 |
-|------|------|------|---------|
-| **Tier1** | 全局铁律 | 所有题材、所有节点通用 | 各角色SKILL.md内嵌 |
-| **Tier2** | 品类规范 | 特定题材（genre）专属 | `tier2-genre-rules.md` |
-| **Tier3** | 节点流程 | 特定创作阶段（node）专属 | `tier3-node-rules.md` |
-| **Tier4** | 合规熔断 | 内容安全，不可突破 | `tier4-compliance.md` |
+长文参考：`knowledge/tier2-genre-rules.md`、`knowledge/tier3-stage-rules.md`、`knowledge/tier4-compliance.md`。
 
----
+## 12 角色 ↔ Section 映射
 
----
+| Agent | Sections |
+|-------|----------|
+| drama.topic-planner | philosophy |
+| drama.market-analyst | rhythm_rules, philosophy, scoring, episode_structure, learned_rules |
+| drama.world-architect | philosophy |
+| drama.character-designer | philosophy, foreshadowing_rules, character_rules |
+| drama.plot-architect | episode_structure, rhythm_rules, quantitative_constraints, foreshadowing_rules, qdn_emotion_model, hook_effectiveness, payment_checkpoint_3card, conflict_escalation, learned_rules |
+| drama.narrative-engineer | episode_emotion_8nodes, qdn_emotion_model, hook_effectiveness, emotion_externalization_dict, episode_structure, rhythm_rules, foreshadowing_rules, conflict_escalation, learned_rules |
+| drama.script-writer | episode_structure, quantitative_constraints, writing_prohibitions, writing_requirements, information_asymmetry_mechanics, emotion_externalization_dict, ai_tone_forbidden, qdn_emotion_model, format_standard, hook_effectiveness, episode_emotion_8nodes, dialogue_quality, learned_rules |
+| drama.polish-master | writing_prohibitions, writing_requirements, ai_tone_forbidden, emotion_externalization_dict, dialogue_quality, rhythm_rules, quantitative_constraints, format_standard, learned_rules |
+| drama.script-reviewer | scoring, format_standard, learned_rules |
+| drama.quality-reporter | scoring, learned_rules |
+| drama.production-pack | format_standard, dialogue_quality, hook_effectiveness, scoring, foreshadowing_rules, learned_rules |
+| drama.compliance-guard | （主体走 compliance_block scope） |
 
-## 区块定义
+## Section 定义
 
-| 区块名 | 中文名 | 内容说明 | 被哪些角色使用 |
-|--------|--------|---------|------------|
-| `philosophy` | 创作哲学 | 短剧创作的底层理念（情绪驱动、节奏高于一切等） | brief/structure/character/adapt |
-| `rhythm_rules` | 节奏规则 | 钩子密度、中段节律、高潮区间规则 | structure/outline/rhythm-designer |
-| `episode_structure` | 集段结构 | 四段式（钩子/情境/升级/悬念）+六阶段叙事 | structure/outline/script |
-| `episode_emotion_8nodes` | 8节点情绪图 | 每集8个固定时间点的情绪目标值 | structure/script/emotion-architect |
-| `foreshadowing_rules` | 伏笔规则 | 伏笔布局时间、密度、揭露规范 | structure/character/outline/insight |
-| `scoring` | 评分规范 | 八维评分体系、各维度权重和标准 | review/score/insight |
-| `quantitative_constraints` | 量化约束 | 台词字数上限、场景数量、节奏参数 | outline/script |
-| `writing_prohibitions` | 写作禁忌 | 禁止的写作方式（AI腔、直接说情绪等） | script/polish/adapt |
-| `writing_requirements` | 写作要求 | 必须遵守的创作规范 | script/polish |
-| `information_asymmetry_mechanics` | 信息不对称机制 | 观众视角优势、已知/未知信息设计 | script |
-| `emotion_externalization_dict` | 情绪外化词典 | 各情绪状态对应的动作/道具/环境外化方式 | script/polish/emotion-architect |
-| `ai_tone_forbidden` | AI腔禁用词 | 具体的AI腔表达和修复方式 | script/polish |
-| `qdn_emotion_model` | QDN情绪模型 | 质量感×深度×需求满足的情绪量化模型 | outline/script/emotion-architect |
-| `format_standard` | 格式规范 | 商业剧本格式（场景头/台词/△标记） | script |
-| `hook_effectiveness` | 钩子有效性 | S/A/B/C钩子分级、强度公式、开篇设计 | outline/script/hook-designer/marketing |
-| `dialogue_quality` | 对白质量 | 台词自然化标准、潜台词技法 | script/polish |
-| `payment_checkpoint_3card` | 三卡付费关卡 | 付费卡点设计的三种核心类型 | outline |
+| section | 中文名 | 规则文件 |
+|---------|--------|----------|
+| `philosophy` | 创作哲学 | `philosophy.yaml` |
+| `rhythm_rules` | 节奏规则 | `rhythm-rules.yaml` |
+| `episode_structure` | 分集结构 | `narrative-craft.yaml`、`stage-playbook.yaml` |
+| `episode_emotion_8nodes` | 8 节点情绪 | `narrative-craft.yaml` |
+| `foreshadowing_rules` | 伏笔规则 | `foreshadowing-rules.yaml` |
+| `scoring` | 评分规范 | `scoring-core.yaml` |
+| `quantitative_constraints` | 量化约束 | `script-format.yaml`（数值）+ `writing-*.yaml` |
+| `writing_prohibitions` | 写作禁止 | `writing-prohibitions.yaml` |
+| `writing_requirements` | 写作要求 | `writing-requirements.yaml` |
+| `information_asymmetry_mechanics` | 信息差机制 | `narrative-craft.yaml` |
+| `emotion_externalization_dict` | 情绪外化 | `narrative-craft.yaml` |
+| `ai_tone_forbidden` | AI 腔禁用 | `ai-tone-forbidden.yaml` |
+| `qdn_emotion_model` | QDN 情绪模型 | `narrative-craft.yaml` |
+| `format_standard` | 格式规范 | `script-format.yaml` |
+| `hook_effectiveness` | 钩子有效性 | `narrative-craft.yaml` |
+| `dialogue_quality` | 对白质量 | `dialogue-voice.yaml` |
+| `character_rules` | 角色逻辑 | `character-logic.yaml` |
+| `payment_checkpoint_3card` | 付费三卡 | `payment-checkpoint.yaml` |
+| `conflict_escalation` | 冲突升级 | `conflict-escalation.yaml` |
+| `learned_rules` | 经验规则 LR | `learned-rules.yaml` |
 
----
+## 数值 SSOT
 
-## 各角色知识区块映射
-
-### ScriptForge Agents
-
-| Agent | 使用的知识区块 |
-|-------|-------------|
-| `brief` (立项简报) | philosophy |
-| `structure` (结构设定) | philosophy, rhythm_rules, episode_structure, episode_emotion_8nodes, foreshadowing_rules, scoring |
-| `character` (人物小传) | philosophy, foreshadowing_rules |
-| `outline` (分集大纲) | episode_structure, rhythm_rules, quantitative_constraints, foreshadowing_rules, qdn_emotion_model, hook_effectiveness, payment_checkpoint_3card |
-| `script` (剧本正文) | 12个区块（全量） |
-| `review` (质量审查) | scoring |
-| `polish` (润色) | writing_prohibitions, writing_requirements, ai_tone_forbidden, emotion_externalization_dict, dialogue_quality |
-| `score` (评分) | scoring |
-| `emotion_architect` | episode_emotion_8nodes, qdn_emotion_model, hook_effectiveness, emotion_externalization_dict |
-| `marketing` | hook_effectiveness |
-
----
-
-## 与 drama-skills/ 角色的对应关系
-
-| 知识区块 | 对应 drama-skills/ 角色 |
-|---------|----------------------|
-| philosophy | drama-topic-planner (立项哲学) |
-| rhythm_rules | drama-rhythm-designer |
-| episode_structure | drama-plot-architect |
-| episode_emotion_8nodes | drama-narrative-engineer |
-| foreshadowing_rules | drama-reversal-master（伏笔部分） |
-| scoring | drama-quality-reporter |
-| quantitative_constraints | drama-polish-master + drama-script-writer |
-| writing_prohibitions | drama-polish-master + drama-polish-master |
-| writing_requirements | drama-script-writer |
-| information_asymmetry_mechanics | drama-narrative-engineer + drama-narrative-engineer |
-| emotion_externalization_dict | drama-narrative-engineer + drama-polish-master |
-| ai_tone_forbidden | drama-polish-master |
-| qdn_emotion_model | drama-narrative-engineer |
-| format_standard | drama-polish-master |
-| hook_effectiveness | drama-narrative-engineer |
-| dialogue_quality | drama-polish-master |
-| payment_checkpoint_3card | drama-formula-analyst |
-
----
-
-## 外部内容摄入时的分类指引
-
-提交外部内容后，摄入器（drama-intake）会根据内容特征，将知识点归类到以上区块，再路由到对应角色文件进行更新。
+字数、场景数、台词占比、评分阈值 → **`foundation/constraints/script-format.yaml`**（禁止在其他文件硬编码）。

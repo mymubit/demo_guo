@@ -1,0 +1,43 @@
+# 专家通道 — 12 角色分阶段
+version: "1.0.0"
+entry_type: expert_track
+label: 专家通道
+description: 12个可见角色（8核心+4复合），适合商业精品项目
+
+phases:
+  - phase: strategy
+    label: 战略选题
+    agents:
+      - drama.topic-planner
+      - drama.market-analyst
+  - phase: worldbuilding
+    label: 世界构建
+    agents:
+      - drama.world-architect
+      - drama.character-designer
+  - phase: plot_design
+    label: 剧情引擎
+    agents:
+      - drama.plot-architect
+      - drama.narrative-engineer
+  - phase: writing
+    label: 创作执行
+    agents:
+      - drama.script-writer
+  - phase: review
+    label: 评审质控
+    agents:
+      - drama.script-reviewer
+      - drama.quality-reporter
+  - phase: polish
+    label: 修改润色
+    agents:
+      - drama.polish-master
+  - phase: compliance
+    label: 合规审查
+    agents:
+      - drama.compliance-guard
+  - phase: production
+    label: 制作宣发
+    agents:
+      - drama.production-pack

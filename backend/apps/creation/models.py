@@ -85,7 +85,7 @@ class Project(models.Model):
         help_text="该创作归属的会员用户",
     )
     theme = models.CharField(
-        "题材", max_length=64, help_text="如 family-revenge / overbearing-ceo"
+        "题材", max_length=128, help_text="如 family-revenge / overbearing-ceo / matrix_key"
     )
     core_idea = models.TextField(
         "核心创意", help_text="一句话核心创意，用于生成剧本框架"
@@ -308,13 +308,9 @@ class Project(models.Model):
 
         track_roles = DramaProgressService.list_track_agent_ids(self)
         if not track_roles:
-            from apps.drama.constants import DramaTrackMode
-            from apps.drama.defaults import DRAMA_FAST_TRACK_ROLES, DRAMA_ROLE_DEFAULTS
+            from apps.creation.agent_runtime.entry_plan import DramaEntryPlan
 
-            if self.track_mode == DramaTrackMode.FAST:
-                track_roles = list(DRAMA_FAST_TRACK_ROLES)
-            else:
-                track_roles = [r["agent_id"] for r in DRAMA_ROLE_DEFAULTS]
+            track_roles = DramaEntryPlan.list_agent_ids(track_mode=self.track_mode or "fast")
 
         expected = set(track_roles)
         completed = set(self.completed_roles or []) & expected

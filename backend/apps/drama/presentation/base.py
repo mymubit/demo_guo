@@ -147,6 +147,137 @@ def market_report_block(
     }
 
 
+def project_brief_block(
+    *,
+    headline: str = "",
+    opening_hook: str = "",
+    metrics: Optional[List[dict]] = None,
+    sections: Optional[List[dict]] = None,
+    hook_ratings: Optional[List[dict]] = None,
+    selling_points: Optional[List[dict]] = None,
+) -> dict:
+    return {
+        "type": "project_brief",
+        "headline": headline,
+        "opening_hook": opening_hook,
+        "metrics": metrics or [],
+        "sections": sections or [],
+        "hook_ratings": hook_ratings or [],
+        "selling_points": selling_points or [],
+    }
+
+
+def world_setting_block(
+    *,
+    era_background: str = "",
+    space_intro: str = "",
+    space_scenes: Optional[List[dict]] = None,
+    power_structure: str = "",
+    core_rules: Optional[List[dict]] = None,
+    forbidden_constraint: str = "",
+) -> dict:
+    return {
+        "type": "world_setting",
+        "era_background": era_background,
+        "space_intro": space_intro,
+        "space_scenes": space_scenes or [],
+        "power_structure": power_structure,
+        "core_rules": core_rules or [],
+        "forbidden_constraint": forbidden_constraint,
+    }
+
+
+def character_bible_block(
+    *,
+    protagonists: Optional[List[dict]] = None,
+    supporting_roles: Optional[List[dict]] = None,
+    relation_roles: Optional[List[dict]] = None,
+    relationships: Optional[List[dict]] = None,
+    dream_check: Optional[dict] = None,
+) -> dict:
+    return {
+        "type": "character_bible",
+        "protagonists": protagonists or [],
+        "supporting_roles": supporting_roles or [],
+        "relation_roles": relation_roles or [],
+        "relationships": relationships or [],
+        "dream_check": dream_check or {},
+    }
+
+
+def series_outline_block(
+    *,
+    total_episodes: Any = None,
+    generated_episodes: Any = None,
+    missing_episodes: Optional[List[int]] = None,
+    suggested_range: str = "",
+    episode_batches: Optional[List[dict]] = None,
+    stages: Optional[List[dict]] = None,
+    foreshadowing: Optional[List[dict]] = None,
+    episodes: Optional[List[dict]] = None,
+) -> dict:
+    return {
+        "type": "series_outline",
+        "total_episodes": total_episodes,
+        "generated_episodes": generated_episodes,
+        "missing_episodes": missing_episodes or [],
+        "suggested_range": suggested_range,
+        "episode_batches": episode_batches or [],
+        "stages": stages or [],
+        "foreshadowing": foreshadowing or [],
+        "episodes": episodes or [],
+    }
+
+
+def build_episode_outline_batches(
+    episode_cards: List[dict],
+    *,
+    planned: int,
+    batch_size: int = 10,
+) -> List[dict]:
+    """按固定批次构建分集展陈（含待生成占位）。"""
+    if planned <= 0:
+        return []
+    by_no = {
+        int(card["episode_no"]): card
+        for card in episode_cards
+        if isinstance(card, dict) and card.get("episode_no")
+    }
+    batches: List[dict] = []
+    size = max(1, int(batch_size))
+    for start in range(1, planned + 1, size):
+        end = min(start + size - 1, planned)
+        batch_eps: List[dict] = []
+        generated = 0
+        for num in range(start, end + 1):
+            card = by_no.get(num)
+            if card:
+                batch_eps.append({**card, "missing": False})
+                generated += 1
+            else:
+                batch_eps.append(
+                    {
+                        "episode_no": num,
+                        "missing": True,
+                        "title": f"第{num}集",
+                        "subtitle": "待生成",
+                        "sections": [],
+                        "tags": [],
+                    }
+                )
+        batches.append(
+            {
+                "start": start,
+                "end": end,
+                "label": f"{start}-{end}",
+                "generated": generated,
+                "total": end - start + 1,
+                "episodes": batch_eps,
+            }
+        )
+    return batches
+
+
 def narrative_plan_block(
     *,
     core_objective: str = "",
@@ -840,6 +971,15 @@ def _episode_emotion_sections(emotion_beat: Any) -> List[dict]:
     if not isinstance(emotion_beat, dict):
         return []
     sections: List[dict] = []
+    if emotion_beat.get("emotion_value") is not None:
+        sections.append({"label": "EV 情绪值", "text": format_scalar(emotion_beat["emotion_value"])})
+    if emotion_beat.get("emotion_tension") is not None:
+        sections.append({"label": "ET 张力", "text": format_scalar(emotion_beat["emotion_tension"])})
+    theme = emotion_beat.get("theme_progression")
+    if theme not in (None, "", [], {}):
+        sections.append({"label": "主题推进", "text": str(theme).strip()})
+    if sections:
+        return sections
     for key, section_label in (
         ("EV", "情绪高峰 EV"),
         ("ET", "情绪低谷 ET"),
@@ -894,7 +1034,9 @@ def parse_episode_range(text: Any) -> tuple[int, int] | None:
 
 
 def episode_outline_number(item: dict, *, fallback: int = 1) -> int:
-    raw = item.get("episode_id")
+    raw = item.get("episode_num")
+    if raw in (None, "", [], {}):
+        raw = item.get("episode_id")
     if raw in (None, "", [], {}):
         return fallback
     if isinstance(raw, int):
@@ -912,8 +1054,10 @@ def episode_outline_number(item: dict, *, fallback: int = 1) -> int:
 def _normalize_episode_segments(item: dict) -> tuple[dict | None, str, Any]:
     """解析 series-outline.v1 分集四段结构与情绪标记。"""
     segments_raw = item.get("four_segment_structure")
-    hook = str(item.get("end_hook") or "").strip()
+    hook = str(item.get("ending_hook") or item.get("end_hook") or "").strip()
     emotion_src = item.get("emotion_markers")
+    if emotion_src in (None, "", [], {}) and isinstance(item.get("ev_et_tp"), dict):
+        emotion_src = item.get("ev_et_tp")
 
     if not isinstance(segments_raw, dict):
         return None, hook, emotion_src
@@ -934,6 +1078,11 @@ def episode_outline_card_item(item: dict, *, fallback_index: int = 0) -> dict | 
     segments, hook, emotion_src = _normalize_episode_segments(item)
     structure = _episode_segment_sections(segments)
     emotions = _episode_emotion_sections(emotion_src)
+    goal_conflict = str(item.get("goal_conflict") or "").strip()
+    if goal_conflict and not structure:
+        structure = [{"label": "目标与冲突", "text": goal_conflict}]
+    rhythm = str(item.get("dual_track_rhythm") or "").strip()
+    tags = [f"节奏 {rhythm}"] if rhythm else []
     sections = structure + emotions
     if not sections and not hook:
         return None
@@ -947,6 +1096,7 @@ def episode_outline_card_item(item: dict, *, fallback_index: int = 0) -> dict | 
         "structure": structure,
         "emotions": emotions,
         "sections": sections,
+        "tags": tags,
     }
 
 

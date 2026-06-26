@@ -1,0 +1,54 @@
+# global_core · 跨项目经验规则（LR）— Git SSOT
+version: "1.0.0"
+tier: 1
+items:
+  - rule_key: t1.global.learned_rules.lr001
+    section: learned_rules
+    title: LR-001 复仇开场
+    priority: 10
+    body: "复仇/逆袭：第1集前30秒须展示主角被欺压，快速建立同情与愤怒。"
+  - rule_key: t1.global.learned_rules.lr002
+    section: learned_rules
+    title: LR-002 甜宠独白
+    priority: 11
+    body: "甜宠/治愈：单角色连续内心独白不超过3句，优先互动与外化。"
+  - rule_key: t1.global.learned_rules.lr003
+    section: learned_rules
+    title: LR-003 付费前钩子
+    priority: 12
+    body: "付费墙前最后一集集末钩子须为全剧 S 级强度。"
+  - rule_key: t1.global.learned_rules.lr004
+    section: learned_rules
+    title: LR-004 反派逻辑
+    priority: 13
+    body: "反派失败须有合理逻辑，禁止降智式失败。"
+  - rule_key: t1.global.learned_rules.lr005
+    section: learned_rules
+    title: LR-005 身份揭示
+    priority: 14
+    body: "S级身份反转需3+集误导铺垫，揭示场景须有仪式感。"
+  - rule_key: t1.global.learned_rules.lr006
+    section: learned_rules
+    title: LR-006 推进节拍
+    priority: 15
+    body: "每集推进型节拍占比≥60%，低于则叙事效率不足。"
+  - rule_key: t1.global.learned_rules.lr007
+    section: learned_rules
+    title: LR-007 付费兑现
+    priority: 16
+    body: "首付费卡点第3–5集；付费后1集内须兑现承诺。"
+  - rule_key: t1.global.learned_rules.lr008
+    section: learned_rules
+    title: LR-008 逐集上下文
+    priority: 17
+    body: "生成第N集仅加载：N-1集全文+角色快照+伏笔清单+本集大纲条目。"
+  - rule_key: t1.global.learned_rules.lr009
+    section: learned_rules
+    title: LR-009 喘息集限制
+    priority: 18
+    body: "松+轻喘息集每10集最多1次，禁止连续出现。"
+  - rule_key: t1.global.learned_rules.lr010
+    section: learned_rules
+    title: LR-010 危机集节奏
+    priority: 19
+    body: "大反转/身份揭示/决裂集须为紧+重双轨组合。"

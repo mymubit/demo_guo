@@ -55,15 +55,16 @@ class AgentRegistryConfigService:
     def admin_payload(cls) -> Dict[str, Any]:
         """Admin 只读归档 payload（registry v2 已下线，数据来自 AgentDefinition）。"""
         from apps.agent.bootstrap.tier1_sections import (
-            DEFAULT_TIER1_SECTIONS_BY_AGENT,
+            get_agent_tier1_sections,
             tier1_section_catalog_detail,
         )
 
         registry = cls.get_registry()
+        tier1_by_agent = get_agent_tier1_sections()
         section_keys = sorted(
             {
                 key
-                for sections in DEFAULT_TIER1_SECTIONS_BY_AGENT.values()
+                for sections in tier1_by_agent.values()
                 for key in (sections or [])
             }
         )
@@ -72,7 +73,7 @@ class AgentRegistryConfigService:
             "registry": registry,
             "tier1_section_catalog": section_keys,
             "tier1_section_catalog_detail": tier1_section_catalog_detail(),
-            "default_tier1_sections_by_agent": DEFAULT_TIER1_SECTIONS_BY_AGENT,
+            "default_tier1_sections_by_agent": tier1_by_agent,
         }
 
     @classmethod

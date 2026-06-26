@@ -15,7 +15,7 @@ export const AI_CONFIG_SECTIONS = [
     tab: null,
     label: 'Agent 定义',
     icon: Bot,
-    description: 'Drama 36 角色 Prompt 版本、Knowledge 绑定与健康检查',
+    description: 'Drama 12 角色 Prompt 版本、Knowledge 绑定与健康检查',
   },
   {
     id: 'agent-runs',

@@ -1,0 +1,22 @@
+genre_key: urban-counterattack
+label_zh: 都市逆袭
+tier: 2
+items:
+  - rule_key: t2.urban-counterattack.genre_rules.emotion-anchor
+    section: genre_rules
+    scope_type: genre
+    scope_key: urban-counterattack
+    title: 都市逆袭·情绪锚点
+    priority: 10
+    body: |
+      SSOT: knowledge/tier2-genre-rules.md · ThemeTemplate urban-counterattack
+      核心情绪：打工人反PUA/小人物崛起/裁员生存困境；反抗不公的爽感。
+      钩子：职场反转、贵人相助、技能觉醒、对手溃败。
+  - rule_key: t2.urban-counterattack.rhythm_rules.act-ratio
+    section: rhythm_rules
+    scope_type: genre
+    scope_key: urban-counterattack
+    title: 阶段配比参考
+    priority: 20
+    body: |
+      六阶段占比：10/20/25/20/15/10；反转密度≈0.30；首集宜展示最大不公横截面。

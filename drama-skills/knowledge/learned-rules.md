@@ -1,6 +1,6 @@
 # 跨项目经验规则（Learned Rules）
 
-> 来源：从 StoryForge 仓库、行业经验和本系统实际生成案例中提炼。
+> 来源：行业经验与本仓库 `foundation/rules/learned-rules.yaml`（LR）同步维护。
 > 当同类修改出现 2 次以上时，沉淀为此处的跨项目规则。
 
 ## 规则格式

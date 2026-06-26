@@ -10,6 +10,8 @@ from apps.drama.models import DramaRoleExecution
 from apps.drama.presentation.base import view
 from apps.drama.presentation.presenters import present_artifact
 
+from apps.drama.presentation.artifact_source import resolve_live_output_artifacts
+
 logger = logging.getLogger(__name__)
 
 
@@ -17,8 +19,10 @@ def build_role_output_views(
     output_artifacts: Dict[str, Any],
     *,
     agent_id: str = "",
+    planned_episodes: int | None = None,
+    outline_progress: Dict[str, Any] | None = None,
 ) -> Dict[str, dict]:
-    """仅依据 execution 快照中的 output_artifacts 构建展示视图。"""
+    """依据 execution 快照中的 output_artifacts 构建展示视图。"""
     schema_by_key: Dict[str, str] = {}
     artifact_keys: list[str] = []
     if agent_id:
@@ -43,7 +47,17 @@ def build_role_output_views(
             continue
         schema = schema_by_key.get(key) or _infer_schema_version(key, payload)
         try:
-            views[key] = present_artifact(key, schema, payload)
+            if key == "series_outline":
+                from apps.drama.presentation.schema_presenters import present_series_outline
+
+                views[key] = present_series_outline(
+                    key,
+                    payload,
+                    planned_episodes=planned_episodes,
+                    outline_progress=outline_progress,
+                )
+            else:
+                views[key] = present_artifact(key, schema, payload)
         except Exception:  # noqa: BLE001
             logger.exception("[DramaPresentation] 产物展示失败 artifact=%s schema=%s", key, schema)
             views[key] = view(
@@ -55,11 +69,29 @@ def build_role_output_views(
     return views
 
 
-def build_execution_output_views(drama_exec: DramaRoleExecution) -> Dict[str, dict]:
+def build_execution_output_views(
+    drama_exec: DramaRoleExecution,
+    *,
+    planned_episodes: int | None = None,
+    outline_progress: Dict[str, Any] | None = None,
+) -> Dict[str, dict]:
     if drama_exec.status != DramaRoleExecution.Status.SUCCESS:
         return {}
-    artifacts = dict(drama_exec.output_artifacts or {})
-    return build_role_output_views(artifacts, agent_id=drama_exec.agent_id)
+    artifacts = resolve_live_output_artifacts(drama_exec)
+    if planned_episodes is None and getattr(drama_exec, "project", None):
+        planned_episodes = int(drama_exec.project.episode_count or 0) or None
+    if outline_progress is None and drama_exec.agent_id == "drama.plot-architect" and getattr(
+        drama_exec, "project", None
+    ):
+        from apps.drama.outline_progress import summarize_series_outline_progress
+
+        outline_progress = summarize_series_outline_progress(drama_exec.project)
+    return build_role_output_views(
+        artifacts,
+        agent_id=drama_exec.agent_id,
+        planned_episodes=planned_episodes,
+        outline_progress=outline_progress,
+    )
 
 
 def _infer_schema_version(artifact_key: str, payload: Any) -> str:

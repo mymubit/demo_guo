@@ -17,7 +17,7 @@ const HUB_CARDS = [
     to: '/admin/agent',
     icon: Bot,
     title: 'Agent 中心',
-    desc: 'Drama 36 角色 Prompt 定义、Knowledge 与 LLM 路由',
+    desc: 'Drama 12 角色 Prompt 定义、Knowledge 与 LLM 路由',
     accent: 'from-indigo-500/20 to-indigo-600/5 border-indigo-500/25',
   },
   {

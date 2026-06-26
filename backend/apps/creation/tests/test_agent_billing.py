@@ -47,9 +47,9 @@ class DramaAgentBillingTests(TestCase):
         self.assertEqual(agent_action_key("drama.quality-reporter"), "drama.agent.quality-reporter")
 
     def test_get_agent_coin_cost_known_roles(self):
-        self.assertEqual(get_agent_coin_cost("drama.script-writer"), 15)  # 最高消耗
-        self.assertEqual(get_agent_coin_cost("drama.topic-planner"), 3)
-        self.assertEqual(get_agent_coin_cost("drama.formatter"), 2)  # 轻量
+        """兜底函数统一返回 DEFAULT_COIN_COST；真实定价走 BillingService/ActionPricing。"""
+        self.assertEqual(get_agent_coin_cost("drama.script-writer"), 5)
+        self.assertEqual(get_agent_coin_cost("drama.topic-planner"), 5)
 
     def test_get_agent_coin_cost_unknown_uses_default(self):
         cost = get_agent_coin_cost("drama.nonexistent-role")
@@ -86,6 +86,6 @@ class DramaAgentBillingTests(TestCase):
         self.assertEqual(cost, 3)  # 与 setUp 中配置一致
 
     def test_resolve_coin_cost_fallback_to_config(self):
-        """无 DB 定价时从配置读取。"""
+        """无 DB 定价时使用兜底 DEFAULT_COIN_COST。"""
         cost = resolve_coin_cost("drama.character-designer")
-        self.assertEqual(cost, 5)  # DRAMA_AGENT_COIN_COST["drama.character-designer"]
+        self.assertEqual(cost, 5)

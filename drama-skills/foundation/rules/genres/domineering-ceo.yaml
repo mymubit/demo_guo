@@ -1,0 +1,22 @@
+genre_key: domineering-ceo
+label_zh: 豪门霸总
+tier: 2
+items:
+  - rule_key: t2.domineering-ceo.genre_rules.emotion-anchor
+    section: genre_rules
+    scope_type: genre
+    scope_key: domineering-ceo
+    title: 豪门霸总·情绪锚点
+    priority: 10
+    body: |
+      SSOT: knowledge/tier2-genre-rules.md · ThemeTemplate domineering-ceo
+      核心情绪：隐藏身份/阶级碾压/真爱与商业帝国；强势群体在爱情里的软肋。
+      钩子：隐藏身份、商战反转、英雄救美、豪门对峙。
+  - rule_key: t2.domineering-ceo.rhythm_rules.act-ratio
+    section: rhythm_rules
+    scope_type: genre
+    scope_key: domineering-ceo
+    title: 阶段配比参考
+    priority: 20
+    body: |
+      六阶段占比：10/20/25/20/15/10；反转密度≈0.40；高潮期宜放大打脸。

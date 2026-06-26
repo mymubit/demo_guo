@@ -384,7 +384,7 @@ export default function CreationProjectsPage() {
       <AdminPageHeader
         crumbs={[{ label: 'Console' }, { label: '创作项目' }]}
         title={`创作项目 · ${runningCount ?? 0} 进行中`}
-        subtitle="Drama 36 角色轨 · 点击项目查看角色执行轨迹与产物"
+        subtitle="Drama 12 角色轨 · 点击项目查看角色执行轨迹与产物"
       />
 
       {spotlightProjects.length > 0 ? (

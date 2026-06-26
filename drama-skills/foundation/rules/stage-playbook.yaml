@@ -1,0 +1,32 @@
+# stage_playbook · 阶段 playbook — Git SSOT（按 agent scope_key 过滤）
+version: "1.0.0"
+tier: 3
+items:
+  - rule_key: t3.drama-plot-architect.episode_structure.six-stage
+    section: episode_structure
+    scope_type: agent
+    scope_key: drama.plot-architect
+    title: 六阶段集数分配
+    priority: 10
+    body: |
+      SSOT: knowledge/tier3-stage-rules.md
+      100集基准：开篇10%/升温20%/高潮20%/转折20%/冲刺15%/结局15%。
+      每集大纲须含 Goal×Conflict、EV/ET/TP、集末钩子、双轨节奏[松/中/紧×轻/中/重]。
+  - rule_key: t3.drama-character-designer.character_rules.density
+    section: character_rules
+    scope_type: agent
+    scope_key: drama.character-designer
+    title: 角色密度与弧光
+    priority: 10
+    body: |
+      SSOT: knowledge/tier3-stage-rules.md
+      主角≤2，核心配角2-4，总关系角色≤6；每人须 Want/Need/Ghost/Lie/Flaw；15秒内可视觉识别。
+  - rule_key: t3.drama-script-writer.writing_requirements.episode-range
+    section: writing_requirements
+    scope_type: agent
+    scope_key: drama.script-writer
+    title: 分集写作约束
+    priority: 10
+    body: |
+      SSOT: roles/drama-script-writer/tasks/write-episodes.md
+      必须指定 episode_range；逐集依赖上一集全文+memory_checkpoint（LR-008）；禁止一次生成全剧。

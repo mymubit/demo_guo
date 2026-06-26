@@ -2,8 +2,7 @@
 """
 Agent 运行时工具函数 — drama.* 新体系。
 
-旧的 brief/structure/character/outline/script 等硬编码已移除。
-现在所有 Agent 统一通过 AgentDefinition 数据库记录管理。
+角色顺序与快速通道列表来自 drama-skills/registry.yaml（Git SSOT）。
 """
 from __future__ import annotations
 
@@ -11,35 +10,16 @@ import logging
 from functools import lru_cache
 from typing import Any, Dict, Optional
 
+from apps.drama.skills_registry import (
+    SKILL_VERSION,
+    get_fast_track_agent_ids,
+    get_workspace_order_map,
+)
+
 logger = logging.getLogger(__name__)
 
-# drama.* 快速通道角色（workspace_order 决定排序）
-DRAMA_FAST_TRACK_AGENT_IDS = [
-    "drama.topic-planner",
-    "drama.world-architect",
-    "drama.character-designer",
-    "drama.plot-architect",
-    "drama.script-writer",
-    "drama.script-reviewer",
-    "drama.quality-reporter",
-    "drama.compliance-guard",
-]
-
-# drama.* 角色按 workspace_order 的顺序（用于进度计算）
-DRAMA_WORKSPACE_ORDER = {
-    "drama.topic-planner": 103,
-    "drama.world-architect": 201,
-    "drama.character-designer": 202,
-    "drama.plot-architect": 302,
-    "drama.script-writer": 401,
-    "drama.script-reviewer": 501,
-    "drama.quality-reporter": 504,
-    "drama.compliance-guard": 801,
-    "drama.market-analyst": 106,
-    "drama.narrative-engineer": 308,
-    "drama.polish-master": 601,
-    "drama.production-pack": 701,
-}
+DRAMA_FAST_TRACK_AGENT_IDS = get_fast_track_agent_ids()
+DRAMA_WORKSPACE_ORDER = get_workspace_order_map()
 
 
 def action_key_agent_meta(action_key: str) -> Dict[str, Any]:
@@ -62,9 +42,9 @@ def primary_output_artifact(agent_id: str) -> str:
             return str(outputs[0])
     if agent_id.startswith("drama."):
         try:
-            from apps.agent.definition_service import AgentDefinitionService
+            from apps.agent.models import AgentDefinition
 
-            row = AgentDefinitionService.get(agent_id)
+            row = AgentDefinition.objects.filter(agent_id=agent_id).first()
             if row and isinstance(row.output_contract, dict):
                 artifacts = row.output_contract.get("artifacts") or []
                 if artifacts:
@@ -80,10 +60,7 @@ def workspace_index_for_agent(agent_id: str) -> int:
 
 
 def get_agent_registry() -> Dict[str, Any]:
-    """
-    从数据库获取所有 drama.* Agent 的运行时描述。
-    结果按 workspace_order 排序。
-    """
+    """从数据库获取所有 drama.* Agent 的运行时描述。"""
     return _load_agent_registry()
 
 
@@ -91,6 +68,7 @@ def get_agent_registry() -> Dict[str, Any]:
 def _load_agent_registry() -> Dict[str, Any]:
     try:
         from apps.agent.models import AgentDefinition
+
         agents = AgentDefinition.objects.filter(
             category="drama_skills",
             is_enabled=True,
@@ -98,7 +76,7 @@ def _load_agent_registry() -> Dict[str, Any]:
         ).order_by("workspace_order")
 
         return {
-            "_meta": {"version": "drama-skills-v3.0"},
+            "_meta": {"version": SKILL_VERSION},
             "orchestrator": {"runtime": "scriptforge-drama"},
             "agents": [
                 {
@@ -115,7 +93,7 @@ def _load_agent_registry() -> Dict[str, Any]:
         }
     except Exception as exc:  # noqa: BLE001
         logger.warning("[drama runtime] get_agent_registry failed: %s", exc)
-        return {"_meta": {"version": "drama-skills-v3.0"}, "agents": []}
+        return {"_meta": {"version": SKILL_VERSION}, "agents": []}
 
 
 get_agent_registry.cache_clear = _load_agent_registry.cache_clear  # type: ignore[attr-defined]
@@ -125,6 +103,7 @@ def get_agent(agent_id: str) -> Optional[Dict[str, Any]]:
     """按 agent_id 获取单个 Agent 运行时信息。"""
     try:
         from apps.agent.models import AgentDefinition
+
         agent = AgentDefinition.objects.filter(agent_id=agent_id).first()
         if not agent:
             return None

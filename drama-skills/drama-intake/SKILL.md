@@ -1,6 +1,6 @@
 ---
 name: drama-intake
-version: "1.0.0"
+version: "3.1.0"
 description: "外部内容摄入器：接收任意来源的外部内容（GitHub仓库/PDF/公众号/小红书/Word等），自动提取与短剧创作相关的知识，路由到对应的进化轨道（灵感库/技能规则/知识库/新模式发现）。Invoke when user provides external content to absorb into the skill system."
 tags: ["外部摄入", "知识提取", "进化输入", "多来源支持"]
 ---
@@ -60,7 +60,7 @@ Step 5：归档确认
 | 具体反转/意外设计案例 | 轨道二：灵感归档 | `inspirations/reversals.md` |
 | 精彩台词/对白案例 | 轨道二：灵感归档 | `inspirations/dialogues.md` |
 | 创新叙事结构案例 | 轨道二：灵感归档 | `inspirations/structures.md` |
-| 角色/情节设计理论 | 轨道一：技能规则 | 对应角色的 SKILL.md（提案） |
+| 角色/情节设计理论 | 轨道一：规则进化 | `foundation/rules/*.yaml`（提案，见 `INTAKE_PROTOCOL.md`） |
 | 全新的创作方法论 | 轨道四：新模式发现 | `inspirations/new-patterns.md` |
 | 行业数据/平台规律 | 轨道三：外部摄入 | `knowledge/market-insights.md` |
 | 爆款作品分析 | 触发拉片分析 | `drama-market-analyst`（含拉片分析能力） |
@@ -104,7 +104,7 @@ Step 5：归档确认
 处理方式：
 - 大文档分段处理
 - 每段提取3-5个核心知识点
-- 与现有SKILL.md内容做差异对比
+- 与现有 `foundation/rules/` 做差异对比
 ```
 
 ### GitHub 仓库
@@ -136,7 +136,7 @@ Step 5：归档确认
 | # | 内容类型 | 核心知识点 | 路由轨道 | 目标位置 |
 |---|---------|----------|---------|---------|
 | 1 | 钩子案例 | [描述] | 灵感归档 | hooks.md |
-| 2 | 新方法论 | [描述] | 技能规则 | drama-xxx/SKILL.md |
+| 2 | 新方法论 | [描述] | 规则进化 | `foundation/rules/*.yaml` |
 
 ### 冲突标记（X条）
 [与现有规则存在矛盾的内容，需要用户确认]
@@ -158,7 +158,7 @@ Step 5：归档确认
 
 ---
 
-## 进化闭环（内嵌·原evolution-analyst能力）
+## 进化闭环（内嵌于 drama-intake）
 
 摄入内容分析完成后，自动触发双轨进化：
 
@@ -184,5 +184,5 @@ Step 5：归档确认
 ```
 
 触发条件：
-- 质量报告连续两次某维度<70分 → 提案改进对应角色prompt
+- 质量报告连续两次某维度<70分 → 提案更新 `foundation/rules/` 或对应 `role.yaml` modules
 - 摄入内容包含现有库未覆盖的新模式 → 触发`inspirations/new-patterns.md`归档

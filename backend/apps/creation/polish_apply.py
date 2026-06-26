@@ -101,7 +101,17 @@ def apply_polish_suggestions(
         applied_records.append(record)
 
     scripts["episodes"] = sorted(by_num.values(), key=lambda x: int(x["episodeNumber"]))
-    save_artifact(project, "episode_scripts", scripts)
+    from apps.drama.episode_artifact_store import EPISODE_SCRIPTS_CONFIG, persist_episode_blob_output
+
+    persist_episode_blob_output(
+        project,
+        EPISODE_SCRIPTS_CONFIG,
+        scripts,
+        agent_id="drama.polish-master",
+        run_id="polish-apply",
+        episode_from=None,
+        episode_to=None,
+    )
 
     already = set(polish_log.get("appliedIndices") or [])
     already.update(selected)

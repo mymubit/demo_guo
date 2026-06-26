@@ -14,28 +14,14 @@ from django.core.exceptions import PermissionDenied
 
 logger = logging.getLogger(__name__)
 
-# drama.* 角色 Coin 消耗等级
-DRAMA_AGENT_COIN_COST: dict[str, int] = {
-    "drama.character-designer": 4,
-    "drama.compliance-guard": 3,
-    "drama.market-analyst": 8,
-    "drama.narrative-engineer": 15,
-    "drama.plot-architect": 8,
-    "drama.polish-master": 15,
-    "drama.production-pack": 12,
-    "drama.quality-reporter": 4,
-    "drama.script-reviewer": 5,
-    "drama.script-writer": 12,
-    "drama.topic-planner": 3,
-    "drama.world-architect": 4,
-}
-
+# drama.* 角色 Coin 消耗 — 仅作 BillingService 无配置时的兜底，运营定价以 DB 为准
 DEFAULT_COIN_COST = 5
 
 
 def get_agent_coin_cost(agent_id: str) -> int:
-    """获取指定 drama.* Agent 的 Coin 消耗量。"""
-    return DRAMA_AGENT_COIN_COST.get(agent_id, DEFAULT_COIN_COST)
+    """获取指定 drama.* Agent 的 Coin 消耗量（兜底默认值）。"""
+    _ = agent_id
+    return DEFAULT_COIN_COST
 
 
 def agent_action_key(agent_id: str) -> str:
@@ -56,6 +42,7 @@ def resolve_coin_cost(agent_id: str, params: Optional[Dict[str, Any]] = None) ->
             return cost
     except Exception:  # noqa: BLE001
         pass
+    logger.debug("[AgentBilling] 使用兜底 Coin 成本 agent=%s cost=%s", agent_id, DEFAULT_COIN_COST)
     return get_agent_coin_cost(agent_id)
 
 

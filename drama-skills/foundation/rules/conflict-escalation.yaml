@@ -1,0 +1,17 @@
+# global_core · 冲突升级 — Git SSOT（plot-architect / narrative-engineer）
+version: "1.0.0"
+tier: 1
+items:
+  - rule_key: t1.global.conflict_escalation.four-types
+    section: conflict_escalation
+    title: 四类冲突
+    priority: 10
+    body: |
+      外部（环境/社会）· 人际（关系/利益）· 内心（Ghost/Lie）· 命运（结构性对立）。
+      每次升级须改变冲突质量，禁止同烈度重复拉扯。
+  - rule_key: t1.global.conflict_escalation.upgrade-protocol
+    section: conflict_escalation
+    title: 升级协议
+    priority: 11
+    body: |
+      范围升级 → 烈度升级 → 信息升级 → 后果升级。对峙场景含：势力对比/表面诉求/真实意图/权力拉锯/场景转折。

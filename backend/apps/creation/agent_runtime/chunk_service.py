@@ -9,67 +9,31 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional
 
-# drama.* 角色产物 → 分片流类型映射
-# kind: 产物类型
-# array_keys: 可能包含数组内容的 JSON 键路径（用于流式拼接）
-DRAMA_ARTIFACT_CHUNK_MAP: Dict[str, Dict[str, Any]] = {
-    # 剧本执笔师 - 最大产物，需要分片
-    "episode_scripts": {
-        "kind": "episode_scripts",
-        "array_keys": ("episodes",),
-    },
-    # 情节架构师 - 分集大纲
-    "series_outline": {
-        "kind": "series_outline",
-        "array_keys": ("episodes", "stages"),
-    },
-    # 修稿师/对白专家 - 也输出 episode_scripts
-    # (同 episode_scripts，复用上面的配置)
-
-    # 情绪架构师 - 情绪蓝图
-    "emotion_blueprint": {
-        "kind": "emotion_blueprint",
-        "array_keys": ("episodes",),
-    },
-    # 节奏设计师 - 情绪曲线
-    "emotion_curve": {
-        "kind": "emotion_curve",
-        "array_keys": ("episodes",),
-    },
-    # 分镜导演 - 分镜表
-    "storyboard": {
-        "kind": "storyboard",
-        "array_keys": ("scenes",),
-    },
-}
-
-# drama.* agent_id → 主要产物键映射
-DRAMA_AGENT_PRIMARY_ARTIFACT: Dict[str, str] = {
-    "drama.script-writer": "episode_scripts",
-    "drama.polish-master": "polished_script",
-    "drama.production-pack": "production_package",
-    "drama.narrative-engineer": "narrative_plan",
-    "drama.market-analyst": "market_report",
-    "drama.plot-architect": "series_outline",
-}
+from apps.drama.skills_registry import get_artifact_chunk_map
 
 
 def get_chunk_config(artifact_key: str) -> Optional[Dict[str, Any]]:
     """获取指定 artifact_key 的分片配置。"""
-    return DRAMA_ARTIFACT_CHUNK_MAP.get(artifact_key)
+    return get_artifact_chunk_map().get(artifact_key)
+
+
+# drama.* agent_id → 主要产物键（来自 registry.yaml default_output_artifact_key）
 
 
 def get_agent_primary_artifact(agent_id: str) -> Optional[str]:
     """获取指定 drama.* Agent 的主要产物键。"""
-    return DRAMA_AGENT_PRIMARY_ARTIFACT.get(agent_id)
+    from apps.drama.skills_registry import get_primary_artifact_map
+
+    return get_primary_artifact_map().get(agent_id)
 
 
 def resolve_chunk_kind(agent_id: str, params: Optional[Dict[str, Any]] = None) -> str:
     """根据 drama.* agent_id 解析分片产物类型。"""
-    config = get_chunk_config(agent_id)
-    if config:
-        return config.get("kind", "episode_scripts")
+    _ = params
     primary = get_agent_primary_artifact(agent_id)
+    config = get_chunk_config(primary or "")
+    if config:
+        return str(config.get("kind") or primary or "episode_scripts")
     return primary or "episode_scripts"
 
 

@@ -3,6 +3,9 @@ import { request } from '../http';
 // ─── 角色列表（含三层分级）────────────────────────────────────────────────────
 export const getDramaRoles = () => request('GET', '/api/drama/roles/');
 
+// ─── 题材四轴矩阵（SSOT: theme-matrix.yaml）────────────────────────────────────
+export const getThemeMatrix = () => request('GET', '/api/drama/theme-matrix/');
+
 // ─── 项目管理 ──────────────────────────────────────────────────────────────────
 export const createDramaProject = (data) => request('POST', '/api/drama/projects/', { data });
 export const getDramaProjects = () => request('GET', '/api/drama/projects/');

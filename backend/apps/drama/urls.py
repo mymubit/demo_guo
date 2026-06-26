@@ -11,6 +11,7 @@ from apps.drama.views import (
     GenerationPlanView,
     ModelConfigView,
     QualityRadarView,
+    ThemeMatrixView,
     TokenStatsView,
     WordCountValidateView,
 )
@@ -21,6 +22,9 @@ router.register(r"projects", DramaWorkspaceViewSet, basename="drama-project")
 urlpatterns = [
     # 角色分组列表
     path("roles/", DramaRoleListView.as_view(), name="drama-roles"),
+
+    # 题材四轴矩阵（SSOT）
+    path("theme-matrix/", ThemeMatrixView.as_view(), name="drama-theme-matrix"),
 
     # 字数校验
     path("validate/word-count/", WordCountValidateView.as_view(), name="drama-word-validate"),

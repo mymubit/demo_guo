@@ -1,0 +1,45 @@
+# 流式分片产物配置 SSOT — chunk_service / stream_service 引用
+version: "1.0.0"
+
+artifacts:
+  episode_scripts:
+    kind: episode_scripts
+    array_keys: [episodes]
+  series_outline:
+    kind: series_outline
+    array_keys: [episodes, stages]
+  polished_script:
+    kind: polished_script
+    array_keys: [episodes]
+  narrative_plan:
+    kind: narrative_plan
+    array_keys: [episode_narrative_designs]
+  market_report:
+    kind: market_report
+    array_keys: []
+  production_package:
+    kind: production_package
+    array_keys: []
+
+array_artifact_keys:
+  - episode_scripts
+  - series_outline
+  - polished_script
+  - narrative_plan
+  - emotion_curve
+  - emotion_blueprint
+  - storyboard
+
+pipeline_result_keys:
+  project_brief: project_brief
+  world_setting: world_setting
+  character_bible: character_bible
+  series_outline: series_outline
+  episode_scripts: scripts
+  quality_report: quality_report
+  compliance_report: compliance_report
+  production_package: production_package
+  polished_script: polished_script
+  narrative_plan: narrative_plan
+  review_report: review_report
+  market_report: market_report

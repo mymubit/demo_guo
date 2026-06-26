@@ -61,9 +61,9 @@ jobs:
       - name: Migrate
         working-directory: backend
         run: python manage.py migrate --noinput
-      - name: Seed drama skills agents
+      - name: Sync drama skills from Git SSOT
         working-directory: backend
-        run: python manage.py seed_drama_skills
+        run: python manage.py sync_drama_from_git --force
       - name: Run backend tests with coverage
         working-directory: backend
         run: |

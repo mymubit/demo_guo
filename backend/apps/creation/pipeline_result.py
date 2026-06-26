@@ -12,23 +12,14 @@ from .artifact_renderer import normalize_episode_scripts_for_delivery
 from .artifact_service import get_artifact
 from .models import Project
 
-# drama.* 产物键 → 结果字段名映射
-DRAMA_ARTIFACT_RESULT_KEYS: Dict[str, str] = {
-    "project_brief": "project_brief",
-    "world_setting": "world_setting",
-    "character_bible": "character_bible",
-    "series_outline": "series_outline",
-    "episode_scripts": "scripts",  # 保留 scripts 兼容旧交付格式
-    "quality_report": "quality_report",
-    "compliance_report": "compliance_report",
-    "delivery_pack": "delivery_pack",
-    "emotion_curve": "emotion_curve",
-    "emotion_blueprint": "emotion_blueprint",
-    "marketing_kit": "marketing_kit",
-}
-
 # 需要 episode_scripts → scripts 格式转换的键
 _SCRIPT_TRANSFORM_KEYS = frozenset({"scripts"})
+
+
+def _pipeline_result_key_map() -> Dict[str, str]:
+    from apps.drama.skills_registry import get_pipeline_result_key_map
+
+    return get_pipeline_result_key_map()
 
 
 def build_pipeline_result_from_project(project: Project) -> Dict[str, Any]:
@@ -39,7 +30,7 @@ def build_pipeline_result_from_project(project: Project) -> Dict[str, Any]:
         "artifacts": artifacts,
     }
 
-    for artifact_key, result_key in DRAMA_ARTIFACT_RESULT_KEYS.items():
+    for artifact_key, result_key in _pipeline_result_key_map().items():
         payload = get_artifact(project, artifact_key) or {}
         artifacts[artifact_key] = payload
 

@@ -36,7 +36,7 @@ class DramaWorkspaceSerializer(serializers.Serializer):
 
 class DramaWorkspaceCreateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=128)
-    theme = serializers.CharField(max_length=64, default="family-revenge")
+    theme = serializers.CharField(max_length=128, default="family-revenge")
     episode_count = serializers.IntegerField(default=30, min_value=5, max_value=200)
     target_platform = serializers.ChoiceField(
         choices=["douyin", "kuaishou", "weixin", "all"],
@@ -52,22 +52,44 @@ class DramaWorkspaceCreateSerializer(serializers.Serializer):
 class DramaRoleExecutionSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     output_views = serializers.SerializerMethodField()
+    output_artifacts = serializers.SerializerMethodField()
+    run_params = serializers.SerializerMethodField()
 
     class Meta:
         model = DramaRoleExecution
         fields = [
             "id", "agent_id", "agent_name_zh", "status", "status_display",
-            "output_artifacts", "output_views",
+            "output_artifacts", "output_views", "run_params",
             "prompt_tokens", "completion_tokens", "total_tokens", "cost_cents",
             "elapsed_seconds", "llm_provider", "llm_model",
             "error_message", "started_at", "finished_at", "created_at",
         ]
         read_only_fields = fields
 
+    @staticmethod
+    def get_run_params(obj: DramaRoleExecution) -> dict:
+        params = (obj.input_artifacts or {}).get("params")
+        return dict(params) if isinstance(params, dict) else {}
+
+    def get_output_artifacts(self, obj: DramaRoleExecution) -> dict:
+        from apps.drama.presentation.artifact_source import resolve_live_output_artifacts
+
+        if obj.status != DramaRoleExecution.Status.SUCCESS:
+            return dict(obj.output_artifacts or {})
+        return resolve_live_output_artifacts(obj)
+
     def get_output_views(self, obj: DramaRoleExecution) -> dict:
+        from apps.drama.outline_progress import summarize_series_outline_progress
         from apps.drama.presentation.service import build_execution_output_views
 
-        return build_execution_output_views(obj)
+        outline_progress = None
+        if obj.agent_id == "drama.plot-architect" and getattr(obj, "project", None):
+            outline_progress = summarize_series_outline_progress(obj.project)
+        return build_execution_output_views(
+            obj,
+            planned_episodes=int(getattr(obj.project, "episode_count", 0) or 0) or None,
+            outline_progress=outline_progress,
+        )
 
 
 class WordCountValidateSerializer(serializers.Serializer):

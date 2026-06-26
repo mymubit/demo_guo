@@ -1,0 +1,17 @@
+# global_core · 写作要求 — 执笔/精修共用
+version: "1.0.0"
+tier: 1
+items:
+  - rule_key: t1.global.writing_requirements.episode-scope
+    section: writing_requirements
+    title: 分集与记忆检查点
+    priority: 10
+    body: |
+      必须遵守 params.episode_range；逐集仅依赖上一集全文+memory_checkpoint（LR-008）。
+      每场 Goal×Conflict；每场 McKee 价值转变；每集输出 memory_checkpoint。
+  - rule_key: t1.global.writing_requirements.commercial-format
+    section: writing_requirements
+    title: 商业格式执行
+    priority: 11
+    body: |
+      场景头/台词/△ 动作遵循 format_standard；台词占比与字数见 quantitative_constraints。

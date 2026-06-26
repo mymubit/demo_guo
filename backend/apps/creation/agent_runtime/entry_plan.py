@@ -1,126 +1,48 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-8
 """
 创作入口规划 — drama.* 新体系。
 
-根据用户的创作入口类型，推荐对应的 drama.* 角色执行顺序。
+编排顺序来自 drama-skills/orchestration/*.yaml（Git SSOT）。
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List
-
 import logging
-
-from apps.agent.runtime import DRAMA_FAST_TRACK_AGENT_IDS
+from typing import Any, Dict, List
 
 logger = logging.getLogger(__name__)
 
 
 class DramaEntryPlan:
-    """
-    drama.* 创作入口规划。
-
-    根据 track_mode（fast/expert）和创作起点类型，
-    决定推荐的角色执行顺序。
-    """
-
-    # 快速通道：8个核心角色
-    FAST_TRACK_PLAN = {
-        "entry_type": "fast_track",
-        "label": "快速通道",
-        "description": "8个核心角色，适合初次创作和快速验证",
-        "recommended_agents": DRAMA_FAST_TRACK_AGENT_IDS,
-        "optional_agents": [],
-    }
-
-    # 专家通道：12个可见角色，按部门分阶段
-    EXPERT_TRACK_PLAN = {
-        "entry_type": "expert_track",
-        "label": "专家通道",
-        "description": "12个可见角色（8核心+4复合），适合商业精品项目",
-        "phases": [
-            {
-                "phase": "strategy",
-                "label": "战略选题",
-                "agents": ["drama.topic-planner", "drama.market-analyst"],
-            },
-            {
-                "phase": "worldbuilding",
-                "label": "世界构建",
-                "agents": ["drama.world-architect", "drama.character-designer"],
-            },
-            {
-                "phase": "plot_design",
-                "label": "剧情引擎",
-                "agents": ["drama.plot-architect", "drama.narrative-engineer"],
-            },
-            {
-                "phase": "writing",
-                "label": "创作执行",
-                "agents": ["drama.script-writer"],
-            },
-            {
-                "phase": "review",
-                "label": "评审质控",
-                "agents": ["drama.script-reviewer", "drama.quality-reporter"],
-            },
-            {
-                "phase": "polish",
-                "label": "修改润色",
-                "agents": ["drama.polish-master"],
-            },
-            {
-                "phase": "production",
-                "label": "制作宣发",
-                "agents": ["drama.production-pack"],
-            },
-            {
-                "phase": "compliance",
-                "label": "合规交付",
-                "agents": ["drama.compliance-guard"],
-            },
-        ],
-    }
-
-    # IP改编专用入口
-    IP_ADAPT_PLAN = {
-        "entry_type": "ip_adapt",
-        "label": "IP改编",
-        "description": "小说/原著改编专用通道",
-        "recommended_agents": [
-            "drama.topic-planner",
-            "drama.world-architect",
-            "drama.character-designer",
-            "drama.plot-architect",
-            "drama.script-writer",
-            "drama.script-reviewer",
-            "drama.quality-reporter",
-            "drama.compliance-guard",
-            "drama.narrative-engineer",
-            "drama.polish-master",
-            "drama.production-pack",
-        ],
-    }
+    """drama.* 创作入口规划。"""
 
     @classmethod
     def resolve(cls, track_mode: str = "fast", entry_type: str = "from-scratch") -> Dict[str, Any]:
-        """
-        根据创作模式和入口类型获取推荐的 Agent 执行计划。
+        from apps.drama.skills_registry import get_entry_plan
 
-        参数：
-        - track_mode: "fast" | "expert"
-        - entry_type: "from-scratch" | "from-novel" | "from-outline"
-        """
         if entry_type in ("from-novel", "novel-adaptation"):
-            return cls.IP_ADAPT_PLAN
+            plan = get_entry_plan("ip_adapt")
+        elif track_mode == "expert":
+            plan = get_entry_plan("expert")
+        else:
+            plan = get_entry_plan("fast")
 
-        if track_mode == "expert":
-            return cls.EXPERT_TRACK_PLAN
-
-        return cls.FAST_TRACK_PLAN
+        if plan.get("recommended_agents") is not None:
+            return {
+                "entry_type": plan.get("entry_type") or "fast_track",
+                "label": plan.get("label") or "快速通道",
+                "description": plan.get("description") or "",
+                "recommended_agents": list(plan.get("recommended_agents") or []),
+                "optional_agents": list(plan.get("optional_agents") or []),
+            }
+        return {
+            "entry_type": plan.get("entry_type") or "expert_track",
+            "label": plan.get("label") or "专家通道",
+            "description": plan.get("description") or "",
+            "phases": plan.get("phases") or [],
+        }
 
     @classmethod
     def list_agent_ids(cls, track_mode: str = "fast", entry_type: str = "from-scratch") -> list[str]:
-        """返回当前轨道下的全部 agent_id 有序列表。"""
         plan = cls.resolve(track_mode=track_mode, entry_type=entry_type)
         if plan.get("recommended_agents"):
             return list(plan["recommended_agents"])
@@ -131,7 +53,7 @@ class DramaEntryPlan:
 
 
 def get_entry_plan(entry_type: str = "from-scratch", *, track_mode: str = "fast") -> Dict[str, Any]:
-    """读取创作入口计划（DB 覆盖 + drama 默认）。"""
+    """读取创作入口计划（DB 覆盖 + drama-skills orchestration 默认）。"""
     from apps.agent.definition_service import AgentDefinitionService
     from apps.skill.models import SkillConfigEntry
 

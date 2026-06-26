@@ -1,0 +1,17 @@
+# global_core · 全局节奏基线 — Git SSOT（rhythm_rules section；题材 genre_profile 可覆盖配比）
+version: "1.0.0"
+tier: 1
+items:
+  - rule_key: t1.global.rhythm_rules.hook-density
+    section: rhythm_rules
+    title: 钩子密度
+    priority: 10
+    body: |
+      首集前 30 秒：视觉冲击 → 信息建立 → 悬念确立。单集 B/C 级钩子 ≥3；集末必须留未解问题。
+  - rule_key: t1.global.rhythm_rules.act-pacing
+    section: rhythm_rules
+    title: 六阶段节奏基线
+    priority: 11
+    body: |
+      100 集基准：开篇 10% / 升温 20% / 高潮 20% / 转折 20% / 冲刺 15% / 结局 15%。
+      双轨节奏 [松/中/紧 × 轻/中/重] 禁止连续同格超过 2 集。

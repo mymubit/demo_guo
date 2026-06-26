@@ -932,7 +932,32 @@ def _outline_framework_ready(payload: dict) -> bool:
 def _outline_episode_has_content(ep: dict) -> bool:
     if not isinstance(ep, dict):
         return False
-    return bool((ep.get("oneLineSummary") or ep.get("summary") or "").strip())
+    if (ep.get("oneLineSummary") or ep.get("summary") or "").strip():
+        return True
+    for key in ("goal_conflict", "ending_hook", "end_hook", "four_segment_structure", "ev_et_tp"):
+        val = ep.get(key)
+        if val not in (None, "", [], {}):
+            return True
+    return False
+
+
+def _outline_existing_episode_numbers(outline: dict) -> set[int]:
+    nums: set[int] = set()
+    for key in ("episodes", "episode_outlines"):
+        rows = outline.get(key) or []
+        if not isinstance(rows, list):
+            continue
+        for ep in rows:
+            if not isinstance(ep, dict):
+                continue
+            raw = ep.get("episodeNumber") or ep.get("episode_num") or ep.get("episode_id")
+            try:
+                num = int(str(raw).lstrip("EePp").split("-")[0])
+            except (TypeError, ValueError, AttributeError):
+                num = 0
+            if num and _outline_episode_has_content(ep):
+                nums.add(num)
+    return nums
 
 
 def compute_outline_batch_range(
@@ -947,11 +972,7 @@ def compute_outline_batch_range(
     """返回 (from, to, coin_cost)。"""
     total = int(project.episode_count or 80)
     outline = get_artifact(project, "series_outline") or {}
-    existing_nums = {
-        int(e.get("episodeNumber"))
-        for e in (outline.get("episodes") or [])
-        if isinstance(e, dict) and e.get("episodeNumber") and _outline_episode_has_content(e)
-    }
+    existing_nums = _outline_existing_episode_numbers(outline)
     default_batch = max(1, int(getattr(settings, "FUSION_LLM_OUTLINE_BATCH", 1)))
     batch = max(1, int(batch_size or default_batch))
 
@@ -984,11 +1005,7 @@ def compute_outline_fill_all_range(project: Project) -> Tuple[int, int, int]:
     """生成全部剩余集纲的范围。"""
     total = int(project.episode_count or 80)
     outline = get_artifact(project, "series_outline") or {}
-    existing_nums = {
-        int(e.get("episodeNumber"))
-        for e in (outline.get("episodes") or [])
-        if isinstance(e, dict) and e.get("episodeNumber") and _outline_episode_has_content(e)
-    }
+    existing_nums = _outline_existing_episode_numbers(outline)
     start = 1
     while start in existing_nums and start <= total:
         start += 1

@@ -34,7 +34,7 @@ function RoleCard({ role }) {
   )
 }
 
-/** Drama 36 角色目录 — Admin Agent 页 */
+/** Drama 12 角色目录 — Admin Agent 页 */
 export default function AdminAgentCatalogPanel() {
   const { showMessage, MessageBanner } = useAdminPanelMessage()
   const [loading, setLoading] = useState(true)

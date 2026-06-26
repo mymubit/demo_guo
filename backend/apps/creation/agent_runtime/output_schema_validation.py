@@ -7,7 +7,32 @@ from typing import Any, Callable, Dict, List
 
 from apps.creation.agent_runtime.independent_service import AgentRuntimeError
 
-Validator = Callable[[Dict[str, Any]], None]
+Validator = Callable[..., None]
+
+
+def _validation_artifact_mode(run_params: dict | None) -> str:
+    """与 persist 分批模式对齐；校验阶段不读取 DB 已有结构。"""
+    from apps.drama.artifact_mode import resolve_artifact_mode
+
+    params = run_params if isinstance(run_params, dict) else {}
+    ep_raw = params.get("episode_from") or params.get("episode_start")
+    try:
+        ep_from = int(ep_raw) if ep_raw is not None else None
+    except (TypeError, ValueError):
+        ep_from = None
+    return resolve_artifact_mode(
+        params,
+        episode_from=ep_from,
+        existing_meta={},
+        has_structure=lambda _: False,
+    )
+
+
+def _invoke_validator(validator: Validator, body: Dict[str, Any], *, run_params: dict | None) -> None:
+    if validator in (_validate_narrative_plan, _validate_episode_scripts):
+        validator(body, run_params=run_params)
+        return
+    validator(body)
 
 
 def _require_dict(body: Dict[str, Any], label: str) -> None:
@@ -34,15 +59,55 @@ def _coerce_bool(value: Any):
     return None
 
 
-def _validate_episode_scripts(body: Dict[str, Any]) -> None:
+def normalize_episode_scripts(body: Dict[str, Any], *, run_params: dict | None = None) -> Dict[str, Any]:
+    """归一化 LLM 常见别名字段，并补齐 episodeNumber。"""
+    from apps.creation.agent_runtime.episode_merge import episode_outline_number
+
+    if not isinstance(body, dict):
+        return body
+    episodes = body.get("episodes")
+    if not isinstance(episodes, list):
+        return body
+
+    params = run_params if isinstance(run_params, dict) else {}
+    ep_from_raw = params.get("episode_from") or params.get("episode_start")
+    try:
+        ep_from = int(ep_from_raw) if ep_from_raw is not None else None
+    except (TypeError, ValueError):
+        ep_from = None
+
+    normalized: List[dict] = []
+    for index, episode in enumerate(episodes):
+        if not isinstance(episode, dict):
+            continue
+        item = dict(episode)
+        for alias in ("episode_num", "episode_no", "episode", "episode_id", "episodeId", "index"):
+            if alias in item and item.get("episodeNumber") in (None, "", 0):
+                item["episodeNumber"] = item.get(alias)
+        num = episode_outline_number(item)
+        if not num and ep_from is not None:
+            num = int(ep_from) + index
+        elif not num:
+            num = index + 1
+        if num:
+            item["episodeNumber"] = num
+        normalized.append(item)
+    body["episodes"] = normalized
+    return body
+
+
+def _validate_episode_scripts(body: Dict[str, Any], *, run_params: dict | None = None) -> None:
     _require_dict(body, "episode_scripts")
+    normalize_episode_scripts(body, run_params=run_params)
     episodes = body.get("episodes")
     if not isinstance(episodes, list) or not episodes:
         raise AgentRuntimeError("episode_scripts.episodes 必须为非空数组")
+    from apps.creation.agent_runtime.episode_merge import episode_outline_number
+
     for index, episode in enumerate(episodes):
         if not isinstance(episode, dict):
             raise AgentRuntimeError(f"episode_scripts.episodes[{index}] 必须是对象")
-        if episode.get("episodeNumber") is None:
+        if not episode_outline_number(episode):
             raise AgentRuntimeError(f"episode_scripts.episodes[{index}].episodeNumber 必填")
 
 
@@ -222,18 +287,7 @@ def normalize_narrative_plan(body: Dict[str, Any]) -> Dict[str, Any]:
     return body
 
 
-def _validate_narrative_plan(body: Dict[str, Any]) -> None:
-    _require_dict(body, "narrative_plan")
-    normalize_narrative_plan(body)
-    forbidden = sorted(key for key in body if key in _NARRATIVE_PLAN_FORBIDDEN_KEYS)
-    if forbidden:
-        raise AgentRuntimeError(
-            "narrative_plan 使用了非契约字段 "
-            f"{forbidden}，请改用 narrative_core_objective / episode_narrative_designs / "
-            "narrative_beat_timing / audience_emotion_design 等标准字段"
-        )
-    if not str(body.get("narrative_core_objective") or "").strip():
-        raise AgentRuntimeError("narrative_plan.narrative_core_objective 必填")
+def _validate_narrative_plan_episode_designs(body: Dict[str, Any]) -> None:
     designs = body.get("episode_narrative_designs")
     if not isinstance(designs, list) or not designs:
         raise AgentRuntimeError("narrative_plan.episode_narrative_designs 必须为非空数组")
@@ -248,6 +302,42 @@ def _validate_narrative_plan(body: Dict[str, Any]) -> None:
             raise AgentRuntimeError(
                 f"narrative_plan.episode_narrative_designs[{index}].narrative_focus 必填"
             )
+
+
+def _validate_narrative_plan_structure_fields(body: Dict[str, Any]) -> None:
+    from apps.drama.episode_artifact_store import NARRATIVE_PLAN_CONFIG, project_has_blob_structure
+
+    if project_has_blob_structure(body, NARRATIVE_PLAN_CONFIG):
+        return
+    raise AgentRuntimeError(
+        "narrative_plan 全剧框架缺少 narrative_core_objective / narrative_mechanics 等有效内容"
+    )
+
+
+def _validate_narrative_plan(body: Dict[str, Any], *, run_params: dict | None = None) -> None:
+    _require_dict(body, "narrative_plan")
+    normalize_narrative_plan(body)
+    forbidden = sorted(key for key in body if key in _NARRATIVE_PLAN_FORBIDDEN_KEYS)
+    if forbidden:
+        raise AgentRuntimeError(
+            "narrative_plan 使用了非契约字段 "
+            f"{forbidden}，请改用 narrative_core_objective / episode_narrative_designs / "
+            "narrative_beat_timing / audience_emotion_design 等标准字段"
+        )
+
+    from apps.drama.artifact_mode import ARTIFACT_MODE_EPISODES_ONLY, ARTIFACT_MODE_STRUCTURE_ONLY
+
+    mode = _validation_artifact_mode(run_params)
+    if mode == ARTIFACT_MODE_STRUCTURE_ONLY:
+        _validate_narrative_plan_structure_fields(body)
+        return
+    if mode == ARTIFACT_MODE_EPISODES_ONLY:
+        _validate_narrative_plan_episode_designs(body)
+        return
+
+    if not str(body.get("narrative_core_objective") or "").strip():
+        raise AgentRuntimeError("narrative_plan.narrative_core_objective 必填")
+    _validate_narrative_plan_episode_designs(body)
 
 
 ARTIFACT_KEY_VALIDATORS: Dict[str, Validator] = {
@@ -275,6 +365,7 @@ def validate_matched_outputs(
     matched: Dict[str, Dict[str, Any]],
     *,
     schema_version: str = "",
+    run_params: dict | None = None,
 ) -> None:
     """按 artifact key 与 schema_version 做字段级校验。"""
     version_validator = SCHEMA_VERSION_VALIDATORS.get(schema_version)
@@ -283,6 +374,6 @@ def validate_matched_outputs(
             raise AgentRuntimeError(f"产物 {artifact_key} 必须是对象")
         key_validator = ARTIFACT_KEY_VALIDATORS.get(artifact_key)
         if key_validator:
-            key_validator(body)
+            _invoke_validator(key_validator, body, run_params=run_params)
         elif version_validator:
-            version_validator(body)
+            _invoke_validator(version_validator, body, run_params=run_params)

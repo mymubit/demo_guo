@@ -5,7 +5,7 @@
 
 ---
 
-## 预置示例（来自 dramaskilltrae dialogue-examples.json）
+## 预置示例
 
 ### DL001 · 强势宣言型 · ⭐⭐⭐
 **内容**：

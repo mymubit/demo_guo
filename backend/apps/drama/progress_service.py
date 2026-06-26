@@ -10,22 +10,9 @@ from django.db.models import Q
 from apps.creation.models import Project
 from apps.drama.constants import DramaStage, DramaTrackMode
 from apps.drama.models import DramaRoleExecution
+from apps.drama.skills_registry import DELIVERY_AGENT_IDS, QUALITY_AGENT_ID, build_agent_phase_map
 
 logger = logging.getLogger(__name__)
-
-FAST_TRACK_AGENT_PHASE: Dict[str, str] = {
-    "drama.topic-planner": DramaStage.STRATEGY,
-    "drama.world-architect": DramaStage.WORLDBUILDING,
-    "drama.character-designer": DramaStage.WORLDBUILDING,
-    "drama.plot-architect": DramaStage.PLOT_DESIGN,
-    "drama.script-writer": DramaStage.WRITING,
-    "drama.script-reviewer": DramaStage.REVIEW,
-    "drama.quality-reporter": DramaStage.REVIEW,
-    "drama.compliance-guard": DramaStage.COMPLIANCE,
-}
-
-DELIVERY_AGENT_IDS = frozenset({"drama.production-pack", "drama.compliance-guard"})
-QUALITY_AGENT_ID = "drama.quality-reporter"
 
 
 class DramaProgressService:
@@ -54,18 +41,8 @@ class DramaProgressService:
 
     @classmethod
     def agent_phase_map(cls, project: Project) -> Dict[str, str]:
-        from apps.creation.agent_runtime.entry_plan import DramaEntryPlan
-
-        if project.track_mode == DramaTrackMode.FAST:
-            return dict(FAST_TRACK_AGENT_PHASE)
-
-        plan = DramaEntryPlan.resolve(track_mode="expert")
-        mapping: Dict[str, str] = {}
-        for phase in plan.get("phases") or []:
-            phase_code = str(phase.get("phase") or "")
-            for agent_id in phase.get("agents") or []:
-                mapping[str(agent_id)] = phase_code
-        return mapping
+        track_mode = project.track_mode or DramaTrackMode.FAST
+        return build_agent_phase_map(track_mode)
 
     @classmethod
     def resolve_current_stage(cls, project: Project) -> str:

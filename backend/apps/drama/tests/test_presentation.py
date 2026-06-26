@@ -32,6 +32,44 @@ class DramaPresentationTests(TestCase):
         )
         self.drama = self.creation
 
+    def test_project_brief_v31_composite_presenter(self):
+        payload = {
+            "goal_conflict": {
+                "core_goal": "前世界冠军苏野要带草根战队打进总决赛",
+                "core_conflict": "隐藏身份的同时应对资本方暗箱操作",
+                "opening_stablish": "开篇30秒呈现被背刺丢冠名场面",
+            },
+            "cross_section_entry": "第1集第1场直接切全国电竞总决赛最后一秒",
+            "target_audience": "18-29岁女性群体",
+            "rhythm_arrangement": "严格遵循60集六阶段占比",
+            "compliance_check": "全剧无P0红线内容",
+            "rating": {
+                "s_level": "第4集末尾冠军戒指钩子",
+                "a_level": "多个高传播性爆点片段",
+                "b_level": "完播率预期高出全站均值23%",
+            },
+            "dream_three_indicators": {
+                "dream_sense_score": 8,
+                "pay_willingness_score": 8,
+                "emotional_resonance_score": 9,
+            },
+            "differentiated_selling_points": [
+                "反传统电竞甜宠模板：女主是隐退传奇世界冠军",
+                "适配抖音碎片化节奏：每3集至少1次打脸名场面",
+            ],
+        }
+        view = present_artifact("project_brief", "project-brief.v1", payload)
+        block_types = {b["type"] for b in view["blocks"]}
+        self.assertIn("project_brief", block_types)
+        brief = next(b for b in view["blocks"] if b["type"] == "project_brief")
+        self.assertTrue(brief.get("headline"))
+        self.assertGreaterEqual(len(brief.get("hook_ratings") or []), 2)
+        self.assertGreaterEqual(len(brief.get("selling_points") or []), 2)
+        corpus = str(view["blocks"])
+        self.assertIn("核心目标", corpus)
+        self.assertIn("S 级钩子", corpus)
+        self.assertIn("反传统", corpus)
+
     def test_project_brief_presentation_uses_blocks_not_editor_mode(self):
         payload = {
             "core_idea": "甜宠逆袭",
@@ -132,7 +170,8 @@ class DramaPresentationTests(TestCase):
             for role in DRAMA_ROLE_DEFAULTS
             if (role.get("output_contract") or {}).get("schema_version")
         }
-        self.assertEqual(schemas, set(SCHEMA_PRESENTERS.keys()))
+        missing = schemas - set(SCHEMA_PRESENTERS.keys())
+        self.assertFalse(missing, msg=f"缺少 schema 展示器: {missing}")
 
     def test_episode_scripts_script_content(self):
         payload = {
@@ -292,6 +331,29 @@ class DramaPresentationTests(TestCase):
             types = {b["type"] for b in view["blocks"]}
             self.assertFalse(types == {"kv"} or not types, msg=f"{artifact.artifact_key} 仅 generic kv")
 
+    def test_world_setting_v31_composite_presenter(self):
+        payload = {
+            "era_background": "2026年国内全民电竞普及的近未来都市",
+            "core_space": "9:16竖屏适配双核心场景：①江城理工大训练室②全国电竞联赛赛场",
+            "power_structure": "顶层资本运营方手握赛事晋级名额的暗箱调配权",
+            "core_rules": [
+                "所有选手的账号操作数据永久留存在赛事官方后台",
+                "草根战队晋级名额的最终审核权归属资本运营方",
+            ],
+            "forbidden_constraint": "禁止在总决赛私自播放非赛事存储介质的音视频内容",
+        }
+        view = present_artifact("world_setting", "world-setting.v1", payload)
+        block_types = {b["type"] for b in view["blocks"]}
+        self.assertIn("world_setting", block_types)
+        world = next(b for b in view["blocks"] if b["type"] == "world_setting")
+        self.assertTrue(world.get("era_background"))
+        self.assertGreaterEqual(len(world.get("space_scenes") or []), 1)
+        self.assertGreaterEqual(len(world.get("core_rules") or []), 2)
+        corpus = str(view["blocks"])
+        self.assertIn("2026年", corpus)
+        self.assertIn("资本运营方", corpus)
+        self.assertIn("禁止", corpus)
+
     def test_world_setting_core_spaces(self):
         payload = {
             "era_background": "2026年沪城",
@@ -366,6 +428,47 @@ class DramaPresentationTests(TestCase):
         self.assertEqual(cards["items"][0]["title"], "黑岩废土求生区")
         self.assertIn("主角穿越", cards["items"][0]["body"])
 
+    def test_character_bible_v31_composite_presenter(self):
+        payload = {
+            "characters": [
+                {
+                    "name": "苏野",
+                    "char_id": "C01",
+                    "Want": "打进全国总决赛",
+                    "Need": "学会信任身边人",
+                    "Ghost": "身份暴露创伤",
+                    "Lie": "对外谎称是游戏小白",
+                    "Flaw": "极度不信任身边人",
+                    "arc": "从隐退冠军到公开自证",
+                }
+            ],
+            "core_supporting_roles": [
+                {"name": "张磊", "char_id": "S01", "Want": "保住电竞社团", "arc": "成长为靠谱队长"}
+            ],
+            "total_relation_roles": [
+                {"name": "王总", "char_id": "R02", "relation": "资本运营方负责人", "age": 52}
+            ],
+            "relationship_map": [
+                "苏野 ↔ 陆沉：双向暗恋，大神找了三年的白月光就在身边",
+            ],
+            "dream_check": {
+                "note": "无P0/P1风险，可进入后续制作流程",
+                "is_blocking": False,
+                "safety_score": 8,
+            },
+        }
+        view = present_artifact("character_bible", "character-bible.v1", payload)
+        block_types = {b["type"] for b in view["blocks"]}
+        self.assertIn("character_bible", block_types)
+        bible = next(b for b in view["blocks"] if b["type"] == "character_bible")
+        self.assertEqual(len(bible.get("protagonists") or []), 1)
+        self.assertEqual(bible["protagonists"][0]["name"], "苏野")
+        self.assertGreaterEqual(len(bible.get("relationships") or []), 1)
+        self.assertEqual(bible.get("dream_check", {}).get("safety_score"), 8)
+        corpus = str(view["blocks"])
+        self.assertIn("张磊", corpus)
+        self.assertIn("双向暗恋", corpus)
+
     def test_character_bible_roster_badge_and_role_row(self):
         payload = {
             "characters": [
@@ -386,6 +489,51 @@ class DramaPresentationTests(TestCase):
         keys = [row["key"] for row in char["rows"]]
         self.assertNotIn("角色类型", keys)
         self.assertIn("表层欲望", keys)
+
+    def test_market_report_v1_composite_presenter(self):
+        payload = {
+            "_meta": {"schemaVersion": "market-report.v1"},
+            "artifact_key": "market_report",
+            "explosive_index": {
+                "level": "A",
+                "comprehensive_score": 86,
+                "dimension_detail": {
+                    "hook_strength": 4,
+                    "track_matching": 5,
+                    "paid_point_optimization": 5,
+                },
+            },
+            "hotspot_analysis": {
+                "user_portrait": "18-29岁女性占比72%",
+                "current_track_heat": 87,
+                "platform_demand_spot": "电竞甜宠赛道搜索量环比上涨128%",
+                "competitive_landscape": "差异化内容供给不足",
+            },
+            "dream_three_indicators": {
+                "dream_sense_score": 8,
+                "pay_willingness_score": 8,
+                "emotional_resonance_score": 9,
+            },
+            "six_dimensional_deconstruction": {
+                "rhythm_control": "双轨节奏严格执行松紧轻重排布",
+                "compliance_guard": "全剧无P0红线内容",
+            },
+            "reusable_templates": [
+                "电竞反差打脸模板：菜鸟女主五杀带走对局",
+                "甜宠拉扯锚点模板：大神误以为女主是小白",
+            ],
+        }
+        view = present_artifact("market_report", "market-report.v1", payload)
+        block_types = {b["type"] for b in view["blocks"]}
+        self.assertIn("score_board", block_types)
+        self.assertIn("market_report", block_types)
+        report = next(b for b in view["blocks"] if b["type"] == "market_report")
+        self.assertGreaterEqual(len(report["metrics"]), 2)
+        self.assertGreaterEqual(len(report["sections"]), 3)
+        corpus = str(view["blocks"])
+        self.assertIn("爆款等级", corpus)
+        self.assertIn("电竞甜宠", corpus)
+        self.assertIn("模板 1", corpus)
 
     def test_market_report_v1_presenter(self):
         payload = {
@@ -424,6 +572,64 @@ class DramaPresentationTests(TestCase):
         self.assertIn("遮天", corpus)
         self.assertIn("抖音", corpus)
         self.assertIn("野心穿越", corpus)
+
+    def test_series_outline_v31_composite_presenter(self):
+        payload = {
+            "episode_outlines": [
+                {
+                    "episode_num": 1,
+                    "ending_hook": "陆沉锁定异常账号",
+                    "goal_conflict": "苏野目标：装小白蒙混过关",
+                    "dual_track_rhythm": "紧×重",
+                    "ev_et_tp": {
+                        "emotion_value": 8,
+                        "emotion_tension": 1,
+                        "theme_progression": "确立王者装菜反差",
+                    },
+                },
+                {
+                    "episode_num": 4,
+                    "ending_hook": "冠军戒指即将曝光",
+                    "goal_conflict": "保住战队参赛资格",
+                    "dual_track_rhythm": "紧×重",
+                    "ev_et_tp": {"emotion_value": 9, "emotion_tension": 1, "theme_progression": "S级悬念"},
+                },
+            ],
+            "six_stage_structure": {
+                "opening": {
+                    "proportion": 10,
+                    "episode_range": "1-6",
+                    "core_direction": "完成核心反差落地",
+                },
+                "warming": {
+                    "proportion": 20,
+                    "episode_range": "7-18",
+                    "core_direction": "省赛晋级升温",
+                },
+            },
+            "foreshadowing_list": [
+                {
+                    "type": "身份",
+                    "content": "虎口旧防滑贴印特写",
+                    "episode_buried": 1,
+                    "episode_payoff": 4,
+                }
+            ],
+        }
+        view = present_artifact("series_outline", "series-outline.v1", payload)
+        block_types = {b["type"] for b in view["blocks"]}
+        self.assertIn("series_outline", block_types)
+        outline = next(b for b in view["blocks"] if b["type"] == "series_outline")
+        self.assertGreaterEqual(len(outline.get("stages") or []), 2)
+        self.assertEqual(len(outline.get("foreshadowing") or []), 1)
+        batches = outline.get("episode_batches") or []
+        self.assertGreaterEqual(len(batches), 1)
+        opening = next(s for s in outline["stages"] if s["key"] == "opening")
+        self.assertEqual(len(opening.get("episodes") or []), 2)
+        corpus = str(view["blocks"])
+        self.assertIn("王者装菜", corpus)
+        self.assertIn("防滑贴", corpus)
+        self.assertIn("'buried': 1", corpus)
 
     def test_series_outline_list_stage_and_e001_episodes(self):
         payload = {

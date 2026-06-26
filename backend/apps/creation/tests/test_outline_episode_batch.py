@@ -6,6 +6,7 @@ from apps.creation.models import Project
 from apps.creation.agent_runtime.episode_merge import (
     filter_episodes_by_range,
     merge_episode_designs_by_number,
+    merge_episode_outlines_by_number,
     merge_episodes_by_number,
 )
 from apps.creation.workspace.workspace_editor import compute_outline_batch_range
@@ -90,3 +91,27 @@ class OutlineEpisodeBatchTests(TestCase):
             batch_size=1,
         )
         self.assertEqual((o_from, o_to), (1, 1))
+
+    def test_merge_episode_outlines_by_number_keeps_other_batches(self):
+        existing = {
+            "episode_outlines": [
+                {"episode_num": 1, "goal_conflict": "第一集"},
+                {"episode_num": 10, "goal_conflict": "第十集"},
+            ],
+            "six_stage_structure": {"opening": {"episode_range": "1-6"}},
+        }
+        incoming = [
+            {"episode_num": 11, "goal_conflict": "第十一集"},
+            {"episode_num": 20, "goal_conflict": "第二十集"},
+            {"episode_num": 99, "goal_conflict": "越界"},
+        ]
+        merged = merge_episode_outlines_by_number(
+            existing,
+            incoming,
+            episode_from=11,
+            episode_to=20,
+        )
+        nums = [item["episode_num"] for item in merged["episode_outlines"]]
+        self.assertEqual(nums, [1, 10, 11, 20])
+        self.assertEqual(merged["six_stage_structure"]["opening"]["episode_range"], "1-6")
+        self.assertEqual(merged["target_episode_range"], "E001-E020")

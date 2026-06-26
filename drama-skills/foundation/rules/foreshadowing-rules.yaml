@@ -1,0 +1,24 @@
+# global_core · 伏笔规则 — Git SSOT（foreshadowing_rules section）
+version: "1.0.0"
+tier: 1
+items:
+  - rule_key: t1.global.foreshadowing_rules.density
+    section: foreshadowing_rules
+    title: 伏笔密度与布局
+    priority: 10
+    body: |
+      全剧伏笔清单化：已埋 / 待回扣 / 已回收。每 10 集至少 1 个 A 级伏笔；S 级反转需 5+ 集铺垫。
+      禁止无铺垫硬反转；S 级揭露窗口全剧 55–75%（危机前夕）。
+  - rule_key: t1.global.foreshadowing_rules.payoff
+    section: foreshadowing_rules
+    title: 回扣与记忆检查点
+    priority: 11
+    body: |
+      每条伏笔标注「埋点集 → 计划回扣集」。回扣 3 集内须兑现情感价值；未回收写入 memory_checkpoint。
+      逐集生成仅加载上一集 + 快照 + 伏笔列表（LR-008）。
+  - rule_key: t1.global.foreshadowing_rules.types
+    section: foreshadowing_rules
+    title: 五类反转伏笔
+    priority: 12
+    body: |
+      身份 / 动机 / 关系 / 局势 / 真相五类；逆向设计。铺垫线索须在前序集以「无关细节」呈现。

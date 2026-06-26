@@ -1,6 +1,7 @@
 # 新模式发现库
 
-> 记录通过拉片分析或外部内容摄入发现的、**不在现有技能库分类中**的全新创作模式。
+> 记录通过拉片分析、外部摄入或 **四轴矩阵创新组合** 发现的、可复用创作模式。
+> 矩阵 SSOT：`foundation/theme-matrix.yaml`（`featured_combos` + 用户自定义 `matrix_key`）
 > 每条模式需经过 3+ 个实际案例验证后，才能升级为技能规则更新。
 
 ---
@@ -30,7 +31,8 @@
 ## 归档说明
 
 - 每条模式包含：发现日期、来源、描述、案例列表、核心机制、适用场景
-- 验证达到3个案例时，自动通知 `drama-evolution-analyst` 创建升级提案
+- 验证达到3个案例时，由 `@drama-intake` 创建升级提案（目标：`foundation/rules/*.yaml` 或 `theme-matrix.yaml` 升格 tag→轴）
+- 矩阵路径：quality_report ≥ B 且 matrix_key 不在 featured_combos → 优先写入本库
 - 升级后，原记录保留并标记为"已归档"
 
 ---

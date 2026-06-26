@@ -1,6 +1,6 @@
 # 原创性保护规则（Originality Protection Rules）
 
-> **来源**：dramaskill `references/originality-protection-library.json` v3.0（52条规则）
+> **参考规则库**；新条目请写入 `foundation/rules/`
 > 含2026广电新规/AI漫剧肖像权/出海版权保护
 >
 > **使用方式**：drama-ip-adapter（改编/原创创作时执行）、drama-compliance-guard（最终合规检测）。

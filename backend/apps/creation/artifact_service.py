@@ -24,8 +24,34 @@ def save_artifacts_batch(project: Project, artifacts: Dict[str, dict]) -> None:
             save_artifact(project, key, payload)
 
 
+def get_fusion_meta_payload(project: Project, artifact_key: str) -> dict:
+    """读取 ProjectFusionArtifact 原始 payload（不聚合分集表）。"""
+    row = ProjectFusionArtifact.objects.filter(project=project, artifact_key=artifact_key).first()
+    if not row or not isinstance(row.payload, dict):
+        return {}
+    return dict(row.payload)
+
+
 def get_artifact(project: Project, artifact_key: str) -> Optional[dict]:
     row = ProjectFusionArtifact.objects.filter(project=project, artifact_key=artifact_key).first()
+    if artifact_key == "series_outline":
+        from apps.drama.episode_outline_store import aggregate_series_outline
+
+        aggregated = aggregate_series_outline(project)
+        if aggregated.get("episode_outlines") or row:
+            return aggregated
+        return None
+    try:
+        from apps.drama.episode_artifact_store import EPISODE_BLOB_CONFIGS, aggregate_episode_blob
+
+        config = EPISODE_BLOB_CONFIGS.get(artifact_key)
+        if config:
+            aggregated = aggregate_episode_blob(project, config)
+            if aggregated.get(config.output_list_key) or row:
+                return aggregated
+            return None
+    except Exception:  # noqa: BLE001
+        pass
     return row.payload if row else None
 
 

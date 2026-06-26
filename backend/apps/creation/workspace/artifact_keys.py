@@ -9,48 +9,27 @@ from __future__ import annotations
 
 from typing import List
 
-# drama.* 核心产物键集合
-DRAMA_ARTIFACT_KEYS: List[str] = [
-    "project_brief",
-    "world_setting",
-    "character_bible",
-    "series_outline",
-    "episode_scripts",
-    "emotion_blueprint",
-    "emotion_curve",
-    "hook_plan",
-    "conflict_plan",
-    "reversal_plan",
-    "review_report",
-    "reader_review",
-    "emotion_audit",
-    "quality_report",
-    "compliance_report",
-    "word_count_report",
-    "style_check",
-    "visual_pack",
-    "storyboard",
-    "post_assets",
-    "marketing_kit",
-    "delivery_pack",
-    "evolution_proposal",
-    "adaptation_plan",
-    "lapian_report",
-    "market_analysis",
-    "formula_analysis",
-    "dream_check",
-    "psychology_guide",
-    "visual_prompts",
-]
+from apps.drama.skills_registry import build_role_defaults, get_array_artifact_keys
 
-# 可能包含逐集数据（数组型产物）
-ARRAY_ARTIFACT_KEYS = frozenset({
-    "episode_scripts",
-    "series_outline",
-    "emotion_curve",
-    "emotion_blueprint",
-    "storyboard",
-})
+
+def _collect_registry_artifact_keys() -> List[str]:
+    keys: set[str] = {"project_brief"}
+    for role in build_role_defaults():
+        if role.get("default_output_artifact_key"):
+            keys.add(str(role["default_output_artifact_key"]))
+        for contract_name in ("input_contract", "output_contract"):
+            contract = role.get(contract_name) or {}
+            for key in contract.get("required_artifacts") or []:
+                keys.add(str(key))
+            for key in contract.get("artifacts") or []:
+                keys.add(str(key))
+    return sorted(keys)
+
+
+# drama.* 核心产物键集合（registry 主产物 + 契约引用）
+DRAMA_ARTIFACT_KEYS: List[str] = _collect_registry_artifact_keys()
+
+ARRAY_ARTIFACT_KEYS = get_array_artifact_keys()
 
 
 def is_array_artifact(artifact_key: str) -> bool:

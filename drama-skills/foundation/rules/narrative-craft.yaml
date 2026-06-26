@@ -1,0 +1,40 @@
+# global_core · 叙事 craft 摘要 — hook/结构/情绪/信息差
+version: "1.0.0"
+tier: 1
+items:
+  - rule_key: t1.global.hook_effectiveness.levels
+    section: hook_effectiveness
+    title: 四级钩子
+    priority: 10
+    body: |
+      S级全剧核心 / A级跨2-3集 / B级集末 / C级场间。首集开场30秒：视觉冲击→信息建立→悬念确立。
+  - rule_key: t1.global.episode_structure.four-act
+    section: episode_structure
+    title: 单集四段式占比
+    priority: 11
+    body: |
+      钩子10% + 情境30% + 升级40% + 悬念20%。集末必须有未解问题或新威胁。
+  - rule_key: t1.global.information_asymmetry_mechanics.core
+    section: information_asymmetry_mechanics
+    title: 信息差三类型
+    priority: 12
+    body: |
+      观众知·角色不知 / 角色知·观众不知 / 双知情博弈。核心真相延迟；每解一谜生一新谜。
+  - rule_key: t1.global.emotion_externalization_dict.usage
+    section: emotion_externalization_dict
+    title: 情绪外化
+    priority: 13
+    body: |
+      用动作/道具/环境/对话节奏外化情绪；禁止形容词直述内心。参考 tier2 情绪维度台词节奏。
+  - rule_key: t1.global.qdn_emotion_model.summary
+    section: qdn_emotion_model
+    title: QDN 情绪模型
+    priority: 14
+    body: |
+      质量感Q × 深度D × 需求满足N；设计 EV/ET/TP 与双轨节奏[松/中/紧×轻/中/重]。
+  - rule_key: t1.global.episode_emotion_8nodes.summary
+    section: episode_emotion_8nodes
+    title: 分集情绪八节点
+    priority: 15
+    body: |
+      每集8个时间点设目标情绪值；禁止连续3集 EV 平台（相差<2）。

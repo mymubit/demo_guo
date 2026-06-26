@@ -11,21 +11,16 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
+from apps.drama.skills_registry import get_quality_dimensions, get_quality_grade_thresholds
+
 logger = logging.getLogger(__name__)
 
 
 class DramaWordCountService:
-    """字数校验服务 - 单集剧本格式校验"""
+    """字数校验服务 - 阈值来自 drama-skills/foundation/constraints/script-format.yaml"""
 
-    # 字数阈值配置，参考 dramaskilltrae skill-thresholds.json
-    FIRST_EPISODE_MIN = 900
-    FIRST_EPISODE_MAX = 1100
-    OTHER_EPISODE_MIN = 700
-    OTHER_EPISODE_MAX = 900
-    DIALOGUE_RATIO_MIN = 0.28
     MAX_SCENES = 3
 
-    # 需要过滤的非剧本内容模式（AI备注、系统提示等）
     NON_SCRIPT_PATTERNS = [
         r"```.*?```",
         r"<!--.*?-->",
@@ -44,6 +39,33 @@ class DramaWordCountService:
         r"^\d+-\d+\s+[\u65e5\u591c]\s+[\u5185\u5916]\s+.+$",
         re.MULTILINE,
     )
+
+    @classmethod
+    def _format_constraints(cls) -> Dict[str, Any]:
+        from apps.drama.skills_registry import load_script_format_constraints
+
+        return load_script_format_constraints()
+
+    @classmethod
+    def _episode_word_range(cls, episode_number: int) -> tuple[int, int]:
+        constraints = cls._format_constraints()
+        wc = constraints.get("episode_word_count") or {}
+        block = wc.get("first_episode" if episode_number == 1 else "other_episodes") or {}
+        default_min = 900 if episode_number == 1 else 700
+        default_max = 1100 if episode_number == 1 else 900
+        return int(block.get("min", default_min)), int(block.get("max", default_max))
+
+    @classmethod
+    def _dialogue_ratio_min(cls) -> float:
+        constraints = cls._format_constraints()
+        ratio = constraints.get("dialogue_ratio") or {}
+        return float(ratio.get("min", 0.35))
+
+    @classmethod
+    def _scene_limits(cls) -> tuple[int, int]:
+        constraints = cls._format_constraints()
+        scenes = constraints.get("scenes_per_episode") or {}
+        return int(scenes.get("min", 1)), int(scenes.get("max", 3))
 
     @classmethod
     def clean_non_script(cls, content: str) -> str:
@@ -90,27 +112,23 @@ class DramaWordCountService:
         dialogue_cjk = cls.count_dialogue_cjk(cleaned)
         scene_count = cls.count_scenes(cleaned)
 
-        # 字数阈值
-        if episode_number == 1:
-            min_words, max_words = cls.FIRST_EPISODE_MIN, cls.FIRST_EPISODE_MAX
-        else:
-            min_words, max_words = cls.OTHER_EPISODE_MIN, cls.OTHER_EPISODE_MAX
+        min_words, max_words = cls._episode_word_range(episode_number)
+        scene_min, scene_max = cls._scene_limits()
+        dialogue_ratio_min = cls._dialogue_ratio_min()
 
-        # 对话占比
         dialogue_ratio = dialogue_cjk / total_cjk if total_cjk > 0 else 0
 
-        # 合规判断
         word_ok = min_words <= total_cjk <= max_words
-        dialogue_ok = dialogue_ratio >= cls.DIALOGUE_RATIO_MIN
-        scene_ok = 1 <= scene_count <= cls.MAX_SCENES
+        dialogue_ok = dialogue_ratio >= dialogue_ratio_min
+        scene_ok = scene_min <= scene_count <= scene_max
 
         # 使用status_code和ok字段进行判断，避免依赖中文字符串匹配
         word_status_code = "normal" if word_ok else ("too_short" if total_cjk < min_words else "too_long")
         word_status = "正常" if word_ok else ("字数不足" if total_cjk < min_words else "字数过多")
         dialogue_status_code = "normal" if dialogue_ok else "too_low"
         dialogue_status = "正常" if dialogue_ok else "对话占比偏低"
-        scene_status_code = "normal" if scene_ok else ("too_many" if scene_count > cls.MAX_SCENES else "too_few")
-        scene_status = "正常" if scene_ok else ("场景数过多" if scene_count > cls.MAX_SCENES else "场景数过少")
+        scene_status_code = "normal" if scene_ok else ("too_many" if scene_count > scene_max else "too_few")
+        scene_status = "正常" if scene_ok else ("场景数过多" if scene_count > scene_max else "场景数过少")
 
         recommendations = []
         if not word_ok:
@@ -128,12 +146,12 @@ class DramaWordCountService:
         if not dialogue_ok:
             actual_pct = f"{dialogue_ratio:.1%}"
             recommendations.append(
-                f"对话占比{actual_pct}低于28%，建议增加人物互动和对话推进剧情，适当减少旁白描述"
+                f"对话占比{actual_pct}低于{dialogue_ratio_min:.0%}，建议增加人物互动和对话推进剧情，适当减少旁白描述"
             )
 
-        if scene_count > cls.MAX_SCENES:
+        if scene_count > scene_max:
             recommendations.append(
-                f"场景数量{scene_count}超过3个，建议合并场景或减少场景切换，单集控制在1-3个场景内"
+                f"场景数量{scene_count}超过{scene_max}个，建议合并场景或减少场景切换，单集控制在{scene_min}-{scene_max}个场景内"
             )
         elif scene_count < 1:
             recommendations.append(
@@ -159,14 +177,14 @@ class DramaWordCountService:
                 "dialogue_count": dialogue_cjk,
                 "ratio": f"{dialogue_ratio:.1%}",
                 "ratio_value": dialogue_ratio,
-                "target": f"≥{cls.DIALOGUE_RATIO_MIN:.0%}",
+                "target": f"≥{dialogue_ratio_min:.0%}",
                 "ok": dialogue_ok,
                 "status_code": dialogue_status_code,
                 "status": dialogue_status,
             },
             "scene_count": {
                 "count": scene_count,
-                "target": f"1-{cls.MAX_SCENES}",
+                "target": f"{scene_min}-{scene_max}",
                 "ok": scene_ok,
                 "status_code": scene_status_code,
                 "status": scene_status,
@@ -259,8 +277,8 @@ class DramaRoleService:
 
         角色分组规则：
         - 8个快速通道核心角色（tier=1），蓝色标签
-        - 4个复合增强角色（tier=2），绿色标签；其余27个旧角色隐藏
-        注意：tier2/3的旧角色不展示，但后台保留数据用于历史兼容
+        - 4个复合增强角色（tier=2），绿色标签
+        数据来源：drama-skills/registry.yaml（Git SSOT）
         """
         DramaRoleService.ensure_visible_roles()
         from apps.agent.models import AgentDefinition, AgentLlmRouteConfig
@@ -272,10 +290,9 @@ class DramaRoleService:
         tier_map = {r["agent_id"]: r.get("tier", 3) for r in DRAMA_ROLE_DEFAULTS}
         dept_map = {r["agent_id"]: r.get("dept", "") for r in DRAMA_ROLE_DEFAULTS}
 
-        COMPOSITE_ROLES = {
-            "drama.market-analyst", "drama.narrative-engineer",
-            "drama.polish-master", "drama.production-pack",
-        }
+        from apps.drama.skills_registry import get_composite_agent_ids
+
+        composite_roles = get_composite_agent_ids()
 
         # 只查询可见的12个角色
         agents = list(
@@ -318,7 +335,7 @@ class DramaRoleService:
                     "description": agent.description,
                     "workspace_order": agent.workspace_order,
                     "is_fast_track": agent_id in DRAMA_FAST_TRACK_ROLES,
-                    "is_composite": agent_id in COMPOSITE_ROLES,
+                    "is_composite": agent_id in composite_roles,
                     "tier": tier,
                     "tier_label": DramaRoleService.TIER_LABELS.get(tier, {}).get("name", "增强层"),
                     "tier_color": DramaRoleService.TIER_LABELS.get(tier, {}).get("color", "green"),
@@ -418,32 +435,17 @@ class DramaRoleService:
         }
 
 
-class DramaQualityService:
-    """质量评估服务 - 8维度评分 + 问题检测 + 改进建议"""
+class _QualityDimensionsDescriptor:
+    """延迟从 Git SSOT 加载十维评分配置。"""
 
-    # 10个质量维度（基于 StoryForge G-Eval 框架，8个核心维度+2个商业维度）
-    DIMENSIONS = [
-        {"key": "format",     "name": "格式规范",   "weight": 0.10,
-         "desc": "场景标注/人物台词格式/字数控制/对话占比/FER<5%"},
-        {"key": "narrative",  "name": "叙事结构",   "weight": 0.15,
-         "desc": "三幕式完整性/建置-对抗-结局/钩子-转折-高潮布局"},
-        {"key": "conflict",   "name": "戏剧冲突",   "weight": 0.15,
-         "desc": "核心冲突明确度/升级节奏/对抗强度/两难选择"},
-        {"key": "character",  "name": "人物塑造", "weight": 0.10,
-         "desc": "主角弧光/人物区分度/行为合理性/Ghost-Lie-Flaw设计"},
-        {"key": "emotion",    "name": "情绪曲线",   "weight": 0.10,
-         "desc": "情绪起伏设计/每3-5分钟情绪点/共情度/爽点"},
-        {"key": "logic",      "name": "逻辑自洽", "weight": 0.10,
-         "desc": "世界观/动机/因果链/人物行为/常识合理性"},
-        {"key": "satisfaction","name": "爽点密度",  "weight": 0.10,
-         "desc": "每集2-3个爽点/打脸逆袭/甜宠/反转/解压感"},
-        {"key": "hooks",      "name": "钩子设计",   "weight": 0.10,
-         "desc": "开场10秒钩子/集末cliffhanger/付费点钩子强度"},
-        {"key": "paywall",    "name": "付费转化", "weight": 0.05,
-         "desc": "付费卡点位置设计/断更点悬念/S级钩子配置"},
-        {"key": "genre_fit",  "name": "题材适配", "weight": 0.05,
-         "desc": "符合目标题材规范/元素完整度/受众匹配度"},
-    ]
+    def __get__(self, obj, owner=None) -> List[Dict[str, Any]]:
+        return get_quality_dimensions()
+
+
+class DramaQualityService:
+    """质量评估服务 - G-Eval 十维评分 + 问题检测 + 改进建议"""
+
+    DIMENSIONS = _QualityDimensionsDescriptor()
 
     # 各维度问题模板，按严重等级分级
     ISSUE_TEMPLATES: Dict[str, List[Dict[str, Any]]] = {
@@ -576,7 +578,7 @@ class DramaQualityService:
         )
         overall = round(overall, 1)
 
-        grade = "S" if overall >= 90 else "A" if overall >= 80 else "B" if overall >= 75 else "C" if overall >= 60 else "D"
+        grade = cls._compute_grade(overall)
 
         # 按严重度排序问题
         severity_order = {"error": 0, "warning": 1, "info": 2}
@@ -669,6 +671,15 @@ class DramaQualityService:
                 issues.append({**t, "dimension": cls._dim_name(dimension_key)})
 
         return issues[:3]  # 每个维度最多返回3个问题
+
+    @classmethod
+    def _compute_grade(cls, overall: float) -> str:
+        thresholds = get_quality_grade_thresholds()
+        for grade in ("S", "A", "B", "C"):
+            min_score = thresholds.get(grade)
+            if min_score is not None and overall >= min_score:
+                return grade
+        return "D"
 
     @classmethod
     def _dim_name(cls, key: str) -> str:
@@ -1018,7 +1029,22 @@ class DramaRoleRunService:
         output_keys = [str(k) for k in (agent.output_contract or {}).get("artifacts") or []]
         output_artifacts = {}
         for key in output_keys:
-            payload = get_artifact(project, key)
+            if key == "series_outline":
+                from apps.drama.episode_outline_store import aggregate_series_outline
+
+                payload = aggregate_series_outline(project)
+            else:
+                blob_cfg = None
+                try:
+                    from apps.drama.episode_artifact_store import EPISODE_BLOB_CONFIGS, aggregate_episode_blob
+
+                    blob_cfg = EPISODE_BLOB_CONFIGS.get(key)
+                except Exception:  # noqa: BLE001
+                    blob_cfg = None
+                if blob_cfg:
+                    payload = aggregate_episode_blob(project, blob_cfg)
+                else:
+                    payload = get_artifact(project, key)
             if payload is not None:
                 output_artifacts[key] = payload
 
