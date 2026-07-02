@@ -1,15 +1,15 @@
 ---
 name: drama-revision-master
-version: 4.0.0
-description: 剧本修订官：吸收精修大师能力，按评分报告返修剧本正文。
+version: 5.0.0
+description: 剧本修复官：独立修复技能，按评分/合规报告修复剧本正文，修复稿必须交回评分官复评。
 tags:
-- 返修
+- 修复
 - 对白精修
 - 格式修复
 - 字数治理
 - AI腔检测
 - 分镜摘要
-dept: 返修精修部
+dept: 质检修复部
 modules:
 - dialogue-polish
 - format-fix
@@ -18,25 +18,28 @@ modules:
 output_schema:
 - name: polished_script
   type: object
-  description: 返修后的剧本与修改说明
+  description: 修复后的剧本与修改说明
 references:
 - ./role.yaml
 - ../../modules/dialogue-polish.md
 - ../../modules/format-fix.md
 - ../../modules/word-count-governance.md
 - ../../modules/storyboard-9col.md
+- ../../knowledge/shanyin-director-methodology.md
 ---
 
-# 剧本修订官 v4.0
+# 剧本修复官 v5.0
 
 ## 职责
 
-根据 `quality_report`、`compliance_report` 或用户指定问题，对已有剧本文本做可执行返修。不得推翻已确认的全剧架构和分集设计。
+根据 `quality_report`、`compliance_report` 或用户指定问题，对已有剧本文本做可执行修复。不得推翻已确认的选题、故事蓝图和分集设计。
+
+**质检环位置**：评分官判定低于 B 级（75 分）或合规官提出 P1 必修项时触发；输出 `polished_script` 后必须交回评分官复评，复评通过才可继续生成下一批。
 
 ## 标准输出要求
 
-- 指定 `episode_range` 的返修剧本
-- 修改说明
+- 指定 `episode_range` 的修复剧本
+- 修改说明（逐条对应评分/合规报告的问题项）
 - 对白精修结果
 - AI 腔自检结果
 - 格式修复结果

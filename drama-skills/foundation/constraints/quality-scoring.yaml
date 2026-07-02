@@ -1,4 +1,4 @@
-# G-Eval 十维评分 SSOT — quality-reporter / DramaQualityService 引用
+# G-Eval 十维评分 SSOT — drama.script-scorer / DramaQualityService 引用
 # 规则摘要见 foundation/rules/scoring-core.yaml · t1.global.scoring.ten-dimensions
 version: "1.0.0"
 framework: geval

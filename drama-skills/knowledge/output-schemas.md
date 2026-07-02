@@ -7,14 +7,16 @@
 | schema_version | 产物键 | 角色 | 格式 |
 |----------------|--------|------|------|
 | project-brief.v1 | project_brief | drama.topic-director | JSON |
-| character-bible.v1 | character_bible | drama.character-relations | JSON / MD |
-| series-outline.v1 | series_outline | drama.series-architect | JSON / MD |
+| story-bible.v1 | story_bible | drama.story-bible | JSON / MD |
 | narrative-plan.v1 | narrative_plan | drama.episode-designer | JSON |
 | episode-scripts.v1 | episode_scripts | drama.script-writer | JSON |
 | quality-report.v1 | quality_report | drama.script-scorer | JSON |
 | polished-script.v1 | polished_script | drama.revision-master | JSON / MD |
 | compliance-report.v1 | compliance_report | drama.compliance-guard | JSON |
 | production-pack.v1 | production_package | drama.delivery-tool | JSON / MD |
+
+> v5 变更：`story-bible.v1` = 原 `character-bible.v1` ∪ `series-outline.v1` ∪ 梗概层。
+> 原 `character_bible` / `series_outline` 两个产物键作为 `story_bible` 内部分节的兼容别名保留（见 `foundation/constraints/artifact-chunk-map.yaml`）。
 
 ---
 
@@ -24,11 +26,11 @@
 {
   "title": "string",
   "genre_matrix": {
-    "emotion": "revenge|love|healing|suspense|ambition|comedy|justice",
-    "identity": "underdog|reborn|hidden-elite|ordinary|outcast|student|protector",
-    "conflict": "family|workplace|romance|power|survival|crime|disparity",
-    "world": "modern|ancient|republic|rural|fantasy|campus|scifi",
-    "flavor_tags": ["wuxia", "nongtian", "infinite-flow", "..."],
+    "emotion": "revenge|love|healing|suspense|ambition|comedy|justice|warmth|nostalgia",
+    "identity": "underdog|reborn|hidden-elite|ordinary|outcast|student|protector|bound|dual-lead",
+    "conflict": "family|workplace|romance|power|survival|crime|disparity|redemption|tradition",
+    "world": "modern|ancient|republic|rural|fantasy|campus|scifi|virtual|overseas",
+    "flavor_tags": ["wuxia", "nongtian", "infinite-flow", "..."]
   },
   "theme_code": "matrix",
   "matrix_key": "revenge-reborn-family-ancient",
@@ -57,10 +59,26 @@
 }
 ```
 
-## character-bible.v1（人物关系）
+> 四轴枚举 SSOT：`foundation/theme-matrix.yaml`（各轴 9 项 + 69 风味标签）。
+> `rule_params.act_ratio` 为题材合成值，示例仅供参考；全局基线为 10/20/20/20/15/15（`stage-playbook.yaml`）。
+
+## story-bible.v1（故事蓝图 = 梗概层 + 人物层 + 结构层）
 
 ```json
 {
+  "drama_title": "string",
+  "logline": "一句话故事",
+  "synopsis": {
+    "short": "300字短梗概",
+    "full": "千字完整梗概"
+  },
+  "adapt_source": {
+    "mode": "original|adapt",
+    "retained": ["改编模式：保留的原故事要素"],
+    "enhanced": ["改编模式：强化的要素"],
+    "rewritten": ["改编模式：改写的要素"],
+    "originality_check": "改编模式：原创性风险自检结论"
+  },
   "world_rules": {
     "setting_summary": "string",
     "root_rules": ["只保留影响人物行动和剧情选择的规则"],
@@ -81,26 +99,23 @@
       "visual_anchor": "string"
     }
   ],
-  "relationship_map": [{"from": "string", "to": "string", "type": "string"}]
+  "relationship_map": [{"from": "string", "to": "string", "type": "string"}],
+  "series_structure": {
+    "main_storyline": "string",
+    "six_stage_structure": [
+      {"stage": "string", "episode_range": "1-3", "function": "string", "turning_point": "string"}
+    ],
+    "conflict_escalation_chain": ["string"],
+    "major_reversal_positions": [{"episode": 12, "content": "string"}],
+    "paywall_distribution": [{"episode": 5, "hook": "string"}],
+    "foreshadowing_table": [{"setup_episode": 2, "payoff_episode": 18, "item": "string"}],
+    "series_emotion_curve": [{"episode": 1, "value": 7}]
+  }
 }
 ```
 
-## series-outline.v1（全剧架构）
-
-```json
-{
-  "drama_title": "string",
-  "main_storyline": "string",
-  "six_stage_structure": [
-    {"stage": "string", "episode_range": "1-3", "function": "string", "turning_point": "string"}
-  ],
-  "conflict_escalation_chain": ["string"],
-  "major_reversal_positions": [{"episode": 12, "content": "string"}],
-  "paywall_distribution": [{"episode": 5, "hook": "string"}],
-  "foreshadowing_table": [{"setup_episode": 2, "payoff_episode": 18, "item": "string"}],
-  "series_emotion_curve": [{"episode": 1, "value": 7}]
-}
-```
+> 原创模式 `adapt_source.mode = "original"`，其余 adapt 字段可省略。
+> 长剧分节：先产出梗概层+`world_rules`+`characters`+`relationship_map`，再补 `series_structure`（`outline_mode=structure_only`）。
 
 ## narrative-plan.v1（分集设计）
 
@@ -141,6 +156,7 @@
 ```json
 {
   "drama_title": "string",
+  "scored_artifact": "polished_script|episode_scripts|external_script",
   "overall_score": 82,
   "grade": "S|A|B|C|D",
   "can_continue_next_batch": true,
@@ -159,9 +175,12 @@
   },
   "defects": [],
   "revision_priorities": [{"priority": 1, "target": "string", "suggestion": "string"}],
+  "evolution_proposal": {"trigger": "同一维度连续2次<70", "target": "foundation/rules/...", "content": "string"},
   "verdict": "通过|条件通过|需要修改|重大返工"
 }
 ```
+
+> `evolution_proposal` 仅在触发进化条件时输出，路由至 `@drama-intake` 轨道一。
 
 ## compliance-report.v1（合规报告）
 
@@ -169,6 +188,7 @@
 {
   "drama_title": "string",
   "check_mode": "standard|values-risk|full",
+  "checked_artifact": "polished_script|episode_scripts|external_script",
   "overall_result": "通过|风险|不通过",
   "blocking_issues": [],
   "risk_items": [{"type": "p0|p1|p2", "description": "string", "suggestion": "string"}]
@@ -181,12 +201,12 @@
 
 ```
 output/《剧名》/
-├── 01_立项/project_brief.json
-├── 02_人物/character_bible.json
-├── 03_架构/series_outline.json · narrative_plan.json
+├── 01_立项/project_brief.json          （原创通道）
+├── 02_蓝图/story_bible.json
+├── 03_分集/narrative_plan.json
 ├── 04_剧本/episode_scripts/ · polished_script/
-├── 05_评估/quality_report.json · compliance_report.json
-└── 06_宣发/production_package/   （可选，drama.delivery-tool）
+├── 05_质检/quality_report.json · compliance_report.json
+└── 06_宣发/production_package/         （可选，drama.delivery-tool）
 ```
 
 修改字段时：同步更新本文档、对应 `role.yaml` 的 `schema_version`，并在 `EVOLUTION_LOG.md` 记录。

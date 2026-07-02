@@ -3,7 +3,7 @@
 > **参考规则库**；新条目请写入 `foundation/rules/`
 > 含2026广电新规/AI漫剧肖像权/出海版权保护
 >
-> **使用方式**：drama-ip-adapter（改编/原创创作时执行）、drama-compliance-guard（最终合规检测）。
+> **使用方式**：drama.story-bible（改编模式提取补全时执行原创性自检）、drama.compliance-guard（最终合规检测）。
 
 ---
 

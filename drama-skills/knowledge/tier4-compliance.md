@@ -2,7 +2,7 @@
 
 > **参考长文**；可执行规则 SSOT：`foundation/rules/compliance-core.yaml`
 >
-> **使用方式**：drama-compliance-guard 执行合规检测时读取；drama-topic-planner 立项前预检可选。
+> **使用方式**：drama.compliance-guard 执行合规检测时读取；drama.topic-director 立项前预检可选。
 
 ---
 

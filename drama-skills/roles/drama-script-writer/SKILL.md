@@ -1,14 +1,14 @@
 ---
 name: drama-script-writer
-version: 4.0.0
-description: 剧本正文官：按分集设计和商业格式生成指定集数剧本，必须指定 episode_range。细则见 tasks/write-episodes.md 与 script-format.yaml。
+version: 5.0.0
+description: 剧本正文官：按故事蓝图、分集设计和商业格式生成指定集数剧本，必须指定 episode_range。细则见 tasks/write-episodes.md 与 script-format.yaml。
 tags:
 - 剧本生成
 - 执笔
 - 商业格式
 - 分集写作
 - 记忆检查点
-dept: 创作执行部
+dept: 正文创作部
 references:
 - ./role.yaml
 - ../../foundation/constraints/script-format.yaml
@@ -21,9 +21,9 @@ output_schema:
   description: 剧本 JSON（含每集内容 + memory_checkpoint）
 ---
 
-# 剧本正文官 v4.0
+# 剧本正文官 v5.0
 
-> **v4.0**：角色重组后专注正文生成；对白、格式与字数基础自检必须进入标准输出，深度返修交给 `drama-revision-master`。
+> **v5.0**：专注正文生成；对白、格式与字数基础自检必须进入标准输出，深度返修交给 `drama-revision-master`（由评分环触发）。
 
 **职责**：按 `episode_range` 分批生成正式剧本
 
@@ -39,10 +39,9 @@ output_schema:
 | 方向 | 键 | 说明 |
 |------|-----|------|
 | 输出 | `episode_scripts` | schema: `episode-scripts.v1` |
-| 输入（必填） | `series_outline` | 上游产物 |
-| 输入（必填） | `character_bible` | 上游产物 |
+| 输入（必填） | `story_bible` | 上游产物（人物层 + 结构层） |
+| 输入（可选） | `narrative_plan` | 分集设计（若有则严格遵循） |
 | 输入（可选） | `project_brief` | 上游产物 |
-| 输入（可选） | `narrative_plan` | 分集设计 |
 | 参数 | `episode_range` | 运行参数 |
 
 ## 标准输出要求

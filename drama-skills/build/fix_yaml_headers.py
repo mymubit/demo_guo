@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""统一 foundation/rules/*.yaml 首行注释为 v3.1 scope 术语。"""
+"""统一 foundation/rules/*.yaml 首行注释为标准 scope 术语。"""
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1] / "foundation" / "rules"

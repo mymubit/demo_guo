@@ -1,6 +1,6 @@
 ---
 name: drama-delivery-tool
-version: 4.0.0
+version: 5.0.0
 description: 宣发交付工具：吸收制作发行能力，输出 production_package。
 tags:
 - 宣发
@@ -24,9 +24,11 @@ references:
 - ../../modules/marketing-copy.md
 - ../../modules/delivery-check.md
 - ../../modules/story-to-game.md
+- ../../knowledge/story-to-game.md
+- ../../knowledge/shanyin-director-styles.md
 ---
 
-# 宣发交付工具 v4.0
+# 宣发交付工具 v5.0
 
 ## 职责
 

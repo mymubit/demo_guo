@@ -1,26 +1,36 @@
 # Drama Skills 进化日志
 
-> 记录 v3.1 技能库的四轨道进化。提交外部内容见 `INTAKE_PROTOCOL.md`。
+> 记录技能库的四轨道进化。四轨道唯一定义见 `drama-intake/SKILL.md`；提交外部内容见 `INTAKE_PROTOCOL.md`。
 
-## 四轨道
+## 四轨道（引用 drama-intake 定义）
 
-| 轨道 | 触发 | 写入位置 |
-|------|------|----------|
-| 规则进化 | 评分/审查反复暴露同一问题 | `foundation/rules/*.yaml`（PR） |
-| 灵感归档 | 创作中发现好钩子/反转/对白 | `inspirations/` |
-| 外部摄入 | 用户提交 PDF/文章/剧本 | `knowledge/` + `foundation/rules/` |
-| 新模式 | 拉片/摄入发现库中无覆盖规律 | `inspirations/new-patterns.md` |
+| 轨道 | 名称 | 触发 | 写入位置 |
+|------|------|------|----------|
+| 一 | 规则进化 | 方法论/阈值/LR 提案；评分维度连续 2 次 <70 | `foundation/rules/*.yaml` |
+| 二 | 灵感归档 | 创作中发现好钩子/反转/对白/结构 | `inspirations/` |
+| 三 | 市场知识 | 行业数据/平台趋势/受众分析 | `knowledge/market-insights.md` |
+| 四 | 新模式发现 | 库中无覆盖的新规律（3+ 案例验证后经轨道一升格） | `inspirations/new-patterns.md` |
 
-## v3.1 基线（2026-06-25）
+## v5.0 基线（2026-07-02）
 
-- **架构**：`registry.yaml` + `roles/*/role.yaml` + `foundation/rules/` 三层 SSOT
-- **角色**：12 个（8 core + 4 composite），见 `registry.yaml`
-- **规则**：四 Scope（global_core / genre_profile / stage_playbook / compliance_block）
-- **编排**：`orchestration/fast-track.yaml`、`expert-track.yaml`
-- **题材**：`foundation/rules/genres/` 8 题材 + hybrid
-- **经验规则**：`learned-rules.yaml` LR-001～LR-010
+- **角色**：8 个 = 4 主链生产（topic-director / story-bible / episode-designer / script-writer）+ 3 质检环独立技能（script-scorer / compliance-guard / revision-master）+ 1 可选工具（delivery-tool）
+- **编排**：双通道 `orchestration/original-track.yaml`（原创）/ `story-adapt-track.yaml`（故事改编），在 story_bible 汇合
+- **质检环**：每批正文后评分+合规并行；低于 B 级（75）或 P1 → 修复 → 强制复评
+- **规则**：四 Scope 不变（global_core / genre_profile / stage_playbook / compliance_block）
 
 ## 变更记录
+
+### 2026-07-02 · v5.0 主链收缩 + 双通道 + 质检环 + 进化机制补全
+
+- **角色 9→8**：`drama.character-relations` + `drama.series-architect` 合并为 `drama.story-bible`（剧本蓝图官，双模式：原创/改编），modules 与 sections 全量随迁，能力零丢失（映射见 `ROLE-DESIGN-ANALYSIS.md`）
+- **新产物** `story-bible.v1` = character-bible.v1 ∪ series-outline.v1 ∪ 梗概层；旧两键保留为兼容别名（`artifact-chunk-map.yaml`）
+- **修复主链断链**：评分官/合规官输入改为 `required_artifacts_any_of`（polished_script > episode_scripts > external_script），修复稿强制复评
+- **编排重写**：`fast-track.yaml` / `expert-track.yaml` / `ip-adapt.yaml` → `original-track.yaml` + `story-adapt-track.yaml`（expert 与 fast 的差异由 optional_agents 表达；ip-adapt 由改编通道真正实现）
+- **阈值收敛**：B 级统一为 75（`quality-scoring.yaml` SSOT）；`s-class-standards.md`、`scoring-presets.md` 对齐
+- **进化机制补全**：四轨道统一定义收敛至 `drama-intake/SKILL.md`（修复三处编号互相矛盾）；评分官新增进化提案规则（stage-playbook `t3.drama-script-scorer.scoring.evolution-proposal`）；`quality-report.v1` 增加 `evolution_proposal` 字段
+- **stage-playbook 补缺**：新增 compliance-guard（合规裁判边界）与 delivery-tool（交付前置门禁）条目
+- **知识库清理**：15+ 处旧角色名引用（topic-planner / market-analyst / quality-reporter / script-reviewer / hook-designer / ip-adapter / game-adapter / rhythm-designer / storyboard-director 等）全部改指 v5 角色；孤儿长文挂接到对应角色 SKILL references（s-class-standards / scoring-presets → 评分官；douyin-formulas / industry-benchmarks / market-insights → 选题官；originality-rules / 山音编剧长文 → 蓝图官；导演方法论 → 修复官/交付工具；story-to-game → 交付工具）
+- **新增校验**：`build/validate_skills.py` 全库一致性校验（registry ↔ roles ↔ orchestration ↔ rules ↔ references）
 
 ### 2026-06-25 · 题材矩阵 v1.4
 

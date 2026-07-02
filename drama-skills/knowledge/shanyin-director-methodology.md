@@ -119,7 +119,7 @@ A发现秘密时不用特写而是保持中景——让观众自己在肢体语�
 
 ---
 
-## 五、对 drama-storyboard-director 的直接升级
+## 五、对九列分镜模块（drama.revision-master · storyboard-9col）的直接升级
 
 将九列格式和叙事目的分析法整合到分镜表规范中：
 

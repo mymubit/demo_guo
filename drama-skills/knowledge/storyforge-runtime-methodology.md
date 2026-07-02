@@ -50,7 +50,7 @@ StoryForge 最重要的设计原则：**没有确认梗概，拒绝生成剧本�
 | 卡点 | 触发条件 | 拒绝消息 |
 |------|---------|---------|
 | **立项卡点** | 没有 `project_brief` 产物 | "立项简报未完成，无法开始世界构建" |
-| **大纲卡点** | 没有 `series_outline` 产物 | "分集大纲未确认，无法开始剧本执笔" |
+| **蓝图卡点** | 没有 `story_bible` 产物 | "故事蓝图未确认，无法开始剧本执笔" |
 | **质量卡点** | 质量报告分数 < 75 且未人工确认 | "质量低于基准，请先确认是否继续" |
 | **合规卡点** | P0/P1 合规问题未解决 | "存在合规红线，必须修改后才能交付" |
 
@@ -75,20 +75,20 @@ StoryForge 的 Agent 分工：
   - format-checker.md      格式检查
 ```
 
-### 在我们系统中的对应关系
+### 在我们系统中的对应关系（v5 角色）
 
 ```
 生成侧：
-  topic-planner + world-architect + character-designer + plot-architect
-  + script-writer + narrative-engineer
+  drama.topic-director + drama.story-bible
+  + drama.episode-designer + drama.script-writer
 
-评估侧：
-  script-reviewer + quality-reporter + compliance-guard
+评估侧（质检环，独立技能）：
+  drama.script-scorer + drama.compliance-guard
 
 隔离原则：
-  script-writer 不能自己评估自己写的剧本
-  quality-reporter 的 8 维评分必须基于独立上下文
-  审稿官评估时，不加载执笔师的系统提示词
+  drama.script-writer 不能自己评估自己写的剧本
+  drama.script-scorer 的十维评分必须基于独立上下文
+  评分官评估时，不加载正文官的系统提示词
 ```
 
 ---
@@ -172,7 +172,7 @@ StoryForge 的 10 维评分（比我们的 8 维更完整）：
 | ⑨ | 付费点优化 | 逻辑审计 | 付费墙在最大张力处、付费后立即兑现 |
 | ⑩ | 赛道匹配度 | 逻辑审计 | 符合赛道核心套路 |
 
-**我们应将 quality-reporter 的 8 维升级为这 10 维**（补充 ⑨付费点优化 和 ⑩赛道匹配度）。
+**该建议已落地**：`drama.script-scorer` 的十维评分（含 ⑨付费点优化 和 ⑩赛道匹配度）见 `foundation/constraints/quality-scoring.yaml`。
 
 ---
 
@@ -276,39 +276,35 @@ StoryForge 的 `/compare` 功能：
 
 ---
 
-## 九、主流程总结（适配 Drama Skills）
+## 九、主流程总结（已适配 v5 双通道）
 
-基于 StoryForge 的流程控制理念，我们的最优工作流应为：
+基于 StoryForge 的流程控制理念，v5 工作流（SSOT：`orchestration/original-track.yaml` / `story-adapt-track.yaml`）：
 
 ```
-1. 采访/立项
-   → topic-planner（四轴矩阵+横截面理论）
-   → 输出 project_brief.md
+1. 入口
+   原创：drama.topic-director（四轴矩阵+横截面理论）→ project_brief
+   改编：跳过选题，用户提供 external_story
 
-2. 梗概确认（硬卡点）
-   → world-architect + character-designer + plot-architect
-   → 输出 series_outline.md
-   → 【必须人工确认大纲才能进入剧本阶段】
+2. 蓝图确认（硬卡点）
+   → drama.story-bible（梗概+人物+世界规则+全剧结构一体）
+   → 输出 story_bible
+   → 【必须人工确认蓝图才能进入分集/剧本阶段】
 
-3. 叙事强化（可选）
-   → narrative-engineer
+3. 分集设计
+   → drama.episode-designer → narrative_plan（分批）
 
-4. 逐批剧本生成（每批 5 集）
-   → script-writer（使用上下文加载策略：只加载上一集+快照+伏笔）
+4. 逐批剧本生成（每批 ≤5 集）
+   → drama.script-writer（上下文加载策略：只加载上一集+快照+伏笔）
    → 输出 episode_scripts（每集附带记忆检查点）
 
-5. 评估回路（G-Eval + 收敛停止）
-   → script-reviewer（格式+McKee+横截面+节奏）
-   → quality-reporter（10 维评分，分析先于打分）
+5. 质检环（G-Eval + 收敛停止）
+   → drama.script-scorer（十维评分，分析先于打分）+ drama.compliance-guard（并行）
    → 分数趋势检测：收敛继续/停滞立即停/发散立即停
-   → 质量 < 75 分：自动修正最多 3 轮，超限交给用户
+   → 低于 B 级（75）：drama.revision-master 修复 → 复评，最多 3 轮，超限交给用户
 
-6. 精修与交付
-   → polish-master
-   → compliance-guard（硬卡点：P0/P1 未通过拒绝交付）
-   → production-pack
+6. 交付（可选）
+   → drama.delivery-tool（前置门禁：评分+合规通过）
 
-7. 经验沉淀
-   → 每个项目维护 lessons.md
-   → 跨项目共性 → 更新 learned-rules.md
+7. 经验沉淀（技能进化）
+   → 跨项目共性 → @drama-intake 轨道一 → foundation/rules/learned-rules.yaml
 ```

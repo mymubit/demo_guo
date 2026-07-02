@@ -11,7 +11,7 @@
 
 - 每条记录包含：具体内容、核心机制、适用场景、效果评级
 - 创作时可按题材/类型筛选灵感
-- 高质量条目（⭐⭐⭐）应考虑纳入 `drama-hook-designer` 的规范库
+- 高质量条目（⭐⭐⭐）应考虑经轨道一提案纳入 `modules/hook-system.md` 或 `foundation/rules/narrative-craft.yaml`
 
 ---
 

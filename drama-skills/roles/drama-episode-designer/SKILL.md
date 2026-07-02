@@ -1,7 +1,7 @@
 ---
 name: drama-episode-designer
-version: 4.0.0
-description: 分集设计官：吸收叙事工程与分集大纲能力，输出逐集 episode cards。
+version: 5.0.0
+description: 分集设计官：吸收叙事工程与分集大纲能力，把 story_bible 拆成逐集 episode cards。
 tags:
 - 分集梗概
 - 单集钩子
@@ -9,7 +9,7 @@ tags:
 - 付费卡点
 - 反转
 - 双轨节奏
-dept: 架构设计部
+dept: 分集设计部
 modules:
 - emotion-blueprint
 - hook-system
@@ -25,13 +25,14 @@ references:
 - ../../modules/hook-system.md
 - ../../modules/conflict-escalation.md
 - ../../modules/reversal-system.md
+- ../../knowledge/shanyin-series-format.md
 ---
 
-# 分集设计官 v4.0
+# 分集设计官 v5.0
 
 ## 职责
 
-回答“每一集发生什么，为什么观众要看下一集”。不重写全剧结构，只把 `series_outline` 拆成可供正文写作使用的逐集设计。
+回答“每一集发生什么，为什么观众要看下一集”。不重写全剧结构，只把 `story_bible` 的结构层拆成可供正文写作使用的逐集设计。
 
 ## 标准输出要求
 

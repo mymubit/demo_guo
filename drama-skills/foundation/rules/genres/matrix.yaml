@@ -25,4 +25,4 @@ items:
     body: |
       SSOT: foundation/theme-matrix.yaml · param_synthesis
       读取 project_brief.rule_params.act_ratio 作为六阶段占比。
-      未提供 rule_params 时，topic-planner 必须先合成再下游传递。
+      未提供 rule_params 时，drama.topic-director 必须先合成再下游传递。
