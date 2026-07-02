@@ -124,11 +124,11 @@ output_schema:
 
 ## 参考文档
 
-- `knowledge/shanyin-screenwriting-methodology.md` — 横截面 / Ghost-Lie-Flaw / McKee
-- `knowledge/douyin-formulas.md` — 爆款公式
+- `knowledge/craft/shanyin-screenwriting-methodology.md` — 横截面 / Ghost-Lie-Flaw / McKee
+- `knowledge/market/douyin-formulas.md` — 爆款公式
 - `foundation/theme-matrix.yaml` — 四轴矩阵与规则模板映射
-- `knowledge/theme-templates.md` — 规则模板量化参数
-- `knowledge/tier4-compliance.md` — 合规红线
-- `knowledge/originality-rules.md` — 改编模式原创性保护
+- `knowledge/craft/theme-templates.md` — 规则模板量化参数
+- `knowledge/quality/tier4-compliance.md` — 合规红线
+- `knowledge/quality/originality-rules.md` — 改编模式原创性保护
 - `foundation/constraints/script-format.yaml` — 字数与格式数值
-- `knowledge/storyforge-runtime-methodology.md` — 生成过程控制（收敛停止/上下文加载）
+- `knowledge/system/storyforge-runtime-methodology.md` — 生成过程控制（收敛停止/上下文加载）

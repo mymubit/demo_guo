@@ -12,8 +12,8 @@ dept: 质检修复部
 references:
 - ./role.yaml
 - ../../foundation/rules/compliance-core.yaml
-- ../../knowledge/tier4-compliance.md
-- ../../knowledge/originality-rules.md
+- ../../knowledge/quality/tier4-compliance.md
+- ../../knowledge/quality/originality-rules.md
 ---
 
 # 合规审查官 v5.0
@@ -53,4 +53,4 @@ references:
 ## 延伸阅读
 
 - `./role.yaml`
-- `../../knowledge/tier4-compliance.md`
+- `../../knowledge/quality/tier4-compliance.md`

@@ -14,7 +14,7 @@ phases:
     label: 剧本蓝图（改编模式）
     agents:
       - drama.story-bible
-    notes: 提取原故事人物/冲突/结构 → 按短剧规律补全 → 原创性风险自检（knowledge/originality-rules.md）
+    notes: 提取原故事人物/冲突/结构 → 按短剧规律补全 → 原创性风险自检（knowledge/quality/originality-rules.md）
   - phase: episode_design
     label: 分集设计
     agents:

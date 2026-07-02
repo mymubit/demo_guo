@@ -10,20 +10,29 @@
 drama-skills/
 ├── registry.yaml                 # 角色 + 部门 + 主链 + 工具索引
 ├── foundation/
-│   ├── constraints/              # 数值常量（字数/格式/评分阈值/运行参数）
+│   ├── constraints/              # 数值常量（含 config_tier 分级：git_ssot / seed_default）
 │   ├── theme-matrix.yaml         # 四轴 9^4 + 69 风味标签 + 32 创新组合
 │   ├── methodology/              # 方法论长文
-│   └── rules/                    # 规则条目 YAML（global / genre / stage / compliance）
+│   └── rules/                    # 规则条目 YAML，8 个主题 global 文件 + stage + compliance
 │       └── genres/               # 规则模板（8 预设 + hybrid + matrix）的 genre 规则
 ├── roles/<slug>/                 # 每角色：role.yaml + SKILL.md [+ tasks/]
-├── modules/                      # 角色能力块（Markdown）
+├── modules/                      # 角色能力块（目标/步骤/量化标准/自检清单）
 ├── orchestration/                # original-track / story-adapt-track 双通道
-├── knowledge/                    # 参考长文（规则 body 可引用）
+├── knowledge/                    # 参考长文（按消费场景分目录）
+│   ├── craft/                    #   创作方法论（山音编剧/题材/阶段/LR详解）
+│   ├── market/                   #   市场数据（时效性，后台配置候选）
+│   ├── quality/                  #   质检标准（S级/预设/合规/原创性）
+│   ├── production/               #   制作宣发（导演方法论/互动改编）
+│   ├── system/                   #   系统方法论（流程控制）
+│   ├── knowledge-sections.md     #   Section↔角色索引（后端固定路径解析，勿移动）
+│   └── output-schemas.md         #   产物 schema 索引
 ├── inspirations/                 # 创意素材库（进化轨道二/四写入）
 ├── drama-master/                 # 创作总入口 @drama-master
 ├── drama-intake/                 # 技能进化入口 @drama-intake
-└── build/                        # 仓库维护与校验脚本
+└── build/                        # 仓库维护与校验脚本（validate_skills.py 必跑）
 ```
+
+深度治理方案与配置分级评估：`docs/DRAMA-SKILLS-V5-PLAN.md`（仓库根 docs/）。
 
 ## 安装（Cursor）
 
@@ -65,7 +74,7 @@ drama-skills/
 |------|------|------|
 | 一 · 规则进化 | 方法论/阈值/LR 提案（含评分官自动提案） | `foundation/rules/*.yaml` |
 | 二 · 灵感归档 | 钩子/反转/对白/结构案例 | `inspirations/` |
-| 三 · 市场知识 | 行业数据/平台趋势 | `knowledge/market-insights.md` |
+| 三 · 市场知识 | 行业数据/平台趋势 | `knowledge/market/market-insights.md` |
 | 四 · 新模式发现 | 未覆盖的新规律（3+ 案例验证后升格） | `inspirations/new-patterns.md` |
 
 ## 改规则 / 加角色
@@ -78,7 +87,7 @@ drama-skills/
 | 注册新角色 | `registry.yaml` + 新建 `roles/<slug>/` + `stage-playbook.yaml` 条目 |
 | 改流程顺序 | `orchestration/*.yaml` |
 | 四轴矩阵 / 题材映射 | `foundation/theme-matrix.yaml` |
-| 规则模板量化参数 | `knowledge/theme-templates.md` + `foundation/rules/genres/` |
+| 规则模板量化参数 | `knowledge/craft/theme-templates.md` + `foundation/rules/genres/` |
 
 改完运行一致性校验：`python build/validate_skills.py`
 
@@ -87,7 +96,7 @@ drama-skills/
 | 文件 | 用途 |
 |------|------|
 | `knowledge/knowledge-sections.md` | Section 名 ↔ 角色映射 |
-| `knowledge/tier3-stage-rules.md` | 各角色阶段 playbook 参考长文 |
+| `knowledge/craft/tier3-stage-rules.md` | 各角色阶段 playbook 参考长文 |
 | `knowledge/output-schemas.md` | 产物 JSON 字段参考（含 story-bible.v1） |
 | `INTAKE_PROTOCOL.md` | 外部内容摄入协议 |
 | `EVOLUTION_LOG.md` | 进化记录 |

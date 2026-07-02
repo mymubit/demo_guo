@@ -49,14 +49,14 @@ TRIGGERS: Dict[str, List[str]] = {
 EXTRA_READING: Dict[str, List[str]] = {
     "drama.topic-director": [
         "foundation/methodology/cross-section.md",
-        "knowledge/douyin-formulas.md",
-        "knowledge/industry-benchmarks.md",
-        "knowledge/market-insights.md",
+        "knowledge/market/douyin-formulas.md",
+        "knowledge/market/industry-benchmarks.md",
+        "knowledge/market/market-insights.md",
     ],
     "drama.story-bible": [
-        "foundation/rules/character-logic.yaml",
-        "knowledge/originality-rules.md",
-        "knowledge/shanyin-screenwriting-methodology.md",
+        "foundation/rules/character-rules.yaml",
+        "knowledge/quality/originality-rules.md",
+        "knowledge/craft/shanyin-screenwriting-methodology.md",
     ],
     "drama.script-writer": [
         "foundation/constraints/script-format.yaml",
@@ -65,15 +65,15 @@ EXTRA_READING: Dict[str, List[str]] = {
     ],
     "drama.script-scorer": [
         "foundation/constraints/quality-scoring.yaml",
-        "knowledge/s-class-standards.md",
-        "knowledge/scoring-presets.md",
+        "knowledge/quality/s-class-standards.md",
+        "knowledge/quality/scoring-presets.md",
     ],
     "drama.revision-master": [
         "foundation/constraints/script-format.yaml",
     ],
     "drama.compliance-guard": [
-        "knowledge/tier4-compliance.md",
-        "knowledge/originality-rules.md",
+        "knowledge/quality/tier4-compliance.md",
+        "knowledge/quality/originality-rules.md",
     ],
 }
 

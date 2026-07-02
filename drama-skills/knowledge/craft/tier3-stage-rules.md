@@ -176,7 +176,7 @@
 ```
 与评分官并行触发；审查对象按「修复稿优先」取最新版本。
 P0 或未解决 P1 → 拒绝出具通过报告，阻断下游。
-详见 knowledge/tier4-compliance.md。
+详见 knowledge/quality/tier4-compliance.md。
 ```
 
 输出：`compliance_report`（schema: `compliance-report.v1`）

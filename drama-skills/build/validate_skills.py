@@ -4,13 +4,16 @@
 
 检查项：
 1. registry ↔ roles/*/role.yaml ↔ SKILL.md：目录存在、agent_id/产物/schema/modules 对齐
-2. modules 引用的能力块文件存在
+2. modules 引用的能力块文件存在，且无孤儿模块（未被任何角色挂载）
 3. orchestration/*.yaml 引用的角色均已注册
 4. stage-playbook 的 scope_key 均为有效 agent_id，且每个角色至少 1 条阶段规则
 5. SKILL.md frontmatter references 路径可解析
 6. 产物 DAG：所有 input_contract 消费的产物都有生产者（或在白名单：用户上传/运行参数）
-7. 全库无已废弃角色名残留（历史文档除外）
+7. 全库无已废弃角色名残留（历史文档除外）；无指向已删除规则文件的引用
 8. agent-runtime.yaml 覆盖全部注册角色
+9. 全库文本中的 knowledge/foundation/modules 相对路径引用均指向真实文件
+10. knowledge/ 孤儿检测：每个知识长文必须被至少一处（SKILL/rules/modules/入口文档）引用
+11. 角色↔Section 映射中的 section 必须在规则文件中真实存在
 
 用法：python build/validate_skills.py
 """
@@ -222,6 +225,82 @@ def check_agent_runtime(agent_ids: set) -> None:
         err(f"agent-runtime.yaml 存在未注册角色 {stale}")
 
 
+# 全库文本中出现的相对路径引用（knowledge/foundation/modules/orchestration/roles）
+PATH_REF_PATTERN = re.compile(
+    r"(?:knowledge|foundation|modules|orchestration|roles|inspirations)"
+    r"(?:/[A-Za-z0-9_.\-]+)+\.(?:md|yaml|yml)"
+)
+
+
+def check_path_references() -> None:
+    """所有文档/规则中提到的库内相对路径必须真实存在。"""
+    for path in sorted(ROOT.rglob("*")):
+        if not path.is_file() or path.suffix not in SCAN_SUFFIXES:
+            continue
+        if path.name in HISTORY_DOCS or "build" in path.parts:
+            continue
+        text = path.read_text(encoding="utf-8")
+        for match in PATH_REF_PATTERN.finditer(text):
+            ref = match.group(0)
+            if not (ROOT / ref).exists():
+                err(f"路径引用失效 {path.relative_to(ROOT)} → {ref}")
+
+
+def check_knowledge_orphans() -> None:
+    """knowledge/ 下每个长文必须被库内至少一处引用（索引文件除外）。"""
+    index_files = {"knowledge-sections.md", "output-schemas.md"}
+    knowledge_files = [
+        p for p in (ROOT / "knowledge").rglob("*.md") if p.name not in index_files
+    ]
+    corpus: List[str] = []
+    for path in ROOT.rglob("*"):
+        if not path.is_file() or path.suffix not in SCAN_SUFFIXES:
+            continue
+        if "build" in path.parts:
+            continue
+        corpus.append(path.read_text(encoding="utf-8"))
+    blob = "\n".join(corpus)
+    for kfile in knowledge_files:
+        rel = kfile.relative_to(ROOT).as_posix()
+        # 引用计数需排除自引用（自身文件内出现的路径不算）
+        self_text = kfile.read_text(encoding="utf-8")
+        refs = blob.count(rel) - self_text.count(rel)
+        if refs <= 0:
+            err(f"knowledge 孤儿文件（无任何引用）: {rel}")
+
+
+def check_module_orphans(role_metas: Dict[str, Dict[str, Any]]) -> None:
+    mounted = set()
+    for meta in role_metas.values():
+        mounted.update(meta.get("modules") or [])
+    for module_file in sorted((ROOT / "modules").glob("*.md")):
+        if module_file.stem not in mounted:
+            err(f"孤儿模块（未被任何角色挂载）: modules/{module_file.name}")
+
+
+def check_section_mapping() -> None:
+    """knowledge-sections.md 角色映射中的 section 必须在规则文件中真实存在。"""
+    defined_sections = set()
+    rules_dir = ROOT / "foundation" / "rules"
+    for path in list(rules_dir.glob("*.yaml")) + list((rules_dir / "genres").glob("*.yaml")):
+        data = load_yaml(path)
+        for item in data.get("items", []) or []:
+            if isinstance(item, dict) and item.get("section"):
+                defined_sections.add(str(item["section"]))
+    # 由 constraints 合成、不在规则文件中的 section
+    synthesized = {"quantitative_constraints", "format_standard", "genre_rules"}
+    mapping_path = ROOT / "knowledge" / "knowledge-sections.md"
+    for line in mapping_path.read_text(encoding="utf-8").splitlines():
+        if not line.startswith("| drama."):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        if len(cells) < 2:
+            continue
+        for section in (s.strip() for s in cells[1].split(",")):
+            if section and section not in defined_sections | synthesized:
+                err(f"knowledge-sections.md: {cells[0]} 引用不存在的 section `{section}`")
+
+
 def main() -> int:
     registry = load_yaml(ROOT / "registry.yaml")
     if not registry:
@@ -234,6 +313,10 @@ def main() -> int:
     check_artifact_dag(role_metas)
     check_agent_runtime(agent_ids)
     check_deprecated_tokens()
+    check_path_references()
+    check_knowledge_orphans()
+    check_module_orphans(role_metas)
+    check_section_mapping()
 
     for msg in WARNINGS:
         print(f"WARN  {msg}")

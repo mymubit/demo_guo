@@ -1,5 +1,5 @@
 # genre_profile · 全局 fallback — hybrid 或未匹配 theme_code 时使用
-version: "1.0.0"
+version: "1.1.0"
 tier: 2
 items:
   - rule_key: t2.global.genre_profile.emotion-anchor-summary
@@ -9,6 +9,20 @@ items:
     title: 题材情绪锚点（全局摘要）
     priority: 100
     body: |
-      SSOT: knowledge/tier2-genre-rules.md
-      未命中具体 theme_code（如 hybrid）时使用本摘要。
-      台词须按阶层/职业/情绪外化；角色决策须符合年龄段逻辑；悬念滚动释放禁止断层。
+      长文参考: knowledge/craft/tier2-genre-rules.md
+      未命中具体 theme_code（如 hybrid）时使用本摘要：
+      - 主情绪锚点必须来自目标受众真实生活痛点，每 3-5 分钟触发一次目标情绪
+      - 台词按阶层/职业差异化，情绪按节奏外化（见 dialogue_quality section）
+      - 角色决策符合年龄段逻辑（见 character_rules section）
+      - 悬念滚动释放：每解一谜生一新谜，禁止信息断层
+  - rule_key: t2.global.genre_profile.fallback-params
+    section: rhythm_rules
+    scope_type: genre
+    scope_key: ""
+    title: 未命中题材时的默认参数
+    priority: 101
+    body: |
+      未提供 rule_params 时使用全局基线：六阶段 10/20/20/20/15/15；
+      reversal_density≈0.35；hook_types 从四级钩子体系自选；
+      情绪曲线按 emotion-blueprint 六阶段基线铺设。
+      命中 theme_code=matrix 时必须改用 project_brief.rule_params（见 genres/matrix.yaml）。

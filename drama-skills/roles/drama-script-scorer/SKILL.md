@@ -17,8 +17,8 @@ references:
 - ./role.yaml
 - ../../foundation/constraints/quality-scoring.yaml
 - ../../foundation/rules/scoring-core.yaml
-- ../../knowledge/s-class-standards.md
-- ../../knowledge/scoring-presets.md
+- ../../knowledge/quality/s-class-standards.md
+- ../../knowledge/quality/scoring-presets.md
 ---
 
 # 剧本评分官 v5.0
@@ -29,7 +29,7 @@ references:
 
 评分对象按优先级取当前最新版本：`polished_script`（修复稿）＞ `episode_scripts`（原始稿）＞ `external_script`（外部上传）。修复官返修后必须复评，形成「写作 → 评分 → 修复 → 复评」闭环。
 
-评分预设（standard / strict / relaxed / rhythm_first）见 `knowledge/scoring-presets.md`；S 级逐项核对清单见 `knowledge/s-class-standards.md`。
+评分预设（standard / strict / relaxed / rhythm_first）见 `knowledge/quality/scoring-presets.md`；S 级逐项核对清单见 `knowledge/quality/s-class-standards.md`。
 
 ## 十维评分
 

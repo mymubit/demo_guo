@@ -26,7 +26,7 @@ items:
     title: 角色密度与弧光
     priority: 10
     body: |
-      SSOT: knowledge/tier3-stage-rules.md
+      SSOT: knowledge/craft/tier3-stage-rules.md
       主角≤2，核心配角2-4，总关系角色≤6；每人须 Want/Need/Ghost/Lie/Flaw；15秒内可视觉识别。
       世界观只保留会影响人物行动与剧情选择的规则。
   - rule_key: t3.drama-story-bible.episode_structure.six-stage
@@ -36,7 +36,7 @@ items:
     title: 六阶段集数分配
     priority: 11
     body: |
-      SSOT: knowledge/tier3-stage-rules.md
+      SSOT: knowledge/craft/tier3-stage-rules.md
       100集基准：开篇10%/升温20%/高潮20%/转折20%/冲刺15%/结局15%（题材 rule_params.act_ratio 可覆盖）。
       结构层只定义六阶段、主支线、关键反转、付费节点分布和伏笔总表，不展开逐集细节。
   - rule_key: t3.drama-episode-designer.episode_structure.episode-card
@@ -46,7 +46,7 @@ items:
     title: 分集设计卡
     priority: 10
     body: |
-      SSOT: knowledge/tier3-stage-rules.md
+      SSOT: knowledge/craft/tier3-stage-rules.md
       每集设计须含 Goal×Conflict、EV/ET/TP、集首钩子、集末钩子、爽点、反转、付费卡点、伏笔埋设/回扣、双轨节奏[松/中/紧×轻/中/重]。
       不得重写 story_bible 的主线与六阶段结构。
   - rule_key: t3.drama-script-writer.writing_requirements.episode-range
@@ -92,7 +92,7 @@ items:
     title: 合规裁判边界
     priority: 10
     body: |
-      SSOT: foundation/rules/compliance-core.yaml + knowledge/tier4-compliance.md
+      SSOT: foundation/rules/compliance-core.yaml + knowledge/quality/tier4-compliance.md
       只判断能否交付，不评价剧本好坏；审查对象按「修复稿优先」取当前最新版本。
       P0 或未解决 P1 时拒绝出具通过报告，并阻断继续生成与交付流程。
   - rule_key: t3.drama-delivery-tool.delivery.gate

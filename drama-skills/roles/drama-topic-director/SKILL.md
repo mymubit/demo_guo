@@ -23,9 +23,9 @@ references:
 - ../../modules/market-radar.md
 - ../../modules/formula-analysis.md
 - ../../modules/tear-down-6d.md
-- ../../knowledge/douyin-formulas.md
-- ../../knowledge/industry-benchmarks.md
-- ../../knowledge/market-insights.md
+- ../../knowledge/market/douyin-formulas.md
+- ../../knowledge/market/industry-benchmarks.md
+- ../../knowledge/market/market-insights.md
 ---
 
 # 选题定调官 v5.0

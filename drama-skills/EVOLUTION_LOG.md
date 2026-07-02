@@ -8,7 +8,7 @@
 |------|------|------|----------|
 | 一 | 规则进化 | 方法论/阈值/LR 提案；评分维度连续 2 次 <70 | `foundation/rules/*.yaml` |
 | 二 | 灵感归档 | 创作中发现好钩子/反转/对白/结构 | `inspirations/` |
-| 三 | 市场知识 | 行业数据/平台趋势/受众分析 | `knowledge/market-insights.md` |
+| 三 | 市场知识 | 行业数据/平台趋势/受众分析 | `knowledge/market/market-insights.md` |
 | 四 | 新模式发现 | 库中无覆盖的新规律（3+ 案例验证后经轨道一升格） | `inspirations/new-patterns.md` |
 
 ## v5.0 基线（2026-07-02）
@@ -19,6 +19,16 @@
 - **规则**：四 Scope 不变（global_core / genre_profile / stage_playbook / compliance_block）
 
 ## 变更记录
+
+### 2026-07-02 · v5.1 底层技能深度治理（模块充实 + 规则合并 + 知识分目录 + 配置分级）
+
+- **模块去空心化**：16 个 modules 从 3 行存根充实为「目标/执行步骤/量化标准/自检清单」结构的可执行操作指南（30-60 行/个），并标注挂载角色与数值 SSOT
+- **规则文件合并（17→12，运行时透明）**：dialogue-voice+ai-tone-forbidden→`dialogue-rules.yaml`；writing-requirements+writing-prohibitions→`writing-rules.yaml`；conflict-escalation+foreshadowing-rules+payment-checkpoint→`plotting-rules.yaml`；character-logic→`character-rules.yaml`（扩充密度/弧光条目）；genre-profile fallback 强化为可执行摘要+默认参数；rule_key/section 全部保留
+- **规则 body 治理**：可执行内容内联进 body，knowledge 指针降级为「长文参考」注释（规则条目是 prompt 实际载体，指针背后的内容运行时读不到）
+- **knowledge 按消费场景分 5 目录**：craft/（创作方法论）、market/（时效市场数据，后台配置候选）、quality/（质检标准）、production/（制作宣发）、system/（流程控制）；`knowledge-sections.md`、`output-schemas.md` 留在根目录（后端固定路径解析）；全库引用路径同步更新
+- **配置分级标注**：constraints 文件头部声明 `config_tier`——agent-runtime=seed_default（后台 drama-models 可覆盖）；quality-scoring 的阈值/熔断与 script-format 的字数/占比=seed_default（建议后台 system_config 覆盖）；格式 pattern、chunk-map=git_ssot
+- **校验器升级**：`validate_skills.py` 新增 knowledge 孤儿检测、模块孤儿检测、全库相对路径引用有效性、角色↔Section 映射存在性 4 项检查
+- 完整方案与后台配置中心设计见 `docs/DRAMA-SKILLS-V5-PLAN.md`
 
 ### 2026-07-02 · v5.0 主链收缩 + 双通道 + 质检环 + 进化机制补全
 

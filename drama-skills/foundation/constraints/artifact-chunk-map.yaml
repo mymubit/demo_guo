@@ -1,4 +1,5 @@
 # 流式分片产物配置 SSOT — chunk_service / stream_service 引用
+# 配置分级：git_ssot（纯运行时工程配置，与代码同评审，不进后台）
 # v5.0：新增 story_bible；character_bible / series_outline 保留为 story_bible 分节的兼容别名
 version: "5.0.0"
 

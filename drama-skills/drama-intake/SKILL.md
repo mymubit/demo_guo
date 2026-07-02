@@ -20,7 +20,7 @@ tags: ["技能进化", "外部摄入", "知识提取", "四轨道", "规则提�
 |------|------|------|----------|------|
 | **轨道一** | 规则进化 | 方法论补充 / 阈值修正 / LR 新增 / 评分维度连续 2 次 <70 | `foundation/rules/*.yaml`（含 `learned-rules.yaml`） | 提案 → 用户确认 → 写入 YAML → 记录 EVOLUTION_LOG |
 | **轨道二** | 灵感归档 | 具体的钩子/反转/对白/结构案例 | `inspirations/hooks.md` / `reversals.md` / `dialogues.md` / `structures.md` | 归档确认 → 直接写入 |
-| **轨道三** | 市场知识 | 行业数据、平台趋势、受众分析 | `knowledge/market-insights.md`（`drama.topic-director` 读取） | 归档确认 → 直接写入 |
+| **轨道三** | 市场知识 | 行业数据、平台趋势、受众分析 | `knowledge/market/market-insights.md`（`drama.topic-director` 读取） | 归档确认 → 直接写入 |
 | **轨道四** | 新模式发现 | 现有库未覆盖的全新规律 | `inspirations/new-patterns.md` | 提案 → 3+ 案例验证 → 经轨道一升格为正式规则 |
 
 > 本表是四轨道唯一定义；`INTAKE_PROTOCOL.md` 与 `EVOLUTION_LOG.md` 引用本表，不得另行编号。
@@ -81,7 +81,7 @@ Step 5：归档确认
 | 具体反转/意外设计案例 | 轨道二：灵感归档 | `inspirations/reversals.md` |
 | 精彩台词/对白案例 | 轨道二：灵感归档 | `inspirations/dialogues.md` |
 | 创新叙事结构案例 | 轨道二：灵感归档 | `inspirations/structures.md` |
-| 行业数据/平台规律 | 轨道三：市场知识 | `knowledge/market-insights.md` |
+| 行业数据/平台规律 | 轨道三：市场知识 | `knowledge/market/market-insights.md` |
 | 全新的创作方法论/模式 | 轨道四：新模式发现 | `inspirations/new-patterns.md` |
 | 爆款作品剧本 | 拉片分析 | `@drama-topic-director`（tear-down-6d）→ 结论再分发 |
 

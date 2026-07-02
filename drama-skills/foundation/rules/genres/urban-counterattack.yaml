@@ -9,7 +9,7 @@ items:
     title: 都市逆袭·情绪锚点
     priority: 10
     body: |
-      SSOT: knowledge/tier2-genre-rules.md · ThemeTemplate urban-counterattack
+      SSOT: knowledge/craft/tier2-genre-rules.md · ThemeTemplate urban-counterattack
       核心情绪：打工人反PUA/小人物崛起/裁员生存困境；反抗不公的爽感。
       钩子：职场反转、贵人相助、技能觉醒、对手溃败。
   - rule_key: t2.urban-counterattack.rhythm_rules.act-ratio

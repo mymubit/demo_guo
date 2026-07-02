@@ -227,7 +227,7 @@ Level 1：项目级经验
   触发：用户手动修改生成结果后，记录原因
 
 Level 2：跨项目规则
-  路径：knowledge/learned-rules.md
+  路径：knowledge/craft/learned-rules.md
   触发：同类修改出现 2 次以上 → 提示沉淀
   效果：后续所有项目自动加载此规则
 ```

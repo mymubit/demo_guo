@@ -25,7 +25,7 @@ references:
 - ../../modules/format-fix.md
 - ../../modules/word-count-governance.md
 - ../../modules/storyboard-9col.md
-- ../../knowledge/shanyin-director-methodology.md
+- ../../knowledge/production/shanyin-director-methodology.md
 ---
 
 # 剧本修复官 v5.0
