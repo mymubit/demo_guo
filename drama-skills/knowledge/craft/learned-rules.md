@@ -1,7 +1,8 @@
-# 跨项目经验规则（Learned Rules）
+# 跨项目经验规则详解（Learned Rules）
 
-> 来源：行业经验与本仓库 `foundation/rules/learned-rules.yaml`（LR）同步维护。
-> 当同类修改出现 2 次以上时，沉淀为此处的跨项目规则。
+> 可执行条目 SSOT：`foundation/rules/learned-rules.yaml`（LR-001～LR-010 摘要版，随规则注入角色）。
+> 本文档是各条 LR 的详解长文（原因、违反示例），两者同步维护。
+> 新增 LR 走 `@drama-intake` 轨道一（规则进化）：同类修改出现 2 次以上时提案沉淀。
 
 ## 规则格式
 每条规则包含：规则 ID、赛道适用范围、规则内容、原因。

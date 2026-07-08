@@ -1,0 +1,41 @@
+# 原创创作通道 — 选题 → 蓝图 → 分集 → 正文 + 质检环
+version: "5.0.0"
+entry_type: original_track
+label: 原创创作通道
+description: 从零选题的标准通道：4 个生产角色主链，每批正文完成后由质检环（评分+合规并行，未达标转修复并复评）把关。
+
+phases:
+  - phase: strategy
+    label: 选题定调
+    agents:
+      - drama.topic-director
+  - phase: blueprint
+    label: 剧本蓝图
+    agents:
+      - drama.story-bible
+  - phase: episode_design
+    label: 分集设计
+    agents:
+      - drama.episode-designer
+  - phase: writing
+    label: 正文创作
+    agents:
+      - drama.script-writer
+
+# 质检环：独立技能，每批 episode_scripts 完成后触发；不占主链阶段位。
+quality_loop:
+  trigger: 每批正文（episode_range）完成后
+  parallel_judges:
+    - drama.script-scorer
+    - drama.compliance-guard
+  on_fail:
+    condition: overall_score < 75（B 级线）或存在 P1 必修项
+    agent: drama.revision-master
+    then: 修复稿交回 parallel_judges 复评，通过后才可继续生成下一批
+  score_target: latest_script  # 修复稿优先：polished_script > episode_scripts
+
+optional_agents:
+  - drama.delivery-tool
+
+# 兼容说明：本文件替代 v4 的 fast-track.yaml 与 expert-track.yaml
+#（专家通道与标准通道的唯一差异是宣发交付，已由 optional_agents 表达）。

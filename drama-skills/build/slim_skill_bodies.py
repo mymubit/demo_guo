@@ -13,7 +13,7 @@ REGISTRY = ROOT / "registry.yaml"
 ROLES_DIR = ROOT / "roles"
 
 V31_NOTICE = (
-    "> **v4.0**：规则 SSOT 见 `foundation/rules/`；角色契约 SSOT 见 `./role.yaml`。"
+    "> **v5.0**：规则 SSOT 见 `foundation/rules/`；角色契约 SSOT 见 `./role.yaml`。"
     "本文档仅保留 Cursor 触发方式与 I/O 索引。"
 )
 
@@ -21,11 +21,9 @@ TRIGGERS: Dict[str, List[str]] = {
     "drama.topic-director": [
         "@drama-topic-director 我想写一部复仇×重生×职场的短剧",
     ],
-    "drama.character-relations": [
-        "@drama-character-relations 基于立项简报输出人物关系",
-    ],
-    "drama.series-architect": [
-        "@drama-series-architect 设计30集全剧架构",
+    "drama.story-bible": [
+        "@drama-story-bible 基于立项简报输出故事蓝图",
+        "@drama-story-bible external_story=《...》 把这个故事改编成30集短剧蓝图",
     ],
     "drama.episode-designer": [
         "@drama-episode-designer episode_range=1-10",
@@ -51,7 +49,14 @@ TRIGGERS: Dict[str, List[str]] = {
 EXTRA_READING: Dict[str, List[str]] = {
     "drama.topic-director": [
         "foundation/methodology/cross-section.md",
-        "knowledge/originality-rules.md",
+        "knowledge/market/douyin-formulas.md",
+        "knowledge/market/industry-benchmarks.md",
+        "knowledge/market/market-insights.md",
+    ],
+    "drama.story-bible": [
+        "foundation/rules/character-rules.yaml",
+        "knowledge/quality/originality-rules.md",
+        "knowledge/craft/shanyin-screenwriting-methodology.md",
     ],
     "drama.script-writer": [
         "foundation/constraints/script-format.yaml",
@@ -59,13 +64,16 @@ EXTRA_READING: Dict[str, List[str]] = {
         "foundation/methodology/mckee-value-shift.md",
     ],
     "drama.script-scorer": [
-        "foundation/constraints/script-format.yaml",
+        "foundation/constraints/quality-scoring.yaml",
+        "knowledge/quality/s-class-standards.md",
+        "knowledge/quality/scoring-presets.md",
     ],
     "drama.revision-master": [
         "foundation/constraints/script-format.yaml",
     ],
     "drama.compliance-guard": [
-        "knowledge/tier4-compliance.md",
+        "knowledge/quality/tier4-compliance.md",
+        "knowledge/quality/originality-rules.md",
     ],
 }
 
@@ -160,7 +168,7 @@ def _build_body(registry_role: Dict[str, Any]) -> str:
     io_table = _build_io_table(role_meta, registry_role)
 
     parts = [
-        f"# {name_zh} v3.1",
+        f"# {name_zh} v5.0",
         "",
         V31_NOTICE,
         f"> 角色配置 SSOT：`{'./role.yaml' if co_located else f'roles/{slug}/role.yaml'}`",
@@ -209,7 +217,7 @@ def slim_skill(skill_path: Path, registry_role: Dict[str, Any]) -> bool:
         return False
 
     meta = yaml.safe_load(fm_raw) or {}
-    meta["version"] = "3.1.0"
+    meta["version"] = "5.0.0"
     new_fm = yaml.dump(meta, allow_unicode=True, sort_keys=False).strip()
     new_body = _build_body(registry_role)
     skill_path.write_text(f"---\n{new_fm}\n---\n\n{new_body}", encoding="utf-8")

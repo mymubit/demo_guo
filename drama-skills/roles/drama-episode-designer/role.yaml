@@ -1,10 +1,10 @@
 agent_id: drama.episode-designer
 name: Episode Designer
 name_zh: 分集设计官
-dept: plot_engine
+dept: episode_design
 role_tier: production
 fast_track: true
-workspace_order: 302
+workspace_order: 301
 default_output_artifact_key: narrative_plan
 schema_version: narrative-plan.v1
 modules:
@@ -23,11 +23,11 @@ input_contract:
   params:
   - episode_range
   required_artifacts:
+  - story_bible
+  optional_artifacts:
   - project_brief
-  - character_bible
-  - series_outline
 output_contract:
   artifacts:
   - narrative_plan
   schema_version: narrative-plan.v1
-role: 把全剧架构拆成逐集可写的 episode cards，必须输出每集核心事件、Goal×Conflict、情绪强度、集首/集末钩子、爽点、反转、伏笔埋设/回扣、付费卡点和双轨节奏标注。
+role: 把故事蓝图拆成逐集可写的 episode cards，必须输出每集核心事件、Goal×Conflict、情绪强度、集首/集末钩子、爽点、反转、伏笔埋设/回扣、付费卡点和双轨节奏标注。

@@ -1,7 +1,7 @@
 # 市场洞察知识库
 
 > 来自外部内容摄入的市场数据、平台规律、受众分析。
-> 由 `drama-intake` 自动归档，`drama-market-analyst` 读取引用。
+> 由 `drama-intake` 轨道三自动归档，`drama.topic-director` 做市场判断时读取引用。
 
 ---
 

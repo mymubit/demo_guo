@@ -1,0 +1,31 @@
+# global_core · 写作规则 — 要求 + 禁止项（writing_requirements / writing_prohibitions）
+version: "1.1.0"
+tier: 1
+items:
+  - rule_key: t1.global.writing_requirements.episode-scope
+    section: writing_requirements
+    title: 分集与记忆检查点
+    priority: 10
+    body: |
+      必须遵守 params.episode_range；逐集仅依赖上一集全文+memory_checkpoint（LR-008）。
+      每场 Goal×Conflict；每场 McKee 价值转变；每集输出 memory_checkpoint。
+  - rule_key: t1.global.writing_requirements.commercial-format
+    section: writing_requirements
+    title: 商业格式执行
+    priority: 11
+    body: |
+      场景头/台词/△ 动作遵循 format_standard；台词占比与字数见 quantitative_constraints
+      （数值 SSOT: foundation/constraints/script-format.yaml）。
+  - rule_key: t1.global.writing_prohibitions.format-ssot
+    section: writing_prohibitions
+    title: 格式禁止项
+    priority: 5
+    body: |
+      数值 SSOT: foundation/constraints/script-format.yaml
+      禁止：引号台词；心理描写；方括号场景头；独立【画面】行；"她感到..."类叙述。
+  - rule_key: t1.global.writing_prohibitions.ai-emotion
+    section: writing_prohibitions
+    title: 情绪直述禁止
+    priority: 10
+    body: |
+      禁止直接写"我感到/他很愤怒/她很难过"；用动作、停顿、环境、对话节奏外化情绪。

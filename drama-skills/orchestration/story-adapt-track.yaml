@@ -1,0 +1,41 @@
+# 故事改编通道 — 用户自带故事 → 蓝图（改编模式）→ 分集 → 正文 + 质检环
+version: "5.0.0"
+entry_type: story_adapt
+label: 故事改编通道
+description: 用户提供故事/小说/大纲时的通道：剧本蓝图官以改编模式提取并补全故事蓝图，之后与原创通道完全共链。替代 v4 的 ip-adapt.yaml。
+
+entry_requirements:
+  params:
+    - external_story   # 用户粘贴的故事/小说/大纲原文
+    - adapt_notes      # 可选：保留什么、强化什么、改写什么
+
+phases:
+  - phase: blueprint
+    label: 剧本蓝图（改编模式）
+    agents:
+      - drama.story-bible
+    notes: 提取原故事人物/冲突/结构 → 按短剧规律补全 → 原创性风险自检（knowledge/quality/originality-rules.md）
+  - phase: episode_design
+    label: 分集设计
+    agents:
+      - drama.episode-designer
+  - phase: writing
+    label: 正文创作
+    agents:
+      - drama.script-writer
+
+# 质检环与原创通道一致（见 original-track.yaml）。
+quality_loop:
+  trigger: 每批正文（episode_range）完成后
+  parallel_judges:
+    - drama.script-scorer
+    - drama.compliance-guard
+  on_fail:
+    condition: overall_score < 75（B 级线）或存在 P1 必修项
+    agent: drama.revision-master
+    then: 修复稿交回 parallel_judges 复评，通过后才可继续生成下一批
+  score_target: latest_script
+
+optional_agents:
+  - drama.topic-director   # 改编项目仍需市场定调时可选调用
+  - drama.delivery-tool

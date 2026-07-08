@@ -1,5 +1,10 @@
-# 剧本格式数值常量 SSOT — 所有角色/规则/校验器引用此文件
-version: "1.0.0"
+# 剧本格式数值常量 — 所有角色/规则/校验器引用此文件
+# 配置分级：
+#   scene_header_pattern / dialogue_pattern / action_pattern / format_prohibitions = git_ssot：
+#     商业剧本格式规范，属方法论
+#   episode_word_count / dialogue_ratio / scenes_per_episode / review_thresholds / quality_grades = seed_default：
+#     产品业务参数（不同平台/套餐可能不同），商业网站应支持后台覆盖，本文件提供默认值
+version: "1.1.0"
 
 episode_word_count:
   first_episode:

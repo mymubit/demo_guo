@@ -6,7 +6,7 @@ coverage_model:
     1. 四轴（各 9 项）：主情绪 / 身份 / 冲突 / 时空
     2. 风味标签（69 项 / 12 类，最多 5 个）：全行业 + 形态创新长尾
     3. featured_combos 32 条：创新杂交种子，可归档至 inspirations/new-patterns.md
-    4. topic_planner_inference：自由创意 → 四轴+标签推断词表
+    4. topic_inference：自由创意 → 四轴+标签推断词表
   axis_combinations: 6561
   flavor_tag_count: 69
   featured_combo_count: 32
@@ -386,7 +386,7 @@ resolve:
     params: synthesize preset_templates.dims
   free_text_path:
     when: core_idea only
-    params: topic-planner 推断 genre_matrix + flavor_tags（可 >3 标签时保留 top5 权重）
+    params: drama.topic-director 推断 genre_matrix + flavor_tags（可 >3 标签时保留 top5 权重）
 
 featured_combos:
   - { id: wuxia-revenge, label_zh: 武侠复仇, dims: { emotion: revenge, identity: outcast, conflict: power, world: ancient, flavor_tags: [wuxia, male-lead, angst-revenge] } }
@@ -422,7 +422,7 @@ featured_combos:
   - { id: werewolf-romance, label_zh: 狼人言情, dims: { emotion: love, identity: outcast, conflict: romance, world: modern, flavor_tags: [werewolf-vampire, melo-heavy, dual-power] } }
   - { id: dual-world-fantasy, label_zh: 双世界奇幻, dims: { emotion: suspense, identity: reborn, conflict: power, world: fantasy, flavor_tags: [dual-world, transmigration-book, system-panel] } }
 
-topic_planner_inference:
+topic_inference:
   hint: 从 core_idea 关键词推断四轴与标签（多标签时保留权重最高的 5 个）
   keyword_map:
     emotion:

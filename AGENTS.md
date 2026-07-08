@@ -9,7 +9,7 @@
 
 ### Drama Skills 系统（新核心功能）
 
-- 短剧创作技能库：`drama-skills/`（根目录）— 36个专业角色，8个职能部门
+- 短剧创作技能库：`drama-skills/`（根目录）— v5.0：4 主链生产角色 + 3 质检环独立技能 + 1 可选交付工具，双通道（原创 / 故事改编）
 - Drama Web App：`backend/apps/drama/` + `frontend/src/pages/Drama/`
 - 技能安装说明：`drama-skills/README.md`
 - 网站技术方案：`docs/DRAMA-SKILLS-WEBSITE-PLAN.md`

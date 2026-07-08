@@ -3,7 +3,7 @@
 > **参考长文**；可执行规则 SSOT：`foundation/rules/genres/` + `genre-profile.yaml`
 > 
 > **使用方式**：创作前根据题材选择对应区块，作为 global_core 的补充约束。
-> **适用角色**：drama-world-architect / drama-character-designer / drama-plot-architect / drama-dialogue-expert
+> **适用角色**：drama.story-bible（人物/世界/结构）、drama.episode-designer（分集）、drama.script-writer（台词）
 
 ---
 

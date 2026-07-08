@@ -1,26 +1,46 @@
 # Drama Skills 进化日志
 
-> 记录 v3.1 技能库的四轨道进化。提交外部内容见 `INTAKE_PROTOCOL.md`。
+> 记录技能库的四轨道进化。四轨道唯一定义见 `drama-intake/SKILL.md`；提交外部内容见 `INTAKE_PROTOCOL.md`。
 
-## 四轨道
+## 四轨道（引用 drama-intake 定义）
 
-| 轨道 | 触发 | 写入位置 |
-|------|------|----------|
-| 规则进化 | 评分/审查反复暴露同一问题 | `foundation/rules/*.yaml`（PR） |
-| 灵感归档 | 创作中发现好钩子/反转/对白 | `inspirations/` |
-| 外部摄入 | 用户提交 PDF/文章/剧本 | `knowledge/` + `foundation/rules/` |
-| 新模式 | 拉片/摄入发现库中无覆盖规律 | `inspirations/new-patterns.md` |
+| 轨道 | 名称 | 触发 | 写入位置 |
+|------|------|------|----------|
+| 一 | 规则进化 | 方法论/阈值/LR 提案；评分维度连续 2 次 <70 | `foundation/rules/*.yaml` |
+| 二 | 灵感归档 | 创作中发现好钩子/反转/对白/结构 | `inspirations/` |
+| 三 | 市场知识 | 行业数据/平台趋势/受众分析 | `knowledge/market/market-insights.md` |
+| 四 | 新模式发现 | 库中无覆盖的新规律（3+ 案例验证后经轨道一升格） | `inspirations/new-patterns.md` |
 
-## v3.1 基线（2026-06-25）
+## v5.0 基线（2026-07-02）
 
-- **架构**：`registry.yaml` + `roles/*/role.yaml` + `foundation/rules/` 三层 SSOT
-- **角色**：12 个（8 core + 4 composite），见 `registry.yaml`
-- **规则**：四 Scope（global_core / genre_profile / stage_playbook / compliance_block）
-- **编排**：`orchestration/fast-track.yaml`、`expert-track.yaml`
-- **题材**：`foundation/rules/genres/` 8 题材 + hybrid
-- **经验规则**：`learned-rules.yaml` LR-001～LR-010
+- **角色**：8 个 = 4 主链生产（topic-director / story-bible / episode-designer / script-writer）+ 3 质检环独立技能（script-scorer / compliance-guard / revision-master）+ 1 可选工具（delivery-tool）
+- **编排**：双通道 `orchestration/original-track.yaml`（原创）/ `story-adapt-track.yaml`（故事改编），在 story_bible 汇合
+- **质检环**：每批正文后评分+合规并行；低于 B 级（75）或 P1 → 修复 → 强制复评
+- **规则**：四 Scope 不变（global_core / genre_profile / stage_playbook / compliance_block）
 
 ## 变更记录
+
+### 2026-07-02 · v5.1 底层技能深度治理（模块充实 + 规则合并 + 知识分目录 + 配置分级）
+
+- **模块去空心化**：16 个 modules 从 3 行存根充实为「目标/执行步骤/量化标准/自检清单」结构的可执行操作指南（30-60 行/个），并标注挂载角色与数值 SSOT
+- **规则文件合并（17→12，运行时透明）**：dialogue-voice+ai-tone-forbidden→`dialogue-rules.yaml`；writing-requirements+writing-prohibitions→`writing-rules.yaml`；conflict-escalation+foreshadowing-rules+payment-checkpoint→`plotting-rules.yaml`；character-logic→`character-rules.yaml`（扩充密度/弧光条目）；genre-profile fallback 强化为可执行摘要+默认参数；rule_key/section 全部保留
+- **规则 body 治理**：可执行内容内联进 body，knowledge 指针降级为「长文参考」注释（规则条目是 prompt 实际载体，指针背后的内容运行时读不到）
+- **knowledge 按消费场景分 5 目录**：craft/（创作方法论）、market/（时效市场数据，后台配置候选）、quality/（质检标准）、production/（制作宣发）、system/（流程控制）；`knowledge-sections.md`、`output-schemas.md` 留在根目录（后端固定路径解析）；全库引用路径同步更新
+- **配置分级标注**：constraints 文件头部声明 `config_tier`——agent-runtime=seed_default（后台 drama-models 可覆盖）；quality-scoring 的阈值/熔断与 script-format 的字数/占比=seed_default（建议后台 system_config 覆盖）；格式 pattern、chunk-map=git_ssot
+- **校验器升级**：`validate_skills.py` 新增 knowledge 孤儿检测、模块孤儿检测、全库相对路径引用有效性、角色↔Section 映射存在性 4 项检查
+- 完整方案与后台配置中心设计见 `docs/DRAMA-SKILLS-V5-PLAN.md`
+
+### 2026-07-02 · v5.0 主链收缩 + 双通道 + 质检环 + 进化机制补全
+
+- **角色 9→8**：`drama.character-relations` + `drama.series-architect` 合并为 `drama.story-bible`（剧本蓝图官，双模式：原创/改编），modules 与 sections 全量随迁，能力零丢失（映射见 `ROLE-DESIGN-ANALYSIS.md`）
+- **新产物** `story-bible.v1` = character-bible.v1 ∪ series-outline.v1 ∪ 梗概层；旧两键保留为兼容别名（`artifact-chunk-map.yaml`）
+- **修复主链断链**：评分官/合规官输入改为 `required_artifacts_any_of`（polished_script > episode_scripts > external_script），修复稿强制复评
+- **编排重写**：`fast-track.yaml` / `expert-track.yaml` / `ip-adapt.yaml` → `original-track.yaml` + `story-adapt-track.yaml`（expert 与 fast 的差异由 optional_agents 表达；ip-adapt 由改编通道真正实现）
+- **阈值收敛**：B 级统一为 75（`quality-scoring.yaml` SSOT）；`s-class-standards.md`、`scoring-presets.md` 对齐
+- **进化机制补全**：四轨道统一定义收敛至 `drama-intake/SKILL.md`（修复三处编号互相矛盾）；评分官新增进化提案规则（stage-playbook `t3.drama-script-scorer.scoring.evolution-proposal`）；`quality-report.v1` 增加 `evolution_proposal` 字段
+- **stage-playbook 补缺**：新增 compliance-guard（合规裁判边界）与 delivery-tool（交付前置门禁）条目
+- **知识库清理**：15+ 处旧角色名引用（topic-planner / market-analyst / quality-reporter / script-reviewer / hook-designer / ip-adapter / game-adapter / rhythm-designer / storyboard-director 等）全部改指 v5 角色；孤儿长文挂接到对应角色 SKILL references（s-class-standards / scoring-presets → 评分官；douyin-formulas / industry-benchmarks / market-insights → 选题官；originality-rules / 山音编剧长文 → 蓝图官；导演方法论 → 修复官/交付工具；story-to-game → 交付工具）
+- **新增校验**：`build/validate_skills.py` 全库一致性校验（registry ↔ roles ↔ orchestration ↔ rules ↔ references）
 
 ### 2026-06-25 · 题材矩阵 v1.4
 

@@ -6,7 +6,7 @@
 
 ---
 
-## drama.topic-director — 选题定调
+## drama.topic-director — 选题定调（原创通道入口）
 
 ### 标准输出
 
@@ -22,9 +22,18 @@
 
 ---
 
-## drama.character-relations — 人物关系
+## drama.story-bible — 剧本蓝图（人物层 + 结构层）
 
-### 角色密度
+### 双模式
+
+```
+原创模式：输入 project_brief，展开梗概/人物/结构
+改编模式：输入 params.external_story，先提取再补全，
+          显式输出「保留/强化/改写」说明 + 原创性风险自检
+两种模式输出同一 story-bible.v1
+```
+
+### 角色密度（人物层）
 
 ```
 主角：1–2 人（完整弧光）
@@ -48,11 +57,7 @@
 普通都市/家庭/职场短剧不得输出冗长世界观文档。
 ```
 
----
-
-## drama.series-architect — 全剧架构
-
-### 六阶段集数分配（100 集基准，等比缩放）
+### 六阶段集数分配（结构层，100 集基准，等比缩放）
 
 ```
 阶段 1 开篇 10%  情绪 3→6
@@ -63,9 +68,9 @@
 阶段 6 结局 15%  情绪 10→余韵
 ```
 
-题材配比 override 见 `foundation/rules/genres/*.yaml`。
+题材配比 override 见 `foundation/rules/genres/*.yaml`（`rule_params.act_ratio`）。
 
-### 全剧架构输出（输出 `series_outline`）
+### 结构层输出
 
 ```
 1. 全剧主线
@@ -82,7 +87,7 @@
 
 ```
 每 5 集 ≥1 次 A 级反转；阶段 4 情绪谷底 ≤2；终局 3 集加速。
-全剧架构官不展开逐集细节。
+剧本蓝图官不展开逐集细节。
 ```
 
 ---
@@ -108,7 +113,7 @@
 
 ```
 集末有明确钩子；禁止连续 2 集纯铺垫（峰值 <6）。
-分集设计官不得重写全剧主线和六阶段结构。
+分集设计官不得重写 story_bible 的主线和六阶段结构。
 ```
 
 ---
@@ -138,32 +143,51 @@
 
 ---
 
-## drama.revision-master — 剧本修订
-
-### 返修边界
+## drama.script-scorer — 十维评分（质检环 · 独立技能）
 
 ```
-只能根据评分报告、合规报告或用户指定问题返修文本执行质量。
-不得推翻已确认的选题、人设、全剧架构和分集设计。
-```
-
-输出：`polished_script`（schema: `polished-script.v1`）
-
----
-
-## drama.script-scorer — 十维评分
-
-```
-1. 输出 quality_report（schema: quality-report.v1）
-2. defects 路由至 drama.revision-master
-3. overall_score < 70 → 记录至 EVOLUTION_LOG，考虑规则补丁
-4. 某维度连续 2 次 < 70 → 提案更新 foundation/rules/
+1. 评分对象按「修复稿优先」：polished_script > episode_scripts > external_script
+2. 输出 quality_report（schema: quality-report.v1）
+3. defects 路由至 drama.revision-master；低于 B 级（75）阻断下一批生成
+4. overall_score < 70 → 记录至 EVOLUTION_LOG，考虑规则补丁
+5. 某维度连续 2 次 < 70 → 经 @drama-intake 轨道一提案更新 foundation/rules/
 ```
 
 评分维度 SSOT：`foundation/constraints/quality-scoring.yaml`
 
 ---
 
-## drama.compliance-guard — 合规（见 tier4-compliance.md）
+## drama.revision-master — 剧本修复（质检环 · 独立技能）
+
+### 修复边界
+
+```
+只能根据评分报告、合规报告或用户指定问题修复文本执行质量。
+不得推翻已确认的选题、故事蓝图和分集设计。
+输出后必须交回 drama.script-scorer 复评。
+```
+
+输出：`polished_script`（schema: `polished-script.v1`）
+
+---
+
+## drama.compliance-guard — 合规（质检环 · 独立技能）
+
+```
+与评分官并行触发；审查对象按「修复稿优先」取最新版本。
+P0 或未解决 P1 → 拒绝出具通过报告，阻断下游。
+详见 knowledge/quality/tier4-compliance.md。
+```
 
 输出：`compliance_report`（schema: `compliance-report.v1`）
+
+---
+
+## drama.delivery-tool — 宣发交付（可选工具）
+
+```
+前置门禁：必须读取 quality_report + compliance_report；
+无合规通过结论或评分低于 B 级（75）时只输出「不可交付+缺口清单」。
+```
+
+输出：`production_package`（schema: `production-pack.v1`）

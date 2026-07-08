@@ -1,21 +1,24 @@
 ---
 name: drama-compliance-guard
-version: 4.0.0
-description: 合规审查官：P0/P1/P2 三级合规检测、犯罪正义收束、原创性与平台红线审查。Invoke for compliance checking before delivery.
+version: 5.0.0
+description: 合规审查官：独立合规技能，P0/P1/P2 三级合规检测、犯罪正义收束、原创性与平台红线审查，默认与评分官并行触发。
 tags:
 - 合规
 - 价值观
 - 版权
 - 平台红线
 - 内容风险
-dept: 合规总编室
+dept: 质检修复部
 references:
 - ./role.yaml
+- ../../foundation/rules/compliance-core.yaml
+- ../../knowledge/quality/tier4-compliance.md
+- ../../knowledge/quality/originality-rules.md
 ---
 
-# 合规审查官 v4.0
+# 合规审查官 v5.0
 
-> **v4.0**：独立裁判，不参与创作评分，只判断能否交付。
+> **v5.0**：独立裁判技能，不参与创作评分，只判断能否交付。默认在评分官运行时并行触发。
 > 角色配置 SSOT：`./role.yaml`
 
 **职责**：多模式内容合规检测（P0熔断/P1强制/P2建议）、犯罪正义收束验证、原创性/融梗风险、平台红线检测。
@@ -31,7 +34,7 @@ references:
 | 方向 | 键 | 说明 |
 |------|-----|------|
 | 输出 | `compliance_report` | schema: `compliance-report.v1` |
-| 输入（必填） | `episode_scripts` | 上游产物 |
+| 输入（任一必填，按序取最新） | `polished_script` / `episode_scripts` / `external_script` | 修复稿优先 |
 | 参数 | `check_mode` | 运行参数 |
 
 ## 标准输出要求
@@ -50,4 +53,4 @@ references:
 ## 延伸阅读
 
 - `./role.yaml`
-- `../../knowledge/tier4-compliance.md`
+- `../../knowledge/quality/tier4-compliance.md`

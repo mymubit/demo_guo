@@ -9,7 +9,7 @@ items:
     title: 混合题材·组合策略
     priority: 10
     body: |
-      SSOT: knowledge/tier2-genre-rules.md · ThemeTemplate hybrid
+      SSOT: knowledge/craft/tier2-genre-rules.md · ThemeTemplate hybrid
       以 project_brief 主情绪与主冲突为准，最多叠加2条子赛道特征（钩子/反转/台词节奏）。
       禁止堆砌超过3种互斥套路；优先保证 Goal×Conflict 单一主轴。
   - rule_key: t2.hybrid.rhythm_rules.act-ratio

@@ -1,0 +1,55 @@
+# global_core · 情节工程规则 — 冲突升级 + 伏笔 + 付费卡点
+# （conflict_escalation / foreshadowing_rules / payment_checkpoint_3card）
+version: "1.1.0"
+tier: 1
+items:
+  - rule_key: t1.global.conflict_escalation.four-types
+    section: conflict_escalation
+    title: 四类冲突
+    priority: 10
+    body: |
+      外部（环境/社会）· 人际（关系/利益）· 内心（Ghost/Lie）· 命运（结构性对立）。
+      全剧至少覆盖 3 类；主线冲突须为结构性对立（不能一次和解消失）。
+      每次升级须改变冲突质量，禁止同烈度重复拉扯。
+  - rule_key: t1.global.conflict_escalation.upgrade-protocol
+    section: conflict_escalation
+    title: 升级协议
+    priority: 11
+    body: |
+      范围升级 → 烈度升级 → 信息升级 → 后果升级。
+      对峙场景五要素：势力对比/表面诉求/真实意图/权力拉锯（上风至少易手1次）/场景转折。
+  - rule_key: t1.global.foreshadowing_rules.density
+    section: foreshadowing_rules
+    title: 伏笔密度与布局
+    priority: 10
+    body: |
+      全剧伏笔清单化：已埋 / 待回扣 / 已回收。每 10 集至少 1 个 A 级伏笔；S 级反转需 5+ 集铺垫。
+      禁止无铺垫硬反转；S 级揭露窗口全剧 55–75%（危机前夕）。
+  - rule_key: t1.global.foreshadowing_rules.payoff
+    section: foreshadowing_rules
+    title: 回扣与记忆检查点
+    priority: 11
+    body: |
+      每条伏笔标注「埋点集 → 计划回扣集」。回扣 3 集内须兑现情感价值；未回收写入 memory_checkpoint。
+      逐集生成仅加载上一集 + 快照 + 伏笔列表（LR-008）。
+  - rule_key: t1.global.foreshadowing_rules.types
+    section: foreshadowing_rules
+    title: 五类反转伏笔
+    priority: 12
+    body: |
+      身份 / 动机 / 关系 / 局势 / 真相五类；逆向设计（先定揭露场景再倒推铺垫）。
+      铺垫线索须在前序集以「无关细节」呈现。
+  - rule_key: t1.global.payment_checkpoint_3card.types
+    section: payment_checkpoint_3card
+    title: 三卡付费关卡类型
+    priority: 10
+    body: |
+      情感卡：关系临界 / 告白前夕 / 分离危机。悬念卡：真相边缘 / 身份将揭 / 幕后浮现。
+      爽感卡：打脸前夜 / 复仇倒计时 / 实力将曝。
+  - rule_key: t1.global.payment_checkpoint_3card.timing
+    section: payment_checkpoint_3card
+    title: 卡点时机与兑现
+    priority: 11
+    body: |
+      首付费卡点第 3–5 集（情感投入建立后）；习惯养成卡点第 8–12 集。付费后 1 集内须兑现承诺。
+      S 级反转窗口 55–75%；首集钩子密度 ≥7（公式 SSOT: modules/formula-analysis.md）。

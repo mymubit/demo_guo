@@ -1,6 +1,10 @@
-# G-Eval 十维评分 SSOT — quality-reporter / DramaQualityService 引用
+# G-Eval 十维评分 — drama.script-scorer / DramaQualityService 引用
 # 规则摘要见 foundation/rules/scoring-core.yaml · t1.global.scoring.ten-dimensions
-version: "1.0.0"
+# 配置分级：
+#   dimensions（维度/权重/描述）= git_ssot：评分方法论，改动需评审进 Git
+#   grade_thresholds / revision_threshold / fuse_rules = seed_default：
+#     业务运营参数，商业网站应支持后台（system_config）覆盖，本文件提供默认值
+version: "1.1.0"
 framework: geval
 score_scale: 100
 

@@ -45,9 +45,9 @@
 
 ## 对 drama-skills 的扩展意义
 
-### 新增潜在角色：drama-game-adapter（互动游戏改编师）
+### 已落地：drama.delivery-tool 的 story-to-game 模块
 
-将完成的短剧剧本转化为互动游戏版本：
+该能力已作为 `modules/story-to-game.md` 挂载在宣发交付工具下，将完成的短剧剧本转化为互动游戏版本：
 
 ```
 输入：完整短剧剧本（03_完整剧本/）
@@ -90,4 +90,4 @@ Step5-9：分段写作+验证输出
 ## 触发词
 
 - "把剧本做成游戏"、"互动版本"、"分支故事"、"选择版剧本"
-- `@drama-game-adapter`、`[game]`（如需创建此角色）
+- `@drama-delivery-tool 输出互动改编版本`
