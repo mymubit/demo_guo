@@ -1,0 +1,138 @@
+# Drama Skills 全局索引 — Git SSOT
+# v5.0：主链收缩为 4 生产角色（选题→蓝图→分集→正文），评分/合规/修复独立为质检环技能。
+# 双入口：原创通道（original-track）与故事改编通道（story-adapt-track），在剧本蓝图处汇合。
+version: 5.0.0
+departments:
+- code: strategy
+  name_zh: 选题定调部
+  order: 1
+- code: blueprint
+  name_zh: 剧本蓝图部
+  order: 2
+- code: episode_design
+  name_zh: 分集设计部
+  order: 3
+- code: writing
+  name_zh: 正文创作部
+  order: 4
+- code: quality
+  name_zh: 质检修复部
+  order: 5
+- code: delivery
+  name_zh: 宣发交付部
+  order: 6
+# 标准主链 + 质检环推荐顺序（写作后：评分/合规并行 → 不达标转修复 → 复评）。
+# 故事改编通道从 drama.story-bible 进入，跳过 drama.topic-director。
+fast_track_agents:
+- drama.topic-director
+- drama.story-bible
+- drama.episode-designer
+- drama.script-writer
+- drama.script-scorer
+- drama.compliance-guard
+- drama.revision-master
+roles:
+- agent_id: drama.topic-director
+  skill_dir: roles/drama-topic-director
+  name: Topic Director
+  name_zh: 选题定调官
+  dept: strategy
+  role_tier: production
+  workspace_order: 101
+  default_output_artifact_key: project_brief
+  schema_version: project-brief.v1
+  modules:
+  - market-radar
+  - formula-analysis
+  - tear-down-6d
+- agent_id: drama.story-bible
+  skill_dir: roles/drama-story-bible
+  name: Story Bible
+  name_zh: 剧本蓝图官
+  dept: blueprint
+  role_tier: production
+  workspace_order: 201
+  default_output_artifact_key: story_bible
+  schema_version: story-bible.v1
+  modules:
+  - psychology-immersion
+  - emotion-blueprint
+  - conflict-escalation
+  - reversal-system
+- agent_id: drama.episode-designer
+  skill_dir: roles/drama-episode-designer
+  name: Episode Designer
+  name_zh: 分集设计官
+  dept: episode_design
+  role_tier: production
+  workspace_order: 301
+  default_output_artifact_key: narrative_plan
+  schema_version: narrative-plan.v1
+  modules:
+  - emotion-blueprint
+  - hook-system
+  - conflict-escalation
+  - reversal-system
+- agent_id: drama.script-writer
+  skill_dir: roles/drama-script-writer
+  name: Script Writer
+  name_zh: 剧本正文官
+  dept: writing
+  role_tier: production
+  workspace_order: 401
+  default_output_artifact_key: episode_scripts
+  schema_version: episode-scripts.v1
+  default_task: write-episodes
+- agent_id: drama.script-scorer
+  skill_dir: roles/drama-script-scorer
+  name: Script Scorer
+  name_zh: 剧本评分官
+  dept: quality
+  role_tier: judge
+  workspace_order: 501
+  default_output_artifact_key: quality_report
+  schema_version: quality-report.v1
+- agent_id: drama.compliance-guard
+  skill_dir: roles/drama-compliance-guard
+  name: Compliance Guard
+  name_zh: 合规审查官
+  dept: quality
+  role_tier: judge
+  workspace_order: 502
+  default_output_artifact_key: compliance_report
+  schema_version: compliance-report.v1
+- agent_id: drama.revision-master
+  skill_dir: roles/drama-revision-master
+  name: Revision Master
+  name_zh: 剧本修复官
+  dept: quality
+  role_tier: production
+  workspace_order: 503
+  default_output_artifact_key: polished_script
+  schema_version: polished-script.v1
+  modules:
+  - dialogue-polish
+  - format-fix
+  - word-count-governance
+  - storyboard-9col
+- agent_id: drama.delivery-tool
+  skill_dir: roles/drama-delivery-tool
+  name: Delivery Tool
+  name_zh: 宣发交付工具
+  dept: delivery
+  role_tier: tool
+  workspace_order: 601
+  default_output_artifact_key: production_package
+  schema_version: production-pack.v1
+  modules:
+  - visual-anchor
+  - marketing-copy
+  - delivery-check
+  - story-to-game
+tools:
+- id: drama-master
+  skill_dir: drama-master
+  description: 创作总入口：双通道路由（原创 / 故事改编）+ 阶段路由 + 质检环调度
+- id: drama-intake
+  skill_dir: drama-intake
+  description: 技能进化入口：外部内容摄入 + 四轨道进化（规则/灵感/市场知识/新模式）

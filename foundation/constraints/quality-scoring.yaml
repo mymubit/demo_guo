@@ -1,0 +1,63 @@
+# G-Eval 十维评分 — drama.script-scorer / DramaQualityService 引用
+# 规则摘要见 foundation/rules/scoring-core.yaml · t1.global.scoring.ten-dimensions
+# 配置分级：
+#   dimensions（维度/权重/描述）= git_ssot：评分方法论，改动需评审进 Git
+#   grade_thresholds / revision_threshold / fuse_rules = seed_default：
+#     业务运营参数，商业网站应支持后台（system_config）覆盖，本文件提供默认值
+version: "1.1.0"
+framework: geval
+score_scale: 100
+
+grade_thresholds:
+  S: 90
+  A: 80
+  B: 75
+  C: 60
+
+revision_threshold: 40  # 单维 1-5 分制 ≤2/5 → 100 分制 ≤40 必须返工
+
+fuse_rules:
+  fer_fail_rate: 0.10
+  dream_safety_min: 7
+
+dimensions:
+  - key: format
+    name: 格式规范
+    weight: 0.10
+    desc: 场景标注/人物台词格式/字数控制/对话占比/FER<5%
+  - key: narrative
+    name: 叙事效率
+    weight: 0.15
+    desc: 三幕式完整性/建置-对抗-结局/钩子-转折-高潮布局/节奏密度
+  - key: conflict
+    name: 冲突处理
+    weight: 0.15
+    desc: 核心冲突明确度/升级节奏/对抗强度/两难选择
+  - key: character
+    name: 角色一致性
+    weight: 0.10
+    desc: 主角弧光/人物区分度/行为合理性/Ghost-Lie-Flaw设计
+  - key: emotion
+    name: 情感深度
+    weight: 0.10
+    desc: 情绪起伏设计/每3-5分钟情绪点/共情度/爽点
+  - key: logic
+    name: 逻辑一致性
+    weight: 0.10
+    desc: 世界观/动机/因果链/人物行为/常识合理性
+  - key: satisfaction
+    name: 爽点密度
+    weight: 0.10
+    desc: 每集2-3个爽点/打脸逆袭/甜宠/反转/解压感
+  - key: hooks
+    name: 钩子强度
+    weight: 0.10
+    desc: 开场10秒钩子/集末cliffhanger/付费点钩子强度
+  - key: paywall
+    name: 付费点优化
+    weight: 0.05
+    desc: 付费卡点位置设计/断更点悬念/S级钩子配置
+  - key: genre_fit
+    name: 赛道匹配
+    weight: 0.05
+    desc: 符合目标题材规范/元素完整度/受众匹配度

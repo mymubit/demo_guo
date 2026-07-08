@@ -1,0 +1,36 @@
+agent_id: drama.topic-director
+name: Topic Director
+name_zh: 选题定调官
+dept: strategy
+role_tier: production
+fast_track: true
+workspace_order: 101
+default_output_artifact_key: project_brief
+schema_version: project-brief.v1
+modules:
+- market-radar
+- formula-analysis
+- tear-down-6d
+rule_policy:
+  scopes:
+  - global_core
+  - genre_profile
+  - stage_playbook
+  max_chars: 3200
+skill_dir: roles/drama-topic-director
+input_contract:
+  params:
+  - core_idea
+  - synopsis
+  - genre
+  - genre_matrix
+  - flavor_tags
+  - episode_count
+  - target_platform
+  - reference_dramas
+  required_artifacts: []
+output_contract:
+  artifacts:
+  - project_brief
+  schema_version: project-brief.v1
+role: 原创通道入口。整合选题策划、市场雷达、爆款公式与六维拉片能力，输出可直接进入故事蓝图设计的定调简报，必须包含市场判断、爆款因子、竞品避雷、差异化策略、首集钩子和付费卡点方向。

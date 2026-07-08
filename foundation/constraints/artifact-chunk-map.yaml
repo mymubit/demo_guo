@@ -1,0 +1,48 @@
+# 流式分片产物配置 SSOT — chunk_service / stream_service 引用
+# 配置分级：git_ssot（纯运行时工程配置，与代码同评审，不进后台）
+# v5.0：新增 story_bible；character_bible / series_outline 保留为 story_bible 分节的兼容别名
+version: "5.0.0"
+
+artifacts:
+  story_bible:
+    kind: story_bible
+    array_keys: [characters, stages]
+  episode_scripts:
+    kind: episode_scripts
+    array_keys: [episodes]
+  polished_script:
+    kind: polished_script
+    array_keys: [episodes]
+  narrative_plan:
+    kind: narrative_plan
+    array_keys: [episode_narrative_designs]
+  production_package:
+    kind: production_package
+    array_keys: []
+  # 兼容别名：v4 存量数据仍按以下两个键存储，对应 story_bible 的人物层与结构层
+  series_outline:
+    kind: series_outline
+    array_keys: [episodes, stages]
+  character_bible:
+    kind: character_bible
+    array_keys: [characters]
+
+array_artifact_keys:
+  - story_bible
+  - episode_scripts
+  - series_outline
+  - polished_script
+  - narrative_plan
+  - storyboard
+
+pipeline_result_keys:
+  project_brief: project_brief
+  story_bible: story_bible
+  character_bible: character_bible   # 兼容别名（story_bible 人物层）
+  series_outline: series_outline     # 兼容别名（story_bible 结构层）
+  narrative_plan: narrative_plan
+  episode_scripts: scripts
+  quality_report: quality_report
+  compliance_report: compliance_report
+  polished_script: polished_script
+  production_package: production_package

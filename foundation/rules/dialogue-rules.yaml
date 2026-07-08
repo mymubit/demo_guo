@@ -1,0 +1,28 @@
+# global_core · 台词规则 — 声音差异化 + AI 腔禁用（dialogue_quality / ai_tone_forbidden）
+version: "1.1.0"
+tier: 1
+items:
+  - rule_key: t1.global.dialogue_quality.voice-by-class
+    section: dialogue_quality
+    title: 阶层/职业台词特征
+    priority: 10
+    body: |
+      长文参考: knowledge/craft/tier2-genre-rules.md · 台词声音差异化
+      底层：口语直接；中产：逻辑清晰少脏话；上层：简短暗示反问。
+      学生：短句热词；职场人：对齐/闭环/抓手；生意人：客套模糊承诺；公职：严谨滴水不漏。
+      遮名测试：遮住角色名仍可从台词风格判断说话者。
+  - rule_key: t1.global.dialogue_quality.emotion-rhythm
+    section: dialogue_quality
+    title: 情绪外化到台词节奏
+    priority: 11
+    body: |
+      愤怒：极短句重复；悲伤：断续停顿；开心：语速快重复用词；紧张/撒谎：结巴+多余解释；强装镇定：刻意完整逻辑。
+      关键情感场景必须使用潜台词：角色说的 ≠ 角色想的。
+  - rule_key: t1.global.ai_tone_forbidden.core
+    section: ai_tone_forbidden
+    title: AI 腔禁用词与修复
+    priority: 10
+    body: |
+      禁用（堆砌时）：因此/然而/于是/不得不承认/此刻/不禁/竟然。
+      修复三步：改口语短句；一句一信息点；角色口吻差异化。
+      通过朗读测试：读出来不像真人说话的句子必须重写。

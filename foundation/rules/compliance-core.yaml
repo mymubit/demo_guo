@@ -1,0 +1,32 @@
+# compliance_block · 合规核心 — Git SSOT
+version: "1.0.0"
+tier: 4
+items:
+  - rule_key: t4.global.p0_categories.redlines
+    section: p0_categories
+    title: P0 熔断红线
+    priority: 5
+    body: |
+      SSOT: knowledge/quality/tier4-compliance.md
+      P0 命中即否决：人口买卖/拐卖；未成年+犯罪语境；极端性暴力展示；活体解剖/食人/长时间酷刑展示。
+  - rule_key: t4.global.p1_categories.must-fix
+    section: p1_categories
+    title: P1 强制修改
+    priority: 10
+    body: |
+      SSOT: knowledge/quality/tier4-compliance.md
+      必须修改：敏感职业无正义收束；乱伦/虐待儿童；犯罪手法详细展示无法律收束；反派洗白（有犯罪无惩罚）。
+  - rule_key: t4.global.justice_tail_rule.core
+    section: justice_tail_rule
+    title: 犯罪正义收束
+    priority: 8
+    body: |
+      SSOT: knowledge/quality/tier4-compliance.md
+      全剧≥2处犯罪相关表述时，必须出现正义收束词汇（伏法/落网/审判/付出代价等），否则 P1 熔断。
+  - rule_key: t4.global.fuse_behavior.guard
+    section: fuse_behavior
+    title: 熔断行为
+    priority: 1
+    body: |
+      SSOT: knowledge/quality/tier4-compliance.md
+      P0 或未解决 P1 时：拒绝出具合规通过报告；停止下游制作/发行流程。

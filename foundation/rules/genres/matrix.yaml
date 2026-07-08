@@ -1,0 +1,28 @@
+# genre_profile · 四轴合成题材 — theme_code: matrix
+# 当 project_brief.genre_matrix 存在时使用；参数来自 param_synthesis，非 8 预设 archetype
+genre_key: matrix
+label_zh: 四轴合成
+tier: 2
+items:
+  - rule_key: t2.matrix.genre_rules.from-brief
+    section: genre_rules
+    scope_type: genre
+    scope_key: matrix
+    title: 四轴合成·情绪与钩子
+    priority: 5
+    body: |
+      SSOT: foundation/theme-matrix.yaml · param_synthesis
+      读取 project_brief.rule_params（由 genre_matrix 合成）：
+      - reversal_density、emotion_curve、hook_types
+      - 禁止忽略 genre_matrix 改用无关 archetype 模板
+      - 钩子须符合 hook_types 列表，情绪曲线对齐 8 节点目标值
+  - rule_key: t2.matrix.rhythm_rules.from-brief
+    section: rhythm_rules
+    scope_type: genre
+    scope_key: matrix
+    title: 四轴合成·阶段配比
+    priority: 10
+    body: |
+      SSOT: foundation/theme-matrix.yaml · param_synthesis
+      读取 project_brief.rule_params.act_ratio 作为六阶段占比。
+      未提供 rule_params 时，drama.topic-director 必须先合成再下游传递。

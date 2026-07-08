@@ -1,0 +1,44 @@
+# Agent LLM 运行参数 — seed_drama_skills 与运行时路由引用
+# 配置分级：本文件是「种子默认值」（seed defaults）。
+# 商业网站运行时以后台管理配置为准（AgentLlmRouteConfig / /admin/drama-models 可覆盖
+# temperature、max_tokens、模型路由），修改本文件仅影响新环境初始化。
+version: "5.0.0"
+config_tier: seed_default   # git_ssot=Git唯一真相 | seed_default=种子默认值，后台可覆盖
+
+agents:
+  drama.topic-director:
+    max_completion_tokens: 8000
+    max_prompt_tokens: 30000
+    temperature: 0.7
+  drama.story-bible:
+    max_completion_tokens: 16000
+    max_prompt_tokens: 40000
+    temperature: 0.75
+    overwrite_mode: merge
+  drama.episode-designer:
+    max_completion_tokens: 16000
+    max_prompt_tokens: 40000
+    temperature: 0.75
+    overwrite_mode: merge
+  drama.script-writer:
+    max_completion_tokens: 16000
+    max_prompt_tokens: 40000
+    temperature: 0.85
+    overwrite_mode: merge
+  drama.script-scorer:
+    max_completion_tokens: 8000
+    max_prompt_tokens: 40000
+    temperature: 0.2
+  drama.compliance-guard:
+    max_completion_tokens: 8000
+    max_prompt_tokens: 40000
+    temperature: 0.1
+  drama.revision-master:
+    max_completion_tokens: 16000
+    max_prompt_tokens: 40000
+    temperature: 0.8
+    overwrite_mode: merge
+  drama.delivery-tool:
+    max_completion_tokens: 12000
+    max_prompt_tokens: 40000
+    temperature: 0.7

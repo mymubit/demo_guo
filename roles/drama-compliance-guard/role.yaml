@@ -1,0 +1,35 @@
+agent_id: drama.compliance-guard
+name: Compliance Guard
+name_zh: 合规审查官
+dept: quality
+role_tier: judge
+fast_track: true
+workspace_order: 502
+default_output_artifact_key: compliance_report
+schema_version: compliance-report.v1
+modules: []
+rule_policy:
+  scopes:
+  - global_core
+  - genre_profile
+  - stage_playbook
+  - compliance_block
+  max_chars: 3200
+skill_dir: roles/drama-compliance-guard
+# 独立技能：默认与评分官并行触发，审「当前最新版本」剧本（修复稿优先）。
+input_contract:
+  required_artifacts: []
+  required_artifacts_any_of:
+  - polished_script
+  - episode_scripts
+  - external_script
+  optional_artifacts:
+  - project_brief
+  - story_bible
+  params:
+  - check_mode
+output_contract:
+  artifacts:
+  - compliance_report
+  schema_version: compliance-report.v1
+role: 独立合规裁判，不参与创作评分，只判断能否交付；执行 P0/P1/P2 三级合规检测、犯罪正义收束验证、原创性/融梗风险与平台红线审查，P0 或未解决 P1 时拒绝出具通过报告并阻断下游流程。

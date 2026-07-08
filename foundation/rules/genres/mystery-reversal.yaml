@@ -1,0 +1,23 @@
+genre_key: mystery-reversal
+label_zh: 悬疑反转
+tier: 2
+items:
+  - rule_key: t2.mystery-reversal.genre_rules.emotion-anchor
+    section: genre_rules
+    scope_type: genre
+    scope_key: mystery-reversal
+    title: 悬疑反转·情绪锚点
+    priority: 10
+    body: |
+      SSOT: knowledge/craft/tier2-genre-rules.md · ThemeTemplate mystery-reversal
+      核心情绪：普通人卷入案件/求真相执念/正义与规则两难。
+      信息差：观众知·角色不知 / 角色知·观众不知 / 双知情博弈。
+      钩子：真相揭露、凶手反转、时间错位、双重人格。
+  - rule_key: t2.mystery-reversal.rhythm_rules.act-ratio
+    section: rhythm_rules
+    scope_type: genre
+    scope_key: mystery-reversal
+    title: 阶段配比参考
+    priority: 20
+    body: |
+      开篇×0.8、高潮×1.5、转折×1.3；中段高密度反转；禁止悬念断层。

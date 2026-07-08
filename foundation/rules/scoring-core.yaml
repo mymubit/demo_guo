@@ -1,0 +1,20 @@
+# global_core · 评分规范 — G-Eval 十维摘要（drama.script-scorer 等）
+version: "1.0.0"
+tier: 1
+items:
+  - rule_key: t1.global.scoring.geval-framework
+    section: scoring
+    title: G-Eval 评分框架
+    priority: 10
+    body: |
+      SSOT: knowledge/knowledge-sections.md · section=scoring
+      必须先分析再打分（chain-of-thought），禁止直接给结论。
+      各维度 1-5 分；任意维度≤2/5 必须修改；综合等级 S≥90/A≥80/B≥75/C≥60/D<60。
+  - rule_key: t1.global.scoring.ten-dimensions
+    section: scoring
+    title: 十维权重摘要
+    priority: 11
+    body: |
+      格式规范10% · 叙事效率15% · 冲突处理15% · 角色一致性10% · 情感深度10%
+      逻辑一致性10% · 爽点密度10% · 钩子强度10% · 付费点优化5% · 赛道匹配5%
+      熔断：FER≥10% 或梦境安全感<7 → 返工。

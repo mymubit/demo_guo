@@ -1,0 +1,37 @@
+agent_id: drama.revision-master
+name: Revision Master
+name_zh: 剧本修复官
+dept: quality
+role_tier: production
+fast_track: true
+workspace_order: 503
+default_output_artifact_key: polished_script
+schema_version: polished-script.v1
+modules:
+- dialogue-polish
+- format-fix
+- word-count-governance
+- storyboard-9col
+rule_policy:
+  scopes:
+  - global_core
+  - genre_profile
+  - stage_playbook
+  max_chars: 3600
+skill_dir: roles/drama-revision-master
+# 独立技能：由评分环触发（低于 B 级）或用户手动调用；产出修复稿后必须交回评分官复评。
+input_contract:
+  required_artifacts:
+  - episode_scripts
+  optional_artifacts:
+  - quality_report
+  - compliance_report
+  - polished_script
+  params:
+  - episode_range
+  - focus_areas
+output_contract:
+  artifacts:
+  - polished_script
+  schema_version: polished-script.v1
+role: 根据评分报告、合规报告和用户要求修复剧本，吸收对白精修、格式修复、字数治理和九列分镜摘要能力；不重新设计故事，只提升文本执行质量；输出修复稿后必须提交剧本评分官复评。

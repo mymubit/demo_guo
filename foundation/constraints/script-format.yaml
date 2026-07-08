@@ -1,0 +1,47 @@
+# 剧本格式数值常量 — 所有角色/规则/校验器引用此文件
+# 配置分级：
+#   scene_header_pattern / dialogue_pattern / action_pattern / format_prohibitions = git_ssot：
+#     商业剧本格式规范，属方法论
+#   episode_word_count / dialogue_ratio / scenes_per_episode / review_thresholds / quality_grades = seed_default：
+#     产品业务参数（不同平台/套餐可能不同），商业网站应支持后台覆盖，本文件提供默认值
+version: "1.1.0"
+
+episode_word_count:
+  first_episode:
+    min: 900
+    max: 1100
+    unit: zh_chars
+    note: 含台词与动作，不含场景头
+  other_episodes:
+    min: 700
+    max: 900
+    unit: zh_chars
+
+dialogue_ratio:
+  min: 0.35
+  description: 台词字符 / 总字符
+
+scenes_per_episode:
+  min: 1
+  max: 3
+
+format_prohibitions:
+  - 引号台词
+  - 心理描写
+  - 方括号场景头
+  - 独立【画面】行
+  - '"她感到..." 类外化'
+
+scene_header_pattern: "集号-场景号 时间（日/夜/晨/昏） 内/外 地点"
+dialogue_pattern: "角色（情绪）：台词"
+action_pattern: "△【景别】动作描述（15-25字）"
+
+review_thresholds:
+  fer_pass_rate: 0.05
+  fer_fail_rate: 0.10
+
+quality_grades:
+  S: 90
+  A: 80
+  B: 75
+  C: 60
