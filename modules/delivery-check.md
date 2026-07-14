@@ -7,7 +7,7 @@
 | 检查项 | 标准 | 依据 |
 |--------|------|------|
 | 合规结论 | compliance_report.overall_result = 通过 | P0/P1 熔断（compliance-core.yaml） |
-| 质量等级 | quality_report ≥ B 级（75） | 等级 SSOT（quality-scoring.yaml） |
+| 质量等级 | 达到当前评分预设通过线 | `quality-scoring.yaml` + `scoring-presets.yaml` |
 | 集数完整 | 实际集数 = story_bible 规划集数，无缺集断号 | — |
 | 字数达标率 | ≥95% 的集落入 script-format 区间 | script-format.yaml |
 | 付费墙钩子 | 付费卡点前一集集末钩子为全剧最强之一 | LR-003 |

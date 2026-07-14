@@ -1,0 +1,44 @@
+# 商业短剧量化公式 SSOT
+# 数值只在本文件维护；rules/modules 通过 constraint_key 引用，不重复定义。
+version: "1.0.0"
+config_tier: seed_default
+
+metrics:
+  first_episode_hook_count:
+    target_min: 7
+    counted_grades: [B, A, S]
+    description: 首集内 B 级及以上钩子总数
+  first_payment_checkpoint:
+    episode_min: 3
+    episode_max: 5
+    description: 首个付费卡点；习惯养成卡点不是首卡
+  habit_payment_checkpoint:
+    episode_min: 8
+    episode_max: 12
+    description: 已完成首次兑现后的习惯养成卡点
+  payment_promise_payoff:
+    max_episodes_after_payment: 1
+  s_reversal_window:
+    start_ratio: 0.55
+    end_ratio: 0.75
+  dream_metrics:
+    scale: 10
+    safety:
+      target_min: 8
+      target_max: 9
+      fuse_min: 7
+    satisfaction:
+      target_min: 8
+      target_max: 9
+    realism:
+      target_min: 7
+      target_max: 8
+  tag_mix:
+    common: 2
+    scene: 1
+    emotion: 1
+
+metric_definitions:
+  safety: 主角行为可由正义、自卫或保护解释，观众获得爽感时无明显道德负罪感。
+  satisfaction: 每集至少存在一个被清晰兑现的爽点、甜点或强悬念，不以机械计数替代有效性判断。
+  realism: 核心矛盾根植于目标观众可识别的生活经验或稳定世界规则。

@@ -23,7 +23,8 @@
 
 ## FER（格式错误率）
 
-FER = 格式错误行数 / 总行数。目标 <5%（通过线）；≥10% 触发熔断返工（SSOT：script-format.yaml `review_thresholds`）。
+FER = 格式错误行数 / 总行数。目标线、警告线与熔断线读取
+`foundation/constraints/quality-scoring.yaml#format_error_rate`。
 
 ## 执行步骤
 

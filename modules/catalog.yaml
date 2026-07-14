@@ -1,0 +1,37 @@
+# 基础能力模块目录；角色挂载将在上层设计阶段单独调整。
+version: "1.0.0"
+statuses:
+  - mounted
+  - compatibility
+  - foundation
+  - extension
+
+modules:
+  market-radar: { domain: concept, status: mounted }
+  formula-analysis: { domain: concept, status: mounted }
+  tear-down-6d: { domain: concept, status: mounted }
+  psychology-immersion: { domain: character, status: compatibility }
+  emotion-blueprint: { domain: emotion, status: compatibility }
+  conflict-escalation: { domain: plotting, status: mounted }
+  reversal-system: { domain: plotting, status: compatibility }
+  hook-system: { domain: episode, status: mounted }
+  dialogue-polish: { domain: revision, status: mounted }
+  format-fix: { domain: revision, status: mounted }
+  word-count-governance: { domain: revision, status: mounted }
+  storyboard-9col: { domain: production, status: extension }
+  visual-anchor: { domain: marketing, status: extension }
+  marketing-copy: { domain: marketing, status: extension }
+  delivery-check: { domain: delivery, status: extension }
+  story-to-game: { domain: derivative, status: extension }
+
+  concept-development: { domain: concept, status: foundation }
+  adaptation-originality: { domain: concept, status: foundation }
+  character-system: { domain: character, status: foundation }
+  series-structure: { domain: structure, status: foundation }
+  series-emotion-curve: { domain: emotion, status: foundation }
+  reversal-foreshadowing: { domain: plotting, status: foundation }
+  episode-card: { domain: episode, status: foundation }
+  episode-emotion-nodes: { domain: emotion, status: foundation }
+  payment-checkpoint: { domain: episode, status: foundation }
+  scene-writing: { domain: writing, status: foundation }
+  continuity-snapshot: { domain: writing, status: foundation }

@@ -151,6 +151,16 @@
 
 见 `roles/drama-script-writer/tasks/write-episodes.md` 的 `expected_output` 样例。
 
+每集必须包含 `memory_checkpoint`，字段 SSOT：
+`foundation/constraints/continuity-checkpoint.yaml`。检查点至少包含：
+
+- `episode`
+- `character_states`
+- `active_clues`
+- `foreshadowing`
+- `rhythm_state`
+- `next_episode_constraints`
+
 ## quality-report.v1（十维评分报告）
 
 ```json

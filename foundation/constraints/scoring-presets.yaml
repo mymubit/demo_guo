@@ -1,0 +1,58 @@
+# 十维评分预设 SSOT
+# 所有预设必须使用 quality-scoring.yaml 中定义的十个维度。
+version: "1.0.0"
+config_tier: seed_default
+
+presets:
+  standard:
+    pass_threshold: 75
+    weights:
+      format: 0.10
+      narrative: 0.15
+      conflict: 0.15
+      character: 0.10
+      emotion: 0.10
+      logic: 0.10
+      satisfaction: 0.10
+      hooks: 0.10
+      paywall: 0.05
+      genre_fit: 0.05
+  strict:
+    pass_threshold: 80
+    weights:
+      format: 0.10
+      narrative: 0.16
+      conflict: 0.15
+      character: 0.12
+      emotion: 0.11
+      logic: 0.12
+      satisfaction: 0.08
+      hooks: 0.08
+      paywall: 0.04
+      genre_fit: 0.04
+  relaxed:
+    pass_threshold: 60
+    weights:
+      format: 0.10
+      narrative: 0.14
+      conflict: 0.14
+      character: 0.10
+      emotion: 0.11
+      logic: 0.10
+      satisfaction: 0.11
+      hooks: 0.10
+      paywall: 0.05
+      genre_fit: 0.05
+  rhythm_first:
+    pass_threshold: 75
+    weights:
+      format: 0.08
+      narrative: 0.17
+      conflict: 0.13
+      character: 0.07
+      emotion: 0.10
+      logic: 0.08
+      satisfaction: 0.12
+      hooks: 0.15
+      paywall: 0.07
+      genre_fit: 0.03

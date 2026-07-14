@@ -2,14 +2,18 @@
 
 > 挂载角色：`drama.episode-designer`（集首/集末钩子设计）
 
-## 四级钩子
+## 输入
 
-| 级别 | 作用域 | 要求 |
-|------|--------|------|
-| S | 全剧核心悬念 | 全剧 ≥1 个，贯穿至最后 25% 才完全揭晓 |
-| A | 跨 2-3 集 | 每 5-7 集 1 个；付费墙前必须是 S/A 级（LR-003） |
-| B | 集末 cliffhanger | 每集集末必须有 |
-| C | 场间衔接 | 每集 ≥3 个 |
+- 本集分集卡、下一集首场与付费节点
+
+## 引用规则
+
+- `t1.global.hook_effectiveness.levels`
+- `t1.global.rhythm_rules.hook-density`
+- `t1.global.learned_rules.lr003`
+- `foundation/constraints/commercial-formulas.yaml`
+
+钩子等级、密度与付费要求由上述规则和约束定义，本模块不重复维护。
 
 ## 黄金 30 秒（首集开场）
 
@@ -18,8 +22,6 @@
 3-10s  信息建立：谁、和谁、什么冲突
 10-30s 悬念确立：抛出第一个「为什么」
 ```
-
-首集钩子密度 ≥7（公式分析 SSOT，`modules/formula-analysis.md`）。
 
 ## 集末钩子四种写法
 

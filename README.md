@@ -2,7 +2,8 @@
 
 > **4 主链生产角色 · 3 质检环独立技能 · 1 可选交付工具 · 双通道 · Git SSOT**
 
-本仓库是技能体系的唯一真相源（SSOT）。所有可执行规则在 `foundation/rules/`，角色契约在 `roles/*/role.yaml`，全局索引在 `registry.yaml`。
+本仓库是技能体系的唯一真相源（SSOT）。数值约束在 `foundation/constraints/`，原子规则在
+`foundation/rules/`，执行流程在 `modules/`，角色契约在 `roles/*/role.yaml`。
 
 ## 目录结构
 
@@ -16,7 +17,8 @@ drama-skills/
 │   └── rules/                    # 规则条目 YAML，8 个主题 global 文件 + stage + compliance
 │       └── genres/               # 规则模板（8 预设 + hybrid + matrix）的 genre 规则
 ├── roles/<slug>/                 # 每角色：role.yaml + SKILL.md [+ tasks/]
-├── modules/                      # 角色能力块（目标/步骤/量化标准/自检清单）
+├── modules/                      # 能力块（输入/规则引用/输出/步骤/失败条件/自检）
+│   └── catalog.yaml             # 模块领域、状态与待挂载基础能力目录
 ├── orchestration/                # original-track / story-adapt-track 双通道
 ├── knowledge/                    # 参考长文（按消费场景分目录）
 │   ├── craft/                    #   创作方法论（山音编剧/题材/阶段/LR详解）
@@ -106,7 +108,8 @@ python manage.py sync_drama_from_git
 | 操作 | 改哪里 |
 |------|--------|
 | 增删改规则条目 | `foundation/rules/*.yaml` |
-| 改字数/格式/评分阈值 | `foundation/constraints/script-format.yaml`、`quality-scoring.yaml` |
+| 改数值、枚举、阈值或产物结构 | `foundation/constraints/*.yaml` |
+| 改能力执行步骤 | `modules/*.md`，并登记 `modules/catalog.yaml` |
 | 改角色 I/O | `roles/<slug>/role.yaml` |
 | 注册新角色 | `registry.yaml` + 新建 `roles/<slug>/` + `stage-playbook.yaml` 条目 |
 | 改流程顺序 | `orchestration/*.yaml` |
@@ -114,6 +117,23 @@ python manage.py sync_drama_from_git
 | 规则模板量化参数 | `knowledge/craft/theme-templates.md` + `foundation/rules/genres/` |
 
 改完运行一致性校验：`python build/validate_skills.py`
+
+## 底层知识分层
+
+依赖方向必须保持单向：
+
+```text
+knowledge（原因、案例、行业背景）
+  → foundation/constraints（数值与结构 SSOT）
+  → foundation/rules（可注入原子规则）
+  → modules（执行流程与字段映射）
+  → roles / orchestration（上层挂载与编排）
+```
+
+- `knowledge/` 不声明运行时 SSOT，不整篇注入代替规则。
+- 原子规则通过 `source_ref` 追溯知识来源，不引用 module 为 SSOT。
+- module 不重复规则全文和数值，只引用 `rule_key` / constraint 路径。
+- 尚未进入角色设计的基础模块使用 `catalog.yaml` 的 `foundation` 状态，不视为孤儿。
 
 ## 文档索引
 

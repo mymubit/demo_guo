@@ -9,14 +9,15 @@ items:
     title: 古装权谋·情绪锚点
     priority: 10
     body: |
-      SSOT: knowledge/craft/tier2-genre-rules.md · ThemeTemplate ancient-power
+      知识参考: knowledge/craft/tier2-genre-rules.md · ThemeTemplate ancient-power
       核心情绪：底层反击/隐忍复仇/女性在男权社会挣扎；权力斗争中的成长。
       钩子：宫廷政变、身份揭秘、权谋反转、帝王之心。
   - rule_key: t2.ancient-power.rhythm_rules.act-ratio
     section: rhythm_rules
     scope_type: genre
     scope_key: ancient-power
-    title: 阶段配比参考
+    title: 阶段参数来源
     priority: 20
     body: |
-      六阶段占比：10/15/25/20/20/10；反转密度≈0.50；家族内斗×复仇爽感结构。
+      使用 foundation/theme-matrix.yaml 中 preset_templates.ancient-power 合成 rule_params；
+      不再维护独立阶段比例和反转密度。权谋升级必须改变势力、信息或不可逆后果。

@@ -1,6 +1,7 @@
 # 评分预设（Scoring Presets）
 
-> **参考长文**；等级阈值 SSOT：`foundation/constraints/quality-scoring.yaml`（S≥90 / A≥80 / B≥75 / C≥60）
+> **参考说明**；等级、维度与权重 SSOT：`foundation/constraints/quality-scoring.yaml`。
+> 预设 SSOT：`foundation/constraints/scoring-presets.yaml`。
 > 
 > **使用方式**：drama.script-scorer 执行评分时，根据使用场景选择对应预设。
 > 默认使用 `standard` 预设；`standard` 的通过线即质检环的 B 级线（75）。
@@ -8,77 +9,24 @@
 
 ---
 
-## 4个评分预设
+## 四个评分预设
 
-| 预设ID | 名称 | 通过线 | 节奏权重 | 适用场景 |
-|--------|------|--------|---------|---------|
-| `standard` | 标准（推荐） | 75分（=B级线） | 40% | 日常创作默认评分 |
-| `strict` | 严格 | 80分 | 35% | 平台精品筛选 |
-| `relaxed` | 宽松 | 60分 | 35% | 内测/鼓励完稿 |
-| `rhythm_first` | 节奏优先 | 75分 | 50% | 强钩子、快节奏题材 |
+| 预设ID | 名称 | 适用场景 |
+|--------|------|---------|
+| `standard` | 标准（推荐） | 日常创作默认评分 |
+| `strict` | 严格 | 精品筛选，增强叙事、逻辑和人物要求 |
+| `relaxed` | 宽松 | 内测或初稿，不用于正式发布结论 |
+| `rhythm_first` | 节奏优先 | 强钩子、强留存题材 |
 
 ---
 
-## 各预设详细参数
+## 执行约束
 
-### Standard（标准）
+所有预设都必须使用同一十维：
 
-```
-通过线：75分（与 SSOT B 级线一致）
-S/A/B/C/D：90/80/75/60/0
-维度权重：
-  格式规范：20%
-  节奏：40%
-  内容：20%
-  制作：20%
+`format / narrative / conflict / character / emotion / logic / satisfaction / hooks / paywall / genre_fit`
 
-说明：与质检环判定一致的默认策略
-```
-
-### Strict（严格）
-
-```
-通过线：80分（=A级线）
-S/A/B/C/D：92/85/80/65/0（显式覆盖默认阈值）
-维度权重：
-  格式规范：20%
-  节奏：35%
-  内容：25%
-  制作：20%
-
-说明：提高内容权重，适合追求精品化的制作团队
-     S级门槛92分（比标准高2分）
-```
-
-### Relaxed（宽松）
-
-```
-通过线：60分（=C级线）
-S/A/B/C/D：88/78/65/55/0（显式覆盖默认阈值）
-维度权重：
-  格式规范：15%
-  节奏：35%
-  内容：25%
-  制作：25%
-
-说明：用于内测阶段或鼓励写完一稿
-     不建议用于正式上线评估
-```
-
-### Rhythm First（节奏优先）
-
-```
-通过线：75分（与 SSOT B 级线一致）
-S/A/B/C/D：90/80/75/60/0
-维度权重：
-  格式规范：15%
-  节奏：50%  ← 大幅提升
-  内容：15%
-  制作：20%
-
-说明：适合追求强钩子密度的抖音短剧
-     节奏权重50%，一旦节奏不达标则很难通过
-```
+具体通过线与十维权重只读取 `foundation/constraints/scoring-presets.yaml`，不得重新聚合成“格式/节奏/内容/制作”四维。
 
 ---
 
@@ -97,7 +45,7 @@ S/A/B/C/D：90/80/75/60/0
 ## 关键阈值
 
 ```
-DEFAULT_PASS_THRESHOLD = 75          # 通过线 = B 级线（SSOT: quality-scoring.yaml）
-DEFAULT_MIN_SUB_ITEM_SCORE = 75      # 子项最低分（低于此值标记警告）
-DEFAULT_RELEASE_PASS_SCORE = 85      # 平台发布推荐线（非强制）
+等级阈值：foundation/constraints/quality-scoring.yaml
+预设通过线：foundation/constraints/scoring-presets.yaml
+单维返工线：quality-scoring.revision_threshold
 ```

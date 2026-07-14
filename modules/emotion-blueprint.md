@@ -1,33 +1,29 @@
-# 模块：情绪蓝图
+# 模块：情绪蓝图（兼容入口）
 
-> 挂载角色：`drama.story-bible`（全剧情绪曲线）、`drama.episode-designer`（单集八节点）
+> 当前角色挂载兼容入口；底层能力已拆为两个单一职责模块。
 
-## 目标
+## 路由
 
-用 QDN 模型（质量感 Q × 深度 D × 需求满足 N）把「观众情绪」变成可设计、可校验的数值曲线。
+- 全剧层：执行 `modules/series-emotion-curve.md`
+- 单集层：执行 `modules/episode-emotion-nodes.md`
 
-## 核心概念
+## 输入
 
-- **EV（Emotion Value）**：情绪强度 1-10；**ET（Emotion Trough）**：情绪谷点；**TP（Turning Point）**：价值转折点
-- **双轨节奏**：情节节奏 [松/中/紧] × 情感节奏 [轻/中/重]，四种错位组合是高级手法（松+重=平静下的沉重，见 `knowledge/craft/shanyin-screenwriting-methodology.md`）
+- `scope=series|episode`
+- 对应层级的结构、题材情绪曲线与相邻状态
 
-## 执行步骤（全剧层 · story-bible）
+## 引用规则
 
-1. 按六阶段基线铺全剧情绪走势：开篇 3→6 / 升温 5→7 / 高潮 7→9 / 转折 8→10 / 冲刺 9→10 / 结局 10→余韵
-2. 标注全剧情绪谷底位置（约 60% 处，主角跌到 EV≤2），谷底次数 ≤2
-3. 每个付费卡点前一集情绪必须处于上升沿
-4. 输出 `series_structure.series_emotion_curve`（逐集 EV 目标值）
+- `t1.global.qdn_emotion_model.summary`
+- `t1.global.episode_emotion_8nodes.summary`
+- `foundation/constraints/series-scale.yaml#emotion_terms`
 
-## 执行步骤（单集层 · episode-designer）
+## 输出
 
-1. 每集设 8 个时间点的目标情绪值（episode_emotion_8nodes）
-2. 标注本集 EV 峰值（通常在 75% 处）、ET 谷值（通常在 20% 处）、TP 位置与内容
-3. 标注双轨节奏标签（如 `tight-heavy`），禁止连续同格超过 2 集
-4. 校验：禁止连续 3 集 EV 峰值相差 <2（情绪平台熔断线）
+- `scope=series`：`series_structure.series_emotion_curve`
+- `scope=episode`：`emotion_nodes`、`rhythm_tag`
 
-## 自检清单
+## 失败条件
 
-- [ ] 全剧曲线覆盖每一集，谷底 ≤2 次且位置在 55-65%
-- [ ] 单集 8 节点齐全，EV/ET/TP 有具体数值和内容
-- [ ] 双轨标签无连续同格 >2 集；喘息集（松+轻）每 10 集 ≤1 次（LR-009）
-- [ ] 大反转/身份揭示/决裂集为紧+重组合（LR-010）
+- 未声明层级却同时生成全剧曲线和单集节点。
+- 复制固定曲线而未结合题材参数与具体事件。

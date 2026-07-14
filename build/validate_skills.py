@@ -4,7 +4,7 @@
 
 检查项：
 1. registry ↔ roles/*/role.yaml ↔ SKILL.md：目录存在、agent_id/产物/schema/modules 对齐
-2. modules 引用的能力块文件存在，且无孤儿模块（未被任何角色挂载）
+2. modules 引用的能力块文件存在，且全部登记于 modules/catalog.yaml
 3. orchestration/*.yaml 引用的角色均已注册
 4. stage-playbook 的 scope_key 均为有效 agent_id，且每个角色至少 1 条阶段规则
 5. SKILL.md frontmatter references 路径可解析
@@ -14,6 +14,9 @@
 9. 全库文本中的 knowledge/foundation/modules 相对路径引用均指向真实文件
 10. knowledge/ 孤儿检测：每个知识长文必须被至少一处（SKILL/rules/modules/入口文档）引用
 11. 角色↔Section 映射中的 section 必须在规则文件中真实存在
+12. 原子规则 rule_key 唯一且字段完整；数值 SSOT 不反向指向 knowledge/modules
+13. 十维评分预设完整、权重和为 1
+14. 流式产物列表与 artifacts 定义一致
 
 用法：python build/validate_skills.py
 """
@@ -270,12 +273,77 @@ def check_knowledge_orphans() -> None:
 
 
 def check_module_orphans(role_metas: Dict[str, Dict[str, Any]]) -> None:
+    """模块必须登记；未挂载的 foundation/extension 模块允许等待上层设计。"""
     mounted = set()
     for meta in role_metas.values():
         mounted.update(meta.get("modules") or [])
-    for module_file in sorted((ROOT / "modules").glob("*.md")):
-        if module_file.stem not in mounted:
-            err(f"孤儿模块（未被任何角色挂载）: modules/{module_file.name}")
+    catalog = load_yaml(ROOT / "modules" / "catalog.yaml")
+    entries = catalog.get("modules") or {}
+    allowed_statuses = set(catalog.get("statuses") or [])
+    files = {path.stem for path in (ROOT / "modules").glob("*.md")}
+    registered = set(entries)
+    for missing in sorted(files - registered):
+        err(f"模块未登记 modules/catalog.yaml: modules/{missing}.md")
+    for stale in sorted(registered - files):
+        err(f"模块目录登记了不存在的文件: modules/{stale}.md")
+    for module, meta in entries.items():
+        status = (meta or {}).get("status")
+        if status not in allowed_statuses:
+            err(f"模块 {module}: 非法 status={status}")
+        if status in {"mounted", "compatibility"} and module not in mounted:
+            err(f"模块 {module}: status={status} 但未被角色挂载")
+        if status == "foundation":
+            text = (ROOT / "modules" / f"{module}.md").read_text(encoding="utf-8")
+            required_headings = ("## 目标", "## 输入", "## 引用规则", "## 输出", "## 失败条件")
+            for heading in required_headings:
+                if heading not in text:
+                    err(f"基础模块 {module}: 缺少章节 `{heading}`")
+
+
+def check_atomic_rules() -> None:
+    """原子规则键唯一，且可执行层不把 knowledge/modules 声明为 SSOT。"""
+    seen: Dict[str, Path] = {}
+    rules_dir = ROOT / "foundation" / "rules"
+    paths = list(rules_dir.glob("*.yaml")) + list((rules_dir / "genres").glob("*.yaml"))
+    for path in sorted(paths):
+        for item in load_yaml(path).get("items", []) or []:
+            if not isinstance(item, dict):
+                err(f"{path.relative_to(ROOT)}: items 含非对象条目")
+                continue
+            for field in ("rule_key", "section", "title", "priority", "body"):
+                if item.get(field) in (None, ""):
+                    err(f"{path.relative_to(ROOT)}: 原子规则缺少 {field}")
+            rule_key = str(item.get("rule_key") or "")
+            if rule_key in seen:
+                err(
+                    f"rule_key 重复 {rule_key}: "
+                    f"{seen[rule_key].relative_to(ROOT)} / {path.relative_to(ROOT)}"
+                )
+            seen[rule_key] = path
+            body = str(item.get("body") or "")
+            if re.search(r"SSOT:\s*(?:knowledge|modules)/", body):
+                err(f"{path.relative_to(ROOT)}: {rule_key} 的 SSOT 层级倒置")
+
+
+def check_scoring_presets() -> None:
+    scoring = load_yaml(ROOT / "foundation" / "constraints" / "quality-scoring.yaml")
+    expected = {item["key"] for item in scoring.get("dimensions", []) or []}
+    presets = load_yaml(ROOT / "foundation" / "constraints" / "scoring-presets.yaml")
+    for preset_id, preset in (presets.get("presets") or {}).items():
+        weights = (preset or {}).get("weights") or {}
+        if set(weights) != expected:
+            err(f"评分预设 {preset_id}: 维度与 quality-scoring 不一致")
+        total = sum(float(value) for value in weights.values())
+        if abs(total - 1.0) > 1e-9:
+            err(f"评分预设 {preset_id}: 权重和={total}，应为 1")
+
+
+def check_artifact_chunk_map() -> None:
+    data = load_yaml(ROOT / "foundation" / "constraints" / "artifact-chunk-map.yaml")
+    artifacts = set((data.get("artifacts") or {}).keys())
+    for key in data.get("array_artifact_keys") or []:
+        if key not in artifacts:
+            err(f"artifact-chunk-map: array_artifact_keys 含未定义产物 {key}")
 
 
 def check_section_mapping() -> None:
@@ -317,6 +385,9 @@ def main() -> int:
     check_knowledge_orphans()
     check_module_orphans(role_metas)
     check_section_mapping()
+    check_atomic_rules()
+    check_scoring_presets()
+    check_artifact_chunk_map()
 
     for msg in WARNINGS:
         print(f"WARN  {msg}")

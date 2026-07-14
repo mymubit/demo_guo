@@ -6,7 +6,7 @@ version: "5.0.0"
 artifacts:
   story_bible:
     kind: story_bible
-    array_keys: [characters, stages]
+    array_keys: [characters, series_structure.six_stage_structure]
   episode_scripts:
     kind: episode_scripts
     array_keys: [episodes]
@@ -33,7 +33,6 @@ array_artifact_keys:
   - series_outline
   - polished_script
   - narrative_plan
-  - storyboard
 
 pipeline_result_keys:
   project_brief: project_brief

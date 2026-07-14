@@ -9,14 +9,15 @@ items:
     title: 混合题材·组合策略
     priority: 10
     body: |
-      SSOT: knowledge/craft/tier2-genre-rules.md · ThemeTemplate hybrid
+      知识参考: knowledge/craft/tier2-genre-rules.md · ThemeTemplate hybrid
       以 project_brief 主情绪与主冲突为准，最多叠加2条子赛道特征（钩子/反转/台词节奏）。
       禁止堆砌超过3种互斥套路；优先保证 Goal×Conflict 单一主轴。
   - rule_key: t2.hybrid.rhythm_rules.act-ratio
     section: rhythm_rules
     scope_type: genre
     scope_key: hybrid
-    title: 阶段配比参考
+    title: 阶段参数来源
     priority: 20
     body: |
-      六阶段占比：12/22/22/18/14/12；反转密度≈0.22；开篇15%内须完成主冲突亮相。
+      按主情绪、主身份、主冲突和时空调用 foundation/theme-matrix.yaml.param_synthesis；
+      不再维护 hybrid 独立阶段比例。无法判断时使用 param_synthesis.base。

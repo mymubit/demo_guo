@@ -1,0 +1,34 @@
+# global_core / compliance_block · 原创性保护原子规则
+version: "1.0.0"
+tier: 4
+items:
+  - rule_key: t4.global.originality.protected-elements
+    section: originality_rules
+    title: 六类受保护元素
+    priority: 10
+    source_ref: knowledge/quality/originality-rules.md
+    body: |
+      检查角色名、标题标语、关键情节结构、标志性台词、角色形象/声纹及目标市场版权。
+      只允许借鉴抽象机制，不得复用可识别的具体表达组合。
+  - rule_key: t4.global.originality.rewrite-strategy
+    section: originality_rules
+    title: 原创化改写
+    priority: 11
+    source_ref: knowledge/quality/originality-rules.md
+    body: |
+      命中风险时改变角色关系、场景、时机和因果链，保留的只能是戏剧功能；禁止只替换人名或少量词语。
+  - rule_key: t4.global.originality.similarity-thresholds
+    section: originality_rules
+    title: 相似度阈值
+    priority: 12
+    source_ref: knowledge/quality/originality-rules.md
+    body: |
+      标题语义相似度>0.72、台词相似度>0.80 或逐集结构位置相似度>20% 时标记 P1 并要求重写。
+      无可用检索或相似度工具时必须声明「未完成数据库比对」，不得伪造通过结论。
+  - rule_key: t4.global.originality.ai-rights
+    section: originality_rules
+    title: AI 形象与声纹权利
+    priority: 13
+    source_ref: knowledge/quality/originality-rules.md
+    body: |
+      不得生成可识别模仿现有 IP 或现实人物的角色形象、肖像或声纹；发布时按目标平台和地区要求标识 AI 生成内容。

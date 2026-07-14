@@ -1,5 +1,5 @@
 # global_core · 角色行为逻辑（character_rules）
-version: "1.1.0"
+version: "1.2.0"
 tier: 1
 items:
   - rule_key: t1.global.character_rules.age-logic
@@ -18,3 +18,17 @@ items:
       主角≤2（完整弧光），核心配角2-4（各有独立动机），关系角色≤6；每人须 Want/Need/Ghost/Lie/Flaw。
       弧光四点：起点（第1集）→ 转折1（≈30%）→ 转折2（≈70%）→ 终态。
       每个核心角色 15 秒内可视觉识别（visual_anchor）。
+  - rule_key: t1.global.character_rules.relationship-dynamics
+    section: character_rules
+    title: 关系动力
+    priority: 12
+    body: |
+      每条核心关系必须明确双方诉求、权力来源、当前状态和预期变化；关系变化必须由可见事件触发。
+      只承担信息传递且没有独立欲望的配角应合并或删除。
+  - rule_key: t1.global.character_rules.voice-anchor
+    section: character_rules
+    title: 人物声音与视觉锚点
+    priority: 13
+    body: |
+      每个核心角色必须定义 voice_tag 与 visual_anchor；voice_tag 约束词汇、句长和回避表达，
+      visual_anchor 必须可由服装、道具、动作或空间位置直接呈现。
