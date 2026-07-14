@@ -33,10 +33,10 @@ modules:
   format-fix: {label_zh: 格式修复, domain: revision, kind: core, lifecycle: active, target_roles: [drama.revision-master], workbench_visible: true}
   word-count-governance: {label_zh: 字数治理, domain: revision, kind: core, lifecycle: active, target_roles: [drama.revision-master], workbench_visible: true}
 
-  storyboard-9col: {label_zh: 九列分镜, domain: production, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true}
-  visual-anchor: {label_zh: 视觉锚点, domain: marketing, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true}
-  marketing-copy: {label_zh: 宣发文案, domain: marketing, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true}
+  storyboard-9col: {label_zh: 九列分镜, domain: production, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true, enable_when: "deliverables contains 'storyboard'"}
+  visual-anchor: {label_zh: 视觉锚点, domain: marketing, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true, enable_when: "deliverables contains 'visual'"}
+  marketing-copy: {label_zh: 宣发文案, domain: marketing, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true, enable_when: "deliverables contains 'marketing'"}
   delivery-check: {label_zh: 交付门禁, domain: delivery, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true}
-  story-to-game: {label_zh: 互动改编, domain: derivative, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true}
-  budget-estimator: {label_zh: 制作预算分级, domain: production, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true}
-  platform-ops-checklist: {label_zh: 平台上架清单, domain: delivery, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true}
+  story-to-game: {label_zh: 互动改编, domain: derivative, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true, enable_when: "deliverables contains 'interactive'"}
+  budget-estimator: {label_zh: 制作预算分级, domain: production, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true, enable_when: "deliverables contains 'budget'"}
+  platform-ops-checklist: {label_zh: 平台上架清单, domain: delivery, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true, enable_when: "deliverables contains 'release'"}

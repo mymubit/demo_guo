@@ -123,10 +123,10 @@ StoryForge 不是"评不通过就无限重试"，而是根据**分数趋势**决
 def quality_gate_loop(episode, max_rounds=3):
     scores = []
     for round in range(max_rounds):
-        score = quality_reporter.evaluate(episode)
+        score = drama_script_scorer.evaluate(episode)
         scores.append(score)
         
-        if score >= 75:  # 达标
+        if score >= resolved_quality_threshold:
             return "pass"
         
         if len(scores) >= 2:
@@ -134,7 +134,7 @@ def quality_gate_loop(episode, max_rounds=3):
             if trend in ["stagnant", "diverging", "oscillating"]:
                 return "stop_need_human"  # 交给用户
         
-        script_writer.rewrite(episode)  # 继续修正
+        drama_revision_master.rewrite(episode)
     
     return "stop_max_rounds"  # 达到上限，交给用户
 ```

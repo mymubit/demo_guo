@@ -9,9 +9,9 @@
 - 可用的参考作品清单
 
 ## 引用规则
-- `t4.global.originality.protected-elements`
-- `t4.global.originality.rewrite-strategy`
-- `t4.global.originality.similarity-thresholds`
+- `t1.global.originality.protected-elements`
+- `t1.global.originality.rewrite-strategy`
+- `t1.global.originality.similarity-thresholds`
 
 ## 输出
 - `adapt_source.retained`

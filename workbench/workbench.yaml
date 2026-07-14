@@ -167,6 +167,7 @@ derived_fields:
 system_fields:
   - skills_version
   - skills_git_ref
+  - platform_policy
 
 runtime_projection:
   drama.topic-director:
@@ -206,7 +207,7 @@ stages:
   - {id: quality_score, stage_kind: quality_loop, role: drama.script-scorer, artifact: quality_report, parallel_group: quality}
   - {id: compliance, stage_kind: quality_loop, role: drama.compliance-guard, artifact: compliance_report, parallel_group: quality}
   - {id: revision, stage_kind: quality_loop, role: drama.revision-master, artifact: polished_script, conditional: true}
-  - {id: delivery, stage_kind: optional, role: drama.delivery-tool, artifact: production_package, optional: true}
+  - {id: delivery, stage_kind: optional, role: drama.delivery-tool, artifact: production_package, optional: true, visible_when: "enable_delivery == true"}
 
 module_panel:
   source: modules/catalog.yaml
@@ -214,6 +215,15 @@ module_panel:
   filter: "lifecycle == 'active' and workbench_visible == true"
   evaluate_enable_when: true
   allow_project_toggle: false
+
+external_tools:
+  script_review:
+    input_artifact: external_script
+    input_type: text_or_file
+    accepted_formats: [txt, md, json]
+    roles: [drama.script-scorer, drama.compliance-guard]
+    runtime_params:
+      scoring_mode: external
 
 admin_settings:
   policy: manifest/config-policy.yaml

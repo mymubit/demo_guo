@@ -68,7 +68,7 @@
 阶段 6 结局 15%  情绪 10→余韵
 ```
 
-题材配比 override 见 `foundation/rules/genres/*.yaml`（`rule_params.act_ratio`）。
+题材配比由 `foundation/theme-matrix.yaml` 合成 `rule_params.act_ratio`，统一经 `genres/matrix.yaml` 注入。
 
 ### 结构层输出
 

@@ -14,11 +14,15 @@ modules:
 - story-to-game
 - budget-estimator
 - platform-ops-checklist
+module_policy:
+  source: modules/catalog.yaml
+  evaluate_enable_when: true
 rule_policy:
   scopes:
   - global_core
   - genre_profile
   - stage_playbook
+  - compliance_block
   max_chars: 3600
 skill_dir: roles/drama-delivery-tool
 input_contract:

@@ -3,7 +3,8 @@
 ## 输入
 - `params.episode_range`：如 `1-5`（必填，严禁一次生成全剧）
 - 上游：`story_bible`（人物层 + 结构层）
-- 可选：`narrative_plan`（若有则严格遵循 EV/ET、钩子与冲突安排）、`project_brief`
+- 必填：`narrative_plan`（严格遵循 EV/ET、钩子与冲突安排）
+- 可选：`project_brief`
 
 ## 执行步骤
 1. 确认 episode_range，只生成范围内集数

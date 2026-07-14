@@ -93,6 +93,6 @@
 ## 扩展指南
 
 - **新增主链角色**：改 `registry.yaml`、新建 `roles/<slug>/`、补 `stage-playbook.yaml` 条目、更新 orchestration
-- **新增题材**：`foundation/rules/genres/<code>.yaml` + 更新 `theme-templates.md`
+- **新增题材**：扩展 `foundation/theme-matrix.yaml`，继续由 `genres/matrix.yaml` 统一解析
 - **新增 LR**：经 `@drama-intake` 轨道一 → `foundation/rules/learned-rules.yaml`
 - 改完运行 `python build/validate_skills.py`

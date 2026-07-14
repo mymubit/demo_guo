@@ -25,8 +25,9 @@ input_contract:
   - narrative_plan
   input_modes:
     project:
-      required_artifacts: [story_bible, narrative_plan]
+      required_artifacts: [latest_script, story_bible, narrative_plan]
     external:
+      required_artifacts: [latest_script]
       optional_artifacts: [project_brief, story_bible, narrative_plan]
   params_schema:
     scoring_mode:

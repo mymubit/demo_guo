@@ -10,7 +10,7 @@
 | `global_core` | `tier: 1` | `foundation/rules/*.yaml`（根级） | 全题材通用铁律 |
 | `genre_profile` | `tier: 2` | `foundation/rules/genres/*.yaml` | 按 `theme_code` 过滤（由 `theme-matrix.yaml` 解析） |
 | `stage_playbook` | `tier: 3` | `foundation/rules/stage-playbook.yaml` | 按 `scope_key=agent_id` |
-| `compliance_block` | `tier: 4` | `foundation/rules/compliance-core.yaml` + `originality-rules.yaml` | 合规与原创性 |
+| `compliance_block` | `tier: 4` | `foundation/rules/compliance-core.yaml` | 合规熔断 |
 
 长文参考：`knowledge/craft/tier2-genre-rules.md`、`knowledge/craft/tier3-stage-rules.md`、`knowledge/quality/tier4-compliance.md`。
 
@@ -25,7 +25,7 @@
 | drama.script-scorer | scoring, continuity, world_rules, format_standard, episode_structure, character_rules, hook_effectiveness, payment_checkpoint_3card, learned_rules |
 | drama.compliance-guard | compliance_block, originality_rules, learned_rules |
 | drama.revision-master | writing_prohibitions, writing_requirements, ai_tone_forbidden, emotion_externalization_dict, dialogue_quality, rhythm_rules, quantitative_constraints, format_standard, learned_rules |
-| drama.delivery-tool | production_feasibility, budget_estimation, platform_ops, format_standard, dialogue_quality, hook_effectiveness, scoring, foreshadowing_rules, learned_rules |
+| drama.delivery-tool | production_feasibility, budget_estimation, platform_ops, platform_specific, three_phase_compliance_checklist, format_standard, dialogue_quality, hook_effectiveness, scoring, foreshadowing_rules, learned_rules |
 
 > v5 变更：`drama.story-bible` 的 sections = 原人物关系官 ∪ 原全剧架构官（合并，能力零丢失）。
 
@@ -44,7 +44,7 @@
 | `learned-rules.yaml` | learned_rules | 经验规则 LR |
 | `stage-playbook.yaml`（tier 3） | 按 agent scope_key | 阶段 playbook |
 | `compliance-core.yaml`（tier 4） | p0_categories, p1_categories, p2_advisories, nine_dimension_risk_assessment, justice_tail_rule, values_bottom_line, title_compliance_rules, platform_specific, three_phase_compliance_checklist, fuse_behavior | 合规熔断 |
-| `originality-rules.yaml`（tier 4） | originality_rules | 原创性保护 |
+| `originality-rules.yaml`（tier 1） | originality_rules | 原创性保护 |
 | `concept-rules.yaml`（tier 1） | concept_development | 核心概念形成 |
 | `structure-rules.yaml`（tier 1） | series_structure, episode_card, continuity | 全剧结构、分集卡与连续性 |
 | `world-rules.yaml`（tier 1） | world_rules | 世界规则 |
