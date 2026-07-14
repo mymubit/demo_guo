@@ -42,6 +42,7 @@ roles:
   default_output_artifact_key: project_brief
   schema_version: project-brief.v1
   modules:
+  - concept-development
   - market-radar
   - formula-analysis
   - tear-down-6d
@@ -55,10 +56,12 @@ roles:
   default_output_artifact_key: story_bible
   schema_version: story-bible.v1
   modules:
-  - psychology-immersion
-  - emotion-blueprint
+  - character-system
+  - series-structure
+  - series-emotion-curve
   - conflict-escalation
-  - reversal-system
+  - reversal-foreshadowing
+  - adaptation-originality
 - agent_id: drama.episode-designer
   skill_dir: roles/drama-episode-designer
   name: Episode Designer
@@ -69,10 +72,12 @@ roles:
   default_output_artifact_key: narrative_plan
   schema_version: narrative-plan.v1
   modules:
-  - emotion-blueprint
+  - episode-card
+  - episode-emotion-nodes
   - hook-system
   - conflict-escalation
-  - reversal-system
+  - reversal-foreshadowing
+  - payment-checkpoint
 - agent_id: drama.script-writer
   skill_dir: roles/drama-script-writer
   name: Script Writer
@@ -83,6 +88,9 @@ roles:
   default_output_artifact_key: episode_scripts
   schema_version: episode-scripts.v1
   default_task: write-episodes
+  modules:
+  - scene-writing
+  - continuity-snapshot
 - agent_id: drama.script-scorer
   skill_dir: roles/drama-script-scorer
   name: Script Scorer
@@ -114,7 +122,6 @@ roles:
   - dialogue-polish
   - format-fix
   - word-count-governance
-  - storyboard-9col
 - agent_id: drama.delivery-tool
   skill_dir: roles/drama-delivery-tool
   name: Delivery Tool
@@ -125,6 +132,7 @@ roles:
   default_output_artifact_key: production_package
   schema_version: production-pack.v1
   modules:
+  - storyboard-9col
   - visual-anchor
   - marketing-copy
   - delivery-check

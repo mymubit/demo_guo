@@ -141,10 +141,24 @@ def check_registry_roles(registry: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
 
         if skill_md.exists():
             fm = frontmatter(skill_md)
+            if "modules" in fm and sorted(fm.get("modules") or []) != sorted(role_modules):
+                err(
+                    f"{agent_id}: SKILL.md modules 与 role.yaml 不一致 "
+                    f"{fm.get('modules') or []} != {role_modules}"
+                )
             for ref in fm.get("references") or []:
                 target = (skill_dir / ref).resolve()
                 if not target.exists():
                     err(f"{agent_id}: SKILL.md reference 不存在 {ref}")
+
+        contract = meta.get("input_contract") or {}
+        params = set(contract.get("params") or [])
+        params_schema = set((contract.get("params_schema") or {}).keys())
+        if params != params_schema:
+            err(
+                f"{agent_id}: params 与 params_schema 不一致 "
+                f"params={sorted(params)} schema={sorted(params_schema)}"
+            )
 
     for agent_id in registry.get("fast_track_agents", []):
         if agent_id not in agent_ids:
@@ -273,13 +287,15 @@ def check_knowledge_orphans() -> None:
 
 
 def check_module_orphans(role_metas: Dict[str, Dict[str, Any]]) -> None:
-    """模块必须登记；未挂载的 foundation/extension 模块允许等待上层设计。"""
-    mounted = set()
-    for meta in role_metas.values():
-        mounted.update(meta.get("modules") or [])
+    """模块目录声明的 target_roles 必须与实际挂载完全一致。"""
+    mounted_by: Dict[str, set] = {}
+    for agent_id, role_meta in role_metas.items():
+        for module in role_meta.get("modules") or []:
+            mounted_by.setdefault(module, set()).add(agent_id)
     catalog = load_yaml(ROOT / "modules" / "catalog.yaml")
     entries = catalog.get("modules") or {}
-    allowed_statuses = set(catalog.get("statuses") or [])
+    allowed_lifecycles = set(catalog.get("lifecycles") or [])
+    allowed_kinds = set(catalog.get("kinds") or [])
     files = {path.stem for path in (ROOT / "modules").glob("*.md")}
     registered = set(entries)
     for missing in sorted(files - registered):
@@ -287,17 +303,23 @@ def check_module_orphans(role_metas: Dict[str, Dict[str, Any]]) -> None:
     for stale in sorted(registered - files):
         err(f"模块目录登记了不存在的文件: modules/{stale}.md")
     for module, meta in entries.items():
-        status = (meta or {}).get("status")
-        if status not in allowed_statuses:
-            err(f"模块 {module}: 非法 status={status}")
-        if status in {"mounted", "compatibility"} and module not in mounted:
-            err(f"模块 {module}: status={status} 但未被角色挂载")
-        if status == "foundation":
-            text = (ROOT / "modules" / f"{module}.md").read_text(encoding="utf-8")
-            required_headings = ("## 目标", "## 输入", "## 引用规则", "## 输出", "## 失败条件")
-            for heading in required_headings:
-                if heading not in text:
-                    err(f"基础模块 {module}: 缺少章节 `{heading}`")
+        lifecycle = (meta or {}).get("lifecycle")
+        kind = (meta or {}).get("kind")
+        if lifecycle not in allowed_lifecycles:
+            err(f"模块 {module}: 非法 lifecycle={lifecycle}")
+        if kind not in allowed_kinds:
+            err(f"模块 {module}: 非法 kind={kind}")
+        declared_roles = set((meta or {}).get("target_roles") or [])
+        actual_roles = mounted_by.get(module, set())
+        if declared_roles != actual_roles:
+            err(
+                f"模块 {module}: target_roles 与实际挂载不一致 "
+                f"{sorted(declared_roles)} != {sorted(actual_roles)}"
+            )
+        if lifecycle == "active" and not actual_roles:
+            err(f"活动模块 {module}: 未挂载任何角色")
+        if lifecycle == "compatibility" and actual_roles:
+            err(f"兼容模块 {module}: 不应继续挂载生产角色")
 
 
 def check_atomic_rules() -> None:

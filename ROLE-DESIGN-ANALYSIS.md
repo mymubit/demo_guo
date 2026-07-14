@@ -44,17 +44,18 @@
 | compliance-guard | 保留 | 独立技能化；与评分并行；输入同上 |
 | delivery-tool | 保留 | 输入改为 story_bible + 最新剧本；前置门禁规则化 |
 
-## Modules（16 个，全部保留）
+## Modules（24 个活动模块 + 3 个兼容入口）
 
 | 角色 | modules |
 |------|---------|
-| topic-director | market-radar, formula-analysis, tear-down-6d |
-| story-bible | psychology-immersion, emotion-blueprint, conflict-escalation, reversal-system |
-| episode-designer | emotion-blueprint, hook-system, conflict-escalation, reversal-system |
-| revision-master | dialogue-polish, format-fix, word-count-governance, storyboard-9col |
-| delivery-tool | visual-anchor, marketing-copy, delivery-check, story-to-game |
+| topic-director | concept-development, market-radar, formula-analysis, tear-down-6d |
+| story-bible | character-system, series-structure, series-emotion-curve, conflict-escalation, reversal-foreshadowing, adaptation-originality |
+| episode-designer | episode-card, episode-emotion-nodes, hook-system, conflict-escalation, reversal-foreshadowing, payment-checkpoint |
+| script-writer | scene-writing, continuity-snapshot |
+| revision-master | dialogue-polish, format-fix, word-count-governance |
+| delivery-tool | storyboard-9col, visual-anchor, marketing-copy, delivery-check, story-to-game |
 
-模块正文：`modules/*.md`。
+模块正文：`modules/*.md`；机器目录与兼容替代关系：`modules/catalog.yaml`。
 
 ## 产物依赖（Artifact DAG）
 

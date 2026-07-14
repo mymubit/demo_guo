@@ -19,6 +19,9 @@ drama-skills/
 ├── roles/<slug>/                 # 每角色：role.yaml + SKILL.md [+ tasks/]
 ├── modules/                      # 能力块（输入/规则引用/输出/步骤/失败条件/自检）
 │   └── catalog.yaml             # 模块领域、状态与待挂载基础能力目录
+├── manifest/                     # Bundle清单与后台覆盖白名单
+├── workbench/                    # 工作台字段、阶段和面板机器契约
+├── schemas/                      # 项目设置与运营覆盖JSON Schema
 ├── orchestration/                # original-track / story-adapt-track 双通道
 ├── knowledge/                    # 参考长文（按消费场景分目录）
 │   ├── craft/                    #   创作方法论（山音编剧/题材/阶段/LR详解）
@@ -34,7 +37,8 @@ drama-skills/
 └── build/                        # 仓库维护与校验脚本（validate_skills.py 必跑）
 ```
 
-深度治理方案与配置分级评估：`docs/DRAMA-SKILLS-V5-PLAN.md`（ScriptForge 根目录 docs/）。
+机器可读治理入口：`manifest/drama-skills.manifest.yaml`；
+后台覆盖边界：`manifest/config-policy.yaml`。
 
 ## 独立仓库（demo_guo）
 
@@ -117,6 +121,19 @@ python manage.py sync_drama_from_git
 | 规则模板量化参数 | `knowledge/craft/theme-templates.md` + `foundation/rules/genres/` |
 
 改完运行一致性校验：`python build/validate_skills.py`
+
+工作台或后台配置变化还必须运行：
+
+```bash
+python build/validate_workbench.py
+```
+
+## 工作台与后台配置边界
+
+- 项目设置：题材四轴、风味标签、集数、平台、评分预设、批次和交付选项，见 `workbench/workbench.yaml`。
+- 运营后台：只能覆盖 `manifest/config-policy.yaml#overlay_files` 白名单中的 seed defaults。
+- Git 硬规则：角色组合、原子规则、编排拓扑、产物契约、题材枚举和合规红线禁止后台覆盖。
+- 每次后台修改必须记录版本、操作人、时间和原因，并保留可回滚历史。
 
 ## 底层知识分层
 

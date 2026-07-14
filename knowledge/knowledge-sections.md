@@ -18,10 +18,10 @@
 
 | Agent | Sections |
 |-------|----------|
-| drama.topic-director | philosophy, rhythm_rules, scoring, episode_structure, learned_rules |
-| drama.story-bible | philosophy, character_rules, emotion_externalization_dict, episode_structure, rhythm_rules, foreshadowing_rules, qdn_emotion_model, payment_checkpoint_3card, conflict_escalation, learned_rules |
-| drama.episode-designer | episode_emotion_8nodes, qdn_emotion_model, hook_effectiveness, emotion_externalization_dict, episode_structure, rhythm_rules, foreshadowing_rules, conflict_escalation, payment_checkpoint_3card, learned_rules |
-| drama.script-writer | episode_structure, quantitative_constraints, writing_prohibitions, writing_requirements, information_asymmetry_mechanics, emotion_externalization_dict, ai_tone_forbidden, qdn_emotion_model, format_standard, hook_effectiveness, episode_emotion_8nodes, dialogue_quality, learned_rules |
+| drama.topic-director | philosophy, concept_development, rhythm_rules, episode_structure, learned_rules |
+| drama.story-bible | philosophy, character_rules, series_structure, emotion_externalization_dict, episode_structure, rhythm_rules, foreshadowing_rules, qdn_emotion_model, payment_checkpoint_3card, conflict_escalation, originality_rules, learned_rules |
+| drama.episode-designer | episode_card, episode_emotion_8nodes, qdn_emotion_model, hook_effectiveness, emotion_externalization_dict, episode_structure, rhythm_rules, foreshadowing_rules, conflict_escalation, payment_checkpoint_3card, learned_rules |
+| drama.script-writer | episode_structure, continuity, quantitative_constraints, writing_prohibitions, writing_requirements, information_asymmetry_mechanics, emotion_externalization_dict, ai_tone_forbidden, qdn_emotion_model, format_standard, hook_effectiveness, episode_emotion_8nodes, dialogue_quality, learned_rules |
 | drama.script-scorer | scoring, format_standard, episode_structure, character_rules, hook_effectiveness, payment_checkpoint_3card, learned_rules |
 | drama.compliance-guard | compliance_block, originality_rules, learned_rules |
 | drama.revision-master | writing_prohibitions, writing_requirements, ai_tone_forbidden, emotion_externalization_dict, dialogue_quality, rhythm_rules, quantitative_constraints, format_standard, learned_rules |
@@ -45,8 +45,8 @@
 | `stage-playbook.yaml`（tier 3） | 按 agent scope_key | 阶段 playbook |
 | `compliance-core.yaml`（tier 4） | p0_categories, p1_categories, p2_advisories, nine_dimension_risk_assessment, justice_tail_rule, values_bottom_line, title_compliance_rules, platform_specific, three_phase_compliance_checklist, fuse_behavior | 合规熔断 |
 | `originality-rules.yaml`（tier 4） | originality_rules | 原创性保护 |
-| `concept-rules.yaml`（tier 1） | concept_development | 基础候选，待上层角色设计分配 |
-| `structure-rules.yaml`（tier 1） | series_structure, episode_card, continuity | 基础候选，待上层角色设计分配 |
+| `concept-rules.yaml`（tier 1） | concept_development | 核心概念形成 |
+| `structure-rules.yaml`（tier 1） | series_structure, episode_card, continuity | 全剧结构、分集卡与连续性 |
 | `genre-profile.yaml` + `genres/*.yaml`（tier 2） | genre_rules, rhythm_rules（题材覆盖） | 题材规则 |
 
 > `quantitative_constraints` / `format_standard` 两个 section 的数值来自 `foundation/constraints/script-format.yaml`，由后端注入时合成，不在规则文件中重复。

@@ -1,37 +1,39 @@
-# 基础能力模块目录；角色挂载将在上层设计阶段单独调整。
-version: "1.0.0"
-statuses:
-  - mounted
-  - compatibility
-  - foundation
-  - extension
+# 能力模块目录：工作台展示与角色挂载的机器契约。
+version: "1.1.0"
+lifecycles: [active, compatibility, candidate, deprecated]
+kinds: [core, extension]
 
 modules:
-  market-radar: { domain: concept, status: mounted }
-  formula-analysis: { domain: concept, status: mounted }
-  tear-down-6d: { domain: concept, status: mounted }
-  psychology-immersion: { domain: character, status: compatibility }
-  emotion-blueprint: { domain: emotion, status: compatibility }
-  conflict-escalation: { domain: plotting, status: mounted }
-  reversal-system: { domain: plotting, status: compatibility }
-  hook-system: { domain: episode, status: mounted }
-  dialogue-polish: { domain: revision, status: mounted }
-  format-fix: { domain: revision, status: mounted }
-  word-count-governance: { domain: revision, status: mounted }
-  storyboard-9col: { domain: production, status: extension }
-  visual-anchor: { domain: marketing, status: extension }
-  marketing-copy: { domain: marketing, status: extension }
-  delivery-check: { domain: delivery, status: extension }
-  story-to-game: { domain: derivative, status: extension }
+  concept-development: {label_zh: 核心概念形成, domain: concept, kind: core, lifecycle: active, target_roles: [drama.topic-director], workbench_visible: true}
+  market-radar: {label_zh: 市场雷达, domain: concept, kind: core, lifecycle: active, target_roles: [drama.topic-director], workbench_visible: true}
+  formula-analysis: {label_zh: 商业公式分析, domain: concept, kind: core, lifecycle: active, target_roles: [drama.topic-director], workbench_visible: true}
+  tear-down-6d: {label_zh: 六维拉片, domain: concept, kind: core, lifecycle: active, target_roles: [drama.topic-director], workbench_visible: true}
 
-  concept-development: { domain: concept, status: foundation }
-  adaptation-originality: { domain: concept, status: foundation }
-  character-system: { domain: character, status: foundation }
-  series-structure: { domain: structure, status: foundation }
-  series-emotion-curve: { domain: emotion, status: foundation }
-  reversal-foreshadowing: { domain: plotting, status: foundation }
-  episode-card: { domain: episode, status: foundation }
-  episode-emotion-nodes: { domain: emotion, status: foundation }
-  payment-checkpoint: { domain: episode, status: foundation }
-  scene-writing: { domain: writing, status: foundation }
-  continuity-snapshot: { domain: writing, status: foundation }
+  character-system: {label_zh: 人物系统, domain: character, kind: core, lifecycle: active, target_roles: [drama.story-bible], workbench_visible: true}
+  series-structure: {label_zh: 全剧结构, domain: structure, kind: core, lifecycle: active, target_roles: [drama.story-bible], workbench_visible: true}
+  series-emotion-curve: {label_zh: 全剧情绪曲线, domain: emotion, kind: core, lifecycle: active, target_roles: [drama.story-bible], workbench_visible: true}
+  conflict-escalation: {label_zh: 冲突升级, domain: plotting, kind: core, lifecycle: active, target_roles: [drama.story-bible, drama.episode-designer], workbench_visible: true}
+  reversal-foreshadowing: {label_zh: 反转伏笔闭环, domain: plotting, kind: core, lifecycle: active, target_roles: [drama.story-bible, drama.episode-designer], workbench_visible: true}
+  adaptation-originality: {label_zh: 改编原创化, domain: concept, kind: core, lifecycle: active, target_roles: [drama.story-bible], workbench_visible: true, enable_when: "entry_type == 'story_adapt'"}
+
+  episode-card: {label_zh: 标准分集卡, domain: episode, kind: core, lifecycle: active, target_roles: [drama.episode-designer], workbench_visible: true}
+  episode-emotion-nodes: {label_zh: 单集情绪节点, domain: emotion, kind: core, lifecycle: active, target_roles: [drama.episode-designer], workbench_visible: true}
+  hook-system: {label_zh: 钩子体系, domain: episode, kind: core, lifecycle: active, target_roles: [drama.episode-designer], workbench_visible: true}
+  payment-checkpoint: {label_zh: 付费卡点, domain: episode, kind: core, lifecycle: active, target_roles: [drama.episode-designer], workbench_visible: true}
+
+  scene-writing: {label_zh: 场景写作, domain: writing, kind: core, lifecycle: active, target_roles: [drama.script-writer], workbench_visible: true}
+  continuity-snapshot: {label_zh: 连续性快照, domain: writing, kind: core, lifecycle: active, target_roles: [drama.script-writer], workbench_visible: true}
+
+  dialogue-polish: {label_zh: 对白精修, domain: revision, kind: core, lifecycle: active, target_roles: [drama.revision-master], workbench_visible: true}
+  format-fix: {label_zh: 格式修复, domain: revision, kind: core, lifecycle: active, target_roles: [drama.revision-master], workbench_visible: true}
+  word-count-governance: {label_zh: 字数治理, domain: revision, kind: core, lifecycle: active, target_roles: [drama.revision-master], workbench_visible: true}
+
+  storyboard-9col: {label_zh: 九列分镜, domain: production, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true}
+  visual-anchor: {label_zh: 视觉锚点, domain: marketing, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true}
+  marketing-copy: {label_zh: 宣发文案, domain: marketing, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true}
+  delivery-check: {label_zh: 交付门禁, domain: delivery, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true}
+  story-to-game: {label_zh: 互动改编, domain: derivative, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true}
+
+  psychology-immersion: {label_zh: 心理代入（兼容）, domain: character, kind: core, lifecycle: compatibility, target_roles: [], workbench_visible: false, replacement: character-system}
+  emotion-blueprint: {label_zh: 情绪蓝图（兼容）, domain: emotion, kind: core, lifecycle: compatibility, target_roles: [], workbench_visible: false, replacement: [series-emotion-curve, episode-emotion-nodes]}
+  reversal-system: {label_zh: 反转体系（兼容）, domain: plotting, kind: core, lifecycle: compatibility, target_roles: [], workbench_visible: false, replacement: reversal-foreshadowing}

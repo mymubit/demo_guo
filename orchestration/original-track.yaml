@@ -3,36 +3,70 @@ version: "5.0.0"
 entry_type: original_track
 label: 原创创作通道
 description: 从零选题的标准通道：4 个生产角色主链，每批正文完成后由质检环（评分+合规并行，未达标转修复并复评）把关。
+project_settings_schema: schemas/project-settings.v1.schema.json
+
+entry_requirements:
+  required_settings:
+    - core_idea
+    - episode_count
+    - target_platform
 
 phases:
   - phase: strategy
     label: 选题定调
     agents:
       - drama.topic-director
+    produces: project_brief
   - phase: blueprint
     label: 剧本蓝图
     agents:
       - drama.story-bible
+    requires_artifacts: [project_brief]
+    produces: story_bible
+    approval_gate: story_bible_approved
   - phase: episode_design
     label: 分集设计
     agents:
       - drama.episode-designer
+    requires_artifacts: [story_bible]
+    requires_approvals: [story_bible_approved]
+    produces: narrative_plan
   - phase: writing
     label: 正文创作
     agents:
       - drama.script-writer
+    requires_artifacts: [story_bible, narrative_plan]
+    produces: episode_scripts
+
+gates:
+  story_bible_approved:
+    artifact: story_bible
+    approval_type: user
+    invalidate_downstream_on_change: true
 
 # 质检环：独立技能，每批 episode_scripts 完成后触发；不占主链阶段位。
 quality_loop:
-  trigger: 每批正文（episode_range）完成后
+  trigger:
+    event: artifact_batch_completed
+    artifact: episode_scripts
+    range_param: episode_range
   parallel_judges:
     - drama.script-scorer
     - drama.compliance-guard
+  max_revision_rounds: 3
+  stop_on: [stagnant, diverging, oscillating]
   on_fail:
-    condition: overall_score < 75（B 级线）或存在 P1 必修项
+    condition: standard_quality_gate
+    conditions:
+      any:
+        - {path: quality_report.overall_score, op: lt, value_ref: foundation/constraints/quality-scoring.yaml#grade_thresholds.B}
+        - {path: compliance_report.blocking_issues, op: not_empty}
     agent: drama.revision-master
     then: 修复稿交回 parallel_judges 复评，通过后才可继续生成下一批
   score_target: latest_script  # 修复稿优先：polished_script > episode_scripts
+  on_stop:
+    action: require_user_decision
+    options: [accept_current, manual_revision, abandon_batch]
 
 optional_agents:
   - drama.delivery-tool

@@ -1,0 +1,37 @@
+# Drama Skills Bundle 清单
+bundle_version: "5.0.0"
+compatible_runtime_min: "5.0.0"
+
+registries:
+  roles: registry.yaml
+  modules: modules/catalog.yaml
+  sections: knowledge/knowledge-sections.md
+
+workbench:
+  definition: workbench/workbench.yaml
+  project_settings_schema: schemas/project-settings.v1.schema.json
+  ops_overlay_schema: schemas/ops-config-overlay.v1.schema.json
+  config_policy: manifest/config-policy.yaml
+
+orchestration:
+  original_track: orchestration/original-track.yaml
+  story_adapt: orchestration/story-adapt-track.yaml
+
+configuration_sources:
+  theme: foundation/theme-matrix.yaml
+  platform: foundation/constraints/platform-profiles.yaml
+  script_format: foundation/constraints/script-format.yaml
+  quality: foundation/constraints/quality-scoring.yaml
+  scoring_presets: foundation/constraints/scoring-presets.yaml
+  commercial: foundation/constraints/commercial-formulas.yaml
+  agent_runtime: foundation/constraints/agent-runtime.yaml
+
+artifact_contracts:
+  index: knowledge/output-schemas.md
+  chunk_map: foundation/constraints/artifact-chunk-map.yaml
+  continuity: foundation/constraints/continuity-checkpoint.yaml
+
+validation:
+  - python build/validate_skills.py
+  - python build/validate_theme_matrix.py
+  - python build/validate_workbench.py

@@ -7,9 +7,11 @@ tags:
 - 交付
 - 视觉提示词
 - 投流文案
+- 分镜摘要
 - 互动改编
 dept: 宣发交付部
 modules:
+- storyboard-9col
 - visual-anchor
 - marketing-copy
 - delivery-check
@@ -20,11 +22,13 @@ output_schema:
   description: 宣发交付包
 references:
 - ./role.yaml
+- ../../modules/storyboard-9col.md
 - ../../modules/visual-anchor.md
 - ../../modules/marketing-copy.md
 - ../../modules/delivery-check.md
 - ../../modules/story-to-game.md
 - ../../knowledge/production/story-to-game.md
+- ../../knowledge/production/shanyin-director-methodology.md
 - ../../knowledge/production/shanyin-director-styles.md
 ---
 

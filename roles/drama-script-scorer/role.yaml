@@ -30,7 +30,23 @@ input_contract:
   - narrative_plan
   params:
   - scoring_mode
+  - scoring_preset
   - episode_range
+  params_schema:
+    scoring_mode:
+      type: string
+      required: false
+      enum: [project, external]
+      default: project
+    scoring_preset:
+      type: string
+      required: false
+      source_ref: foundation/constraints/scoring-presets.yaml#presets
+      default: standard
+    episode_range:
+      type: string
+      required: false
+      pattern: '^\d+-\d+$'
 output_contract:
   artifacts:
   - quality_report

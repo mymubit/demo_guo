@@ -9,8 +9,13 @@ tags:
 - 分集写作
 - 记忆检查点
 dept: 正文创作部
+modules:
+- scene-writing
+- continuity-snapshot
 references:
 - ./role.yaml
+- ../../modules/scene-writing.md
+- ../../modules/continuity-snapshot.md
 - ../../foundation/constraints/script-format.yaml
 - ../../foundation/methodology/cross-section.md
 - ../../foundation/methodology/mckee-value-shift.md

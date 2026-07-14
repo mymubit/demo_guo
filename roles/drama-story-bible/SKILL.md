@@ -12,20 +12,24 @@ tags:
 - 故事改编
 dept: 剧本蓝图部
 modules:
-- psychology-immersion
-- emotion-blueprint
+- character-system
+- series-structure
+- series-emotion-curve
 - conflict-escalation
-- reversal-system
+- reversal-foreshadowing
+- adaptation-originality
 output_schema:
 - name: story_bible
   type: object
   description: 故事蓝图（梗概 + 人物 + 世界规则 + 全剧结构）
 references:
 - ./role.yaml
-- ../../modules/psychology-immersion.md
-- ../../modules/emotion-blueprint.md
+- ../../modules/character-system.md
+- ../../modules/series-structure.md
+- ../../modules/series-emotion-curve.md
 - ../../modules/conflict-escalation.md
-- ../../modules/reversal-system.md
+- ../../modules/reversal-foreshadowing.md
+- ../../modules/adaptation-originality.md
 - ../../foundation/rules/character-rules.yaml
 - ../../knowledge/quality/originality-rules.md
 - ../../knowledge/craft/shanyin-screenwriting-methodology.md

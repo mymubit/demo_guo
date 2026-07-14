@@ -1,0 +1,156 @@
+# 短剧创作工作台机器契约
+version: "1.0.0"
+project_schema: project-settings.v1
+
+navigation:
+  source: registry.yaml
+  order_field: workspace_order
+  group_field: dept
+
+project_settings:
+  groups:
+    entry:
+      label_zh: 创作入口
+      fields: [entry_type, core_idea, external_story, adapt_notes]
+    theme:
+      label_zh: 题材与受众
+      fields: [genre_matrix, flavor_tags, preset_theme_code, target_platform]
+    scale:
+      label_zh: 篇幅与批次
+      fields: [episode_count, batch_episode_max, outline_mode]
+    quality:
+      label_zh: 质量偏好
+      fields: [scoring_preset, compliance_check_mode]
+    delivery:
+      label_zh: 交付偏好
+      fields: [enable_delivery, delivery_items]
+
+  fields:
+    entry_type:
+      type: string
+      enum_source: orchestration.*.entry_type
+      default: original_track
+      config_scope: project
+    core_idea:
+      type: string
+      ui_widget: textarea
+      visible_when: "entry_type == 'original_track'"
+      config_scope: project
+    external_story:
+      type: string
+      ui_widget: textarea
+      required_when: "entry_type == 'story_adapt'"
+      config_scope: project
+    adapt_notes:
+      type: object
+      visible_when: "entry_type == 'story_adapt'"
+      config_scope: project
+    genre_matrix:
+      type: object
+      fields_source: foundation/theme-matrix.yaml#axes
+      config_scope: project
+    flavor_tags:
+      type: array
+      options_source: foundation/theme-matrix.yaml#flavor_tags.options
+      max_items_source: foundation/theme-matrix.yaml#flavor_tags.max_select
+      config_scope: project
+    preset_theme_code:
+      type: string
+      options_source: foundation/theme-matrix.yaml#preset_templates
+      required: false
+      config_scope: project
+    episode_count:
+      type: integer
+      minimum: 1
+      required: true
+      config_scope: project
+    target_platform:
+      type: string
+      options_source: foundation/constraints/platform-profiles.yaml#platforms
+      default: generic
+      config_scope: project
+    batch_episode_max:
+      type: integer
+      minimum: 1
+      maximum: 5
+      default: 5
+      config_scope: project
+    outline_mode:
+      type: string
+      enum: [full, structure_only]
+      default: full
+      config_scope: project
+    scoring_preset:
+      type: string
+      options_source: foundation/constraints/scoring-presets.yaml#presets
+      default: standard
+      config_scope: project
+    compliance_check_mode:
+      type: string
+      enum: [standard, values-risk, full]
+      default: standard
+      config_scope: project
+    enable_delivery:
+      type: boolean
+      default: false
+      config_scope: project
+    delivery_items:
+      type: array
+      enum_items: [storyboard, visual, marketing, interactive]
+      default: [storyboard, visual, marketing]
+      visible_when: enable_delivery
+      config_scope: project
+
+derived_fields:
+  - matrix_key
+  - rule_params
+  - skills_version
+  - skills_git_ref
+
+runtime_projection:
+  drama.topic-director:
+    episode_count: episode_count
+    target_platform: target_platform
+    genre_matrix: genre_matrix
+    flavor_tags: flavor_tags
+    core_idea: core_idea
+  drama.story-bible:
+    episode_count: episode_count
+    outline_mode: creation_preferences.outline_mode
+    external_story: external_story
+    adapt_notes: adapt_notes
+  drama.script-scorer:
+    scoring_preset: creation_preferences.scoring_preset
+  drama.compliance-guard:
+    check_mode: creation_preferences.compliance_check_mode
+    target_platform: target_platform
+  drama.delivery-tool:
+    deliverables: creation_preferences.delivery_items
+
+stages:
+  - {id: strategy, role: drama.topic-director, artifact: project_brief, visible_when: "entry_type == 'original_track'"}
+  - {id: blueprint, role: drama.story-bible, artifact: story_bible, approval_required: true}
+  - {id: episode_design, role: drama.episode-designer, artifact: narrative_plan}
+  - {id: writing, role: drama.script-writer, artifact: episode_scripts, batch_field: episode_range}
+  - {id: quality_score, role: drama.script-scorer, artifact: quality_report, parallel_group: quality}
+  - {id: compliance, role: drama.compliance-guard, artifact: compliance_report, parallel_group: quality}
+  - {id: revision, role: drama.revision-master, artifact: polished_script, conditional: true}
+  - {id: delivery, role: drama.delivery-tool, artifact: production_package, optional: true}
+
+module_panel:
+  source: modules/catalog.yaml
+  group_by: domain
+  filter: "lifecycle == 'active' and workbench_visible == true"
+  allow_project_toggle: false
+
+admin_settings:
+  policy: manifest/config-policy.yaml
+  sections:
+    - {id: model_routing, source: foundation/constraints/agent-runtime.yaml}
+    - {id: script_format, source: foundation/constraints/script-format.yaml}
+    - {id: quality_thresholds, source: foundation/constraints/quality-scoring.yaml}
+    - {id: commercial, source: foundation/constraints/commercial-formulas.yaml}
+    - {id: scoring_presets, source: foundation/constraints/scoring-presets.yaml}
+    - {id: platform_policies, source: foundation/constraints/platform-profiles.yaml}
+  require_audit_reason: true
+  allow_git_ssot_override: false

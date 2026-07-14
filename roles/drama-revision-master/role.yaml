@@ -11,7 +11,6 @@ modules:
 - dialogue-polish
 - format-fix
 - word-count-governance
-- storyboard-9col
 rule_policy:
   scopes:
   - global_core
@@ -21,17 +20,26 @@ rule_policy:
 skill_dir: roles/drama-revision-master
 # 独立技能：由评分环触发（低于 B 级）或用户手动调用；产出修复稿后必须交回评分官复评。
 input_contract:
-  required_artifacts:
+  required_artifacts: []
+  required_artifacts_any_of:
+  - polished_script
   - episode_scripts
   optional_artifacts:
   - quality_report
   - compliance_report
-  - polished_script
+  - story_bible
+  - narrative_plan
   params:
   - episode_range
   - focus_areas
+  params_schema:
+    episode_range:
+      type: string
+      required: false
+      pattern: '^\d+-\d+$'
+    focus_areas: {type: array, required: false, items_type: string}
 output_contract:
   artifacts:
   - polished_script
   schema_version: polished-script.v1
-role: 根据评分报告、合规报告和用户要求修复剧本，吸收对白精修、格式修复、字数治理和九列分镜摘要能力；不重新设计故事，只提升文本执行质量；输出修复稿后必须提交剧本评分官复评。
+role: 根据评分报告、合规报告和用户要求修复剧本，执行对白精修、格式修复和字数治理；不重新设计故事，只提升文本执行质量；输出修复稿后必须提交剧本评分官复评。

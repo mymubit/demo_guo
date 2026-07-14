@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills://schemas/ops-config-overlay.v1",
+  "title": "运营后台配置覆盖",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "tenant_id",
+    "skills_version",
+    "overrides",
+    "audit"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "ops-config-overlay.v1"
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "skills_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "effective_at": {
+      "type": "string"
+    },
+    "overrides": {
+      "type": "object",
+      "description": "键必须存在于 manifest/config-policy.yaml#overlay_files"
+    },
+    "audit": {
+      "type": "object",
+      "required": [
+        "revision",
+        "updated_by",
+        "updated_at",
+        "change_reason"
+      ],
+      "properties": {
+        "revision": {"type": "integer", "minimum": 1},
+        "updated_by": {"type": "string", "minLength": 1},
+        "updated_at": {"type": "string"},
+        "change_reason": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

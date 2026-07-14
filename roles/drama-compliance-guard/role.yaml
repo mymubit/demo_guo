@@ -28,6 +28,18 @@ input_contract:
   - story_bible
   params:
   - check_mode
+  - target_platform
+  params_schema:
+    check_mode:
+      type: string
+      required: false
+      enum: [standard, values-risk, full]
+      default: standard
+    target_platform:
+      type: string
+      required: false
+      source_ref: foundation/constraints/platform-profiles.yaml#platforms
+      default: generic
 output_contract:
   artifacts:
   - compliance_report

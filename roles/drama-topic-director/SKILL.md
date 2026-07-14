@@ -10,6 +10,7 @@ tags:
 - 差异化
 dept: 选题定调部
 modules:
+- concept-development
 - market-radar
 - formula-analysis
 - tear-down-6d
@@ -20,6 +21,7 @@ output_schema:
 references:
 - ./role.yaml
 - ../../foundation/theme-matrix.yaml
+- ../../modules/concept-development.md
 - ../../modules/market-radar.md
 - ../../modules/formula-analysis.md
 - ../../modules/tear-down-6d.md

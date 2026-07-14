@@ -167,6 +167,9 @@
 {
   "drama_title": "string",
   "scored_artifact": "polished_script|episode_scripts|external_script",
+  "scoring_preset": "standard|strict|relaxed|rhythm_first",
+  "pass_threshold": 75,
+  "config_revision": "string",
   "overall_score": 82,
   "grade": "S|A|B|C|D",
   "can_continue_next_batch": true,
@@ -198,6 +201,9 @@
 {
   "drama_title": "string",
   "check_mode": "standard|values-risk|full",
+  "target_platform": "generic|douyin|kuaishou|wechat_miniprogram",
+  "platform_policy_version": "string|null",
+  "platform_policy_verified_at": "string|null",
   "checked_artifact": "polished_script|episode_scripts|external_script",
   "overall_result": "通过|风险|不通过",
   "blocking_issues": [],

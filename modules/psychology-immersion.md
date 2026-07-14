@@ -1,6 +1,6 @@
 # 模块：心理代入
 
-> 挂载角色：`drama.story-bible`（人物层设计时执行）
+> 兼容入口：能力已并入 `modules/character-system.md`，不再挂载生产角色。
 
 ## 目标
 

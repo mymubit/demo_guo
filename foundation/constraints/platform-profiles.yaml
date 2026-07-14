@@ -12,6 +12,9 @@ default:
   policy_status: common_rules_only
 
 platforms:
+  generic:
+    policy_status: common_rules_only
+    notes: [仅执行通用格式、质量与合规规则]
   douyin:
     policy_status: requires_runtime_verification
     notes: [开场留存敏感, 暴力内容需专项检查]

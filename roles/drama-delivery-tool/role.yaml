@@ -8,6 +8,7 @@ workspace_order: 601
 default_output_artifact_key: production_package
 schema_version: production-pack.v1
 modules:
+- storyboard-9col
 - visual-anchor
 - marketing-copy
 - delivery-check
@@ -29,6 +30,14 @@ input_contract:
   - project_brief
   - quality_report
   - compliance_report
+  params:
+  - deliverables
+  params_schema:
+    deliverables:
+      type: array
+      required: false
+      enum_items: [storyboard, visual, marketing, interactive]
+      default: [storyboard, visual, marketing]
 output_contract:
   artifacts:
   - production_package

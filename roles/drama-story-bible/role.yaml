@@ -8,10 +8,12 @@ workspace_order: 201
 default_output_artifact_key: story_bible
 schema_version: story-bible.v1
 modules:
-- psychology-immersion
-- emotion-blueprint
+- character-system
+- series-structure
+- series-emotion-curve
 - conflict-escalation
-- reversal-system
+- reversal-foreshadowing
+- adaptation-originality
 rule_policy:
   scopes:
   - global_core
@@ -28,6 +30,23 @@ input_contract:
   - external_story
   - adapt_notes
   - episode_count
+  - outline_mode
+  params_schema:
+    external_story: {type: string, required: false, ui_widget: textarea}
+    adapt_notes: {type: object, required: false}
+    episode_count: {type: integer, required: true, minimum: 1}
+    outline_mode:
+      type: string
+      required: false
+      enum: [full, structure_only]
+      default: full
+  input_modes:
+    original:
+      required_artifacts: [project_brief]
+      forbidden_params: [external_story]
+    adapt:
+      required_params: [external_story]
+      optional_artifacts: [project_brief]
   required_artifacts: []
 output_contract:
   artifacts:
