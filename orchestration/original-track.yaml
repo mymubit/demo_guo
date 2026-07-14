@@ -56,7 +56,6 @@ quality_loop:
   max_revision_rounds: 3
   stop_on: [stagnant, diverging, oscillating]
   on_fail:
-    condition: standard_quality_gate
     conditions:
       any:
         - {path: quality_report.overall_score, op: lt, value_ref: foundation/constraints/quality-scoring.yaml#grade_thresholds.B}

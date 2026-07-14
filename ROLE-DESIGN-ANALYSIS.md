@@ -35,8 +35,8 @@
 | v4 角色 | v5 归属 | 能力去向 |
 |---------|---------|----------|
 | topic-director | 保留 | 不变（modules: market-radar / formula-analysis / tear-down-6d） |
-| character-relations | **并入 story-bible** | 人物小传/关系网/轻量世界观 → story_bible 人物层；module psychology-immersion 随迁 |
-| series-architect | **并入 story-bible** | 六阶段/主支线/反转位/伏笔总表 → story_bible 结构层；modules emotion-blueprint / conflict-escalation / reversal-system 随迁 |
+| character-relations | **并入 story-bible** | 人物小传/关系网/轻量世界观 → story_bible 人物层；能力收敛为 character-system |
+| series-architect | **并入 story-bible** | 六阶段/主支线/反转位/伏笔总表 → story_bible 结构层；拆分为 series-structure / series-emotion-curve / reversal-foreshadowing |
 | episode-designer | 保留 | 输入从三产物改为 story_bible |
 | script-writer | 保留 | 输入从 series_outline+character_bible 改为 story_bible |
 | revision-master（剧本修订官） | 保留，更名剧本修复官 | 移入质检环；输出后强制复评 |

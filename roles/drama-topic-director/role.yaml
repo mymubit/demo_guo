@@ -26,6 +26,7 @@ input_contract:
   - genre
   - genre_matrix
   - flavor_tags
+  - preset_theme_code
   - episode_count
   - target_platform
   - reference_dramas
@@ -42,6 +43,10 @@ input_contract:
       required: false
       max_items: 5
       source_ref: foundation/theme-matrix.yaml#flavor_tags.options
+    preset_theme_code:
+      type: string
+      required: false
+      source_ref: foundation/theme-matrix.yaml#preset_templates
     episode_count: {type: integer, required: true, minimum: 1}
     target_platform:
       type: string

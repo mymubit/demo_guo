@@ -34,6 +34,9 @@
       "type": "string",
       "minLength": 1
     },
+    "synopsis": {
+      "type": "string"
+    },
     "external_story": {
       "type": "string",
       "minLength": 1

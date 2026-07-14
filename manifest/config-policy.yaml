@@ -40,11 +40,25 @@ overlay_files:
       - fuse_rules
       - format_error_rate
   foundation/constraints/commercial-formulas.yaml:
-    allowed_paths: [metrics]
+    allowed_paths:
+      - metrics.*.target_min
+      - metrics.*.target_max
+      - metrics.*.episode_min
+      - metrics.*.episode_max
+      - metrics.*.max_episodes_after_payment
+      - metrics.*.start_ratio
+      - metrics.*.end_ratio
   foundation/constraints/scoring-presets.yaml:
-    allowed_paths: [presets]
+    allowed_paths:
+      - presets.*.pass_threshold
+      - presets.*.weights.*
   foundation/constraints/platform-profiles.yaml:
-    allowed_paths: [platforms]
+    allowed_paths:
+      - platforms.*.policy_status
+      - platforms.*.policy_version
+      - platforms.*.policy_source
+      - platforms.*.verified_at
+      - platforms.*.notes
 
 runtime_content:
   knowledge/market/**:
@@ -52,6 +66,7 @@ runtime_content:
     write_back_to_git: false
 
 audit_requirements:
-  required_fields: [revision, updated_by, updated_at, change_reason, skills_version]
+  top_level_required: [tenant_id, skills_version, overrides]
+  required_fields: [revision, updated_by, updated_at, change_reason]
   immutable_history: true
   rollback_supported: true

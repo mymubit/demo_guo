@@ -27,7 +27,16 @@
     },
     "overrides": {
       "type": "object",
-      "description": "键必须存在于 manifest/config-policy.yaml#overlay_files"
+      "description": "叶子路径仍须通过 manifest/config-policy.yaml#overlay_files.allowed_paths 校验",
+      "properties": {
+        "foundation/constraints/agent-runtime.yaml": {"type": "object"},
+        "foundation/constraints/script-format.yaml": {"type": "object"},
+        "foundation/constraints/quality-scoring.yaml": {"type": "object"},
+        "foundation/constraints/commercial-formulas.yaml": {"type": "object"},
+        "foundation/constraints/scoring-presets.yaml": {"type": "object"},
+        "foundation/constraints/platform-profiles.yaml": {"type": "object"}
+      },
+      "additionalProperties": false
     },
     "audit": {
       "type": "object",

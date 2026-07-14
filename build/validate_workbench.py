@@ -68,6 +68,27 @@ def check_config_policy() -> None:
             ERRORS.append(f"overlay 文件被 protected_paths 禁止: {relative_path}")
         if not (definition or {}).get("allowed_paths"):
             ERRORS.append(f"overlay 文件缺少 allowed_paths: {relative_path}")
+    overlay_schema = load_json("schemas/ops-config-overlay.v1.schema.json")
+    schema_files = set(
+        (
+            (
+                ((overlay_schema.get("properties") or {}).get("overrides") or {})
+                .get("properties")
+            )
+            or {}
+        ).keys()
+    )
+    if set(overlays) != schema_files:
+        ERRORS.append("ops overlay Schema 文件白名单与 config-policy 不一致")
+    schema_required = set(
+        (((overlay_schema.get("properties") or {}).get("audit") or {}).get("required"))
+        or []
+    )
+    policy_required = set(
+        ((policy.get("audit_requirements") or {}).get("required_fields")) or []
+    )
+    if schema_required != policy_required:
+        ERRORS.append("ops overlay 审计必填字段与 config-policy 不一致")
 
 
 def check_role_params() -> None:
@@ -115,6 +136,18 @@ def check_workbench() -> None:
         ERRORS.append("工作台 scoring_preset 默认值未注册")
     flavor_max = ((matrix.get("flavor_tags") or {}).get("max_select"))
     project_schema = load_json("schemas/project-settings.v1.schema.json")
+    for field_name, definition in fields.items():
+        persist_path = (definition or {}).get("persist_path")
+        if not persist_path:
+            ERRORS.append(f"工作台字段 {field_name}: 缺少 persist_path")
+        elif not schema_has_path(project_schema, persist_path):
+            ERRORS.append(f"工作台字段 {field_name}: persist_path 不存在 {persist_path}")
+        for condition_key in ("visible_when", "required_when"):
+            condition = (definition or {}).get(condition_key)
+            if condition is not None and (
+                not isinstance(condition, str) or "==" not in condition
+            ):
+                ERRORS.append(f"工作台字段 {field_name}: {condition_key} 语法不统一")
     schema_max = (
         (project_schema.get("properties") or {}).get("flavor_tags") or {}
     ).get("maxItems")
@@ -131,6 +164,45 @@ def check_workbench() -> None:
     )
     if entry_types != schema_entries:
         ERRORS.append("项目 Schema entry_type 与编排入口不一致")
+
+    for path in workbench.get("derived_fields", []) or []:
+        if not schema_has_path(project_schema, path):
+            ERRORS.append(f"derived_fields 路径不存在: {path}")
+    for path in workbench.get("system_fields", []) or []:
+        if not schema_has_path(project_schema, path):
+            ERRORS.append(f"system_fields 路径不存在: {path}")
+
+    role_metas = {
+        item["agent_id"]: load_yaml(f"{item['skill_dir']}/role.yaml")
+        for item in registry.get("roles", []) or []
+    }
+    for target, projection in (workbench.get("runtime_projection") or {}).items():
+        if target != "workflow" and target not in role_metas:
+            ERRORS.append(f"runtime_projection 指向未注册角色: {target}")
+            continue
+        target_params = (
+            set(((role_metas[target].get("input_contract") or {}).get("params") or []))
+            if target in role_metas
+            else set()
+        )
+        for param, source_path in (projection or {}).items():
+            if param == "when":
+                continue
+            if target != "workflow" and param not in target_params:
+                ERRORS.append(f"runtime_projection: {target}.{param} 未在角色参数注册")
+            if not schema_has_path(project_schema, str(source_path)):
+                ERRORS.append(f"runtime_projection 来源不存在: {source_path}")
+
+    catalog = load_yaml("modules/catalog.yaml")
+    panel = workbench.get("module_panel") or {}
+    for module, meta in (catalog.get("modules") or {}).items():
+        if (meta or {}).get("enable_when"):
+            if panel.get("evaluate_enable_when") is not True:
+                ERRORS.append(f"条件模块 {module}: 工作台未启用 enable_when")
+            for role_id in (meta or {}).get("target_roles") or []:
+                policy = (role_metas.get(role_id) or {}).get("module_policy") or {}
+                if policy.get("evaluate_enable_when") is not True:
+                    ERRORS.append(f"条件模块 {module}: 角色 {role_id} 未启用 enable_when")
 
 
 def check_orchestration_contract() -> None:
@@ -150,6 +222,18 @@ def check_orchestration_contract() -> None:
         conditions = (((quality_loop.get("on_fail") or {}).get("conditions") or {}).get("any"))
         if not conditions:
             ERRORS.append(f"{relative_path}: 质检失败条件未结构化")
+        if "condition" in (quality_loop.get("on_fail") or {}):
+            ERRORS.append(f"{relative_path}: 不得同时保留自然语言 condition")
+
+
+def schema_has_path(schema: Dict[str, Any], dotted_path: str) -> bool:
+    current = schema
+    for part in dotted_path.split("."):
+        properties = current.get("properties") or {}
+        if part not in properties:
+            return False
+        current = properties[part]
+    return True
 
 
 def main() -> int:

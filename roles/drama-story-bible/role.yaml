@@ -14,6 +14,9 @@ modules:
 - conflict-escalation
 - reversal-foreshadowing
 - adaptation-originality
+module_policy:
+  source: modules/catalog.yaml
+  evaluate_enable_when: true
 rule_policy:
   scopes:
   - global_core
