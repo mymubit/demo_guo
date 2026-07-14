@@ -37,12 +37,12 @@ items:
     section: learned_rules
     title: LR-007 付费兑现
     priority: 16
-    body: "首付费卡点与兑现期限读取 commercial-formulas；付费后必须兑现卡点承诺。"
+    body: "首付费卡点与兑现期限读取 foundation/constraints/commercial-formulas.yaml；付费后必须兑现卡点承诺。"
   - rule_key: t1.global.learned_rules.lr008
     section: learned_rules
     title: LR-008 逐集上下文
     priority: 17
-    body: "生成第N集仅加载：N-1集全文+continuity-checkpoint+本集分集卡+仍有效的全局约束。"
+    body: "生成第N集仅加载：N-1集全文+foundation/constraints/continuity-checkpoint.yaml 定义的检查点+本集分集卡+仍有效的全局约束。"
   - rule_key: t1.global.learned_rules.lr009
     section: learned_rules
     title: LR-009 喘息集限制

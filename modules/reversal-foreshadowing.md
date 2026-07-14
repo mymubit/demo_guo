@@ -12,7 +12,7 @@
 - `t1.global.foreshadowing_rules.density`
 - `t1.global.foreshadowing_rules.payoff`
 - `t1.global.foreshadowing_rules.types`
-- `commercial-formulas.s_reversal_window`
+- `foundation/constraints/commercial-formulas.yaml#metrics.s_reversal_window`
 
 ## 输出
 - `major_reversal_positions[]`

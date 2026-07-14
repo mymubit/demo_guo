@@ -48,7 +48,7 @@ references:
 - 竞品参考与避雷点
 - 差异化策略
 - 首集钩子方向
-- 第 3-5 集付费卡点方向
+- 首付费卡点方向（窗口读取 `foundation/constraints/commercial-formulas.yaml`）
 - 合规初筛
 
 ## 触发方式

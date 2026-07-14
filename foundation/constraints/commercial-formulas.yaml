@@ -26,7 +26,7 @@ metrics:
     safety:
       target_min: 8
       target_max: 9
-      fuse_min: 7
+      fuse_min_ref: foundation/constraints/quality-scoring.yaml#fuse_rules.dream_safety_min
     satisfaction:
       target_min: 8
       target_max: 9

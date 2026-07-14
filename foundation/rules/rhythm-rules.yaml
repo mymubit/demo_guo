@@ -7,7 +7,8 @@ items:
     title: 钩子密度
     priority: 10
     body: |
-      首集前 30 秒：视觉冲击 → 信息建立 → 悬念确立。首集目标读取 commercial-formulas.first_episode_hook_count。
+      首集前 30 秒：视觉冲击 → 信息建立 → 悬念确立。首集目标读取
+      foundation/constraints/commercial-formulas.yaml#metrics.first_episode_hook_count。
       每集集末必须留未解问题；具体钩子等级规则见 hook_effectiveness。
   - rule_key: t1.global.rhythm_rules.act-pacing
     section: rhythm_rules

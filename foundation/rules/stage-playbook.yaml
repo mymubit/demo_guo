@@ -52,7 +52,7 @@ items:
     title: 分集写作约束
     priority: 10
     body: |
-      SSOT: roles/drama-script-writer/tasks/write-episodes.md
+      格式与数值只读取 foundation/constraints/script-format.yaml；
       必须指定 episode_range；逐集依赖上一集全文+memory_checkpoint（LR-008）；禁止一次生成全剧。
   - rule_key: t3.drama-revision-master.writing_requirements.revision-only
     section: writing_requirements
@@ -79,7 +79,7 @@ items:
     title: 评分驱动技能进化
     priority: 20
     body: |
-      单批 overall_score 低于 quality-scoring.evolution_threshold 须记录至 EVOLUTION_LOG.md；
+      单批 overall_score 低于 foundation/constraints/quality-scoring.yaml#evolution_threshold 须记录至 EVOLUTION_LOG.md；
       同一维度连续 2 次低于该阈值须向 @drama-intake
       轨道一（规则进化）输出 evolution_proposal（目标 foundation/rules/ 或对应 role.yaml）。
   - rule_key: t3.drama-compliance-guard.compliance.latest-script
@@ -100,4 +100,5 @@ items:
     priority: 10
     body: |
       执行交付检查前必须读取 quality_report 与 compliance_report；
-      无合规通过结论或评分低于 quality-scoring.grade_thresholds.B 时，只输出「不可交付+缺口清单」，不产出宣发物料。
+      无合规通过结论或评分低于 foundation/constraints/quality-scoring.yaml#grade_thresholds.B 时，
+      只输出「不可交付+缺口清单」，不产出宣发物料。

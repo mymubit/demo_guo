@@ -321,13 +321,24 @@ def check_atomic_rules() -> None:
                 )
             seen[rule_key] = path
             body = str(item.get("body") or "")
-            if re.search(r"SSOT:\s*(?:knowledge|modules)/", body):
+            if re.search(r"SSOT:\s*(?:knowledge|modules|roles|orchestration)/", body):
                 err(f"{path.relative_to(ROOT)}: {rule_key} 的 SSOT 层级倒置")
+    reference_pattern = re.compile(r"`(t[1-4]\.[a-zA-Z0-9_.-]+)`")
+    for module_path in sorted((ROOT / "modules").glob("*.md")):
+        text = module_path.read_text(encoding="utf-8")
+        for rule_key in reference_pattern.findall(text):
+            if rule_key not in seen:
+                err(f"{module_path.relative_to(ROOT)}: 引用不存在的 rule_key {rule_key}")
 
 
 def check_scoring_presets() -> None:
     scoring = load_yaml(ROOT / "foundation" / "constraints" / "quality-scoring.yaml")
     expected = {item["key"] for item in scoring.get("dimensions", []) or []}
+    dimension_total = sum(
+        float(item.get("weight", 0)) for item in scoring.get("dimensions", []) or []
+    )
+    if abs(dimension_total - 1.0) > 1e-9:
+        err(f"quality-scoring: 十维权重和={dimension_total}，应为 1")
     presets = load_yaml(ROOT / "foundation" / "constraints" / "scoring-presets.yaml")
     for preset_id, preset in (presets.get("presets") or {}).items():
         weights = (preset or {}).get("weights") or {}
@@ -336,6 +347,12 @@ def check_scoring_presets() -> None:
         total = sum(float(value) for value in weights.values())
         if abs(total - 1.0) > 1e-9:
             err(f"评分预设 {preset_id}: 权重和={total}，应为 1")
+        if (
+            float((preset or {}).get("pass_threshold", 0))
+            < float((scoring.get("grade_thresholds") or {}).get("B", 0))
+            and (preset or {}).get("delivery_eligible") is not False
+        ):
+            err(f"评分预设 {preset_id}: 低于 B 级但仍允许交付")
 
 
 def check_artifact_chunk_map() -> None:
@@ -344,6 +361,27 @@ def check_artifact_chunk_map() -> None:
     for key in data.get("array_artifact_keys") or []:
         if key not in artifacts:
             err(f"artifact-chunk-map: array_artifact_keys 含未定义产物 {key}")
+
+
+def check_constraint_consistency() -> None:
+    checkpoint = load_yaml(
+        ROOT / "foundation" / "constraints" / "continuity-checkpoint.yaml"
+    )
+    required = set(checkpoint.get("required_fields") or [])
+    optional = set(checkpoint.get("optional_fields") or [])
+    schema_fields = set((checkpoint.get("schema") or {}).keys())
+    if required - schema_fields:
+        err(f"continuity-checkpoint: 必填字段无 schema {sorted(required - schema_fields)}")
+    if optional - schema_fields:
+        err(f"continuity-checkpoint: 可选字段无 schema {sorted(optional - schema_fields)}")
+    if required & optional:
+        err(f"continuity-checkpoint: 字段同时为必填和可选 {sorted(required & optional)}")
+
+    matrix = load_yaml(ROOT / "foundation" / "theme-matrix.yaml")
+    series_scale = load_yaml(ROOT / "foundation" / "constraints" / "series-scale.yaml")
+    matrix_ratio = ((matrix.get("param_synthesis") or {}).get("base") or {}).get("act_ratio")
+    if matrix_ratio != series_scale.get("base_ratios"):
+        err("theme-matrix.param_synthesis.base.act_ratio 与 series-scale.base_ratios 不一致")
 
 
 def check_section_mapping() -> None:
@@ -388,6 +426,7 @@ def main() -> int:
     check_atomic_rules()
     check_scoring_presets()
     check_artifact_chunk_map()
+    check_constraint_consistency()
 
     for msg in WARNINGS:
         print(f"WARN  {msg}")

@@ -10,7 +10,7 @@
 | `global_core` | `tier: 1` | `foundation/rules/*.yaml`（根级） | 全题材通用铁律 |
 | `genre_profile` | `tier: 2` | `foundation/rules/genres/*.yaml` | 按 `theme_code` 过滤（由 `theme-matrix.yaml` 解析） |
 | `stage_playbook` | `tier: 3` | `foundation/rules/stage-playbook.yaml` | 按 `scope_key=agent_id` |
-| `compliance_block` | `tier: 4` | `foundation/rules/compliance-core.yaml` | 合规熔断 |
+| `compliance_block` | `tier: 4` | `foundation/rules/compliance-core.yaml` + `originality-rules.yaml` | 合规与原创性 |
 
 长文参考：`knowledge/craft/tier2-genre-rules.md`、`knowledge/craft/tier3-stage-rules.md`、`knowledge/quality/tier4-compliance.md`。
 
@@ -23,7 +23,7 @@
 | drama.episode-designer | episode_emotion_8nodes, qdn_emotion_model, hook_effectiveness, emotion_externalization_dict, episode_structure, rhythm_rules, foreshadowing_rules, conflict_escalation, payment_checkpoint_3card, learned_rules |
 | drama.script-writer | episode_structure, quantitative_constraints, writing_prohibitions, writing_requirements, information_asymmetry_mechanics, emotion_externalization_dict, ai_tone_forbidden, qdn_emotion_model, format_standard, hook_effectiveness, episode_emotion_8nodes, dialogue_quality, learned_rules |
 | drama.script-scorer | scoring, format_standard, episode_structure, character_rules, hook_effectiveness, payment_checkpoint_3card, learned_rules |
-| drama.compliance-guard | compliance_block, learned_rules |
+| drama.compliance-guard | compliance_block, originality_rules, learned_rules |
 | drama.revision-master | writing_prohibitions, writing_requirements, ai_tone_forbidden, emotion_externalization_dict, dialogue_quality, rhythm_rules, quantitative_constraints, format_standard, learned_rules |
 | drama.delivery-tool | format_standard, dialogue_quality, hook_effectiveness, scoring, foreshadowing_rules, learned_rules |
 
@@ -43,7 +43,10 @@
 | `scoring-core.yaml` | scoring | 评分规范 |
 | `learned-rules.yaml` | learned_rules | 经验规则 LR |
 | `stage-playbook.yaml`（tier 3） | 按 agent scope_key | 阶段 playbook |
-| `compliance-core.yaml`（tier 4） | compliance_block（p0/p1/justice/fuse） | 合规熔断 |
+| `compliance-core.yaml`（tier 4） | p0_categories, p1_categories, p2_advisories, nine_dimension_risk_assessment, justice_tail_rule, values_bottom_line, title_compliance_rules, platform_specific, three_phase_compliance_checklist, fuse_behavior | 合规熔断 |
+| `originality-rules.yaml`（tier 4） | originality_rules | 原创性保护 |
+| `concept-rules.yaml`（tier 1） | concept_development | 基础候选，待上层角色设计分配 |
+| `structure-rules.yaml`（tier 1） | series_structure, episode_card, continuity | 基础候选，待上层角色设计分配 |
 | `genre-profile.yaml` + `genres/*.yaml`（tier 2） | genre_rules, rhythm_rules（题材覆盖） | 题材规则 |
 
 > `quantitative_constraints` / `format_standard` 两个 section 的数值来自 `foundation/constraints/script-format.yaml`，由后端注入时合成，不在规则文件中重复。
@@ -51,5 +54,7 @@
 ## 数值 SSOT
 
 字数、场景数、台词占比 → **`foundation/constraints/script-format.yaml`**；
-评分维度、权重、等级阈值（S≥90 / A≥80 / B≥75 / C≥60）→ **`foundation/constraints/quality-scoring.yaml`**。
+评分维度、权重、等级阈值 → **`foundation/constraints/quality-scoring.yaml`**；
+商业公式 → **`foundation/constraints/commercial-formulas.yaml`**；
+结构缩放 → **`foundation/constraints/series-scale.yaml`**。
 禁止在其他文件硬编码上述数值。

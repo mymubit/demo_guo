@@ -24,7 +24,8 @@ items:
     priority: 10
     body: |
       全剧伏笔清单化：已埋 / 待回扣 / 已回收。每 10 集至少 1 个 A 级伏笔；S 级反转需 5+ 集铺垫。
-      禁止无铺垫硬反转；S 级揭露窗口读取 commercial-formulas.s_reversal_window。
+      禁止无铺垫硬反转；S 级揭露窗口读取
+      foundation/constraints/commercial-formulas.yaml#metrics.s_reversal_window。
   - rule_key: t1.global.foreshadowing_rules.payoff
     section: foreshadowing_rules
     title: 回扣与记忆检查点

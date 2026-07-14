@@ -11,6 +11,10 @@ required_fields:
   - rhythm_state
   - next_episode_constraints
 
+optional_fields:
+  - relationship_changes
+  - prop_states
+
 schema:
   episode: integer
   character_states:
@@ -31,6 +35,7 @@ schema:
     type: array
     item_fields: [prop, holder, state, narrative_function]
   rhythm_state:
+    type: object
     item_fields: [plot_pace, emotion_pace, episode_ev, episode_et, episode_tp]
   next_episode_constraints:
     type: array

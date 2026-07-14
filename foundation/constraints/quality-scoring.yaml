@@ -5,6 +5,9 @@
 #   grade_thresholds / revision_threshold / fuse_rules = seed_default：
 #     业务运营参数，商业网站应支持后台（system_config）覆盖，本文件提供默认值
 version: "1.2.0"
+config_tiers:
+  dimensions: git_ssot
+  business_defaults: seed_default
 framework: geval
 score_scale: 100
 

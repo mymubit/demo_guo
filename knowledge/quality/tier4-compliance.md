@@ -1,6 +1,7 @@
 # compliance_block 参考（合规熔断）
 
-> **参考长文**；可执行规则 SSOT：`foundation/rules/compliance-core.yaml`
+> **参考长文**；合规执行 SSOT：`foundation/rules/compliance-core.yaml`；
+> 原创性执行 SSOT：`foundation/rules/originality-rules.yaml`。
 >
 > **使用方式**：drama.compliance-guard 执行合规检测时读取；drama.topic-director 立项前预检可选。
 

@@ -47,9 +47,7 @@ output_schema:
 ## 标准输出要求
 
 - 指定 `episode_range` 的剧本正文
-- 每集 1-3 场
-- 第 1 集 900-1100 字，其余 700-900 字
-- 台词占比 >= 35%
+- 场景数、字数和台词占比严格读取 `foundation/constraints/script-format.yaml`
 - 标准场景头
 - 角色情绪式台词
 - 动作外化

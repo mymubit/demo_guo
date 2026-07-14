@@ -7,17 +7,15 @@
 
 ## 执行步骤
 1. 确认 episode_range，只生成范围内集数
-2. 每集 1–3 场景，第 1 集第一场从最大张力横截面切入
+2. 按 `script-format.yaml` 的场景数约束拆场，第 1 集第一场从最大张力横截面切入
 3. 每场戏验证 Goal×Conflict 与 McKee 价值转变
 4. 每集完成后输出 memory_checkpoint
 5. 每集输出字数、台词占比、格式自检和可传播金句
 6. 输出合法 JSON，遵循 `episode-scripts.v1`
 
 ## 数值约束
-引用 `foundation/constraints/script-format.yaml`：
-- 第 1 集 900–1100 字，其余 700–900 字
-- 台词占比 ≥ 35%
-- 每集场景数 1–3
+字数、台词占比和场景数只读取 `foundation/constraints/script-format.yaml`，不得在任务中复制数值。
+`memory_checkpoint` 读取 `foundation/constraints/continuity-checkpoint.yaml`。
 
 ## expected_output
 ```json
@@ -30,7 +28,7 @@
       "word_count": 850,
       "dialogue_ratio": 0.38,
       "scene_count": 2,
-      "memory_checkpoint": {}
+      "memory_checkpoint": {"episode": 1, "character_states": [], "active_clues": [], "foreshadowing": [], "rhythm_state": {}, "next_episode_constraints": []}
     }
   ]
 }
