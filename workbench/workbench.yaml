@@ -200,10 +200,10 @@ runtime_projection:
     batch_episode_max: creation_preferences.batch_episode_max
 
 stages:
-  - {id: strategy, stage_kind: main, role: drama.topic-director, artifact: project_brief, visible_when: "entry_type == 'original_track'"}
-  - {id: blueprint, stage_kind: main, role: drama.story-bible, artifact: story_bible, approval_required: true}
-  - {id: episode_design, stage_kind: main, role: drama.episode-designer, artifact: narrative_plan}
-  - {id: writing, stage_kind: main, role: drama.script-writer, artifact: episode_scripts, batch_field: episode_range}
+  - {id: strategy, orchestration_phase: strategy, stage_kind: main, role: drama.topic-director, artifact: project_brief, visible_when: "entry_type == 'original_track'"}
+  - {id: blueprint, orchestration_phase: blueprint, stage_kind: main, role: drama.story-bible, artifact: story_bible, approval_required: true}
+  - {id: episode_design, orchestration_phase: episode_design, stage_kind: main, role: drama.episode-designer, artifact: narrative_plan}
+  - {id: writing, orchestration_phase: writing, stage_kind: main, role: drama.script-writer, artifact: episode_scripts, batch_field: episode_range}
   - {id: quality_score, stage_kind: quality_loop, role: drama.script-scorer, artifact: quality_report, parallel_group: quality}
   - {id: compliance, stage_kind: quality_loop, role: drama.compliance-guard, artifact: compliance_report, parallel_group: quality}
   - {id: revision, stage_kind: quality_loop, role: drama.revision-master, artifact: polished_script, conditional: true}

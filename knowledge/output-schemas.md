@@ -1,6 +1,7 @@
 # 输出契约 Schema（Output Schemas）
 
-> **SSOT**：`registry.yaml` 的 `default_output_artifact_key` + `schema_version`；字段细节以本文档与 `roles/*/role.yaml` 为准。
+> **机器 SSOT**：`schemas/artifacts/*.schema.json`；本文件是人类可读说明。
+> 角色与版本索引以 `registry.yaml` 为准。
 
 ## schema 索引
 

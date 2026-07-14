@@ -1,0 +1,17 @@
+version: "1.0.0"
+cases:
+  - {id: Q001, category: quality_gate, input: {score: 82, blocking_issues: []}, expected: {decision: pass}}
+  - {id: Q002, category: quality_gate, input: {score: 74, blocking_issues: []}, expected: {decision: revise}}
+  - {id: Q003, category: quality_gate, input: {score: 90, blocking_issues: [P1]}, expected: {decision: revise}}
+  - {id: Q004, category: continuity, input: {conflicting_facts: 0}, expected: {result: pass}}
+  - {id: Q005, category: continuity, input: {conflicting_facts: 2}, expected: {result: fail}}
+  - {id: Q006, category: compliance, input: {highest_risk: p0}, expected: {result: 不通过, blocking: true}}
+  - {id: Q007, category: compliance, input: {highest_risk: p1}, expected: {result: 风险, blocking: true}}
+  - {id: Q008, category: compliance, input: {highest_risk: p2}, expected: {result: 风险, blocking: false}}
+  - {id: Q009, category: production, input: {tags: [location_change]}, expected: {band: lean}}
+  - {id: Q010, category: production, input: {tags: [stunt, digital_vfx, period_setting]}, expected: {band: complex}}
+  - {id: Q011, category: platform, input: {release_requested: true, policy_status: requires_runtime_verification}, expected: {can_release: false}}
+  - {id: Q012, category: platform, input: {release_requested: false, policy_status: common_rules_only}, expected: {can_release: false, package_allowed: true}}
+  - {id: Q013, category: trend, input: {scores: [70, 70.5]}, expected: {trend: stagnant}}
+  - {id: Q014, category: trend, input: {scores: [75, 70]}, expected: {trend: diverging}}
+  - {id: Q015, category: trend, input: {scores: [70, 75, 72]}, expected: {trend: oscillating}}

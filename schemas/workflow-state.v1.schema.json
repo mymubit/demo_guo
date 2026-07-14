@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills://schemas/workflow-state.v1",
+  "type": "object",
+  "required": ["schema_version", "project_id", "version", "entry_type", "status", "current_phase", "approvals", "batch_cursor", "revision_round", "score_history", "quality_results", "artifacts", "processed_commands"],
+  "properties": {
+    "schema_version": {"const": "workflow-state.v1"},
+    "project_id": {"type": "string", "minLength": 1},
+    "version": {"type": "integer", "minimum": 0},
+    "entry_type": {"enum": ["original_track", "story_adapt"]},
+    "status": {"enum": ["active", "waiting_approval", "waiting_quality", "waiting_user", "completed", "blocked"]},
+    "current_phase": {"enum": ["strategy", "blueprint", "blueprint_approval", "episode_design", "writing", "quality", "revision", "delivery", "completed"]},
+    "approvals": {"type": "object"},
+    "batch_cursor": {"type": "integer", "minimum": 1},
+    "revision_round": {"type": "integer", "minimum": 0},
+    "score_history": {"type": "array", "items": {"type": "number", "minimum": 0, "maximum": 100}},
+    "quality_results": {"type": "object"},
+    "artifacts": {"type": "object"},
+    "processed_commands": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "blocked_reason": {"type": ["string", "null"]},
+    "pending_user_options": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

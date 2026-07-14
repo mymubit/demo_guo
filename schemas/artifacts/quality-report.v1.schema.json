@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills://artifacts/quality-report.v1",
+  "type": "object",
+  "required": ["drama_title", "scored_artifact", "resolved_script_key", "scoring_preset", "pass_threshold", "overall_score", "grade", "can_continue_next_batch", "needs_revision", "dimensions", "defects", "continuity_summary", "revision_priorities", "verdict"],
+  "properties": {
+    "drama_title": {"type": "string"},
+    "scored_artifact": {"const": "latest_script"},
+    "resolved_script_key": {"enum": ["polished_script", "episode_scripts", "external_script"]},
+    "scoring_preset": {"enum": ["standard", "strict", "relaxed", "rhythm_first"]},
+    "pass_threshold": {"type": "number", "minimum": 0, "maximum": 100},
+    "config_revision": {"type": "string"},
+    "overall_score": {"type": "number", "minimum": 0, "maximum": 100},
+    "grade": {"enum": ["S", "A", "B", "C", "D"]},
+    "can_continue_next_batch": {"type": "boolean"},
+    "needs_revision": {"type": "boolean"},
+    "dimensions": {
+      "type": "object",
+      "required": ["format", "narrative", "conflict", "character", "emotion", "logic", "satisfaction", "hooks", "paywall", "genre_fit"],
+      "properties": {
+        "format": {"$ref": "score-dimension.v1.schema.json"},
+        "narrative": {"$ref": "score-dimension.v1.schema.json"},
+        "conflict": {"$ref": "score-dimension.v1.schema.json"},
+        "character": {"$ref": "score-dimension.v1.schema.json"},
+        "emotion": {"$ref": "score-dimension.v1.schema.json"},
+        "logic": {"$ref": "score-dimension.v1.schema.json"},
+        "satisfaction": {"$ref": "score-dimension.v1.schema.json"},
+        "hooks": {"$ref": "score-dimension.v1.schema.json"},
+        "paywall": {"$ref": "score-dimension.v1.schema.json"},
+        "genre_fit": {"$ref": "score-dimension.v1.schema.json"}
+      },
+      "additionalProperties": false
+    },
+    "defects": {"type": "array", "items": {"type": "object"}},
+    "continuity_summary": {
+      "type": "object",
+      "required": ["result", "issues"],
+      "properties": {
+        "result": {"enum": ["pass", "warning", "fail"]},
+        "issues": {"type": "array", "items": {"type": "object"}}
+      },
+      "additionalProperties": false
+    },
+    "revision_priorities": {"type": "array", "items": {"type": "object"}},
+    "evolution_proposal": {"type": ["object", "null"]},
+    "verdict": {"enum": ["通过", "条件通过", "需要修改", "重大返工"]}
+  },
+  "additionalProperties": false
+}

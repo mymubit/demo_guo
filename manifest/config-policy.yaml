@@ -29,16 +29,16 @@ overlay_files:
       - agents.*.temperature
   foundation/constraints/script-format.yaml:
     allowed_paths:
-      - episode_word_count
-      - dialogue_ratio
-      - scenes_per_episode
+      - episode_word_count.*.*
+      - dialogue_ratio.*
+      - scenes_per_episode.*
   foundation/constraints/quality-scoring.yaml:
     allowed_paths:
-      - grade_thresholds
+      - grade_thresholds.*
       - revision_threshold
       - evolution_threshold
-      - fuse_rules
-      - format_error_rate
+      - fuse_rules.*
+      - format_error_rate.*
   foundation/constraints/commercial-formulas.yaml:
     allowed_paths:
       - metrics.*.target_min

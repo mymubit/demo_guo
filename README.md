@@ -18,11 +18,13 @@ drama-skills/
 │       └── genres/matrix.yaml    # 四轴合成后的题材规则入口
 ├── roles/<slug>/                 # 每角色：role.yaml + SKILL.md [+ tasks/]
 ├── modules/                      # 能力块（输入/规则引用/输出/步骤/失败条件/自检）
-│   └── catalog.yaml             # 模块领域、状态与待挂载基础能力目录
+│   └── catalog.yaml             # 模块领域、角色挂载与条件加载目录
 ├── manifest/                     # Bundle清单与后台覆盖白名单
-├── workbench/                    # 工作台字段、阶段和面板机器契约
-├── schemas/                      # 项目设置与运营覆盖JSON Schema
+├── workbench/                    # 工作台字段、阶段、面板与API契约
+├── schemas/                      # 项目、流程、后台与全部产物JSON Schema
 ├── orchestration/                # original-track / story-adapt-track 双通道
+├── runtime/                      # 流程状态机参考实现
+├── quality/                      # 确定性质量回归用例
 ├── knowledge/                    # 参考长文（按消费场景分目录）
 │   ├── craft/                    #   创作方法论（山音编剧/题材/阶段/LR详解）
 │   ├── market/                   #   市场数据（时效性，后台配置候选）
@@ -34,7 +36,7 @@ drama-skills/
 ├── inspirations/                 # 创意素材库（进化轨道二/四写入）
 ├── drama-master/                 # 创作总入口 @drama-master
 ├── drama-intake/                 # 技能进化入口 @drama-intake
-└── build/                        # 仓库维护与校验脚本（validate_skills.py 必跑）
+└── build/                        # 解析器、导出器、校验脚本、fixtures与单元测试
 ```
 
 机器可读治理入口：`manifest/drama-skills.manifest.yaml`；
@@ -126,6 +128,10 @@ python manage.py sync_drama_from_git
 
 ```bash
 python build/validate_workbench.py
+python build/validate_artifacts.py
+python build/validate_config.py
+python build/validate_workflow.py
+python build/validate_quality_cases.py
 ```
 
 ## 工作台与后台配置边界
@@ -134,6 +140,9 @@ python build/validate_workbench.py
 - 运营后台：只能覆盖 `manifest/config-policy.yaml#overlay_files` 白名单中的 seed defaults。
 - Git 硬规则：角色组合、原子规则、编排拓扑、产物契约、题材枚举和合规红线禁止后台覆盖。
 - 每次后台修改必须记录版本、操作人、时间和原因，并保留可回滚历史。
+
+前端通过 `python build/export_workbench_schema.py` 导出表单定义，并按
+`workbench/api-contract.yaml` 接入 ScriptForge。当前独立技能仓不包含网站前后端源码。
 
 ## 底层知识分层
 

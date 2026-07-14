@@ -11,6 +11,8 @@ from typing import Any, Dict, List
 
 import yaml
 
+from export_workbench_schema import export_definition
+
 ROOT = Path(__file__).resolve().parents[1]
 ERRORS: List[str] = []
 
@@ -125,6 +127,22 @@ def check_workbench() -> None:
             ERRORS.append(f"工作台阶段 {stage.get('id')}: 未注册角色 {role_id}")
         elif stage.get("artifact") != artifacts[role_id]:
             ERRORS.append(f"工作台阶段 {stage.get('id')}: 产物与角色契约不一致")
+    declared_main_phases = {
+        stage.get("orchestration_phase")
+        for stage in workbench.get("stages", []) or []
+        if stage.get("stage_kind") == "main"
+    }
+    orchestration_phases = set()
+    for track_path in (
+        "orchestration/original-track.yaml",
+        "orchestration/story-adapt-track.yaml",
+    ):
+        orchestration_phases.update(
+            phase.get("phase")
+            for phase in load_yaml(track_path).get("phases", []) or []
+        )
+    if declared_main_phases != orchestration_phases:
+        ERRORS.append("工作台主阶段与编排 phases 不一致")
 
     fields = ((workbench.get("project_settings") or {}).get("fields") or {})
     matrix = load_yaml("foundation/theme-matrix.yaml")
@@ -236,6 +254,24 @@ def check_orchestration_contract() -> None:
             ERRORS.append(f"{relative_path}: 不得同时保留自然语言 condition")
 
 
+def check_form_export() -> None:
+    try:
+        exported = export_definition()
+        json.dumps(exported, ensure_ascii=False)
+    except (KeyError, ValueError, OSError) as exc:
+        ERRORS.append(f"工作台表单导出失败: {exc}")
+        return
+    fields = ((exported.get("project_settings") or {}).get("fields") or {})
+    for name, definition in fields.items():
+        unresolved = {
+            key
+            for key in ("options_source", "fields_source", "max_items_source")
+            if key in definition
+        }
+        if unresolved:
+            ERRORS.append(f"工作台字段 {name}: 导出后仍有未解析来源 {sorted(unresolved)}")
+
+
 def schema_has_path(schema: Dict[str, Any], dotted_path: str) -> bool:
     current = schema
     for part in dotted_path.split("."):
@@ -252,6 +288,7 @@ def main() -> int:
     check_role_params()
     check_workbench()
     check_orchestration_contract()
+    check_form_export()
     for message in ERRORS:
         print(f"ERROR {message}")
     print(f"\n工作台校验完成：{len(ERRORS)} 错误")

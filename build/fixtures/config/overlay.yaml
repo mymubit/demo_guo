@@ -1,0 +1,16 @@
+schema_version: ops-config-overlay.v1
+tenant_id: test
+skills_version: "5.0.0"
+overrides:
+  foundation/constraints/quality-scoring.yaml:
+    grade_thresholds:
+      B: 78
+  foundation/constraints/script-format.yaml:
+    episode_word_count:
+      first_episode:
+        max: 1050
+audit:
+  revision: 1
+  updated_by: test-admin
+  updated_at: "2026-07-14T00:00:00Z"
+  change_reason: 回归测试
