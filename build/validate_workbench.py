@@ -98,13 +98,17 @@ def check_role_params() -> None:
         role_path = f"{role['skill_dir']}/role.yaml"
         meta = load_yaml(role_path)
         contract = meta.get("input_contract") or {}
-        params = set(contract.get("params") or [])
         params_schema = contract.get("params_schema") or {}
-        if params != set(params_schema):
-            ERRORS.append(f"{role['agent_id']}: params 与 params_schema 不一致")
         for name, definition in params_schema.items():
             if (definition or {}).get("type") not in allowed_types:
                 ERRORS.append(f"{role['agent_id']}.{name}: 非法参数类型")
+        for mode_name, mode in (contract.get("input_modes") or {}).items():
+            for field in ("required_params", "forbidden_params"):
+                for param in (mode or {}).get(field) or []:
+                    if param not in params_schema:
+                        ERRORS.append(
+                            f"{role['agent_id']}.{mode_name}: {field} 引用未知参数 {param}"
+                        )
 
 
 def check_workbench() -> None:
@@ -181,7 +185,13 @@ def check_workbench() -> None:
             ERRORS.append(f"runtime_projection 指向未注册角色: {target}")
             continue
         target_params = (
-            set(((role_metas[target].get("input_contract") or {}).get("params") or []))
+            set(
+                (
+                    (role_metas[target].get("input_contract") or {})
+                    .get("params_schema", {})
+                    .keys()
+                )
+            )
             if target in role_metas
             else set()
         )

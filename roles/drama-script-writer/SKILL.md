@@ -11,11 +11,15 @@ tags:
 dept: 正文创作部
 modules:
 - scene-writing
+- dialogue-craft
 - continuity-snapshot
+- production-feasibility
 references:
 - ./role.yaml
 - ../../modules/scene-writing.md
+- ../../modules/dialogue-craft.md
 - ../../modules/continuity-snapshot.md
+- ../../modules/production-feasibility.md
 - ../../foundation/constraints/script-format.yaml
 - ../../foundation/methodology/cross-section.md
 - ../../foundation/methodology/mckee-value-shift.md
@@ -45,7 +49,7 @@ output_schema:
 |------|-----|------|
 | 输出 | `episode_scripts` | schema: `episode-scripts.v1` |
 | 输入（必填） | `story_bible` | 上游产物（人物层 + 结构层） |
-| 输入（可选） | `narrative_plan` | 分集设计（若有则严格遵循） |
+| 输入（必填） | `narrative_plan` | 分集设计 |
 | 输入（可选） | `project_brief` | 上游产物 |
 | 参数 | `episode_range` | 运行参数 |
 
@@ -61,6 +65,7 @@ output_schema:
 - 台词占比统计
 - 格式自检结果
 - memory_checkpoint
+- production_notes（制片复杂度与低成本替代方案）
 
 ## 延伸阅读
 

@@ -13,6 +13,7 @@ tags:
 dept: 剧本蓝图部
 modules:
 - character-system
+- world-rules
 - series-structure
 - series-emotion-curve
 - conflict-escalation
@@ -25,6 +26,7 @@ output_schema:
 references:
 - ./role.yaml
 - ../../modules/character-system.md
+- ../../modules/world-rules.md
 - ../../modules/series-structure.md
 - ../../modules/series-emotion-curve.md
 - ../../modules/conflict-escalation.md

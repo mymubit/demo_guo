@@ -62,7 +62,7 @@ quality_loop:
         - {path: compliance_report.blocking_issues, op: not_empty}
     agent: drama.revision-master
     then: 修复稿交回 parallel_judges 复评，通过后才可继续生成下一批
-  score_target: latest_script  # 修复稿优先：polished_script > episode_scripts
+  score_target: latest_script
   on_stop:
     action: require_user_decision
     options: [accept_current, manual_revision, abandon_batch]
@@ -70,5 +70,3 @@ quality_loop:
 optional_agents:
   - drama.delivery-tool
 
-# 兼容说明：本文件替代 v4 的 fast-track.yaml 与 expert-track.yaml
-#（专家通道与标准通道的唯一差异是宣发交付，已由 optional_agents 表达）。

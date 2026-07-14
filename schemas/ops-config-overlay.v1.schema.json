@@ -34,7 +34,8 @@
         "foundation/constraints/quality-scoring.yaml": {"type": "object"},
         "foundation/constraints/commercial-formulas.yaml": {"type": "object"},
         "foundation/constraints/scoring-presets.yaml": {"type": "object"},
-        "foundation/constraints/platform-profiles.yaml": {"type": "object"}
+        "foundation/constraints/platform-profiles.yaml": {"type": "object"},
+        "foundation/constraints/production-feasibility.yaml": {"type": "object"}
       },
       "additionalProperties": false
     },

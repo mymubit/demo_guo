@@ -146,7 +146,7 @@
 ## drama.script-scorer — 十维评分（质检环 · 独立技能）
 
 ```
-1. 评分对象按「修复稿优先」：polished_script > episode_scripts > external_script
+1. 评分对象统一读取 `latest_script`
 2. 输出 quality_report（schema: quality-report.v1）
 3. defects 路由至 drama.revision-master；低于 B 级（75）阻断下一批生成
 4. overall_score < 70 → 记录至 EVOLUTION_LOG，考虑规则补丁
@@ -174,7 +174,7 @@
 ## drama.compliance-guard — 合规（质检环 · 独立技能）
 
 ```
-与评分官并行触发；审查对象按「修复稿优先」取最新版本。
+与评分官并行触发；审查对象统一读取 `latest_script`。
 P0 或未解决 P1 → 拒绝出具通过报告，阻断下游。
 详见 knowledge/quality/tier4-compliance.md。
 ```

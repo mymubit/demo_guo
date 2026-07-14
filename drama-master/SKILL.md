@@ -84,7 +84,7 @@ output_schema:
 | 剧本蓝图 | story-bible | story_bible | 梗概+人物+世界观+全剧结构；改编模式吃 external_story |
 | 分集设计 | episode-designer | narrative_plan | 分批（episode_range） |
 | 正文创作 | script-writer | episode_scripts | 分批（每批 ≤5 集） |
-| 独立评分 | script-scorer | quality_report | 质检环；修复稿优先 |
+| 独立评分 | script-scorer | quality_report | 质检环；读取 latest_script |
 | 合规审查 | compliance-guard | compliance_report | 质检环；与评分并行 |
 | 剧本修复 | revision-master | polished_script | 质检环；修复后必须复评 |
 | 宣发交付 | delivery-tool（可选） | production_package | 前置门禁：评分+合规通过 |

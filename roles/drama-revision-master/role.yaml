@@ -3,7 +3,6 @@ name: Revision Master
 name_zh: 剧本修复官
 dept: quality
 role_tier: production
-fast_track: true
 workspace_order: 503
 default_output_artifact_key: polished_script
 schema_version: polished-script.v1
@@ -20,18 +19,13 @@ rule_policy:
 skill_dir: roles/drama-revision-master
 # 独立技能：由评分环触发（低于 B 级）或用户手动调用；产出修复稿后必须交回评分官复评。
 input_contract:
-  required_artifacts: []
-  required_artifacts_any_of:
-  - polished_script
-  - episode_scripts
+  required_artifacts:
+  - latest_script
   optional_artifacts:
   - quality_report
   - compliance_report
   - story_bible
   - narrative_plan
-  params:
-  - episode_range
-  - focus_areas
   params_schema:
     episode_range:
       type: string

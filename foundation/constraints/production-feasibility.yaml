@@ -1,0 +1,35 @@
+# 制片复杂度标签与预算带种子配置
+# 方法与标签为 Git SSOT；权重和分级阈值允许后台按制作体系覆盖。
+version: "1.0.0"
+config_tiers:
+  tag_definitions: git_ssot
+  scoring_defaults: seed_default
+
+tags:
+  location_change: {label_zh: 场地切换, weight: 1}
+  exterior: {label_zh: 外景, weight: 1}
+  night_shoot: {label_zh: 夜戏, weight: 1}
+  crowd: {label_zh: 群演场面, weight: 2}
+  stunt: {label_zh: 危险动作, weight: 3}
+  special_prop: {label_zh: 特殊道具, weight: 1}
+  practical_effect: {label_zh: 实拍特效, weight: 2}
+  digital_vfx: {label_zh: 数字特效, weight: 3}
+  minor_actor: {label_zh: 未成年演员, weight: 2}
+  animal: {label_zh: 动物拍摄, weight: 2}
+  period_setting: {label_zh: 年代/古装置景, weight: 3}
+
+complexity_bands:
+  lean: {max_score: 3}
+  standard: {min_score: 4, max_score: 8}
+  complex: {min_score: 9}
+
+required_output:
+  - tags
+  - complexity_score
+  - complexity_band
+  - high_cost_scenes
+  - lower_cost_alternatives
+
+currency_estimation:
+  enabled_by_default: false
+  required_context: [currency, region, pricing_version, excluded_items]

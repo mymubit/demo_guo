@@ -9,7 +9,7 @@ items:
     source_ref: knowledge/craft/shanyin-series-format.md
     body: |
       阶段顺序与基础占比读取 foundation/constraints/series-scale.yaml。
-      题材合成后的 project_brief.rule_params.act_ratio 可覆盖基础占比；不得同时使用 legacy 题材硬编码比例。
+      题材合成后的 project_brief.rule_params.act_ratio 可覆盖基础占比；不得使用其他硬编码阶段比例。
   - rule_key: t1.global.series_structure.boundary
     section: series_structure
     title: 蓝图层结构边界

@@ -1,0 +1,33 @@
+# global_core · 世界规则原子规范
+version: "1.0.0"
+tier: 1
+items:
+  - rule_key: t1.global.world_rules.actionable
+    section: world_rules
+    title: 可行动世界规则
+    priority: 10
+    body: |
+      只保留会改变人物目标、选择、代价或资源分配的世界规则。
+      每条规则必须说明适用对象、触发条件、违反代价和可见表现，禁止百科式设定堆积。
+  - rule_key: t1.global.world_rules.power-structure
+    section: world_rules
+    title: 权力与资源结构
+    priority: 11
+    body: |
+      明确谁控制稀缺资源、谁制定规则、谁承担代价，以及主角可利用的制度缝隙。
+      权力结构必须能持续产生主线冲突，不能只作为背景介绍。
+  - rule_key: t1.global.world_rules.information-release
+    section: world_rules
+    title: 世界信息释放
+    priority: 12
+    source_ref: knowledge/craft/shanyin-series-format.md
+    body: |
+      世界规则通过人物行动和后果逐层释放；单集最多引入一个新规则层。
+      禁止旁白或台词集中讲解设定，新规则首次出现时必须立即影响选择。
+  - rule_key: t1.global.world_rules.consistency
+    section: world_rules
+    title: 规则一致性
+    priority: 13
+    body: |
+      相同条件必须产生一致后果；例外必须提前声明来源和代价。
+      所有新增规则写入 story_bible.world_rules，后续分集不得临时发明破局规则。

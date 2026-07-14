@@ -1,5 +1,5 @@
 # genre_profile · 四轴合成题材 — theme_code: matrix
-# 当 project_brief.genre_matrix 存在时使用；参数来自 param_synthesis，非 8 预设 archetype
+# 所有题材统一通过 genre_matrix + param_synthesis 生成参数
 genre_key: matrix
 label_zh: 四轴合成
 tier: 2

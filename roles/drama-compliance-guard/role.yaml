@@ -3,7 +3,6 @@ name: Compliance Guard
 name_zh: 合规审查官
 dept: quality
 role_tier: judge
-fast_track: true
 workspace_order: 502
 default_output_artifact_key: compliance_report
 schema_version: compliance-report.v1
@@ -16,19 +15,13 @@ rule_policy:
   - compliance_block
   max_chars: 3200
 skill_dir: roles/drama-compliance-guard
-# 独立技能：默认与评分官并行触发，审「当前最新版本」剧本（修复稿优先）。
+# 独立技能：默认与评分官并行触发，统一审查 latest_script。
 input_contract:
-  required_artifacts: []
-  required_artifacts_any_of:
-  - polished_script
-  - episode_scripts
-  - external_script
+  required_artifacts:
+  - latest_script
   optional_artifacts:
   - project_brief
   - story_bible
-  params:
-  - check_mode
-  - target_platform
   params_schema:
     check_mode:
       type: string

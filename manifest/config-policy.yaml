@@ -59,6 +59,11 @@ overlay_files:
       - platforms.*.policy_source
       - platforms.*.verified_at
       - platforms.*.notes
+  foundation/constraints/production-feasibility.yaml:
+    allowed_paths:
+      - tags.*.weight
+      - complexity_bands.*.min_score
+      - complexity_bands.*.max_score
 
 runtime_content:
   knowledge/market/**:

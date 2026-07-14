@@ -8,6 +8,7 @@
     "entry_type",
     "episode_count",
     "target_platform",
+    "production_context",
     "creation_preferences",
     "audit"
   ],
@@ -81,6 +82,21 @@
       "type": "array",
       "items": {"type": "string"}
     },
+    "production_context": {
+      "type": "object",
+      "required": ["target_band"],
+      "properties": {
+        "target_band": {"enum": ["lean", "standard", "complex"]},
+        "region": {"type": "string"},
+        "currency": {"type": "string"},
+        "pricing_version": {"type": "string"},
+        "excluded_items": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      },
+      "additionalProperties": false
+    },
     "creation_preferences": {
       "type": "object",
       "required": [
@@ -99,7 +115,7 @@
         "delivery_items": {
           "type": "array",
           "uniqueItems": true,
-          "items": {"enum": ["storyboard", "visual", "marketing", "interactive"]}
+          "items": {"enum": ["storyboard", "visual", "marketing", "interactive", "budget", "release"]}
         }
       },
       "additionalProperties": false

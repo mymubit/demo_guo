@@ -15,7 +15,7 @@ drama-skills/
 │   ├── theme-matrix.yaml         # 四轴 9^4 + 69 风味标签 + 32 创新组合
 │   ├── methodology/              # 方法论长文
 │   └── rules/                    # 规则条目 YAML，8 个主题 global 文件 + stage + compliance
-│       └── genres/               # 规则模板（8 预设 + hybrid + matrix）的 genre 规则
+│       └── genres/matrix.yaml    # 四轴合成后的题材规则入口
 ├── roles/<slug>/                 # 每角色：role.yaml + SKILL.md [+ tasks/]
 ├── modules/                      # 能力块（输入/规则引用/输出/步骤/失败条件/自检）
 │   └── catalog.yaml             # 模块领域、状态与待挂载基础能力目录
@@ -118,7 +118,7 @@ python manage.py sync_drama_from_git
 | 注册新角色 | `registry.yaml` + 新建 `roles/<slug>/` + `stage-playbook.yaml` 条目 |
 | 改流程顺序 | `orchestration/*.yaml` |
 | 四轴矩阵 / 题材映射 | `foundation/theme-matrix.yaml` |
-| 规则模板量化参数 | `knowledge/craft/theme-templates.md` + `foundation/rules/genres/` |
+| 规则模板量化参数 | `foundation/theme-matrix.yaml` + `foundation/rules/genres/matrix.yaml` |
 
 改完运行一致性校验：`python build/validate_skills.py`
 
@@ -130,7 +130,7 @@ python build/validate_workbench.py
 
 ## 工作台与后台配置边界
 
-- 项目设置：题材四轴、风味标签、集数、平台、评分预设、批次和交付选项，见 `workbench/workbench.yaml`。
+- 项目设置：题材四轴、风味标签、集数、平台、制作复杂度目标、评分预设、批次和交付选项，见 `workbench/workbench.yaml`。
 - 运营后台：只能覆盖 `manifest/config-policy.yaml#overlay_files` 白名单中的 seed defaults。
 - Git 硬规则：角色组合、原子规则、编排拓扑、产物契约、题材枚举和合规红线禁止后台覆盖。
 - 每次后台修改必须记录版本、操作人、时间和原因，并保留可回滚历史。

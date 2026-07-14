@@ -3,7 +3,6 @@ name: Episode Designer
 name_zh: 分集设计官
 dept: episode_design
 role_tier: production
-fast_track: true
 workspace_order: 301
 default_output_artifact_key: narrative_plan
 schema_version: narrative-plan.v1
@@ -22,8 +21,6 @@ rule_policy:
   max_chars: 3600
 skill_dir: roles/drama-episode-designer
 input_contract:
-  params:
-  - episode_range
   params_schema:
     episode_range:
       type: string

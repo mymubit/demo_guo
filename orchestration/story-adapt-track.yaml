@@ -2,7 +2,7 @@
 version: "5.0.0"
 entry_type: story_adapt
 label: 故事改编通道
-description: 用户提供故事/小说/大纲时的通道：剧本蓝图官以改编模式提取并补全故事蓝图，之后与原创通道完全共链。替代 v4 的 ip-adapt.yaml。
+description: 用户提供故事/小说/大纲时的通道：剧本蓝图官以改编模式提取并补全故事蓝图，之后与原创通道完全共链。
 project_settings_schema: schemas/project-settings.v1.schema.json
 
 entry_requirements:
@@ -10,9 +10,8 @@ entry_requirements:
     - external_story
     - episode_count
     - target_platform
-  params:
-    - external_story   # 用户粘贴的故事/小说/大纲原文
-    - adapt_notes      # 可选：保留什么、强化什么、改写什么
+  optional_settings:
+    - adapt_notes
 
 phases:
   - phase: blueprint

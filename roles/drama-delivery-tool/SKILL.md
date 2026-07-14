@@ -16,6 +16,8 @@ modules:
 - marketing-copy
 - delivery-check
 - story-to-game
+- budget-estimator
+- platform-ops-checklist
 output_schema:
 - name: production_package
   type: object
@@ -27,6 +29,8 @@ references:
 - ../../modules/marketing-copy.md
 - ../../modules/delivery-check.md
 - ../../modules/story-to-game.md
+- ../../modules/budget-estimator.md
+- ../../modules/platform-ops-checklist.md
 - ../../knowledge/production/story-to-game.md
 - ../../knowledge/production/shanyin-director-methodology.md
 - ../../knowledge/production/shanyin-director-styles.md
@@ -36,14 +40,15 @@ references:
 
 ## 职责
 
-这是可选工具，不进入默认创作完成率。仅在剧本需要投放、交付、视觉包装或互动改编时调用。
+这是可选工具，不进入默认创作完成率。用于把终稿转成制作、预算、上架、宣发或互动改编物料。
 
 ## 执行流程
 
-1. **先跑交付门禁**（`modules/delivery-check.md`）：质量 ≥B 级 + 合规通过 + 集数/字数完整，任一不过只输出缺口清单
-2. 生成视觉物料（`modules/visual-anchor.md`）与营销文案（`modules/marketing-copy.md`）
-3. 按需生成互动改编版本（`modules/story-to-game.md`）
-4. 组装 production_package 并附核验表
+1. **先跑交付门禁**：质量达到当前可交付预设、合规通过且剧本完整
+2. 汇总制片标签，输出复杂度/预算带与低成本替代方案
+3. 生成九列分镜、视觉物料与营销文案
+4. 按需生成互动改编，并执行平台上架清单
+5. 组装 `production_package` 并附核验表
 
 ## 标准输出要求
 
@@ -54,6 +59,8 @@ references:
 - 简介
 - 投流短文案
 - 高光切片建议
+- 制片复杂度与预算带
+- 平台上架清单
 - 交付完整性检查
 - 互动改编可能性
 

@@ -24,6 +24,7 @@ configuration_sources:
   quality: foundation/constraints/quality-scoring.yaml
   scoring_presets: foundation/constraints/scoring-presets.yaml
   commercial: foundation/constraints/commercial-formulas.yaml
+  production_feasibility: foundation/constraints/production-feasibility.yaml
   agent_runtime: foundation/constraints/agent-runtime.yaml
 
 artifact_contracts:

@@ -30,32 +30,34 @@
 | quality 质检修复部 | script-scorer, compliance-guard, revision-master |
 | delivery 宣发交付部 | delivery-tool |
 
-## v4 → v5 角色映射（能力零丢失）
+## 角色边界
 
-| v4 角色 | v5 归属 | 能力去向 |
-|---------|---------|----------|
-| topic-director | 保留 | 不变（modules: market-radar / formula-analysis / tear-down-6d） |
-| character-relations | **并入 story-bible** | 人物小传/关系网/轻量世界观 → story_bible 人物层；能力收敛为 character-system |
-| series-architect | **并入 story-bible** | 六阶段/主支线/反转位/伏笔总表 → story_bible 结构层；拆分为 series-structure / series-emotion-curve / reversal-foreshadowing |
-| episode-designer | 保留 | 输入从三产物改为 story_bible |
-| script-writer | 保留 | 输入从 series_outline+character_bible 改为 story_bible |
-| revision-master（剧本修订官） | 保留，更名剧本修复官 | 移入质检环；输出后强制复评 |
-| script-scorer | 保留 | 独立技能化；输入改为「修复稿优先」any_of，修掉 polished_script 无人消费的断链 |
-| compliance-guard | 保留 | 独立技能化；与评分并行；输入同上 |
-| delivery-tool | 保留 | 输入改为 story_bible + 最新剧本；前置门禁规则化 |
+| 角色 | 独占决策 |
+|------|----------|
+| topic-director | 项目是否值得做、面向谁、以什么差异化立项 |
+| story-bible | 人物、世界规则和全剧结构的统一蓝图 |
+| episode-designer | 如何把蓝图拆成可直接写作的逐集卡 |
+| script-writer | 如何把分集卡转成可拍摄正文 |
+| script-scorer | 剧本质量与连续性是否达标 |
+| compliance-guard | 内容能否进入制作与发行 |
+| revision-master | 在不改变已确认蓝图的前提下修复文本 |
+| delivery-tool | 终稿如何转成制作、预算、上架与宣发物料 |
 
-## Modules（24 个活动模块 + 3 个兼容入口）
+世界观、对白、分镜、预算和平台上架均有独立模块，但不单设角色：它们没有独占审批产物，拆角色只会增加同步成本。
+
+## Modules（30 个活动模块）
 
 | 角色 | modules |
 |------|---------|
 | topic-director | concept-development, market-radar, formula-analysis, tear-down-6d |
-| story-bible | character-system, series-structure, series-emotion-curve, conflict-escalation, reversal-foreshadowing, adaptation-originality |
+| story-bible | character-system, world-rules, series-structure, series-emotion-curve, conflict-escalation, reversal-foreshadowing, adaptation-originality |
 | episode-designer | episode-card, episode-emotion-nodes, hook-system, conflict-escalation, reversal-foreshadowing, payment-checkpoint |
-| script-writer | scene-writing, continuity-snapshot |
+| script-writer | scene-writing, dialogue-craft, continuity-snapshot, production-feasibility |
+| script-scorer | continuity-audit |
 | revision-master | dialogue-polish, format-fix, word-count-governance |
-| delivery-tool | storyboard-9col, visual-anchor, marketing-copy, delivery-check, story-to-game |
+| delivery-tool | storyboard-9col, visual-anchor, marketing-copy, delivery-check, story-to-game, budget-estimator, platform-ops-checklist |
 
-模块正文：`modules/*.md`；机器目录与兼容替代关系：`modules/catalog.yaml`。
+模块正文：`modules/*.md`；机器目录与挂载关系：`modules/catalog.yaml`。
 
 ## 产物依赖（Artifact DAG）
 
@@ -67,14 +69,14 @@
                                  ↓
                             episode_scripts（分批）
                                  ↓ 质检环
-                  quality_report + compliance_report（并行，修复稿优先）
+                  quality_report + compliance_report（并行，读取 latest_script）
                                  ↓ 低于 B 级 / P1
                             polished_script → 复评
                                  ↓ 通过
                           [production_package]（可选）
 ```
 
-各边定义在对应 `role.yaml` 的 `input_contract` / `output_contract`；`required_artifacts_any_of` 表示按序取第一个存在的产物。
+各边定义在对应 `role.yaml` 的 `input_contract` / `output_contract`；当前有效剧本统一由 `latest_script` 虚拟产物解析。
 
 ## 关键设计决策
 
@@ -83,18 +85,10 @@
 | 人物与全剧结构合并为一份 story_bible | 人物弧光与情节架构强耦合，分开生成易脱节；对齐商业产品「剧本摘要」心智 |
 | 双通道共用 story-bible.v1 | 避免双管线维护；改编只是输入不同 |
 | 评分/合规/修复独立成环 | 可在任意时点调用（含外部剧本评测）；修复稿强制复评，闭环可收敛 |
-| 评分对象「修复稿优先」any_of | 修掉 v4 断链（polished_script 无下游消费） |
+| 当前剧本统一为 latest_script | 角色不再各自维护剧本版本优先级 |
 | script-writer 分批 `episode_range` | 控制 token；LR-008 逐集上下文 |
 | 数值不进 SKILL 正文 | 统一引用 `script-format.yaml` / `quality-scoring.yaml` |
 | 进化统一走 drama-intake 四轨道 | 评分官提案、灵感、外部摄入、新模式一个入口，可审计 |
-
-## 体系沿革
-
-| 版本 | 角色数 | 说明 |
-|------|--------|------|
-| v3.x | 12（8 core + 4 composite） | 部门制雏形，规则三层 SSOT |
-| v4.0 | 9（6 生产 + 2 裁判 + 1 工具） | composite 能力收敛为 modules |
-| v5.0 | 8（4 主链 + 3 质检 + 1 工具） | 主链收缩、双通道、质检环、进化闭环 |
 
 ## 扩展指南
 

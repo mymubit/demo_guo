@@ -3,7 +3,6 @@ name: Topic Director
 name_zh: 选题定调官
 dept: strategy
 role_tier: production
-fast_track: true
 workspace_order: 101
 default_output_artifact_key: project_brief
 schema_version: project-brief.v1
@@ -20,20 +19,9 @@ rule_policy:
   max_chars: 3200
 skill_dir: roles/drama-topic-director
 input_contract:
-  params:
-  - core_idea
-  - synopsis
-  - genre
-  - genre_matrix
-  - flavor_tags
-  - preset_theme_code
-  - episode_count
-  - target_platform
-  - reference_dramas
   params_schema:
     core_idea: {type: string, required: false, ui_widget: textarea}
     synopsis: {type: string, required: false, ui_widget: textarea}
-    genre: {type: string, required: false, deprecated: true}
     genre_matrix:
       type: object
       required: false

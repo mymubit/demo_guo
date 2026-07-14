@@ -35,8 +35,6 @@ WARNINGS: List[str] = []
 
 # 用户上传或由外部提供的产物键（无库内生产者）
 EXTERNAL_ARTIFACTS = {"external_script"}
-# story_bible 分节兼容别名（v4 存量数据键，无独立生产者）
-LEGACY_ALIAS_ARTIFACTS = {"character_bible", "series_outline"}
 
 # 已废弃角色名（v3/v4 时代），不允许出现在活跃文档中
 DEPRECATED_TOKENS = [
@@ -152,17 +150,10 @@ def check_registry_roles(registry: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
                     err(f"{agent_id}: SKILL.md reference 不存在 {ref}")
 
         contract = meta.get("input_contract") or {}
-        params = set(contract.get("params") or [])
-        params_schema = set((contract.get("params_schema") or {}).keys())
-        if params != params_schema:
-            err(
-                f"{agent_id}: params 与 params_schema 不一致 "
-                f"params={sorted(params)} schema={sorted(params_schema)}"
-            )
-
-    for agent_id in registry.get("fast_track_agents", []):
-        if agent_id not in agent_ids:
-            err(f"fast_track_agents 含未注册角色 {agent_id}")
+        if "params" in contract:
+            err(f"{agent_id}: input_contract.params 已废弃，只允许 params_schema")
+        if "required_artifacts_any_of" in contract:
+            err(f"{agent_id}: required_artifacts_any_of 已废弃，统一使用虚拟产物")
 
     for tool in registry.get("tools", []):
         tool_dir = ROOT / tool["skill_dir"]
@@ -209,13 +200,25 @@ def check_artifact_dag(role_metas: Dict[str, Dict[str, Any]]) -> None:
     produced = set()
     for meta in role_metas.values():
         produced.update((meta.get("output_contract") or {}).get("artifacts") or [])
-    known = produced | EXTERNAL_ARTIFACTS | LEGACY_ALIAS_ARTIFACTS
+    chunk_map = load_yaml(
+        ROOT / "foundation" / "constraints" / "artifact-chunk-map.yaml"
+    )
+    virtual = set((chunk_map.get("virtual_artifacts") or {}).keys())
+    known = produced | EXTERNAL_ARTIFACTS | virtual
     for agent_id, meta in role_metas.items():
         contract = meta.get("input_contract") or {}
-        for group in ("required_artifacts", "required_artifacts_any_of", "optional_artifacts"):
+        for group in ("required_artifacts", "optional_artifacts"):
             for key in contract.get(group) or []:
                 if key not in known:
                     err(f"{agent_id}: 输入产物 {key} 没有任何生产者（{group}）")
+        for mode_name, mode in (contract.get("input_modes") or {}).items():
+            for group in ("required_artifacts", "optional_artifacts"):
+                for key in (mode or {}).get(group) or []:
+                    if key not in known:
+                        err(
+                            f"{agent_id}.{mode_name}: 输入产物 {key} "
+                            f"没有任何生产者（{group}）"
+                        )
 
 
 def check_deprecated_tokens() -> None:
@@ -318,8 +321,6 @@ def check_module_orphans(role_metas: Dict[str, Dict[str, Any]]) -> None:
             )
         if lifecycle == "active" and not actual_roles:
             err(f"活动模块 {module}: 未挂载任何角色")
-        if lifecycle == "compatibility" and actual_roles:
-            err(f"兼容模块 {module}: 不应继续挂载生产角色")
 
 
 def check_atomic_rules() -> None:
@@ -383,6 +384,13 @@ def check_artifact_chunk_map() -> None:
     for key in data.get("array_artifact_keys") or []:
         if key not in artifacts:
             err(f"artifact-chunk-map: array_artifact_keys 含未定义产物 {key}")
+    valid_candidates = artifacts | EXTERNAL_ARTIFACTS
+    for key, definition in (data.get("virtual_artifacts") or {}).items():
+        candidates = set((definition or {}).get("candidates") or [])
+        if not candidates:
+            err(f"artifact-chunk-map: 虚拟产物 {key} 没有 candidates")
+        for candidate in sorted(candidates - valid_candidates):
+            err(f"artifact-chunk-map: 虚拟产物 {key} 引用未知产物 {candidate}")
 
 
 def check_constraint_consistency() -> None:
@@ -404,6 +412,28 @@ def check_constraint_consistency() -> None:
     matrix_ratio = ((matrix.get("param_synthesis") or {}).get("base") or {}).get("act_ratio")
     if matrix_ratio != series_scale.get("base_ratios"):
         err("theme-matrix.param_synthesis.base.act_ratio 与 series-scale.base_ratios 不一致")
+
+    production = load_yaml(
+        ROOT / "foundation" / "constraints" / "production-feasibility.yaml"
+    )
+    for tag, definition in (production.get("tags") or {}).items():
+        if float((definition or {}).get("weight", -1)) < 0:
+            err(f"production-feasibility: {tag} 权重不能为负")
+    bands = production.get("complexity_bands") or {}
+    lean_max = ((bands.get("lean") or {}).get("max_score"))
+    standard_min = ((bands.get("standard") or {}).get("min_score"))
+    standard_max = ((bands.get("standard") or {}).get("max_score"))
+    complex_min = ((bands.get("complex") or {}).get("min_score"))
+    if None in (lean_max, standard_min, standard_max, complex_min):
+        err("production-feasibility: 复杂度分级边界不完整")
+    elif not (lean_max + 1 == standard_min and standard_max + 1 == complex_min):
+        err("production-feasibility: 复杂度分级必须连续且不重叠")
+
+    genre_files = {
+        path.name for path in (ROOT / "foundation" / "rules" / "genres").glob("*.yaml")
+    }
+    if genre_files != {"matrix.yaml"}:
+        err(f"最新态只允许 genres/matrix.yaml，当前={sorted(genre_files)}")
 
 
 def check_section_mapping() -> None:

@@ -18,6 +18,9 @@ project_settings:
     scale:
       label_zh: 篇幅与批次
       fields: [episode_count, batch_episode_max, outline_mode]
+    production:
+      label_zh: 制作约束
+      fields: [production_target_band, production_region, budget_currency, pricing_version, budget_excluded_items]
     quality:
       label_zh: 质量偏好
       fields: [scoring_preset, compliance_check_mode]
@@ -106,6 +109,33 @@ project_settings:
       enum: [full, structure_only]
       default: full
       config_scope: project
+    production_target_band:
+      type: string
+      persist_path: production_context.target_band
+      enum: [lean, standard, complex]
+      default: standard
+      config_scope: project
+    production_region:
+      type: string
+      persist_path: production_context.region
+      required: false
+      config_scope: project
+    budget_currency:
+      type: string
+      persist_path: production_context.currency
+      required: false
+      config_scope: project
+    pricing_version:
+      type: string
+      persist_path: production_context.pricing_version
+      required: false
+      config_scope: project
+    budget_excluded_items:
+      type: array
+      persist_path: production_context.excluded_items
+      items_type: string
+      required: false
+      config_scope: project
     scoring_preset:
       type: string
       persist_path: creation_preferences.scoring_preset
@@ -126,8 +156,8 @@ project_settings:
     delivery_items:
       type: array
       persist_path: creation_preferences.delivery_items
-      enum_items: [storyboard, visual, marketing, interactive]
-      default: [storyboard, visual, marketing]
+      enum_items: [storyboard, visual, marketing, interactive, budget, release]
+      default: [storyboard, visual, marketing, budget]
       visible_when: "enable_delivery == true"
       config_scope: project
 
@@ -160,7 +190,11 @@ runtime_projection:
     target_platform: target_platform
   drama.delivery-tool:
     deliverables: creation_preferences.delivery_items
+    target_platform: target_platform
+    production_context: production_context
     when: "creation_preferences.enable_delivery == true"
+  drama.script-writer:
+    production_target_band: production_context.target_band
   workflow:
     batch_episode_max: creation_preferences.batch_episode_max
 
@@ -190,5 +224,6 @@ admin_settings:
     - {id: commercial, source: foundation/constraints/commercial-formulas.yaml}
     - {id: scoring_presets, source: foundation/constraints/scoring-presets.yaml}
     - {id: platform_policies, source: foundation/constraints/platform-profiles.yaml}
+    - {id: production_feasibility, source: foundation/constraints/production-feasibility.yaml}
   require_audit_reason: true
   allow_git_ssot_override: false
