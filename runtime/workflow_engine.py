@@ -23,12 +23,12 @@ def detect_trend(scores: List[float]) -> Optional[str]:
     previous, current = scores[-2:]
     if abs(current - previous) < 1:
         return "stagnant"
-    if current < previous:
-        return "diverging"
     if len(scores) >= 3:
         first, second, third = scores[-3:]
         if (second - first) * (third - second) < 0:
             return "oscillating"
+    if current < previous:
+        return "diverging"
     return None
 
 
