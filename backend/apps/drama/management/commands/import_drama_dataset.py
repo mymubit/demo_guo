@@ -67,11 +67,21 @@ class Command(BaseCommand):
             )
 
             for artifact in item.get("artifacts") or []:
+                artifact_key = artifact["artifact_key"]
+                schema_version = artifact.get("schema_version")
+                if schema_version is not None and not isinstance(schema_version, int):
+                    from apps.drama.services.skills_loader import get_skills_loader
+
+                    loader = get_skills_loader()
+                    if loader.get_artifact_contract(artifact_key).get("schema_version"):
+                        schema_version = loader.artifact_schema_version(artifact_key)
+                    else:
+                        schema_version = int(schema_version)
                 artifact_service.save_artifact(
                     project,
-                    artifact["artifact_key"],
+                    artifact_key,
                     artifact["payload"],
-                    schema_version=artifact.get("schema_version"),
+                    schema_version=schema_version,
                 )
 
             workflow = item.get("workflow")

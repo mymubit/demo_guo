@@ -6,7 +6,19 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+import yaml
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def _load_latest_script_candidates() -> List[str]:
+    contract_path = ROOT / "contracts" / "artifacts.yaml"
+    contract = yaml.safe_load(contract_path.read_text(encoding="utf-8")) or {}
+    latest = (contract.get("virtual_artifacts") or {}).get("latest_script") or {}
+    return list(latest.get("candidates") or [])
 
 
 class WorkflowError(ValueError):
@@ -35,7 +47,7 @@ def detect_trend(scores: List[float]) -> Optional[str]:
 def resolve_latest_script(
     artifacts: Dict[str, Any], episode_range: Optional[str] = None
 ) -> Dict[str, Any]:
-    for key in ("polished_script", "episode_scripts", "external_script"):
+    for key in _load_latest_script_candidates():
         value = artifacts.get(key)
         if value is None:
             continue

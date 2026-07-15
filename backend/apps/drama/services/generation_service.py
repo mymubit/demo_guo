@@ -336,7 +336,7 @@ class GenerationService:
             json_mode=True,
         )
         content = response["choices"][0]["message"]["content"]
-        artifact_key = contract.get("default_output_artifact_key", "")
+        artifact_key = self.loader.get_output_artifact_by_role(role)
         schema_path = self.loader.artifact_schema_path(artifact_key)
         return parse_and_validate(
             content,
@@ -369,7 +369,7 @@ class GenerationService:
         )
 
         contract = self.loader.get_role_contract(role)
-        artifact_key = contract.get("default_output_artifact_key", "")
+        artifact_key = self.loader.get_output_artifact_by_role(role)
         self.artifacts.save_artifact(project, artifact_key, artifact_payload)
         self.append_progress(job, {"phase": "artifact_saved", "artifact_key": artifact_key})
 
@@ -462,7 +462,8 @@ class GenerationService:
             json_mode=True,
         )
         content = response["choices"][0]["message"]["content"]
-        schema_path = self.loader.artifact_schema_path("quality_report")
+        artifact_key = self.loader.get_output_artifact_by_role(role)
+        schema_path = self.loader.artifact_schema_path(artifact_key)
         return parse_and_validate(
             content,
             validator=self.validator,
@@ -505,7 +506,8 @@ class GenerationService:
             json_mode=True,
         )
         content = response["choices"][0]["message"]["content"]
-        schema_path = self.loader.artifact_schema_path("compliance_report")
+        artifact_key = self.loader.get_output_artifact_by_role(role)
+        schema_path = self.loader.artifact_schema_path(artifact_key)
         return parse_and_validate(
             content,
             validator=self.validator,
@@ -588,15 +590,7 @@ class GenerationService:
 
     def _collect_artifacts(self, project: DramaProject) -> dict[str, Any]:
         result: dict[str, Any] = {}
-        for key in (
-            "project_brief",
-            "story_bible",
-            "narrative_plan",
-            "episode_scripts",
-            "polished_script",
-            "quality_report",
-            "compliance_report",
-        ):
+        for key in self.loader.artifacts_contract.get("artifacts", {}):
             stored = self.artifacts.get_artifact(project, key)
             if stored.get("payload") is not None:
                 result[key] = stored["payload"]
@@ -640,4 +634,11 @@ class GenerationService:
                 }
             ]
         }
-        self.artifacts.save_artifact(project, "external_script", payload)
+        episode_contract = self.loader.get_artifact_contract("episode_scripts")
+        self.validator.validate_file(payload, episode_contract["schema_path"])
+        self.artifacts.save_artifact(
+            project,
+            "external_script",
+            payload,
+            schema_version=episode_contract["schema_version"],
+        )

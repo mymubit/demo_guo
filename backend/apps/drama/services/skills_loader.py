@@ -2,6 +2,7 @@
 """Drama Skills Bundle 加载器。"""
 from __future__ import annotations
 
+import copy
 import json
 import re
 from functools import lru_cache
@@ -11,13 +12,13 @@ from typing import Any
 import yaml
 from django.conf import settings
 
+from apps.drama.services.parameter_resolver import (
+    load_source,
+    normalize_options,
+    resolve_enum,
+    resolve_max_items,
+)
 
-_SCOPE_TIER = {
-    "global_core": 1,
-    "genre_profile": 2,
-    "stage_playbook": 3,
-    "compliance_block": 4,
-}
 
 _RULE_FILES = [
     "foundation/rules/philosophy.yaml",
@@ -41,7 +42,7 @@ _RULE_FILES = [
 
 
 class SkillsBundleLoader:
-    """从 DRAMA_SKILLS_ROOT 读取 manifest、编排与 schema 索引。"""
+    """从 DRAMA_SKILLS_ROOT 读取 manifest、编排与集中契约。"""
 
     def __init__(self, root: Path | None = None) -> None:
         self.root = Path(root or settings.DRAMA_SKILLS_ROOT)
@@ -85,6 +86,26 @@ class SkillsBundleLoader:
     def bundle_version(self) -> str:
         return str(self.manifest.get("bundle_version", "5.0.0"))
 
+    @property
+    def artifacts_contract(self) -> dict[str, Any]:
+        rel = self.manifest.get("artifact_contracts", {}).get(
+            "contracts", "contracts/artifacts.yaml"
+        )
+        return self._load_yaml(rel)
+
+    @property
+    def parameters_contract(self) -> dict[str, Any]:
+        rel = self.manifest.get("workbench", {}).get(
+            "parameters_contract", "contracts/parameters.yaml"
+        )
+        return self._load_yaml(rel)
+
+    @property
+    def project_settings_schema_path(self) -> str:
+        return self.manifest.get("workbench", {}).get(
+            "project_settings_schema", "schemas/project-settings.v1.schema.json"
+        )
+
     def get_role_entry(self, agent_id: str) -> dict[str, Any]:
         for role in self.registry.get("roles", []):
             if role.get("agent_id") == agent_id:
@@ -95,6 +116,170 @@ class SkillsBundleLoader:
         entry = self.get_role_entry(agent_id)
         skill_dir = entry.get("skill_dir") or f"roles/{agent_id.replace('.', '-')}"
         return self._load_yaml(f"{skill_dir}/role.yaml")
+
+    def get_artifact_contract(self, artifact_key: str) -> dict[str, Any]:
+        contract = self.artifacts_contract
+        artifacts = contract.get("artifacts") or {}
+        if artifact_key in artifacts:
+            return dict(artifacts[artifact_key])
+        external = contract.get("external_artifacts") or {}
+        if artifact_key in external:
+            return dict(external[artifact_key])
+        virtual = contract.get("virtual_artifacts") or {}
+        if artifact_key in virtual:
+            return dict(virtual[artifact_key])
+        raise KeyError(f"未知产物契约: {artifact_key}")
+
+    def get_output_artifact_by_role(self, role: str) -> str:
+        for key, definition in (self.artifacts_contract.get("artifacts") or {}).items():
+            if (definition or {}).get("producer") == role:
+                return key
+        raise KeyError(f"角色 {role} 无产出产物")
+
+    def get_parameter_definition(self, param_name: str) -> dict[str, Any]:
+        parameters = self.parameters_contract.get("parameters") or {}
+        if param_name not in parameters:
+            raise KeyError(f"未知参数: {param_name}")
+        return dict(parameters[param_name])
+
+    def get_role_parameter_refs(self, agent_id: str) -> list[str]:
+        refs = (self.parameters_contract.get("role_parameter_refs") or {}).get(agent_id)
+        if refs is None:
+            raise KeyError(f"角色 {agent_id} 无参数引用")
+        return list(refs)
+
+    def artifact_schema_path(self, artifact_key: str) -> str:
+        contract = self.get_artifact_contract(artifact_key)
+        schema_path = contract.get("schema_path")
+        if not schema_path:
+            raise KeyError(f"产物 {artifact_key} 无 schema_path")
+        return schema_path
+
+    def artifact_schema_version(self, artifact_key: str) -> int:
+        contract = self.get_artifact_contract(artifact_key)
+        version = contract.get("schema_version")
+        if not isinstance(version, int) or version < 1:
+            raise ValueError(f"产物 {artifact_key} schema_version 无效")
+        return version
+
+    def load_artifact_schema(self, artifact_key: str) -> dict[str, Any]:
+        return self.load_json(self.artifact_schema_path(artifact_key))
+
+    def producer_artifact_map(self) -> dict[str, str]:
+        result: dict[str, str] = {}
+        for key, definition in (self.artifacts_contract.get("artifacts") or {}).items():
+            producer = (definition or {}).get("producer")
+            if producer:
+                result[producer] = key
+        return result
+
+    def export_workbench_form(self) -> dict[str, Any]:
+        workbench = copy.deepcopy(self.workbench)
+        parameters = self.parameters_contract.get("parameters") or {}
+        raw_fields = workbench["project_settings"]["fields"]
+        resolved_fields: dict[str, Any] = {}
+        for name, definition in raw_fields.items():
+            resolved_fields[name] = self._merge_parameter_definition(
+                name, definition, parameters
+            )
+        workbench["project_settings"]["fields"] = resolved_fields
+
+        for definition in resolved_fields.values():
+            if "options_source" in definition:
+                value = load_source(self.root, definition.pop("options_source"))
+                definition["options"] = normalize_options(value)
+            if "fields_source" in definition:
+                value = load_source(self.root, definition.pop("fields_source"))
+                definition["fields"] = {
+                    key: {
+                        "label": axis.get("label_zh", key),
+                        "required": axis.get("min_select") == 1,
+                        "options": normalize_options(axis.get("options") or []),
+                    }
+                    for key, axis in value.items()
+                }
+            max_items = resolve_max_items(definition, self.root)
+            if "max_items_source" in definition:
+                definition.pop("max_items_source")
+            if max_items is not None:
+                definition["max_items"] = max_items
+            if definition.get("enum_items"):
+                definition["items_enum"] = definition.pop("enum_items")
+            if definition.get("items_type"):
+                definition.setdefault("items", {"type": definition.pop("items_type")})
+            for contract_only in (
+                "enum_source",
+                "source",
+                "nullable",
+                "unique_items",
+                "max_items_source",
+            ):
+                definition.pop(contract_only, None)
+
+        role_outputs = self.producer_artifact_map()
+        for stage in workbench.get("stages", []):
+            role_id = stage.get("role")
+            if role_id in role_outputs:
+                artifact_key = role_outputs[role_id]
+                stage["artifact"] = artifact_key
+                stage["artifact_label"] = self.get_artifact_contract(artifact_key).get(
+                    "label_zh", artifact_key
+                )
+
+        workbench["module_catalog"] = self.modules_catalog.get("modules", [])
+        workbench["schema_version"] = "workbench-form.v1"
+        return workbench
+
+    def project_runtime_projection(
+        self,
+        agent_id: str,
+        settings: dict[str, Any],
+        workflow_state: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        projection_cfg = (self.workbench.get("runtime_projection") or {}).get(agent_id, {})
+        if not projection_cfg:
+            return {}
+        when_expr = projection_cfg.get("when")
+        if when_expr and not _eval_when(when_expr, settings):
+            return {}
+        parameters = self.parameters_contract.get("parameters") or {}
+        result: dict[str, Any] = {}
+        for param, source_path in projection_cfg.items():
+            if param == "when":
+                continue
+            if param not in parameters:
+                continue
+            value = _deep_get(settings, source_path)
+            if value is not None:
+                result[param] = value
+        wf_projection = (self.workbench.get("runtime_projection") or {}).get("workflow", {})
+        if workflow_state and wf_projection:
+            for param, source_path in wf_projection.items():
+                if param not in parameters:
+                    continue
+                if param not in result:
+                    value = _deep_get(settings, source_path)
+                    if value is not None:
+                        result[param] = value
+            result["batch_cursor"] = workflow_state.get("batch_cursor")
+            result["revision_round"] = workflow_state.get("revision_round")
+        return result
+
+    def apply_parameter_defaults(self, settings: dict[str, Any]) -> dict[str, Any]:
+        """按 parameters contract 填充缺失默认值，不信任调用方内联类型/默认。"""
+        result = copy.deepcopy(settings)
+        fields = (self.workbench.get("project_settings") or {}).get("fields") or {}
+        for field_def in fields.values():
+            param_ref = field_def.get("parameter_ref")
+            if not param_ref:
+                continue
+            persist_path = field_def.get("persist_path", param_ref)
+            if _deep_get(result, persist_path) is not None:
+                continue
+            param_def = self.get_parameter_definition(param_ref)
+            if "default" in param_def:
+                _deep_set(result, persist_path, param_def["default"])
+        return result
 
     def load_skill(self, agent_id: str) -> str:
         entry = self.get_role_entry(agent_id)
@@ -133,54 +318,6 @@ class SkillsBundleLoader:
             raise FileNotFoundError(f"缺少编排轨道: {entry_type}")
         return self._load_yaml(rel)
 
-    def artifact_schema_path(self, artifact_key: str) -> str:
-        contracts = self.manifest.get("artifact_contracts", {}).get("schemas", {})
-        for schema_version, rel_path in contracts.items():
-            key = schema_version.split(".")[0].replace("-", "_")
-            if key == artifact_key or artifact_key.replace("_", "-") in schema_version:
-                return rel_path
-        mapping = {
-            "project_brief": "schemas/artifacts/project-brief.v1.schema.json",
-            "story_bible": "schemas/artifacts/story-bible.v1.schema.json",
-            "narrative_plan": "schemas/artifacts/narrative-plan.v1.schema.json",
-            "episode_scripts": "schemas/artifacts/episode-scripts.v1.schema.json",
-            "quality_report": "schemas/artifacts/quality-report.v1.schema.json",
-            "compliance_report": "schemas/artifacts/compliance-report.v1.schema.json",
-            "polished_script": "schemas/artifacts/polished-script.v1.schema.json",
-            "production_package": "schemas/artifacts/production-pack.v1.schema.json",
-            "external_script": "schemas/artifacts/episode-scripts.v1.schema.json",
-        }
-        return mapping[artifact_key]
-
-    def load_artifact_schema(self, artifact_key: str) -> dict[str, Any]:
-        return self.load_json(self.artifact_schema_path(artifact_key))
-
-    def project_runtime_projection(
-        self,
-        agent_id: str,
-        settings: dict[str, Any],
-        workflow_state: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
-        projection_cfg = (self.workbench.get("runtime_projection") or {}).get(agent_id, {})
-        if not projection_cfg:
-            return {}
-        when_expr = projection_cfg.get("when")
-        if when_expr and not _eval_when(when_expr, settings):
-            return {}
-        result: dict[str, Any] = {}
-        for param, source_path in projection_cfg.items():
-            if param == "when":
-                continue
-            result[param] = _deep_get(settings, source_path)
-        wf_projection = (self.workbench.get("runtime_projection") or {}).get("workflow", {})
-        if workflow_state and wf_projection:
-            for param, source_path in wf_projection.items():
-                if param not in result:
-                    result[param] = _deep_get(settings, source_path)
-            result["batch_cursor"] = workflow_state.get("batch_cursor")
-            result["revision_round"] = workflow_state.get("revision_round")
-        return result
-
     def collect_rules(
         self,
         agent_id: str,
@@ -214,6 +351,29 @@ class SkillsBundleLoader:
     def load_seed_yaml(self, relative_path: str) -> dict[str, Any]:
         return self._load_yaml(relative_path)
 
+    def _merge_parameter_definition(
+        self,
+        field_name: str,
+        field_def: dict[str, Any],
+        parameters: dict[str, Any],
+    ) -> dict[str, Any]:
+        param_ref = field_def.get("parameter_ref")
+        if not param_ref:
+            raise KeyError(f"工作台字段 {field_name} 缺少 parameter_ref")
+        param = copy.deepcopy(parameters[param_ref])
+        merged = {**param, **field_def}
+        merged.pop("parameter_ref", None)
+        if "source" in param:
+            merged["options_source"] = param["source"]
+        if "max_items_source" in param:
+            merged["max_items_source"] = param["max_items_source"]
+        if param_ref == "genre_matrix":
+            merged["fields_source"] = param["source"]
+        enum_values = resolve_enum(param, self.root)
+        if enum_values is not None:
+            merged["enum"] = enum_values
+        return merged
+
     def _load_yaml(self, relative_path: str) -> dict[str, Any]:
         path = self.root / relative_path
         if not path.exists():
@@ -240,6 +400,18 @@ def _deep_get(data: dict[str, Any], dotted: str) -> Any:
             return None
         current = current.get(part)
     return current
+
+
+def _deep_set(data: dict[str, Any], dotted: str, value: Any) -> None:
+    parts = dotted.split(".")
+    current = data
+    for part in parts[:-1]:
+        nested = current.get(part)
+        if not isinstance(nested, dict):
+            nested = {}
+            current[part] = nested
+        current = nested
+    current[parts[-1]] = value
 
 
 def _resolve_theme_code(settings: dict[str, Any]) -> str:
@@ -283,6 +455,22 @@ def _eval_when(expression: str, settings: dict[str, Any]) -> bool:
         prefs = settings.get("creation_preferences") or {}
         expected = raw == "true"
         return bool(prefs.get(field)) == expected
+    match = re.match(
+        r"^(\w+)\s*==\s*'([^']+)'$",
+        expression.strip(),
+    )
+    if match:
+        field, expected = match.groups()
+        return str(settings.get(field)) == expected
+    match = re.match(
+        r"^enable_delivery\s*==\s*(true|false)$",
+        expression.strip(),
+    )
+    if match:
+        raw = match.group(1)
+        prefs = settings.get("creation_preferences") or {}
+        expected = raw == "true"
+        return bool(prefs.get("enable_delivery")) == expected
     return True
 
 

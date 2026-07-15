@@ -8,6 +8,7 @@ import {
   visibleStages,
   workbenchStages,
 } from '@/utils/pipeline'
+import { testWorkbenchDefinition } from '@/test/workbenchFixtures'
 import type { WorkflowState } from '@/types/domain'
 
 function workflow(partial: Partial<WorkflowState>): WorkflowState {
@@ -29,13 +30,18 @@ function workflow(partial: Partial<WorkflowState>): WorkflowState {
   }
 }
 
-describe('pipeline status', () => {
+describe('pipeline status (definition-driven)', () => {
+  const definition = testWorkbenchDefinition()
+
   it('hides strategy for story_adapt and delivery when disabled', () => {
-    const adaptStages = visibleStages({ entry_type: 'story_adapt', enable_delivery: false })
+    const adaptStages = visibleStages(definition.stages, {
+      entry_type: 'story_adapt',
+      enable_delivery: false,
+    })
     expect(adaptStages.some((s) => s.id === 'strategy')).toBe(false)
     expect(adaptStages.some((s) => s.id === 'delivery')).toBe(false)
 
-    const withDelivery = mainPipelineStages({
+    const withDelivery = mainPipelineStages(definition.stages, {
       entry_type: 'original_track',
       enable_delivery: true,
       creation_preferences: { enable_delivery: true, delivery_items: ['budget'] },
@@ -44,7 +50,10 @@ describe('pipeline status', () => {
   })
 
   it('marks past phases done and current active/waiting', () => {
-    const stages = visibleStages({ entry_type: 'original_track', enable_delivery: false })
+    const stages = visibleStages(definition.stages, {
+      entry_type: 'original_track',
+      enable_delivery: false,
+    })
     const blueprint = stages.find((s) => s.id === 'blueprint')!
     const strategy = stages.find((s) => s.id === 'strategy')!
 
@@ -59,7 +68,7 @@ describe('pipeline status', () => {
   })
 
   it('marks quality waiting_user as waiting', () => {
-    const stages = visibleStages({ entry_type: 'original_track' })
+    const stages = visibleStages(definition.stages, { entry_type: 'original_track' })
     const quality = stages.find((s) => s.id === 'quality_score')!
     expect(
       resolveStageStatus(
@@ -70,9 +79,9 @@ describe('pipeline status', () => {
   })
 
   it('exposes quality_score / compliance / revision as quality loop group', () => {
-    const loop = qualityLoopStages({ entry_type: 'original_track' })
+    const loop = qualityLoopStages(definition.stages, { entry_type: 'original_track' })
     expect(loop.map((s) => s.id)).toEqual(['quality_score', 'compliance', 'revision'])
-    const all = workbenchStages({ entry_type: 'original_track', enable_delivery: false })
+    const all = workbenchStages(definition, { entry_type: 'original_track', enable_delivery: false })
     expect(all.some((s) => s.id === 'quality_score')).toBe(true)
   })
 
@@ -86,7 +95,7 @@ describe('pipeline status', () => {
   })
 
   it('gates execute strictly by phase/status/stage', () => {
-    const stages = visibleStages({ entry_type: 'original_track' })
+    const stages = visibleStages(definition.stages, { entry_type: 'original_track' })
     const strategy = stages.find((s) => s.id === 'strategy')!
     const writing = stages.find((s) => s.id === 'writing')!
     const quality = stages.find((s) => s.id === 'quality_score')!

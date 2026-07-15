@@ -63,7 +63,7 @@ class DramaArtifactVersion(models.Model):
     )
     artifact_key = models.CharField("产物键", max_length=64, db_index=True)
     version = models.PositiveIntegerField("版本号", default=1)
-    schema_version = models.CharField("Schema 版本", max_length=64)
+    schema_version = models.PositiveIntegerField("Schema 版本")
     payload = models.JSONField("内容")
     created_at = models.DateTimeField(auto_now_add=True)
 

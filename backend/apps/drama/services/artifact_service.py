@@ -12,7 +12,6 @@ from apps.drama.services.skills_loader import get_skills_loader
 from apps.drama.services.workflow_engine import WorkflowError, resolve_latest_script
 
 
-# 需要脱敏的字段
 SENSITIVE_KEYS = {"api_key", "secret", "password", "token"}
 
 
@@ -65,10 +64,19 @@ class ArtifactService:
         artifact_key: str,
         payload: dict[str, Any],
         *,
-        schema_version: str | None = None,
+        schema_version: int | None = None,
     ) -> DramaArtifactVersion:
-        schema_path = self.loader.artifact_schema_path(artifact_key)
-        self.validator.validate_file(payload, schema_path)
+        contract = self.loader.get_artifact_contract(artifact_key)
+        schema_path = contract.get("schema_path")
+        if schema_path:
+            self.validator.validate_file(payload, schema_path)
+
+        if schema_version is not None:
+            resolved_version = schema_version
+        elif isinstance(contract.get("schema_version"), int):
+            resolved_version = contract["schema_version"]
+        else:
+            raise ValueError(f"产物 {artifact_key} 缺少 schema_version")
 
         wf = DramaWorkflowState.objects.select_for_update().get(project=project)
         latest = (
@@ -78,14 +86,11 @@ class ArtifactService:
             .first()
         )
         next_version = (latest.version + 1) if latest else 1
-        schema_version = schema_version or schema_path.split("/")[-1].replace(
-            ".schema.json", ""
-        )
         record = DramaArtifactVersion.objects.create(
             project=project,
             artifact_key=artifact_key,
             version=next_version,
-            schema_version=schema_version,
+            schema_version=resolved_version,
             payload=payload,
         )
         state = dict(wf.state)

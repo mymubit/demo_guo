@@ -138,11 +138,11 @@ export type StoryBibleApprovalRequest = {
   expected_version: number
 }
 
-/** Artifact API wrapper — matches backend ArtifactService.get_artifact */
+/** Artifact API wrapper — schema_version is numeric (artifacts contract), not legacy *.v1 strings */
 export type ArtifactRecord<T = unknown> = {
   artifact_key: string
   version: number | null
-  schema_version?: string
+  schema_version?: number
   payload: T | null
 }
 

@@ -33,8 +33,8 @@ class PromptBuilder:
         modules_text = self.loader.load_modules_for_role(role)
         rules_text = self.loader.collect_rules(role, settings, max_chars=max_chars)
         runtime = self.loader.project_runtime_projection(role, settings, workflow_state)
-        artifact_key = contract.get("default_output_artifact_key", "")
-        schema_version = contract.get("schema_version", "")
+        artifact_key = self.loader.get_output_artifact_by_role(role)
+        schema_version = self.loader.artifact_schema_version(artifact_key)
 
         system_parts = [
             f"你是 {entry.get('name_zh', role)}（agent_id={role}）。",
@@ -50,7 +50,7 @@ class PromptBuilder:
         system_parts.extend(
             [
                 "",
-                f"## 输出契约",
+                "## 输出契约",
                 f"- artifact_key: {artifact_key}",
                 f"- schema_version: {schema_version}",
                 "仅输出符合 schema 的 JSON 对象，不要输出解释文字。",

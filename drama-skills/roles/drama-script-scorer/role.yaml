@@ -4,8 +4,6 @@ name_zh: 剧本评分官
 dept: quality
 role_tier: judge
 workspace_order: 501
-default_output_artifact_key: quality_report
-schema_version: quality-report.v1
 modules:
 - continuity-audit
 rule_policy:
@@ -29,23 +27,8 @@ input_contract:
     external:
       required_artifacts: [latest_script]
       optional_artifacts: [project_brief, story_bible, narrative_plan]
-  params_schema:
-    scoring_mode:
-      type: string
-      required: false
-      enum: [project, external]
-      default: project
-    scoring_preset:
-      type: string
-      required: false
-      source_ref: foundation/constraints/scoring-presets.yaml#presets
-      default: standard
-    episode_range:
-      type: string
-      required: false
-      pattern: '^\d+-\d+$'
-output_contract:
-  artifacts:
-  - quality_report
-  schema_version: quality-report.v1
+  parameter_refs:
+  - scoring_mode
+  - scoring_preset
+  - episode_range
 role: 独立十维剧本评分与连续性终审裁判，不能参与生成剧本；统一评估 latest_script，输出总分、等级、十维证据、连续性缺陷、返修优先级和是否可继续下一批；同一维度连续两次低于进化阈值时输出规则提案。

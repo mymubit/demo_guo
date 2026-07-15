@@ -1,0 +1,105 @@
+# 产物契约机器 SSOT — schema、分片、生产者、中文标签
+version: "1.0.0"
+
+artifacts:
+  project_brief:
+    label_zh: 立项简报
+    schema_version: 1
+    schema_path: schemas/artifacts/project_brief/1.schema.json
+    producer: drama.topic-director
+    array_paths: []
+
+  story_bible:
+    label_zh: 故事蓝图
+    schema_version: 1
+    schema_path: schemas/artifacts/story_bible/1.schema.json
+    producer: drama.story-bible
+    array_paths:
+      - characters
+      - series_structure.six_stage_structure
+
+  narrative_plan:
+    label_zh: 分集设计
+    schema_version: 1
+    schema_path: schemas/artifacts/narrative_plan/1.schema.json
+    producer: drama.episode-designer
+    array_paths:
+      - episode_narrative_designs
+
+  episode_scripts:
+    label_zh: 分集剧本
+    schema_version: 1
+    schema_path: schemas/artifacts/episode_scripts/1.schema.json
+    producer: drama.script-writer
+    array_paths:
+      - episodes
+
+  quality_report:
+    label_zh: 质量评分报告
+    schema_version: 1
+    schema_path: schemas/artifacts/quality_report/1.schema.json
+    producer: drama.script-scorer
+    array_paths: []
+
+  compliance_report:
+    label_zh: 合规审查报告
+    schema_version: 1
+    schema_path: schemas/artifacts/compliance_report/1.schema.json
+    producer: drama.compliance-guard
+    array_paths: []
+
+  polished_script:
+    label_zh: 修复稿
+    schema_version: 1
+    schema_path: schemas/artifacts/polished_script/1.schema.json
+    producer: drama.revision-master
+    array_paths:
+      - episodes
+
+  production_package:
+    label_zh: 制作发行交付包
+    schema_version: 1
+    schema_path: schemas/artifacts/production_package/1.schema.json
+    producer: drama.delivery-tool
+    array_paths:
+      - storyboard
+      - visual_assets
+      - marketing_assets
+
+  memory_checkpoint:
+    label_zh: 连续性检查点
+    schema_version: 1
+    schema_path: schemas/artifacts/memory_checkpoint/1.schema.json
+    producer: null
+    array_paths: []
+
+virtual_artifacts:
+  latest_script:
+    label_zh: 当前有效剧本
+    resolver: first_existing
+    candidates:
+      - polished_script
+      - episode_scripts
+      - external_script
+    scope: episode_range
+
+external_artifacts:
+  external_script:
+    label_zh: 外部上传剧本
+
+array_artifact_keys:
+  - story_bible
+  - narrative_plan
+  - episode_scripts
+  - polished_script
+  - production_package
+
+pipeline_result_keys:
+  project_brief: project_brief
+  story_bible: story_bible
+  narrative_plan: narrative_plan
+  episode_scripts: episode_scripts
+  quality_report: quality_report
+  compliance_report: compliance_report
+  polished_script: polished_script
+  production_package: production_package

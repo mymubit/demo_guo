@@ -11,7 +11,7 @@ import type {
   WorkflowCommandRequest,
   WorkflowState,
 } from '@/types/domain'
-import type { ThemeMatrix } from '@/types/workbench'
+import type { WorkbenchFormApiResponse } from '@/types/workbench'
 
 const BASE = '/api/v1/drama'
 
@@ -70,8 +70,12 @@ export const dramaApi = {
     )
   },
 
-  getThemeMatrix() {
-    return request<ThemeMatrix>('GET', withSlash(`${BASE}/theme-matrix`))
+  /** Runtime workbench form definition (stages / modules / parameter fields). No static fallback. */
+  getWorkbenchForm() {
+    return request<WorkbenchFormApiResponse>(
+      'GET',
+      withSlash(`${BASE}/meta/workbench-form`),
+    )
   },
 
   startGeneration(

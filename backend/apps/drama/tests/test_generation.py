@@ -46,7 +46,7 @@ class SkillsLoaderTests(TestCase):
     def test_registry_and_role_contract(self):
         loader = SkillsBundleLoader()
         entry = loader.get_role_entry("drama.topic-director")
-        self.assertEqual(entry["default_output_artifact_key"], "project_brief")
+        self.assertEqual(entry["agent_id"], "drama.topic-director")
         contract = loader.get_role_contract("drama.topic-director")
         self.assertIn("rule_policy", contract)
         self.assertIn("input_contract", contract)
@@ -58,7 +58,14 @@ class SkillsLoaderTests(TestCase):
         module = loader.load_module("concept-development")
         self.assertIn("概念", module)
         schema = loader.load_artifact_schema("project_brief")
-        self.assertEqual(schema["$id"], "drama-skills://artifacts/project-brief.v1")
+        self.assertEqual(schema["$id"], "drama-skills://artifacts/project_brief/1")
+
+    def test_output_artifact_from_producer_contract(self):
+        loader = SkillsBundleLoader()
+        self.assertEqual(
+            loader.get_output_artifact_by_role("drama.topic-director"),
+            "project_brief",
+        )
 
     def test_runtime_projection_from_settings(self):
         loader = SkillsBundleLoader()
@@ -234,7 +241,7 @@ class GenerationServiceTests(TestCase):
 
     @patch("apps.drama.services.generation_service.LlmProvider.chat_completion")
     def test_execute_generation_saves_artifact_and_advances_workflow(self, mock_llm):
-        mock_llm.return_value = _mock_llm_response(FIXTURES["project-brief.v1"])
+        mock_llm.return_value = _mock_llm_response(FIXTURES["project_brief"])
         job = DramaGenerationJob.objects.create(
             project=self.project,
             job_type=DramaGenerationJob.JobType.GENERATION,
@@ -269,7 +276,7 @@ class GenerationServiceTests(TestCase):
         wf = WorkflowService()
         artifact_svc = ArtifactService()
         artifact_svc.save_artifact(
-            self.project, "project_brief", FIXTURES["project-brief.v1"]
+            self.project, "project_brief", FIXTURES["project_brief"]
         )
         wf.apply_command(
             self.project,
@@ -280,7 +287,7 @@ class GenerationServiceTests(TestCase):
         )
         self.project.refresh_from_db()
         artifact_svc.save_artifact(
-            self.project, "story_bible", FIXTURES["story-bible.v1"]
+            self.project, "story_bible", FIXTURES["story_bible"]
         )
         wf.apply_command(
             self.project,
@@ -300,7 +307,7 @@ class GenerationServiceTests(TestCase):
         self.project.refresh_from_db()
 
         artifact_svc.save_artifact(
-            self.project, "narrative_plan", FIXTURES["narrative-plan.v1"]
+            self.project, "narrative_plan", FIXTURES["narrative_plan"]
         )
         wf.apply_command(
             self.project,
@@ -314,10 +321,10 @@ class GenerationServiceTests(TestCase):
 
         def llm_side_effect(*, system_prompt, user_prompt, json_mode=True):
             if "剧本评分官" in system_prompt or "script-scorer" in system_prompt:
-                return _mock_llm_response(FIXTURES["quality-report.v1"])
+                return _mock_llm_response(FIXTURES["quality_report"])
             if "合规审查官" in system_prompt or "compliance-guard" in system_prompt:
-                return _mock_llm_response(FIXTURES["compliance-report.v1"])
-            return _mock_llm_response(FIXTURES["episode-scripts.v1"])
+                return _mock_llm_response(FIXTURES["compliance_report"])
+            return _mock_llm_response(FIXTURES["episode_scripts"])
 
         mock_llm.side_effect = llm_side_effect
         job = DramaGenerationJob.objects.create(
@@ -357,15 +364,15 @@ class QualityGateTests(TestCase):
     def test_quality_gate_passed(self):
         self.assertTrue(
             quality_gate_passed(
-                FIXTURES["quality-report.v1"],
-                FIXTURES["compliance-report.v1"],
+                FIXTURES["quality_report"],
+                FIXTURES["compliance_report"],
             )
         )
 
     def test_quality_gate_failed_on_low_score(self):
-        report = dict(FIXTURES["quality-report.v1"])
+        report = dict(FIXTURES["quality_report"])
         report["overall_score"] = 50
-        self.assertFalse(quality_gate_passed(report, FIXTURES["compliance-report.v1"]))
+        self.assertFalse(quality_gate_passed(report, FIXTURES["compliance_report"]))
 
 
 @override_settings(DRAMA_SKILLS_ROOT="/workspace", LLM_ENABLED=False)

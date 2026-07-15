@@ -23,11 +23,16 @@ from apps.drama.services.workflow_service import WorkflowService
 class ProjectSettingsService:
     """项目设置 CRUD 与派生字段计算。"""
 
-    SCHEMA_PATH = "project-settings.v1.schema.json"
-
     def __init__(self) -> None:
         self.validator = SchemaValidator()
         self.loader = get_skills_loader()
+
+    @property
+    def schema_path(self) -> str:
+        path = self.loader.project_settings_schema_path
+        if path.startswith("schemas/"):
+            return path[len("schemas/") :]
+        return path
 
     def default_settings(
         self,
@@ -37,23 +42,14 @@ class ProjectSettingsService:
         actor: str,
     ) -> dict[str, Any]:
         now = datetime.now(timezone.utc).isoformat()
-        settings = {
+        settings: dict[str, Any] = {
             "schema_version": "project-settings.v1",
             "project_id": str(project.id),
             "skills_version": self.loader.bundle_version,
             "entry_type": entry_type,
             "title": project.title,
             "core_idea": "",
-            "episode_count": 30,
-            "target_platform": "generic",
-            "production_context": {"target_band": "standard"},
-            "creation_preferences": {
-                "batch_episode_max": 5,
-                "outline_mode": "full",
-                "scoring_preset": "standard",
-                "compliance_check_mode": "standard",
-                "enable_delivery": False,
-            },
+            "production_context": {},
             "platform_policy": {
                 "policy_version": None,
                 "policy_source": None,
@@ -66,6 +62,7 @@ class ProjectSettingsService:
                 "updated_by": actor,
             },
         }
+        settings = self.loader.apply_parameter_defaults(settings)
         return self._derive(settings)
 
     @transaction.atomic
@@ -135,8 +132,9 @@ class ProjectSettingsService:
         payload = dict(payload)
         payload["project_id"] = str(project.id)
         payload["skills_version"] = self.loader.bundle_version
+        payload = self.loader.apply_parameter_defaults(payload)
         derived = self._derive(payload)
-        self.validator.validate_file(derived, self.SCHEMA_PATH)
+        self.validator.validate_file(derived, self.schema_path)
 
         old_settings = project.settings
         blueprint_changed = self._blueprint_inputs_changed(old_settings, derived)

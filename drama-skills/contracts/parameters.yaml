@@ -1,0 +1,182 @@
+# 可传递参数机器 SSOT — 类型、枚举、来源、默认值、必填约束
+version: "1.0.0"
+
+parameters:
+  entry_type:
+    type: string
+    enum_source: orchestration.*.entry_type
+    default: original_track
+    required: true
+
+  core_idea:
+    type: string
+    required: false
+    ui_widget: textarea
+
+  synopsis:
+    type: string
+    required: false
+    ui_widget: textarea
+
+  external_story:
+    type: string
+    required: false
+    ui_widget: textarea
+
+  adapt_notes:
+    type: object
+    required: false
+    properties:
+      retained: {type: array, items_type: string}
+      enhanced: {type: array, items_type: string}
+      rewritten: {type: array, items_type: string}
+
+  reference_dramas:
+    type: array
+    required: false
+    items_type: string
+
+  genre_matrix:
+    type: object
+    required: false
+    source: foundation/theme-matrix.yaml#axes
+
+  flavor_tags:
+    type: array
+    required: false
+    source: foundation/theme-matrix.yaml#flavor_tags.options
+    max_items_source: foundation/theme-matrix.yaml#flavor_tags.max_select
+    unique_items: true
+
+  preset_theme_code:
+    type: string
+    required: false
+    nullable: true
+    source: foundation/theme-matrix.yaml#preset_templates
+
+  episode_count:
+    type: integer
+    required: true
+    minimum: 1
+
+  target_platform:
+    type: string
+    required: true
+    source: foundation/constraints/platform-profiles.yaml#platforms
+    default: generic
+
+  batch_episode_max:
+    type: integer
+    required: false
+    minimum: 1
+    maximum: 5
+    default: 5
+
+  outline_mode:
+    type: string
+    required: false
+    enum: [full, structure_only]
+    default: full
+
+  episode_range:
+    type: string
+    required: false
+    pattern: '^\d+-\d+$'
+    ui_widget: episode_range
+
+  production_target_band:
+    type: string
+    required: false
+    enum: [lean, standard, complex]
+    default: standard
+
+  production_context:
+    type: object
+    required: false
+
+  production_region:
+    type: string
+    required: false
+
+  budget_currency:
+    type: string
+    required: false
+
+  pricing_version:
+    type: string
+    required: false
+
+  budget_excluded_items:
+    type: array
+    required: false
+    items_type: string
+
+  scoring_mode:
+    type: string
+    required: false
+    enum: [project, external]
+    default: project
+
+  scoring_preset:
+    type: string
+    required: false
+    source: foundation/constraints/scoring-presets.yaml#presets
+    default: standard
+
+  check_mode:
+    type: string
+    required: false
+    enum: [standard, values-risk, full]
+    default: standard
+
+  focus_areas:
+    type: array
+    required: false
+    items_type: string
+
+  deliverables:
+    type: array
+    required: false
+    enum_items: [storyboard, visual, marketing, interactive, budget, release]
+    unique_items: true
+    default: [storyboard, visual, marketing, budget]
+
+  enable_delivery:
+    type: boolean
+    required: false
+    default: false
+
+role_parameter_refs:
+  drama.topic-director:
+    - core_idea
+    - synopsis
+    - genre_matrix
+    - flavor_tags
+    - preset_theme_code
+    - episode_count
+    - target_platform
+    - reference_dramas
+  drama.story-bible:
+    - external_story
+    - adapt_notes
+    - episode_count
+    - outline_mode
+  drama.episode-designer:
+    - episode_range
+  drama.script-writer:
+    - episode_range
+    - production_target_band
+  drama.script-scorer:
+    - scoring_mode
+    - scoring_preset
+    - episode_range
+  drama.compliance-guard:
+    - check_mode
+    - target_platform
+  drama.revision-master:
+    - episode_range
+    - focus_areas
+  drama.delivery-tool:
+    - deliverables
+    - target_platform
+    - production_context

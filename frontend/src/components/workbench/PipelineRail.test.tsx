@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { PipelineRail } from '@/components/workbench/PipelineRail'
-import { createDefaultSettings } from '@/utils/settingsForm'
+import { WorkbenchDefinitionTestProvider } from '@/hooks/useWorkbenchDefinition'
+import { testProjectSettings, testWorkbenchDefinition } from '@/test/workbenchFixtures'
 import type { WorkflowState } from '@/types/domain'
 
 const baseWorkflow: WorkflowState = {
@@ -20,62 +21,57 @@ const baseWorkflow: WorkflowState = {
   processed_commands: [],
 }
 
-describe('PipelineRail', () => {
-  it('renders quality_score / compliance / revision group and locks future stages', () => {
-    const settings = createDefaultSettings({
-      creation_preferences: {
-        batch_episode_max: 5,
-        outline_mode: 'full',
-        scoring_preset: 'standard',
-        compliance_check_mode: 'standard',
-        enable_delivery: false,
-      },
-    })
+const definition = testWorkbenchDefinition()
 
-    render(
+function renderRail(workflow: WorkflowState, activeStageId: string, settings = testProjectSettings()) {
+  return render(
+    <WorkbenchDefinitionTestProvider definition={definition}>
       <PipelineRail
         settings={settings}
-        workflow={baseWorkflow}
-        activeStageId="quality_score"
+        workflow={workflow}
+        activeStageId={activeStageId}
         onSelect={() => undefined}
-      />,
+      />
+    </WorkbenchDefinitionTestProvider>,
+  )
+}
+
+describe('PipelineRail', () => {
+  it('renders quality loop group labels from API definition and hides delivery when disabled', () => {
+    renderRail(
+      baseWorkflow,
+      'quality_score',
+      testProjectSettings({
+        creation_preferences: {
+          batch_episode_max: 5,
+          outline_mode: 'full',
+          scoring_preset: 'standard',
+          compliance_check_mode: 'standard',
+          enable_delivery: false,
+        },
+      }),
     )
 
     expect(screen.getByText('质检环')).toBeInTheDocument()
-    expect(screen.getByText('评分')).toBeInTheDocument()
-    expect(screen.getByText('合规')).toBeInTheDocument()
-    expect(screen.getByText('修复')).toBeInTheDocument()
-
-    const deliveryLocked = screen.queryByRole('button', { name: /宣发交付/ })
-    // delivery hidden when enable_delivery false
-    expect(deliveryLocked).toBeNull()
-
-    const writingBtn = screen.getByRole('button', { name: /正文创作/ })
-    // writing is past quality? writing is before quality so should be done, clickable
-    expect(writingBtn).not.toBeDisabled()
-
-    // strategy done
-    expect(screen.getByRole('button', { name: /选题定调/ })).not.toBeDisabled()
+    expect(screen.getByText('质量评分报告')).toBeInTheDocument()
+    expect(screen.getByText('合规审查报告')).toBeInTheDocument()
+    expect(screen.getByText('修复稿')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /制作发行交付包/ })).toBeNull()
+    expect(screen.getByRole('button', { name: /分集剧本/ })).not.toBeDisabled()
+    expect(screen.getByRole('button', { name: /立项简报/ })).not.toBeDisabled()
   })
 
   it('disables locked stages with aria-disabled', () => {
-    const settings = createDefaultSettings()
-    const early: WorkflowState = {
-      ...baseWorkflow,
-      status: 'active',
-      current_phase: 'strategy',
-    }
-
-    render(
-      <PipelineRail
-        settings={settings}
-        workflow={early}
-        activeStageId="strategy"
-        onSelect={() => undefined}
-      />,
+    renderRail(
+      {
+        ...baseWorkflow,
+        status: 'active',
+        current_phase: 'strategy',
+      },
+      'strategy',
     )
 
-    const writing = screen.getByRole('button', { name: /正文创作/ })
+    const writing = screen.getByRole('button', { name: /分集剧本/ })
     expect(writing).toBeDisabled()
     expect(writing).toHaveAttribute('aria-disabled', 'true')
   })

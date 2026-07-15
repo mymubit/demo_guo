@@ -29,8 +29,6 @@ roles:
   dept: strategy
   role_tier: production
   workspace_order: 101
-  default_output_artifact_key: project_brief
-  schema_version: project-brief.v1
   modules:
   - concept-development
   - market-radar
@@ -43,8 +41,6 @@ roles:
   dept: blueprint
   role_tier: production
   workspace_order: 201
-  default_output_artifact_key: story_bible
-  schema_version: story-bible.v1
   modules:
   - character-system
   - world-rules
@@ -60,8 +56,6 @@ roles:
   dept: episode_design
   role_tier: production
   workspace_order: 301
-  default_output_artifact_key: narrative_plan
-  schema_version: narrative-plan.v1
   modules:
   - episode-card
   - episode-emotion-nodes
@@ -76,8 +70,6 @@ roles:
   dept: writing
   role_tier: production
   workspace_order: 401
-  default_output_artifact_key: episode_scripts
-  schema_version: episode-scripts.v1
   default_task: write-episodes
   modules:
   - scene-writing
@@ -91,8 +83,6 @@ roles:
   dept: quality
   role_tier: judge
   workspace_order: 501
-  default_output_artifact_key: quality_report
-  schema_version: quality-report.v1
   modules:
   - continuity-audit
 - agent_id: drama.compliance-guard
@@ -102,8 +92,6 @@ roles:
   dept: quality
   role_tier: judge
   workspace_order: 502
-  default_output_artifact_key: compliance_report
-  schema_version: compliance-report.v1
 - agent_id: drama.revision-master
   skill_dir: roles/drama-revision-master
   name: Revision Master
@@ -111,8 +99,6 @@ roles:
   dept: quality
   role_tier: production
   workspace_order: 503
-  default_output_artifact_key: polished_script
-  schema_version: polished-script.v1
   modules:
   - dialogue-polish
   - format-fix
@@ -124,8 +110,6 @@ roles:
   dept: delivery
   role_tier: tool
   workspace_order: 601
-  default_output_artifact_key: production_package
-  schema_version: production-pack.v1
   modules:
   - storyboard-9col
   - visual-anchor
@@ -141,3 +125,6 @@ tools:
 - id: drama-intake
   skill_dir: drama-intake
   description: 技能进化入口：外部内容摄入 + 四轨道进化（规则/灵感/市场知识/新模式）
+contracts:
+  artifacts: contracts/artifacts.yaml
+  parameters: contracts/parameters.yaml

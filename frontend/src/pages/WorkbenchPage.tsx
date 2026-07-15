@@ -7,6 +7,7 @@ import { ModulePanel } from '@/components/workbench/ModulePanel'
 import { StageCanvas } from '@/components/workbench/StageCanvas'
 import { Button } from '@/components/ui/Button'
 import { ErrorBanner, LoadingBlock } from '@/components/ui/Tabs'
+import { useWorkbenchDefinition } from '@/hooks/useWorkbenchDefinition'
 import { dramaApi } from '@/services/drama'
 import { formatApiError } from '@/services/errors'
 import { workbenchStages } from '@/utils/pipeline'
@@ -24,6 +25,7 @@ const WORKFLOW_STATUS_LABELS = {
 
 export function WorkbenchPage() {
   const { projectId = '' } = useParams()
+  const { definition } = useWorkbenchDefinition()
 
   const settingsQuery = useQuery({
     queryKey: ['settings', projectId],
@@ -43,12 +45,12 @@ export function WorkbenchPage() {
 
   const stages = useMemo(() => {
     if (!settingsQuery.data) return []
-    return workbenchStages({
+    return workbenchStages(definition, {
       entry_type: settingsQuery.data.entry_type,
       enable_delivery: settingsQuery.data.creation_preferences.enable_delivery,
       creation_preferences: settingsQuery.data.creation_preferences,
     })
-  }, [settingsQuery.data])
+  }, [definition, settingsQuery.data])
 
   const [activeStageId, setActiveStageId] = useState<string | null>(null)
   const isCompactPc = useCompactPcLayout()

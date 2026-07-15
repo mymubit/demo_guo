@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import json
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
 import jsonschema
 from django.conf import settings
-from jsonschema.validators import Draft202012Validator, RefResolver
+from jsonschema import Draft202012Validator
+from referencing import Registry, Resource
 
 from apps.core.exceptions import SCHEMA_VALIDATION_FAILED, BusinessException
 
@@ -49,14 +51,33 @@ class SchemaValidator:
     def _build_validator(
         self, schema: dict[str, Any], schema_path: Path | None
     ) -> Draft202012Validator:
-        artifacts_dir = self.skills_root / "schemas" / "artifacts"
-        store: dict[str, Any] = {}
-        if artifacts_dir.exists():
-            for file_path in artifacts_dir.glob("*.schema.json"):
-                content = json.loads(file_path.read_text(encoding="utf-8"))
-                store[file_path.name] = content
-                if "$id" in content:
-                    store[content["$id"]] = content
-        base_uri = (schema_path.parent if schema_path else artifacts_dir).as_uri() + "/"
-        resolver = RefResolver(base_uri=base_uri, referrer=schema, store=store)
-        return Draft202012Validator(schema, resolver=resolver)
+        schemas_root = self.skills_root / "schemas"
+        registry = _schema_registry(schemas_root)
+        if schema_path is not None:
+            anchor = schema_path.as_uri()
+            resource = Resource.from_contents(schema)
+            registry = registry.with_resource(anchor, resource)
+            return Draft202012Validator(schema, registry=registry)
+        return Draft202012Validator(schema, registry=registry)
+
+
+@lru_cache(maxsize=8)
+def _schema_registry(schemas_root: Path) -> Registry:
+    resources: list[tuple[str, Resource]] = []
+    if not schemas_root.exists():
+        return Registry()
+    artifacts_root = schemas_root / "artifacts"
+    for file_path in schemas_root.rglob("*.schema.json"):
+        content = json.loads(file_path.read_text(encoding="utf-8"))
+        resource = Resource.from_contents(content)
+        resources.append((file_path.as_uri(), resource))
+        rel_from_root = file_path.relative_to(schemas_root).as_posix()
+        resources.append((rel_from_root, resource))
+        schema_id = content.get("$id")
+        if isinstance(schema_id, str):
+            resources.append((schema_id, resource))
+        if artifacts_root in file_path.parents:
+            rel_from_artifacts = file_path.relative_to(artifacts_root).as_posix()
+            resources.append((rel_from_artifacts, resource))
+            resources.append((f"{artifacts_root.as_uri()}/{rel_from_artifacts}", resource))
+    return Registry().with_resources(resources)

@@ -18,7 +18,7 @@ items:
     title: 双模式统一产出
     priority: 5
     body: |
-      原创模式（输入 project_brief）与改编模式（输入 params.external_story）必须输出同一 story-bible.v1 结构。
+      原创模式（输入 project_brief）与改编模式（输入 external_story）必须输出同一 story_bible schema v1 结构。
       改编模式先提取原故事人物/冲突/结构，再补全缺失部分，并显式列出「保留/强化/改写」处理说明与原创性风险自检。
   - rule_key: t3.drama-story-bible.character_rules.density
     section: character_rules
@@ -27,7 +27,7 @@ items:
     title: 角色密度与弧光
     priority: 10
     body: |
-      执行 character_rules 与 series_structure；本阶段只负责把原子规则落实到 story-bible.v1 字段。
+      执行 character_rules 与 series_structure；本阶段只负责把原子规则落实到 story_bible 字段。
       世界观必须执行 world_rules，并写入可行动规则、权力结构和信息释放边界。
   - rule_key: t3.drama-story-bible.episode_structure.six-stage
     section: episode_structure
@@ -45,7 +45,7 @@ items:
     title: 分集设计卡
     priority: 10
     body: |
-      执行 episode_card 原子规则并写入 narrative-plan.v1；不得重写 story_bible 的主线与六阶段结构。
+      执行 episode_card 原子规则并写入 narrative_plan schema v1；不得重写 story_bible 的主线与六阶段结构。
   - rule_key: t3.drama-script-writer.writing_requirements.episode-range
     section: writing_requirements
     scope_type: agent

@@ -11,6 +11,9 @@ workbench:
   definition: workbench/workbench.yaml
   api_contract: workbench/api-contract.yaml
   form_exporter: build/export_workbench_schema.py
+  parameters_contract: contracts/parameters.yaml
+  parameters_schema_generator: build/generate_parameter_schemas.py
+  parameters_schema: schemas/generated/parameters.schema.json
   project_settings_schema: schemas/project-settings.v1.schema.json
   ops_overlay_schema: schemas/ops-config-overlay.v1.schema.json
   config_policy: manifest/config-policy.yaml
@@ -38,23 +41,14 @@ runtime_reference:
   workflow_engine: runtime/workflow_engine.py
 
 artifact_contracts:
+  contracts: contracts/artifacts.yaml
   index: knowledge/output-schemas.md
-  schemas:
-    project-brief.v1: schemas/artifacts/project-brief.v1.schema.json
-    story-bible.v1: schemas/artifacts/story-bible.v1.schema.json
-    narrative-plan.v1: schemas/artifacts/narrative-plan.v1.schema.json
-    episode-scripts.v1: schemas/artifacts/episode-scripts.v1.schema.json
-    quality-report.v1: schemas/artifacts/quality-report.v1.schema.json
-    compliance-report.v1: schemas/artifacts/compliance-report.v1.schema.json
-    polished-script.v1: schemas/artifacts/polished-script.v1.schema.json
-    production-pack.v1: schemas/artifacts/production-pack.v1.schema.json
-    memory-checkpoint.v1: schemas/artifacts/memory-checkpoint.v1.schema.json
-  chunk_map: foundation/constraints/artifact-chunk-map.yaml
   continuity: foundation/constraints/continuity-checkpoint.yaml
 
 validation:
   - python build/validate_skills.py
   - python build/validate_theme_matrix.py
+  - python build/generate_parameter_schemas.py --check
   - python build/validate_workbench.py
   - python build/validate_artifacts.py
   - python build/validate_config.py

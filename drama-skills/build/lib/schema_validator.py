@@ -21,6 +21,33 @@ class SchemaValidator:
     def load(self, path: Path) -> Dict[str, Any]:
         return json.loads(path.read_text(encoding="utf-8"))
 
+    def _resolve_ref(self, ref_path: str, current_file: Optional[Path]) -> Dict[str, Any]:
+        file_part, _, fragment = ref_path.partition("#")
+        if file_part.startswith("#") or (not file_part and fragment):
+            raise SchemaValidationError(f"暂不支持相对内部 $ref: {ref_path}")
+        if file_part:
+            target = self.schema_root / file_part
+            resolved = self.load(target)
+        elif current_file is not None:
+            resolved = self.load(current_file)
+        else:
+            raise SchemaValidationError(f"无法解析 $ref: {ref_path}")
+        if fragment:
+            pointer = fragment if fragment.startswith("/") else f"/{fragment}"
+            resolved = self._resolve_pointer(resolved, pointer)
+        return resolved
+
+    def _resolve_pointer(self, document: Any, pointer: str) -> Any:
+        current = document
+        if pointer in ("", "/"):
+            return current
+        for part in pointer.lstrip("/").split("/"):
+            key = part.replace("~1", "/").replace("~0", "~")
+            if not isinstance(current, dict) or key not in current:
+                raise SchemaValidationError(f"JSON Pointer 无效: {pointer}")
+            current = current[key]
+        return current
+
     def validate(
         self,
         instance: Any,
@@ -29,11 +56,12 @@ class SchemaValidator:
         current_file: Optional[Path] = None,
     ) -> None:
         if "$ref" in schema:
-            ref_path = schema["$ref"]
-            if ref_path.startswith("#"):
-                raise SchemaValidationError(f"{path}: 暂不支持内部 $ref")
-            target = self.schema_root / ref_path
-            self.validate(instance, self.load(target), path, target)
+            resolved = self._resolve_ref(schema["$ref"], current_file)
+            target_file = None
+            file_part = schema["$ref"].partition("#")[0]
+            if file_part:
+                target_file = self.schema_root / file_part
+            self.validate(instance, resolved, path, target_file or current_file)
             return
 
         self._validate_compositions(instance, schema, path, current_file)

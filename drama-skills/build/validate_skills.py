@@ -29,6 +29,17 @@ from typing import Any, Dict, List
 
 import yaml
 
+from lib.contracts_loader import (
+    FORBIDDEN_ROLE_PARAM_KEYS,
+    artifact_keys,
+    load_artifacts_contract,
+    load_parameters_contract,
+    parameter_names,
+    producer_map,
+    role_output_artifacts,
+    role_parameter_refs,
+)
+
 ROOT = Path(__file__).resolve().parents[1]
 ERRORS: List[str] = []
 WARNINGS: List[str] = []
@@ -116,11 +127,13 @@ def check_registry_roles(registry: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
         meta = load_yaml(role_yaml)
         role_metas[agent_id] = meta
 
-        for field in ("default_output_artifact_key", "schema_version", "dept"):
+        for field in ("dept",):
             if meta.get(field) != entry.get(field):
                 err(
                     f"{agent_id}: {field} 不一致 registry={entry.get(field)} role.yaml={meta.get(field)}"
                 )
+        if meta.get("output_artifact"):
+            err(f"{agent_id}: output_artifact 由 registry/contracts 维护，禁止写入 role.yaml")
         if meta.get("agent_id") != agent_id:
             err(f"{agent_id}: role.yaml agent_id={meta.get('agent_id')}")
 
@@ -151,9 +164,17 @@ def check_registry_roles(registry: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
 
         contract = meta.get("input_contract") or {}
         if "params" in contract:
-            err(f"{agent_id}: input_contract.params 已废弃，只允许 params_schema")
+            err(f"{agent_id}: input_contract.params 已废弃，只允许 parameter_refs")
+        if "params_schema" in contract:
+            err(f"{agent_id}: input_contract.params_schema 已废弃，改用 parameter_refs")
         if "required_artifacts_any_of" in contract:
             err(f"{agent_id}: required_artifacts_any_of 已废弃，统一使用虚拟产物")
+        if meta.get("output_contract"):
+            err(f"{agent_id}: output_contract 已废弃，改用 output_artifact")
+        if meta.get("schema_version"):
+            err(f"{agent_id}: schema_version 复合字符串已废弃")
+        if meta.get("default_output_artifact_key"):
+            err(f"{agent_id}: default_output_artifact_key 已废弃，改用 output_artifact")
 
     for tool in registry.get("tools", []):
         tool_dir = ROOT / tool["skill_dir"]
@@ -197,14 +218,9 @@ def check_stage_playbook(agent_ids: set) -> None:
 
 
 def check_artifact_dag(role_metas: Dict[str, Dict[str, Any]]) -> None:
-    produced = set()
-    for meta in role_metas.values():
-        produced.update((meta.get("output_contract") or {}).get("artifacts") or [])
-    chunk_map = load_yaml(
-        ROOT / "foundation" / "constraints" / "artifact-chunk-map.yaml"
-    )
-    virtual = set((chunk_map.get("virtual_artifacts") or {}).keys())
-    known = produced | EXTERNAL_ARTIFACTS | virtual
+    contract = load_artifacts_contract(ROOT)
+    produced = set(producer_map(contract).keys())
+    known = artifact_keys(contract) | EXTERNAL_ARTIFACTS
     for agent_id, meta in role_metas.items():
         contract = meta.get("input_contract") or {}
         for group in ("required_artifacts", "optional_artifacts"):
@@ -247,7 +263,7 @@ def check_agent_runtime(agent_ids: set) -> None:
 
 # 全库文本中出现的相对路径引用（knowledge/foundation/modules/orchestration/roles）
 PATH_REF_PATTERN = re.compile(
-    r"(?:knowledge|foundation|modules|orchestration|roles|inspirations)"
+    r"(?:knowledge|foundation|modules|orchestration|roles|contracts|inspirations)"
     r"(?:/[A-Za-z0-9_.\-]+)+\.(?:md|yaml|yml)"
 )
 
@@ -379,18 +395,119 @@ def check_scoring_presets() -> None:
 
 
 def check_artifact_chunk_map() -> None:
-    data = load_yaml(ROOT / "foundation" / "constraints" / "artifact-chunk-map.yaml")
-    artifacts = set((data.get("artifacts") or {}).keys())
-    for key in data.get("array_artifact_keys") or []:
+    pointer = load_yaml(ROOT / "foundation" / "constraints" / "artifact-chunk-map.yaml")
+    source = pointer.get("source")
+    if source != "contracts/artifacts.yaml":
+        err("artifact-chunk-map: 必须仅引用 contracts/artifacts.yaml")
+    contract = load_artifacts_contract(ROOT)
+    if pointer.get("artifacts") or pointer.get("virtual_artifacts"):
+        err("artifact-chunk-map: 禁止内联产物定义")
+    artifacts = set((contract.get("artifacts") or {}).keys())
+    for key in contract.get("array_artifact_keys") or []:
         if key not in artifacts:
-            err(f"artifact-chunk-map: array_artifact_keys 含未定义产物 {key}")
+            err(f"contracts/artifacts: array_artifact_keys 含未定义产物 {key}")
     valid_candidates = artifacts | EXTERNAL_ARTIFACTS
-    for key, definition in (data.get("virtual_artifacts") or {}).items():
+    for key, definition in (contract.get("virtual_artifacts") or {}).items():
         candidates = set((definition or {}).get("candidates") or [])
         if not candidates:
-            err(f"artifact-chunk-map: 虚拟产物 {key} 没有 candidates")
+            err(f"contracts/artifacts: 虚拟产物 {key} 没有 candidates")
         for candidate in sorted(candidates - valid_candidates):
-            err(f"artifact-chunk-map: 虚拟产物 {key} 引用未知产物 {candidate}")
+            err(f"contracts/artifacts: 虚拟产物 {key} 引用未知产物 {candidate}")
+
+
+def check_artifacts_contract(registry: Dict[str, Any]) -> None:
+    contract = load_artifacts_contract(ROOT)
+    artifacts = contract.get("artifacts") or {}
+    producers = producer_map(contract)
+    role_outputs = role_output_artifacts(contract)
+    registered_roles = {
+        role["agent_id"] for role in registry.get("roles", []) or []
+    }
+    for artifact_key, definition in artifacts.items():
+        if not isinstance(definition.get("schema_version"), int) or definition["schema_version"] < 1:
+            err(f"contracts/artifacts: {artifact_key} schema_version 必须是正整数")
+        schema_path = ROOT / definition.get("schema_path", "")
+        if not schema_path.exists():
+            err(f"contracts/artifacts: {artifact_key} schema 路径不存在 {definition.get('schema_path')}")
+        producer = definition.get("producer")
+        if producer and producers.get(artifact_key) != producer:
+            err(f"contracts/artifacts: {artifact_key} producer 映射不一致")
+        if producer and producer not in registered_roles:
+            err(f"contracts/artifacts: {artifact_key} producer 未注册 {producer}")
+    for agent_id in sorted(registered_roles):
+        if agent_id not in role_outputs:
+            err(f"contracts/artifacts: 角色 {agent_id} 没有唯一输出产物")
+    for role in registry.get("roles", []) or []:
+        if role.get("output_artifact"):
+            err(f"registry {role['agent_id']}: 禁止复制 output_artifact")
+
+
+def check_parameters_contract(
+    registry: Dict[str, Any], role_metas: Dict[str, Dict[str, Any]]
+) -> None:
+    contract = load_parameters_contract(ROOT)
+    params = parameter_names(contract)
+    role_refs = contract.get("role_parameter_refs") or {}
+    workbench = load_yaml(ROOT / "workbench" / "workbench.yaml")
+    fields = ((workbench.get("project_settings") or {}).get("fields") or {})
+
+    for agent_id, refs in role_refs.items():
+        for param in refs:
+            if param not in params:
+                err(f"contracts/parameters: {agent_id} 引用未知参数 {param}")
+
+    for agent_id, meta in role_metas.items():
+        declared = set(role_refs.get(agent_id) or [])
+        used = set((meta.get("input_contract") or {}).get("parameter_refs") or [])
+        if declared != used:
+            err(
+                f"{agent_id}: parameter_refs 与 contracts/parameters 不一致 "
+                f"{sorted(used)} != {sorted(declared)}"
+            )
+        contract_block = meta.get("input_contract") or {}
+        for mode_name, mode in (contract_block.get("input_modes") or {}).items():
+            for field in ("required_params", "forbidden_params"):
+                for param in (mode or {}).get(field) or []:
+                    if param not in params:
+                        err(f"{agent_id}.{mode_name}: {field} 引用未知参数 {param}")
+
+    for field_name, definition in fields.items():
+        if not (definition or {}).get("parameter_ref"):
+            err(f"工作台字段 {field_name}: 缺少 parameter_ref")
+        for forbidden in FORBIDDEN_ROLE_PARAM_KEYS:
+            if forbidden in (definition or {}):
+                err(f"工作台字段 {field_name}: 禁止内联 {forbidden}")
+        param_ref = (definition or {}).get("parameter_ref")
+        if param_ref and param_ref not in params:
+            err(f"工作台字段 {field_name}: parameter_ref={param_ref} 未定义")
+
+    covered = set()
+    for refs in role_refs.values():
+        covered.update(refs)
+    for definition in fields.values():
+        param_ref = (definition or {}).get("parameter_ref")
+        if param_ref:
+            covered.add(param_ref)
+    workbench_full = load_yaml(ROOT / "workbench" / "workbench.yaml")
+    for projection in (workbench_full.get("runtime_projection") or {}).values():
+        for key in (projection or {}):
+            if key != "when":
+                covered.add(key)
+    for tool in (workbench_full.get("external_tools") or {}).values():
+        covered.update(((tool or {}).get("runtime_params") or {}).keys())
+    uncovered = sorted(params - covered)
+    if uncovered:
+        err(f"contracts/parameters: 未挂载参数 {uncovered}")
+
+    for role in registry.get("roles", []) or []:
+        if (
+            role.get("schema_version")
+            or role.get("default_output_artifact_key")
+            or role.get("output_artifact")
+        ):
+            err(
+                f"registry {role['agent_id']}: 禁止复制产物或 Schema 定义"
+            )
 
 
 def check_constraint_consistency() -> None:
@@ -466,6 +583,8 @@ def main() -> int:
         return 1
     role_metas = check_registry_roles(registry)
     agent_ids = {r["agent_id"] for r in registry.get("roles", [])}
+    check_artifacts_contract(registry)
+    check_parameters_contract(registry, role_metas)
     check_orchestration(agent_ids)
     check_stage_playbook(agent_ids)
     check_artifact_dag(role_metas)

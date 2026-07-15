@@ -167,34 +167,34 @@ class WorkflowTests(unittest.TestCase):
 
 class ArtifactSchemaTests(unittest.TestCase):
     def setUp(self):
-        self.validator = SchemaValidator(ROOT / "schemas/artifacts")
+        self.validator = SchemaValidator(ROOT / "schemas" / "artifacts")
         self.fixtures = json.loads(
             (
                 ROOT / "build/fixtures/artifacts/valid-artifacts.json"
             ).read_text(encoding="utf-8")
         )
+        self.contract = load_yaml("contracts/artifacts.yaml")
 
     def test_all_valid_fixtures(self):
-        for version, fixture in self.fixtures.items():
-            schema = self.validator.load(
-                ROOT / f"schemas/artifacts/{version}.schema.json"
-            )
+        for artifact_key, fixture in self.fixtures.items():
+            schema_path = ROOT / self.contract["artifacts"][artifact_key]["schema_path"]
+            schema = self.validator.load(schema_path)
             self.validator.validate(fixture, schema)
 
     def test_missing_required_rejected(self):
-        fixture = copy.deepcopy(self.fixtures["project-brief.v1"])
+        fixture = copy.deepcopy(self.fixtures["project_brief"])
         fixture.pop("title")
         schema = self.validator.load(
-            ROOT / "schemas/artifacts/project-brief.v1.schema.json"
+            ROOT / self.contract["artifacts"]["project_brief"]["schema_path"]
         )
         with self.assertRaises(SchemaValidationError):
             self.validator.validate(fixture, schema)
 
     def test_invalid_enum_rejected(self):
-        fixture = copy.deepcopy(self.fixtures["compliance-report.v1"])
+        fixture = copy.deepcopy(self.fixtures["compliance_report"])
         fixture["overall_result"] = "未知"
         schema = self.validator.load(
-            ROOT / "schemas/artifacts/compliance-report.v1.schema.json"
+            ROOT / self.contract["artifacts"]["compliance_report"]["schema_path"]
         )
         with self.assertRaises(SchemaValidationError):
             self.validator.validate(fixture, schema)
