@@ -1,0 +1,239 @@
+# 短剧创作工作台机器契约
+version: "1.0.0"
+project_schema: project-settings.v1
+
+navigation:
+  source: registry.yaml
+  order_field: workspace_order
+  group_field: dept
+
+project_settings:
+  groups:
+    entry:
+      label_zh: 创作入口
+      fields: [entry_type, core_idea, synopsis, external_story, adapt_notes, reference_dramas]
+    theme:
+      label_zh: 题材与受众
+      fields: [genre_matrix, flavor_tags, preset_theme_code, target_platform]
+    scale:
+      label_zh: 篇幅与批次
+      fields: [episode_count, batch_episode_max, outline_mode]
+    production:
+      label_zh: 制作约束
+      fields: [production_target_band, production_region, budget_currency, pricing_version, budget_excluded_items]
+    quality:
+      label_zh: 质量偏好
+      fields: [scoring_preset, compliance_check_mode]
+    delivery:
+      label_zh: 交付偏好
+      fields: [enable_delivery, delivery_items]
+
+  fields:
+    entry_type:
+      type: string
+      persist_path: entry_type
+      enum_source: orchestration.*.entry_type
+      default: original_track
+      config_scope: project
+    core_idea:
+      type: string
+      persist_path: core_idea
+      ui_widget: textarea
+      visible_when: "entry_type == 'original_track'"
+      config_scope: project
+    synopsis:
+      type: string
+      persist_path: synopsis
+      ui_widget: textarea
+      visible_when: "entry_type == 'original_track'"
+      config_scope: project
+    external_story:
+      type: string
+      persist_path: external_story
+      ui_widget: textarea
+      required_when: "entry_type == 'story_adapt'"
+      config_scope: project
+    adapt_notes:
+      type: object
+      persist_path: adapt_notes
+      visible_when: "entry_type == 'story_adapt'"
+      properties:
+        retained: {type: array, items_type: string}
+        enhanced: {type: array, items_type: string}
+        rewritten: {type: array, items_type: string}
+      config_scope: project
+    reference_dramas:
+      type: array
+      persist_path: reference_dramas
+      items_type: string
+      config_scope: project
+    genre_matrix:
+      type: object
+      persist_path: genre_matrix
+      fields_source: foundation/theme-matrix.yaml#axes
+      config_scope: project
+    flavor_tags:
+      type: array
+      persist_path: flavor_tags
+      options_source: foundation/theme-matrix.yaml#flavor_tags.options
+      max_items_source: foundation/theme-matrix.yaml#flavor_tags.max_select
+      config_scope: project
+    preset_theme_code:
+      type: string
+      persist_path: preset_theme_code
+      options_source: foundation/theme-matrix.yaml#preset_templates
+      required: false
+      config_scope: project
+    episode_count:
+      type: integer
+      persist_path: episode_count
+      minimum: 1
+      required: true
+      config_scope: project
+    target_platform:
+      type: string
+      persist_path: target_platform
+      options_source: foundation/constraints/platform-profiles.yaml#platforms
+      default: generic
+      config_scope: project
+    batch_episode_max:
+      type: integer
+      persist_path: creation_preferences.batch_episode_max
+      minimum: 1
+      maximum: 5
+      default: 5
+      config_scope: project
+    outline_mode:
+      type: string
+      persist_path: creation_preferences.outline_mode
+      enum: [full, structure_only]
+      default: full
+      config_scope: project
+    production_target_band:
+      type: string
+      persist_path: production_context.target_band
+      enum: [lean, standard, complex]
+      default: standard
+      config_scope: project
+    production_region:
+      type: string
+      persist_path: production_context.region
+      required: false
+      config_scope: project
+    budget_currency:
+      type: string
+      persist_path: production_context.currency
+      required: false
+      config_scope: project
+    pricing_version:
+      type: string
+      persist_path: production_context.pricing_version
+      required: false
+      config_scope: project
+    budget_excluded_items:
+      type: array
+      persist_path: production_context.excluded_items
+      items_type: string
+      required: false
+      config_scope: project
+    scoring_preset:
+      type: string
+      persist_path: creation_preferences.scoring_preset
+      options_source: foundation/constraints/scoring-presets.yaml#presets
+      default: standard
+      config_scope: project
+    compliance_check_mode:
+      type: string
+      persist_path: creation_preferences.compliance_check_mode
+      enum: [standard, values-risk, full]
+      default: standard
+      config_scope: project
+    enable_delivery:
+      type: boolean
+      persist_path: creation_preferences.enable_delivery
+      default: false
+      config_scope: project
+    delivery_items:
+      type: array
+      persist_path: creation_preferences.delivery_items
+      enum_items: [storyboard, visual, marketing, interactive, budget, release]
+      default: [storyboard, visual, marketing, budget]
+      visible_when: "enable_delivery == true"
+      config_scope: project
+
+derived_fields:
+  - derived.matrix_key
+  - derived.rule_params_ref
+system_fields:
+  - skills_version
+  - skills_git_ref
+  - platform_policy
+
+runtime_projection:
+  drama.topic-director:
+    episode_count: episode_count
+    target_platform: target_platform
+    genre_matrix: genre_matrix
+    flavor_tags: flavor_tags
+    preset_theme_code: preset_theme_code
+    core_idea: core_idea
+    synopsis: synopsis
+    reference_dramas: reference_dramas
+  drama.story-bible:
+    episode_count: episode_count
+    outline_mode: creation_preferences.outline_mode
+    external_story: external_story
+    adapt_notes: adapt_notes
+  drama.script-scorer:
+    scoring_preset: creation_preferences.scoring_preset
+  drama.compliance-guard:
+    check_mode: creation_preferences.compliance_check_mode
+    target_platform: target_platform
+  drama.delivery-tool:
+    deliverables: creation_preferences.delivery_items
+    target_platform: target_platform
+    production_context: production_context
+    when: "creation_preferences.enable_delivery == true"
+  drama.script-writer:
+    production_target_band: production_context.target_band
+  workflow:
+    batch_episode_max: creation_preferences.batch_episode_max
+
+stages:
+  - {id: strategy, orchestration_phase: strategy, stage_kind: main, role: drama.topic-director, artifact: project_brief, visible_when: "entry_type == 'original_track'"}
+  - {id: blueprint, orchestration_phase: blueprint, stage_kind: main, role: drama.story-bible, artifact: story_bible, approval_required: true}
+  - {id: episode_design, orchestration_phase: episode_design, stage_kind: main, role: drama.episode-designer, artifact: narrative_plan}
+  - {id: writing, orchestration_phase: writing, stage_kind: main, role: drama.script-writer, artifact: episode_scripts, batch_field: episode_range}
+  - {id: quality_score, stage_kind: quality_loop, role: drama.script-scorer, artifact: quality_report, parallel_group: quality}
+  - {id: compliance, stage_kind: quality_loop, role: drama.compliance-guard, artifact: compliance_report, parallel_group: quality}
+  - {id: revision, stage_kind: quality_loop, role: drama.revision-master, artifact: polished_script, conditional: true}
+  - {id: delivery, stage_kind: optional, role: drama.delivery-tool, artifact: production_package, optional: true, visible_when: "enable_delivery == true"}
+
+module_panel:
+  source: modules/catalog.yaml
+  group_by: domain
+  filter: "lifecycle == 'active' and workbench_visible == true"
+  evaluate_enable_when: true
+  allow_project_toggle: false
+
+external_tools:
+  script_review:
+    input_artifact: external_script
+    input_type: text_or_file
+    accepted_formats: [txt, md, json]
+    roles: [drama.script-scorer, drama.compliance-guard]
+    runtime_params:
+      scoring_mode: external
+
+admin_settings:
+  policy: manifest/config-policy.yaml
+  sections:
+    - {id: model_routing, source: foundation/constraints/agent-runtime.yaml}
+    - {id: script_format, source: foundation/constraints/script-format.yaml}
+    - {id: quality_thresholds, source: foundation/constraints/quality-scoring.yaml}
+    - {id: commercial, source: foundation/constraints/commercial-formulas.yaml}
+    - {id: scoring_presets, source: foundation/constraints/scoring-presets.yaml}
+    - {id: platform_policies, source: foundation/constraints/platform-profiles.yaml}
+    - {id: production_feasibility, source: foundation/constraints/production-feasibility.yaml}
+  require_audit_reason: true
+  allow_git_ssot_override: false

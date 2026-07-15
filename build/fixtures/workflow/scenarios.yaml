@@ -1,0 +1,36 @@
+scenarios:
+  original_pass:
+    entry_type: original_track
+    events:
+      - {event: project_brief_completed}
+      - {event: story_bible_completed}
+      - {event: story_bible_approved}
+      - {event: narrative_plan_completed}
+      - {event: episode_batch_completed}
+      - {event: quality_score_completed, payload: {overall_score: 82}}
+      - {event: compliance_completed, payload: {blocking_issues: []}}
+      - {event: quality_passed}
+    expected_phase: writing
+    expected_batch_cursor: 2
+  adapt_revision:
+    entry_type: story_adapt
+    events:
+      - {event: story_bible_completed}
+      - {event: story_bible_approved}
+      - {event: narrative_plan_completed}
+      - {event: episode_batch_completed}
+      - {event: quality_score_completed, payload: {overall_score: 68}}
+      - {event: compliance_completed, payload: {blocking_issues: []}}
+      - {event: quality_failed}
+    expected_phase: revision
+    expected_revision_round: 1
+  blueprint_invalidation:
+    entry_type: original_track
+    events:
+      - {event: project_brief_completed}
+      - {event: story_bible_completed}
+      - {event: story_bible_approved}
+      - {event: narrative_plan_completed}
+      - {event: story_bible_changed}
+    expected_phase: blueprint_approval
+    expected_approval: false

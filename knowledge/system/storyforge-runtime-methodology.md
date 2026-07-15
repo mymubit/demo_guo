@@ -123,10 +123,10 @@ StoryForge 不是"评不通过就无限重试"，而是根据**分数趋势**决
 def quality_gate_loop(episode, max_rounds=3):
     scores = []
     for round in range(max_rounds):
-        score = quality_reporter.evaluate(episode)
+        score = drama_script_scorer.evaluate(episode)
         scores.append(score)
         
-        if score >= 75:  # 达标
+        if score >= resolved_quality_threshold:
             return "pass"
         
         if len(scores) >= 2:
@@ -134,7 +134,7 @@ def quality_gate_loop(episode, max_rounds=3):
             if trend in ["stagnant", "diverging", "oscillating"]:
                 return "stop_need_human"  # 交给用户
         
-        script_writer.rewrite(episode)  # 继续修正
+        drama_revision_master.rewrite(episode)
     
     return "stop_max_rounds"  # 达到上限，交给用户
 ```
@@ -161,13 +161,13 @@ StoryForge 的 10 维评分（比我们的 8 维更完整）：
 
 | # | 维度 | 评估 Agent | 关键标准 |
 |---|------|-----------|---------|
-| ① | 格式规范 | 规范检查 | 格式错误率 FER < 5% |
+| ① | 格式规范 | 规范检查 | FER 达到 `quality-scoring.yaml#format_error_rate.target_max` |
 | ② | 叙事效率 | 叙事评审 | 每集推进型节拍占比、无废戏 |
 | ③ | 冲突处理 | 叙事评审 | 核心冲突贯穿、持续升级、反转自然 |
 | ④ | 角色一致性 | 角色评审 | 对白辨识度、行为符合人设、知识边界清晰 |
-| ⑤ | 情感深度 | 角色评审 | 情感弧线完整、每集 3-5 次情绪切换 |
+| ⑤ | 情感深度 | 角色评审 | 情感弧线完整、关键节点有事件依据 |
 | ⑥ | 逻辑一致性 | 逻辑审计 | 与前集和梗概完全一致 |
-| ⑦ | 爽点密度 | 叙事评审 | 每集 2-3 个爽点、类型多样 |
+| ⑦ | 爽点密度 | 叙事评审 | 每集存在被清晰兑现的满足点，不机械堆数 |
 | ⑧ | 钩子强度 | 叙事评审 | 开头 10 秒抓力、结尾 cliffhanger |
 | ⑨ | 付费点优化 | 逻辑审计 | 付费墙在最大张力处、付费后立即兑现 |
 | ⑩ | 赛道匹配度 | 逻辑审计 | 符合赛道核心套路 |

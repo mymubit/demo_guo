@@ -1,0 +1,77 @@
+# 工作台/后台配置覆盖策略 SSOT
+version: "1.0.0"
+overlay_schema: ops-config-overlay.v1
+
+precedence:
+  - git_ssot
+  - run_context
+  - project_settings
+  - ops_overlay
+  - seed_default
+
+protected_paths:
+  - registry.yaml
+  - roles/**
+  - modules/**
+  - orchestration/**
+  - foundation/rules/**
+  - foundation/theme-matrix.yaml
+  - foundation/constraints/artifact-chunk-map.yaml
+  - foundation/constraints/continuity-checkpoint.yaml
+  - foundation/constraints/series-scale.yaml
+  - schemas/**
+
+overlay_files:
+  foundation/constraints/agent-runtime.yaml:
+    allowed_paths:
+      - agents.*.max_completion_tokens
+      - agents.*.max_prompt_tokens
+      - agents.*.temperature
+  foundation/constraints/script-format.yaml:
+    allowed_paths:
+      - episode_word_count.*.*
+      - dialogue_ratio.*
+      - scenes_per_episode.*
+  foundation/constraints/quality-scoring.yaml:
+    allowed_paths:
+      - grade_thresholds.*
+      - revision_threshold
+      - evolution_threshold
+      - fuse_rules.*
+      - format_error_rate.*
+  foundation/constraints/commercial-formulas.yaml:
+    allowed_paths:
+      - metrics.*.target_min
+      - metrics.*.target_max
+      - metrics.*.episode_min
+      - metrics.*.episode_max
+      - metrics.*.max_episodes_after_payment
+      - metrics.*.start_ratio
+      - metrics.*.end_ratio
+  foundation/constraints/scoring-presets.yaml:
+    allowed_paths:
+      - presets.*.pass_threshold
+      - presets.*.weights.*
+  foundation/constraints/platform-profiles.yaml:
+    allowed_paths:
+      - platforms.*.policy_status
+      - platforms.*.policy_version
+      - platforms.*.policy_source
+      - platforms.*.verified_at
+      - platforms.*.notes
+  foundation/constraints/production-feasibility.yaml:
+    allowed_paths:
+      - tags.*.weight
+      - complexity_bands.*.min_score
+      - complexity_bands.*.max_score
+
+runtime_content:
+  knowledge/market/**:
+    update_mode: manual_review
+    write_back_to_git: false
+
+audit_requirements:
+  top_level_required: [tenant_id, skills_version, overrides]
+  required_fields: [revision, updated_by, updated_at, change_reason]
+  immutable_history: true
+  rollback_supported: true

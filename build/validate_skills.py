@@ -4,7 +4,7 @@
 
 检查项：
 1. registry ↔ roles/*/role.yaml ↔ SKILL.md：目录存在、agent_id/产物/schema/modules 对齐
-2. modules 引用的能力块文件存在，且无孤儿模块（未被任何角色挂载）
+2. modules 引用的能力块文件存在，且全部登记于 modules/catalog.yaml
 3. orchestration/*.yaml 引用的角色均已注册
 4. stage-playbook 的 scope_key 均为有效 agent_id，且每个角色至少 1 条阶段规则
 5. SKILL.md frontmatter references 路径可解析
@@ -14,6 +14,9 @@
 9. 全库文本中的 knowledge/foundation/modules 相对路径引用均指向真实文件
 10. knowledge/ 孤儿检测：每个知识长文必须被至少一处（SKILL/rules/modules/入口文档）引用
 11. 角色↔Section 映射中的 section 必须在规则文件中真实存在
+12. 原子规则 rule_key 唯一且字段完整；数值 SSOT 不反向指向 knowledge/modules
+13. 十维评分预设完整、权重和为 1
+14. 流式产物列表与 artifacts 定义一致
 
 用法：python build/validate_skills.py
 """
@@ -32,8 +35,6 @@ WARNINGS: List[str] = []
 
 # 用户上传或由外部提供的产物键（无库内生产者）
 EXTERNAL_ARTIFACTS = {"external_script"}
-# story_bible 分节兼容别名（v4 存量数据键，无独立生产者）
-LEGACY_ALIAS_ARTIFACTS = {"character_bible", "series_outline"}
 
 # 已废弃角色名（v3/v4 时代），不允许出现在活跃文档中
 DEPRECATED_TOKENS = [
@@ -138,14 +139,21 @@ def check_registry_roles(registry: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
 
         if skill_md.exists():
             fm = frontmatter(skill_md)
+            if "modules" in fm and sorted(fm.get("modules") or []) != sorted(role_modules):
+                err(
+                    f"{agent_id}: SKILL.md modules 与 role.yaml 不一致 "
+                    f"{fm.get('modules') or []} != {role_modules}"
+                )
             for ref in fm.get("references") or []:
                 target = (skill_dir / ref).resolve()
                 if not target.exists():
                     err(f"{agent_id}: SKILL.md reference 不存在 {ref}")
 
-    for agent_id in registry.get("fast_track_agents", []):
-        if agent_id not in agent_ids:
-            err(f"fast_track_agents 含未注册角色 {agent_id}")
+        contract = meta.get("input_contract") or {}
+        if "params" in contract:
+            err(f"{agent_id}: input_contract.params 已废弃，只允许 params_schema")
+        if "required_artifacts_any_of" in contract:
+            err(f"{agent_id}: required_artifacts_any_of 已废弃，统一使用虚拟产物")
 
     for tool in registry.get("tools", []):
         tool_dir = ROOT / tool["skill_dir"]
@@ -192,13 +200,25 @@ def check_artifact_dag(role_metas: Dict[str, Dict[str, Any]]) -> None:
     produced = set()
     for meta in role_metas.values():
         produced.update((meta.get("output_contract") or {}).get("artifacts") or [])
-    known = produced | EXTERNAL_ARTIFACTS | LEGACY_ALIAS_ARTIFACTS
+    chunk_map = load_yaml(
+        ROOT / "foundation" / "constraints" / "artifact-chunk-map.yaml"
+    )
+    virtual = set((chunk_map.get("virtual_artifacts") or {}).keys())
+    known = produced | EXTERNAL_ARTIFACTS | virtual
     for agent_id, meta in role_metas.items():
         contract = meta.get("input_contract") or {}
-        for group in ("required_artifacts", "required_artifacts_any_of", "optional_artifacts"):
+        for group in ("required_artifacts", "optional_artifacts"):
             for key in contract.get(group) or []:
                 if key not in known:
                     err(f"{agent_id}: 输入产物 {key} 没有任何生产者（{group}）")
+        for mode_name, mode in (contract.get("input_modes") or {}).items():
+            for group in ("required_artifacts", "optional_artifacts"):
+                for key in (mode or {}).get(group) or []:
+                    if key not in known:
+                        err(
+                            f"{agent_id}.{mode_name}: 输入产物 {key} "
+                            f"没有任何生产者（{group}）"
+                        )
 
 
 def check_deprecated_tokens() -> None:
@@ -270,12 +290,150 @@ def check_knowledge_orphans() -> None:
 
 
 def check_module_orphans(role_metas: Dict[str, Dict[str, Any]]) -> None:
-    mounted = set()
-    for meta in role_metas.values():
-        mounted.update(meta.get("modules") or [])
-    for module_file in sorted((ROOT / "modules").glob("*.md")):
-        if module_file.stem not in mounted:
-            err(f"孤儿模块（未被任何角色挂载）: modules/{module_file.name}")
+    """模块目录声明的 target_roles 必须与实际挂载完全一致。"""
+    mounted_by: Dict[str, set] = {}
+    for agent_id, role_meta in role_metas.items():
+        for module in role_meta.get("modules") or []:
+            mounted_by.setdefault(module, set()).add(agent_id)
+    catalog = load_yaml(ROOT / "modules" / "catalog.yaml")
+    entries = catalog.get("modules") or {}
+    allowed_lifecycles = set(catalog.get("lifecycles") or [])
+    allowed_kinds = set(catalog.get("kinds") or [])
+    files = {path.stem for path in (ROOT / "modules").glob("*.md")}
+    registered = set(entries)
+    for missing in sorted(files - registered):
+        err(f"模块未登记 modules/catalog.yaml: modules/{missing}.md")
+    for stale in sorted(registered - files):
+        err(f"模块目录登记了不存在的文件: modules/{stale}.md")
+    for module, meta in entries.items():
+        lifecycle = (meta or {}).get("lifecycle")
+        kind = (meta or {}).get("kind")
+        if lifecycle not in allowed_lifecycles:
+            err(f"模块 {module}: 非法 lifecycle={lifecycle}")
+        if kind not in allowed_kinds:
+            err(f"模块 {module}: 非法 kind={kind}")
+        declared_roles = set((meta or {}).get("target_roles") or [])
+        actual_roles = mounted_by.get(module, set())
+        if declared_roles != actual_roles:
+            err(
+                f"模块 {module}: target_roles 与实际挂载不一致 "
+                f"{sorted(declared_roles)} != {sorted(actual_roles)}"
+            )
+        if lifecycle == "active" and not actual_roles:
+            err(f"活动模块 {module}: 未挂载任何角色")
+
+
+def check_atomic_rules() -> None:
+    """原子规则键唯一，且可执行层不把 knowledge/modules 声明为 SSOT。"""
+    seen: Dict[str, Path] = {}
+    rules_dir = ROOT / "foundation" / "rules"
+    paths = list(rules_dir.glob("*.yaml")) + list((rules_dir / "genres").glob("*.yaml"))
+    for path in sorted(paths):
+        for item in load_yaml(path).get("items", []) or []:
+            if not isinstance(item, dict):
+                err(f"{path.relative_to(ROOT)}: items 含非对象条目")
+                continue
+            for field in ("rule_key", "section", "title", "priority", "body"):
+                if item.get(field) in (None, ""):
+                    err(f"{path.relative_to(ROOT)}: 原子规则缺少 {field}")
+            rule_key = str(item.get("rule_key") or "")
+            if rule_key in seen:
+                err(
+                    f"rule_key 重复 {rule_key}: "
+                    f"{seen[rule_key].relative_to(ROOT)} / {path.relative_to(ROOT)}"
+                )
+            seen[rule_key] = path
+            body = str(item.get("body") or "")
+            if re.search(r"SSOT:\s*(?:knowledge|modules|roles|orchestration)/", body):
+                err(f"{path.relative_to(ROOT)}: {rule_key} 的 SSOT 层级倒置")
+    reference_pattern = re.compile(r"`(t[1-4]\.[a-zA-Z0-9_.-]+)`")
+    for module_path in sorted((ROOT / "modules").glob("*.md")):
+        text = module_path.read_text(encoding="utf-8")
+        for rule_key in reference_pattern.findall(text):
+            if rule_key not in seen:
+                err(f"{module_path.relative_to(ROOT)}: 引用不存在的 rule_key {rule_key}")
+
+
+def check_scoring_presets() -> None:
+    scoring = load_yaml(ROOT / "foundation" / "constraints" / "quality-scoring.yaml")
+    expected = {item["key"] for item in scoring.get("dimensions", []) or []}
+    dimension_total = sum(
+        float(item.get("weight", 0)) for item in scoring.get("dimensions", []) or []
+    )
+    if abs(dimension_total - 1.0) > 1e-9:
+        err(f"quality-scoring: 十维权重和={dimension_total}，应为 1")
+    presets = load_yaml(ROOT / "foundation" / "constraints" / "scoring-presets.yaml")
+    for preset_id, preset in (presets.get("presets") or {}).items():
+        weights = (preset or {}).get("weights") or {}
+        if set(weights) != expected:
+            err(f"评分预设 {preset_id}: 维度与 quality-scoring 不一致")
+        total = sum(float(value) for value in weights.values())
+        if abs(total - 1.0) > 1e-9:
+            err(f"评分预设 {preset_id}: 权重和={total}，应为 1")
+        if (
+            float((preset or {}).get("pass_threshold", 0))
+            < float((scoring.get("grade_thresholds") or {}).get("B", 0))
+            and (preset or {}).get("delivery_eligible") is not False
+        ):
+            err(f"评分预设 {preset_id}: 低于 B 级但仍允许交付")
+
+
+def check_artifact_chunk_map() -> None:
+    data = load_yaml(ROOT / "foundation" / "constraints" / "artifact-chunk-map.yaml")
+    artifacts = set((data.get("artifacts") or {}).keys())
+    for key in data.get("array_artifact_keys") or []:
+        if key not in artifacts:
+            err(f"artifact-chunk-map: array_artifact_keys 含未定义产物 {key}")
+    valid_candidates = artifacts | EXTERNAL_ARTIFACTS
+    for key, definition in (data.get("virtual_artifacts") or {}).items():
+        candidates = set((definition or {}).get("candidates") or [])
+        if not candidates:
+            err(f"artifact-chunk-map: 虚拟产物 {key} 没有 candidates")
+        for candidate in sorted(candidates - valid_candidates):
+            err(f"artifact-chunk-map: 虚拟产物 {key} 引用未知产物 {candidate}")
+
+
+def check_constraint_consistency() -> None:
+    checkpoint = load_yaml(
+        ROOT / "foundation" / "constraints" / "continuity-checkpoint.yaml"
+    )
+    required = set(checkpoint.get("required_fields") or [])
+    optional = set(checkpoint.get("optional_fields") or [])
+    schema_fields = set((checkpoint.get("schema") or {}).keys())
+    if required - schema_fields:
+        err(f"continuity-checkpoint: 必填字段无 schema {sorted(required - schema_fields)}")
+    if optional - schema_fields:
+        err(f"continuity-checkpoint: 可选字段无 schema {sorted(optional - schema_fields)}")
+    if required & optional:
+        err(f"continuity-checkpoint: 字段同时为必填和可选 {sorted(required & optional)}")
+
+    matrix = load_yaml(ROOT / "foundation" / "theme-matrix.yaml")
+    series_scale = load_yaml(ROOT / "foundation" / "constraints" / "series-scale.yaml")
+    matrix_ratio = ((matrix.get("param_synthesis") or {}).get("base") or {}).get("act_ratio")
+    if matrix_ratio != series_scale.get("base_ratios"):
+        err("theme-matrix.param_synthesis.base.act_ratio 与 series-scale.base_ratios 不一致")
+
+    production = load_yaml(
+        ROOT / "foundation" / "constraints" / "production-feasibility.yaml"
+    )
+    for tag, definition in (production.get("tags") or {}).items():
+        if float((definition or {}).get("weight", -1)) < 0:
+            err(f"production-feasibility: {tag} 权重不能为负")
+    bands = production.get("complexity_bands") or {}
+    lean_max = ((bands.get("lean") or {}).get("max_score"))
+    standard_min = ((bands.get("standard") or {}).get("min_score"))
+    standard_max = ((bands.get("standard") or {}).get("max_score"))
+    complex_min = ((bands.get("complex") or {}).get("min_score"))
+    if None in (lean_max, standard_min, standard_max, complex_min):
+        err("production-feasibility: 复杂度分级边界不完整")
+    elif not (lean_max + 1 == standard_min and standard_max + 1 == complex_min):
+        err("production-feasibility: 复杂度分级必须连续且不重叠")
+
+    genre_files = {
+        path.name for path in (ROOT / "foundation" / "rules" / "genres").glob("*.yaml")
+    }
+    if genre_files != {"matrix.yaml"}:
+        err(f"最新态只允许 genres/matrix.yaml，当前={sorted(genre_files)}")
 
 
 def check_section_mapping() -> None:
@@ -317,6 +475,10 @@ def main() -> int:
     check_knowledge_orphans()
     check_module_orphans(role_metas)
     check_section_mapping()
+    check_atomic_rules()
+    check_scoring_presets()
+    check_artifact_chunk_map()
+    check_constraint_consistency()
 
     for msg in WARNINGS:
         print(f"WARN  {msg}")

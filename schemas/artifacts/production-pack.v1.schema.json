@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills://artifacts/production-pack.v1",
+  "type": "object",
+  "required": ["drama_title", "source_artifact", "storyboard", "visual_assets", "marketing_assets", "production_plan", "release_checklist"],
+  "properties": {
+    "drama_title": {"type": "string"},
+    "source_artifact": {"const": "latest_script"},
+    "storyboard": {"type": "array", "items": {"type": "object"}},
+    "visual_assets": {"type": "array", "items": {"type": "object"}},
+    "marketing_assets": {"type": "array", "items": {"type": "object"}},
+    "interactive_adaptation": {"type": ["object", "null"]},
+    "production_plan": {
+      "type": "object",
+      "required": ["complexity_score", "complexity_band", "cost_drivers", "high_cost_scenes", "lower_cost_alternatives"],
+      "properties": {
+        "complexity_score": {"type": "integer", "minimum": 0},
+        "complexity_band": {"enum": ["lean", "standard", "complex"]},
+        "cost_drivers": {"type": "array", "items": {"type": "string"}},
+        "high_cost_scenes": {"type": "array", "items": {"type": "string"}},
+        "lower_cost_alternatives": {"type": "array", "items": {"type": "string"}},
+        "budget_range": {"type": ["object", "null"]},
+        "pricing_context": {"type": ["object", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "release_checklist": {
+      "type": "object",
+      "required": ["target_platform", "policy_version", "verified_at", "blocking_items", "missing_materials", "can_release"],
+      "properties": {
+        "target_platform": {"enum": ["generic", "douyin", "kuaishou", "wechat_miniprogram"]},
+        "policy_version": {"type": ["string", "null"]},
+        "verified_at": {"type": ["string", "null"]},
+        "blocking_items": {"type": "array", "items": {"type": "string"}},
+        "missing_materials": {"type": "array", "items": {"type": "string"}},
+        "can_release": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

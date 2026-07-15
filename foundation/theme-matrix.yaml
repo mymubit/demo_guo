@@ -211,7 +211,7 @@ param_synthesis:
   base:
     reversal_density: 0.28
     emotion_curve: [4, 4, 5, 5, 6, 7, 8, 8]
-    act_ratio: [0.10, 0.20, 0.22, 0.20, 0.15, 0.13]
+    act_ratio: [0.10, 0.20, 0.20, 0.20, 0.15, 0.15]
     hook_types: [Goal×Conflict, 集末悬念]
 
   emotion_profiles:
@@ -436,8 +436,11 @@ topic_inference:
       温情|烟火: warmth
       怀旧|年代记忆: nostalgia
     identity:
+      弱势|逆袭|被轻视: underdog
       重生|穿越: reborn
       隐藏|大佬|马甲: hidden-elite
+      普通人|小人物: ordinary
+      边缘|异类|被排斥: outcast
       赘婿|闪婚|契约|替身: bound
       双强|双男主|双女主: dual-lead
       学生|青春: student
@@ -445,10 +448,15 @@ topic_inference:
     conflict:
       婆媳|家族|伦理: family
       职场|商战: workplace
+      爱情|误会|三角关系: romance
       罪案|刑侦: crime
       权谋|宫斗: power
+      生存|逃亡|限时危机: survival
       阶级|贫富: disparity
+      救赎|弥补|和解: redemption
+      传统|礼教|代际观念: tradition
     world:
+      都市|现代|当代: modern
       古代|宫廷: ancient
       民国|年代: republic
       乡村|小镇: rural

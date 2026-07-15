@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills://artifacts/project-brief.v1",
+  "type": "object",
+  "required": ["title", "genre_matrix", "theme_code", "matrix_key", "rule_params", "episode_count", "core_idea", "target_audience", "core_conflict", "hook_concept", "compliance_risk"],
+  "properties": {
+    "title": {"type": "string", "minLength": 1},
+    "genre_matrix": {
+      "type": "object",
+      "required": ["emotion", "identity", "conflict", "world"],
+      "properties": {
+        "emotion": {"type": "string"},
+        "identity": {"type": "string"},
+        "conflict": {"type": "string"},
+        "world": {"type": "string"},
+        "flavor_tags": {"type": "array", "maxItems": 5, "uniqueItems": true, "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "theme_code": {"const": "matrix"},
+    "matrix_key": {"type": "string", "minLength": 1},
+    "rule_params": {
+      "type": "object",
+      "required": ["reversal_density", "emotion_curve", "act_ratio", "hook_types"],
+      "properties": {
+        "reversal_density": {"type": "number", "minimum": 0.12, "maximum": 0.65},
+        "emotion_curve": {"type": "array", "minItems": 8, "maxItems": 8, "items": {"type": "integer", "minimum": 1, "maximum": 10}},
+        "act_ratio": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"type": "number", "minimum": 0, "maximum": 1}},
+        "hook_types": {"type": "array", "maxItems": 10, "uniqueItems": true, "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "preset_theme_code": {"type": ["string", "null"]},
+    "episode_count": {"type": "integer", "minimum": 1},
+    "episode_duration": {"type": ["number", "null"], "minimum": 0},
+    "core_idea": {"type": "string", "minLength": 1},
+    "target_audience": {"type": "string", "minLength": 1},
+    "core_conflict": {"type": "string", "minLength": 1},
+    "hook_concept": {"type": "string", "minLength": 1},
+    "commercial_hook": {"type": "string"},
+    "reference_works": {"type": "array", "items": {"type": "string"}},
+    "compliance_risk": {"enum": ["low", "medium", "high"]},
+    "market_opportunity": {"type": "string"},
+    "blockbuster_factors": {"type": "array", "items": {"type": "string"}},
+    "competitor_references": {"type": "array", "items": {"type": "object"}},
+    "differentiation_strategy": {"type": "string"},
+    "first_episode_hook": {"type": "string"},
+    "paywall_direction": {"type": "string"}
+  },
+  "additionalProperties": false
+}

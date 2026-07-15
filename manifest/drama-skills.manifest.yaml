@@ -1,0 +1,63 @@
+# Drama Skills Bundle 清单
+bundle_version: "5.0.0"
+compatible_runtime_min: "5.0.0"
+
+registries:
+  roles: registry.yaml
+  modules: modules/catalog.yaml
+  sections: knowledge/knowledge-sections.md
+
+workbench:
+  definition: workbench/workbench.yaml
+  api_contract: workbench/api-contract.yaml
+  form_exporter: build/export_workbench_schema.py
+  project_settings_schema: schemas/project-settings.v1.schema.json
+  ops_overlay_schema: schemas/ops-config-overlay.v1.schema.json
+  config_policy: manifest/config-policy.yaml
+
+orchestration:
+  original_track: orchestration/original-track.yaml
+  story_adapt: orchestration/story-adapt-track.yaml
+  transitions: orchestration/workflow-transitions.yaml
+  state_schema: schemas/workflow-state.v1.schema.json
+
+configuration_sources:
+  theme: foundation/theme-matrix.yaml
+  platform: foundation/constraints/platform-profiles.yaml
+  script_format: foundation/constraints/script-format.yaml
+  quality: foundation/constraints/quality-scoring.yaml
+  scoring_presets: foundation/constraints/scoring-presets.yaml
+  commercial: foundation/constraints/commercial-formulas.yaml
+  production_feasibility: foundation/constraints/production-feasibility.yaml
+  agent_runtime: foundation/constraints/agent-runtime.yaml
+
+runtime_reference:
+  config_resolver: build/lib/config_resolver.py
+  condition_evaluator: build/lib/condition_eval.py
+  source_loader: build/lib/source_loader.py
+  workflow_engine: runtime/workflow_engine.py
+
+artifact_contracts:
+  index: knowledge/output-schemas.md
+  schemas:
+    project-brief.v1: schemas/artifacts/project-brief.v1.schema.json
+    story-bible.v1: schemas/artifacts/story-bible.v1.schema.json
+    narrative-plan.v1: schemas/artifacts/narrative-plan.v1.schema.json
+    episode-scripts.v1: schemas/artifacts/episode-scripts.v1.schema.json
+    quality-report.v1: schemas/artifacts/quality-report.v1.schema.json
+    compliance-report.v1: schemas/artifacts/compliance-report.v1.schema.json
+    polished-script.v1: schemas/artifacts/polished-script.v1.schema.json
+    production-pack.v1: schemas/artifacts/production-pack.v1.schema.json
+    memory-checkpoint.v1: schemas/artifacts/memory-checkpoint.v1.schema.json
+  chunk_map: foundation/constraints/artifact-chunk-map.yaml
+  continuity: foundation/constraints/continuity-checkpoint.yaml
+
+validation:
+  - python build/validate_skills.py
+  - python build/validate_theme_matrix.py
+  - python build/validate_workbench.py
+  - python build/validate_artifacts.py
+  - python build/validate_config.py
+  - python build/validate_workflow.py
+  - python build/validate_quality_cases.py
+  - python -m unittest discover -s build/tests -p test_*.py -v

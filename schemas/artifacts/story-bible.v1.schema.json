@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills://artifacts/story-bible.v1",
+  "type": "object",
+  "required": ["drama_title", "logline", "synopsis", "adapt_source", "world_rules", "characters", "relationship_map", "series_structure"],
+  "properties": {
+    "drama_title": {"type": "string", "minLength": 1},
+    "logline": {"type": "string", "minLength": 1},
+    "synopsis": {
+      "type": "object",
+      "required": ["short", "full"],
+      "properties": {"short": {"type": "string"}, "full": {"type": "string"}},
+      "additionalProperties": false
+    },
+    "adapt_source": {
+      "type": "object",
+      "required": ["mode"],
+      "properties": {
+        "mode": {"enum": ["original", "adapt"]},
+        "retained": {"type": "array", "items": {"type": "string"}},
+        "enhanced": {"type": "array", "items": {"type": "string"}},
+        "rewritten": {"type": "array", "items": {"type": "string"}},
+        "originality_check": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "world_rules": {
+      "type": "object",
+      "required": ["setting_summary", "root_rules", "power_structure"],
+      "properties": {
+        "setting_summary": {"type": "string"},
+        "root_rules": {"type": "array", "items": {"type": "string"}},
+        "power_structure": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "characters": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "role_type", "surface_desire", "deep_need", "ghost", "lie", "flaw", "arc", "voice_tag", "visual_anchor"],
+        "properties": {
+          "name": {"type": "string"},
+          "role_type": {"enum": ["protagonist", "antagonist", "supporting"]},
+          "surface_desire": {"type": "string"},
+          "deep_need": {"type": "string"},
+          "ghost": {"type": "string"},
+          "lie": {"type": "string"},
+          "flaw": {"type": "string"},
+          "arc": {
+            "type": "object",
+            "required": ["start", "turning_point_1", "turning_point_2", "end"],
+            "properties": {
+              "start": {"type": "string"},
+              "turning_point_1": {"type": "string"},
+              "turning_point_2": {"type": "string"},
+              "end": {"type": "string"}
+            },
+            "additionalProperties": false
+          },
+          "audience_identification": {"type": "string"},
+          "voice_tag": {"type": "string"},
+          "visual_anchor": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "relationship_map": {"type": "array", "items": {"type": "object"}},
+    "series_structure": {
+      "type": "object",
+      "required": ["main_storyline", "six_stage_structure", "conflict_escalation_chain", "major_reversal_positions", "paywall_distribution", "foreshadowing_table", "series_emotion_curve"],
+      "properties": {
+        "main_storyline": {"type": "string"},
+        "six_stage_structure": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"type": "object"}},
+        "conflict_escalation_chain": {"type": "array", "items": {"type": "string"}},
+        "major_reversal_positions": {"type": "array", "items": {"type": "object"}},
+        "paywall_distribution": {"type": "array", "items": {"type": "object"}},
+        "foreshadowing_table": {"type": "array", "items": {"type": "object"}},
+        "series_emotion_curve": {"type": "array", "items": {"type": "object"}}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

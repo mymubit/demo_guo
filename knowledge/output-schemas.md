@@ -1,6 +1,7 @@
 # 输出契约 Schema（Output Schemas）
 
-> **SSOT**：`registry.yaml` 的 `default_output_artifact_key` + `schema_version`；字段细节以本文档与 `roles/*/role.yaml` 为准。
+> **机器 SSOT**：`schemas/artifacts/*.schema.json`；本文件是人类可读说明。
+> 角色与版本索引以 `registry.yaml` 为准。
 
 ## schema 索引
 
@@ -15,8 +16,8 @@
 | compliance-report.v1 | compliance_report | drama.compliance-guard | JSON |
 | production-pack.v1 | production_package | drama.delivery-tool | JSON / MD |
 
-> v5 变更：`story-bible.v1` = 原 `character-bible.v1` ∪ `series-outline.v1` ∪ 梗概层。
-> 原 `character_bible` / `series_outline` 两个产物键作为 `story_bible` 内部分节的兼容别名保留（见 `foundation/constraints/artifact-chunk-map.yaml`）。
+`story-bible.v1` 是人物、世界规则与全剧结构的唯一蓝图产物。
+`latest_script` 是不持久化的虚拟输入，由 `artifact-chunk-map.yaml` 在当前批次解析为有效剧本。
 
 ---
 
@@ -151,12 +152,29 @@
 
 见 `roles/drama-script-writer/tasks/write-episodes.md` 的 `expected_output` 样例。
 
+每集必须包含 `memory_checkpoint`，字段 SSOT：
+`foundation/constraints/continuity-checkpoint.yaml`。检查点至少包含：
+
+- `episode`
+- `character_states`
+- `active_clues`
+- `foreshadowing`
+- `rhythm_state`
+- `next_episode_constraints`
+
+每集同时输出 `production_notes`，字段读取
+`foundation/constraints/production-feasibility.yaml#required_output`。
+
 ## quality-report.v1（十维评分报告）
 
 ```json
 {
   "drama_title": "string",
-  "scored_artifact": "polished_script|episode_scripts|external_script",
+  "scored_artifact": "latest_script",
+  "resolved_script_key": "polished_script|episode_scripts|external_script",
+  "scoring_preset": "standard|strict|relaxed|rhythm_first",
+  "pass_threshold": 75,
+  "config_revision": "string",
   "overall_score": 82,
   "grade": "S|A|B|C|D",
   "can_continue_next_batch": true,
@@ -174,6 +192,10 @@
     "genre_fit": {"score": 82, "weight": 0.05, "evidence": ["string"], "deductions": ["string"]}
   },
   "defects": [],
+  "continuity_summary": {
+    "result": "pass|warning|fail",
+    "issues": [{"episodes": [1, 2], "facts": ["string"], "responsible_layer": "script|checkpoint|blueprint"}]
+  },
   "revision_priorities": [{"priority": 1, "target": "string", "suggestion": "string"}],
   "evolution_proposal": {"trigger": "同一维度连续2次<70", "target": "foundation/rules/...", "content": "string"},
   "verdict": "通过|条件通过|需要修改|重大返工"
@@ -188,7 +210,11 @@
 {
   "drama_title": "string",
   "check_mode": "standard|values-risk|full",
-  "checked_artifact": "polished_script|episode_scripts|external_script",
+  "target_platform": "generic|douyin|kuaishou|wechat_miniprogram",
+  "platform_policy_version": "string|null",
+  "platform_policy_verified_at": "string|null",
+  "checked_artifact": "latest_script",
+  "resolved_script_key": "polished_script|episode_scripts|external_script",
   "overall_result": "通过|风险|不通过",
   "blocking_issues": [],
   "risk_items": [{"type": "p0|p1|p2", "description": "string", "suggestion": "string"}]
@@ -196,6 +222,38 @@
 ```
 
 ---
+
+## production-pack.v1（制作发行交付包）
+
+```json
+{
+  "drama_title": "string",
+  "source_artifact": "latest_script",
+  "storyboard": [],
+  "visual_assets": [],
+  "marketing_assets": [],
+  "interactive_adaptation": null,
+  "production_plan": {
+    "complexity_score": 0,
+    "complexity_band": "lean|standard|complex",
+    "cost_drivers": [],
+    "high_cost_scenes": [],
+    "lower_cost_alternatives": [],
+    "budget_range": null,
+    "pricing_context": null
+  },
+  "release_checklist": {
+    "target_platform": "generic|douyin|kuaishou|wechat_miniprogram",
+    "policy_version": "string|null",
+    "verified_at": "string|null",
+    "blocking_items": [],
+    "missing_materials": [],
+    "can_release": false
+  }
+}
+```
+
+金额预算仅在地区、币种、价格版本和排除项齐全时允许填写。
 
 ## 推荐交付目录（可选）
 

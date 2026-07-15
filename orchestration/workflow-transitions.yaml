@@ -1,0 +1,29 @@
+version: "1.0.0"
+state_schema: schemas/workflow-state.v1.schema.json
+
+initial_phase:
+  original_track: strategy
+  story_adapt: blueprint
+
+transitions:
+  - {from: strategy, event: project_brief_completed, to: blueprint}
+  - {from: blueprint, event: story_bible_completed, to: blueprint_approval, status: waiting_approval}
+  - {from: blueprint_approval, event: story_bible_approved, to: episode_design, action: approve_story_bible}
+  - {from: blueprint_approval, event: story_bible_rejected, to: blueprint}
+  - {from: episode_design, event: narrative_plan_completed, to: writing}
+  - {from: writing, event: episode_batch_completed, to: quality, status: waiting_quality, action: reset_quality_join}
+  - {from: quality, event: quality_score_completed, to: quality, status: waiting_quality, action: record_quality_score}
+  - {from: quality, event: compliance_completed, to: quality, status: waiting_quality, action: record_compliance}
+  - {from: quality, event: quality_passed, to: writing, guard: quality_join_complete, action: advance_batch}
+  - {from: quality, event: quality_failed, to: revision, guard: can_auto_revise, action: increment_revision_round}
+  - {from: quality, event: quality_failed, to: quality, guard: must_stop, status: waiting_user, action: require_user_decision}
+  - {from: revision, event: polished_script_completed, to: quality, status: waiting_quality, action: reset_quality_join}
+  - {from: writing, event: all_batches_completed, to: delivery}
+  - {from: delivery, event: delivery_skipped, to: completed, status: completed}
+  - {from: delivery, event: production_package_completed, to: completed, status: completed}
+  - {from: "*", event: story_bible_changed, to: blueprint_approval, status: waiting_approval, action: invalidate_downstream}
+
+user_decisions:
+  accept_current: {to: writing, action: advance_batch}
+  manual_revision: {to: revision}
+  abandon_batch: {to: completed, status: completed}

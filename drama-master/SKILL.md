@@ -21,6 +21,7 @@ output_schema:
 >
 > 流程 SSOT：`orchestration/original-track.yaml` / `story-adapt-track.yaml`  
 > 角色 SSOT：`registry.yaml` + `roles/*/role.yaml`
+> 工作台设置：`workbench/workbench.yaml`
 
 ---
 
@@ -43,8 +44,8 @@ output_schema:
    A. 从零开始 / 只有一个想法        → 原创创作通道（先走选题定调官）
    B. 已有故事 / 小说 / 大纲         → 故事改编通道（直接进剧本蓝图官改编模式）
 ② 题材（原创通道）：四轴矩阵（见 `foundation/theme-matrix.yaml`）或一句话创意
-③ 集数规模：10-20 / 30-50 / 50+
-④ 目标平台：抖音 / 快手 / 小程序 / 通用
+③ 集数规模：正整数；工作台可提供常用区间快捷选择
+④ 目标平台：读取 `foundation/constraints/platform-profiles.yaml`
 ⑤ 是否需要宣发交付包（可选工具）
 ```
 
@@ -59,7 +60,7 @@ output_schema:
                                         ↓ 每批完成
                             ┌── 质检环（独立技能）──┐
                             │ 评分官 + 合规官（并行）│
-                            │   ↓ 低于B级(75)/P1    │
+                            │   ↓ 未达质量门禁/P1    │
                             │ 修复官 → 复评         │
                             └──────────────────────┘
 ```
@@ -83,7 +84,7 @@ output_schema:
 | 剧本蓝图 | story-bible | story_bible | 梗概+人物+世界观+全剧结构；改编模式吃 external_story |
 | 分集设计 | episode-designer | narrative_plan | 分批（episode_range） |
 | 正文创作 | script-writer | episode_scripts | 分批（每批 ≤5 集） |
-| 独立评分 | script-scorer | quality_report | 质检环；修复稿优先 |
+| 独立评分 | script-scorer | quality_report | 质检环；读取 latest_script |
 | 合规审查 | compliance-guard | compliance_report | 质检环；与评分并行 |
 | 剧本修复 | revision-master | polished_script | 质检环；修复后必须复评 |
 | 宣发交付 | delivery-tool（可选） | production_package | 前置门禁：评分+合规通过 |
@@ -105,9 +106,9 @@ output_schema:
 
 1. story-bible 一次出故事蓝图（50 集以上可分两批：先梗概+人物，再结构层）
 2. episode-designer 分批输出分集设计
-3. script-writer 每批 ≤5 集（`episode_range=1-5`）
+3. script-writer 每批上限读取工作台 `batch_episode_max`
 4. 每批：script-scorer 十维评分 + compliance-guard 合规（并行）；
-   低于 B 级（75）或有 P1 必修项 → revision-master 修复 → 复评通过后再续写
+   未达到当前质量门禁或有 P1 必修项 → revision-master 修复 → 复评通过后再续写
 
 ---
 

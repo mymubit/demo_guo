@@ -1,0 +1,69 @@
+{
+  "project-brief.v1": {
+    "title": "逆光重来",
+    "genre_matrix": {"emotion": "revenge", "identity": "reborn", "conflict": "family", "world": "modern", "flavor_tags": []},
+    "theme_code": "matrix",
+    "matrix_key": "revenge-reborn-family-modern",
+    "rule_params": {"reversal_density": 0.4, "emotion_curve": [3, 2, 1, 4, 7, 8, 9, 10], "act_ratio": [0.1, 0.2, 0.2, 0.2, 0.15, 0.15], "hook_types": ["身份反转"]},
+    "preset_theme_code": null,
+    "episode_count": 30,
+    "episode_duration": 2,
+    "core_idea": "被家族抛弃的继承人重生后夺回人生",
+    "target_audience": "都市女性",
+    "core_conflict": "个人尊严与家族控制",
+    "hook_concept": "主角提前知道背叛",
+    "commercial_hook": "重生复仇",
+    "reference_works": [],
+    "compliance_risk": "low",
+    "market_opportunity": "人格共鸣",
+    "blockbuster_factors": ["信息差"],
+    "competitor_references": [],
+    "differentiation_strategy": "职业能力破局",
+    "first_episode_hook": "婚礼现场反击",
+    "paywall_direction": "关键证据即将公开"
+  },
+  "story-bible.v1": {
+    "drama_title": "逆光重来",
+    "logline": "她带着真相重回被抛弃当天",
+    "synopsis": {"short": "短梗概", "full": "完整梗概"},
+    "adapt_source": {"mode": "original", "retained": [], "enhanced": [], "rewritten": [], "originality_check": "原创"},
+    "world_rules": {"setting_summary": "现代家族企业", "root_rules": ["股权决定话语权"], "power_structure": "董事会控制资源"},
+    "characters": [{"name": "林夏", "role_type": "protagonist", "surface_desire": "夺回股权", "deep_need": "建立自我价值", "ghost": "被家族抛弃", "lie": "只有被认可才有价值", "flaw": "过度证明", "arc": {"start": "依赖认可", "turning_point_1": "独立决策", "turning_point_2": "放弃讨好", "end": "自我确认"}, "audience_identification": "职场与家庭边界", "voice_tag": "短句直接", "visual_anchor": "旧怀表"}],
+    "relationship_map": [],
+    "series_structure": {"main_storyline": "夺回人生", "six_stage_structure": [{}, {}, {}, {}, {}, {}], "conflict_escalation_chain": [], "major_reversal_positions": [], "paywall_distribution": [], "foreshadowing_table": [], "series_emotion_curve": []}
+  },
+  "narrative-plan.v1": {
+    "episode_narrative_designs": [{"episode": 1, "title": "归来", "core_event": "主角拒绝签字", "goal_conflict": "保住股权×家族逼迫", "emotion_intensity": 8, "opening_hook": "婚礼逃离", "ending_hook": "证据出现", "satisfaction_points": ["当众拒绝"], "reversal": "主角掌握录音", "paywall_hook": "录音内容未公开", "rhythm_tag": "tight-heavy", "foreshadowing": {"setup": ["怀表"], "payoff": []}, "hook_grade": "B", "characters": ["林夏"], "emotion_nodes": {"EV": {"value": 8}, "ET": {"value": 3}, "TP": {"content": "拒绝签字"}}}]
+  },
+  "episode-scripts.v1": {
+    "episodes": [{"episode_number": 1, "title": "归来", "script": "1-1 日 内 婚礼厅\n△林夏撕掉协议。", "word_count": 900, "dialogue_ratio": 0.4, "scene_count": 1, "golden_lines": [], "format_check": {}, "memory_checkpoint": {"episode": 1, "character_states": [], "active_clues": [], "foreshadowing": [], "relationship_changes": [], "prop_states": [], "rhythm_state": {"plot_pace": "tight", "emotion_pace": "heavy", "episode_ev": 8, "episode_et": 3, "episode_tp": "拒绝签字"}, "next_episode_constraints": ["承接录音"]}, "production_notes": {"tags": [], "complexity_score": 0, "complexity_band": "lean", "high_cost_scenes": [], "lower_cost_alternatives": []}}]
+  },
+  "quality-report.v1": {
+    "drama_title": "逆光重来", "scored_artifact": "latest_script", "resolved_script_key": "episode_scripts", "scoring_preset": "standard", "pass_threshold": 75, "config_revision": "1", "overall_score": 82, "grade": "A", "can_continue_next_batch": true, "needs_revision": false,
+    "dimensions": {
+      "format": {"score": 82, "weight": 0.1, "evidence": [], "deductions": []},
+      "narrative": {"score": 82, "weight": 0.15, "evidence": [], "deductions": []},
+      "conflict": {"score": 82, "weight": 0.15, "evidence": [], "deductions": []},
+      "character": {"score": 82, "weight": 0.1, "evidence": [], "deductions": []},
+      "emotion": {"score": 82, "weight": 0.1, "evidence": [], "deductions": []},
+      "logic": {"score": 82, "weight": 0.1, "evidence": [], "deductions": []},
+      "satisfaction": {"score": 82, "weight": 0.1, "evidence": [], "deductions": []},
+      "hooks": {"score": 82, "weight": 0.1, "evidence": [], "deductions": []},
+      "paywall": {"score": 82, "weight": 0.05, "evidence": [], "deductions": []},
+      "genre_fit": {"score": 82, "weight": 0.05, "evidence": [], "deductions": []}
+    },
+    "defects": [], "continuity_summary": {"result": "pass", "issues": []}, "revision_priorities": [], "evolution_proposal": null, "verdict": "通过"
+  },
+  "compliance-report.v1": {
+    "drama_title": "逆光重来", "check_mode": "standard", "target_platform": "generic", "platform_policy_version": null, "platform_policy_verified_at": null, "checked_artifact": "latest_script", "resolved_script_key": "episode_scripts", "overall_result": "通过", "blocking_issues": [], "risk_items": []
+  },
+  "polished-script.v1": {
+    "episodes": [{"episode_number": 1, "title": "归来", "script": "修复后剧本", "word_count": 900, "dialogue_ratio": 0.4, "scene_count": 1, "memory_checkpoint": {"episode": 1, "character_states": [], "active_clues": [], "foreshadowing": [], "rhythm_state": {"plot_pace": "tight", "emotion_pace": "heavy", "episode_ev": 8}, "next_episode_constraints": []}, "production_notes": {}}],
+    "revision_summary": [], "resolved_issues": [], "remaining_issues": []
+  },
+  "production-pack.v1": {
+    "drama_title": "逆光重来", "source_artifact": "latest_script", "storyboard": [], "visual_assets": [], "marketing_assets": [], "interactive_adaptation": null,
+    "production_plan": {"complexity_score": 0, "complexity_band": "lean", "cost_drivers": [], "high_cost_scenes": [], "lower_cost_alternatives": [], "budget_range": null, "pricing_context": null},
+    "release_checklist": {"target_platform": "generic", "policy_version": null, "verified_at": null, "blocking_items": [], "missing_materials": [], "can_release": false}
+  }
+}

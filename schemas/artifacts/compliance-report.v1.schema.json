@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills://artifacts/compliance-report.v1",
+  "type": "object",
+  "required": ["drama_title", "check_mode", "target_platform", "checked_artifact", "resolved_script_key", "overall_result", "blocking_issues", "risk_items"],
+  "properties": {
+    "drama_title": {"type": "string"},
+    "check_mode": {"enum": ["standard", "values-risk", "full"]},
+    "target_platform": {"enum": ["generic", "douyin", "kuaishou", "wechat_miniprogram"]},
+    "platform_policy_version": {"type": ["string", "null"]},
+    "platform_policy_verified_at": {"type": ["string", "null"]},
+    "checked_artifact": {"const": "latest_script"},
+    "resolved_script_key": {"enum": ["polished_script", "episode_scripts", "external_script"]},
+    "overall_result": {"enum": ["通过", "风险", "不通过"]},
+    "blocking_issues": {"type": "array", "items": {"type": "object"}},
+    "risk_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "description", "suggestion"],
+        "properties": {
+          "type": {"enum": ["p0", "p1", "p2"]},
+          "description": {"type": "string"},
+          "suggestion": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
