@@ -2,6 +2,38 @@
 
 面向短剧工业化创作的 PC 工作台。从零实现，不含旧版会员、订单、钱包或历史工作流。
 
+## 本地拉取（技能 + 工作台同一目录）
+
+**只拉一个分支**即可，仓库根目录同时包含前后端与技能仓，不必分别 clone。
+
+```bash
+git clone https://github.com/mymubit/demo_guo.git
+cd demo_guo
+git checkout flickForge
+```
+
+若本地已有仓库：
+
+```bash
+git fetch origin
+git checkout flickForge
+git pull origin flickForge
+```
+
+拉下来后的目录：
+
+```text
+demo_guo/
+  backend/         # Django API
+  frontend/        # PC 工作台
+  drama-skills/    # 技能 / 契约 / 编排（SSOT）
+  docker-compose.yml
+  scripts/dev-local.sh
+  package.json
+```
+
+说明：`drama-skills` 分支是**纯技能仓**（根目录即技能文件，没有 `backend/` / `frontend/`）。要两边文件在同一目录，请用 `flickForge`（或本 PR 分支 `cursor/scriptforge-pc-workbench-6e1b`）。
+
 ## 技术栈
 
 - 前端：React 18、TypeScript strict、Vite、Tailwind、TanStack Query
