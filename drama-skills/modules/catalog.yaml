@@ -1,0 +1,42 @@
+# 能力模块目录：工作台展示与角色挂载的机器契约。
+version: "1.2.0"
+lifecycles: [active]
+kinds: [core, extension]
+
+modules:
+  concept-development: {label_zh: 核心概念形成, domain: concept, kind: core, lifecycle: active, target_roles: [drama.topic-director], workbench_visible: true}
+  market-radar: {label_zh: 市场雷达, domain: concept, kind: core, lifecycle: active, target_roles: [drama.topic-director], workbench_visible: true}
+  formula-analysis: {label_zh: 商业公式分析, domain: concept, kind: core, lifecycle: active, target_roles: [drama.topic-director], workbench_visible: true}
+  tear-down-6d: {label_zh: 六维拉片, domain: concept, kind: core, lifecycle: active, target_roles: [drama.topic-director], workbench_visible: true}
+
+  character-system: {label_zh: 人物系统, domain: character, kind: core, lifecycle: active, target_roles: [drama.story-bible], workbench_visible: true}
+  world-rules: {label_zh: 世界规则, domain: structure, kind: core, lifecycle: active, target_roles: [drama.story-bible], workbench_visible: true}
+  series-structure: {label_zh: 全剧结构, domain: structure, kind: core, lifecycle: active, target_roles: [drama.story-bible], workbench_visible: true}
+  series-emotion-curve: {label_zh: 全剧情绪曲线, domain: emotion, kind: core, lifecycle: active, target_roles: [drama.story-bible], workbench_visible: true}
+  conflict-escalation: {label_zh: 冲突升级, domain: plotting, kind: core, lifecycle: active, target_roles: [drama.story-bible, drama.episode-designer], workbench_visible: true}
+  reversal-foreshadowing: {label_zh: 反转伏笔闭环, domain: plotting, kind: core, lifecycle: active, target_roles: [drama.story-bible, drama.episode-designer], workbench_visible: true}
+  adaptation-originality: {label_zh: 改编原创化, domain: concept, kind: core, lifecycle: active, target_roles: [drama.story-bible], workbench_visible: true, enable_when: "entry_type == 'story_adapt'"}
+
+  episode-card: {label_zh: 标准分集卡, domain: episode, kind: core, lifecycle: active, target_roles: [drama.episode-designer], workbench_visible: true}
+  episode-emotion-nodes: {label_zh: 单集情绪节点, domain: emotion, kind: core, lifecycle: active, target_roles: [drama.episode-designer], workbench_visible: true}
+  hook-system: {label_zh: 钩子体系, domain: episode, kind: core, lifecycle: active, target_roles: [drama.episode-designer], workbench_visible: true}
+  payment-checkpoint: {label_zh: 付费卡点, domain: episode, kind: core, lifecycle: active, target_roles: [drama.episode-designer], workbench_visible: true}
+
+  scene-writing: {label_zh: 场景写作, domain: writing, kind: core, lifecycle: active, target_roles: [drama.script-writer], workbench_visible: true}
+  dialogue-craft: {label_zh: 首稿对白, domain: writing, kind: core, lifecycle: active, target_roles: [drama.script-writer], workbench_visible: true}
+  continuity-snapshot: {label_zh: 连续性快照, domain: writing, kind: core, lifecycle: active, target_roles: [drama.script-writer], workbench_visible: true}
+  production-feasibility: {label_zh: 制片可拍性, domain: production, kind: core, lifecycle: active, target_roles: [drama.script-writer], workbench_visible: true}
+
+  continuity-audit: {label_zh: 连续性终审, domain: quality, kind: core, lifecycle: active, target_roles: [drama.script-scorer], workbench_visible: true}
+
+  dialogue-polish: {label_zh: 对白精修, domain: revision, kind: core, lifecycle: active, target_roles: [drama.revision-master], workbench_visible: true}
+  format-fix: {label_zh: 格式修复, domain: revision, kind: core, lifecycle: active, target_roles: [drama.revision-master], workbench_visible: true}
+  word-count-governance: {label_zh: 字数治理, domain: revision, kind: core, lifecycle: active, target_roles: [drama.revision-master], workbench_visible: true}
+
+  storyboard-9col: {label_zh: 九列分镜, domain: production, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true, enable_when: "deliverables contains 'storyboard'"}
+  visual-anchor: {label_zh: 视觉锚点, domain: marketing, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true, enable_when: "deliverables contains 'visual'"}
+  marketing-copy: {label_zh: 宣发文案, domain: marketing, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true, enable_when: "deliverables contains 'marketing'"}
+  delivery-check: {label_zh: 交付门禁, domain: delivery, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true}
+  story-to-game: {label_zh: 互动改编, domain: derivative, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true, enable_when: "deliverables contains 'interactive'"}
+  budget-estimator: {label_zh: 制作预算分级, domain: production, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true, enable_when: "deliverables contains 'budget'"}
+  platform-ops-checklist: {label_zh: 平台上架清单, domain: delivery, kind: extension, lifecycle: active, target_roles: [drama.delivery-tool], workbench_visible: true, enable_when: "deliverables contains 'release'"}

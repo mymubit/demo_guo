@@ -3,36 +3,32 @@ name: Script Scorer
 name_zh: 剧本评分官
 dept: quality
 role_tier: judge
-fast_track: true
 workspace_order: 501
-default_output_artifact_key: quality_report
-schema_version: quality-report.v1
-modules: []
+modules:
+- continuity-audit
 rule_policy:
   scopes:
   - global_core
   - genre_profile
   - stage_playbook
-  max_chars: 3200
+  max_chars: 3600
 skill_dir: roles/drama-script-scorer
-# 独立技能：可在任意时点调用，评「当前最新版本」的剧本。
-# required_artifacts_any_of 按优先级取第一个存在的产物：
-# 修复稿 polished_script > 原始稿 episode_scripts > 外部上传 external_script。
+# 独立技能：latest_script 由 artifact resolver 解析当前有效剧本。
 input_contract:
-  required_artifacts: []
-  required_artifacts_any_of:
-  - polished_script
-  - episode_scripts
-  - external_script
+  required_artifacts:
+  - latest_script
   optional_artifacts:
   - project_brief
   - story_bible
   - narrative_plan
-  params:
+  input_modes:
+    project:
+      required_artifacts: [latest_script, story_bible, narrative_plan]
+    external:
+      required_artifacts: [latest_script]
+      optional_artifacts: [project_brief, story_bible, narrative_plan]
+  parameter_refs:
   - scoring_mode
+  - scoring_preset
   - episode_range
-output_contract:
-  artifacts:
-  - quality_report
-  schema_version: quality-report.v1
-role: 独立十维剧本评分裁判，不能参与生成剧本；按「修复稿优先」评估当前最新版本剧本或用户上传的外部剧本，输出总分、等级、十维评分、证据、扣分原因、返修优先级和是否可继续生成下一批；同一维度连续两次低于70分时向技能进化轨道输出规则提案。
+role: 独立十维剧本评分与连续性终审裁判，不能参与生成剧本；统一评估 latest_script，输出总分、等级、十维证据、连续性缺陷、返修优先级和是否可继续下一批；同一维度连续两次低于进化阈值时输出规则提案。

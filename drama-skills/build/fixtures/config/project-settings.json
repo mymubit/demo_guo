@@ -1,0 +1,50 @@
+{
+  "schema_version": "project-settings.v1",
+  "project_id": "test-project",
+  "skills_version": "5.0.0",
+  "skills_git_ref": "test-ref",
+  "entry_type": "original_track",
+  "title": "逆光重来",
+  "core_idea": "被家族抛弃的继承人重生",
+  "genre_matrix": {
+    "emotion": "revenge",
+    "identity": "reborn",
+    "conflict": "family",
+    "world": "modern"
+  },
+  "flavor_tags": [],
+  "preset_theme_code": null,
+  "episode_count": 30,
+  "target_platform": "generic",
+  "reference_dramas": [],
+  "production_context": {
+    "target_band": "standard",
+    "region": "CN",
+    "currency": "CNY",
+    "pricing_version": "test",
+    "excluded_items": []
+  },
+  "creation_preferences": {
+    "batch_episode_max": 5,
+    "outline_mode": "full",
+    "scoring_preset": "standard",
+    "compliance_check_mode": "standard",
+    "enable_delivery": true,
+    "delivery_items": ["storyboard", "visual", "marketing", "budget"]
+  },
+  "platform_policy": {
+    "policy_version": null,
+    "policy_source": null,
+    "verified_at": null
+  },
+  "derived": {
+    "matrix_key": "revenge-reborn-family-modern",
+    "rule_params_ref": "project_brief.rule_params"
+  },
+  "audit": {
+    "revision": 1,
+    "created_at": "2026-07-14T00:00:00Z",
+    "updated_at": "2026-07-14T00:00:00Z",
+    "updated_by": "test-user"
+  }
+}

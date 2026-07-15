@@ -1,4 +1,2 @@
 # -*- coding: utf-8 -*-
-"""
-ScriptForge apps 包
-"""
+"""核心基础设施应用。"""

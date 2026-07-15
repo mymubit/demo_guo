@@ -1,0 +1,32 @@
+# 平台差异化配置入口
+# 平台政策具有时效性；每次更新必须记录来源与生效日期，未知字段不得推断。
+version: "1.0.0"
+config_tier: seed_default
+
+default:
+  profile_id: generic-short-drama
+  inherits:
+    format: foundation/constraints/script-format.yaml
+    quality: foundation/constraints/quality-scoring.yaml
+    commercial: foundation/constraints/commercial-formulas.yaml
+  policy_status: common_rules_only
+
+platforms:
+  generic:
+    policy_status: common_rules_only
+    notes: [仅执行通用格式、质量与合规规则]
+  douyin:
+    policy_status: requires_runtime_verification
+    notes: [开场留存敏感, 暴力内容需专项检查]
+  kuaishou:
+    policy_status: requires_runtime_verification
+    notes: [未成年人内容需专项检查]
+  wechat_miniprogram:
+    policy_status: requires_runtime_verification
+    notes: [备案材料与AI内容标识需专项检查]
+
+required_metadata:
+  - target_platform
+  - policy_version
+  - policy_source
+  - verified_at

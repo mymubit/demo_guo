@@ -3,34 +3,36 @@ name: Delivery Tool
 name_zh: 宣发交付工具
 dept: delivery
 role_tier: tool
-fast_track: false
 workspace_order: 601
-default_output_artifact_key: production_package
-schema_version: production-pack.v1
 modules:
+- storyboard-9col
 - visual-anchor
 - marketing-copy
 - delivery-check
 - story-to-game
+- budget-estimator
+- platform-ops-checklist
+module_policy:
+  source: modules/catalog.yaml
+  evaluate_enable_when: true
 rule_policy:
   scopes:
   - global_core
   - genre_profile
   - stage_playbook
-  max_chars: 2800
+  - compliance_block
+  max_chars: 3600
 skill_dir: roles/drama-delivery-tool
 input_contract:
   required_artifacts:
   - story_bible
-  required_artifacts_any_of:
-  - polished_script
-  - episode_scripts
-  optional_artifacts:
-  - project_brief
+  - latest_script
   - quality_report
   - compliance_report
-output_contract:
-  artifacts:
-  - production_package
-  schema_version: production-pack.v1
-role: 可选宣发交付工具，吸收制作发行师能力；仅在需要商业包装、交付检查、投流文案、视觉提示词或互动改编时执行，交付检查必须读取质量报告与合规结果，优先使用修复稿。
+  optional_artifacts:
+  - project_brief
+  parameter_refs:
+  - deliverables
+  - target_platform
+  - production_context
+role: 可选制作发行工具；按需输出分镜、视觉、宣发、互动改编、制片复杂度/预算带与平台上架清单，交付检查必须读取质量报告与合规结果，剧本统一使用 latest_script。

@@ -12,13 +12,13 @@
 
 ```
 故事梗概 + 市场机会 + 爆款因子 + 竞品避雷 + 差异化策略
-首集钩子方向 + 第3-5集付费卡点方向 + 合规初筛
+首集钩子方向 + 首付费卡点方向 + 合规初筛（数值见 `foundation/constraints/commercial-formulas.yaml`）
 ```
 
 ### 输入 / 输出
 
 - 输入：主题 / 故事梗概 / 题材矩阵 / 参考剧
-- 输出 schema：`project-brief.v1`
+- 输出 schema：`story_bible` v1
 
 ---
 
@@ -30,7 +30,7 @@
 原创模式：输入 project_brief，展开梗概/人物/结构
 改编模式：输入 params.external_story，先提取再补全，
           显式输出「保留/强化/改写」说明 + 原创性风险自检
-两种模式输出同一 story-bible.v1
+两种模式输出同一 `story_bible` schema v1
 ```
 
 ### 角色密度（人物层）
@@ -68,7 +68,7 @@
 阶段 6 结局 15%  情绪 10→余韵
 ```
 
-题材配比 override 见 `foundation/rules/genres/*.yaml`（`rule_params.act_ratio`）。
+题材配比由 `foundation/theme-matrix.yaml` 合成 `rule_params.act_ratio`，统一经 `genres/matrix.yaml` 注入。
 
 ### 结构层输出
 
@@ -146,8 +146,8 @@
 ## drama.script-scorer — 十维评分（质检环 · 独立技能）
 
 ```
-1. 评分对象按「修复稿优先」：polished_script > episode_scripts > external_script
-2. 输出 quality_report（schema: quality-report.v1）
+1. 评分对象统一读取 `latest_script`
+2. 输出 quality_report（schema v1）
 3. defects 路由至 drama.revision-master；低于 B 级（75）阻断下一批生成
 4. overall_score < 70 → 记录至 EVOLUTION_LOG，考虑规则补丁
 5. 某维度连续 2 次 < 70 → 经 @drama-intake 轨道一提案更新 foundation/rules/
@@ -167,19 +167,19 @@
 输出后必须交回 drama.script-scorer 复评。
 ```
 
-输出：`polished_script`（schema: `polished-script.v1`）
+输出：`polished_script`（schema v1）
 
 ---
 
 ## drama.compliance-guard — 合规（质检环 · 独立技能）
 
 ```
-与评分官并行触发；审查对象按「修复稿优先」取最新版本。
+与评分官并行触发；审查对象统一读取 `latest_script`。
 P0 或未解决 P1 → 拒绝出具通过报告，阻断下游。
 详见 knowledge/quality/tier4-compliance.md。
 ```
 
-输出：`compliance_report`（schema: `compliance-report.v1`）
+输出：`compliance_report`（schema v1）
 
 ---
 
@@ -190,4 +190,4 @@ P0 或未解决 P1 → 拒绝出具通过报告，阻断下游。
 无合规通过结论或评分低于 B 级（75）时只输出「不可交付+缺口清单」。
 ```
 
-输出：`production_package`（schema: `production-pack.v1`）
+输出：`production_package`（schema v1）

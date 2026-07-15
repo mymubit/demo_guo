@@ -10,6 +10,7 @@ tags:
 - 差异化
 dept: 选题定调部
 modules:
+- concept-development
 - market-radar
 - formula-analysis
 - tear-down-6d
@@ -20,6 +21,7 @@ output_schema:
 references:
 - ./role.yaml
 - ../../foundation/theme-matrix.yaml
+- ../../modules/concept-development.md
 - ../../modules/market-radar.md
 - ../../modules/formula-analysis.md
 - ../../modules/tear-down-6d.md
@@ -48,7 +50,7 @@ references:
 - 竞品参考与避雷点
 - 差异化策略
 - 首集钩子方向
-- 第 3-5 集付费卡点方向
+- 首付费卡点方向（窗口读取 `foundation/constraints/commercial-formulas.yaml`）
 - 合规初筛
 
 ## 触发方式

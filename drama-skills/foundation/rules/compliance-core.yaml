@@ -1,32 +1,76 @@
 # compliance_block · 合规核心 — Git SSOT
-version: "1.0.0"
+# knowledge/quality/tier4-compliance.md 仅作解释与案例来源。
+version: "1.1.0"
 tier: 4
 items:
   - rule_key: t4.global.p0_categories.redlines
     section: p0_categories
     title: P0 熔断红线
     priority: 5
+    source_ref: knowledge/quality/tier4-compliance.md
     body: |
-      SSOT: knowledge/quality/tier4-compliance.md
       P0 命中即否决：人口买卖/拐卖；未成年+犯罪语境；极端性暴力展示；活体解剖/食人/长时间酷刑展示。
   - rule_key: t4.global.p1_categories.must-fix
     section: p1_categories
     title: P1 强制修改
     priority: 10
+    source_ref: knowledge/quality/tier4-compliance.md
     body: |
-      SSOT: knowledge/quality/tier4-compliance.md
       必须修改：敏感职业无正义收束；乱伦/虐待儿童；犯罪手法详细展示无法律收束；反派洗白（有犯罪无惩罚）。
+  - rule_key: t4.global.p2_advisories.optimize
+    section: p2_advisories
+    title: P2 建议优化
+    priority: 20
+    source_ref: knowledge/quality/tier4-compliance.md
+    body: |
+      灰色职业应说明现实危害；未触及 P0/P1 的过度暴力应淡化细节。P2 不阻断交付，但必须记录风险与建议。
   - rule_key: t4.global.justice_tail_rule.core
     section: justice_tail_rule
     title: 犯罪正义收束
     priority: 8
+    source_ref: knowledge/quality/tier4-compliance.md
     body: |
-      SSOT: knowledge/quality/tier4-compliance.md
-      全剧≥2处犯罪相关表述时，必须出现正义收束词汇（伏法/落网/审判/付出代价等），否则 P1 熔断。
+      全剧≥2处犯罪相关表述时，必须出现正义收束；高犯罪密度至少3处、普通密度至少2处，且结尾段至少1处。
+      正义收束可使用伏法、落网、审判、法律制裁或付出代价等明确结果，否则按 P1 处理。
+  - rule_key: t4.global.risk_assessment.nine-dimensions
+    section: nine_dimension_risk_assessment
+    title: 九维风险评估
+    priority: 12
+    source_ref: knowledge/quality/tier4-compliance.md
+    body: |
+      必须覆盖价值观、人物塑造、未成年保护、版权、社会敏感、虚假宣传、恐怖内容、犯罪展示和平台红线九维。
+      未检查的维度不得默认为通过。
+  - rule_key: t4.global.values_bottom_line.core
+    section: values_bottom_line
+    title: 价值观底线
+    priority: 6
+    body: |
+      禁止美化犯罪、虐待、歧视或反社会行为；允许塑造有动机的反派，但不得以动机替代责任与后果。
+  - rule_key: t4.global.title_compliance.core
+    section: title_compliance_rules
+    title: 片名合规
+    priority: 12
+    body: |
+      片名不得冒充既有作品、使用受保护角色名、作虚假承诺或以低俗猎奇词规避正文审核；原创性同时执行 originality_rules。
+  - rule_key: t4.global.platform_specific.declared-target
+    section: platform_specific
+    title: 平台专项检查
+    priority: 14
+    source_ref: knowledge/quality/tier4-compliance.md
+    body: |
+      必须记录 target_platform 和规则版本；未提供平台时只执行通用规则，并明确平台专项尚未核验。
+      不得凭过期市场知识声称已满足最新平台政策。
+  - rule_key: t4.global.three_phase_checklist.gates
+    section: three_phase_compliance_checklist
+    title: 三阶段合规检查
+    priority: 15
+    source_ref: knowledge/quality/tier4-compliance.md
+    body: |
+      立项检查 P0、版权和社会敏感；逐集检查 P0、犯罪收束铺垫和未成年安全；交付执行 P0/P1/P2、九维评估与材料完整性。
   - rule_key: t4.global.fuse_behavior.guard
     section: fuse_behavior
     title: 熔断行为
     priority: 1
+    source_ref: knowledge/quality/tier4-compliance.md
     body: |
-      SSOT: knowledge/quality/tier4-compliance.md
       P0 或未解决 P1 时：拒绝出具合规通过报告；停止下游制作/发行流程。

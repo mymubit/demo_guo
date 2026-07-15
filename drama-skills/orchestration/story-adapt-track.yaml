@@ -2,39 +2,67 @@
 version: "5.0.0"
 entry_type: story_adapt
 label: 故事改编通道
-description: 用户提供故事/小说/大纲时的通道：剧本蓝图官以改编模式提取并补全故事蓝图，之后与原创通道完全共链。替代 v4 的 ip-adapt.yaml。
+description: 用户提供故事/小说/大纲时的通道：剧本蓝图官以改编模式提取并补全故事蓝图，之后与原创通道完全共链。
+project_settings_schema: schemas/project-settings.v1.schema.json
 
 entry_requirements:
-  params:
-    - external_story   # 用户粘贴的故事/小说/大纲原文
-    - adapt_notes      # 可选：保留什么、强化什么、改写什么
+  required_settings:
+    - external_story
+    - episode_count
+    - target_platform
+  optional_settings:
+    - adapt_notes
 
 phases:
   - phase: blueprint
     label: 剧本蓝图（改编模式）
     agents:
       - drama.story-bible
+    produces: story_bible
+    approval_gate: story_bible_approved
     notes: 提取原故事人物/冲突/结构 → 按短剧规律补全 → 原创性风险自检（knowledge/quality/originality-rules.md）
   - phase: episode_design
     label: 分集设计
     agents:
       - drama.episode-designer
+    requires_artifacts: [story_bible]
+    requires_approvals: [story_bible_approved]
+    produces: narrative_plan
   - phase: writing
     label: 正文创作
     agents:
       - drama.script-writer
+    requires_artifacts: [story_bible, narrative_plan]
+    produces: episode_scripts
+
+gates:
+  story_bible_approved:
+    artifact: story_bible
+    approval_type: user
+    invalidate_downstream_on_change: true
 
 # 质检环与原创通道一致（见 original-track.yaml）。
 quality_loop:
-  trigger: 每批正文（episode_range）完成后
+  trigger:
+    event: artifact_batch_completed
+    artifact: episode_scripts
+    range_param: episode_range
   parallel_judges:
     - drama.script-scorer
     - drama.compliance-guard
+  max_revision_rounds: 3
+  stop_on: [stagnant, diverging, oscillating]
   on_fail:
-    condition: overall_score < 75（B 级线）或存在 P1 必修项
+    conditions:
+      any:
+        - {path: quality_report.overall_score, op: lt, value_ref: foundation/constraints/quality-scoring.yaml#grade_thresholds.B}
+        - {path: compliance_report.blocking_issues, op: not_empty}
     agent: drama.revision-master
     then: 修复稿交回 parallel_judges 复评，通过后才可继续生成下一批
   score_target: latest_script
+  on_stop:
+    action: require_user_decision
+    options: [accept_current, manual_revision, abandon_batch]
 
 optional_agents:
   - drama.topic-director   # 改编项目仍需市场定调时可选调用

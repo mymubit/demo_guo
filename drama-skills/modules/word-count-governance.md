@@ -1,7 +1,7 @@
 # 模块：字数治理
 
 > 挂载角色：`drama.revision-master`（修复阶段字数与台词占比治理）
-> 数值 SSOT：`foundation/constraints/script-format.yaml`（首集 900-1100 / 其余 700-900 / 台词占比 ≥35%）
+> 数值 SSOT：`foundation/constraints/script-format.yaml`；本模块不重复维护区间。
 
 ## 治理策略
 
@@ -20,7 +20,7 @@
 
 ## 自检清单
 
-- [ ] 全部集数落入 SSOT 字数区间（达标率 ≥95%）
-- [ ] 台词占比 ≥35% 且 ≤70%
+- [ ] 全部集数落入 SSOT 字数区间，并按交付门禁计算达标率
+- [ ] 台词占比落入 `script-format.yaml#dialogue_ratio` 区间
 - [ ] 修复未削弱 EV 峰值与集末钩子
 - [ ] 每集场景数仍在 1-3 内

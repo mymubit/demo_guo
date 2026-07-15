@@ -1,0 +1,24 @@
+# 剧集结构缩放 SSOT
+version: "1.0.0"
+config_tier: git_ssot
+
+stage_order: [opening, warming, climax, turning, sprint, ending]
+base_ratios: [0.10, 0.20, 0.20, 0.20, 0.15, 0.15]
+
+allocation:
+  method: largest_remainder
+  minimum_episodes_per_stage: 1
+  description: 先按占比计算，再用最大余数法补齐集数，确保各阶段之和等于 episode_count。
+
+episode_structure:
+  segment_ratios:
+    hook: 0.10
+    situation: 0.30
+    escalation: 0.40
+    cliffhanger: 0.20
+  scenes_ref: foundation/constraints/script-format.yaml#scenes_per_episode
+
+emotion_terms:
+  EV: Emotion Value，当前节点情绪强度，范围 1-10。
+  ET: Emotion Trough，单集或阶段的最低情绪节点。
+  TP: Turning Point，使核心价值状态发生变化的转折点。

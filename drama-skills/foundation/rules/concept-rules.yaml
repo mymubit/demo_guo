@@ -1,0 +1,24 @@
+# global_core · 概念形成与差异化原子规则
+version: "1.0.0"
+tier: 1
+items:
+  - rule_key: t1.global.concept.entry-paths
+    section: concept_development
+    title: 五类创意入口
+    priority: 10
+    source_ref: knowledge/craft/shanyin-screenwriting-methodology.md
+    body: |
+      创意可从主题、人物、空间、关系或标签碰撞进入，但最终都必须收敛为「谁在什么处境下，为何被迫做出选择」。
+  - rule_key: t1.global.concept.combination-methods
+    section: concept_development
+    title: 概念组合方法
+    priority: 11
+    source_ref: knowledge/craft/shanyin-screenwriting-methodology.md
+    body: |
+      可使用概念嫁接、时空错置、隐喻具象化、反转并置或规则反转；组合后只保留一个核心戏剧动作。
+  - rule_key: t1.global.concept.elevator-test
+    section: concept_development
+    title: 电梯测试
+    priority: 12
+    body: |
+      一句话必须包含主角身份、急切目标、核心阻碍与差异化机制；删除专有名词后仍能说明为何值得追看。

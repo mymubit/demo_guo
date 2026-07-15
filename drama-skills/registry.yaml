@@ -21,16 +21,6 @@ departments:
 - code: delivery
   name_zh: 宣发交付部
   order: 6
-# 标准主链 + 质检环推荐顺序（写作后：评分/合规并行 → 不达标转修复 → 复评）。
-# 故事改编通道从 drama.story-bible 进入，跳过 drama.topic-director。
-fast_track_agents:
-- drama.topic-director
-- drama.story-bible
-- drama.episode-designer
-- drama.script-writer
-- drama.script-scorer
-- drama.compliance-guard
-- drama.revision-master
 roles:
 - agent_id: drama.topic-director
   skill_dir: roles/drama-topic-director
@@ -39,9 +29,8 @@ roles:
   dept: strategy
   role_tier: production
   workspace_order: 101
-  default_output_artifact_key: project_brief
-  schema_version: project-brief.v1
   modules:
+  - concept-development
   - market-radar
   - formula-analysis
   - tear-down-6d
@@ -52,13 +41,14 @@ roles:
   dept: blueprint
   role_tier: production
   workspace_order: 201
-  default_output_artifact_key: story_bible
-  schema_version: story-bible.v1
   modules:
-  - psychology-immersion
-  - emotion-blueprint
+  - character-system
+  - world-rules
+  - series-structure
+  - series-emotion-curve
   - conflict-escalation
-  - reversal-system
+  - reversal-foreshadowing
+  - adaptation-originality
 - agent_id: drama.episode-designer
   skill_dir: roles/drama-episode-designer
   name: Episode Designer
@@ -66,13 +56,13 @@ roles:
   dept: episode_design
   role_tier: production
   workspace_order: 301
-  default_output_artifact_key: narrative_plan
-  schema_version: narrative-plan.v1
   modules:
-  - emotion-blueprint
+  - episode-card
+  - episode-emotion-nodes
   - hook-system
   - conflict-escalation
-  - reversal-system
+  - reversal-foreshadowing
+  - payment-checkpoint
 - agent_id: drama.script-writer
   skill_dir: roles/drama-script-writer
   name: Script Writer
@@ -80,9 +70,12 @@ roles:
   dept: writing
   role_tier: production
   workspace_order: 401
-  default_output_artifact_key: episode_scripts
-  schema_version: episode-scripts.v1
   default_task: write-episodes
+  modules:
+  - scene-writing
+  - dialogue-craft
+  - continuity-snapshot
+  - production-feasibility
 - agent_id: drama.script-scorer
   skill_dir: roles/drama-script-scorer
   name: Script Scorer
@@ -90,8 +83,8 @@ roles:
   dept: quality
   role_tier: judge
   workspace_order: 501
-  default_output_artifact_key: quality_report
-  schema_version: quality-report.v1
+  modules:
+  - continuity-audit
 - agent_id: drama.compliance-guard
   skill_dir: roles/drama-compliance-guard
   name: Compliance Guard
@@ -99,8 +92,6 @@ roles:
   dept: quality
   role_tier: judge
   workspace_order: 502
-  default_output_artifact_key: compliance_report
-  schema_version: compliance-report.v1
 - agent_id: drama.revision-master
   skill_dir: roles/drama-revision-master
   name: Revision Master
@@ -108,13 +99,10 @@ roles:
   dept: quality
   role_tier: production
   workspace_order: 503
-  default_output_artifact_key: polished_script
-  schema_version: polished-script.v1
   modules:
   - dialogue-polish
   - format-fix
   - word-count-governance
-  - storyboard-9col
 - agent_id: drama.delivery-tool
   skill_dir: roles/drama-delivery-tool
   name: Delivery Tool
@@ -122,13 +110,14 @@ roles:
   dept: delivery
   role_tier: tool
   workspace_order: 601
-  default_output_artifact_key: production_package
-  schema_version: production-pack.v1
   modules:
+  - storyboard-9col
   - visual-anchor
   - marketing-copy
   - delivery-check
   - story-to-game
+  - budget-estimator
+  - platform-ops-checklist
 tools:
 - id: drama-master
   skill_dir: drama-master
@@ -136,3 +125,6 @@ tools:
 - id: drama-intake
   skill_dir: drama-intake
   description: 技能进化入口：外部内容摄入 + 四轨道进化（规则/灵感/市场知识/新模式）
+contracts:
+  artifacts: contracts/artifacts.yaml
+  parameters: contracts/parameters.yaml

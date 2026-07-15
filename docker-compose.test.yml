@@ -1,0 +1,66 @@
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: scriptforge_test
+      POSTGRES_USER: scriptforge
+      POSTGRES_PASSWORD: scriptforge-test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scriptforge -d scriptforge_test"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  redis-test:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  celery-test:
+    build: ./backend
+    environment: &test-env
+      DJANGO_ENV: development
+      DB_NAME: scriptforge_test
+      DB_USER: scriptforge
+      DB_PASSWORD: scriptforge-test
+      DB_HOST: postgres-test
+      DB_PORT: 5432
+      REDIS_URL: redis://redis-test:6379/0
+      CELERY_BROKER_URL: redis://redis-test:6379/1
+      CELERY_RESULT_BACKEND: redis://redis-test:6379/2
+      DRAMA_SKILLS_ROOT: /app/drama-skills
+      SECRET_KEY: integration-test-secret
+      LLM_ENABLED: "false"
+    command: celery -A config worker -l warning --concurrency=1
+    volumes:
+      - ./drama-skills:/app/drama-skills:ro
+    depends_on:
+      postgres-test: {condition: service_healthy}
+      redis-test: {condition: service_healthy}
+
+  integration-test:
+    build: ./backend
+    environment:
+      <<: *test-env
+      DJANGO_ENV: test
+      TEST_DB_NAME: scriptforge_test
+      TEST_DB_USER: scriptforge
+      TEST_DB_PASSWORD: scriptforge-test
+      TEST_DB_HOST: postgres-test
+      TEST_DB_PORT: 5432
+      TEST_REDIS_URL: redis://redis-test:6379/0
+      CELERY_TASK_ALWAYS_EAGER: "false"
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             CELERY_TASK_ALWAYS_EAGER=true python manage.py test apps.drama.tests --verbosity=2 &&
+             DJANGO_ENV=development CELERY_TASK_ALWAYS_EAGER=false python /app/scripts/verify_real_stack.py"
+    volumes:
+      - ./drama-skills:/app/drama-skills:ro
+      - ./scripts:/app/scripts:ro
+    depends_on:
+      postgres-test: {condition: service_healthy}
+      redis-test: {condition: service_healthy}
+      celery-test: {condition: service_started}

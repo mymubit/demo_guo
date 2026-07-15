@@ -3,32 +3,30 @@ name: Script Writer
 name_zh: 剧本正文官
 dept: writing
 role_tier: production
-fast_track: true
 workspace_order: 401
-default_output_artifact_key: episode_scripts
-schema_version: episode-scripts.v1
-modules: []
+modules:
+- scene-writing
+- dialogue-craft
+- continuity-snapshot
+- production-feasibility
 rule_policy:
   scopes:
   - global_core
   - genre_profile
   - stage_playbook
-  max_chars: 2500
+  max_chars: 4200
 skill_dir: roles/drama-script-writer
 tasks:
   default: write-episodes
   available:
   - write-episodes
 input_contract:
-  params:
+  parameter_refs:
   - episode_range
+  - production_target_band
   required_artifacts:
   - story_bible
-  optional_artifacts:
   - narrative_plan
+  optional_artifacts:
   - project_brief
-output_contract:
-  artifacts:
-  - episode_scripts
-  schema_version: episode-scripts.v1
-role: 按故事蓝图、分集设计与商业格式生成指定集数范围的正式剧本，严格执行字数/场景/台词约束；每场戏以 Goal×Conflict 驱动并完成 McKee 价值转变，每集输出记忆检查点、字数统计、台词占比与格式自检。
+role: 按故事蓝图、分集设计与商业格式生成指定集数范围的正式剧本，执行场景写作、首稿对白、连续性快照与制片可拍性标记；每场戏以 Goal×Conflict 驱动并完成 McKee 价值转变。

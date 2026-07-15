@@ -1,52 +1,86 @@
-# -*- coding: utf-8 -*-
-"""Drama Skills URL 路由配置"""
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
+"""Drama API 路由。"""
+from django.urls import path
 
 from apps.drama.views import (
-    DramaWorkspaceViewSet,
-    DramaRoleListView,
-    EpisodeArtifactView,
-    EpisodeQualityView,
-    GenerationPlanView,
-    ModelConfigView,
-    QualityRadarView,
+    AdminConfigRollbackView,
+    AdminConfigView,
+    ArtifactDetailView,
+    ExternalScriptReviewView,
+    GenerationJobDetailView,
+    GenerationJobSSEView,
+    GenerationSSEView,
+    GenerationStartView,
+    GenerationStatusView,
+    ProjectDetailView,
+    ProjectListCreateView,
+    ProjectSettingsView,
+    StoryBibleApprovalView,
     ThemeMatrixView,
-    TokenStatsView,
-    WordCountValidateView,
+    WorkbenchFormView,
+    WorkflowCommandView,
+    WorkflowStateView,
 )
 
-router = DefaultRouter()
-router.register(r"projects", DramaWorkspaceViewSet, basename="drama-project")
-
 urlpatterns = [
-    # 角色分组列表
-    path("roles/", DramaRoleListView.as_view(), name="drama-roles"),
-
-    # 题材四轴矩阵（SSOT）
+    path("projects/", ProjectListCreateView.as_view(), name="drama-projects"),
+    path("projects/<uuid:project_id>/", ProjectDetailView.as_view(), name="drama-project-detail"),
+    path(
+        "projects/<uuid:project_id>/settings/",
+        ProjectSettingsView.as_view(),
+        name="drama-project-settings",
+    ),
+    path(
+        "projects/<uuid:project_id>/workflow/",
+        WorkflowStateView.as_view(),
+        name="drama-workflow",
+    ),
+    path(
+        "projects/<uuid:project_id>/workflow/commands/",
+        WorkflowCommandView.as_view(),
+        name="drama-workflow-commands",
+    ),
+    path(
+        "projects/<uuid:project_id>/approvals/story-bible/",
+        StoryBibleApprovalView.as_view(),
+        name="drama-story-bible-approval",
+    ),
+    path(
+        "projects/<uuid:project_id>/artifacts/<str:artifact_key>/",
+        ArtifactDetailView.as_view(),
+        name="drama-artifact",
+    ),
+    path(
+        "projects/<uuid:project_id>/generation/start/",
+        GenerationStartView.as_view(),
+        name="drama-generation-start",
+    ),
+    path(
+        "projects/<uuid:project_id>/generation/<uuid:job_id>/",
+        GenerationStatusView.as_view(),
+        name="drama-generation-status",
+    ),
+    path(
+        "projects/<uuid:project_id>/generation/<uuid:job_id>/stream/",
+        GenerationSSEView.as_view(),
+        name="drama-generation-sse",
+    ),
+    path("jobs/<uuid:job_id>/", GenerationJobDetailView.as_view(), name="drama-job-detail"),
+    path(
+        "jobs/<uuid:job_id>/stream/",
+        GenerationJobSSEView.as_view(),
+        name="drama-job-sse",
+    ),
+    path(
+        "external-script-reviews/",
+        ExternalScriptReviewView.as_view(),
+        name="drama-external-review",
+    ),
     path("theme-matrix/", ThemeMatrixView.as_view(), name="drama-theme-matrix"),
-
-    # 字数校验
-    path("validate/word-count/", WordCountValidateView.as_view(), name="drama-word-validate"),
-
-    # Token/统计
-    path("stats/token/", TokenStatsView.as_view(), name="drama-token-stats"),
-
-    # 模型配置管理（管理员）
-    path("models/config/", ModelConfigView.as_view(), name="drama-model-config"),
-
-    # 8维度质量雷达图（支持单集/全剧）
-    path("projects/<uuid:project_id>/quality-radar/", QualityRadarView.as_view(), name="drama-quality-radar"),
-
-    # 单集质量报告（GET=列表 POST=提交）
-    path("projects/<uuid:project_id>/episode-quality/", EpisodeQualityView.as_view(), name="drama-episode-quality"),
-
-    # 单集剧本内容获取 + 修改建议应用
-    path("projects/<uuid:project_id>/episodes/", EpisodeArtifactView.as_view(), name="drama-episodes"),
-
-    # 批量生成计划（100集模式，token成本预估）
-    path("projects/<uuid:project_id>/generation-plan/", GenerationPlanView.as_view(), name="drama-generation-plan"),
-
-    # 工作区 CRUD + 进度查询 + 角色执行
-    path("", include(router.urls)),
+    path("meta/workbench-form/", WorkbenchFormView.as_view(), name="drama-workbench-form"),
+    path("admin/config/", AdminConfigView.as_view(), name="drama-admin-config"),
+    path(
+        "admin/config/rollback/",
+        AdminConfigRollbackView.as_view(),
+        name="drama-admin-config-rollback",
+    ),
 ]

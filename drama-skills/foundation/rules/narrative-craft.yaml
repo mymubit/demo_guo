@@ -1,5 +1,5 @@
 # global_core · 叙事 craft 摘要 — hook/结构/情绪/信息差
-version: "1.0.0"
+version: "1.1.0"
 tier: 1
 items:
   - rule_key: t1.global.hook_effectiveness.levels
@@ -13,7 +13,8 @@ items:
     title: 单集四段式占比
     priority: 11
     body: |
-      钩子10% + 情境30% + 升级40% + 悬念20%。集末必须有未解问题或新威胁。
+      单集段落占比读取 foundation/constraints/series-scale.yaml.episode_structure.segment_ratios。
+      集末必须有未解问题或新威胁。
   - rule_key: t1.global.information_asymmetry_mechanics.core
     section: information_asymmetry_mechanics
     title: 信息差三类型
@@ -31,7 +32,8 @@ items:
     title: QDN 情绪模型
     priority: 14
     body: |
-      质量感Q × 深度D × 需求满足N；设计 EV/ET/TP 与双轨节奏[松/中/紧×轻/中/重]。
+      质量感Q × 深度D × 需求满足N；EV/ET/TP 定义读取
+      foundation/constraints/series-scale.yaml.emotion_terms，并配合双轨节奏[松/中/紧×轻/中/重]。
   - rule_key: t1.global.episode_emotion_8nodes.summary
     section: episode_emotion_8nodes
     title: 分集情绪八节点

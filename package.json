@@ -1,28 +1,15 @@
 {
-  "name": "scriptforge-ai",
-  "version": "1.0.0",
+  "name": "scriptforge-pc-workbench",
   "private": true,
-  "description": "ScriptForge AI - 基于AI的专业短剧剧本创作平台",
+  "version": "1.0.0",
   "scripts": {
-    "docker:infra": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/docker-infra.ps1",
-    "docker:infra:down": "docker compose down",
-    "docker:prod": "docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build",
-    "dev:frontend": "cd frontend && npm run dev",
-    "dev:backend": "cd backend && python manage.py runserver 0.0.0.0:8000",
-    "dev:worker": "cd backend && python manage.py dj_queue --mode async",
-    "dev:setup": "cd backend && python manage.py migrate && python manage.py init_skill_data && python manage.py init_membership_data && python manage.py init_billing_data && python manage.py init_recharge_data",
-    "check:fusion": "cd backend && python manage.py fusion_check",
-    "setup:admin": "cd backend && python manage.py create_admin --phone 13800008888 --password Admin1234!",
-    "dev:bootstrap": "npm run dev:setup && npm run setup:admin",
-    "start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start-dev.ps1",
-    "dev": "concurrently -n frontend,backend,worker -c cyan,magenta,green \"npm:dev:frontend\" \"npm:dev:backend\" \"npm:dev:worker\"",
-    "build": "cd frontend && npm run build",
-    "preview": "cd frontend && npm run preview",
-    "install:all": "npm run install:frontend && npm run install:backend",
-    "install:frontend": "cd frontend && npm install",
-    "install:backend": "cd backend && pip install -r requirements.txt"
-  },
-  "devDependencies": {
-    "concurrently": "^8.2.2"
+    "dev": "docker compose up --build",
+    "dev:local": "sh scripts/dev-local.sh",
+    "dev:local:eager": "sh scripts/dev-local.sh --eager",
+    "test:frontend": "npm --prefix frontend test",
+    "lint:frontend": "npm --prefix frontend run lint",
+    "build:frontend": "npm --prefix frontend run build",
+    "test:skills": "python drama-skills/build/validate_skills.py && python drama-skills/build/validate_workbench.py && python drama-skills/build/validate_artifacts.py && python drama-skills/build/validate_config.py && python drama-skills/build/validate_workflow.py && python drama-skills/build/validate_quality_cases.py",
+    "test:real": "sh scripts/test-real.sh"
   }
 }

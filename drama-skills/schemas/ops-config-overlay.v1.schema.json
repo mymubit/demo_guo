@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills://schemas/ops-config-overlay.v1",
+  "title": "运营后台配置覆盖",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "tenant_id",
+    "skills_version",
+    "overrides",
+    "audit"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "ops-config-overlay.v1"
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "skills_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "effective_at": {
+      "type": "string"
+    },
+    "overrides": {
+      "type": "object",
+      "description": "叶子路径仍须通过 manifest/config-policy.yaml#overlay_files.allowed_paths 校验",
+      "properties": {
+        "foundation/constraints/agent-runtime.yaml": {"type": "object"},
+        "foundation/constraints/script-format.yaml": {"type": "object"},
+        "foundation/constraints/quality-scoring.yaml": {"type": "object"},
+        "foundation/constraints/commercial-formulas.yaml": {"type": "object"},
+        "foundation/constraints/scoring-presets.yaml": {"type": "object"},
+        "foundation/constraints/platform-profiles.yaml": {"type": "object"},
+        "foundation/constraints/production-feasibility.yaml": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "audit": {
+      "type": "object",
+      "required": [
+        "revision",
+        "updated_by",
+        "updated_at",
+        "change_reason"
+      ],
+      "properties": {
+        "revision": {"type": "integer", "minimum": 1},
+        "updated_by": {"type": "string", "minLength": 1},
+        "updated_at": {"type": "string"},
+        "change_reason": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

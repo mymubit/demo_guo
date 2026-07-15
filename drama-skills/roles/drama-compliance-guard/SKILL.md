@@ -33,8 +33,8 @@ references:
 
 | 方向 | 键 | 说明 |
 |------|-----|------|
-| 输出 | `compliance_report` | schema: `compliance-report.v1` |
-| 输入（任一必填，按序取最新） | `polished_script` / `episode_scripts` / `external_script` | 修复稿优先 |
+| 输出 | `compliance_report` | schema v1 |
+| 输入（必填） | `latest_script` | 由运行时解析当前有效剧本 |
 | 参数 | `check_mode` | 运行参数 |
 
 ## 标准输出要求

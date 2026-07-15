@@ -12,20 +12,26 @@ tags:
 - 故事改编
 dept: 剧本蓝图部
 modules:
-- psychology-immersion
-- emotion-blueprint
+- character-system
+- world-rules
+- series-structure
+- series-emotion-curve
 - conflict-escalation
-- reversal-system
+- reversal-foreshadowing
+- adaptation-originality
 output_schema:
 - name: story_bible
   type: object
   description: 故事蓝图（梗概 + 人物 + 世界规则 + 全剧结构）
 references:
 - ./role.yaml
-- ../../modules/psychology-immersion.md
-- ../../modules/emotion-blueprint.md
+- ../../modules/character-system.md
+- ../../modules/world-rules.md
+- ../../modules/series-structure.md
+- ../../modules/series-emotion-curve.md
 - ../../modules/conflict-escalation.md
-- ../../modules/reversal-system.md
+- ../../modules/reversal-foreshadowing.md
+- ../../modules/adaptation-originality.md
 - ../../foundation/rules/character-rules.yaml
 - ../../knowledge/quality/originality-rules.md
 - ../../knowledge/craft/shanyin-screenwriting-methodology.md
@@ -40,7 +46,7 @@ references:
 
 ## 职责
 
-一次性回答「这是一个什么故事、谁在推动它、整部剧怎么起转爆收」。输出 `story_bible`（schema: `story-bible.v1`），只控制全局，不展开逐集细节。
+一次性回答「这是一个什么故事、谁在推动它、整部剧怎么起转爆收」。输出 `story_bible`（schema v1），只控制全局，不展开逐集细节。
 
 ## 双模式
 

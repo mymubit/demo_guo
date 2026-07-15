@@ -3,15 +3,14 @@ name: Episode Designer
 name_zh: 分集设计官
 dept: episode_design
 role_tier: production
-fast_track: true
 workspace_order: 301
-default_output_artifact_key: narrative_plan
-schema_version: narrative-plan.v1
 modules:
-- emotion-blueprint
+- episode-card
+- episode-emotion-nodes
 - hook-system
 - conflict-escalation
-- reversal-system
+- reversal-foreshadowing
+- payment-checkpoint
 rule_policy:
   scopes:
   - global_core
@@ -20,14 +19,10 @@ rule_policy:
   max_chars: 3600
 skill_dir: roles/drama-episode-designer
 input_contract:
-  params:
+  parameter_refs:
   - episode_range
   required_artifacts:
   - story_bible
   optional_artifacts:
   - project_brief
-output_contract:
-  artifacts:
-  - narrative_plan
-  schema_version: narrative-plan.v1
 role: 把故事蓝图拆成逐集可写的 episode cards，必须输出每集核心事件、Goal×Conflict、情绪强度、集首/集末钩子、爽点、反转、伏笔埋设/回扣、付费卡点和双轨节奏标注。

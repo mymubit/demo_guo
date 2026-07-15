@@ -1,5 +1,5 @@
 # genre_profile · 全局 fallback — hybrid 或未匹配 theme_code 时使用
-version: "1.1.0"
+version: "1.2.0"
 tier: 2
 items:
   - rule_key: t2.global.genre_profile.emotion-anchor-summary
@@ -22,7 +22,6 @@ items:
     title: 未命中题材时的默认参数
     priority: 101
     body: |
-      未提供 rule_params 时使用全局基线：六阶段 10/20/20/20/15/15；
-      reversal_density≈0.35；hook_types 从四级钩子体系自选；
-      情绪曲线按 emotion-blueprint 六阶段基线铺设。
+      未提供 rule_params 时使用 foundation/theme-matrix.yaml.param_synthesis.base，
+      包括 reversal_density、emotion_curve、act_ratio 与 hook_types。
       命中 theme_code=matrix 时必须改用 project_brief.rule_params（见 genres/matrix.yaml）。

@@ -3,34 +3,41 @@ name: Story Bible
 name_zh: 剧本蓝图官
 dept: blueprint
 role_tier: production
-fast_track: true
 workspace_order: 201
-default_output_artifact_key: story_bible
-schema_version: story-bible.v1
 modules:
-- psychology-immersion
-- emotion-blueprint
+- character-system
+- world-rules
+- series-structure
+- series-emotion-curve
 - conflict-escalation
-- reversal-system
+- reversal-foreshadowing
+- adaptation-originality
+module_policy:
+  source: modules/catalog.yaml
+  evaluate_enable_when: true
 rule_policy:
   scopes:
   - global_core
   - genre_profile
   - stage_playbook
-  max_chars: 3600
+  max_chars: 4200
 skill_dir: roles/drama-story-bible
-# 双模式：原创模式吃 project_brief；改编模式吃 params.external_story，
-# 两种模式输出同一 story-bible.v1，下游角色无差别消费。
+# 双模式：原创模式吃 project_brief；改编模式吃 external_story，
+# 两种模式输出同一 story_bible schema v1，下游角色无差别消费。
 input_contract:
   optional_artifacts:
   - project_brief
-  params:
+  parameter_refs:
   - external_story
   - adapt_notes
   - episode_count
+  - outline_mode
+  input_modes:
+    original:
+      required_artifacts: [project_brief]
+      forbidden_params: [external_story]
+    adapt:
+      required_params: [external_story]
+      optional_artifacts: [project_brief]
   required_artifacts: []
-output_contract:
-  artifacts:
-  - story_bible
-  schema_version: story-bible.v1
-role: 剧本蓝图官整合剧本梗概、人物小传、轻量世界观与全剧架构，一次性输出可直接进入分集设计的故事蓝图。原创模式基于立项简报展开；改编模式从用户提供的故事/小说/大纲中提取并补全同样结构，并完成原创性风险自检。只控制全局，不展开逐集细节。
+role: 剧本蓝图官整合剧本梗概、人物系统、可行动世界规则与全剧架构，输出可直接进入分集设计的故事蓝图。原创模式基于立项简报展开；改编模式从用户提供的故事/小说/大纲中提取并补全同样结构，并完成原创性风险自检。只控制全局，不展开逐集细节。

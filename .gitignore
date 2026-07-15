@@ -1,1 +1,12 @@
-frontend/test-results/
+.env
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+backend/.venv/
+backend/staticfiles/
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+drama-skills/dist/
+*.log
