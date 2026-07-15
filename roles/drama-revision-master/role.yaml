@@ -4,8 +4,6 @@ name_zh: 剧本修复官
 dept: quality
 role_tier: production
 workspace_order: 503
-default_output_artifact_key: polished_script
-schema_version: polished-script.v1
 modules:
 - dialogue-polish
 - format-fix
@@ -26,14 +24,7 @@ input_contract:
   - compliance_report
   - story_bible
   - narrative_plan
-  params_schema:
-    episode_range:
-      type: string
-      required: false
-      pattern: '^\d+-\d+$'
-    focus_areas: {type: array, required: false, items_type: string}
-output_contract:
-  artifacts:
-  - polished_script
-  schema_version: polished-script.v1
+  parameter_refs:
+  - episode_range
+  - focus_areas
 role: 根据评分报告、合规报告和用户要求修复剧本，执行对白精修、格式修复和字数治理；不重新设计故事，只提升文本执行质量；输出修复稿后必须提交剧本评分官复评。

@@ -11,6 +11,7 @@ precedence:
 
 protected_paths:
   - registry.yaml
+  - contracts/**
   - roles/**
   - modules/**
   - orchestration/**
