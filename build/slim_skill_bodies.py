@@ -8,9 +8,12 @@ from typing import Any, Dict, List
 
 import yaml
 
+from lib.contracts_loader import load_artifacts_contract, role_output_artifacts
+
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "registry.yaml"
 ROLES_DIR = ROOT / "roles"
+ROLE_OUTPUTS = role_output_artifacts(load_artifacts_contract(ROOT))
 
 V31_NOTICE = (
     "> **v5.0**：规则 SSOT 见 `foundation/rules/`；角色契约 SSOT 见 `./role.yaml`。"
@@ -108,16 +111,13 @@ def _task_files(slug: str) -> List[str]:
 
 def _build_io_table(role_meta: Dict[str, Any], registry_role: Dict[str, Any]) -> str:
     lines = ["| 方向 | 键 | 说明 |", "|------|-----|------|"]
-    artifact = registry_role.get("default_output_artifact_key") or role_meta.get(
-        "default_output_artifact_key", ""
-    )
-    schema = registry_role.get("schema_version") or role_meta.get("schema_version", "")
+    artifact = ROLE_OUTPUTS.get(registry_role.get("agent_id", ""), "")
     if artifact:
-        lines.append(f"| 输出 | `{artifact}` | schema: `{schema}` |")
+        lines.append(f"| 输出 | `{artifact}` | schema v1 |")
 
     required = (role_meta.get("input_contract") or {}).get("required_artifacts") or []
     optional = (role_meta.get("input_contract") or {}).get("optional_artifacts") or []
-    params = (role_meta.get("input_contract") or {}).get("params") or []
+    params = (role_meta.get("input_contract") or {}).get("parameter_refs") or []
 
     for key in required:
         lines.append(f"| 输入（必填） | `{key}` | 上游产物 |")

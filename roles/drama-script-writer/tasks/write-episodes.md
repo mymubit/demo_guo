@@ -12,7 +12,7 @@
 3. 每场戏验证 Goal×Conflict 与 McKee 价值转变
 4. 每集完成后输出 memory_checkpoint
 5. 每集输出字数、台词占比、格式自检、可传播金句与 production_notes
-6. 输出合法 JSON，遵循 `episode-scripts.v1`
+6. 输出合法 JSON，遵循 `episode_scripts` schema v1
 
 ## 数值约束
 字数、台词占比和场景数只读取 `foundation/constraints/script-format.yaml`，不得在任务中复制数值。

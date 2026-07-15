@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills://artifacts/narrative_plan/1",
+  "type": "object",
+  "required": [
+    "episode_narrative_designs"
+  ],
+  "properties": {
+    "episode_narrative_designs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "episode",
+          "title",
+          "core_event",
+          "goal_conflict",
+          "emotion_intensity",
+          "opening_hook",
+          "ending_hook",
+          "satisfaction_points",
+          "reversal",
+          "paywall_hook",
+          "rhythm_tag",
+          "foreshadowing",
+          "hook_grade",
+          "characters",
+          "emotion_nodes"
+        ],
+        "properties": {
+          "episode": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "title": {
+            "type": "string"
+          },
+          "core_event": {
+            "type": "string"
+          },
+          "goal_conflict": {
+            "type": "string"
+          },
+          "emotion_intensity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10
+          },
+          "opening_hook": {
+            "type": "string"
+          },
+          "ending_hook": {
+            "type": "string"
+          },
+          "satisfaction_points": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reversal": {
+            "type": "string"
+          },
+          "paywall_hook": {
+            "type": "string"
+          },
+          "rhythm_tag": {
+            "type": "string"
+          },
+          "foreshadowing": {
+            "type": "object",
+            "required": [
+              "setup",
+              "payoff"
+            ],
+            "properties": {
+              "setup": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "payoff": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          },
+          "hook_grade": {
+            "enum": [
+              "S",
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          "characters": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "emotion_nodes": {
+            "type": "object",
+            "required": [
+              "EV",
+              "ET",
+              "TP"
+            ],
+            "properties": {
+              "EV": {
+                "type": "object"
+              },
+              "ET": {
+                "type": "object"
+              },
+              "TP": {
+                "type": "object"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
