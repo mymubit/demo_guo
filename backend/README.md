@@ -1,29 +1,31 @@
 # ScriptForge Drama Backend
 
-生产可用、结构精简的 Django + DRF 后端，契约以 `DRAMA_SKILLS_ROOT` 下 manifest / schemas / api-contract 为唯一真相。
+Django + DRF 后端，契约以 `DRAMA_SKILLS_ROOT` 下 manifest / schemas / api-contract 为唯一真相。
 
-## 快速开始
+## 启动
+
+仓库根目录一键即可（推荐）：
+
+```bash
+# Docker 整栈
+npm run dev
+
+# 或本机进程 + 本机/Docker 基础设施
+npm run dev:local
+```
+
+仅后端调试时：
 
 ```bash
 cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env
-# 编辑 .env，至少配置 PostgreSQL 与 DRAMA_SKILLS_ROOT
-
-export DJANGO_ENV=development
+cp .env.example .env   # 按需改 DB / Redis；DRAMA_SKILLS_ROOT 默认 ../drama-skills
 python manage.py migrate
-python manage.py createsuperuser
 python manage.py runserver 0.0.0.0:8000
+# 另开终端：celery -A config worker -l info
+# 或不启 worker：CELERY_TASK_ALWAYS_EAGER=true
 ```
-
-## Celery Worker
-
-```bash
-celery -A config worker -l info
-```
-
-集成环境由根目录 `docker-compose` 启动真实 Redis worker；单测使用 `CELERY_TASK_ALWAYS_EAGER=true`。
 
 ## API 概览
 
@@ -43,24 +45,20 @@ celery -A config worker -l info
 | GET/PUT | `/api/v1/drama/admin/config/` | drama_config.* |
 | POST | `/api/v1/drama/admin/config/rollback/` | drama_config.rollback |
 
-认证：`POST /api/v1/auth/token/`、`POST /api/v1/auth/register/`。
-
-健康检查：`GET /health/`。
+认证：`POST /api/v1/auth/token/`、`POST /api/v1/auth/register/`。健康检查：`GET /health/`。
 
 ## 测试
 
 ```bash
 export DJANGO_ENV=test
-export DRAMA_SKILLS_ROOT=/workspace
 python manage.py test apps.drama.tests -v 2
 ```
 
-测试依赖真实 PostgreSQL / Redis（见 `.env.example`），不访问外网；`LLM_ENABLED=false` 时生成任务标记为 `disabled`，不以 mock 冒充成功。
+依赖真实 PostgreSQL / Redis；`LLM_ENABLED=false` 时生成任务标记为 `disabled`。
 
 ## 架构要点
 
-- **apps/core**：统一响应 `{code,message,data}`、异常处理、审计日志、健康检查、JSON Schema 校验
-- **apps/users**：Django 内置 User + SimpleJWT
-- **apps/drama**：模型、服务层（SkillsBundleLoader / ProjectSettings / Workflow / Artifact / ConfigOverlay / Generation）、Celery 任务、DRF 权限类
-- **乐观锁**：项目设置 `settings_revision`、工作流 `version`、配置 `audit.revision`，均通过 `If-Match` 头传递
-- **LLM**：`LLM_API_BASE_URL` + `LLM_API_KEY` OpenAI 兼容 HTTP；`LLM_ENABLED=false` 显式禁用
+- **apps/core**：统一响应、异常、审计、健康检查、JSON Schema
+- **apps/users**：Django User + SimpleJWT
+- **apps/drama**：Skills 加载、项目设置、工作流、产物、配置覆盖、生成任务
+- **乐观锁**：settings_revision / workflow version / config revision，经 `If-Match` 传递

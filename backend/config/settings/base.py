@@ -8,9 +8,11 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
-
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# 优先读 backend/.env，其次读仓库根 .env（docker compose 共用）
+load_dotenv(BASE_DIR / ".env")
+load_dotenv(BASE_DIR.parent / ".env", override=False)
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-change-me-in-production")
 
@@ -126,20 +128,29 @@ CORS_ALLOWED_ORIGINS = [
     if origin.strip()
 ]
 
-# Drama Skills 根目录（Git SSOT）
-DRAMA_SKILLS_ROOT = os.getenv("DRAMA_SKILLS_ROOT", str(BASE_DIR.parent.parent / "workspace"))
+# Drama Skills 根目录（Git SSOT）：默认指向仓库内 drama-skills/
+DRAMA_SKILLS_ROOT = os.getenv(
+    "DRAMA_SKILLS_ROOT",
+    str(BASE_DIR.parent / "drama-skills"),
+)
 
-# LLM（OpenAI 兼容 HTTP）
+# LLM（OpenAI 兼容 HTTP）；本地开发默认关闭，避免误调外网
 LLM_API_BASE_URL = os.getenv("LLM_API_BASE_URL", "")
 LLM_API_KEY = os.getenv("LLM_API_KEY", "")
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
-LLM_ENABLED = os.getenv("LLM_ENABLED", "true").lower() in ("1", "true", "yes")
+LLM_ENABLED = os.getenv("LLM_ENABLED", "false").lower() in ("1", "true", "yes")
 LLM_CONNECT_TIMEOUT = int(os.getenv("LLM_CONNECT_TIMEOUT", "30"))
 LLM_READ_TIMEOUT = int(os.getenv("LLM_READ_TIMEOUT", "120"))
 
 # Celery
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", os.getenv("REDIS_URL", "redis://127.0.0.1:6379/1"))
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
+CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "false").lower() in (
+    "1",
+    "true",
+    "yes",
+)
+CELERY_TASK_EAGER_PROPAGATES = True
 CELERY_TASK_TRACK_STARTED = True
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
