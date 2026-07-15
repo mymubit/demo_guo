@@ -133,7 +133,7 @@ export function StageCanvas({
         <div>
           <h2 className="text-base font-semibold text-ink">{stage.label_zh}</h2>
           <p className="text-xs text-ink-muted">
-            产物 {stage.artifact} · 工作流 v{workflow.version} · 阶段 {workflow.current_phase}
+            当前由对应创作角色执行，完成后自动保存阶段产物
           </p>
         </div>
         <Button

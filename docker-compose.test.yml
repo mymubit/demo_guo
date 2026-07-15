@@ -55,8 +55,8 @@ services:
       CELERY_TASK_ALWAYS_EAGER: "false"
     command: >
       sh -c "python manage.py migrate --noinput &&
-             python manage.py test apps.drama.tests --verbosity=2 &&
-             DJANGO_ENV=development python /app/scripts/verify_real_stack.py"
+             CELERY_TASK_ALWAYS_EAGER=true python manage.py test apps.drama.tests --verbosity=2 &&
+             DJANGO_ENV=development CELERY_TASK_ALWAYS_EAGER=false python /app/scripts/verify_real_stack.py"
     volumes:
       - ./drama-skills:/app/drama-skills:ro
       - ./scripts:/app/scripts:ro

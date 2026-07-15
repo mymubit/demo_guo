@@ -46,17 +46,6 @@ export function ProjectSettingsPage() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!draft) throw new Error('没有可保存的设置')
-      if (
-        draft.target_platform !== 'generic' &&
-        !draft.platform_policy?.verified_at
-      ) {
-        throw new ApiError({
-          code: 42203,
-          httpStatus: 422,
-          message:
-            '目标平台政策尚未核验：非「通用」平台需先完成平台政策核验后再保存，否则服务端将返回 42203。',
-        })
-      }
       return dramaApi.updateSettings(projectId, draft, draft.audit.revision)
     },
     onSuccess: (data) => {
@@ -144,7 +133,7 @@ export function ProjectSettingsPage() {
           <p className="font-medium">平台政策未核验</p>
           <p className="mt-1">
             {policyHint ||
-              `当前目标平台为「${draft.target_platform}」，尚未完成政策核验（platform_policy.verified_at 为空）。保存将被拒绝（错误码 42203），请先切换为「通用」或完成平台政策核验。`}
+              `当前目标平台为「${draft.target_platform}」，尚未完成政策核验。项目设置可以保存，但请求“上架”交付前必须由管理员补充有效政策版本。`}
           </p>
         </div>
       ) : null}

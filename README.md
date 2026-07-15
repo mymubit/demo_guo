@@ -56,6 +56,18 @@ LLM_MODEL=...
 
 生产前必须使用独立测试账号和费用上限执行完整原创、改编、质检与修复流程。
 
+## 导入脱敏真实数据
+
+数据文件使用当前 `project-settings`、`workflow-state` 和 artifact Schema，不保留旧字段兼容：
+
+```bash
+cd backend
+python manage.py import_drama_dataset /path/to/dataset.json --owner demo --dry-run
+python manage.py import_drama_dataset /path/to/dataset.json --owner demo
+```
+
+`--dry-run` 会执行真实数据库事务和全部Schema校验，最后回滚。
+
 ## 目录
 
 ```text

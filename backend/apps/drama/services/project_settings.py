@@ -11,7 +11,6 @@ from django.db import transaction
 from apps.core.audit import audit_log
 from apps.core.exceptions import (
     OPTIMISTIC_LOCK_FAILED,
-    PLATFORM_POLICY_UNVERIFIED,
     BusinessException,
 )
 from apps.core.schema_validator import SchemaValidator
@@ -136,7 +135,6 @@ class ProjectSettingsService:
         payload = dict(payload)
         payload["project_id"] = str(project.id)
         payload["skills_version"] = self.loader.bundle_version
-        self._check_platform_policy(payload)
         derived = self._derive(payload)
         self.validator.validate_file(derived, self.SCHEMA_PATH)
 
@@ -179,6 +177,16 @@ class ProjectSettingsService:
                 "matrix_key": key,
                 "rule_params_ref": "project_brief.rule_params",
             }
+        platform = result.get("target_platform", "generic")
+        profiles = self.loader.load_seed_yaml(
+            "foundation/constraints/platform-profiles.yaml"
+        ).get("platforms", {})
+        profile = profiles.get(platform, {})
+        result["platform_policy"] = {
+            "policy_version": profile.get("policy_version"),
+            "policy_source": profile.get("policy_source"),
+            "verified_at": profile.get("verified_at"),
+        }
         return result
 
     def _blueprint_inputs_changed(
@@ -192,15 +200,3 @@ class ProjectSettingsService:
             "adapt_notes",
         )
         return any(old.get(k) != new.get(k) for k in keys)
-
-    def _check_platform_policy(self, settings: dict[str, Any]) -> None:
-        platform = settings.get("target_platform", "generic")
-        if platform == "generic":
-            return
-        policy = settings.get("platform_policy") or {}
-        if not policy.get("verified_at"):
-            raise BusinessException(
-                PLATFORM_POLICY_UNVERIFIED,
-                f"平台 {platform} 策略未验证",
-                http_status=422,
-            )

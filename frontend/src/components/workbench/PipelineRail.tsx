@@ -38,6 +38,15 @@ const STATUS_LABEL_ZH: Record<StageRailStatus, string> = {
   blocked: '已阻塞',
 }
 
+const WORKFLOW_STATUS_LABELS: Record<WorkflowState['status'], string> = {
+  active: '进行中',
+  waiting_approval: '待审批',
+  waiting_quality: '质检中',
+  waiting_user: '待决策',
+  completed: '已完成',
+  blocked: '已阻塞',
+}
+
 function StageButton({
   stage,
   index,
@@ -82,7 +91,7 @@ function StageButton({
           {index != null ? `${index}. ` : ''}
           {stage.label_zh}
         </div>
-        <div className="truncate text-xs text-ink-muted">{stage.artifact}</div>
+        <div className="truncate text-xs text-ink-muted">{STATUS_LABEL_ZH[status]}</div>
       </div>
     </button>
   )
@@ -126,7 +135,7 @@ export function PipelineRail({
                       : 'brand'
               }
             >
-              {workflow.status}
+              {WORKFLOW_STATUS_LABELS[workflow.status]}
             </Badge>
           </div>
         ) : null}

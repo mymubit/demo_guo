@@ -1,0 +1,80 @@
+name: ScriptForge PC Workbench CI
+
+on:
+  pull_request:
+  push:
+    branches: [scriptforge-reference]
+
+jobs:
+  contract-and-unit:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: scriptforge_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d scriptforge_ci"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: pip install -r backend/requirements.txt
+      - run: npm ci
+        working-directory: frontend
+      - name: Backend tests on PostgreSQL and Redis
+        working-directory: backend
+        env:
+          DJANGO_ENV: test
+          TEST_DB_NAME: scriptforge_ci
+          TEST_DB_USER: postgres
+          TEST_DB_PASSWORD: postgres
+          TEST_DB_HOST: 127.0.0.1
+          TEST_REDIS_URL: redis://127.0.0.1:6379/13
+          DRAMA_SKILLS_ROOT: ${{ github.workspace }}/drama-skills
+          SECRET_KEY: ci-secret
+          LLM_ENABLED: "false"
+        run: python manage.py test apps.drama.tests --noinput
+      - run: npm test
+        working-directory: frontend
+      - run: npm run lint
+        working-directory: frontend
+      - run: npm run typecheck
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - name: Drama Skills contracts
+        working-directory: drama-skills
+        run: |
+          python build/validate_skills.py
+          python build/validate_theme_matrix.py
+          python build/validate_workbench.py
+          python build/validate_artifacts.py
+          python build/validate_config.py
+          python build/validate_workflow.py
+          python build/validate_quality_cases.py
+          python -m unittest discover -s build/tests -p "test_*.py" -v
+
+  real-celery-stack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/test-real.sh

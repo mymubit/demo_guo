@@ -2,7 +2,7 @@
 """项目设置乐观锁与派生字段测试。"""
 from django.test import TestCase, override_settings
 
-from apps.core.exceptions import OPTIMISTIC_LOCK_FAILED, PLATFORM_POLICY_UNVERIFIED
+from apps.core.exceptions import OPTIMISTIC_LOCK_FAILED
 from apps.drama.tests.helpers import FIXTURE_SETTINGS, create_project, create_user
 
 
@@ -46,24 +46,18 @@ class ProjectSettingsServiceTests(TestCase):
             )
         self.assertEqual(ctx.exception.code, OPTIMISTIC_LOCK_FAILED)
 
-    def test_platform_policy_unverified(self):
-        from apps.core.exceptions import BusinessException
+    def test_platform_policy_unverified_does_not_block_project_settings(self):
         from apps.drama.services.project_settings import ProjectSettingsService
 
         svc = ProjectSettingsService()
         payload = dict(FIXTURE_SETTINGS)
         payload["project_id"] = str(self.project.id)
         payload["target_platform"] = "douyin"
-        payload["platform_policy"] = {
-            "policy_version": None,
-            "policy_source": None,
-            "verified_at": None,
-        }
-        with self.assertRaises(BusinessException) as ctx:
-            svc.update_settings(
-                self.project,
-                payload,
-                expected_revision=1,
-                actor=self.user.username,
-            )
-        self.assertEqual(ctx.exception.code, PLATFORM_POLICY_UNVERIFIED)
+        result = svc.update_settings(
+            self.project,
+            payload,
+            expected_revision=1,
+            actor=self.user.username,
+        )
+        self.assertEqual(result["target_platform"], "douyin")
+        self.assertIsNone(result["platform_policy"]["verified_at"])

@@ -3,6 +3,27 @@ import { Badge } from '@/components/ui/Badge'
 import type { ProjectSettings } from '@/types/domain'
 import type { StageDefinition } from '@/types/workbench'
 
+const DOMAIN_LABELS: Record<string, string> = {
+  concept: '创意',
+  character: '人物',
+  structure: '结构',
+  emotion: '情绪',
+  plotting: '情节',
+  episode: '分集',
+  writing: '写作',
+  production: '制作',
+  quality: '质检',
+  revision: '修复',
+  marketing: '宣发',
+  delivery: '交付',
+  derivative: '衍生',
+}
+
+const KIND_LABELS: Record<string, string> = {
+  core: '核心',
+  extension: '扩展',
+}
+
 export function ModulePanel({
   stage,
   settings,
@@ -16,7 +37,7 @@ export function ModulePanel({
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-l border-slate-200 bg-white">
       <div className="border-b border-slate-200 px-4 py-3">
-        <div className="text-xs font-medium uppercase tracking-wide text-ink-faint">Modules</div>
+        <div className="text-xs font-medium tracking-wide text-ink-faint">能力模块</div>
         <div className="mt-1 text-sm font-semibold text-ink">
           {stage ? stage.label_zh : '能力模块'}
         </div>
@@ -29,7 +50,7 @@ export function ModulePanel({
           groups.map(([domain, items]) => (
             <section key={domain}>
               <div className="mb-2 px-1 text-xs font-medium uppercase tracking-wide text-ink-faint">
-                {domain}
+                {DOMAIN_LABELS[domain] ?? domain}
               </div>
               <ul className="space-y-1.5">
                 {items.map((m) => (
@@ -39,7 +60,9 @@ export function ModulePanel({
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm text-ink">{m.label_zh}</span>
-                      <Badge tone={m.kind === 'core' ? 'brand' : 'default'}>{m.kind}</Badge>
+                      <Badge tone={m.kind === 'core' ? 'brand' : 'default'}>
+                        {KIND_LABELS[m.kind] ?? m.kind}
+                      </Badge>
                     </div>
                   </li>
                 ))}
