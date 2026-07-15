@@ -1,3 +1,0 @@
-# -*- coding: utf-8 -*-
-"""???????????????? apps.creation.workspace.workspace_editor?"""
-from apps.creation.workspace.workspace_editor import *  # noqa: F401,F403

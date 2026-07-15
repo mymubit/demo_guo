@@ -1,3 +1,0 @@
-# -*- coding: utf-8 -*-
-"""???????????????? apps.creation.display.character_display?"""
-from apps.creation.display.character_display import *  # noqa: F401,F403

@@ -3,15 +3,16 @@ name: Episode Designer
 name_zh: 分集设计官
 dept: episode_design
 role_tier: production
-fast_track: true
 workspace_order: 301
 default_output_artifact_key: narrative_plan
 schema_version: narrative-plan.v1
 modules:
-- emotion-blueprint
+- episode-card
+- episode-emotion-nodes
 - hook-system
 - conflict-escalation
-- reversal-system
+- reversal-foreshadowing
+- payment-checkpoint
 rule_policy:
   scopes:
   - global_core
@@ -20,8 +21,12 @@ rule_policy:
   max_chars: 3600
 skill_dir: roles/drama-episode-designer
 input_contract:
-  params:
-  - episode_range
+  params_schema:
+    episode_range:
+      type: string
+      required: true
+      pattern: '^\d+-\d+$'
+      ui_widget: episode_range
   required_artifacts:
   - story_bible
   optional_artifacts:

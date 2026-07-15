@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills://artifacts/score-dimension.v1",
+  "type": "object",
+  "required": ["score", "weight", "evidence", "deductions"],
+  "properties": {
+    "score": {"type": "number", "minimum": 0, "maximum": 100},
+    "weight": {"type": "number", "minimum": 0, "maximum": 1},
+    "evidence": {"type": "array", "items": {"type": "string"}},
+    "deductions": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

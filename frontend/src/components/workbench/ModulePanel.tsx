@@ -1,0 +1,53 @@
+import { groupModulesByDomain, modulesForStage } from '@/utils/modules'
+import { Badge } from '@/components/ui/Badge'
+import type { ProjectSettings } from '@/types/domain'
+import type { StageDefinition } from '@/types/workbench'
+
+export function ModulePanel({
+  stage,
+  settings,
+}: {
+  stage: StageDefinition | null
+  settings: ProjectSettings
+}) {
+  const modules = modulesForStage(stage, settings)
+  const groups = groupModulesByDomain(modules)
+
+  return (
+    <aside className="flex h-full w-64 shrink-0 flex-col border-l border-slate-200 bg-white">
+      <div className="border-b border-slate-200 px-4 py-3">
+        <div className="text-xs font-medium uppercase tracking-wide text-ink-faint">Modules</div>
+        <div className="mt-1 text-sm font-semibold text-ink">
+          {stage ? stage.label_zh : '能力模块'}
+        </div>
+        {stage ? <div className="mt-1 truncate text-xs text-ink-muted">{stage.role}</div> : null}
+      </div>
+      <div className="flex-1 space-y-4 overflow-auto p-3">
+        {groups.length === 0 ? (
+          <p className="px-1 text-sm text-ink-muted">当前阶段无可展示模块</p>
+        ) : (
+          groups.map(([domain, items]) => (
+            <section key={domain}>
+              <div className="mb-2 px-1 text-xs font-medium uppercase tracking-wide text-ink-faint">
+                {domain}
+              </div>
+              <ul className="space-y-1.5">
+                {items.map((m) => (
+                  <li
+                    key={m.id}
+                    className="rounded-lg border border-slate-200 bg-canvas px-3 py-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm text-ink">{m.label_zh}</span>
+                      <Badge tone={m.kind === 'core' ? 'brand' : 'default'}>{m.kind}</Badge>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))
+        )}
+      </div>
+    </aside>
+  )
+}

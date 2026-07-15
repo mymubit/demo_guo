@@ -1,5 +1,5 @@
 # stage_playbook · 阶段 playbook — Git SSOT（按 agent scope_key 过滤）
-version: "2.0.0"
+version: "2.1.0"
 tier: 3
 items:
   - rule_key: t3.drama-topic-director.project_brief.market-integrated
@@ -9,7 +9,8 @@ items:
     title: 选题定调必须吸收市场判断
     priority: 10
     body: |
-      输出 project_brief 时必须包含故事梗概、市场机会判断、爆款因子、竞品避雷、差异化策略、首集钩子方向、第3-5集付费卡点方向和合规初筛。
+      输出 project_brief 时必须包含故事梗概、市场机会判断、爆款因子、竞品避雷、差异化策略、首集钩子方向、首付费卡点方向和合规初筛。
+      所有量化值读取 foundation/constraints/commercial-formulas.yaml。
   - rule_key: t3.drama-story-bible.dual-mode.same-schema
     section: philosophy
     scope_type: agent
@@ -26,9 +27,8 @@ items:
     title: 角色密度与弧光
     priority: 10
     body: |
-      SSOT: knowledge/craft/tier3-stage-rules.md
-      主角≤2，核心配角2-4，总关系角色≤6；每人须 Want/Need/Ghost/Lie/Flaw；15秒内可视觉识别。
-      世界观只保留会影响人物行动与剧情选择的规则。
+      执行 character_rules 与 series_structure；本阶段只负责把原子规则落实到 story-bible.v1 字段。
+      世界观必须执行 world_rules，并写入可行动规则、权力结构和信息释放边界。
   - rule_key: t3.drama-story-bible.episode_structure.six-stage
     section: episode_structure
     scope_type: agent
@@ -36,9 +36,8 @@ items:
     title: 六阶段集数分配
     priority: 11
     body: |
-      SSOT: knowledge/craft/tier3-stage-rules.md
-      100集基准：开篇10%/升温20%/高潮20%/转折20%/冲刺15%/结局15%（题材 rule_params.act_ratio 可覆盖）。
-      结构层只定义六阶段、主支线、关键反转、付费节点分布和伏笔总表，不展开逐集细节。
+      六阶段及缩放规则读取 series_structure 和 foundation/constraints/series-scale.yaml；
+      题材 rule_params.act_ratio 可覆盖基础占比。
   - rule_key: t3.drama-episode-designer.episode_structure.episode-card
     section: episode_structure
     scope_type: agent
@@ -46,9 +45,7 @@ items:
     title: 分集设计卡
     priority: 10
     body: |
-      SSOT: knowledge/craft/tier3-stage-rules.md
-      每集设计须含 Goal×Conflict、EV/ET/TP、集首钩子、集末钩子、爽点、反转、付费卡点、伏笔埋设/回扣、双轨节奏[松/中/紧×轻/中/重]。
-      不得重写 story_bible 的主线与六阶段结构。
+      执行 episode_card 原子规则并写入 narrative-plan.v1；不得重写 story_bible 的主线与六阶段结构。
   - rule_key: t3.drama-script-writer.writing_requirements.episode-range
     section: writing_requirements
     scope_type: agent
@@ -56,8 +53,9 @@ items:
     title: 分集写作约束
     priority: 10
     body: |
-      SSOT: roles/drama-script-writer/tasks/write-episodes.md
+      格式与数值只读取 foundation/constraints/script-format.yaml；
       必须指定 episode_range；逐集依赖上一集全文+memory_checkpoint（LR-008）；禁止一次生成全剧。
+      首稿必须执行 dialogue_craft，并输出 production_feasibility 制片标签。
   - rule_key: t3.drama-revision-master.writing_requirements.revision-only
     section: writing_requirements
     scope_type: agent
@@ -75,7 +73,7 @@ items:
     priority: 10
     body: |
       剧本评分官必须作为独立裁判执行十维 G-Eval 评分，覆盖格式、叙事、冲突、角色、情绪、逻辑、爽点、钩子、付费点、赛道匹配；不得参与剧本生成。
-      评分对象按「修复稿优先」取当前最新版本：polished_script > episode_scripts > external_script。
+      评分对象统一读取 `latest_script`，并执行 continuity 连续性终审。
   - rule_key: t3.drama-script-scorer.scoring.evolution-proposal
     section: scoring
     scope_type: agent
@@ -83,7 +81,8 @@ items:
     title: 评分驱动技能进化
     priority: 20
     body: |
-      单批 overall_score<70 须记录至 EVOLUTION_LOG.md；同一维度连续 2 次<70 须向 @drama-intake
+      单批 overall_score 低于 foundation/constraints/quality-scoring.yaml#evolution_threshold 须记录至 EVOLUTION_LOG.md；
+      同一维度连续 2 次低于该阈值须向 @drama-intake
       轨道一（规则进化）输出 evolution_proposal（目标 foundation/rules/ 或对应 role.yaml）。
   - rule_key: t3.drama-compliance-guard.compliance.latest-script
     section: compliance_block
@@ -92,8 +91,8 @@ items:
     title: 合规裁判边界
     priority: 10
     body: |
-      SSOT: foundation/rules/compliance-core.yaml + knowledge/quality/tier4-compliance.md
-      只判断能否交付，不评价剧本好坏；审查对象按「修复稿优先」取当前最新版本。
+      可执行规则只读取 foundation/rules/compliance-core.yaml 与 foundation/rules/originality-rules.yaml。
+      只判断能否交付，不评价剧本好坏；审查对象统一读取 `latest_script`。
       P0 或未解决 P1 时拒绝出具通过报告，并阻断继续生成与交付流程。
   - rule_key: t3.drama-delivery-tool.delivery.gate
     section: format_standard
@@ -103,4 +102,6 @@ items:
     priority: 10
     body: |
       执行交付检查前必须读取 quality_report 与 compliance_report；
-      无合规通过结论或评分低于 B 级（75）时，只输出「不可交付+缺口清单」，不产出宣发物料。
+      无合规通过结论或评分低于 foundation/constraints/quality-scoring.yaml#grade_thresholds.B 时，
+      只输出「不可交付+缺口清单」，不产出宣发物料。
+      交付包必须包含制片复杂度/预算带与平台上架清单；政策未验证时不得标记可发布。

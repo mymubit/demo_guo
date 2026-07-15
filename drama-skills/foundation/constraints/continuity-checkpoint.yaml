@@ -1,0 +1,42 @@
+# 逐集连续性检查点 Schema SSOT
+version: "1.0.0"
+config_tier: git_ssot
+artifact_key: memory_checkpoint
+
+required_fields:
+  - episode
+  - character_states
+  - active_clues
+  - foreshadowing
+  - rhythm_state
+  - next_episode_constraints
+
+optional_fields:
+  - relationship_changes
+  - prop_states
+
+schema:
+  episode: integer
+  character_states:
+    type: array
+    item_fields: [name, physical_state, emotional_state, known_facts, current_goal]
+  active_clues:
+    type: array
+    item_fields: [clue, status, known_by]
+    status_enum: [introduced, developing, resolved]
+  foreshadowing:
+    type: array
+    item_fields: [item, setup_episode, planned_payoff_episode, status]
+    status_enum: [planned, planted, paid_off, overdue]
+  relationship_changes:
+    type: array
+    item_fields: [from, to, before, after, trigger]
+  prop_states:
+    type: array
+    item_fields: [prop, holder, state, narrative_function]
+  rhythm_state:
+    type: object
+    item_fields: [plot_pace, emotion_pace, episode_ev, episode_et, episode_tp]
+  next_episode_constraints:
+    type: array
+    description: 下一集必须承接、不得冲突或必须兑现的事实。

@@ -1,7 +1,7 @@
 ---
 name: drama-script-scorer
 version: 5.0.0
-description: 剧本评分官：独立十维 G-Eval 评分技能，按「修复稿优先」评估最新版本剧本，可评本项目剧本和外部上传剧本。
+description: 剧本评分官：独立十维 G-Eval 评分与连续性终审，评估 latest_script，可评本项目剧本和外部上传剧本。
 tags:
 - 十维评分
 - 剧本评测
@@ -9,12 +9,15 @@ tags:
 - 返修建议
 - 独立裁判
 dept: 质检修复部
+modules:
+- continuity-audit
 output_schema:
 - name: quality_report
   type: json
   description: 十维评分报告
 references:
 - ./role.yaml
+- ../../modules/continuity-audit.md
 - ../../foundation/constraints/quality-scoring.yaml
 - ../../foundation/rules/scoring-core.yaml
 - ../../knowledge/quality/s-class-standards.md
@@ -27,7 +30,7 @@ references:
 
 作为独立裁判评估整部或指定范围剧本。不能参与剧本生成，也不能替剧本正文官自我辩护。
 
-评分对象按优先级取当前最新版本：`polished_script`（修复稿）＞ `episode_scripts`（原始稿）＞ `external_script`（外部上传）。修复官返修后必须复评，形成「写作 → 评分 → 修复 → 复评」闭环。
+评分对象统一读取虚拟产物 `latest_script`。修复官返修后必须复评，形成「写作 → 评分 → 修复 → 复评」闭环。
 
 评分预设（standard / strict / relaxed / rhythm_first）见 `knowledge/quality/scoring-presets.md`；S 级逐项核对清单见 `knowledge/quality/s-class-standards.md`。
 
@@ -60,12 +63,13 @@ references:
 - 是否可继续生成下一批
 - 是否需要返修
 - 返修优先级
+- 连续性终审摘要与双向证据
 - 外部剧本横评说明
 
 ## 进化触发
 
-- 单批 `overall_score < 70`：在 `EVOLUTION_LOG.md` 记录，考虑规则补丁
-- 同一维度连续 2 次 < 70：向 `@drama-intake` 轨道一（规则进化）输出 `evolution_proposal`
+- 低于 `quality-scoring.yaml#evolution_threshold`：记录并考虑规则补丁
+- 同一维度连续 2 次低于该阈值：向 `@drama-intake` 轨道一输出 `evolution_proposal`
 
 ## 触发方式
 

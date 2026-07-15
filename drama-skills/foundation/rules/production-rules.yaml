@@ -1,0 +1,38 @@
+# global_core · 制片可行性与交付准备原子规则
+version: "1.0.0"
+tier: 1
+items:
+  - rule_key: t1.global.production_feasibility.tagging
+    section: production_feasibility
+    title: 制片复杂度标记
+    priority: 10
+    body: |
+      每集必须标记场地切换、夜戏/外景、群演、动作危险、特殊道具、特效与未成年/动物等制片要素。
+      标记只描述资源需求，不擅自删除剧情。
+  - rule_key: t1.global.production_feasibility.alternative
+    section: production_feasibility
+    title: 高成本替代方案
+    priority: 11
+    body: |
+      高复杂度场景必须给出至少一个保持戏剧功能的低成本替代方案，
+      优先调整空间、可见动作、出场人数或表现手段，不削弱核心转折。
+  - rule_key: t1.global.production_feasibility.camera-visible
+    section: production_feasibility
+    title: 可拍摄性底线
+    priority: 12
+    body: |
+      剧本中的关键信息必须能由镜头、声音或表演直接呈现；无法拍摄的心理与抽象判断必须外化。
+  - rule_key: t1.global.budget_estimation.band-only
+    section: budget_estimation
+    title: 预算分级边界
+    priority: 20
+    body: |
+      未接入地区、档期、人员与供应商报价时，只输出资源复杂度和预算带，不输出伪精确金额。
+      金额估算必须注明币种、地区、价格版本和未计入项。
+  - rule_key: t1.global.platform_ops.release-check
+    section: platform_ops
+    title: 平台上架检查
+    priority: 20
+    body: |
+      上架前核验目标平台政策版本、AI内容标识、备案材料、片名、版权授权、质量与合规报告。
+      平台政策未验证或已过期时，必须标记阻断，不得宣称可直接发布。

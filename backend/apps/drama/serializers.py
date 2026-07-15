@@ -1,107 +1,87 @@
 # -*- coding: utf-8 -*-
-"""Drama Skills API Serializers。"""
+"""Drama API 序列化。"""
 from __future__ import annotations
 
 from rest_framework import serializers
 
-from apps.creation.models import Project
-from apps.drama.models import DramaRoleExecution
+from apps.drama.models import DramaProject
 
 
-class DramaWorkspaceSerializer(serializers.Serializer):
-    """Drama 工作台项目（creation.Project）。"""
-
-    id = serializers.UUIDField(read_only=True)
-    title = serializers.CharField()
-    theme = serializers.CharField()
-    episode_count = serializers.IntegerField()
-    target_platform = serializers.CharField()
-    track_mode = serializers.CharField()
-    track_mode_display = serializers.CharField(source="get_track_mode_display", read_only=True)
-    drama_stage = serializers.CharField()
-    drama_stage_display = serializers.CharField(source="get_drama_stage_display", read_only=True)
-    completed_roles = serializers.ListField(child=serializers.CharField(), required=False)
-    completion_rate = serializers.SerializerMethodField()
-    word_count_stats = serializers.DictField(required=False)
-    quality_scores = serializers.DictField(required=False)
-    delivery_status = serializers.CharField()
-    total_tokens_used = serializers.IntegerField(read_only=True)
-    total_cost_cents = serializers.IntegerField(read_only=True)
-    created_at = serializers.DateTimeField(read_only=True)
-    updated_at = serializers.DateTimeField(read_only=True)
-
-    def get_completion_rate(self, obj: Project) -> float:
-        return obj.get_completion_rate()
-
-
-class DramaWorkspaceCreateSerializer(serializers.Serializer):
-    title = serializers.CharField(max_length=128)
-    theme = serializers.CharField(max_length=128, default="family-revenge")
-    episode_count = serializers.IntegerField(default=30, min_value=5, max_value=200)
-    target_platform = serializers.ChoiceField(
-        choices=["douyin", "kuaishou", "weixin", "all"],
-        default="douyin",
-    )
-    track_mode = serializers.ChoiceField(
-        choices=["fast", "expert"],
-        default="fast",
-    )
-    core_idea = serializers.CharField(required=False, allow_blank=True)
-
-
-class DramaRoleExecutionSerializer(serializers.ModelSerializer):
-    status_display = serializers.CharField(source="get_status_display", read_only=True)
-    output_views = serializers.SerializerMethodField()
-    output_artifacts = serializers.SerializerMethodField()
-    run_params = serializers.SerializerMethodField()
+class DramaProjectSerializer(serializers.ModelSerializer):
+    settings_revision = serializers.IntegerField(read_only=True)
+    entry_type = serializers.SerializerMethodField()
+    episode_count = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
 
     class Meta:
-        model = DramaRoleExecution
-        fields = [
-            "id", "agent_id", "agent_name_zh", "status", "status_display",
-            "output_artifacts", "output_views", "run_params",
-            "prompt_tokens", "completion_tokens", "total_tokens", "cost_cents",
-            "elapsed_seconds", "llm_provider", "llm_model",
-            "error_message", "started_at", "finished_at", "created_at",
-        ]
+        model = DramaProject
+        fields = (
+            "id",
+            "title",
+            "entry_type",
+            "episode_count",
+            "status",
+            "settings_revision",
+            "skills_version",
+            "created_at",
+            "updated_at",
+        )
         read_only_fields = fields
 
-    @staticmethod
-    def get_run_params(obj: DramaRoleExecution) -> dict:
-        params = (obj.input_artifacts or {}).get("params")
-        return dict(params) if isinstance(params, dict) else {}
+    def get_entry_type(self, obj: DramaProject) -> str:
+        return (obj.settings or {}).get("entry_type", "original_track")
 
-    def get_output_artifacts(self, obj: DramaRoleExecution) -> dict:
-        from apps.drama.presentation.artifact_source import resolve_live_output_artifacts
+    def get_episode_count(self, obj: DramaProject) -> int | None:
+        return (obj.settings or {}).get("episode_count")
 
-        if obj.status != DramaRoleExecution.Status.SUCCESS:
-            return dict(obj.output_artifacts or {})
-        return resolve_live_output_artifacts(obj)
-
-    def get_output_views(self, obj: DramaRoleExecution) -> dict:
-        from apps.drama.outline_progress import summarize_series_outline_progress
-        from apps.drama.presentation.service import build_execution_output_views
-
-        outline_progress = None
-        artifact_key = getattr(getattr(obj, "agent", None), "default_output_artifact_key", "")
-        artifact_key = artifact_key or (obj.output_artifacts or {}).get("artifact_key")
-        if artifact_key == "series_outline" and getattr(obj, "project", None):
-            outline_progress = summarize_series_outline_progress(obj.project)
-        return build_execution_output_views(
-            obj,
-            planned_episodes=int(getattr(obj.project, "episode_count", 0) or 0) or None,
-            outline_progress=outline_progress,
-        )
+    def get_status(self, obj: DramaProject) -> str | None:
+        wf = getattr(obj, "workflow_state", None)
+        if wf is None:
+            return None
+        return wf.state.get("status")
 
 
-class WordCountValidateSerializer(serializers.Serializer):
-    content = serializers.CharField(help_text="单集剧本内容（纯文本）")
-    episode_number = serializers.IntegerField(min_value=1, help_text="集号（1=首集）")
+class DramaProjectCreateSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=200)
+    entry_type = serializers.ChoiceField(
+        choices=["original_track", "story_adapt"],
+        default="original_track",
+    )
+    episode_count = serializers.IntegerField(min_value=1, required=False)
+    core_idea = serializers.CharField(required=False, allow_blank=True)
+    external_story = serializers.CharField(required=False, allow_blank=True)
 
 
-class ModelConfigSerializer(serializers.Serializer):
-    agent_id = serializers.CharField()
-    provider_id = serializers.IntegerField(allow_null=True)
-    model_name = serializers.CharField(allow_blank=True, default="")
-    temperature = serializers.FloatField(default=0.7, min_value=0.0, max_value=2.0)
-    max_completion_tokens = serializers.IntegerField(default=8000, min_value=100, max_value=128000)
+class WorkflowCommandSerializer(serializers.Serializer):
+    command_id = serializers.CharField(max_length=128)
+    event = serializers.CharField(max_length=64)
+    expected_version = serializers.IntegerField(min_value=0)
+    payload = serializers.JSONField(required=False, default=dict)
+
+
+class StoryBibleApprovalSerializer(serializers.Serializer):
+    command_id = serializers.CharField(max_length=128)
+    decision = serializers.ChoiceField(choices=["approve", "reject"])
+    expected_version = serializers.IntegerField(min_value=0)
+
+
+class GenerationStartSerializer(serializers.Serializer):
+    command_id = serializers.CharField(max_length=128)
+    expected_version = serializers.IntegerField(min_value=0)
+    role = serializers.CharField(max_length=64, default="drama.topic-director")
+    input = serializers.JSONField(required=False, default=dict)
+
+
+class ExternalReviewSerializer(serializers.Serializer):
+    command_id = serializers.CharField(max_length=128)
+    scoring_preset = serializers.CharField(max_length=64)
+    check_mode = serializers.ChoiceField(
+        choices=["standard", "values-risk", "full"],
+    )
+    script_content = serializers.CharField(required=False, allow_blank=True)
+    project_id = serializers.UUIDField(required=False)
+
+
+class ConfigRollbackSerializer(serializers.Serializer):
+    target_revision = serializers.IntegerField(min_value=1)
+    change_reason = serializers.CharField(max_length=500)

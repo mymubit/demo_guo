@@ -3,11 +3,11 @@ name: Topic Director
 name_zh: 选题定调官
 dept: strategy
 role_tier: production
-fast_track: true
 workspace_order: 101
 default_output_artifact_key: project_brief
 schema_version: project-brief.v1
 modules:
+- concept-development
 - market-radar
 - formula-analysis
 - tear-down-6d
@@ -19,15 +19,33 @@ rule_policy:
   max_chars: 3200
 skill_dir: roles/drama-topic-director
 input_contract:
-  params:
+  params_schema:
+    core_idea: {type: string, required: false, ui_widget: textarea}
+    synopsis: {type: string, required: false, ui_widget: textarea}
+    genre_matrix:
+      type: object
+      required: false
+      source_ref: foundation/theme-matrix.yaml#axes
+    flavor_tags:
+      type: array
+      required: false
+      max_items: 5
+      source_ref: foundation/theme-matrix.yaml#flavor_tags.options
+    preset_theme_code:
+      type: string
+      required: false
+      source_ref: foundation/theme-matrix.yaml#preset_templates
+    episode_count: {type: integer, required: true, minimum: 1}
+    target_platform:
+      type: string
+      required: true
+      source_ref: foundation/constraints/platform-profiles.yaml#platforms
+      default: generic
+    reference_dramas: {type: array, required: false, items_type: string}
+  required_params_any_of:
   - core_idea
   - synopsis
-  - genre
   - genre_matrix
-  - flavor_tags
-  - episode_count
-  - target_platform
-  - reference_dramas
   required_artifacts: []
 output_contract:
   artifacts:

@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy-950: #030d24;
+  --navy-900: #0a1628;
+  --navy-800: #12203a;
+  --canvas: #f4f5f7;
+  --canvas-muted: #e8eaee;
+  --brand-500: #6366f1;
+  --brand-600: #4f46e5;
+  --gold-400: #f4b719;
+  --ink: #0f172a;
+  --ink-muted: #475569;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 1280px;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', 'Noto Sans SC', ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer components {
+  .sf-control {
+    @apply w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink
+      placeholder:text-ink-faint outline-none transition
+      focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20;
+  }
+
+  .sf-label {
+    @apply mb-1.5 block text-sm font-medium text-ink;
+  }
+
+  .sf-section-title {
+    @apply text-lg font-semibold tracking-tight text-ink;
+  }
+
+  .sf-panel {
+    @apply rounded-xl border border-slate-200/80 bg-canvas-raised shadow-panel;
+  }
+}

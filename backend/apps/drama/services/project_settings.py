@@ -1,0 +1,206 @@
+# -*- coding: utf-8 -*-
+"""项目设置派生与持久化。"""
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from typing import Any
+
+from django.contrib.auth.models import AbstractBaseUser
+from django.db import transaction
+
+from apps.core.audit import audit_log
+from apps.core.exceptions import (
+    OPTIMISTIC_LOCK_FAILED,
+    PLATFORM_POLICY_UNVERIFIED,
+    BusinessException,
+)
+from apps.core.schema_validator import SchemaValidator
+from apps.drama.models import DramaAuditEvent, DramaProject, DramaWorkflowState
+from apps.drama.services.skills_loader import get_skills_loader
+from apps.drama.services.workflow_engine import WorkflowEngine
+from apps.drama.services.workflow_service import WorkflowService
+
+
+class ProjectSettingsService:
+    """项目设置 CRUD 与派生字段计算。"""
+
+    SCHEMA_PATH = "project-settings.v1.schema.json"
+
+    def __init__(self) -> None:
+        self.validator = SchemaValidator()
+        self.loader = get_skills_loader()
+
+    def default_settings(
+        self,
+        project: DramaProject,
+        *,
+        entry_type: str = "original_track",
+        actor: str,
+    ) -> dict[str, Any]:
+        now = datetime.now(timezone.utc).isoformat()
+        settings = {
+            "schema_version": "project-settings.v1",
+            "project_id": str(project.id),
+            "skills_version": self.loader.bundle_version,
+            "entry_type": entry_type,
+            "title": project.title,
+            "core_idea": "",
+            "episode_count": 30,
+            "target_platform": "generic",
+            "production_context": {"target_band": "standard"},
+            "creation_preferences": {
+                "batch_episode_max": 5,
+                "outline_mode": "full",
+                "scoring_preset": "standard",
+                "compliance_check_mode": "standard",
+                "enable_delivery": False,
+            },
+            "platform_policy": {
+                "policy_version": None,
+                "policy_source": None,
+                "verified_at": None,
+            },
+            "audit": {
+                "revision": 1,
+                "created_at": now,
+                "updated_at": now,
+                "updated_by": actor,
+            },
+        }
+        return self._derive(settings)
+
+    @transaction.atomic
+    def create_project(
+        self,
+        owner: AbstractBaseUser,
+        title: str,
+        *,
+        entry_type: str = "original_track",
+        episode_count: int | None = None,
+        core_idea: str | None = None,
+        external_story: str | None = None,
+    ) -> DramaProject:
+        project = DramaProject.objects.create(
+            owner=owner,
+            title=title,
+            skills_version=self.loader.bundle_version,
+        )
+        settings = self.default_settings(
+            project,
+            entry_type=entry_type,
+            actor=owner.username,
+        )
+        if episode_count is not None:
+            settings["episode_count"] = episode_count
+        if entry_type == "original_track":
+            settings["core_idea"] = core_idea if core_idea is not None else title
+        elif core_idea:
+            settings["core_idea"] = core_idea
+        if external_story is not None:
+            settings["external_story"] = external_story
+        project.settings = settings
+        project.save(update_fields=["settings", "skills_version", "updated_at"])
+
+        engine = WorkflowEngine(self.loader.workflow_transitions)
+        state = engine.create(str(project.id), entry_type)
+        DramaWorkflowState.objects.create(project=project, state=state, version=0)
+
+        DramaAuditEvent.objects.create(
+            project=project,
+            actor=owner.username,
+            action="project.created",
+            detail={"title": title, "entry_type": entry_type},
+        )
+        audit_log("project.created", actor=owner, project_id=str(project.id))
+        return project
+
+    def get_settings(self, project: DramaProject) -> dict[str, Any]:
+        return project.settings
+
+    @transaction.atomic
+    def update_settings(
+        self,
+        project: DramaProject,
+        payload: dict[str, Any],
+        *,
+        expected_revision: int,
+        actor: str,
+    ) -> dict[str, Any]:
+        if project.settings_revision != expected_revision:
+            raise BusinessException(
+                OPTIMISTIC_LOCK_FAILED,
+                f"设置版本冲突，期望 {expected_revision}，实际 {project.settings_revision}",
+                http_status=409,
+            )
+
+        payload = dict(payload)
+        payload["project_id"] = str(project.id)
+        payload["skills_version"] = self.loader.bundle_version
+        self._check_platform_policy(payload)
+        derived = self._derive(payload)
+        self.validator.validate_file(derived, self.SCHEMA_PATH)
+
+        old_settings = project.settings
+        blueprint_changed = self._blueprint_inputs_changed(old_settings, derived)
+
+        now = datetime.now(timezone.utc).isoformat()
+        audit = derived.get("audit", {})
+        audit["revision"] = expected_revision + 1
+        audit["updated_at"] = now
+        audit["updated_by"] = actor
+        audit.setdefault("created_at", old_settings.get("audit", {}).get("created_at", now))
+        derived["audit"] = audit
+
+        project.settings = derived
+        project.settings_revision = expected_revision + 1
+        project.title = derived.get("title") or project.title
+        project.save(update_fields=["settings", "settings_revision", "title", "updated_at"])
+
+        if blueprint_changed:
+            WorkflowService().invalidate_downstream(project, actor=actor)
+
+        DramaAuditEvent.objects.create(
+            project=project,
+            actor=actor,
+            action="project.settings_updated",
+            detail={"revision": project.settings_revision},
+        )
+        return derived
+
+    def _derive(self, settings: dict[str, Any]) -> dict[str, Any]:
+        result = dict(settings)
+        matrix = result.get("genre_matrix") or {}
+        if matrix:
+            key = "-".join(
+                matrix.get(axis, "")
+                for axis in ("emotion", "identity", "conflict", "world")
+            )
+            result["derived"] = {
+                "matrix_key": key,
+                "rule_params_ref": "project_brief.rule_params",
+            }
+        return result
+
+    def _blueprint_inputs_changed(
+        self, old: dict[str, Any], new: dict[str, Any]
+    ) -> bool:
+        keys = (
+            "core_idea",
+            "external_story",
+            "genre_matrix",
+            "episode_count",
+            "adapt_notes",
+        )
+        return any(old.get(k) != new.get(k) for k in keys)
+
+    def _check_platform_policy(self, settings: dict[str, Any]) -> None:
+        platform = settings.get("target_platform", "generic")
+        if platform == "generic":
+            return
+        policy = settings.get("platform_policy") or {}
+        if not policy.get("verified_at"):
+            raise BusinessException(
+                PLATFORM_POLICY_UNVERIFIED,
+                f"平台 {platform} 策略未验证",
+                http_status=422,
+            )

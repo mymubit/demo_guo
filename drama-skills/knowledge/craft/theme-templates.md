@@ -6,7 +6,6 @@
 > |------|------|------------|----------|
 > | **四轴矩阵（主路径）** | 用户选 emotion/identity/conflict/world | `matrix` | `param_synthesis` 合成 `rule_params` |
 > | **预设卡片（快捷）** | 用户直接点「家庭复仇」等卡片 | `matrix` + `preset_theme_code` | 用预设对应的四轴走同一套 synthesis |
-> | **legacy archetype** | 旧数据兼容 | `family-revenge` 等 | `foundation/rules/genres/*.yaml` 固定参数 |
 
 四轴选题**不再**映射到 8 个 archetype；以前 weighted_score 会导致「复仇+重生+家族+古代」被错误判成 `time-travel` 或 `family-revenge`。
 
@@ -18,7 +17,7 @@ SSOT：`foundation/theme-matrix.yaml`
 
 | 层 | 规模 | 说明 |
 |----|------|------|
-| 四轴 | 9×9×9×9 ≈ **4.7 万** 骨架 | 情感/身份/冲突/世界 |
+| 四轴 | 9×9×9×9 = **6561** 个骨架 | 情感/身份/冲突/世界 |
 | 风味标签 | **69 项**，最多 **5** 个 | 12 大类 |
 | 创新组合 | **32** 条 featured | 可直接点选或作进化种子 |
 
@@ -65,11 +64,3 @@ python build/synthesize_matrix_params.py
 | ambition | 0.45 | 3→2→5→4→7→6→9→10 |
 
 identity / conflict / world 在此基础上加减（见 `theme-matrix.yaml`）。
-
----
-
-## legacy：8 个固定 genre 规则包
-
-`foundation/rules/genres/{preset}.yaml` 保留，供**未带 genre_matrix 的旧项目**兼容。新项目应走 `genres/matrix.yaml` + `rule_params`。
-
-`hybrid`：仅当无法确定 emotion 轴时使用。

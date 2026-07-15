@@ -1,5 +1,5 @@
 # global_core · 写作规则 — 要求 + 禁止项（writing_requirements / writing_prohibitions）
-version: "1.1.0"
+version: "1.2.0"
 tier: 1
 items:
   - rule_key: t1.global.writing_requirements.episode-scope
@@ -9,6 +9,14 @@ items:
     body: |
       必须遵守 params.episode_range；逐集仅依赖上一集全文+memory_checkpoint（LR-008）。
       每场 Goal×Conflict；每场 McKee 价值转变；每集输出 memory_checkpoint。
+  - rule_key: t1.global.writing_requirements.scene-unit
+    section: writing_requirements
+    title: 场景最小执行单元
+    priority: 10
+    source_ref: knowledge/craft/shanyin-screenwriting-methodology.md
+    body: |
+      场景进入时明确角色目标、阻碍和风险；结束时至少一个核心价值状态发生变化。
+      无目标、无阻碍或无价值转变的场景必须删除、合并或改写。
   - rule_key: t1.global.writing_requirements.commercial-format
     section: writing_requirements
     title: 商业格式执行
@@ -22,10 +30,18 @@ items:
     priority: 5
     body: |
       数值 SSOT: foundation/constraints/script-format.yaml
-      禁止：引号台词；心理描写；方括号场景头；独立【画面】行；"她感到..."类叙述。
+      格式禁止项只读取 format_prohibitions，不在本规则重复维护。
   - rule_key: t1.global.writing_prohibitions.ai-emotion
     section: writing_prohibitions
     title: 情绪直述禁止
     priority: 10
     body: |
       禁止直接写"我感到/他很愤怒/她很难过"；用动作、停顿、环境、对话节奏外化情绪。
+  - rule_key: t1.global.writing_prohibitions.unfilmable
+    section: writing_prohibitions
+    title: 不可拍摄内容禁用
+    priority: 6
+    source_ref: knowledge/craft/shanyin-screenwriting-methodology.md
+    body: |
+      禁止括号解释潜台词、角色用台词讲解设定或主题、说教式催泪以及任何摄影机无法直接呈现的内容。
+      必须改写为动作、可见道具、空间关系、声音或潜台词。
