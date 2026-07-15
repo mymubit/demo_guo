@@ -24,6 +24,17 @@ const KIND_LABELS: Record<string, string> = {
   extension: '扩展',
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  'drama.topic-director': '选题定调官',
+  'drama.story-bible': '剧本蓝图官',
+  'drama.episode-designer': '分集设计官',
+  'drama.script-writer': '剧本正文官',
+  'drama.script-scorer': '剧本评分官',
+  'drama.compliance-guard': '合规审查官',
+  'drama.revision-master': '剧本修复官',
+  'drama.delivery-tool': '宣发交付工具',
+}
+
 export function ModulePanel({
   stage,
   settings,
@@ -41,7 +52,11 @@ export function ModulePanel({
         <div className="mt-1 text-sm font-semibold text-ink">
           {stage ? stage.label_zh : '能力模块'}
         </div>
-        {stage ? <div className="mt-1 truncate text-xs text-ink-muted">{stage.role}</div> : null}
+        {stage ? (
+          <div className="mt-1 truncate text-xs text-ink-muted">
+            {ROLE_LABELS[stage.role] ?? stage.role}
+          </div>
+        ) : null}
       </div>
       <div className="flex-1 space-y-4 overflow-auto p-3">
         {groups.length === 0 ? (

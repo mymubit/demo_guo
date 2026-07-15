@@ -12,6 +12,15 @@ import { formatApiError } from '@/services/errors'
 import { workbenchStages } from '@/utils/pipeline'
 import type { StageDefinition } from '@/types/workbench'
 
+const WORKFLOW_STATUS_LABELS = {
+  active: '进行中',
+  waiting_approval: '待审批',
+  waiting_quality: '质检中',
+  waiting_user: '待决策',
+  completed: '已完成',
+  blocked: '已阻塞',
+} as const
+
 export function WorkbenchPage() {
   const { projectId = '' } = useParams()
 
@@ -81,7 +90,7 @@ export function WorkbenchPage() {
           </h1>
           <p className="text-xs text-ink-muted">
             {settingsQuery.data.entry_type === 'original_track' ? '原创通道' : '改编通道'} ·{' '}
-            {projectId}
+            {WORKFLOW_STATUS_LABELS[workflowQuery.data.status]}
           </p>
         </div>
         <Link to={`/projects/${projectId}/settings`}>
