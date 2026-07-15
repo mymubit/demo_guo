@@ -9,7 +9,8 @@ import uuid
 from pathlib import Path
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")
-sys.path.insert(0, "/app/backend")
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "backend"))
 
 import django  # noqa: E402
 
@@ -51,9 +52,8 @@ def main() -> None:
         entry_type="original_track",
     )
 
-    fixture_path = Path(
-        "/app/drama-skills/build/fixtures/artifacts/valid-artifacts.json"
-    )
+    skills_root = Path(os.environ.get("DRAMA_SKILLS_ROOT", ROOT / "drama-skills"))
+    fixture_path = skills_root / "build/fixtures/artifacts/valid-artifacts.json"
     fixtures = json.loads(fixture_path.read_text(encoding="utf-8"))
     ArtifactService().save_artifact(
         project,
