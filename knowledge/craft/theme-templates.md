@@ -64,4 +64,3 @@ python build/synthesize_matrix_params.py
 | ambition | 0.45 | 3→2→5→4→7→6→9→10 |
 
 identity / conflict / world 在此基础上加减（见 `theme-matrix.yaml`）。
-
