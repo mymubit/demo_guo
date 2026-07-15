@@ -228,6 +228,7 @@ class SkillsBundleLoader:
 
         workbench["module_catalog"] = self.modules_catalog.get("modules", [])
         workbench["schema_version"] = "workbench-form.v1"
+        workbench["skills_bundle_version"] = self.bundle_version
         return workbench
 
     def project_runtime_projection(

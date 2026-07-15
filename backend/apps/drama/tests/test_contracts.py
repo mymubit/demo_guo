@@ -108,6 +108,7 @@ class WorkbenchFormExportTests(TestCase):
     def test_export_workbench_form_merges_fields_and_stages(self) -> None:
         form = SkillsBundleLoader().export_workbench_form()
         self.assertEqual(form["schema_version"], "workbench-form.v1")
+        self.assertEqual(form["skills_bundle_version"], "5.0.0")
         entry_type = form["project_settings"]["fields"]["entry_type"]
         self.assertEqual(entry_type["type"], "string")
         self.assertIn("original_track", entry_type["enum"])
@@ -138,6 +139,7 @@ class WorkbenchFormApiTests(APITestCase):
         self.assertEqual(resp.data["code"], 0)
         data = resp.data["data"]
         self.assertEqual(data["schema_version"], "workbench-form.v1")
+        self.assertEqual(data["skills_bundle_version"], "5.0.0")
         self.assertIn("project_settings", data)
         self.assertIn("module_catalog", data)
         self.assertTrue(any(stage.get("artifact") for stage in data["stages"]))
