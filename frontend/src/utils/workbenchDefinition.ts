@@ -86,11 +86,15 @@ export function normalizeStages(
     if (!label_zh) {
       throw new Error(`工作台阶段「${stage.id}」缺少 label_zh（后端应合并产物中文标签）`)
     }
+    if (!stage.role_label) {
+      throw new Error(`工作台阶段「${stage.id}」缺少 role_label`)
+    }
     return {
       id: stage.id,
       orchestration_phase: stage.orchestration_phase,
       stage_kind: stage.stage_kind,
       role: stage.role,
+      role_label: stage.role_label,
       artifact: stage.artifact,
       label_zh,
       approval_required: stage.approval_required,

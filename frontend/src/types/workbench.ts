@@ -77,6 +77,7 @@ export type StageDefinition = {
   orchestration_phase?: string
   stage_kind: 'main' | 'quality_loop' | 'optional' | string
   role: string
+  role_label?: string
   /** Filled by backend from artifacts contract */
   artifact: string
   /** Chinese label merged from artifacts contract by backend */
@@ -174,6 +175,7 @@ export type WorkbenchFormApiResponse = {
     Omit<StageDefinition, 'artifact' | 'label_zh'> & {
       artifact?: string
       label_zh?: string
+      role_label?: string
       label?: string
     }
   >

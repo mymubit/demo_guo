@@ -118,6 +118,7 @@ class WorkbenchFormExportTests(TestCase):
         self.assertEqual(blueprint["artifact"], "story_bible")
         self.assertEqual(blueprint["artifact_label"], "故事蓝图")
         self.assertEqual(blueprint["label_zh"], "剧本蓝图")
+        self.assertEqual(blueprint["role_label"], "剧本蓝图官")
         self.assertTrue(all(stage.get("label_zh") for stage in form["stages"]))
 
     def test_export_workbench_form_resolves_platform_options(self) -> None:

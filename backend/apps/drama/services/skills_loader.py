@@ -239,6 +239,9 @@ class SkillsBundleLoader:
                 stage.get("orchestration_phase"),
                 (registry_roles.get(role_id) or {}).get("name_zh", stage["id"]),
             )
+            stage["role_label"] = (registry_roles.get(role_id) or {}).get(
+                "name_zh", role_id
+            )
 
         workbench["module_catalog"] = self.modules_catalog.get("modules", [])
         workbench["schema_version"] = "workbench-form.v1"

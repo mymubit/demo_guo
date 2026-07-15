@@ -313,8 +313,14 @@ def check_form_export() -> None:
         if unresolved:
             ERRORS.append(f"工作台字段 {name}: 导出后仍有未解析字段 {sorted(unresolved)}")
     for stage in exported.get("stages", []):
-        if not stage.get("artifact") or not stage.get("label_zh"):
-            ERRORS.append(f"工作台阶段 {stage.get('id')}: 导出后缺少产物或中文标签")
+        if (
+            not stage.get("artifact")
+            or not stage.get("label_zh")
+            or not stage.get("role_label")
+        ):
+            ERRORS.append(
+                f"工作台阶段 {stage.get('id')}: 导出后缺少产物、阶段或角色标签"
+            )
 
 
 def resolve_schema_node(

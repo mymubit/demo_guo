@@ -67,7 +67,9 @@ export function ModulePanel({
           {stage ? stage.label_zh : '能力模块'}
         </div>
         {stage ? (
-          <div className="mt-1 truncate text-xs text-ink-muted">{stage.role}</div>
+          <div className="mt-1 truncate text-xs text-ink-muted">
+            {stage.role_label ?? stage.role}
+          </div>
         ) : null}
       </div>
       <div className="flex-1 space-y-4 overflow-auto p-3">
