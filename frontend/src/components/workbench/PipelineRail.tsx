@@ -118,7 +118,7 @@ export function PipelineRail({
   const qualityHighlight = isQualityPhaseHighlight(workflow)
 
   return (
-    <aside className="flex h-full w-56 shrink-0 flex-col border-r border-slate-200 bg-white">
+    <aside className="flex h-full w-[clamp(12.5rem,16vw,15rem)] shrink-0 flex-col border-r border-slate-200 bg-white">
       <div className="border-b border-slate-200 px-4 py-3">
         <div className="text-xs font-medium uppercase tracking-wide text-ink-faint">流水线</div>
         <div className="mt-1 text-sm font-semibold text-ink">创作主链</div>

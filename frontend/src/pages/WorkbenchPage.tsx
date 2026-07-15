@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Settings2 } from 'lucide-react'
+import { PanelRightOpen, Settings2 } from 'lucide-react'
 import { PipelineRail } from '@/components/workbench/PipelineRail'
 import { ModulePanel } from '@/components/workbench/ModulePanel'
 import { StageCanvas } from '@/components/workbench/StageCanvas'
@@ -11,6 +11,7 @@ import { dramaApi } from '@/services/drama'
 import { formatApiError } from '@/services/errors'
 import { workbenchStages } from '@/utils/pipeline'
 import type { StageDefinition } from '@/types/workbench'
+import { useCompactPcLayout } from '@/hooks/useDesktopLayout'
 
 const WORKFLOW_STATUS_LABELS = {
   active: '进行中',
@@ -50,6 +51,13 @@ export function WorkbenchPage() {
   }, [settingsQuery.data])
 
   const [activeStageId, setActiveStageId] = useState<string | null>(null)
+  const isCompactPc = useCompactPcLayout()
+  const [isModulePanelOpen, setIsModulePanelOpen] = useState(true)
+
+  useEffect(() => {
+    setIsModulePanelOpen(!isCompactPc)
+  }, [isCompactPc])
+
   const activeStage: StageDefinition | null =
     stages.find((s) => s.id === (activeStageId ?? stages[0]?.id)) ?? null
 
@@ -93,14 +101,31 @@ export function WorkbenchPage() {
             {WORKFLOW_STATUS_LABELS[workflowQuery.data.status]}
           </p>
         </div>
-        <Link to={`/projects/${projectId}/settings`}>
-          <Button variant="secondary" size="sm" iconLeft={<Settings2 className="h-3.5 w-3.5" />}>
-            项目设置
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          {isCompactPc ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              iconLeft={<PanelRightOpen className="h-3.5 w-3.5" />}
+              aria-expanded={isModulePanelOpen}
+              onClick={() => setIsModulePanelOpen((value) => !value)}
+            >
+              能力模块
+            </Button>
+          ) : null}
+          <Link to={`/projects/${projectId}/settings`}>
+            <Button
+              variant="secondary"
+              size="sm"
+              iconLeft={<Settings2 className="h-3.5 w-3.5" />}
+            >
+              项目设置
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      <div className="flex min-h-0 flex-1">
+      <div className="relative flex min-h-0 flex-1">
         <PipelineRail
           settings={settingsQuery.data}
           workflow={workflowQuery.data}
@@ -113,7 +138,24 @@ export function WorkbenchPage() {
           settings={settingsQuery.data}
           workflow={workflowQuery.data}
         />
-        <ModulePanel stage={activeStage} settings={settingsQuery.data} />
+        {!isCompactPc ? (
+          <ModulePanel stage={activeStage} settings={settingsQuery.data} />
+        ) : isModulePanelOpen ? (
+          <>
+            <button
+              type="button"
+              aria-label="关闭能力模块遮罩"
+              className="absolute inset-0 z-20 bg-slate-950/10"
+              onClick={() => setIsModulePanelOpen(false)}
+            />
+            <ModulePanel
+              stage={activeStage}
+              settings={settingsQuery.data}
+              className="absolute inset-y-0 right-0 z-30 w-[300px] shadow-xl"
+              onClose={() => setIsModulePanelOpen(false)}
+            />
+          </>
+        ) : null}
       </div>
     </div>
   )

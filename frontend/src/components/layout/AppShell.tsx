@@ -16,8 +16,11 @@ export function AppShell() {
   const navigate = useNavigate()
 
   return (
-    <div className="flex min-h-full min-w-pc bg-canvas" style={{ minWidth: PC_MIN_WIDTH }}>
-      <aside className="flex w-56 shrink-0 flex-col bg-navy-900 text-slate-200">
+    <div
+      className="flex h-dvh min-h-[720px] min-w-pc bg-canvas"
+      style={{ minWidth: PC_MIN_WIDTH }}
+    >
+      <aside className="flex w-[clamp(10rem,14vw,14rem)] shrink-0 flex-col bg-navy-900 text-slate-200">
         <div className="flex items-center gap-2 border-b border-white/10 px-5 py-5">
           <Clapperboard className="h-5 w-5 text-gold-400" />
           <div>

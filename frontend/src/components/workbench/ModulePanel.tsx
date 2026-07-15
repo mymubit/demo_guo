@@ -1,5 +1,7 @@
 import { groupModulesByDomain, modulesForStage } from '@/utils/modules'
 import { Badge } from '@/components/ui/Badge'
+import { X } from 'lucide-react'
+import { cn } from '@/utils/cn'
 import type { ProjectSettings } from '@/types/domain'
 import type { StageDefinition } from '@/types/workbench'
 
@@ -38,17 +40,38 @@ const ROLE_LABELS: Record<string, string> = {
 export function ModulePanel({
   stage,
   settings,
+  className,
+  onClose,
 }: {
   stage: StageDefinition | null
   settings: ProjectSettings
+  className?: string
+  onClose?: () => void
 }) {
   const modules = modulesForStage(stage, settings)
   const groups = groupModulesByDomain(modules)
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-l border-slate-200 bg-white">
+    <aside
+      className={cn(
+        'flex h-full w-[clamp(15rem,18vw,18.75rem)] shrink-0 flex-col border-l border-slate-200 bg-white',
+        className,
+      )}
+    >
       <div className="border-b border-slate-200 px-4 py-3">
-        <div className="text-xs font-medium tracking-wide text-ink-faint">能力模块</div>
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-xs font-medium tracking-wide text-ink-faint">能力模块</div>
+          {onClose ? (
+            <button
+              type="button"
+              aria-label="关闭能力模块"
+              className="rounded-md p-1 text-ink-muted transition hover:bg-slate-100 hover:text-ink"
+              onClick={onClose}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          ) : null}
+        </div>
         <div className="mt-1 text-sm font-semibold text-ink">
           {stage ? stage.label_zh : '能力模块'}
         </div>

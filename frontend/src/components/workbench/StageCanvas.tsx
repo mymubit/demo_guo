@@ -151,7 +151,7 @@ export function StageCanvas({
         </Button>
       </header>
 
-      <div className="flex-1 space-y-4 overflow-auto p-5">
+      <div className="mx-auto w-full max-w-[1600px] flex-1 space-y-4 overflow-auto p-[clamp(1rem,1.5vw,2rem)]">
         {runMutation.isError ? <ErrorBanner message={formatApiError(runMutation.error)} /> : null}
         {approvalMutation.isError ? <ErrorBanner message={formatApiError(approvalMutation.error)} /> : null}
         {artifactQuery.isError ? (
