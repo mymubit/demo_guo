@@ -59,7 +59,7 @@ def main() -> None:
     ArtifactService().save_artifact(
         project,
         "project_brief",
-        fixtures["project-brief.v1"],
+        fixtures["project_brief"],
     )
     stored = ArtifactService().get_artifact(project, "project_brief")
     if stored["version"] != 1:
