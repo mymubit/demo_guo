@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/Button'
 import { ErrorBanner, LoadingBlock } from '@/components/ui/Tabs'
 import { ThemeMatrixPicker } from '@/components/theme/ThemeMatrixPicker'
+import { useWorkbenchDefinition } from '@/hooks/useWorkbenchDefinition'
 import { dramaApi } from '@/services/drama'
 import { ApiError, formatApiError } from '@/services/errors'
 import {
@@ -13,12 +14,12 @@ import {
   writeSettingValue,
 } from '@/utils/settingsForm'
 import type { AdaptNotes, GenreMatrix, ProjectSettings } from '@/types/domain'
-import type { SettingsFieldDef } from '@/types/workbench'
-import type { ThemeMatrix } from '@/types/workbench'
+import type { SettingsFieldDef, ThemeMatrix } from '@/types/workbench'
 
 export function ProjectSettingsPage() {
   const { projectId = '' } = useParams()
   const qc = useQueryClient()
+  const { definition } = useWorkbenchDefinition()
   const [draft, setDraft] = useState<ProjectSettings | null>(null)
   const [conflict, setConflict] = useState<string | null>(null)
   const [policyHint, setPolicyHint] = useState<string | null>(null)
@@ -27,11 +28,6 @@ export function ProjectSettingsPage() {
     queryKey: ['settings', projectId],
     queryFn: () => dramaApi.getSettings(projectId),
     enabled: Boolean(projectId),
-  })
-
-  const matrixQuery = useQuery({
-    queryKey: ['theme-matrix'],
-    queryFn: () => dramaApi.getThemeMatrix(),
   })
 
   useEffect(() => {
@@ -68,7 +64,13 @@ export function ProjectSettingsPage() {
     },
   })
 
-  const groups = useMemo(() => (draft ? visibleGroups(draft) : []), [draft])
+  const groups = useMemo(
+    () => (draft ? visibleGroups(definition, draft) : []),
+    [definition, draft],
+  )
+
+  const themeMatrix = definition.theme_matrix
+  const platformField = definition.fields.target_platform
 
   if (settingsQuery.isLoading) return <LoadingBlock />
   if (settingsQuery.isError) {
@@ -97,7 +99,8 @@ export function ProjectSettingsPage() {
         <div>
           <h1 className="text-2xl font-semibold text-ink">项目设置</h1>
           <p className="mt-1 text-sm text-ink-muted">
-            契约驱动分组表单 · revision {draft.audit.revision}
+            契约驱动分组表单 · revision {draft.audit.revision} · skills{' '}
+            {definition.skills_bundle_version}
           </p>
         </div>
         <div className="flex gap-2">
@@ -129,7 +132,11 @@ export function ProjectSettingsPage() {
       ) : null}
 
       {(platformUnverified || policyHint) && !conflict ? (
-        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status" aria-live="polite">
+        <div
+          className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+          role="status"
+          aria-live="polite"
+        >
           <p className="font-medium">平台政策未核验</p>
           <p className="mt-1">
             {policyHint ||
@@ -144,12 +151,9 @@ export function ProjectSettingsPage() {
         </div>
       ) : null}
 
-      {matrixQuery.isError ? (
+      {!themeMatrix ? (
         <div className="mb-4">
-          <ErrorBanner
-            message={formatApiError(matrixQuery.error)}
-            onRetry={() => void matrixQuery.refetch()}
-          />
+          <ErrorBanner message="工作台定义未提供题材矩阵字段（genre_matrix / flavor_tags）" />
         </div>
       ) : null}
 
@@ -158,11 +162,11 @@ export function ProjectSettingsPage() {
           <section key={group.id} className="sf-panel p-5">
             <h2 className="sf-section-title">{group.label_zh}</h2>
             <div className="mt-4 space-y-4">
-              {group.id === 'theme' ? (
+              {group.id === 'theme' && themeMatrix ? (
                 <ThemeSection
                   draft={draft}
-                  matrix={matrixQuery.data}
-                  loading={matrixQuery.isLoading}
+                  matrix={themeMatrix}
+                  platformField={platformField}
                   onPatch={patch}
                 />
               ) : (
@@ -187,17 +191,14 @@ export function ProjectSettingsPage() {
 function ThemeSection({
   draft,
   matrix,
-  loading,
+  platformField,
   onPatch,
 }: {
   draft: ProjectSettings
-  matrix: ThemeMatrix | undefined
-  loading: boolean
+  matrix: ThemeMatrix
+  platformField?: SettingsFieldDef
   onPatch: (updater: (prev: ProjectSettings) => ProjectSettings) => void
 }) {
-  if (loading) return <LoadingBlock label="加载题材矩阵…" />
-  if (!matrix) return <p className="text-sm text-ink-muted">题材矩阵不可用</p>
-
   return (
     <div className="space-y-4">
       <ThemeMatrixPicker
@@ -211,19 +212,22 @@ function ThemeSection({
         onChangeFlavorTags={(tags) => onPatch((prev) => ({ ...prev, flavor_tags: tags }))}
         onChangePreset={(code) => onPatch((prev) => ({ ...prev, preset_theme_code: code }))}
       />
-      <div>
-        <label className="sf-label">目标平台</label>
-        <select
-          className="sf-control"
-          value={draft.target_platform}
-          onChange={(e) => onPatch((prev) => ({ ...prev, target_platform: e.target.value }))}
-        >
-          <option value="generic">通用</option>
-          <option value="douyin">抖音</option>
-          <option value="kuaishou">快手</option>
-          <option value="wechat_miniprogram">微信小程序</option>
-        </select>
-      </div>
+      {platformField ? (
+        <div>
+          <label className="sf-label">{platformField.label_zh}</label>
+          <select
+            className="sf-control"
+            value={draft.target_platform}
+            onChange={(e) => onPatch((prev) => ({ ...prev, target_platform: e.target.value }))}
+          >
+            {(platformField.options ?? []).map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
     </div>
   )
 }

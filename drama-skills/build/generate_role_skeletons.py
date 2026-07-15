@@ -32,8 +32,6 @@ def main() -> None:
             "dept": role.get("dept"),
             "role_tier": role.get("role_tier"),
             "workspace_order": role.get("workspace_order"),
-            "default_output_artifact_key": role.get("default_output_artifact_key"),
-            "schema_version": role.get("schema_version"),
             "modules": role.get("modules") or [],
             "rule_policy": {
                 "scopes": ["global_core", "genre_profile", "stage_playbook"],

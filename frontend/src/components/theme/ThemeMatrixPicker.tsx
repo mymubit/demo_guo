@@ -84,48 +84,56 @@ export function ThemeMatrixPicker({
           <Sparkles className="h-4 w-4 text-gold-400" />
           热门组合
         </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
-          <input
-            className="sf-control pl-9"
-            value={comboSearch}
-            onChange={(e) => setComboSearch(e.target.value)}
-            placeholder="筛选热门组合…"
-          />
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          {combos.map((combo) => {
-            const active = presetThemeCode === combo.code
-            return (
-              <button
-                key={combo.code}
-                type="button"
-                onClick={() => {
-                  onChangeGenre({
-                    emotion: combo.emotion,
-                    identity: combo.identity,
-                    conflict: combo.conflict,
-                    world: combo.world,
-                  })
-                  if (combo.flavor_tags) onChangeFlavorTags(combo.flavor_tags.slice(0, maxSelect))
-                  onChangePreset?.(combo.code)
-                }}
-                className={cn(
-                  'rounded-lg border px-3 py-3 text-left transition',
-                  active
-                    ? 'border-gold-400 bg-amber-50'
-                    : 'border-slate-200 bg-white hover:border-brand-300',
-                )}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium text-ink">{combo.label_zh || combo.label || combo.code}</span>
-                  {active ? <Check className="h-4 w-4 text-gold-500" /> : null}
-                </div>
-                {combo.heat ? <div className="mt-1 text-xs text-ink-faint">{combo.heat}</div> : null}
-              </button>
-            )
-          })}
-        </div>
+        {(matrix.featured_combos?.length ?? 0) === 0 ? (
+          <p className="text-sm text-ink-muted">当前定义未提供热门组合</p>
+        ) : (
+          <>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
+              <input
+                className="sf-control pl-9"
+                value={comboSearch}
+                onChange={(e) => setComboSearch(e.target.value)}
+                placeholder="筛选热门组合…"
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              {combos.map((combo) => {
+                const active = presetThemeCode === combo.code
+                return (
+                  <button
+                    key={combo.code}
+                    type="button"
+                    onClick={() => {
+                      onChangeGenre({
+                        emotion: combo.emotion,
+                        identity: combo.identity,
+                        conflict: combo.conflict,
+                        world: combo.world,
+                      })
+                      if (combo.flavor_tags) onChangeFlavorTags(combo.flavor_tags.slice(0, maxSelect))
+                      onChangePreset?.(combo.code)
+                    }}
+                    className={cn(
+                      'rounded-lg border px-3 py-3 text-left transition',
+                      active
+                        ? 'border-gold-400 bg-amber-50'
+                        : 'border-slate-200 bg-white hover:border-brand-300',
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-ink">
+                        {combo.label_zh || combo.label || combo.code}
+                      </span>
+                      {active ? <Check className="h-4 w-4 text-gold-500" /> : null}
+                    </div>
+                    {combo.heat ? <div className="mt-1 text-xs text-ink-faint">{combo.heat}</div> : null}
+                  </button>
+                )
+              })}
+            </div>
+          </>
+        )}
       </section>
 
       <section className="grid grid-cols-2 gap-4">

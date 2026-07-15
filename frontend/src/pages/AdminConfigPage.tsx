@@ -2,14 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/Button'
 import { Tabs, ErrorBanner, LoadingBlock } from '@/components/ui/Tabs'
-import { ADMIN_SECTIONS } from '@/config/workbench'
+import { useWorkbenchDefinition } from '@/hooks/useWorkbenchDefinition'
 import { adminApi } from '@/services/admin'
 import { ApiError, formatApiError } from '@/services/errors'
 import type { OpsConfigOverlay } from '@/types/domain'
 
 export function AdminConfigPage() {
   const qc = useQueryClient()
-  const [sectionId, setSectionId] = useState<string>(ADMIN_SECTIONS[0].id)
+  const { definition } = useWorkbenchDefinition()
+  const sections = definition.admin_sections
+  const [sectionId, setSectionId] = useState<string>(sections[0]?.id ?? '')
   const [draft, setDraft] = useState<OpsConfigOverlay | null>(null)
   const [changeReason, setChangeReason] = useState('')
   const [rollbackTarget, setRollbackTarget] = useState('')
@@ -24,12 +26,18 @@ export function AdminConfigPage() {
     if (query.data) setDraft(query.data)
   }, [query.data])
 
-  const activeSection = ADMIN_SECTIONS.find((s) => s.id === sectionId) ?? ADMIN_SECTIONS[0]
+  useEffect(() => {
+    if (sections.length && !sections.some((s) => s.id === sectionId)) {
+      setSectionId(sections[0].id)
+    }
+  }, [sections, sectionId])
+
+  const activeSection = sections.find((s) => s.id === sectionId) ?? sections[0]
   const overrideJson = useMemo(() => {
-    if (!draft) return '{}'
+    if (!draft || !activeSection) return '{}'
     const value = draft.overrides[activeSection.source] ?? {}
     return JSON.stringify(value, null, 2)
-  }, [draft, activeSection.source])
+  }, [draft, activeSection])
 
   const [editorText, setEditorText] = useState(overrideJson)
   useEffect(() => {
@@ -39,6 +47,7 @@ export function AdminConfigPage() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!draft) throw new Error('配置未加载')
+      if (!activeSection) throw new Error('工作台定义未提供 admin_settings.sections')
       if (!changeReason.trim()) throw new Error('必须填写修改原因')
       let parsed: Record<string, unknown>
       try {
@@ -99,18 +108,26 @@ export function AdminConfigPage() {
   }
   if (!draft) return null
 
+  if (!sections.length || !activeSection) {
+    return (
+      <div className="p-8">
+        <ErrorBanner message="工作台定义未提供 admin_settings.sections" />
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto max-w-5xl px-8 py-8">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-ink">配置后台</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          7 分区 overlay · 强制修改原因 · revision {draft.audit.revision} · skills{' '}
+          {sections.length} 分区 overlay · 强制修改原因 · revision {draft.audit.revision} · skills{' '}
           {draft.skills_version}
         </p>
       </div>
 
       <Tabs
-        items={ADMIN_SECTIONS.map((s) => ({ id: s.id, label: s.label_zh }))}
+        items={sections.map((s) => ({ id: s.id, label: s.label_zh || s.id }))}
         value={sectionId}
         onChange={setSectionId}
       />

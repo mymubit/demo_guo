@@ -47,7 +47,7 @@ output_schema:
 
 | 方向 | 键 | 说明 |
 |------|-----|------|
-| 输出 | `episode_scripts` | schema: `episode-scripts.v1` |
+| 输出 | `episode_scripts` | schema v1 |
 | 输入（必填） | `story_bible` | 上游产物（人物层 + 结构层） |
 | 输入（必填） | `narrative_plan` | 分集设计 |
 | 输入（可选） | `project_brief` | 上游产物 |

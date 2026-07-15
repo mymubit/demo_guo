@@ -1,0 +1,194 @@
+{
+  "$defs": {
+    "adapt_notes": {
+      "additionalProperties": false,
+      "properties": {
+        "enhanced": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "retained": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "rewritten": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "batch_episode_max": {
+      "default": 5,
+      "maximum": 5,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "budget_currency": {
+      "type": "string"
+    },
+    "budget_excluded_items": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "check_mode": {
+      "default": "standard",
+      "enum": [
+        "full",
+        "standard",
+        "values-risk"
+      ],
+      "type": "string"
+    },
+    "core_idea": {
+      "type": "string"
+    },
+    "deliverables": {
+      "default": [
+        "storyboard",
+        "visual",
+        "marketing",
+        "budget"
+      ],
+      "items": {
+        "enum": [
+          "budget",
+          "interactive",
+          "marketing",
+          "release",
+          "storyboard",
+          "visual"
+        ]
+      },
+      "type": "array",
+      "uniqueItems": true
+    },
+    "enable_delivery": {
+      "default": false,
+      "type": "boolean"
+    },
+    "entry_type": {
+      "default": "original_track",
+      "enum": [
+        "original_track",
+        "story_adapt"
+      ],
+      "type": "string"
+    },
+    "episode_count": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "episode_range": {
+      "pattern": "^\\d+-\\d+$",
+      "type": "string"
+    },
+    "external_story": {
+      "type": "string"
+    },
+    "flavor_tags": {
+      "maxItems": 5,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "focus_areas": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "genre_matrix": {
+      "additionalProperties": false,
+      "properties": {
+        "conflict": {
+          "type": "string"
+        },
+        "emotion": {
+          "type": "string"
+        },
+        "identity": {
+          "type": "string"
+        },
+        "world": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "emotion",
+        "identity",
+        "conflict",
+        "world"
+      ],
+      "type": "object"
+    },
+    "outline_mode": {
+      "default": "full",
+      "enum": [
+        "full",
+        "structure_only"
+      ],
+      "type": "string"
+    },
+    "preset_theme_code": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "pricing_version": {
+      "type": "string"
+    },
+    "production_context": {
+      "type": "object"
+    },
+    "production_region": {
+      "type": "string"
+    },
+    "production_target_band": {
+      "default": "standard",
+      "enum": [
+        "complex",
+        "lean",
+        "standard"
+      ],
+      "type": "string"
+    },
+    "reference_dramas": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "scoring_mode": {
+      "default": "project",
+      "enum": [
+        "external",
+        "project"
+      ],
+      "type": "string"
+    },
+    "scoring_preset": {
+      "default": "standard",
+      "type": "string"
+    },
+    "synopsis": {
+      "type": "string"
+    },
+    "target_platform": {
+      "default": "generic",
+      "type": "string"
+    }
+  },
+  "$id": "drama-skills://schemas/generated/parameters",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "由 contracts/parameters.yaml 生成；禁止手改。",
+  "title": "Drama Skills Parameter Definitions"
+}

@@ -1,8 +1,203 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "drama-skills://schemas/project-settings.v1",
-  "title": "短剧项目设置",
-  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "entry_type": {
+            "const": "story_adapt"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "external_story"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "entry_type": {
+            "const": "original_track"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "core_idea"
+        ]
+      }
+    }
+  ],
+  "properties": {
+    "adapt_notes": {
+      "$ref": "generated/parameters.schema.json#/$defs/adapt_notes"
+    },
+    "audit": {
+      "additionalProperties": false,
+      "properties": {
+        "created_at": {
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 1,
+          "type": "integer"
+        },
+        "updated_at": {
+          "type": "string"
+        },
+        "updated_by": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "revision",
+        "updated_at",
+        "updated_by"
+      ],
+      "type": "object"
+    },
+    "core_idea": {
+      "$ref": "generated/parameters.schema.json#/$defs/core_idea"
+    },
+    "creation_preferences": {
+      "additionalProperties": false,
+      "properties": {
+        "batch_episode_max": {
+          "$ref": "generated/parameters.schema.json#/$defs/batch_episode_max"
+        },
+        "compliance_check_mode": {
+          "$ref": "generated/parameters.schema.json#/$defs/check_mode"
+        },
+        "delivery_items": {
+          "$ref": "generated/parameters.schema.json#/$defs/deliverables"
+        },
+        "enable_delivery": {
+          "$ref": "generated/parameters.schema.json#/$defs/enable_delivery"
+        },
+        "outline_mode": {
+          "$ref": "generated/parameters.schema.json#/$defs/outline_mode"
+        },
+        "scoring_preset": {
+          "$ref": "generated/parameters.schema.json#/$defs/scoring_preset"
+        }
+      },
+      "required": [
+        "batch_episode_max",
+        "outline_mode",
+        "scoring_preset",
+        "compliance_check_mode",
+        "enable_delivery"
+      ],
+      "type": "object"
+    },
+    "derived": {
+      "additionalProperties": false,
+      "properties": {
+        "matrix_key": {
+          "type": "string"
+        },
+        "rule_params_ref": {
+          "type": "string"
+        }
+      },
+      "readOnly": true,
+      "type": "object"
+    },
+    "entry_type": {
+      "$ref": "generated/parameters.schema.json#/$defs/entry_type"
+    },
+    "episode_count": {
+      "$ref": "generated/parameters.schema.json#/$defs/episode_count"
+    },
+    "external_story": {
+      "$ref": "generated/parameters.schema.json#/$defs/external_story"
+    },
+    "flavor_tags": {
+      "$ref": "generated/parameters.schema.json#/$defs/flavor_tags"
+    },
+    "genre_matrix": {
+      "$ref": "generated/parameters.schema.json#/$defs/genre_matrix"
+    },
+    "platform_policy": {
+      "additionalProperties": false,
+      "properties": {
+        "policy_source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "policy_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "verified_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "preset_theme_code": {
+      "$ref": "generated/parameters.schema.json#/$defs/preset_theme_code"
+    },
+    "production_context": {
+      "additionalProperties": false,
+      "properties": {
+        "currency": {
+          "$ref": "generated/parameters.schema.json#/$defs/budget_currency"
+        },
+        "excluded_items": {
+          "$ref": "generated/parameters.schema.json#/$defs/budget_excluded_items"
+        },
+        "pricing_version": {
+          "$ref": "generated/parameters.schema.json#/$defs/pricing_version"
+        },
+        "region": {
+          "$ref": "generated/parameters.schema.json#/$defs/production_region"
+        },
+        "target_band": {
+          "$ref": "generated/parameters.schema.json#/$defs/production_target_band"
+        }
+      },
+      "required": [
+        "target_band"
+      ],
+      "type": "object"
+    },
+    "project_id": {
+      "type": "string"
+    },
+    "reference_dramas": {
+      "$ref": "generated/parameters.schema.json#/$defs/reference_dramas"
+    },
+    "schema_version": {
+      "const": "project-settings.v1"
+    },
+    "skills_git_ref": {
+      "type": "string"
+    },
+    "skills_version": {
+      "type": "string"
+    },
+    "synopsis": {
+      "$ref": "generated/parameters.schema.json#/$defs/synopsis"
+    },
+    "target_platform": {
+      "$ref": "generated/parameters.schema.json#/$defs/target_platform"
+    },
+    "title": {
+      "type": "string"
+    }
+  },
   "required": [
     "schema_version",
     "entry_type",
@@ -12,153 +207,6 @@
     "creation_preferences",
     "audit"
   ],
-  "properties": {
-    "schema_version": {
-      "const": "project-settings.v1"
-    },
-    "project_id": {
-      "type": "string"
-    },
-    "skills_version": {
-      "type": "string"
-    },
-    "skills_git_ref": {
-      "type": "string"
-    },
-    "entry_type": {
-      "enum": ["original_track", "story_adapt"]
-    },
-    "title": {
-      "type": "string"
-    },
-    "core_idea": {
-      "type": "string",
-      "minLength": 1
-    },
-    "synopsis": {
-      "type": "string"
-    },
-    "external_story": {
-      "type": "string",
-      "minLength": 1
-    },
-    "adapt_notes": {
-      "type": "object",
-      "properties": {
-        "retained": {"type": "array", "items": {"type": "string"}},
-        "enhanced": {"type": "array", "items": {"type": "string"}},
-        "rewritten": {"type": "array", "items": {"type": "string"}}
-      },
-      "additionalProperties": false
-    },
-    "genre_matrix": {
-      "type": "object",
-      "required": ["emotion", "identity", "conflict", "world"],
-      "properties": {
-        "emotion": {"type": "string"},
-        "identity": {"type": "string"},
-        "conflict": {"type": "string"},
-        "world": {"type": "string"}
-      },
-      "additionalProperties": false
-    },
-    "flavor_tags": {
-      "type": "array",
-      "maxItems": 5,
-      "uniqueItems": true,
-      "items": {"type": "string"}
-    },
-    "preset_theme_code": {
-      "type": ["string", "null"]
-    },
-    "episode_count": {
-      "type": "integer",
-      "minimum": 1
-    },
-    "target_platform": {
-      "type": "string"
-    },
-    "reference_dramas": {
-      "type": "array",
-      "items": {"type": "string"}
-    },
-    "production_context": {
-      "type": "object",
-      "required": ["target_band"],
-      "properties": {
-        "target_band": {"enum": ["lean", "standard", "complex"]},
-        "region": {"type": "string"},
-        "currency": {"type": "string"},
-        "pricing_version": {"type": "string"},
-        "excluded_items": {
-          "type": "array",
-          "items": {"type": "string"}
-        }
-      },
-      "additionalProperties": false
-    },
-    "creation_preferences": {
-      "type": "object",
-      "required": [
-        "batch_episode_max",
-        "outline_mode",
-        "scoring_preset",
-        "compliance_check_mode",
-        "enable_delivery"
-      ],
-      "properties": {
-        "batch_episode_max": {"type": "integer", "minimum": 1, "maximum": 5},
-        "outline_mode": {"enum": ["full", "structure_only"]},
-        "scoring_preset": {"type": "string"},
-        "compliance_check_mode": {"enum": ["standard", "values-risk", "full"]},
-        "enable_delivery": {"type": "boolean"},
-        "delivery_items": {
-          "type": "array",
-          "uniqueItems": true,
-          "items": {"enum": ["storyboard", "visual", "marketing", "interactive", "budget", "release"]}
-        }
-      },
-      "additionalProperties": false
-    },
-    "platform_policy": {
-      "type": "object",
-      "properties": {
-        "policy_version": {"type": ["string", "null"]},
-        "policy_source": {"type": ["string", "null"]},
-        "verified_at": {"type": ["string", "null"]}
-      },
-      "additionalProperties": false
-    },
-    "derived": {
-      "type": "object",
-      "readOnly": true,
-      "properties": {
-        "matrix_key": {"type": "string"},
-        "rule_params_ref": {"type": "string"}
-      },
-      "additionalProperties": false
-    },
-    "audit": {
-      "type": "object",
-      "required": ["revision", "updated_at", "updated_by"],
-      "properties": {
-        "revision": {"type": "integer", "minimum": 1},
-        "created_at": {"type": "string"},
-        "updated_at": {"type": "string"},
-        "updated_by": {"type": "string"}
-      },
-      "additionalProperties": false
-    }
-  },
-  "allOf": [
-    {
-      "if": {"properties": {"entry_type": {"const": "story_adapt"}}},
-      "then": {"required": ["external_story"]}
-    },
-    {
-      "if": {"properties": {"entry_type": {"const": "original_track"}}},
-      "then": {"required": ["core_idea"]}
-    }
-  ],
-  "additionalProperties": false
+  "title": "短剧项目设置",
+  "type": "object"
 }

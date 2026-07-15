@@ -478,3 +478,15 @@ class ThemeMatrixView(APIView):
         )
         matrix = loader.load_seed_yaml(rel_path)
         return api_response(matrix)
+
+
+class WorkbenchFormView(APIView):
+    """工作台动态表单契约（集中 parameters/artifacts 合并导出）。"""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        from apps.drama.services.skills_loader import get_skills_loader
+
+        loader = get_skills_loader()
+        return api_response(loader.export_workbench_form())

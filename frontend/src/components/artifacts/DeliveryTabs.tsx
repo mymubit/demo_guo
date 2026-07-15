@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Tabs } from '@/components/ui/Tabs'
-import { DELIVERY_TAB_ITEMS } from '@/config/workbench'
 import { EmptyState } from '@/components/ui/Tabs'
+import { useWorkbenchDefinition } from '@/hooks/useWorkbenchDefinition'
 import type { DeliveryItem } from '@/types/domain'
 
 export function DeliveryTabs({
@@ -11,9 +11,10 @@ export function DeliveryTabs({
   packageData: Record<string, unknown> | null | undefined
   enabledItems: DeliveryItem[]
 }) {
+  const { definition } = useWorkbenchDefinition()
   const tabs = useMemo(
-    () => DELIVERY_TAB_ITEMS.filter((t) => enabledItems.includes(t.id)),
-    [enabledItems],
+    () => definition.delivery_tab_items.filter((t) => enabledItems.includes(t.id as DeliveryItem)),
+    [definition.delivery_tab_items, enabledItems],
   )
   const [tab, setTab] = useState(tabs[0]?.id ?? 'storyboard')
 
@@ -31,7 +32,11 @@ export function DeliveryTabs({
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold text-ink">交付包</h3>
-      <Tabs items={tabs.map((t) => ({ id: t.id, label: t.label }))} value={tab} onChange={(id) => setTab(id as DeliveryItem)} />
+      <Tabs
+        items={tabs.map((t) => ({ id: t.id, label: t.label }))}
+        value={tab}
+        onChange={(id) => setTab(id)}
+      />
       <div className="sf-panel p-4">
         {tab === 'storyboard' && <JsonList title="分镜" items={storyboard} />}
         {tab === 'visual' && <JsonList title="视觉资产" items={visual} />}
@@ -43,8 +48,14 @@ export function DeliveryTabs({
         )}
         {tab === 'budget' && (
           <div className="space-y-2 text-sm">
-            <p>复杂度：{String(production?.complexity_band ?? '—')}（{String(production?.complexity_score ?? '—')}）</p>
-            <p>成本驱动：{Array.isArray(production?.cost_drivers) ? production?.cost_drivers.join('、') : '—'}</p>
+            <p>
+              复杂度：{String(production?.complexity_band ?? '—')}（
+              {String(production?.complexity_score ?? '—')}）
+            </p>
+            <p>
+              成本驱动：
+              {Array.isArray(production?.cost_drivers) ? production?.cost_drivers.join('、') : '—'}
+            </p>
             <pre className="overflow-auto rounded bg-canvas p-3 text-xs">
               {JSON.stringify(production?.budget_range ?? production ?? {}, null, 2)}
             </pre>
@@ -54,8 +65,18 @@ export function DeliveryTabs({
           <div className="space-y-2 text-sm">
             <p>平台：{String(release?.target_platform ?? '—')}</p>
             <p>可上架：{String(release?.can_release ?? '—')}</p>
-            <p>阻断项：{Array.isArray(release?.blocking_items) ? release?.blocking_items.join('、') || '无' : '—'}</p>
-            <p>缺失材料：{Array.isArray(release?.missing_materials) ? release?.missing_materials.join('、') || '无' : '—'}</p>
+            <p>
+              阻断项：
+              {Array.isArray(release?.blocking_items)
+                ? release?.blocking_items.join('、') || '无'
+                : '—'}
+            </p>
+            <p>
+              缺失材料：
+              {Array.isArray(release?.missing_materials)
+                ? release?.missing_materials.join('、') || '无'
+                : '—'}
+            </p>
           </div>
         )}
       </div>

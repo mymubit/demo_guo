@@ -213,8 +213,8 @@ class ParallelJudgeTaskTests(TestCase):
         def side_effect(**kwargs):
             prompt = kwargs.get("system_prompt", "")
             if "合规" in prompt or "compliance" in prompt:
-                return _mock_llm_response(FIXTURES["compliance-report.v1"])
-            return _mock_llm_response(FIXTURES["quality-report.v1"])
+                return _mock_llm_response(FIXTURES["compliance_report"])
+            return _mock_llm_response(FIXTURES["quality_report"])
 
         mock_llm.side_effect = side_effect
         job = DramaGenerationJob.objects.create(
@@ -272,7 +272,7 @@ class ParallelJudgeTaskTests(TestCase):
         ):
             with self.assertRaises(RuntimeError):
                 _parallel_judge_callback(
-                    [FIXTURES["quality-report.v1"], FIXTURES["compliance-report.v1"]],
+                    [FIXTURES["quality_report"], FIXTURES["compliance_report"]],
                     str(job.id),
                 )
         job.refresh_from_db()
@@ -314,7 +314,7 @@ class GenerationTerminalAndVersionTests(TestCase):
 
     @patch("apps.drama.services.generation_service.LlmProvider.chat_completion")
     def test_persist_uses_captured_workflow_version(self, mock_llm):
-        mock_llm.return_value = _mock_llm_response(FIXTURES["project-brief.v1"])
+        mock_llm.return_value = _mock_llm_response(FIXTURES["project_brief"])
         self.project.workflow_state.version = 5
         self.project.workflow_state.save(update_fields=["version"])
         job = DramaGenerationJob.objects.create(
@@ -370,8 +370,8 @@ class QualityFinalizeAtomicTests(TestCase):
             with self.assertRaises(Exception):
                 self.svc._finalize_quality_results(
                     job,
-                    FIXTURES["quality-report.v1"],
-                    FIXTURES["compliance-report.v1"],
+                    FIXTURES["quality_report"],
+                    FIXTURES["compliance_report"],
                 )
         job.refresh_from_db()
         self.assertEqual(job.status, DramaGenerationJob.Status.FAILED)

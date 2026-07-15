@@ -9,6 +9,9 @@
 
 ```
 drama-skills/
+├── contracts/                    # 产物与参数机器契约（SSOT）
+│   ├── artifacts.yaml            #   产物键、schema、producer、分片
+│   └── parameters.yaml           #   可传递参数类型与角色引用
 ├── registry.yaml                 # 角色 + 部门 + 主链 + 工具索引
 ├── foundation/
 │   ├── constraints/              # 数值常量（含 config_tier 分级：git_ssot / seed_default）
@@ -22,6 +25,7 @@ drama-skills/
 ├── manifest/                     # Bundle清单与后台覆盖白名单
 ├── workbench/                    # 工作台字段、阶段、面板与API契约
 ├── schemas/                      # 项目、流程、后台与全部产物JSON Schema
+│   └── generated/                #   由 contracts/parameters.yaml 生成的参数定义（禁止手改）
 ├── orchestration/                # original-track / story-adapt-track 双通道
 ├── runtime/                      # 流程状态机参考实现
 ├── quality/                      # 确定性质量回归用例
@@ -114,7 +118,9 @@ python manage.py sync_drama_from_git
 | 操作 | 改哪里 |
 |------|--------|
 | 增删改规则条目 | `foundation/rules/*.yaml` |
-| 改数值、枚举、阈值或产物结构 | `foundation/constraints/*.yaml` |
+| 改可传递参数类型/枚举/默认/边界 | `contracts/parameters.yaml`，再运行 `python build/generate_parameter_schemas.py` |
+| 改数值、枚举、阈值（非参数契约） | `foundation/constraints/*.yaml` |
+| 改产物结构 | `contracts/artifacts.yaml` + `schemas/artifacts/<key>/1.schema.json` |
 | 改能力执行步骤 | `modules/*.md`，并登记 `modules/catalog.yaml` |
 | 改角色 I/O | `roles/<slug>/role.yaml` |
 | 注册新角色 | `registry.yaml` + 新建 `roles/<slug>/` + `stage-playbook.yaml` 条目 |
@@ -123,6 +129,13 @@ python manage.py sync_drama_from_git
 | 规则模板量化参数 | `foundation/theme-matrix.yaml` + `foundation/rules/genres/matrix.yaml` |
 
 改完运行一致性校验：`python build/validate_skills.py`
+
+参数契约变更后须重新生成并校验 Schema：
+
+```bash
+python build/generate_parameter_schemas.py
+python build/generate_parameter_schemas.py --check
+```
 
 工作台或后台配置变化还必须运行：
 
@@ -167,7 +180,7 @@ knowledge（原因、案例、行业背景）
 |------|------|
 | `knowledge/knowledge-sections.md` | Section 名 ↔ 角色映射 |
 | `knowledge/craft/tier3-stage-rules.md` | 各角色阶段 playbook 参考长文 |
-| `knowledge/output-schemas.md` | 产物 JSON 字段参考（含 story-bible.v1） |
+| `knowledge/output-schemas.md` | 产物 JSON 字段参考（含 story_bible v1） |
 | `INTAKE_PROTOCOL.md` | 外部内容摄入协议 |
 | `EVOLUTION_LOG.md` | 进化记录 |
 | `ROLE-DESIGN-ANALYSIS.md` | 角色设计说明（v5） |

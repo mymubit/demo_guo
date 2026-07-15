@@ -1,3 +1,12 @@
+/** Runtime workbench-form contract types (from GET /api/v1/drama/meta/workbench-form/). */
+
+export type FieldOption = {
+  value: string
+  label: string
+  label_zh?: string
+  desc?: string
+}
+
 export type AxisOption = {
   value: string
   label_zh: string
@@ -9,6 +18,7 @@ export type AxisConfig = {
   hint?: string
   min_select?: number
   max_select?: number
+  required?: boolean
   options: AxisOption[]
 }
 
@@ -36,9 +46,10 @@ export type FeaturedCombo = {
   flavor_tags?: string[]
 }
 
+/** Theme matrix view-model derived from resolved parameter fields (not a static copy). */
 export type ThemeMatrix = {
   version?: string
-  dim_order: Array<'emotion' | 'identity' | 'conflict' | 'world'>
+  dim_order: string[]
   axes: Record<string, AxisConfig>
   flavor_tags: {
     max_select: number
@@ -54,7 +65,7 @@ export type ModuleCatalogItem = {
   id: string
   label_zh: string
   domain: string
-  kind: 'core' | 'extension'
+  kind: 'core' | 'extension' | string
   lifecycle: string
   target_roles: string[]
   workbench_visible: boolean
@@ -64,39 +75,136 @@ export type ModuleCatalogItem = {
 export type StageDefinition = {
   id: string
   orchestration_phase?: string
-  stage_kind: 'main' | 'quality_loop' | 'optional'
+  stage_kind: 'main' | 'quality_loop' | 'optional' | string
   role: string
+  role_label?: string
+  /** Filled by backend from artifacts contract */
   artifact: string
+  /** Chinese label merged from artifacts contract by backend */
+  label_zh: string
   approval_required?: boolean
   batch_field?: string
   parallel_group?: string
   conditional?: boolean
   optional?: boolean
   visible_when?: string
-  label_zh: string
 }
 
-export type SettingsFieldType = 'string' | 'integer' | 'boolean' | 'array' | 'object'
+export type SettingsFieldType = 'string' | 'integer' | 'boolean' | 'array' | 'object' | string
+
+export type SettingsUiWidget =
+  | 'textarea'
+  | 'select'
+  | 'number'
+  | 'switch'
+  | 'tags'
+  | 'matrix'
+  | 'checklist'
+  | string
 
 export type SettingsFieldDef = {
   key: string
   type: SettingsFieldType
   persist_path: string
   label_zh: string
-  ui_widget?: 'textarea' | 'select' | 'number' | 'switch' | 'tags' | 'matrix' | 'checklist'
+  ui_widget?: SettingsUiWidget
   enum?: string[]
   enum_items?: string[]
+  items_enum?: string[]
   default?: unknown
   minimum?: number
   maximum?: number
+  max_items?: number
   required?: boolean
   required_when?: string
   visible_when?: string
-  options?: Array<{ value: string; label: string }>
+  options?: FieldOption[]
+  /** Nested object axes (e.g. genre_matrix) from parameter contract resolution */
+  fields?: Record<
+    string,
+    {
+      label?: string
+      label_zh?: string
+      required?: boolean
+      options?: FieldOption[]
+    }
+  >
+  items?: { type?: string }
+  config_scope?: string
 }
 
 export type SettingsGroupDef = {
   id: string
   label_zh: string
   fields: string[]
+}
+
+export type AdminSectionDef = {
+  id: string
+  source: string
+  label_zh?: string
+}
+
+export type ModulePanelConfig = {
+  source?: string
+  group_by?: string
+  filter?: string
+  evaluate_enable_when?: boolean
+  allow_project_toggle?: boolean
+}
+
+/** Raw API payload shape (workbench-form.v1 + runtime enrichments). */
+export type WorkbenchFormApiResponse = {
+  schema_version?: string
+  version?: string
+  /** Skills bundle version — used as React Query cache partition key */
+  skills_bundle_version?: string
+  bundle_version?: string
+  project_schema?: string
+  parameters_contract?: string
+  project_settings: {
+    groups: Record<string, { label_zh: string; fields: string[] }> | SettingsGroupDef[]
+    fields: Record<string, Omit<SettingsFieldDef, 'key' | 'label_zh'> & {
+      label_zh?: string
+      label?: string
+      persist_path: string
+      type: SettingsFieldType
+    }>
+  }
+  stages: Array<
+    Omit<StageDefinition, 'artifact' | 'label_zh'> & {
+      artifact?: string
+      label_zh?: string
+      role_label?: string
+      label?: string
+    }
+  >
+  module_catalog: Record<string, Omit<ModuleCatalogItem, 'id'>> | ModuleCatalogItem[]
+  module_panel?: ModulePanelConfig
+  admin_settings?: {
+    sections?: AdminSectionDef[]
+    require_audit_reason?: boolean
+    allow_git_ssot_override?: boolean
+    policy?: string
+  }
+  theme_matrix?: ThemeMatrix
+  derived_fields?: string[]
+  system_fields?: string[]
+  runtime_projection?: Record<string, unknown>
+  navigation?: Record<string, unknown>
+  external_tools?: Record<string, unknown>
+}
+
+/** Normalized definition consumed by UI (no static business fallbacks). */
+export type WorkbenchDefinition = {
+  schema_version: string
+  skills_bundle_version: string
+  groups: SettingsGroupDef[]
+  fields: Record<string, SettingsFieldDef>
+  stages: StageDefinition[]
+  modules: ModuleCatalogItem[]
+  module_panel?: ModulePanelConfig
+  admin_sections: AdminSectionDef[]
+  theme_matrix: ThemeMatrix | null
+  delivery_tab_items: Array<{ id: string; label: string }>
 }

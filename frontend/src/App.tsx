@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/auth/AuthContext'
 import { ProtectedRoute } from '@/router/ProtectedRoute'
 import { AppShell } from '@/components/layout/AppShell'
+import { WorkbenchDefinitionProvider } from '@/hooks/useWorkbenchDefinition'
 import { LoginPage } from '@/pages/LoginPage'
 import { ProjectListPage } from '@/pages/ProjectListPage'
 import { NewProjectPage } from '@/pages/NewProjectPage'
@@ -29,7 +30,13 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route element={<ProtectedRoute />}>
-              <Route element={<AppShell />}>
+              <Route
+                element={
+                  <WorkbenchDefinitionProvider>
+                    <AppShell />
+                  </WorkbenchDefinitionProvider>
+                }
+              >
                 <Route path="/" element={<Navigate to="/projects" replace />} />
                 <Route path="/projects" element={<ProjectListPage />} />
                 <Route path="/projects/new" element={<NewProjectPage />} />

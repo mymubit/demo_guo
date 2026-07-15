@@ -1,6 +1,5 @@
 import { evaluateCondition, settingsConditionContext } from '@/utils/conditions'
-import { STAGES } from '@/config/workbench'
-import type { StageDefinition } from '@/types/workbench'
+import type { StageDefinition, WorkbenchDefinition } from '@/types/workbench'
 import type { WorkflowPhase, WorkflowState } from '@/types/domain'
 
 export type StageRailStatus = 'locked' | 'pending' | 'active' | 'waiting' | 'done' | 'blocked'
@@ -22,6 +21,10 @@ function phaseIndex(phase: WorkflowPhase): number {
 }
 
 function stagePhase(stage: StageDefinition): WorkflowPhase | null {
+  if (stage.orchestration_phase) {
+    const phase = stage.orchestration_phase as WorkflowPhase
+    if (PHASE_ORDER.includes(phase)) return phase
+  }
   if (stage.id === 'strategy') return 'strategy'
   if (stage.id === 'blueprint') return 'blueprint'
   if (stage.id === 'episode_design') return 'episode_design'
@@ -34,13 +37,18 @@ function stagePhase(stage: StageDefinition): WorkflowPhase | null {
   return null
 }
 
-export function visibleStages(ctx: {
+type StageFilterCtx = {
   entry_type?: string
   enable_delivery?: boolean
   creation_preferences?: { enable_delivery?: boolean; delivery_items?: string[] }
-}): StageDefinition[] {
+}
+
+export function visibleStages(
+  stages: StageDefinition[],
+  ctx: StageFilterCtx,
+): StageDefinition[] {
   const conditionCtx = settingsConditionContext(ctx)
-  return STAGES.filter((s) => evaluateCondition(s.visible_when, conditionCtx))
+  return stages.filter((s) => evaluateCondition(s.visible_when, conditionCtx))
 }
 
 export function resolveStageStatus(
@@ -114,15 +122,26 @@ export function isQualityPhaseHighlight(workflow: WorkflowState | null | undefin
   )
 }
 
-export function mainPipelineStages(ctx: Parameters<typeof visibleStages>[0]): StageDefinition[] {
-  return visibleStages(ctx).filter((s) => s.stage_kind === 'main' || s.stage_kind === 'optional')
+export function mainPipelineStages(
+  stages: StageDefinition[],
+  ctx: StageFilterCtx,
+): StageDefinition[] {
+  return visibleStages(stages, ctx).filter(
+    (s) => s.stage_kind === 'main' || s.stage_kind === 'optional',
+  )
 }
 
-export function qualityLoopStages(ctx: Parameters<typeof visibleStages>[0]): StageDefinition[] {
-  return visibleStages(ctx).filter((s) => s.stage_kind === 'quality_loop')
+export function qualityLoopStages(
+  stages: StageDefinition[],
+  ctx: StageFilterCtx,
+): StageDefinition[] {
+  return visibleStages(stages, ctx).filter((s) => s.stage_kind === 'quality_loop')
 }
 
 /** All selectable stages for workbench canvas (main + quality loop + optional). */
-export function workbenchStages(ctx: Parameters<typeof visibleStages>[0]): StageDefinition[] {
-  return visibleStages(ctx)
+export function workbenchStages(
+  definition: Pick<WorkbenchDefinition, 'stages'>,
+  ctx: StageFilterCtx,
+): StageDefinition[] {
+  return visibleStages(definition.stages, ctx)
 }

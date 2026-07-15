@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "scripts": {
     "dev": "docker compose up --build",
+    "dev:local": "sh scripts/dev-local.sh",
+    "dev:local:eager": "sh scripts/dev-local.sh --eager",
     "test:frontend": "npm --prefix frontend test",
     "lint:frontend": "npm --prefix frontend run lint",
     "build:frontend": "npm --prefix frontend run build",

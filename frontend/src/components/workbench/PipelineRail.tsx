@@ -1,6 +1,7 @@
 import { CheckCircle2, Circle, Lock, AlertTriangle, Clock } from 'lucide-react'
 import { cn } from '@/utils/cn'
 import { Badge } from '@/components/ui/Badge'
+import { useWorkbenchDefinition } from '@/hooks/useWorkbenchDefinition'
 import {
   isQualityPhaseHighlight,
   mainPipelineStages,
@@ -108,13 +109,14 @@ export function PipelineRail({
   activeStageId: string
   onSelect: (stage: StageDefinition) => void
 }) {
+  const { definition } = useWorkbenchDefinition()
   const ctx = {
     entry_type: settings.entry_type,
     enable_delivery: settings.creation_preferences.enable_delivery,
     creation_preferences: settings.creation_preferences,
   }
-  const stages = mainPipelineStages(ctx)
-  const qualityStages = qualityLoopStages(ctx)
+  const stages = mainPipelineStages(definition.stages, ctx)
+  const qualityStages = qualityLoopStages(definition.stages, ctx)
   const qualityHighlight = isQualityPhaseHighlight(workflow)
 
   return (

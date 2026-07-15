@@ -16,6 +16,7 @@ from apps.drama.views import (
     ProjectSettingsView,
     StoryBibleApprovalView,
     ThemeMatrixView,
+    WorkbenchFormView,
     WorkflowCommandView,
     WorkflowStateView,
 )
@@ -75,6 +76,7 @@ urlpatterns = [
         name="drama-external-review",
     ),
     path("theme-matrix/", ThemeMatrixView.as_view(), name="drama-theme-matrix"),
+    path("meta/workbench-form/", WorkbenchFormView.as_view(), name="drama-workbench-form"),
     path("admin/config/", AdminConfigView.as_view(), name="drama-admin-config"),
     path(
         "admin/config/rollback/",

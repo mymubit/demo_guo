@@ -14,13 +14,13 @@ from apps.drama.models import DramaGenerationJob, DramaProject
 from apps.drama.services.artifact_service import ArtifactService
 from apps.drama.services.skills_loader import SkillsBundleLoader, get_skills_loader
 
-ROLE_COMPLETION_EVENT: dict[str, str] = {
-    "drama.topic-director": "project_brief_completed",
-    "drama.story-bible": "story_bible_completed",
-    "drama.episode-designer": "narrative_plan_completed",
-    "drama.script-writer": "episode_batch_completed",
-    "drama.revision-master": "polished_script_completed",
-    "drama.delivery-tool": "production_package_completed",
+ARTIFACT_COMPLETION_EVENT: dict[str, str] = {
+    "project_brief": "project_brief_completed",
+    "story_bible": "story_bible_completed",
+    "narrative_plan": "narrative_plan_completed",
+    "episode_scripts": "episode_batch_completed",
+    "polished_script": "polished_script_completed",
+    "production_package": "production_package_completed",
 }
 
 QUALITY_TRIGGER_ROLES = frozenset({"drama.script-writer", "drama.revision-master"})
@@ -115,15 +115,15 @@ class GenerationGate:
                     http_status=422,
                 )
 
-        contract = self.loader.get_role_contract(role)
-        return contract.get("default_output_artifact_key", "")
+        return self.loader.get_output_artifact_by_role(role)
 
     def completion_event_for_role(self, role: str) -> str:
-        event = ROLE_COMPLETION_EVENT.get(role)
+        artifact_key = self.loader.get_output_artifact_by_role(role)
+        event = ARTIFACT_COMPLETION_EVENT.get(artifact_key)
         if not event:
             raise BusinessException(
                 WORKFLOW_GATE_BLOCKED,
-                f"角色 {role} 无对应完成事件",
+                f"产物 {artifact_key} 无对应完成事件",
                 http_status=422,
             )
         return event

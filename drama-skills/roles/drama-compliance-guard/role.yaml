@@ -4,8 +4,6 @@ name_zh: 合规审查官
 dept: quality
 role_tier: judge
 workspace_order: 502
-default_output_artifact_key: compliance_report
-schema_version: compliance-report.v1
 modules: []
 rule_policy:
   scopes:
@@ -22,19 +20,7 @@ input_contract:
   optional_artifacts:
   - project_brief
   - story_bible
-  params_schema:
-    check_mode:
-      type: string
-      required: false
-      enum: [standard, values-risk, full]
-      default: standard
-    target_platform:
-      type: string
-      required: false
-      source_ref: foundation/constraints/platform-profiles.yaml#platforms
-      default: generic
-output_contract:
-  artifacts:
-  - compliance_report
-  schema_version: compliance-report.v1
+  parameter_refs:
+  - check_mode
+  - target_platform
 role: 独立合规裁判，不参与创作评分，只判断能否交付；执行 P0/P1/P2 三级合规检测、犯罪正义收束验证、原创性/融梗风险与平台红线审查，P0 或未解决 P1 时拒绝出具通过报告并阻断下游流程。

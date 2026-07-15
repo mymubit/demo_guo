@@ -1,7 +1,8 @@
-import { groupModulesByDomain, modulesForStage } from '@/utils/modules'
+import { groupModulesByDomain, modulesForStageFromDefinition } from '@/utils/modules'
 import { Badge } from '@/components/ui/Badge'
 import { X } from 'lucide-react'
 import { cn } from '@/utils/cn'
+import { useWorkbenchDefinition } from '@/hooks/useWorkbenchDefinition'
 import type { ProjectSettings } from '@/types/domain'
 import type { StageDefinition } from '@/types/workbench'
 
@@ -26,17 +27,6 @@ const KIND_LABELS: Record<string, string> = {
   extension: '扩展',
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  'drama.topic-director': '选题定调官',
-  'drama.story-bible': '剧本蓝图官',
-  'drama.episode-designer': '分集设计官',
-  'drama.script-writer': '剧本正文官',
-  'drama.script-scorer': '剧本评分官',
-  'drama.compliance-guard': '合规审查官',
-  'drama.revision-master': '剧本修复官',
-  'drama.delivery-tool': '宣发交付工具',
-}
-
 export function ModulePanel({
   stage,
   settings,
@@ -48,7 +38,8 @@ export function ModulePanel({
   className?: string
   onClose?: () => void
 }) {
-  const modules = modulesForStage(stage, settings)
+  const { definition } = useWorkbenchDefinition()
+  const modules = modulesForStageFromDefinition(definition, stage, settings)
   const groups = groupModulesByDomain(modules)
 
   return (
@@ -77,7 +68,7 @@ export function ModulePanel({
         </div>
         {stage ? (
           <div className="mt-1 truncate text-xs text-ink-muted">
-            {ROLE_LABELS[stage.role] ?? stage.role}
+            {stage.role_label ?? stage.role}
           </div>
         ) : null}
       </div>
