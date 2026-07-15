@@ -23,6 +23,7 @@ from apps.drama.models import DramaGenerationJob  # noqa: E402
 from apps.drama.services.artifact_service import ArtifactService  # noqa: E402
 from apps.drama.services.generation_service import GenerationService  # noqa: E402
 from apps.drama.services.project_settings import ProjectSettingsService  # noqa: E402
+from apps.drama.services.workflow_service import WorkflowService  # noqa: E402
 
 
 def wait_job(job_id: str, timeout_seconds: int = 30) -> DramaGenerationJob:
@@ -63,6 +64,14 @@ def main() -> None:
     stored = ArtifactService().get_artifact(project, "project_brief")
     if stored["version"] != 1:
         raise RuntimeError("PostgreSQL 产物版本写入失败")
+    WorkflowService().apply_command(
+        project,
+        command_id="verify-project-brief",
+        event="project_brief_completed",
+        expected_version=project.workflow_state.version,
+        actor=username,
+    )
+    project.workflow_state.refresh_from_db()
 
     job = GenerationService().start_generation(
         project,
