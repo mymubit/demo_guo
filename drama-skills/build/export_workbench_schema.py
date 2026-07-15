@@ -88,10 +88,25 @@ def export_definition() -> Dict[str, Any]:
         ):
             definition.pop(contract_only, None)
     role_outputs = role_output_artifacts(load_artifacts_contract(ROOT))
+    registry_roles = {
+        role["agent_id"]: role
+        for role in load_yaml("registry.yaml").get("roles", [])
+    }
+    phase_labels: Dict[str, str] = {}
+    for track in (
+        load_yaml("orchestration/original-track.yaml"),
+        load_yaml("orchestration/story-adapt-track.yaml"),
+    ):
+        for phase in track.get("phases", []):
+            phase_labels.setdefault(phase["phase"], phase.get("label", phase["phase"]))
     for stage in output.get("stages", []):
         role_id = stage.get("role")
         if role_id in role_outputs:
             stage["artifact"] = role_outputs[role_id]
+        stage["label_zh"] = phase_labels.get(
+            stage.get("orchestration_phase"),
+            (registry_roles.get(role_id) or {}).get("name_zh", stage["id"]),
+        )
     output["module_catalog"] = load_yaml("modules/catalog.yaml")["modules"]
     output["schema_version"] = "workbench-form.v1"
     return output

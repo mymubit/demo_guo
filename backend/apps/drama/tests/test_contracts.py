@@ -117,6 +117,8 @@ class WorkbenchFormExportTests(TestCase):
         blueprint = next(stage for stage in form["stages"] if stage["id"] == "blueprint")
         self.assertEqual(blueprint["artifact"], "story_bible")
         self.assertEqual(blueprint["artifact_label"], "故事蓝图")
+        self.assertEqual(blueprint["label_zh"], "剧本蓝图")
+        self.assertTrue(all(stage.get("label_zh") for stage in form["stages"]))
 
     def test_export_workbench_form_resolves_platform_options(self) -> None:
         form = SkillsBundleLoader().export_workbench_form()

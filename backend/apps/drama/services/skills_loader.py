@@ -217,6 +217,16 @@ class SkillsBundleLoader:
                 definition.pop(contract_only, None)
 
         role_outputs = self.producer_artifact_map()
+        registry_roles = {
+            role["agent_id"]: role for role in self.registry.get("roles", [])
+        }
+        phase_labels: dict[str, str] = {}
+        for entry_type in ("original_track", "story_adapt"):
+            for phase in self.get_orchestration_track(entry_type).get("phases", []):
+                phase_labels.setdefault(
+                    phase["phase"],
+                    phase.get("label", phase["phase"]),
+                )
         for stage in workbench.get("stages", []):
             role_id = stage.get("role")
             if role_id in role_outputs:
@@ -225,6 +235,10 @@ class SkillsBundleLoader:
                 stage["artifact_label"] = self.get_artifact_contract(artifact_key).get(
                     "label_zh", artifact_key
                 )
+            stage["label_zh"] = phase_labels.get(
+                stage.get("orchestration_phase"),
+                (registry_roles.get(role_id) or {}).get("name_zh", stage["id"]),
+            )
 
         workbench["module_catalog"] = self.modules_catalog.get("modules", [])
         workbench["schema_version"] = "workbench-form.v1"
