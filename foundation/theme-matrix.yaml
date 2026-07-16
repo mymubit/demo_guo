@@ -1,15 +1,24 @@
-# 四轴题材矩阵 SSOT v1.4 — 全量覆盖 + 校验
-version: "1.4.0"
+# 题材矩阵 SSOT v2.0 — 频道 + 四轴 + 主角结构 + 风味标签
+# v2.0 变更：
+#   1. 受众频道升维为必选独立维度（市场第一级分类：男频/女频/普适）
+#   2. identity 轴移除 dual-lead（主角数量不是身份禀赋），新增 returning-elite（强者归来）
+#   3. 主角结构独立为可选维度（大男主/大女主/双强/双男主/双女主/多女主/群像）
+#   4. 标签库对齐市场：删 5 个受众标签（升维/迁移），增 8 个高热标签，标签分 tier
+#   5. 新增 tag_constraints 组合约束（互斥/世界观依赖）
+#   6. 合成幂等：标签按 canonical 顺序叠加，与用户选择顺序无关
+version: "2.0.0"
 
 coverage_model:
   summary: |
-    1. 四轴（各 9 项）：主情绪 / 身份 / 冲突 / 时空
-    2. 风味标签（69 项 / 12 类，最多 5 个）：全行业 + 形态创新长尾
-    3. featured_combos 32 条：创新杂交种子，可归档至 inspirations/new-patterns.md
-    4. topic_inference：自由创意 → 四轴+标签推断词表
+    1. 受众频道（必选 1，默认 general）：男频 / 女频 / 普适
+    2. 四轴（各 9 项）：主情绪 / 身份 / 冲突 / 时空
+    3. 主角结构（可选 1）：大男主 / 大女主 / 双强 / 双男主 / 双女主 / 多女主 / 群像
+    4. 风味标签（72 项 / 12 类，最多 5 个，分 hot/standard/longtail 三档）
+    5. featured_combos 34 条：创新杂交种子，可归档至 inspirations/new-patterns.md
+    6. topic_inference：自由创意 → 频道+四轴+结构+标签推断词表
   axis_combinations: 6561
-  flavor_tag_count: 69
-  featured_combo_count: 32
+  flavor_tag_count: 72
+  featured_combo_count: 34
   validate: python build/validate_theme_matrix.py
 
 dim_order:
@@ -17,6 +26,29 @@ dim_order:
   - identity
   - conflict
   - world
+
+audience_channel:
+  label_zh: 受众频道
+  hint: 市场第一级分类，直接影响爽点节奏与钩子策略（必选，默认 general）
+  required: true
+  default: general
+  options:
+    - { value: female, label_zh: 女频, desc: 情感浓度优先；打脸虐渣/甜宠/大女主主赛道 }
+    - { value: male, label_zh: 男频, desc: 强爽节奏优先；战神/神医/都市玄幻主赛道 }
+    - { value: general, label_zh: 普适, desc: 不刻意区分频道的普适题材 }
+
+protagonist_structure:
+  label_zh: 主角结构
+  hint: 可选；主角数量与配置（原 identity 轴 dual-lead 与受众标签 bl/gl/dual-power 迁移至此）
+  required: false
+  options:
+    - { value: single-male, label_zh: 大男主 }
+    - { value: single-female, label_zh: 大女主 }
+    - { value: dual-power, label_zh: 双强CP }
+    - { value: bl, label_zh: 双男主 }
+    - { value: gl, label_zh: 双女主 }
+    - { value: multi-female, label_zh: 多女主 }
+    - { value: ensemble, label_zh: 群像 }
 
 axes:
   emotion:
@@ -49,7 +81,7 @@ axes:
       - { value: student, label_zh: 青春成长, desc: 学生/初入社会 }
       - { value: protector, label_zh: 守护照护, desc: 母职/长辈/照护者 }
       - { value: bound, label_zh: 契约绑定, desc: 赘婿/闪婚/替身/契约关系 }
-      - { value: dual-lead, label_zh: 双强双核, desc: 双主角势均力敌、互为镜像 }
+      - { value: returning-elite, label_zh: 强者归来, desc: 战神/龙王/神医/高手下山，实力已成、重返世俗 }
 
   conflict:
     label_zh: 冲突轴
@@ -85,26 +117,26 @@ axes:
 
 flavor_tags:
   max_select: 5
-  hint: 可选；按类多选以覆盖全行业赛道与创新杂交
+  hint: 可选；tier=hot 为市场高热标签（UI 优先展示），standard 常规，longtail 长尾（默认折叠）
   categories:
     - id: ancient_sub
       label_zh: 古风细分
       tags: [wuxia, xianxia, palace, harem, zhainu, nongtian, shoushi, female-dom]
     - id: meta_fantasy
       label_zh: 穿书系统
-      tags: [transmigration-book, quick-travel, system-panel, infinite-flow, game-world]
+      tags: [transmigration-book, quick-travel, system-panel, infinite-flow, game-world, mind-reading, villainess]
+    - id: male_urban
+      label_zh: 男频都市
+      tags: [war-god, divine-doctor, master-descend, urban-fantasy, son-in-law, god-wealth]
     - id: urban_sub
       label_zh: 都市细分
-      tags: [ceo-domineering, son-in-law, god-wealth, flash-marriage, secret-baby, anti-pua, mafia-underworld, campus-bully, substitute-life, gender-swap]
+      tags: [ceo-domineering, flash-marriage, secret-baby, true-false-heiress, marriage-first, anti-pua, mafia-underworld, campus-bully, substitute-life, gender-swap]
     - id: profession
       label_zh: 职业行业
       tags: [medical, legal, military, fire-rescue, esports, sports, food, craft-heritage, industry-deep]
-    - id: audience
-      label_zh: 受众向
-      tags: [female-lead, male-lead, bl, gl, dual-power, down-market]
     - id: tone
       label_zh: 情感调性
-      tags: [sweet-heavy, melo-heavy, realism, angst-revenge, slow-burn]
+      tags: [sweet-heavy, melo-heavy, realism, angst-revenge, slow-burn, down-market]
     - id: thriller
       label_zh: 悬疑惊悚
       tags: [horror, folk-horror, crime-procedural, spy]
@@ -126,86 +158,105 @@ flavor_tags:
 
   options:
     # 古风细分
-    - { value: wuxia, label_zh: 武侠江湖, category: ancient_sub }
-    - { value: xianxia, label_zh: 修仙玄幻, category: ancient_sub }
-    - { value: palace, label_zh: 宫廷朝堂, category: ancient_sub }
-    - { value: harem, label_zh: 后宫争宠, category: ancient_sub }
-    - { value: zhainu, label_zh: 宅斗内院, category: ancient_sub }
-    - { value: nongtian, label_zh: 种田基建, category: ancient_sub }
-    - { value: shoushi, label_zh: 兽世异族, category: ancient_sub }
-    - { value: female-dom, label_zh: 女尊逆轨, category: ancient_sub }
+    - { value: wuxia, label_zh: 武侠江湖, category: ancient_sub, tier: standard }
+    - { value: xianxia, label_zh: 修仙玄幻, category: ancient_sub, tier: standard }
+    - { value: palace, label_zh: 宫斗宅斗·朝堂, category: ancient_sub, tier: hot }
+    - { value: harem, label_zh: 后宫争宠, category: ancient_sub, tier: standard }
+    - { value: zhainu, label_zh: 宅斗内院, category: ancient_sub, tier: standard }
+    - { value: nongtian, label_zh: 种田经营, category: ancient_sub, tier: hot }
+    - { value: shoushi, label_zh: 兽世异族, category: ancient_sub, tier: longtail }
+    - { value: female-dom, label_zh: 女尊逆轨, category: ancient_sub, tier: longtail }
     # 穿书系统
-    - { value: transmigration-book, label_zh: 穿书穿剧, category: meta_fantasy }
-    - { value: quick-travel, label_zh: 快穿任务, category: meta_fantasy }
-    - { value: system-panel, label_zh: 系统面板, category: meta_fantasy }
-    - { value: infinite-flow, label_zh: 无限流副本, category: meta_fantasy }
-    - { value: game-world, label_zh: 游戏世界, category: meta_fantasy }
+    - { value: transmigration-book, label_zh: 穿书穿剧, category: meta_fantasy, tier: hot }
+    - { value: quick-travel, label_zh: 快穿任务, category: meta_fantasy, tier: standard }
+    - { value: system-panel, label_zh: 系统面板, category: meta_fantasy, tier: hot }
+    - { value: infinite-flow, label_zh: 无限流副本, category: meta_fantasy, tier: standard }
+    - { value: game-world, label_zh: 游戏世界, category: meta_fantasy, tier: standard }
+    - { value: mind-reading, label_zh: 读心心声, category: meta_fantasy, tier: hot }
+    - { value: villainess, label_zh: 反派女配觉醒, category: meta_fantasy, tier: standard }
+    # 男频都市
+    - { value: war-god, label_zh: 战神归来, category: male_urban, tier: hot }
+    - { value: divine-doctor, label_zh: 神医圣手, category: male_urban, tier: hot }
+    - { value: master-descend, label_zh: 高手下山, category: male_urban, tier: hot }
+    - { value: urban-fantasy, label_zh: 都市玄幻, category: male_urban, tier: hot }
+    - { value: son-in-law, label_zh: 赘婿逆袭, category: male_urban, tier: hot }
+    - { value: god-wealth, label_zh: 神豪暴富, category: male_urban, tier: standard }
     # 都市细分
-    - { value: ceo-domineering, label_zh: 霸总豪门, category: urban_sub }
-    - { value: son-in-law, label_zh: 赘婿逆袭, category: urban_sub }
-    - { value: god-wealth, label_zh: 神豪暴富, category: urban_sub }
-    - { value: flash-marriage, label_zh: 闪婚契约, category: urban_sub }
-    - { value: secret-baby, label_zh: 萌宝带球, category: urban_sub }
-    - { value: anti-pua, label_zh: 反PUA觉醒, category: urban_sub }
-    - { value: mafia-underworld, label_zh: 黑帮地下, category: urban_sub }
-    - { value: campus-bully, label_zh: 校园霸凌反击, category: urban_sub }
-    - { value: substitute-life, label_zh: 替身人生, category: urban_sub }
-    - { value: gender-swap, label_zh: 灵魂互换, category: urban_sub }
+    - { value: ceo-domineering, label_zh: 霸总豪门, category: urban_sub, tier: hot }
+    - { value: flash-marriage, label_zh: 闪婚契约, category: urban_sub, tier: hot }
+    - { value: secret-baby, label_zh: 萌宝带球, category: urban_sub, tier: hot }
+    - { value: true-false-heiress, label_zh: 真假千金, category: urban_sub, tier: hot }
+    - { value: marriage-first, label_zh: 先婚后爱, category: urban_sub, tier: standard }
+    - { value: anti-pua, label_zh: 反PUA觉醒, category: urban_sub, tier: standard }
+    - { value: mafia-underworld, label_zh: 黑帮地下, category: urban_sub, tier: standard }
+    - { value: campus-bully, label_zh: 校园霸凌反击, category: urban_sub, tier: standard }
+    - { value: substitute-life, label_zh: 替身人生, category: urban_sub, tier: standard }
+    - { value: gender-swap, label_zh: 灵魂互换, category: urban_sub, tier: longtail }
     # 职业行业
-    - { value: medical, label_zh: 医疗生死, category: profession }
-    - { value: legal, label_zh: 律政庭审, category: profession }
-    - { value: military, label_zh: 军旅战争, category: profession }
-    - { value: fire-rescue, label_zh: 消防救援, category: profession }
-    - { value: esports, label_zh: 电竞游戏, category: profession }
-    - { value: sports, label_zh: 竞技体育, category: profession }
-    - { value: food, label_zh: 美食治愈, category: profession }
-    - { value: craft-heritage, label_zh: 非遗手艺, category: profession }
-    - { value: industry-deep, label_zh: 行业深描, category: profession }
-    # 受众向
-    - { value: female-lead, label_zh: 大女主, category: audience }
-    - { value: male-lead, label_zh: 大男主, category: audience }
-    - { value: bl, label_zh: 双男主, category: audience }
-    - { value: gl, label_zh: 双女主, category: audience }
-    - { value: dual-power, label_zh: 双强CP, category: audience }
-    - { value: down-market, label_zh: 下沉写实, category: audience }
+    - { value: medical, label_zh: 医疗生死, category: profession, tier: standard }
+    - { value: legal, label_zh: 律政庭审, category: profession, tier: standard }
+    - { value: military, label_zh: 军旅战争, category: profession, tier: standard }
+    - { value: fire-rescue, label_zh: 消防救援, category: profession, tier: longtail }
+    - { value: esports, label_zh: 电竞游戏, category: profession, tier: standard }
+    - { value: sports, label_zh: 竞技体育, category: profession, tier: longtail }
+    - { value: food, label_zh: 美食治愈, category: profession, tier: standard }
+    - { value: craft-heritage, label_zh: 非遗手艺, category: profession, tier: longtail }
+    - { value: industry-deep, label_zh: 行业深描, category: profession, tier: longtail }
     # 情感调性
-    - { value: sweet-heavy, label_zh: 高甜少虐, category: tone }
-    - { value: melo-heavy, label_zh: 极致虐心, category: tone }
-    - { value: realism, label_zh: 现实主义, category: tone }
-    - { value: angst-revenge, label_zh: 虐爽复仇, category: tone }
-    - { value: slow-burn, label_zh: 慢热积累, category: tone }
+    - { value: sweet-heavy, label_zh: 高甜少虐, category: tone, tier: hot }
+    - { value: melo-heavy, label_zh: 极致虐心, category: tone, tier: standard }
+    - { value: realism, label_zh: 现实主义, category: tone, tier: standard }
+    - { value: angst-revenge, label_zh: 打脸虐渣, category: tone, tier: hot }
+    - { value: slow-burn, label_zh: 慢热积累, category: tone, tier: standard }
+    - { value: down-market, label_zh: 下沉写实, category: tone, tier: standard }
     # 悬疑惊悚
-    - { value: horror, label_zh: 惊悚灵异, category: thriller }
-    - { value: folk-horror, label_zh: 中式怪谈, category: thriller }
-    - { value: crime-procedural, label_zh: 刑侦探案, category: thriller }
-    - { value: spy, label_zh: 谍战潜伏, category: thriller }
+    - { value: horror, label_zh: 惊悚灵异, category: thriller, tier: standard }
+    - { value: folk-horror, label_zh: 中式怪谈, category: thriller, tier: standard }
+    - { value: crime-procedural, label_zh: 刑侦探案, category: thriller, tier: standard }
+    - { value: spy, label_zh: 谍战潜伏, category: thriller, tier: standard }
     # 年代专题
-    - { value: reform-era, label_zh: 改革开放, category: era }
-    - { value: sent-down-youth, label_zh: 下乡知青, category: era }
-    - { value: old-shanghai, label_zh: 老上海滩, category: era }
-    - { value: overseas-chinese, label_zh: 华侨移民, category: era }
-    - { value: era-rebirth, label_zh: 年代重生, category: era }
+    - { value: reform-era, label_zh: 改革开放, category: era, tier: standard }
+    - { value: sent-down-youth, label_zh: 下乡知青, category: era, tier: longtail }
+    - { value: old-shanghai, label_zh: 老上海滩, category: era, tier: standard }
+    - { value: overseas-chinese, label_zh: 华侨移民, category: era, tier: longtail }
+    - { value: era-rebirth, label_zh: 年代重生, category: era, tier: hot }
     # 家庭关系
-    - { value: parent-child, label_zh: 亲子代际, category: family }
-    - { value: second-marriage, label_zh: 二婚重组, category: family }
-    - { value: multigenerational, label_zh: 三代同堂, category: family }
-    - { value: sibling-rivalry, label_zh: 手足反目, category: family }
+    - { value: parent-child, label_zh: 亲子代际, category: family, tier: standard }
+    - { value: second-marriage, label_zh: 二婚重组, category: family, tier: standard }
+    - { value: multigenerational, label_zh: 三代同堂, category: family, tier: standard }
+    - { value: sibling-rivalry, label_zh: 手足反目, category: family, tier: standard }
     # 创新实验
-    - { value: ai-comic-meta, label_zh: AI漫剧元叙事, category: innovation }
-    - { value: female-awakening, label_zh: 女性觉醒, category: innovation }
-    - { value: social-issue, label_zh: 社会议题, category: innovation }
-    - { value: crossover-ip, label_zh: 跨IP联动, category: innovation }
-    - { value: experimental-form, label_zh: 形式实验, category: innovation }
+    - { value: ai-comic-meta, label_zh: AI漫剧元叙事, category: innovation, tier: longtail }
+    - { value: female-awakening, label_zh: 女性觉醒, category: innovation, tier: hot }
+    - { value: social-issue, label_zh: 社会议题, category: innovation, tier: standard }
+    - { value: crossover-ip, label_zh: 跨IP联动, category: innovation, tier: longtail }
+    - { value: experimental-form, label_zh: 形式实验, category: innovation, tier: longtail }
     # 特殊幻想
-    - { value: apocalypse, label_zh: 末世求生, category: spec_fantasy }
-    - { value: time-loop, label_zh: 时间循环, category: spec_fantasy }
-    - { value: dual-world, label_zh: 双世界交错, category: spec_fantasy }
-    - { value: werewolf-vampire, label_zh: 狼人吸血鬼, category: spec_fantasy }
-    - { value: cyberpunk, label_zh: 赛博朋克, category: spec_fantasy }
+    - { value: apocalypse, label_zh: 末世求生, category: spec_fantasy, tier: standard }
+    - { value: time-loop, label_zh: 时间循环, category: spec_fantasy, tier: standard }
+    - { value: dual-world, label_zh: 双世界交错, category: spec_fantasy, tier: longtail }
+    - { value: werewolf-vampire, label_zh: 狼人吸血鬼, category: spec_fantasy, tier: longtail }
+    - { value: cyberpunk, label_zh: 赛博朋克, category: spec_fantasy, tier: longtail }
     # 形态分发
-    - { value: vertical-interactive, label_zh: 竖屏互动, category: platform_form }
-    - { value: livestream-commerce, label_zh: 直播带货, category: platform_form }
-    - { value: branching-story, label_zh: 分支剧情, category: platform_form }
+    - { value: vertical-interactive, label_zh: 竖屏互动, category: platform_form, tier: longtail }
+    - { value: livestream-commerce, label_zh: 直播带货, category: platform_form, tier: longtail }
+    - { value: branching-story, label_zh: 分支剧情, category: platform_form, tier: longtail }
+
+# 组合约束 — 校验器与前端表单共同消费；违反时拒绝合成
+tag_constraints:
+  mutually_exclusive:
+    - [sweet-heavy, melo-heavy]
+  requires_world:
+    wuxia: [ancient]
+    palace: [ancient]
+    harem: [ancient]
+    zhainu: [ancient]
+    xianxia: [ancient, fantasy]
+    nongtian: [ancient, rural]
+    shoushi: [fantasy]
+    infinite-flow: [virtual, fantasy]
+    game-world: [virtual]
+    urban-fantasy: [modern]
 
 param_synthesis:
   base:
@@ -261,7 +312,23 @@ param_synthesis:
     student: { emotion_curve_delta: [1, 1, 0, 0, 0, 0, 0, 0], hook_types_add: [青春抉择, 成长代价] }
     protector: { reversal_density: -0.02, hook_types_add: [守护牺牲, 代际和解] }
     bound: { hook_types_add: [契约反转, 假戏真做, 替身真相] }
-    dual-lead: { hook_types_add: [双核共振, 镜像抉择], reversal_density: 0.02 }
+    returning-elite: { reversal_density: 0.04, hook_types_add: [强者归来, 隐忍爆发, 实力曝光] }
+
+  # 受众频道叠加（audience_channel 必选；general 无叠加）
+  channel_profiles:
+    male: { reversal_density: 0.03, hook_types_add: [实力碾压, 快速获得感] }
+    female: { hook_types_add: [情绪共鸣, 关系确认] }
+    general: {}
+
+  # 主角结构叠加（protagonist_structure 可选）
+  structure_deltas:
+    single-male: { hook_types_add: [担当破局] }
+    single-female: { hook_types_add: [女性觉醒, 独立抉择] }
+    dual-power: { reversal_density: 0.02, hook_types_add: [双强博弈, 并肩作战] }
+    bl: { hook_types_add: [双向救赎, 禁忌张力] }
+    gl: { hook_types_add: [双向成长, 彼此支撑] }
+    multi-female: { hook_types_add: [多线并进, 群芳博弈] }
+    ensemble: { hook_types_add: [群像交织, 视角轮转] }
 
   conflict_deltas:
     family: { act_ratio_delta: [0, 0.02, 0.02, 0.02, -0.02, -0.04], hook_types_add: [家族对峙, 伦理打脸] }
@@ -302,8 +369,16 @@ param_synthesis:
     ceo-domineering: { hook_types_add: [豪门对峙, 商战联姻] }
     son-in-law: { hook_types_add: [赘婿打脸, 岳家反转] }
     god-wealth: { hook_types_add: [暴富反差, 金钱碾压] }
+    war-god: { reversal_density: 0.05, hook_types_add: [战神归来, 实力碾压, 隐忍爆发] }
+    divine-doctor: { hook_types_add: [医术碾压, 妙手回春, 打脸质疑] }
+    master-descend: { hook_types_add: [下山历练, 世俗碰撞, 师门底牌] }
+    urban-fantasy: { reversal_density: 0.05, hook_types_add: [异能觉醒, 都市规则破局] }
     flash-marriage: { hook_types_add: [闪婚真相, 契约到期] }
     secret-baby: { hook_types_add: [亲子鉴定, 萌宝助攻] }
+    true-false-heiress: { reversal_density: 0.04, hook_types_add: [身份错换, 真千金归位, 家族对峙] }
+    marriage-first: { hook_types_add: [先婚后爱, 契约变真] }
+    mind-reading: { reversal_density: 0.04, hook_types_add: [心声泄露, 信息差反转] }
+    villainess: { hook_types_add: [反派觉醒, 剧本偏离, 洗白代价] }
     anti-pua: { hook_types_add: [觉醒反击, 边界建立] }
     medical: { hook_types_add: [生死一线, 医德抉择] }
     legal: { hook_types_add: [庭审反转, 证据链] }
@@ -314,11 +389,6 @@ param_synthesis:
     food: { reversal_density: -0.03, hook_types_add: [烟火人间, 味蕾记忆] }
     craft-heritage: { reversal_density: -0.02, hook_types_add: [手艺传承, 匠心打脸] }
     industry-deep: { hook_types_add: [行业规则, 专业对决] }
-    female-lead: { hook_types_add: [女性觉醒, 独立抉择] }
-    male-lead: { hook_types_add: [担当破局] }
-    bl: { hook_types_add: [双向救赎, 禁忌张力] }
-    gl: { hook_types_add: [双向成长, 彼此支撑] }
-    dual-power: { hook_types_add: [双强博弈, 并肩作战] }
     down-market: { reversal_density: -0.02, hook_types_add: [下沉共鸣, 熟人社会] }
     sweet-heavy: { reversal_density: -0.05, emotion_curve_delta: [0, 0, 1, 0, 1, 0, 0, 0] }
     melo-heavy: { reversal_density: 0.02, emotion_curve_delta: [0, -1, 0, 0, 1, 0, 1, 0] }
@@ -358,79 +428,91 @@ param_synthesis:
 
   merge_rules: |
     1. emotion_profiles[emotion] 为底（emotion 必选）
-    2. 叠加 identity / conflict / world delta
-    3. 对每个 flavor_tags[] 叠加 flavor_tag_deltas（最多 5 个）
-    4. reversal_density clamp [0.12, 0.65]
-    5. emotion_curve 向量相加，每节点 clamp [1, 10]
-    6. act_ratio 归一化总和 = 1.0
-    7. hook_types 去重保留 ≤ 10 个
+    2. 按固定顺序叠加：identity → conflict → world → channel_profiles[audience_channel]
+       → structure_deltas[protagonist_structure]
+    3. flavor_tags 按本文件 options 声明顺序（canonical order）叠加，与用户选择顺序无关（幂等保证）
+    4. 叠加前校验 tag_constraints（互斥 / requires_world），违反即拒绝合成
+    5. reversal_density clamp [0.12, 0.65]
+    6. emotion_curve 向量相加，每节点 clamp [1, 10]
+    7. act_ratio 归一化总和 = 1.0
+    8. hook_types 按叠加顺序去重保留前 10 个（底稿 hooks 优先级最高）
 
 preset_templates:
-  - { theme_code: family-revenge, label_zh: 家庭伦理复仇, dims: { emotion: revenge, identity: underdog, conflict: family, world: modern } }
-  - { theme_code: domineering-ceo, label_zh: 豪门霸总, dims: { emotion: love, identity: hidden-elite, conflict: romance, world: modern, flavor_tags: [ceo-domineering, male-lead, sweet-heavy] } }
-  - { theme_code: sweet-pet, label_zh: 甜宠虐恋, dims: { emotion: love, identity: ordinary, conflict: romance, world: modern, flavor_tags: [sweet-heavy] } }
-  - { theme_code: time-travel, label_zh: 穿越重生, dims: { emotion: revenge, identity: reborn, conflict: family, world: modern, flavor_tags: [transmigration-book] } }
-  - { theme_code: urban-counterattack, label_zh: 都市逆袭, dims: { emotion: ambition, identity: underdog, conflict: workplace, world: modern } }
-  - { theme_code: ancient-power, label_zh: 古装权谋, dims: { emotion: ambition, identity: hidden-elite, conflict: power, world: ancient, flavor_tags: [palace, female-lead] } }
-  - { theme_code: mystery-reversal, label_zh: 悬疑反转, dims: { emotion: suspense, identity: ordinary, conflict: crime, world: modern, flavor_tags: [crime-procedural] } }
-  - { theme_code: healing, label_zh: 情感疗愈, dims: { emotion: healing, identity: ordinary, conflict: redemption, world: modern, flavor_tags: [realism, slow-burn] } }
+  - { theme_code: family-revenge, label_zh: 家庭伦理复仇, dims: { emotion: revenge, identity: underdog, conflict: family, world: modern, audience_channel: female, flavor_tags: [angst-revenge] } }
+  - { theme_code: domineering-ceo, label_zh: 豪门霸总, dims: { emotion: love, identity: hidden-elite, conflict: romance, world: modern, audience_channel: female, protagonist_structure: single-female, flavor_tags: [ceo-domineering, sweet-heavy] } }
+  - { theme_code: sweet-pet, label_zh: 甜宠虐恋, dims: { emotion: love, identity: ordinary, conflict: romance, world: modern, audience_channel: female, flavor_tags: [sweet-heavy] } }
+  - { theme_code: time-travel, label_zh: 穿越重生, dims: { emotion: revenge, identity: reborn, conflict: family, world: modern, audience_channel: female, flavor_tags: [transmigration-book, angst-revenge] } }
+  - { theme_code: urban-counterattack, label_zh: 都市逆袭, dims: { emotion: ambition, identity: underdog, conflict: workplace, world: modern, audience_channel: male, protagonist_structure: single-male } }
+  - { theme_code: urban-war-god, label_zh: 都市玄幻战神, dims: { emotion: justice, identity: returning-elite, conflict: family, world: modern, audience_channel: male, protagonist_structure: single-male, flavor_tags: [war-god, urban-fantasy, angst-revenge] } }
+  - { theme_code: true-false-heiress, label_zh: 真假千金, dims: { emotion: revenge, identity: underdog, conflict: family, world: modern, audience_channel: female, protagonist_structure: single-female, flavor_tags: [true-false-heiress, angst-revenge] } }
+  - { theme_code: ancient-power, label_zh: 古装权谋, dims: { emotion: ambition, identity: hidden-elite, conflict: power, world: ancient, audience_channel: female, protagonist_structure: single-female, flavor_tags: [palace] } }
+  - { theme_code: mystery-reversal, label_zh: 悬疑反转, dims: { emotion: suspense, identity: ordinary, conflict: crime, world: modern, audience_channel: general, flavor_tags: [crime-procedural] } }
+  - { theme_code: healing, label_zh: 情感疗愈, dims: { emotion: healing, identity: ordinary, conflict: redemption, world: modern, audience_channel: female, flavor_tags: [realism, slow-burn] } }
 
 resolve:
   matrix_path:
     when: genre_matrix.emotion is set
     theme_code: matrix
-    matrix_key: "{emotion}-{identity}-{conflict}-{world}|{sorted_flavor_tags_joined_by_plus}"
+    matrix_key: "{emotion}-{identity}-{conflict}-{world}[|ch:{channel≠general}][|ps:{structure}][|{canonical_flavor_tags_joined_by_plus}]"
     params: synthesize_via param_synthesis
   preset_path:
     when: preset card clicked
     params: synthesize preset_templates.dims
   free_text_path:
     when: core_idea only
-    params: drama.topic-director 推断 genre_matrix + flavor_tags（可 >3 标签时保留 top5 权重）
+    params: drama.topic-director 推断 audience_channel + genre_matrix + protagonist_structure + flavor_tags（>5 标签时保留 top5 权重）
 
 featured_combos:
-  - { id: wuxia-revenge, label_zh: 武侠复仇, dims: { emotion: revenge, identity: outcast, conflict: power, world: ancient, flavor_tags: [wuxia, male-lead, angst-revenge] } }
-  - { id: xianxia-system, label_zh: 修仙系统, dims: { emotion: ambition, identity: reborn, conflict: power, world: fantasy, flavor_tags: [xianxia, system-panel, male-lead] } }
-  - { id: zhainu-palace, label_zh: 宅斗宫斗, dims: { emotion: ambition, identity: underdog, conflict: power, world: ancient, flavor_tags: [zhainu, harem, female-lead] } }
+  - { id: wuxia-revenge, label_zh: 武侠复仇, dims: { emotion: revenge, identity: outcast, conflict: power, world: ancient, audience_channel: male, protagonist_structure: single-male, flavor_tags: [wuxia, angst-revenge] } }
+  - { id: xianxia-system, label_zh: 修仙系统, dims: { emotion: ambition, identity: reborn, conflict: power, world: fantasy, audience_channel: male, protagonist_structure: single-male, flavor_tags: [xianxia, system-panel] } }
+  - { id: zhainu-palace, label_zh: 宅斗宫斗, dims: { emotion: ambition, identity: underdog, conflict: power, world: ancient, audience_channel: female, protagonist_structure: single-female, flavor_tags: [zhainu, harem] } }
   - { id: nongtian-healing, label_zh: 种田治愈, dims: { emotion: warmth, identity: ordinary, conflict: redemption, world: rural, flavor_tags: [nongtian, slow-burn, food] } }
-  - { id: son-in-law-counter, label_zh: 赘婿逆袭, dims: { emotion: revenge, identity: bound, conflict: disparity, world: modern, flavor_tags: [son-in-law, god-wealth, down-market] } }
-  - { id: transmigration-villain, label_zh: 穿书反派洗白, dims: { emotion: healing, identity: reborn, conflict: redemption, world: fantasy, flavor_tags: [transmigration-book, dual-power, slow-burn] } }
+  - { id: son-in-law-counter, label_zh: 赘婿逆袭, dims: { emotion: revenge, identity: bound, conflict: disparity, world: modern, audience_channel: male, flavor_tags: [son-in-law, god-wealth, down-market] } }
+  - { id: transmigration-villain, label_zh: 穿书反派洗白, dims: { emotion: healing, identity: reborn, conflict: redemption, world: fantasy, audience_channel: female, protagonist_structure: dual-power, flavor_tags: [transmigration-book, villainess, slow-burn] } }
   - { id: infinite-horror, label_zh: 无限流惊悚, dims: { emotion: suspense, identity: ordinary, conflict: survival, world: virtual, flavor_tags: [infinite-flow, horror, folk-horror] } }
-  - { id: esports-romance, label_zh: 电竞甜宠, dims: { emotion: love, identity: student, conflict: romance, world: campus, flavor_tags: [esports, sweet-heavy, dual-power] } }
-  - { id: legal-justice, label_zh: 律政洗冤, dims: { emotion: justice, identity: dual-lead, conflict: crime, world: modern, flavor_tags: [legal, crime-procedural, realism] } }
+  - { id: esports-romance, label_zh: 电竞甜宠, dims: { emotion: love, identity: student, conflict: romance, world: campus, audience_channel: female, protagonist_structure: dual-power, flavor_tags: [esports, sweet-heavy] } }
+  - { id: legal-justice, label_zh: 律政洗冤, dims: { emotion: justice, identity: ordinary, conflict: crime, world: modern, protagonist_structure: dual-power, flavor_tags: [legal, crime-procedural, realism] } }
   - { id: spy-republic, label_zh: 民国谍战, dims: { emotion: suspense, identity: hidden-elite, conflict: power, world: republic, flavor_tags: [spy, old-shanghai, angst-revenge] } }
-  - { id: secret-baby-ceo, label_zh: 萌宝霸总, dims: { emotion: love, identity: bound, conflict: romance, world: modern, flavor_tags: [secret-baby, ceo-domineering, flash-marriage] } }
-  - { id: female-awakening-work, label_zh: 职场女性觉醒, dims: { emotion: ambition, identity: ordinary, conflict: workplace, world: modern, flavor_tags: [female-awakening, anti-pua, female-lead] } }
-  - { id: shoushi-nongtian, label_zh: 兽世种田, dims: { emotion: warmth, identity: outcast, conflict: survival, world: fantasy, flavor_tags: [shoushi, nongtian, slow-burn] } }
-  - { id: ai-comic-experimental, label_zh: AI漫剧实验, dims: { emotion: comedy, identity: dual-lead, conflict: tradition, world: virtual, flavor_tags: [ai-comic-meta, experimental-form, game-world] } }
+  - { id: secret-baby-ceo, label_zh: 萌宝霸总, dims: { emotion: love, identity: bound, conflict: romance, world: modern, audience_channel: female, flavor_tags: [secret-baby, ceo-domineering, flash-marriage] } }
+  - { id: female-awakening-work, label_zh: 职场女性觉醒, dims: { emotion: ambition, identity: ordinary, conflict: workplace, world: modern, audience_channel: female, protagonist_structure: single-female, flavor_tags: [female-awakening, anti-pua] } }
+  - { id: shoushi-nongtian, label_zh: 兽世种田, dims: { emotion: warmth, identity: outcast, conflict: survival, world: fantasy, flavor_tags: [shoushi, slow-burn] } }
+  - { id: ai-comic-experimental, label_zh: AI漫剧实验, dims: { emotion: comedy, identity: ordinary, conflict: tradition, world: virtual, protagonist_structure: dual-power, flavor_tags: [ai-comic-meta, experimental-form, game-world] } }
   - { id: overseas-identity, label_zh: 出海移民, dims: { emotion: nostalgia, identity: outcast, conflict: disparity, world: overseas, flavor_tags: [overseas-chinese, realism, social-issue] } }
   - { id: multigen-family, label_zh: 三代同堂, dims: { emotion: warmth, identity: protector, conflict: family, world: modern, flavor_tags: [multigenerational, parent-child, down-market] } }
   - { id: folk-horror-rural, label_zh: 乡村怪谈, dims: { emotion: suspense, identity: ordinary, conflict: survival, world: rural, flavor_tags: [folk-horror, horror, down-market] } }
-  - { id: quick-travel-romance, label_zh: 快穿甜虐, dims: { emotion: love, identity: reborn, conflict: romance, world: virtual, flavor_tags: [quick-travel, melo-heavy, dual-power] } }
+  - { id: quick-travel-romance, label_zh: 快穿甜虐, dims: { emotion: love, identity: reborn, conflict: romance, world: virtual, audience_channel: female, protagonist_structure: dual-power, flavor_tags: [quick-travel, melo-heavy] } }
   - { id: craft-heritage-warmth, label_zh: 非遗传承, dims: { emotion: nostalgia, identity: protector, conflict: tradition, world: modern, flavor_tags: [craft-heritage, food, realism] } }
-  - { id: fire-rescue-hero, label_zh: 消防英雄, dims: { emotion: justice, identity: protector, conflict: survival, world: modern, flavor_tags: [fire-rescue, realism, male-lead] } }
-  - { id: cyberpunk-rebellion, label_zh: 赛博朋克反抗, dims: { emotion: ambition, identity: outcast, conflict: disparity, world: scifi, flavor_tags: [cyberpunk, social-issue, dual-power] } }
+  - { id: fire-rescue-hero, label_zh: 消防英雄, dims: { emotion: justice, identity: protector, conflict: survival, world: modern, audience_channel: male, protagonist_structure: single-male, flavor_tags: [fire-rescue, realism] } }
+  - { id: cyberpunk-rebellion, label_zh: 赛博朋克反抗, dims: { emotion: ambition, identity: outcast, conflict: disparity, world: scifi, protagonist_structure: dual-power, flavor_tags: [cyberpunk, social-issue] } }
   - { id: apocalypse-survival, label_zh: 末世求生, dims: { emotion: suspense, identity: ordinary, conflict: survival, world: scifi, flavor_tags: [apocalypse, realism, slow-burn] } }
   - { id: era-rebirth-reform, label_zh: 年代重生逆袭, dims: { emotion: ambition, identity: reborn, conflict: disparity, world: republic, flavor_tags: [era-rebirth, reform-era, god-wealth] } }
   - { id: time-loop-romance, label_zh: 时间循环爱情, dims: { emotion: love, identity: ordinary, conflict: romance, world: modern, flavor_tags: [time-loop, melo-heavy, slow-burn] } }
-  - { id: vertical-branching, label_zh: 竖屏互动分支, dims: { emotion: suspense, identity: dual-lead, conflict: romance, world: virtual, flavor_tags: [vertical-interactive, branching-story, experimental-form] } }
+  - { id: vertical-branching, label_zh: 竖屏互动分支, dims: { emotion: suspense, identity: ordinary, conflict: romance, world: virtual, protagonist_structure: dual-power, flavor_tags: [vertical-interactive, branching-story, experimental-form] } }
   - { id: livestream-counter, label_zh: 直播带货逆袭, dims: { emotion: ambition, identity: underdog, conflict: workplace, world: modern, flavor_tags: [livestream-commerce, god-wealth, down-market] } }
   - { id: mafia-justice, label_zh: 黑帮洗冤, dims: { emotion: justice, identity: hidden-elite, conflict: crime, world: modern, flavor_tags: [mafia-underworld, crime-procedural, angst-revenge] } }
-  - { id: campus-bully-rise, label_zh: 校园霸凌反击, dims: { emotion: revenge, identity: student, conflict: tradition, world: campus, flavor_tags: [campus-bully, female-lead, realism] } }
+  - { id: campus-bully-rise, label_zh: 校园霸凌反击, dims: { emotion: revenge, identity: student, conflict: tradition, world: campus, audience_channel: female, protagonist_structure: single-female, flavor_tags: [campus-bully, realism] } }
   - { id: gender-swap-comedy, label_zh: 互换身体喜剧, dims: { emotion: comedy, identity: bound, conflict: romance, world: modern, flavor_tags: [gender-swap, sweet-heavy, experimental-form] } }
-  - { id: substitute-ceo, label_zh: 替身霸总, dims: { emotion: love, identity: bound, conflict: romance, world: modern, flavor_tags: [substitute-life, ceo-domineering, melo-heavy] } }
-  - { id: werewolf-romance, label_zh: 狼人言情, dims: { emotion: love, identity: outcast, conflict: romance, world: modern, flavor_tags: [werewolf-vampire, melo-heavy, dual-power] } }
+  - { id: substitute-ceo, label_zh: 替身霸总, dims: { emotion: love, identity: bound, conflict: romance, world: modern, audience_channel: female, flavor_tags: [substitute-life, ceo-domineering, melo-heavy] } }
+  - { id: werewolf-romance, label_zh: 狼人言情, dims: { emotion: love, identity: outcast, conflict: romance, world: modern, audience_channel: female, protagonist_structure: dual-power, flavor_tags: [werewolf-vampire, melo-heavy] } }
   - { id: dual-world-fantasy, label_zh: 双世界奇幻, dims: { emotion: suspense, identity: reborn, conflict: power, world: fantasy, flavor_tags: [dual-world, transmigration-book, system-panel] } }
+  - { id: war-god-guardian, label_zh: 战神归来守护, dims: { emotion: justice, identity: returning-elite, conflict: family, world: modern, audience_channel: male, protagonist_structure: single-male, flavor_tags: [war-god, angst-revenge, down-market] } }
+  - { id: mind-reading-sweet, label_zh: 读心甜宠, dims: { emotion: love, identity: hidden-elite, conflict: romance, world: modern, audience_channel: female, flavor_tags: [mind-reading, sweet-heavy, ceo-domineering] } }
 
 topic_inference:
-  hint: 从 core_idea 关键词推断四轴与标签（多标签时保留权重最高的 5 个）
+  hint: |
+    从 core_idea 关键词推断频道+四轴+结构+标签（多标签时保留权重最高的 5 个）。
+    歧义约定：每个关键词只映射一个目标——「权谋/宫斗」只归 conflict.power（野心情绪用「野心|上位」表达）；
+    「爱情」只归 conflict.romance（情绪用「甜宠|虐恋|心动」表达）。
   keyword_map:
+    audience_channel:
+      战神|龙王|神医|下山|兵王|无敌|大男主: male
+      大女主|女频|闺蜜|婆媳: female
     emotion:
-      复仇|打脸: revenge
-      甜宠|爱情|虐恋: love
+      复仇|打脸|虐渣: revenge
+      甜宠|虐恋|心动: love
       治愈|共鸣|释怀: healing
       悬疑|反转|烧脑: suspense
-      权谋|野心|上位: ambition
+      野心|上位|逐权: ambition
       搞笑|喜剧: comedy
       洗冤|正义: justice
       温情|烟火: warmth
@@ -442,15 +524,23 @@ topic_inference:
       普通人|小人物: ordinary
       边缘|异类|被排斥: outcast
       赘婿|闪婚|契约|替身: bound
-      双强|双男主|双女主: dual-lead
+      归来|下山|战神|龙王: returning-elite
       学生|青春: student
       母亲|守护: protector
+    protagonist_structure:
+      大男主: single-male
+      大女主: single-female
+      双强: dual-power
+      双男主: bl
+      双女主: gl
+      多女主|群芳: multi-female
+      群像: ensemble
     conflict:
       婆媳|家族|伦理: family
       职场|商战: workplace
       爱情|误会|三角关系: romance
       罪案|刑侦: crime
-      权谋|宫斗: power
+      权谋|宫斗|夺权: power
       生存|逃亡|限时危机: survival
       阶级|贫富: disparity
       救赎|弥补|和解: redemption
@@ -460,7 +550,7 @@ topic_inference:
       古代|宫廷: ancient
       民国|年代: republic
       乡村|小镇: rural
-      系统|异能: fantasy
+      系统|异能|玄幻: fantasy
       科幻|赛博|未来: scifi
       游戏|副本: virtual
       海外|移民: overseas
@@ -468,7 +558,7 @@ topic_inference:
     flavor_tags:
       武侠: wuxia
       修仙|仙侠: xianxia
-      种田: nongtian
+      种田|经营: nongtian
       兽世: shoushi
       穿书: transmigration-book
       快穿: quick-travel
@@ -476,6 +566,14 @@ topic_inference:
       霸总|豪门: ceo-domineering
       赘婿: son-in-law
       神豪: god-wealth
+      战神|龙王: war-god
+      神医: divine-doctor
+      下山: master-descend
+      都市玄幻|异能都市: urban-fantasy
+      真假千金: true-false-heiress
+      读心|心声: mind-reading
+      先婚后爱: marriage-first
+      恶毒女配|反派洗白: villainess
       萌宝: secret-baby
       末世: apocalypse
       时间循环: time-loop

@@ -36,6 +36,9 @@
     "adapt_notes": {
       "$ref": "generated/parameters.schema.json#/$defs/adapt_notes"
     },
+    "audience_channel": {
+      "$ref": "generated/parameters.schema.json#/$defs/audience_channel"
+    },
     "audit": {
       "additionalProperties": false,
       "properties": {
@@ -175,6 +178,9 @@
     },
     "project_id": {
       "type": "string"
+    },
+    "protagonist_structure": {
+      "$ref": "generated/parameters.schema.json#/$defs/protagonist_structure"
     },
     "reference_dramas": {
       "$ref": "generated/parameters.schema.json#/$defs/reference_dramas"

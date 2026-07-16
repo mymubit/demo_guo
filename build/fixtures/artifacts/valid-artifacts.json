@@ -6,10 +6,11 @@
       "identity": "reborn",
       "conflict": "family",
       "world": "modern",
-      "flavor_tags": []
+      "flavor_tags": [],
+      "audience_channel": "female"
     },
     "theme_code": "matrix",
-    "matrix_key": "revenge-reborn-family-modern",
+    "matrix_key": "revenge-reborn-family-modern|ch:female",
     "rule_params": {
       "reversal_density": 0.4,
       "emotion_curve": [

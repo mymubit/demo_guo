@@ -36,10 +36,22 @@ parameters:
     required: false
     items_type: string
 
+  audience_channel:
+    type: string
+    required: true
+    source: foundation/theme-matrix.yaml#audience_channel.options
+    default: general
+
   genre_matrix:
     type: object
     required: false
     source: foundation/theme-matrix.yaml#axes
+
+  protagonist_structure:
+    type: string
+    required: false
+    nullable: true
+    source: foundation/theme-matrix.yaml#protagonist_structure.options
 
   flavor_tags:
     type: array
@@ -150,7 +162,9 @@ role_parameter_refs:
   drama.topic-director:
     - core_idea
     - synopsis
+    - audience_channel
     - genre_matrix
+    - protagonist_structure
     - flavor_tags
     - preset_theme_code
     - episode_count

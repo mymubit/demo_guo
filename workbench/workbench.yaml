@@ -15,7 +15,7 @@ project_settings:
       fields: [entry_type, core_idea, synopsis, external_story, adapt_notes, reference_dramas]
     theme:
       label_zh: 题材与受众
-      fields: [genre_matrix, flavor_tags, preset_theme_code, target_platform]
+      fields: [audience_channel, genre_matrix, protagonist_structure, flavor_tags, preset_theme_code, target_platform]
     scale:
       label_zh: 篇幅与批次
       fields: [episode_count, batch_episode_max, outline_mode]
@@ -58,9 +58,17 @@ project_settings:
       parameter_ref: reference_dramas
       persist_path: reference_dramas
       config_scope: project
+    audience_channel:
+      parameter_ref: audience_channel
+      persist_path: audience_channel
+      config_scope: project
     genre_matrix:
       parameter_ref: genre_matrix
       persist_path: genre_matrix
+      config_scope: project
+    protagonist_structure:
+      parameter_ref: protagonist_structure
+      persist_path: protagonist_structure
       config_scope: project
     flavor_tags:
       parameter_ref: flavor_tags
@@ -136,7 +144,9 @@ runtime_projection:
   drama.topic-director:
     episode_count: episode_count
     target_platform: target_platform
+    audience_channel: audience_channel
     genre_matrix: genre_matrix
+    protagonist_structure: protagonist_structure
     flavor_tags: flavor_tags
     preset_theme_code: preset_theme_code
     core_idea: core_idea
