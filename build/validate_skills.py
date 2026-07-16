@@ -161,6 +161,11 @@ def check_registry_roles(registry: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
                 target = (skill_dir / ref).resolve()
                 if not target.exists():
                     err(f"{agent_id}: SKILL.md reference 不存在 {ref}")
+            # SKILL 正文漂移检测：role.yaml 声明的每个参数必须在 SKILL.md 中被提及
+            skill_text = skill_md.read_text(encoding="utf-8")
+            for param in (meta.get("input_contract") or {}).get("parameter_refs") or []:
+                if f"`{param}`" not in skill_text and param not in skill_text:
+                    err(f"{agent_id}: SKILL.md 未提及参数 {param}（与 role.yaml 漂移）")
 
         contract = meta.get("input_contract") or {}
         if "params" in contract:
@@ -553,6 +558,18 @@ def check_constraint_consistency() -> None:
         err(f"最新态只允许 genres/matrix.yaml + genres/fallback.yaml，当前={sorted(genre_files)}")
 
 
+MODULE_REQUIRED_SECTIONS = ("## 目标", "## 输入", "## 引用规则", "## 输出", "## 执行步骤", "## 失败条件", "## 自检清单")
+
+
+def check_module_structure() -> None:
+    """模块七段结构完整性：每个模块必须具备统一契约段落。"""
+    for path in sorted((ROOT / "modules").glob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        missing = [s for s in MODULE_REQUIRED_SECTIONS if s not in text]
+        if missing:
+            err(f"modules/{path.name}: 缺少段落 {missing}")
+
+
 def check_section_mapping() -> None:
     """knowledge-sections.md 角色映射中的 section 必须在规则文件中真实存在。"""
     defined_sections = set()
@@ -593,6 +610,7 @@ def main() -> int:
     check_path_references()
     check_knowledge_orphans()
     check_module_orphans(role_metas)
+    check_module_structure()
     check_section_mapping()
     check_atomic_rules()
     check_scoring_presets()

@@ -53,7 +53,10 @@ references:
 | 模式 | 输入 | 行为 |
 |------|------|------|
 | 原创模式 | `project_brief`（上游：选题定调官） | 基于定调简报展开梗概、人物与全剧结构 |
-| 改编模式 | `params.external_story`（用户粘贴故事/小说/大纲）+ 可选 `adapt_notes` | 先提取原故事的人物、冲突与结构，再按短剧规律补全缺失部分，并执行原创性风险自检（见 `knowledge/quality/originality-rules.md`） |
+| 改编模式 | `external_story`（用户粘贴故事/小说/大纲）+ 可选 `adapt_notes` | 先提取原故事的人物、冲突与结构，再按短剧规律补全缺失部分，并执行原创性风险自检（见 `knowledge/quality/originality-rules.md`） |
+
+运行参数（SSOT：`contracts/parameters.yaml#role_parameter_refs`）：`external_story`、`adapt_notes`、
+`episode_count`（总集数，决定六阶段换算）、`outline_mode`（full / structure_only）。
 
 两种模式输出完全相同的 schema，下游分集设计官无差别消费。改编模式必须显式列出「保留 / 强化 / 改写」三类处理说明。
 
