@@ -54,25 +54,46 @@ class BusinessException(APIException):
 def custom_exception_handler(exc: Exception, context: dict) -> Optional[Response]:
     """DRF 全局异常处理器。"""
     if isinstance(exc, BusinessException):
-        return api_error(exc.code, exc.message, status=exc.http_status)
+        return api_error(exc.code, exc.message, status=exc.http_status, data=exc.detail)
 
     response = exception_handler(exc, context)
     if response is not None:
         if isinstance(exc, ValidationError):
             errors = _flatten_validation(response.data)
-            return api_error(VALIDATION_ERROR, errors or "参数校验失败")
+            return api_error(
+                VALIDATION_ERROR,
+                errors or "参数校验失败",
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         if response.status_code == status.HTTP_401_UNAUTHORIZED:
-            return api_error(UNAUTHORIZED, "未授权，请先登录")
+            view = context.get("view")
+            view_name = type(view).__name__ if view is not None else ""
+            # 登录/刷新失败：凭证错误；其它 401：未携带或无效 token
+            if view_name in {"LoginView", "TokenObtainPairView"}:
+                message = "用户名或密码错误"
+            elif view_name in {"RefreshView", "TokenRefreshView"}:
+                message = "登录已过期，请重新登录"
+            else:
+                message = "未授权，请先登录"
+            return api_error(UNAUTHORIZED, message, status=status.HTTP_401_UNAUTHORIZED)
         if response.status_code == status.HTTP_403_FORBIDDEN:
-            return api_error(PERMISSION_DENIED, "禁止访问")
+            return api_error(PERMISSION_DENIED, "禁止访问", status=status.HTTP_403_FORBIDDEN)
         if response.status_code == status.HTTP_404_NOT_FOUND:
-            return api_error(NOT_FOUND, "资源未找到")
-        return api_error(response.status_code, str(exc))
+            return api_error(NOT_FOUND, "资源未找到", status=status.HTTP_404_NOT_FOUND)
+        return api_error(
+            int(response.status_code),
+            str(exc),
+            status=response.status_code,
+        )
 
     if isinstance(exc, ObjectDoesNotExist):
-        return api_error(NOT_FOUND, "资源不存在")
+        return api_error(NOT_FOUND, "资源不存在", status=status.HTTP_404_NOT_FOUND)
     if isinstance(exc, PermissionDenied):
-        return api_error(PERMISSION_DENIED, str(exc) or "无权限执行此操作")
+        return api_error(
+            PERMISSION_DENIED,
+            str(exc) or "无权限执行此操作",
+            status=status.HTTP_403_FORBIDDEN,
+        )
     if isinstance(exc, DatabaseError):
         return api_error(SERVER_ERROR, "数据库操作异常", status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

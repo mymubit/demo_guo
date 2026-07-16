@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { PanelRightOpen, Settings2 } from 'lucide-react'
 import { PipelineRail } from '@/components/workbench/PipelineRail'
@@ -10,6 +10,12 @@ import { ErrorBanner, LoadingBlock } from '@/components/ui/Tabs'
 import { useWorkbenchDefinition } from '@/hooks/useWorkbenchDefinition'
 import { dramaApi } from '@/services/drama'
 import { formatApiError } from '@/services/errors'
+import {
+  isGenreMatrixComplete,
+  isWorkflowFirstRun,
+  resolveFirstRunStageId,
+} from '@/utils/firstRunGuide'
+import { rememberRecentProject } from '@/utils/recentProjects'
 import { workbenchStages } from '@/utils/pipeline'
 import type { StageDefinition } from '@/types/workbench'
 import { useCompactPcLayout } from '@/hooks/useDesktopLayout'
@@ -25,6 +31,8 @@ const WORKFLOW_STATUS_LABELS = {
 
 export function WorkbenchPage() {
   const { projectId = '' } = useParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const forceGuide = searchParams.get('guide') === '1'
   const { definition } = useWorkbenchDefinition()
 
   const settingsQuery = useQuery({
@@ -53,12 +61,45 @@ export function WorkbenchPage() {
   }, [definition, settingsQuery.data])
 
   const [activeStageId, setActiveStageId] = useState<string | null>(null)
+  const [guidePinned, setGuidePinned] = useState(forceGuide)
   const isCompactPc = useCompactPcLayout()
   const [isModulePanelOpen, setIsModulePanelOpen] = useState(true)
 
   useEffect(() => {
     setIsModulePanelOpen(!isCompactPc)
   }, [isCompactPc])
+
+  useEffect(() => {
+    if (!settingsQuery.data || !projectId) return
+    rememberRecentProject({
+      id: projectId,
+      title: settingsQuery.data.title,
+      entry_type: settingsQuery.data.entry_type,
+    })
+  }, [projectId, settingsQuery.data])
+
+  // 首跑或带 guide=1：自动聚焦可执行主链阶段（通常是立项简报）
+  useEffect(() => {
+    if (!workflowQuery.data || stages.length === 0) return
+    if (activeStageId) return
+    const shouldAutoFocus = forceGuide || isWorkflowFirstRun(workflowQuery.data)
+    if (!shouldAutoFocus) return
+    const targetId = resolveFirstRunStageId(stages, workflowQuery.data)
+    if (targetId) setActiveStageId(targetId)
+  }, [stages, workflowQuery.data, activeStageId, forceGuide])
+
+  useEffect(() => {
+    if (forceGuide) setGuidePinned(true)
+  }, [forceGuide])
+
+  const dismissGuide = () => {
+    setGuidePinned(false)
+    if (searchParams.has('guide')) {
+      const next = new URLSearchParams(searchParams)
+      next.delete('guide')
+      setSearchParams(next, { replace: true })
+    }
+  }
 
   const activeStage: StageDefinition | null =
     stages.find((s) => s.id === (activeStageId ?? stages[0]?.id)) ?? null
@@ -91,6 +132,9 @@ export function WorkbenchPage() {
     return <div className="p-8 text-sm text-ink-muted">工作台数据不完整</div>
   }
 
+  const themeReady = isGenreMatrixComplete(settingsQuery.data.genre_matrix)
+  const firstRun = isWorkflowFirstRun(workflowQuery.data)
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-3">
@@ -101,6 +145,7 @@ export function WorkbenchPage() {
           <p className="text-xs text-ink-muted">
             {settingsQuery.data.entry_type === 'original_track' ? '原创通道' : '改编通道'} ·{' '}
             {WORKFLOW_STATUS_LABELS[workflowQuery.data.status]}
+            {firstRun ? ' · 首跑' : ''}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -121,24 +166,41 @@ export function WorkbenchPage() {
               size="sm"
               iconLeft={<Settings2 className="h-3.5 w-3.5" />}
             >
-              项目设置
+              创作设定
             </Button>
           </Link>
         </div>
       </div>
+
+      {!themeReady ? (
+        <div className="border-b border-amber-200 bg-amber-50 px-5 py-2 text-xs text-amber-900">
+          题材未选齐，建议先完善创作设定再执行主链。
+          <Link
+            className="ml-2 font-medium underline underline-offset-2"
+            to={`/projects/${projectId}/settings?focus=theme`}
+          >
+            去选题材
+          </Link>
+        </div>
+      ) : null}
 
       <div className="relative flex min-h-0 flex-1">
         <PipelineRail
           settings={settingsQuery.data}
           workflow={workflowQuery.data}
           activeStageId={activeStage.id}
-          onSelect={(stage) => setActiveStageId(stage.id)}
+          onSelect={(stage) => {
+            setActiveStageId(stage.id)
+            dismissGuide()
+          }}
         />
         <StageCanvas
           projectId={projectId}
           stage={activeStage}
           settings={settingsQuery.data}
           workflow={workflowQuery.data}
+          forceFirstRunGuide={guidePinned}
+          onDismissFirstRunGuide={dismissGuide}
         />
         {!isCompactPc ? (
           <ModulePanel stage={activeStage} settings={settingsQuery.data} />

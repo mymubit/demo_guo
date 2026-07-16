@@ -3,24 +3,28 @@ import { clearAuth, writeAuth, type PersistedAuth } from './tokenStorage'
 import type { LoginResponse } from '@/types/domain'
 
 export const authApi = {
-  login(payload: { phone?: string; username?: string; password: string }) {
-    return request<LoginResponse>('POST', '/api/auth/login/', {
-      data: payload,
+  login(payload: { username: string; password: string }) {
+    const username = payload.username.trim()
+    return request<LoginResponse>('POST', '/api/v1/auth/token/', {
+      data: { username, password: payload.password },
       skipAuthRefresh: true,
     })
   },
   refresh(refreshToken: string) {
-    return request<{ access: string }>('POST', '/api/auth/refresh/', {
+    return request<{ access: string }>('POST', '/api/v1/auth/token/refresh/', {
       data: { refresh: refreshToken },
-      rawResponse: true,
       skipAuthRefresh: true,
     })
   },
-  logout(refreshToken?: string) {
-    return request<null>('POST', '/api/auth/logout/', {
-      data: refreshToken ? { refresh: refreshToken } : {},
-      skipAuthRefresh: true,
-    })
+  me() {
+    return request<{ id: number | string; username?: string; email?: string; is_staff?: boolean }>(
+      'GET',
+      '/api/v1/auth/me/',
+    )
+  },
+  logout(_refreshToken?: string) {
+    // 后端无专用 logout；由调用方本地清 token
+    return Promise.resolve(null)
   },
 }
 

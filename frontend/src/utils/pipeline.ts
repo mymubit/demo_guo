@@ -100,16 +100,36 @@ export function canExecuteStage(
   stage: StageDefinition,
   workflow: WorkflowState | null | undefined,
 ): boolean {
-  if (!workflow) return false
-  if (
-    workflow.status === 'blocked' ||
-    workflow.status === 'completed' ||
-    workflow.status === 'waiting_approval' ||
-    workflow.status === 'waiting_user'
-  ) {
-    return false
+  return explainExecuteGate(stage, workflow) === null
+}
+
+/** 返回不可执行的中文原因；可执行时返回 null */
+export function explainExecuteGate(
+  stage: StageDefinition,
+  workflow: WorkflowState | null | undefined,
+): string | null {
+  if (!workflow) return '工作流尚未加载，请稍后重试。'
+  if (workflow.status === 'blocked') {
+    return workflow.blocked_reason
+      ? `流程已阻塞：${workflow.blocked_reason}`
+      : '流程已阻塞，请检查创作设定或上一步产物。'
   }
-  return resolveStageStatus(stage, workflow) === 'active'
+  if (workflow.status === 'completed') return '项目已完成，无需再执行本阶段。'
+  if (workflow.status === 'waiting_approval') {
+    return '故事蓝图待审批：请先在蓝图阶段通过或驳回后再继续。'
+  }
+  if (workflow.status === 'waiting_user') {
+    return '质检环等待你的决策：请先在质量面板选择修订或放行。'
+  }
+  const status = resolveStageStatus(stage, workflow)
+  if (status === 'active') return null
+  if (status === 'locked') {
+    return `「${stage.label_zh}」尚未解锁。请先完成流水线中更靠前的阶段。`
+  }
+  if (status === 'done') return `「${stage.label_zh}」已完成。如需重跑，请从对应阶段重新发起。`
+  if (status === 'waiting') return `「${stage.label_zh}」正在等待外部操作（审批或决策）。`
+  if (status === 'blocked') return `「${stage.label_zh}」当前不可用。`
+  return `「${stage.label_zh}」暂不可执行。`
 }
 
 export function isQualityPhaseHighlight(workflow: WorkflowState | null | undefined): boolean {

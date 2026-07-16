@@ -1,5 +1,14 @@
 import { Badge } from '@/components/ui/Badge'
 
+const GENRE_AXIS_LABELS: Record<string, string> = {
+  emotion: '情绪卖点',
+  identity: '身份设定',
+  conflict: '冲突类型',
+  world: '世界观',
+  audience: '受众',
+  tone: '调性',
+}
+
 export function ProjectBriefView({ data }: { data: Record<string, unknown> }) {
   const genre = data.genre_matrix as Record<string, string> | undefined
   return (
@@ -12,7 +21,7 @@ export function ProjectBriefView({ data }: { data: Record<string, unknown> }) {
         {genre
           ? Object.entries(genre).map(([k, v]) => (
               <Badge key={k} tone="brand">
-                {k}: {v}
+                {GENRE_AXIS_LABELS[k] ?? k}：{v}
               </Badge>
             ))
           : null}
@@ -38,6 +47,157 @@ export function ProjectBriefView({ data }: { data: Record<string, unknown> }) {
         )}
       </dl>
     </div>
+  )
+}
+
+/** 质检/合规/润色及通用产物的结构化展示，避免整页 JSON */
+export function ReportArtifactView({
+  kind,
+  data,
+}: {
+  kind: 'quality_report' | 'compliance_report' | 'polished_script' | 'generic'
+  data: Record<string, unknown>
+}) {
+  if (kind === 'quality_report') {
+    const dimensions = (data.dimensions ?? {}) as Record<string, { score?: number; comment?: string }>
+    return (
+      <div className="space-y-4">
+        <header className="sf-panel p-4">
+          <h3 className="text-lg font-semibold text-ink">质量评分报告</h3>
+          <div className="mt-2 flex flex-wrap gap-3 text-sm text-ink">
+            <span>
+              总分：<strong>{String(data.overall_score ?? '—')}</strong>
+            </span>
+            <span>
+              等级：<strong>{String(data.grade ?? '—')}</strong>
+            </span>
+            <span>
+              结论：<strong>{String(data.verdict ?? '—')}</strong>
+            </span>
+            {data.needs_revision != null ? (
+              <Badge tone={data.needs_revision ? 'warning' : 'success'}>
+                {data.needs_revision ? '建议修订' : '可放行'}
+              </Badge>
+            ) : null}
+          </div>
+        </header>
+        {Object.keys(dimensions).length > 0 ? (
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {Object.entries(dimensions).map(([key, dim]) => (
+              <li key={key} className="sf-panel p-3 text-sm">
+                <div className="font-medium text-ink">{key}</div>
+                <div className="mt-1 text-ink-muted">得分 {dim.score ?? '—'}</div>
+                {dim.comment ? <p className="mt-1 text-xs text-ink-muted">{dim.comment}</p> : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <KeyValueFallback data={data} omit={['dimensions']} />
+        )}
+      </div>
+    )
+  }
+
+  if (kind === 'compliance_report') {
+    const risks = Array.isArray(data.risk_items) ? data.risk_items : []
+    const blocking = Array.isArray(data.blocking_issues) ? data.blocking_issues : []
+    return (
+      <div className="space-y-4">
+        <header className="sf-panel p-4">
+          <h3 className="text-lg font-semibold text-ink">合规审查报告</h3>
+          <p className="mt-2 text-sm text-ink">
+            总评：<strong>{String(data.overall_result ?? '—')}</strong>
+          </p>
+        </header>
+        {blocking.length > 0 ? (
+          <section className="sf-panel space-y-2 p-4">
+            <h4 className="text-sm font-medium text-red-700">阻断项</h4>
+            <ul className="list-disc space-y-1 pl-5 text-sm text-ink">
+              {blocking.map((item, idx) => (
+                <li key={idx}>{typeof item === 'string' ? item : JSON.stringify(item)}</li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+        {risks.length > 0 ? (
+          <section className="space-y-2">
+            <h4 className="text-sm font-medium text-ink">风险项</h4>
+            {risks.map((item, idx) => {
+              const row = item as { type?: string; description?: string; suggestion?: string }
+              return (
+                <div key={idx} className="sf-panel p-3 text-sm">
+                  <div className="font-medium text-ink">{row.type || `风险 ${idx + 1}`}</div>
+                  {row.description ? <p className="mt-1 text-ink-muted">{row.description}</p> : null}
+                  {row.suggestion ? <p className="mt-1 text-xs text-brand-700">建议：{row.suggestion}</p> : null}
+                </div>
+              )
+            })}
+          </section>
+        ) : (
+          <p className="text-sm text-ink-muted">暂无风险项明细。</p>
+        )}
+      </div>
+    )
+  }
+
+  if (kind === 'polished_script') {
+    const content =
+      (typeof data.content === 'string' && data.content) ||
+      (typeof data.script_content === 'string' && data.script_content) ||
+      (typeof data.polished_text === 'string' && data.polished_text) ||
+      ''
+    return (
+      <div className="space-y-3">
+        <h3 className="text-lg font-semibold text-ink">修复稿 / 润色稿</h3>
+        {content ? (
+          <pre className="sf-panel max-h-[70vh] overflow-auto whitespace-pre-wrap p-4 text-sm leading-relaxed text-ink">
+            {content}
+          </pre>
+        ) : (
+          <KeyValueFallback data={data} />
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      <h3 className="text-lg font-semibold text-ink">阶段产物</h3>
+      <KeyValueFallback data={data} />
+    </div>
+  )
+}
+
+function KeyValueFallback({
+  data,
+  omit = [],
+}: {
+  data: Record<string, unknown>
+  omit?: string[]
+}) {
+  const entries = Object.entries(data).filter(([k]) => !omit.includes(k))
+  if (entries.length === 0) {
+    return <p className="text-sm text-ink-muted">暂无结构化字段。</p>
+  }
+  return (
+    <dl className="grid gap-3 sm:grid-cols-2">
+      {entries.map(([key, value]) => (
+        <div key={key} className="sf-panel p-3 text-sm">
+          <dt className="text-xs text-ink-faint">{key}</dt>
+          <dd className="mt-1 whitespace-pre-wrap text-ink">
+            {typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+              ? String(value)
+              : Array.isArray(value)
+                ? value.length === 0
+                  ? '—'
+                  : value.map((v) => (typeof v === 'string' ? v : JSON.stringify(v))).join('；')
+                : value && typeof value === 'object'
+                  ? JSON.stringify(value, null, 2)
+                  : '—'}
+          </dd>
+        </div>
+      ))}
+    </dl>
   )
 }
 

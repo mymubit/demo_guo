@@ -11,6 +11,7 @@ import { ProjectSettingsPage } from '@/pages/ProjectSettingsPage'
 import { WorkbenchPage } from '@/pages/WorkbenchPage'
 import { ExternalReviewPage } from '@/pages/ExternalReviewPage'
 import { AdminConfigPage } from '@/pages/AdminConfigPage'
+import { ModelHubPage } from '@/pages/ModelHubPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,7 +43,12 @@ export default function App() {
                 <Route path="/projects/new" element={<NewProjectPage />} />
                 <Route path="/projects/:projectId/settings" element={<ProjectSettingsPage />} />
                 <Route path="/projects/:projectId/workbench" element={<WorkbenchPage />} />
+                <Route
+                  path="/projects/:projectId"
+                  element={<Navigate to="workbench" replace />}
+                />
                 <Route path="/tools/script-review" element={<ExternalReviewPage />} />
+                <Route path="/admin/model" element={<ModelHubPage />} />
                 <Route path="/admin/config" element={<AdminConfigPage />} />
               </Route>
             </Route>

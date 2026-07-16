@@ -9,6 +9,7 @@ from apps.drama.models import (
     DramaCommand,
     DramaConfigRevision,
     DramaGenerationJob,
+    DramaLlmProvider,
     DramaProject,
     DramaWorkflowState,
 )
@@ -29,3 +30,4 @@ admin.site.register(DramaCommand)
 admin.site.register(DramaGenerationJob)
 admin.site.register(DramaConfigRevision)
 admin.site.register(DramaAuditEvent)
+admin.site.register(DramaLlmProvider)

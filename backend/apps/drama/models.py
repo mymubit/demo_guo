@@ -235,3 +235,29 @@ class DramaAuditEvent(models.Model):
             models.Index(fields=["project", "-created_at"]),
             models.Index(fields=["action", "-created_at"]),
         ]
+
+
+class DramaLlmProvider(models.Model):
+    """后台可配置的 OpenAI 兼容 LLM 接入（动态覆盖 .env）。"""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField("展示名称", max_length=100)
+    base_url = models.CharField("Base URL", max_length=512, blank=True, default="")
+    model_name = models.CharField("模型名称", max_length=128, default="gpt-4o-mini")
+    api_key_encrypted = models.TextField("加密 API Key", blank=True, default="")
+    temperature = models.FloatField("Temperature", default=0.7)
+    max_tokens = models.PositiveIntegerField("Max Tokens", default=4096)
+    is_enabled = models.BooleanField("启用", default=True)
+    is_active = models.BooleanField("当前使用", default=False, db_index=True)
+    remark = models.CharField("备注", max_length=255, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "drama_llm_provider"
+        ordering = ["-is_active", "-updated_at"]
+        verbose_name = "LLM 接入配置"
+        verbose_name_plural = verbose_name
+
+    def __str__(self) -> str:
+        return self.name

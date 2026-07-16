@@ -245,7 +245,7 @@ export type AuthTokens = {
 export type AuthUser = {
   id: string
   nickname?: string
-  phone?: string
+  username?: string
   email?: string
 }
 

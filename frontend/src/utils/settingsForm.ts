@@ -14,13 +14,20 @@ export function isFieldVisible(field: SettingsFieldDef, settings: ProjectSetting
 }
 
 export function isFieldRequired(field: SettingsFieldDef, settings: ProjectSettings): boolean {
-  if (field.required) return true
   const ctx = settingsConditionContext({
     entry_type: settings.entry_type,
     enable_delivery: settings.creation_preferences?.enable_delivery,
     creation_preferences: settings.creation_preferences,
   })
-  return evaluateCondition(field.required_when, ctx)
+  // required_when 有表达式时才求值；空表达式不能当 true（evaluateCondition 对空默认 true）
+  if (field.required_when?.trim()) {
+    return evaluateCondition(field.required_when, ctx)
+  }
+  // 有契约默认值的字段不标红星，避免「有默认仍打 *」误导
+  if (field.default !== undefined && field.default !== null && field.default !== '') {
+    return false
+  }
+  return Boolean(field.required)
 }
 
 export function readSettingValue(settings: ProjectSettings, field: SettingsFieldDef): unknown {

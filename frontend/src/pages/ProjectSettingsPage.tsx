@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/Button'
 import { ErrorBanner, LoadingBlock } from '@/components/ui/Tabs'
@@ -13,16 +13,28 @@ import {
   visibleGroups,
   writeSettingValue,
 } from '@/utils/settingsForm'
+import { isGenreMatrixComplete } from '@/utils/firstRunGuide'
+import { rememberRecentProject } from '@/utils/recentProjects'
 import type { AdaptNotes, GenreMatrix, ProjectSettings } from '@/types/domain'
 import type { SettingsFieldDef, ThemeMatrix } from '@/types/workbench'
+import { cn } from '@/utils/cn'
+
+/** 借鉴灵感页：分组聚焦、中文说明、减少技术噪音；视觉仍用本站浅色品牌 */
 
 export function ProjectSettingsPage() {
   const { projectId = '' } = useParams()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const isFromNew = searchParams.get('from') === 'new'
+  const focusTheme = searchParams.get('focus') === 'theme' || isFromNew
   const qc = useQueryClient()
   const { definition } = useWorkbenchDefinition()
   const [draft, setDraft] = useState<ProjectSettings | null>(null)
   const [conflict, setConflict] = useState<string | null>(null)
   const [policyHint, setPolicyHint] = useState<string | null>(null)
+  const [activeGroup, setActiveGroup] = useState('')
+  const [saveOk, setSaveOk] = useState(false)
+  const [themeFocusApplied, setThemeFocusApplied] = useState(false)
 
   const settingsQuery = useQuery({
     queryKey: ['settings', projectId],
@@ -34,21 +46,35 @@ export function ProjectSettingsPage() {
     if (settingsQuery.data) setDraft(settingsQuery.data)
   }, [settingsQuery.data])
 
+  useEffect(() => {
+    if (!settingsQuery.data || !projectId) return
+    rememberRecentProject({
+      id: projectId,
+      title: settingsQuery.data.title,
+      entry_type: settingsQuery.data.entry_type,
+    })
+  }, [projectId, settingsQuery.data])
+
   const platformUnverified =
     Boolean(draft) &&
     draft!.target_platform !== 'generic' &&
     !draft!.platform_policy?.verified_at
 
   const saveMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (_opts?: { enterWorkbench?: boolean }) => {
       if (!draft) throw new Error('没有可保存的设置')
       return dramaApi.updateSettings(projectId, draft, draft.audit.revision)
     },
-    onSuccess: (data) => {
+    onSuccess: (data, vars) => {
       setConflict(null)
       setPolicyHint(null)
       setDraft(data)
+      setSaveOk(true)
+      window.setTimeout(() => setSaveOk(false), 2000)
       void qc.invalidateQueries({ queryKey: ['settings', projectId] })
+      if (vars?.enterWorkbench) {
+        navigate(`/projects/${projectId}/workbench?guide=1`)
+      }
     },
     onError: (err) => {
       if (err instanceof ApiError && err.isOptimisticLock) {
@@ -68,6 +94,19 @@ export function ProjectSettingsPage() {
     () => (draft ? visibleGroups(definition, draft) : []),
     [definition, draft],
   )
+
+  useEffect(() => {
+    if (!groups.length) return
+    if (focusTheme && !themeFocusApplied && groups.some((g) => g.id === 'theme')) {
+      setActiveGroup('theme')
+      setThemeFocusApplied(true)
+      return
+    }
+    if (!activeGroup && groups[0]) setActiveGroup(groups[0].id)
+    if (activeGroup && !groups.some((g) => g.id === activeGroup)) {
+      setActiveGroup(groups[0]?.id ?? '')
+    }
+  }, [groups, activeGroup, focusTheme, themeFocusApplied])
 
   const themeMatrix = definition.theme_matrix
 
@@ -94,23 +133,45 @@ export function ProjectSettingsPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-8 py-8">
-      <div className="mb-6 flex items-end justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold text-ink">项目设置</h1>
+          <h1 className="text-2xl font-semibold text-ink">创作设定</h1>
           <p className="mt-1 text-sm text-ink-muted">
-            契约驱动分组表单 · revision {draft.audit.revision} · skills{' '}
-            {definition.skills_bundle_version}
+            按分组调整需求；题材用点选完成，不必记英文标识
           </p>
         </div>
         <div className="flex gap-2">
-          <Link to={`/projects/${projectId}/workbench`}>
+          <Link to={`/projects/${projectId}/workbench${themeReady ? '?guide=1' : ''}`}>
             <Button variant="secondary">进入工作台</Button>
           </Link>
-          <Button loading={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
-            保存设置
+          <Button loading={saveMutation.isPending && !saveMutation.variables?.enterWorkbench} onClick={() => saveMutation.mutate()}>
+            {saveOk && !saveMutation.variables?.enterWorkbench ? '已保存' : '保存设定'}
           </Button>
+          {themeReady ? (
+            <Button
+              loading={saveMutation.isPending && Boolean(saveMutation.variables?.enterWorkbench)}
+              onClick={() => saveMutation.mutate({ enterWorkbench: true })}
+            >
+              保存并开始创作
+            </Button>
+          ) : null}
         </div>
       </div>
+
+      {isFromNew ? (
+        <div className="mb-4 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800">
+          <p className="font-medium">项目已创建，请先完善题材与目标平台</p>
+          <p className="mt-1 text-brand-700/90">
+            名称与灵感已保存。点选题材矩阵并确认平台后，可「保存并开始创作」进入工作台执行立项简报。
+          </p>
+        </div>
+      ) : null}
+
+      {!themeReady && !isFromNew ? (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          题材未选齐：请在「题材与受众」分组点选情绪 / 身份 / 冲突 / 世界观。
+        </div>
+      ) : null}
 
       {conflict ? (
         <div className="mb-4 space-y-2">
@@ -131,15 +192,14 @@ export function ProjectSettingsPage() {
       ) : null}
 
       {(platformUnverified || policyHint) && !conflict ? (
-        <div
-          className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-          role="status"
-          aria-live="polite"
-        >
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <p className="font-medium">平台政策未核验</p>
           <p className="mt-1">
             {policyHint ||
-              `当前目标平台为「${draft.target_platform}」，尚未完成政策核验。项目设置可以保存，但请求“上架”交付前必须由管理员补充有效政策版本。`}
+              `当前目标平台为「${
+                platformField?.options?.find((o) => o.value === draft.target_platform)?.label ??
+                draft.target_platform
+              }」，设定可保存，上架交付前需完成核验。`}
           </p>
         </div>
       ) : null}
@@ -150,11 +210,45 @@ export function ProjectSettingsPage() {
         </div>
       ) : null}
 
-      {!themeMatrix ? (
-        <div className="mb-4">
-          <ErrorBanner message="工作台定义未提供题材矩阵字段（genre_matrix / flavor_tags）" />
-        </div>
-      ) : null}
+      <div className="flex gap-6">
+        <nav className="hidden w-40 shrink-0 md:block">
+          <div className="sticky top-6 space-y-1">
+            {groups.map((group) => (
+              <button
+                key={group.id}
+                type="button"
+                onClick={() => setActiveGroup(group.id)}
+                className={cn(
+                  'w-full rounded-lg px-3 py-2 text-left text-sm transition',
+                  currentGroup?.id === group.id
+                    ? 'bg-brand-50 font-medium text-brand-700'
+                    : 'text-ink-muted hover:bg-slate-100 hover:text-ink',
+                )}
+              >
+                {group.label_zh}
+              </button>
+            ))}
+          </div>
+        </nav>
+
+        <div className="min-w-0 flex-1">
+          <div className="mb-3 flex gap-2 overflow-x-auto md:hidden">
+            {groups.map((group) => (
+              <button
+                key={group.id}
+                type="button"
+                onClick={() => setActiveGroup(group.id)}
+                className={cn(
+                  'shrink-0 rounded-full px-3 py-1 text-xs',
+                  currentGroup?.id === group.id
+                    ? 'bg-brand-500 text-white'
+                    : 'bg-slate-100 text-ink-muted',
+                )}
+              >
+                {group.label_zh}
+              </button>
+            ))}
+          </div>
 
       <div className="space-y-8">
         {groups.map((group) => (
@@ -175,14 +269,38 @@ export function ProjectSettingsPage() {
                     key={field.key}
                     field={field}
                     draft={draft}
-                    required={isFieldRequired(field, draft)}
-                    onChange={(value) => updateField(field, value)}
+                    matrix={themeMatrix}
+                    platformField={platformField}
+                    onPatch={patch}
                   />
-                ))
-              )}
-            </div>
-          </section>
-        ))}
+                ) : (
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    {currentGroup.fields.map((field) => (
+                      <div
+                        key={field.key}
+                        className={cn(
+                          field.ui_widget === 'textarea' ||
+                            field.key === 'adapt_notes' ||
+                            field.ui_widget === 'checklist' ||
+                            field.ui_widget === 'tags'
+                            ? 'md:col-span-2'
+                            : '',
+                        )}
+                      >
+                        <FieldEditor
+                          field={field}
+                          draft={draft}
+                          required={isFieldRequired(field, draft)}
+                          onChange={(value) => updateField(field, value)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </section>
+          ) : null}
+        </div>
       </div>
     </div>
   )
@@ -252,26 +370,35 @@ function FieldEditor({
       enhanced: [],
       rewritten: [],
     }
+    const adaptLabels: Record<'retained' | 'enhanced' | 'rewritten', string> = {
+      retained: '保留',
+      enhanced: '强化',
+      rewritten: '重写',
+    }
     return (
-      <div className="grid grid-cols-3 gap-3">
-        {(['retained', 'enhanced', 'rewritten'] as const).map((key) => (
-          <div key={key}>
-            <label className="sf-label">{key}</label>
-            <textarea
-              className="sf-control min-h-24"
-              value={(notes[key] ?? []).join('\n')}
-              onChange={(e) =>
-                onChange({
-                  ...notes,
-                  [key]: e.target.value
-                    .split('\n')
-                    .map((s) => s.trim())
-                    .filter(Boolean),
-                })
-              }
-            />
-          </div>
-        ))}
+      <div>
+        <div className="sf-label">改编说明</div>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          {(['retained', 'enhanced', 'rewritten'] as const).map((key) => (
+            <div key={key}>
+              <label className="mb-1 block text-xs text-ink-muted">{adaptLabels[key]}</label>
+              <textarea
+                className="sf-control min-h-24"
+                placeholder={`每行一条「${adaptLabels[key]}」`}
+                value={(notes[key] ?? []).join('\n')}
+                onChange={(e) =>
+                  onChange({
+                    ...notes,
+                    [key]: e.target.value
+                      .split('\n')
+                      .map((s) => s.trim())
+                      .filter(Boolean),
+                  })
+                }
+              />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
@@ -288,6 +415,7 @@ function FieldEditor({
           value={String(value ?? '')}
           onChange={(e) => onChange(e.target.value)}
           required={required}
+          placeholder={`请输入${field.label_zh}`}
         />
       ) : field.ui_widget === 'number' ? (
         <input
@@ -322,22 +450,27 @@ function FieldEditor({
           ))}
         </select>
       ) : field.ui_widget === 'checklist' ? (
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2">
           {(field.options ?? []).map((opt) => {
             const selected = Array.isArray(value) ? value.includes(opt.value) : false
             return (
-              <label key={opt.value} className="inline-flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={selected}
-                  onChange={(e) => {
-                    const current = Array.isArray(value) ? [...(value as string[])] : []
-                    if (e.target.checked) onChange([...current, opt.value])
-                    else onChange(current.filter((v) => v !== opt.value))
-                  }}
-                />
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  const current = Array.isArray(value) ? [...(value as string[])] : []
+                  if (selected) onChange(current.filter((v) => v !== opt.value))
+                  else onChange([...current, opt.value])
+                }}
+                className={cn(
+                  'rounded-lg border px-3 py-1.5 text-sm transition',
+                  selected
+                    ? 'border-brand-500 bg-brand-50 text-brand-700'
+                    : 'border-slate-200 bg-white text-ink-muted hover:border-brand-300',
+                )}
+              >
                 {opt.label}
-              </label>
+              </button>
             )
           })}
         </div>
@@ -361,6 +494,7 @@ function FieldEditor({
           value={String(value ?? '')}
           onChange={(e) => onChange(e.target.value)}
           required={required}
+          placeholder={`请输入${field.label_zh}`}
         />
       )}
     </div>

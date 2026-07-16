@@ -6,7 +6,7 @@ import { formatApiError } from '@/services/errors'
 type AuthContextValue = {
   auth: PersistedAuth | null
   isAuthenticated: boolean
-  login: (phone: string, password: string) => Promise<void>
+  login: (username: string, password: string) => Promise<void>
   logout: () => Promise<void>
 }
 
@@ -15,10 +15,24 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [auth, setAuth] = useState<PersistedAuth | null>(() => readAuth())
 
-  const login = useCallback(async (phone: string, password: string) => {
+  const login = useCallback(async (username: string, password: string) => {
     try {
-      const result = await authApi.login({ phone, password })
-      const next = persistLogin(result)
+      const tokens = await authApi.login({ username, password })
+      // 先落 token，后续 /me 才能带 Authorization
+      persistLogin(tokens)
+      let user = tokens.user
+      try {
+        const me = await authApi.me()
+        user = {
+          id: String(me?.id ?? ''),
+          nickname: me?.username,
+          username: me?.username,
+          email: me?.email,
+        }
+      } catch {
+        // me 失败不阻塞登录
+      }
+      const next = persistLogin({ ...tokens, user })
       setAuth(next)
     } catch (err) {
       throw new Error(formatApiError(err))

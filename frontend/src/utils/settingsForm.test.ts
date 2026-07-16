@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isFieldVisible } from '@/utils/settingsForm'
+import { isFieldRequired, isFieldVisible } from '@/utils/settingsForm'
 import { testProjectSettings, testWorkbenchDefinition } from '@/test/workbenchFixtures'
 
 describe('settings field visibility (definition-driven)', () => {
@@ -60,5 +60,18 @@ describe('settings field visibility (definition-driven)', () => {
       false,
     )
     expect(generic.target_platform !== 'generic' && !generic.platform_policy?.verified_at).toBe(false)
+  })
+
+  it('does not star fields that already have contract defaults', () => {
+    const settings = testProjectSettings()
+    const platform = definition.fields.target_platform
+    expect(platform.default).toBe('generic')
+    expect(isFieldRequired({ ...platform, required: true }, settings)).toBe(false)
+    expect(
+      isFieldRequired(
+        { ...definition.fields.core_idea, required: true, default: undefined },
+        settings,
+      ),
+    ).toBe(true)
   })
 })

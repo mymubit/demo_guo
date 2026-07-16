@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""OpenAI 兼容 LLM 提供方。"""
+"""OpenAI 兼容 LLM 提供方（优先读后台 DB 配置）。"""
 from __future__ import annotations
 
 import json
@@ -9,6 +9,8 @@ from typing import Any, Iterator
 
 import requests
 from django.conf import settings
+
+from apps.drama.services.llm_config_service import LlmConfigService, ResolvedLlmConfig
 
 logger = logging.getLogger(__name__)
 
@@ -24,13 +26,18 @@ class LlmProviderError(Exception):
 
 
 class LlmProvider:
-    """基于环境变量的 OpenAI 兼容 HTTP 客户端。"""
+    """OpenAI 兼容 HTTP 客户端：DB active 配置优先，其次 settings.LLM_*。"""
+
+    @classmethod
+    def _resolved(cls) -> ResolvedLlmConfig:
+        return LlmConfigService.resolve()
 
     @classmethod
     def status(cls) -> LlmProviderStatus:
-        if not settings.LLM_ENABLED:
+        cfg = cls._resolved()
+        if not cfg.enabled:
             return LlmProviderStatus.DISABLED
-        if not settings.LLM_API_BASE_URL or not settings.LLM_API_KEY:
+        if not cfg.base_url or not cfg.api_key:
             return LlmProviderStatus.MISCONFIGURED
         return LlmProviderStatus.ENABLED
 
@@ -44,17 +51,20 @@ class LlmProvider:
     ) -> dict[str, Any]:
         status = cls.status()
         if status == LlmProviderStatus.DISABLED:
-            raise LlmProviderError("LLM 已显式禁用（LLM_ENABLED=false）")
+            raise LlmProviderError("LLM 已禁用（后台未启用且 LLM_ENABLED=false）")
         if status == LlmProviderStatus.MISCONFIGURED:
-            raise LlmProviderError("LLM 配置不完整，请设置 LLM_API_BASE_URL 与 LLM_API_KEY")
+            raise LlmProviderError("LLM 配置不完整，请在后台填写 Base URL 与 API Key")
 
-        url = cls._chat_url()
+        cfg = cls._resolved()
+        url = cls._chat_url(cfg.base_url)
         body: dict[str, Any] = {
-            "model": settings.LLM_MODEL,
+            "model": cfg.model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
+            "temperature": cfg.temperature,
+            "max_tokens": cfg.max_tokens,
         }
         if json_mode:
             body["response_format"] = {"type": "json_object"}
@@ -62,7 +72,7 @@ class LlmProvider:
         response = requests.post(
             url,
             headers={
-                "Authorization": f"Bearer {settings.LLM_API_KEY}",
+                "Authorization": f"Bearer {cfg.api_key}",
                 "Content-Type": "application/json",
             },
             json=body,
@@ -85,10 +95,13 @@ class LlmProvider:
         if status != LlmProviderStatus.ENABLED:
             raise LlmProviderError(f"LLM 不可用: {status.value}")
 
-        url = cls._chat_url()
+        cfg = cls._resolved()
+        url = cls._chat_url(cfg.base_url)
         body = {
-            "model": settings.LLM_MODEL,
+            "model": cfg.model,
             "stream": True,
+            "temperature": cfg.temperature,
+            "max_tokens": cfg.max_tokens,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
@@ -97,7 +110,7 @@ class LlmProvider:
         with requests.post(
             url,
             headers={
-                "Authorization": f"Bearer {settings.LLM_API_KEY}",
+                "Authorization": f"Bearer {cfg.api_key}",
                 "Content-Type": "application/json",
             },
             json=body,
@@ -121,8 +134,8 @@ class LlmProvider:
                     logger.warning("忽略无法解析的 SSE 块")
 
     @classmethod
-    def _chat_url(cls) -> str:
-        base = settings.LLM_API_BASE_URL.rstrip("/")
+    def _chat_url(cls, base_url: str) -> str:
+        base = base_url.rstrip("/")
         if base.endswith("/chat/completions"):
             return base
         return f"{base}/chat/completions"

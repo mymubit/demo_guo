@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   canExecuteStage,
+  explainExecuteGate,
   isQualityPhaseHighlight,
   mainPipelineStages,
   qualityLoopStages,
@@ -118,5 +119,21 @@ describe('pipeline status (definition-driven)', () => {
     expect(
       canExecuteStage(quality, workflow({ current_phase: 'quality', status: 'waiting_quality' })),
     ).toBe(true)
+  })
+
+  it('explains execute gate in Chinese', () => {
+    const stages = visibleStages(definition.stages, { entry_type: 'original_track' })
+    const strategy = stages.find((s) => s.id === 'strategy')!
+    const writing = stages.find((s) => s.id === 'writing')!
+
+    expect(explainExecuteGate(strategy, workflow({ current_phase: 'strategy', status: 'active' }))).toBe(
+      null,
+    )
+    expect(
+      explainExecuteGate(writing, workflow({ current_phase: 'strategy', status: 'active' })),
+    ).toMatch(/尚未解锁/)
+    expect(
+      explainExecuteGate(strategy, workflow({ current_phase: 'strategy', status: 'waiting_approval' })),
+    ).toMatch(/待审批/)
   })
 })

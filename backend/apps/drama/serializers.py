@@ -85,3 +85,19 @@ class ExternalReviewSerializer(serializers.Serializer):
 class ConfigRollbackSerializer(serializers.Serializer):
     target_revision = serializers.IntegerField(min_value=1)
     change_reason = serializers.CharField(max_length=500)
+
+
+class LlmProviderWriteSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=100)
+    base_url = serializers.CharField(max_length=512, required=False, allow_blank=True, default="")
+    model_name = serializers.CharField(max_length=128, required=False, default="gpt-4o-mini")
+    api_key = serializers.CharField(required=False, allow_blank=True, write_only=True)
+    temperature = serializers.FloatField(required=False, min_value=0, max_value=2, default=0.7)
+    max_tokens = serializers.IntegerField(required=False, min_value=1, max_value=128000, default=4096)
+    is_enabled = serializers.BooleanField(required=False, default=True)
+    is_active = serializers.BooleanField(required=False, default=False)
+    remark = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+
+
+class LlmProviderUpdateSerializer(LlmProviderWriteSerializer):
+    name = serializers.CharField(max_length=100, required=False)
