@@ -109,9 +109,6 @@ export function ProjectSettingsPage() {
   }, [groups, activeGroup, focusTheme, themeFocusApplied])
 
   const themeMatrix = definition.theme_matrix
-  const platformField = definition.fields.target_platform
-  const currentGroup = groups.find((g) => g.id === activeGroup) ?? groups[0]
-  const themeReady = isGenreMatrixComplete(draft?.genre_matrix)
 
   if (settingsQuery.isLoading) return <LoadingBlock />
   if (settingsQuery.isError) {
@@ -253,18 +250,24 @@ export function ProjectSettingsPage() {
             ))}
           </div>
 
-          {currentGroup ? (
-            <section className="sf-panel p-6">
-              <h2 className="sf-section-title">{currentGroup.label_zh}</h2>
-              <p className="mt-1 text-sm text-ink-muted">
-                {currentGroup.id === 'theme'
-                  ? '点选轴心与标签组合题材；有热门组合时可一键填入'
-                  : '带 * 为当前必填，其余可稍后完善'}
-              </p>
-
-              <div className="mt-5 space-y-5">
-                {currentGroup.id === 'theme' && themeMatrix ? (
-                  <ThemeSection
+      <div className="space-y-8">
+        {groups.map((group) => (
+          <section key={group.id} className="sf-panel p-5">
+            <h2 className="sf-section-title">{group.label_zh}</h2>
+            <div className="mt-4 space-y-4">
+              {group.id === 'theme' && themeMatrix ? (
+                <ThemeSection
+                  draft={draft}
+                  matrix={themeMatrix}
+                  fields={group.fields}
+                  onPatch={patch}
+                  onFieldChange={updateField}
+                />
+              ) : (
+                group.fields.map((field) => (
+                  <FieldEditor
+                    key={field.key}
+                    field={field}
                     draft={draft}
                     matrix={themeMatrix}
                     platformField={platformField}
@@ -303,19 +306,36 @@ export function ProjectSettingsPage() {
   )
 }
 
+/** 由 ThemeMatrixPicker 专属渲染的字段；其余题材字段（频道/主角结构/平台）走通用 FieldEditor */
+const PICKER_FIELD_KEYS = new Set(['genre_matrix', 'flavor_tags', 'preset_theme_code'])
+
 function ThemeSection({
   draft,
   matrix,
-  platformField,
+  fields,
   onPatch,
+  onFieldChange,
 }: {
   draft: ProjectSettings
   matrix: ThemeMatrix
-  platformField?: SettingsFieldDef
+  fields: SettingsFieldDef[]
   onPatch: (updater: (prev: ProjectSettings) => ProjectSettings) => void
+  onFieldChange: (field: SettingsFieldDef, value: unknown) => void
 }) {
+  const editorFields = fields.filter((f) => !PICKER_FIELD_KEYS.has(f.key))
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        {editorFields.map((field) => (
+          <FieldEditor
+            key={field.key}
+            field={field}
+            draft={draft}
+            required={isFieldRequired(field, draft)}
+            onChange={(value) => onFieldChange(field, value)}
+          />
+        ))}
+      </div>
       <ThemeMatrixPicker
         matrix={matrix}
         genreMatrix={(draft.genre_matrix as GenreMatrix | undefined) ?? {}}
@@ -327,22 +347,6 @@ function ThemeSection({
         onChangeFlavorTags={(tags) => onPatch((prev) => ({ ...prev, flavor_tags: tags }))}
         onChangePreset={(code) => onPatch((prev) => ({ ...prev, preset_theme_code: code }))}
       />
-      {platformField ? (
-        <div>
-          <label className="sf-label">{platformField.label_zh}</label>
-          <select
-            className="sf-control"
-            value={draft.target_platform}
-            onChange={(e) => onPatch((prev) => ({ ...prev, target_platform: e.target.value }))}
-          >
-            {(platformField.options ?? []).map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      ) : null}
     </div>
   )
 }

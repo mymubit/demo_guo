@@ -62,6 +62,7 @@ class WorkflowEngine:
             "current_phase": initial,
             "approvals": {},
             "batch_cursor": 1,
+            "last_quality_passed_batch": 0,
             "revision_round": 0,
             "score_history": [],
             "quality_results": {},
@@ -86,7 +87,7 @@ class WorkflowEngine:
                 f"期望版本 {expected_version}，实际 {state['version']}"
             )
         payload = payload or {}
-        transition = self._select_transition(state, event)
+        transition = self._select_transition(state, event, payload)
         if transition is None:
             raise WorkflowError(
                 f"阶段 {state['current_phase']} 不接受事件 {event}"
@@ -133,18 +134,27 @@ class WorkflowEngine:
         )
 
     def _select_transition(
-        self, state: dict[str, Any], event: str
+        self,
+        state: dict[str, Any],
+        event: str,
+        payload: dict[str, Any] | None = None,
     ) -> dict[str, Any] | None:
         for transition in self.transitions.get("transitions", []):
             if transition.get("event") != event:
                 continue
             if transition.get("from") not in ("*", state["current_phase"]):
                 continue
-            if self._guard_passes(state, transition.get("guard")):
+            if self._guard_passes(state, transition.get("guard"), payload or {}):
                 return transition
         return None
 
-    def _guard_passes(self, state: dict[str, Any], guard: str | None) -> bool:
+    def _guard_passes(
+        self,
+        state: dict[str, Any],
+        guard: str | None,
+        payload: dict[str, Any] | None = None,
+    ) -> bool:
+        payload = payload or {}
         if guard is None:
             return True
         if guard == "quality_join_complete":
@@ -156,6 +166,15 @@ class WorkflowEngine:
             )
         if guard == "must_stop":
             return not self._guard_passes(state, "can_auto_revise")
+        if guard == "is_original_track":
+            return state.get("entry_type") == "original_track"
+        if guard == "all_batches_quality_passed":
+            # 末批质检通过后 advance_batch 记录 last_quality_passed_batch；
+            # 事件载荷必须携带 total_batches，两者对齐才允许进入交付。
+            total = payload.get("total_batches")
+            if not isinstance(total, int) or total < 1:
+                return False
+            return state.get("last_quality_passed_batch", 0) >= total
         raise WorkflowError(f"未知 guard: {guard}")
 
     def _run_action(
@@ -179,6 +198,8 @@ class WorkflowEngine:
         elif action == "increment_revision_round":
             state["revision_round"] += 1
         elif action == "advance_batch":
+            # 记录已通过质检（或被用户 accept_current 接受）的批次
+            state["last_quality_passed_batch"] = state["batch_cursor"]
             state["batch_cursor"] += 1
             state["revision_round"] = 0
             state["quality_results"] = {}
@@ -202,6 +223,23 @@ class WorkflowEngine:
                 "production_package",
             ):
                 state["artifacts"].pop(key, None)
+            state["revision_round"] = 0
+            state["quality_results"] = {}
+        elif action == "invalidate_from_strategy":
+            # project_brief 重定调：蓝图及所有下游全部失效
+            state["approvals"]["story_bible_approved"] = False
+            for key in (
+                "story_bible",
+                "narrative_plan",
+                "episode_scripts",
+                "polished_script",
+                "quality_report",
+                "compliance_report",
+                "production_package",
+            ):
+                state["artifacts"].pop(key, None)
+            state["batch_cursor"] = 1
+            state["last_quality_passed_batch"] = 0
             state["revision_round"] = 0
             state["quality_results"] = {}
         else:

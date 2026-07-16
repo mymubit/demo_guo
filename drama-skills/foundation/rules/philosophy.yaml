@@ -1,13 +1,15 @@
 # global_core scope · section=philosophy — Git SSOT
-version: "1.0.0"
+# v1.1：原 foundation/methodology/*.md 与本文件逐句重复，已删除；本文件为唯一来源。
+# 方法论长文出处：knowledge/craft/shanyin-screenwriting-methodology.md
+version: "1.1.0"
 tier: 1
 items:
   - rule_key: t1.global.philosophy.cross-section
     section: philosophy
     title: 山音横截面理论
     priority: 10
+    source_ref: knowledge/craft/shanyin-screenwriting-methodology.md
     body: |
-      方法论参考: foundation/methodology/cross-section.md
       - 故事切出有张力的横截面，不从出生讲到死亡
       - 第1集第1场必须从最大张力切入（Goal×Conflict 立刻成立）
       - 开场即态度：第一场定义全片气质，不是主题说明会
@@ -15,8 +17,8 @@ items:
     section: philosophy
     title: McKee 价值转变
     priority: 11
+    source_ref: knowledge/craft/shanyin-screenwriting-methodology.md
     body: |
-      方法论参考: foundation/methodology/mckee-value-shift.md
       - 每场戏必须有价值转变：开场价值 → 结尾价值
       - 维度：安全感/希望/爱/权力/真相/信任/生命
       - 无转变的场景视为无效，删除或改写

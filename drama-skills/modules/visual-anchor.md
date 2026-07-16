@@ -7,6 +7,20 @@
 
 为每个核心角色和关键场景产出「15 秒内可识别」的视觉标识与 AI 图像/视频 Prompt。
 
+## 输入
+
+- `story_bible.characters[].visual_anchor`
+- `latest_script` 最强冲突/反转场景（切片 Prompt 来源）
+
+## 引用规则
+
+- `t1.global.originality.ai-rights`（AI 形象与声纹权利约束）
+- `knowledge/production/shanyin-director-styles.md`（六维风格库长文）
+
+## 输出
+
+- `production_package.visual_assets[]`（角色锚点/风格关键词/海报与切片 Prompt）
+
 ## 执行步骤
 
 1. **角色视觉锚点**：从 story_bible 的 `visual_anchor` 字段提取每个核心角色的标志性视觉元素（服装/道具/发型/体态），补全为完整外观描述
@@ -20,6 +34,11 @@
 ```
 [主体描述含视觉锚点] + [情绪/动作] + [场景与光线] + [景别与构图] + [风格标签] + 9:16 vertical
 ```
+
+## 失败条件
+
+- 角色 Prompt 之间不可区分。
+- Prompt 与既有 IP 视觉高度相似（肖像权风险）。
 
 ## 自检清单
 

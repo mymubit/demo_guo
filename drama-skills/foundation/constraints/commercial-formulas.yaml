@@ -23,6 +23,8 @@ metrics:
     end_ratio: 0.75
   dream_metrics:
     scale: 10
+    # 注意：target_* 是创作目标带，不是熔断线；熔断线只看 fuse_min_ref（当前=7）。
+    # 未达目标带但高于熔断线 → 记录改进建议；低于熔断线 → 熔断。
     safety:
       target_min: 8
       target_max: 9

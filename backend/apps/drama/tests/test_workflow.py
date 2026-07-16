@@ -4,10 +4,10 @@ from django.test import TestCase, override_settings
 
 from apps.core.exceptions import IDEMPOTENCY_CONFLICT, WORKFLOW_GATE_BLOCKED
 from apps.drama.services.workflow_service import WorkflowService
-from apps.drama.tests.helpers import create_project, create_user
+from apps.drama.tests.helpers import SKILLS_ROOT, create_project, create_user
 
 
-@override_settings(DRAMA_SKILLS_ROOT="/workspace", LLM_ENABLED=False)
+@override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
 class WorkflowServiceTests(TestCase):
     def setUp(self):
         self.user = create_user()
@@ -96,3 +96,91 @@ class WorkflowServiceTests(TestCase):
         )
         self.assertEqual(next_state["current_phase"], "writing")
         self.assertEqual(next_state["status"], "active")
+
+    def _advance_to_writing_with_passed_batch(self):
+        """推进到 writing 且第 1 批已通过质检。"""
+        events = [
+            ("project_brief_completed", None),
+            ("story_bible_completed", None),
+            ("story_bible_approved", None),
+            ("narrative_plan_completed", None),
+            ("episode_batch_completed", None),
+            ("quality_score_completed", {"overall_score": 82}),
+            ("compliance_completed", {"blocking_issues": []}),
+            ("quality_passed", None),
+        ]
+        version = 0
+        state = None
+        for index, (event, payload) in enumerate(events):
+            state = self.svc.apply_command(
+                self.project,
+                command_id=f"adv-{index}",
+                event=event,
+                expected_version=version,
+                payload=payload,
+                actor=self.user.username,
+            )
+            version = state["version"]
+        return state
+
+    def test_all_batches_guard_blocks_unchecked_batch(self):
+        """未通过末批质检禁止进入 delivery（total_batches=2 但只过了 1 批）。"""
+        from apps.core.exceptions import BusinessException
+
+        state = self._advance_to_writing_with_passed_batch()
+        self.assertEqual(state["last_quality_passed_batch"], 1)
+        with self.assertRaises(BusinessException) as ctx:
+            self.svc.apply_command(
+                self.project,
+                command_id="cmd-early-delivery",
+                event="all_batches_completed",
+                expected_version=state["version"],
+                payload={"total_batches": 2},
+                actor=self.user.username,
+            )
+        self.assertEqual(ctx.exception.code, WORKFLOW_GATE_BLOCKED)
+
+    def test_all_batches_guard_requires_total_batches(self):
+        from apps.core.exceptions import BusinessException
+
+        state = self._advance_to_writing_with_passed_batch()
+        with self.assertRaises(BusinessException) as ctx:
+            self.svc.apply_command(
+                self.project,
+                command_id="cmd-no-total",
+                event="all_batches_completed",
+                expected_version=state["version"],
+                actor=self.user.username,
+            )
+        self.assertEqual(ctx.exception.code, WORKFLOW_GATE_BLOCKED)
+
+    def test_delivery_auto_skipped_when_disabled(self):
+        """enable_delivery=false 时进入 delivery 自动跳过并完成。"""
+        state = self._advance_to_writing_with_passed_batch()
+        prefs = dict(self.project.settings.get("creation_preferences") or {})
+        self.assertFalse(prefs.get("enable_delivery"))
+        final = self.svc.apply_command(
+            self.project,
+            command_id="cmd-finish",
+            event="all_batches_completed",
+            expected_version=state["version"],
+            payload={"total_batches": 1},
+            actor=self.user.username,
+        )
+        self.assertEqual(final["current_phase"], "completed")
+        self.assertEqual(final["status"], "completed")
+
+    def test_project_brief_rework_invalidates_all(self):
+        """选题重定调回流 strategy 并清空蓝图与下游。"""
+        state = self._advance_to_writing_with_passed_batch()
+        final = self.svc.apply_command(
+            self.project,
+            command_id="cmd-rework",
+            event="project_brief_changed",
+            expected_version=state["version"],
+            actor=self.user.username,
+        )
+        self.assertEqual(final["current_phase"], "strategy")
+        self.assertFalse(final["approvals"].get("story_bible_approved"))
+        self.assertEqual(final["batch_cursor"], 1)
+        self.assertEqual(final["last_quality_passed_batch"], 0)

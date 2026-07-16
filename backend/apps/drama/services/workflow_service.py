@@ -89,6 +89,8 @@ class WorkflowService:
                 http_status=422,
             ) from exc
 
+        new_state = self._maybe_auto_skip_delivery(project, new_state, command_id)
+
         return self._persist_state(
             project,
             wf,
@@ -97,6 +99,25 @@ class WorkflowService:
             event=event,
             payload=payload,
             actor=actor,
+        )
+
+    def _maybe_auto_skip_delivery(
+        self,
+        project: DramaProject,
+        state: dict[str, Any],
+        command_id: str,
+    ) -> dict[str, Any]:
+        """auto_events.delivery_skipped：enable_delivery=false 时进入 delivery 立即自动跳过。"""
+        if state.get("current_phase") != "delivery":
+            return state
+        prefs = (project.settings or {}).get("creation_preferences") or {}
+        if prefs.get("enable_delivery"):
+            return state
+        return self.engine.apply(
+            state,
+            "delivery_skipped",
+            f"{command_id}:auto-delivery-skipped",
+            state["version"],
         )
 
     @transaction.atomic

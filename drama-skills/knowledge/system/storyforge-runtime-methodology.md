@@ -1,6 +1,9 @@
 # StoryForge Runtime 方法论
 
-> **参考方法论**（外部仓库 StoryForge，与本库互补：本库管「写什么」，StoryForge 管「生成过程怎么控」）
+> **历史设计参考**（外部仓库 StoryForge，与本库互补：本库管「写什么」，StoryForge 管「生成过程怎么控」）
+>
+> 已落地部分：硬卡点/收敛控制 → `orchestration/workflow-transitions.yaml` + `runtime/workflow_engine.py`
+> （质检 join、修复轮上限、趋势熔断、用户决策点）。其余章节为未实现的设计草案，实现前仅作参考。
 
 ---
 

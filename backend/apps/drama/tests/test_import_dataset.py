@@ -10,7 +10,7 @@ from django.core.management import call_command
 from django.test import TestCase, override_settings
 
 from apps.drama.models import DramaProject
-from apps.drama.tests.helpers import FIXTURE_SETTINGS, create_user
+from apps.drama.tests.helpers import FIXTURE_SETTINGS, SKILLS_ROOT, create_user
 
 SKILLS_ROOT = str(Path(__file__).resolve().parents[4] / "drama-skills")
 

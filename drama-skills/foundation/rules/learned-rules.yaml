@@ -27,7 +27,9 @@ items:
     section: learned_rules
     title: LR-005 身份揭示
     priority: 14
-    body: "S级身份反转需3+集误导铺垫，揭示场景须有仪式感。"
+    body: >-
+      S级身份反转铺垫集数与揭露窗口读取
+      foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow；揭示场景须有仪式感。
   - rule_key: t1.global.learned_rules.lr006
     section: learned_rules
     title: LR-006 推进节拍

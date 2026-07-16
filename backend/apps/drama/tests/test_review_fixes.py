@@ -19,7 +19,7 @@ from apps.drama.models import DramaArtifactVersion, DramaGenerationJob
 from apps.drama.services.config_overlay import ConfigOverlayService
 from apps.drama.services.generation_service import GenerationService, TERMINAL_JOB_STATUSES
 from apps.drama.tasks import _parallel_judge_callback, _score_subtask, run_parallel_judge_task
-from apps.drama.tests.helpers import create_project, create_user
+from apps.drama.tests.helpers import SKILLS_ROOT, create_project, create_user
 
 FIXTURES = json.loads(
     Path("/workspace/build/fixtures/artifacts/valid-artifacts.json").read_text(
@@ -53,7 +53,7 @@ class CeleryTestSettingsTests(TestCase):
 
 
 @override_settings(
-    DRAMA_SKILLS_ROOT="/workspace",
+    DRAMA_SKILLS_ROOT=SKILLS_ROOT,
     LLM_ENABLED=False,
     CELERY_TASK_ALWAYS_EAGER=True,
     CELERY_TASK_EAGER_PROPAGATES=True,
@@ -122,7 +122,7 @@ class StartGenerationIntegrityTests(TestCase):
 
 
 @override_settings(
-    DRAMA_SKILLS_ROOT="/workspace",
+    DRAMA_SKILLS_ROOT=SKILLS_ROOT,
     LLM_ENABLED=False,
     CELERY_TASK_ALWAYS_EAGER=True,
     CELERY_TASK_EAGER_PROPAGATES=True,
@@ -196,7 +196,7 @@ class ExternalReviewIdempotencyTests(TestCase):
 
 
 @override_settings(
-    DRAMA_SKILLS_ROOT="/workspace",
+    DRAMA_SKILLS_ROOT=SKILLS_ROOT,
     LLM_ENABLED=True,
     LLM_API_BASE_URL="http://test",
     LLM_API_KEY="k",
@@ -280,7 +280,7 @@ class ParallelJudgeTaskTests(TestCase):
 
 
 @override_settings(
-    DRAMA_SKILLS_ROOT="/workspace",
+    DRAMA_SKILLS_ROOT=SKILLS_ROOT,
     LLM_ENABLED=True,
     LLM_API_BASE_URL="http://test",
     LLM_API_KEY="k",
@@ -339,7 +339,7 @@ class GenerationTerminalAndVersionTests(TestCase):
 
 
 @override_settings(
-    DRAMA_SKILLS_ROOT="/workspace",
+    DRAMA_SKILLS_ROOT=SKILLS_ROOT,
     LLM_ENABLED=False,
     CELERY_TASK_ALWAYS_EAGER=True,
     CELERY_TASK_EAGER_PROPAGATES=True,
@@ -382,7 +382,7 @@ class QualityFinalizeAtomicTests(TestCase):
         )
 
 
-@override_settings(DRAMA_SKILLS_ROOT="/workspace", LLM_ENABLED=False)
+@override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
 class ConfigRollbackValidationTests(TestCase):
     def setUp(self):
         self.svc = ConfigOverlayService()
@@ -440,7 +440,7 @@ class ConfigRollbackValidationTests(TestCase):
 
 
 @override_settings(
-    DRAMA_SKILLS_ROOT="/workspace",
+    DRAMA_SKILLS_ROOT=SKILLS_ROOT,
     LLM_ENABLED=False,
     CELERY_TASK_ALWAYS_EAGER=True,
 )
@@ -476,7 +476,7 @@ class ProgressEventsLockTests(TransactionTestCase):
 
 
 @override_settings(
-    DRAMA_SKILLS_ROOT="/workspace",
+    DRAMA_SKILLS_ROOT=SKILLS_ROOT,
     LLM_ENABLED=False,
     GENERATION_SSE_HEARTBEAT_SECONDS=0,
     GENERATION_SSE_MAX_WAIT_SECONDS=1,

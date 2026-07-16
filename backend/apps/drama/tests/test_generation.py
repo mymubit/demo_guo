@@ -19,7 +19,7 @@ from apps.drama.services.prompt_builder import PromptBuilder
 from apps.drama.services.quality_gate import quality_gate_passed
 from apps.drama.services.skills_loader import SkillsBundleLoader
 from apps.drama.services.workflow_service import WorkflowService
-from apps.drama.tests.helpers import create_project, create_user
+from apps.drama.tests.helpers import SKILLS_ROOT, create_project, create_user
 
 FIXTURES = json.loads(
     Path("/workspace/build/fixtures/artifacts/valid-artifacts.json").read_text(
@@ -37,7 +37,7 @@ def _mock_llm_response(payload: dict) -> dict:
 
 
 @override_settings(
-    DRAMA_SKILLS_ROOT="/workspace",
+    DRAMA_SKILLS_ROOT=SKILLS_ROOT,
     LLM_ENABLED=False,
     CELERY_TASK_ALWAYS_EAGER=True,
     CELERY_TASK_EAGER_PROPAGATES=True,
@@ -80,7 +80,7 @@ class SkillsLoaderTests(TestCase):
         self.assertEqual(runtime["core_idea"], "测试")
 
 
-@override_settings(DRAMA_SKILLS_ROOT="/workspace", LLM_ENABLED=False)
+@override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
 class PromptBuilderTests(TestCase):
     def test_builds_role_scoped_prompt_without_other_roles(self):
         user = create_user()
@@ -102,7 +102,7 @@ class PromptBuilderTests(TestCase):
         )
 
 
-@override_settings(DRAMA_SKILLS_ROOT="/workspace", LLM_ENABLED=False)
+@override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
 class JsonParseTests(TestCase):
     def test_strip_markdown_fence(self):
         raw = '```json\n{"a": 1}\n```'
@@ -113,7 +113,7 @@ class JsonParseTests(TestCase):
             parse_llm_json("[1,2]")
 
 
-@override_settings(DRAMA_SKILLS_ROOT="/workspace", LLM_ENABLED=False)
+@override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
 class GenerationGateTests(TestCase):
     def setUp(self):
         self.user = create_user()
@@ -175,7 +175,7 @@ class GenerationGateTests(TestCase):
 
 
 @override_settings(
-    DRAMA_SKILLS_ROOT="/workspace",
+    DRAMA_SKILLS_ROOT=SKILLS_ROOT,
     LLM_ENABLED=False,
     CELERY_TASK_ALWAYS_EAGER=True,
     CELERY_TASK_EAGER_PROPAGATES=True,
@@ -359,7 +359,7 @@ class GenerationServiceTests(TestCase):
         self.assertIn(phase, ("writing", "revision"))
 
 
-@override_settings(DRAMA_SKILLS_ROOT="/workspace", LLM_ENABLED=False)
+@override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
 class QualityGateTests(TestCase):
     def test_quality_gate_passed(self):
         self.assertTrue(
@@ -375,7 +375,7 @@ class QualityGateTests(TestCase):
         self.assertFalse(quality_gate_passed(report, FIXTURES["compliance_report"]))
 
 
-@override_settings(DRAMA_SKILLS_ROOT="/workspace", LLM_ENABLED=False)
+@override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
 class ProjectCreateFieldsTests(TestCase):
     def test_create_project_with_initial_fields(self):
         user = create_user()

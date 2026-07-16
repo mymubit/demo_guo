@@ -5,6 +5,10 @@ export type FieldOption = {
   label: string
   label_zh?: string
   desc?: string
+  /** 市场热度分层：hot / standard / longtail */
+  tier?: string
+  /** 标签分类 id（theme-matrix categories） */
+  category?: string
 }
 
 export type AxisOption = {
@@ -26,6 +30,7 @@ export type FlavorTagOption = {
   value: string
   label_zh: string
   category: string
+  tier?: string
 }
 
 export type FlavorCategory = {

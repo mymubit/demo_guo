@@ -62,7 +62,7 @@ dimensions:
   - key: hooks
     name: 钩子强度
     weight: 0.10
-    desc: 开场10秒钩子/集末cliffhanger/付费点钩子强度
+    desc: 开场钩子（分层窗口见 narrative-metrics.yaml#opening_hook）/集末cliffhanger/付费点钩子强度
   - key: paywall
     name: 付费点优化
     weight: 0.05

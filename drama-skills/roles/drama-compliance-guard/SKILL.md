@@ -14,6 +14,10 @@ references:
 - ../../foundation/rules/compliance-core.yaml
 - ../../knowledge/quality/tier4-compliance.md
 - ../../knowledge/quality/originality-rules.md
+output_schema:
+- name: compliance_report
+  type: object
+  description: 合规审查报告（P0/P1/P2 结论 + 九维风险 + 交付裁决）
 ---
 
 # 合规审查官 v5.0
@@ -31,11 +35,14 @@ references:
 
 ## 输入 / 输出
 
+参数契约 SSOT：`contracts/parameters.yaml#role_parameter_refs`（本表仅为速览，两边必须一致）
+
 | 方向 | 键 | 说明 |
 |------|-----|------|
 | 输出 | `compliance_report` | schema v1 |
 | 输入（必填） | `latest_script` | 由运行时解析当前有效剧本 |
-| 参数 | `check_mode` | 运行参数 |
+| 参数 | `check_mode` | 项目设置投影（standard / values-risk / full） |
+| 参数 | `target_platform` | 项目设置（平台专项检查基线，政策需运行时核验） |
 
 ## 标准输出要求
 

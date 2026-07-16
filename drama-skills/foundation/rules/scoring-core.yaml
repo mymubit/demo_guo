@@ -1,5 +1,5 @@
 # global_core · 评分执行规范
-version: "1.1.0"
+version: "1.2.0"
 tier: 1
 items:
   - rule_key: t1.global.scoring.geval-framework
@@ -17,3 +17,14 @@ items:
     body: |
       维度、权重、等级和熔断值只读取 foundation/constraints/quality-scoring.yaml。
       评分预设只读取 foundation/constraints/scoring-presets.yaml，且必须保持同一十维模型。
+  - rule_key: t1.global.scoring.s-class-veto
+    section: scoring
+    title: S级一票否决
+    priority: 12
+    source_ref: knowledge/quality/s-class-standards.md
+    body: |
+      以下三项任意一项不满足，总分不得评入 S/A 级（直接进入 B 级以下）：
+      1. 首集开场未在冲击窗口内产生强情绪（窗口读取 narrative-metrics.yaml#opening_hook）；
+      2. 反派未被充分「非人化」（少于3个明确恶行，观众可能产生负罪感）；
+      3. 全剧无贯穿性的 S/A 级悬念。
+      触发否决时必须在 quality_report 中标注否决项与证据。

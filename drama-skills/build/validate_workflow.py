@@ -78,6 +78,34 @@ def main() -> int:
     except ConcurrencyError:
         pass
 
+    # guard 回归：未通过末批质检 / 缺 total_batches 时禁止进入 delivery
+    from runtime.workflow_engine import WorkflowError
+
+    guarded = engine.create("guard-delivery", "original_track")
+    for idx, event in enumerate(
+        ("project_brief_completed", "story_bible_completed", "story_bible_approved",
+         "narrative_plan_completed")
+    ):
+        guarded = engine.apply(guarded, event, f"g-{idx}", guarded["version"])
+    try:
+        engine.apply(guarded, "all_batches_completed", "g-skip", guarded["version"], {"total_batches": 1})
+        ERRORS.append("未通过质检即进入 delivery 未被拒绝")
+    except WorkflowError:
+        pass
+    try:
+        engine.apply(guarded, "all_batches_completed", "g-nototal", guarded["version"])
+        ERRORS.append("缺 total_batches 进入 delivery 未被拒绝")
+    except WorkflowError:
+        pass
+
+    # story_adapt 不允许回流 strategy
+    adapt = engine.create("guard-adapt", "story_adapt")
+    try:
+        engine.apply(adapt, "project_brief_rejected", "g-adapt", adapt["version"])
+        ERRORS.append("story_adapt 回流 strategy 未被拒绝")
+    except WorkflowError:
+        pass
+
     artifacts = {
         "episode_scripts": {"1-5": "draft"},
         "polished_script": {"1-5": "polished"},

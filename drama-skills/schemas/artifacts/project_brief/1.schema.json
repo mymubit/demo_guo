@@ -26,7 +26,8 @@
         "emotion",
         "identity",
         "conflict",
-        "world"
+        "world",
+        "audience_channel"
       ],
       "properties": {
         "emotion": {
@@ -40,6 +41,19 @@
         },
         "world": {
           "type": "string"
+        },
+        "audience_channel": {
+          "enum": [
+            "female",
+            "male",
+            "general"
+          ]
+        },
+        "protagonist_structure": {
+          "type": [
+            "string",
+            "null"
+          ]
         },
         "flavor_tags": {
           "type": "array",

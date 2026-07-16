@@ -4,9 +4,10 @@ from django.test import TestCase, override_settings
 
 from apps.core.exceptions import CONFIG_OVERLAY_FORBIDDEN
 from apps.drama.services.config_overlay import ConfigOverlayService
+from apps.drama.tests.helpers import SKILLS_ROOT
 
 
-@override_settings(DRAMA_SKILLS_ROOT="/workspace", LLM_ENABLED=False)
+@override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
 class ConfigOverlayServiceTests(TestCase):
     def setUp(self):
         self.svc = ConfigOverlayService()

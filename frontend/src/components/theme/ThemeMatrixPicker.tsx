@@ -14,7 +14,7 @@ type Props = {
   onChangePreset?: (code: string | null) => void
 }
 
-/** 借鉴「点选即填」交互，视觉保持本站浅色面板 */
+const TIER_ORDER: Record<string, number> = { hot: 0, standard: 1, longtail: 2 }
 
 export function ThemeMatrixPicker({
   matrix,
@@ -44,11 +44,17 @@ export function ThemeMatrixPicker({
     const q = flavorFilter.trim().toLowerCase()
     return (matrix.flavor_tags.categories ?? [])
       .map((cat) => {
-        const options = (matrix.flavor_tags.options ?? []).filter((o) => {
-          if (o.category !== cat.id) return false
-          if (!q) return true
-          return o.label_zh.toLowerCase().includes(q) || o.value.toLowerCase().includes(q)
-        })
+        const options = (matrix.flavor_tags.options ?? [])
+          .filter((o) => {
+            if (o.category !== cat.id) return false
+            if (!q) return true
+            return o.label_zh.toLowerCase().includes(q) || o.value.toLowerCase().includes(q)
+          })
+          // 市场热度分层排序：hot 优先展示
+          .sort(
+            (a, b) =>
+              (TIER_ORDER[a.tier ?? 'standard'] ?? 1) - (TIER_ORDER[b.tier ?? 'standard'] ?? 1),
+          )
         return { ...cat, options }
       })
       .filter((g) => g.options.length > 0)
@@ -212,6 +218,7 @@ export function ThemeMatrixPicker({
               <div className="flex flex-wrap gap-2">
                 {group.options.map((opt) => {
                   const active = flavorTags.includes(opt.value)
+                  const isHot = opt.tier === 'hot'
                   return (
                     <button
                       key={opt.value}
@@ -221,9 +228,16 @@ export function ThemeMatrixPicker({
                         'rounded-full border px-3 py-1 text-xs transition',
                         active
                           ? 'border-brand-500 bg-brand-500 text-white'
-                          : 'border-slate-200 bg-white text-ink-muted hover:border-brand-300',
+                          : isHot
+                            ? 'border-amber-300 bg-amber-50 text-ink hover:border-brand-300'
+                            : 'border-slate-200 bg-white text-ink-muted hover:border-brand-300',
                       )}
                     >
+                      {isHot && !active ? (
+                        <span className="mr-1 rounded-sm bg-amber-200 px-1 text-[10px] font-medium text-amber-800">
+                          热
+                        </span>
+                      ) : null}
                       {opt.label_zh}
                     </button>
                   )

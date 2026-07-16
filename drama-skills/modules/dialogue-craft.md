@@ -14,8 +14,10 @@
 - `t1.global.dialogue_quality.voice-by-class`
 - `t1.global.ai_tone_forbidden.core`
 
+灵感库（可选参考，已验证的对白模式）：`inspirations/dialogues.md`。
+
 ## 输出
-- 场景对白
+- `episode_scripts.episodes[].script` 中的场景对白
 - 关键台词的行动意图与潜台词自检
 
 ## 执行步骤

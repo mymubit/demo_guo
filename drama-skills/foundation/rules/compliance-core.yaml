@@ -1,6 +1,6 @@
 # compliance_block · 合规核心 — Git SSOT
 # knowledge/quality/tier4-compliance.md 仅作解释与案例来源。
-version: "1.1.0"
+version: "1.2.0"
 tier: 4
 items:
   - rule_key: t4.global.p0_categories.redlines
@@ -10,6 +10,15 @@ items:
     source_ref: knowledge/quality/tier4-compliance.md
     body: |
       P0 命中即否决：人口买卖/拐卖；未成年+犯罪语境；极端性暴力展示；活体解剖/食人/长时间酷刑展示。
+  - rule_key: t4.global.p0_categories.horror-grading
+    section: p0_categories
+    title: 恐怖内容分级处置
+    priority: 5
+    source_ref: knowledge/quality/tier4-compliance.md
+    body: |
+      恐怖内容三级处置：极端级（活体解剖/食人/长时间酷刑+展示）直接熔断；
+      高风险（真实犯罪手法详细演示/惊悚意象密集）强制删改后复检；
+      中风险（孤立恐怖场景、无系统渲染）建议修改并记录。分级结论必须写入 compliance_report。
   - rule_key: t4.global.p1_categories.must-fix
     section: p1_categories
     title: P1 强制修改
@@ -30,8 +39,20 @@ items:
     priority: 8
     source_ref: knowledge/quality/tier4-compliance.md
     body: |
-      全剧≥2处犯罪相关表述时，必须出现正义收束；高犯罪密度至少3处、普通密度至少2处，且结尾段至少1处。
-      正义收束可使用伏法、落网、审判、法律制裁或付出代价等明确结果，否则按 P1 处理。
+      触发条件：全剧犯罪相关表述≥2处。高犯罪密度（≥5处）全剧至少3处正义收束；
+      普通密度至少2处；结尾段（全剧最后35%剧情）至少1处，否则按 P1 处理。
+      犯罪触发词（示例集）：犯罪/违法/谋杀/杀害/绑架/诈骗/勒索/抢劫/盗窃/贩毒/行贿/受贿/
+      潜逃/灭口/栽赃/黑恶势力/非法集资/贪污。
+      正义收束词（示例集）：受到惩罚/法律制裁/伏法/判刑/军法处置/下旨查办/认罪/缉拿归案/正义得到伸张。
+  - rule_key: t4.global.justice_tail_rule.whitewash-detection
+    section: justice_tail_rule
+    title: 反派洗白检测
+    priority: 9
+    source_ref: knowledge/quality/tier4-compliance.md
+    body: |
+      洗白标记词（示例集）出现时必须同时存在正义收束词，否则按 P1（反派洗白）处理：
+      洗白/情有可原/不得已/其实他也是受害者/被迫害才/社会对他不公/早期救赎/获得原谅/值得同情。
+      允许塑造有动机的反派，但动机不得替代责任与后果（见 values_bottom_line）。
   - rule_key: t4.global.risk_assessment.nine-dimensions
     section: nine_dimension_risk_assessment
     title: 九维风险评估
@@ -67,6 +88,8 @@ items:
     source_ref: knowledge/quality/tier4-compliance.md
     body: |
       立项检查 P0、版权和社会敏感；逐集检查 P0、犯罪收束铺垫和未成年安全；交付执行 P0/P1/P2、九维评估与材料完整性。
+      交付阶段备案材料清单：完整剧本、世界观与人设、分集大纲/故事梗概、质量报告、
+      AI 生成内容标识（按目标平台要求）。清单缺项时合规结论不得为通过。
   - rule_key: t4.global.fuse_behavior.guard
     section: fuse_behavior
     title: 熔断行为

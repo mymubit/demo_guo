@@ -15,9 +15,9 @@
 - `foundation/constraints/commercial-formulas.yaml`
 
 ## 输出
-- `paywall_distribution[]`
+- `paywall_distribution[]`（唯一写入者，见 `contracts/artifacts.yaml#field_writers`；
+  每项含 `episode`、`card_type`、`promise`、`payoff_episode`，承诺与兑现映射并入本表）
 - 分集 `paywall_hook`
-- 承诺与兑现集映射
 
 ## 执行步骤
 1. 选择情感卡、悬念卡或爽感卡。

@@ -4,10 +4,10 @@ from django.test import TestCase, override_settings
 
 from apps.drama.job_payload import serialize_generation_job, sse_terminal_event
 from apps.drama.models import DramaGenerationJob
-from apps.drama.tests.helpers import create_project, create_user
+from apps.drama.tests.helpers import SKILLS_ROOT, create_project, create_user
 
 
-@override_settings(DRAMA_SKILLS_ROOT="/workspace", LLM_ENABLED=False)
+@override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
 class JobPayloadTests(TestCase):
     def setUp(self):
         self.user = create_user()

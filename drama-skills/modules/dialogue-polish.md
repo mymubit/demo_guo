@@ -1,6 +1,22 @@
 # 模块：对白精修（AI 腔检测）
 
 > 挂载角色：`drama.revision-master`（修复阶段台词处理）
+> 与 `dialogue-craft`（正文官首稿工艺）分工：craft 管写、polish 管修，不可合并。
+
+## 目标
+
+消除 AI 腔与同质化台词，让修复稿全部台词通过朗读测试并保留传播点。
+
+## 输入
+
+- `latest_script` 指定 `episode_range` 的台词
+- 评分报告中台词相关扣分项（`focus_areas` 可指定）
+
+## 引用规则
+
+- `t1.global.ai_tone_forbidden.core`
+- `t1.global.dialogue_quality.voice-by-class`
+- `t1.global.emotion_externalization_dict.usage`
 
 ## 五类台词问题与修复法
 
@@ -12,12 +28,22 @@
 | 4 | 功能台词 | 纯交代信息、删掉不影响人物 | 叠加人物态度或潜台词，否则转动作 |
 | 5 | 腔调同质化 | 遮住名字分不清谁在说 | 按阶层/职业/年龄语言标签重写（底层直接口语 / 上层简短暗示反问等） |
 
+## 输出
+
+- `polished_script.episodes[].script`（台词修复后全文）
+- `polished_script.revision_summary` 中的台词修复对照（原句 → 新句 → 问题类型）
+
 ## 执行步骤
 
 1. 逐场跑「朗读测试」：读出来不像真人说话的句子全部标记
 2. 按上表五类逐项检测并修复，输出修复对照（原句 → 新句 → 问题类型）
 3. 关键情感场景改用潜台词：角色说的 ≠ 角色想的
 4. 每集提炼 ≥1 句可传播金句（短、有态度、脱离上下文也成立）
+
+## 失败条件
+
+- 只改词不改结构，修复后仍读不像真人说话。
+- 修复引入新的信息过载或改变剧情事实。
 
 ## 自检清单
 
