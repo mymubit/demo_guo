@@ -101,7 +101,8 @@ items:
     title: 交付前置门禁
     priority: 10
     body: |
-      执行交付检查前必须读取 quality_report 与 compliance_report；
-      无合规通过结论或评分低于 foundation/constraints/quality-scoring.yaml#grade_thresholds.B 时，
+      执行交付检查前必须读取 quality_report 与 compliance_report。
+      交付门禁以项目当前 scoring_preset 为准（foundation/constraints/scoring-presets.yaml）：
+      该 preset 的 delivery_eligible=false，或评分低于其 pass_threshold，或无合规通过结论时，
       只输出「不可交付+缺口清单」，不产出宣发物料。
       交付包必须包含制片复杂度/预算带与平台上架清单；政策未验证时不得标记可发布。

@@ -32,6 +32,8 @@
 
 ## 平台推荐预设
 
+映射 SSOT：`foundation/constraints/scoring-presets.yaml#platform_recommendations`（本文仅解释原因）
+
 | 目标平台 | 推荐预设 | 原因 |
 |---------|---------|------|
 | 抖音 | `rhythm_first` | 平台算法高度依赖钩子和留存 |

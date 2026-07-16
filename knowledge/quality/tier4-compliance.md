@@ -21,8 +21,6 @@
 | `originality_rules` | 原创性规则 | 🟠 高 |
 | `fuse_behavior` | 熔断行为规范 | 🔴 最高 |
 | `platform_specific` | 平台专项规则 | 🟠 高 |
-| `new_2026_p0_items` | 2026年新增P0项 | 🔴 最高 |
-| `shortdramas_platform_quantitative` | 短剧平台量化要求 | 🟡 中 |
 | `three_phase_compliance_checklist` | 三阶段合规清单 | 🟡 中 |
 | `_meta` | 元信息 | — |
 
@@ -89,14 +87,12 @@
 
 ### 正义收束标准
 
-```
-高犯罪密度（≥5处）：全剧至少3处正义词汇
-普通犯罪密度：全剧至少2处正义词汇
-结尾段落：至少1处正义词汇
+密度阈值、触发词与正义词汇 SSOT：`foundation/rules/compliance-core.yaml#justice_tail_rule`
+（本文不另行维护数字，以下仅为示例说明）
 
-正义词汇示例：
-受到惩罚/法律制裁/伏法/判刑/军法处置/
-下旨查办/认罪/缉拿归案/正义得到伸张...
+```
+高犯罪密度 → 更多正义收束；结尾段（最后35%）必须至少1处。
+正义词汇示例：受到惩罚/法律制裁/伏法/判刑/缉拿归案/正义得到伸张...
 ```
 
 ### 洗白检测（强制触发）
@@ -169,4 +165,6 @@
 | **抖音** | 前3秒不得有P1级内容；暴力场景限制 |
 | **快手** | 未成年保护更严格 |
 | **微信小程序** | 完整备案材料；AI内容标识必须 |
-| **通用** | 2026新增P0项（见新增P0区块） |
+
+平台专项种子检查项 SSOT：`foundation/constraints/platform-profiles.yaml#platforms.*.seed_checks`；
+平台政策具有时效性，运行时必须按 `requires_runtime_verification` 流程核验，不得凭本文声称已满足最新政策。

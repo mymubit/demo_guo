@@ -11,19 +11,31 @@ default:
     commercial: foundation/constraints/commercial-formulas.yaml
   policy_status: common_rules_only
 
+# seed_checks：来自 knowledge/quality/tier4-compliance.md 的可执行种子检查项。
+# 仅为默认检查基线；policy_status=requires_runtime_verification 的平台
+# 必须在运行时核验最新政策后才能声称合规。
 platforms:
   generic:
     policy_status: common_rules_only
     notes: [仅执行通用格式、质量与合规规则]
+    seed_checks: []
   douyin:
     policy_status: requires_runtime_verification
     notes: [开场留存敏感, 暴力内容需专项检查]
+    seed_checks:
+      - 前3秒内不得出现 P1 级内容
+      - 暴力场景执行恐怖内容分级处置（compliance-core#p0_categories.horror-grading）
   kuaishou:
     policy_status: requires_runtime_verification
     notes: [未成年人内容需专项检查]
+    seed_checks:
+      - 未成年角色场景执行更严格的安全情境检查
   wechat_miniprogram:
     policy_status: requires_runtime_verification
     notes: [备案材料与AI内容标识需专项检查]
+    seed_checks:
+      - 备案材料清单完整（compliance-core#three_phase_compliance_checklist）
+      - AI 生成内容标识必须存在
 
 required_metadata:
   - target_platform

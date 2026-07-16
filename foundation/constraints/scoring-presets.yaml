@@ -1,7 +1,14 @@
 # 十维评分预设 SSOT
 # 所有预设必须使用 quality-scoring.yaml 中定义的十个维度。
-version: "1.0.0"
+version: "1.1.0"
 config_tier: seed_default
+
+# 平台推荐预设（seed 默认；用户显式指定 scoring_preset 时以用户为准）
+platform_recommendations:
+  douyin: rhythm_first
+  kuaishou: standard
+  wechat_miniprogram: strict
+  generic: standard
 
 presets:
   standard:
