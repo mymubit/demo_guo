@@ -1,3 +1,0 @@
-# 流式分片产物配置 — 引用 contracts/artifacts.yaml，禁止在此复制定义
-version: "6.0.0"
-source: contracts/artifacts.yaml

@@ -2,6 +2,21 @@
 
 > 挂载角色：`drama.delivery-tool`（投流与平台文案）
 
+## 目标
+
+为终稿生成平台适配的剧名、标题、简介与投流物料，且不剧透、不货不对板。
+
+## 输入
+
+- `latest_script`、`story_bible`（题材/人设/反转位置）
+- `quality_report`（高分集切片来源）
+- `target_platform`
+
+## 引用规则
+
+- `t4.global.title_compliance.core`（片名合规）
+- `foundation/constraints/commercial-formulas.yaml#metrics.tag_mix`
+
 ## 平台差异化策略
 
 | 平台 | 标题风格 | 侧重 |
@@ -22,6 +37,21 @@
    8-15s  悬念定格 + 「完整版看主页」
    ```
 5. **高光切片建议**：从 quality_report 高分集中选 3 个切片点（冲突峰值/反转揭露/金句场景）
+
+## 输出
+
+- `production_package.marketing_assets[]`（剧名备选/悬念标题/平台简介/投流脚本/切片建议）
+
+## 执行步骤
+
+1. 按平台策略表确定语气与侧重
+2. 依交付物清单逐项产出并标注用途
+3. 对全部文案跑片名合规与「货不对板」自查
+
+## 失败条件
+
+- 文案内容在成片中不存在（货不对板）。
+- 标题或简介剧透 S 级反转。
 
 ## 自检清单
 

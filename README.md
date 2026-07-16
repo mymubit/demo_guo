@@ -1,4 +1,4 @@
-# Drama Skills — AI 短剧创作技能库 v5.0
+# Drama Skills — AI 短剧创作技能库 v5.2
 
 > **4 主链生产角色 · 3 质检环独立技能 · 1 可选交付工具 · 双通道 · Git SSOT**
 
@@ -15,10 +15,9 @@ drama-skills/
 ├── registry.yaml                 # 角色 + 部门 + 主链 + 工具索引
 ├── foundation/
 │   ├── constraints/              # 数值常量（含 config_tier 分级：git_ssot / seed_default）
-│   ├── theme-matrix.yaml         # 四轴 9^4 + 69 风味标签 + 32 创新组合
-│   ├── methodology/              # 方法论长文
-│   └── rules/                    # 规则条目 YAML，8 个主题 global 文件 + stage + compliance
-│       └── genres/matrix.yaml    # 四轴合成后的题材规则入口
+│   ├── theme-matrix.yaml         # 频道 + 四轴 9^4 + 主角结构 + 72 风味标签 + 34 创新组合
+│   └── rules/                    # 规则条目 YAML（global 主题文件 + stage + compliance）
+│       └── genres/               # matrix.yaml（四轴合成）+ fallback.yaml（兜底）
 ├── roles/<slug>/                 # 每角色：role.yaml + SKILL.md [+ tasks/]
 ├── modules/                      # 能力块（输入/规则引用/输出/步骤/失败条件/自检）
 │   └── catalog.yaml             # 模块领域、角色挂载与条件加载目录

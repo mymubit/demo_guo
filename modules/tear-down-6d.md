@@ -2,6 +2,25 @@
 
 > 挂载角色：`drama.topic-director`（竞品/外部剧本分析，drama-intake 的剧本摄入也路由到此）
 
+## 目标
+
+把竞品或外部剧本拆解为六维规律与可复用模板，反哺立项判断与进化轨道。
+
+## 输入
+
+- 目标剧本全文或竞品拉片素材
+- 当前项目题材参数（对照适用范围）
+
+## 引用规则
+
+- `foundation/constraints/series-scale.yaml`（六阶段对照基准）
+- `foundation/constraints/narrative-metrics.yaml`（钩子/密度对照基准）
+
+## 输出
+
+- `project_brief.competitor_references[]`（用于当前立项时）
+- 拉片模板包 → `inspirations/`（轨道二）与 `inspirations/new-patterns.md`（轨道四），不入主链产物
+
 ## 六个维度
 
 | 维度 | 拆什么 | 产出 |
@@ -19,6 +38,11 @@
 2. 提炼 3-5 个可复用模板（结构/人设/节奏/开场/曲线各至多 1 个）
 3. 每个模板标注适用题材范围与失效条件
 4. 高价值发现走进化轨道：具体案例 → `inspirations/`（轨道二）；新规律 → `inspirations/new-patterns.md`（轨道四）
+
+## 失败条件
+
+- 结论没有集数级证据。
+- 模板与现有规则冲突却未标记。
 
 ## 自检清单
 

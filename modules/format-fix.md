@@ -3,6 +3,22 @@
 > 挂载角色：`drama.revision-master`（修复阶段格式治理）
 > 格式数值 SSOT：`foundation/constraints/script-format.yaml`
 
+## 目标
+
+把剧本文本修复到 100% 符合商业格式三件套，FER 降到目标线以下。
+
+## 输入
+
+- `latest_script` 指定 `episode_range` 的全文
+- 评分报告 format 维度扣分项
+
+## 引用规则
+
+- `t1.global.writing_prohibitions.format-ssot`
+- `t1.global.writing_prohibitions.unfilmable`
+- `foundation/constraints/script-format.yaml`
+- `foundation/constraints/quality-scoring.yaml#format_error_rate`
+
 ## 标准格式三件套
 
 ```
@@ -26,12 +42,22 @@
 FER = 格式错误行数 / 总行数。目标线、警告线与熔断线读取
 `foundation/constraints/quality-scoring.yaml#format_error_rate`。
 
+## 输出
+
+- `polished_script.episodes[].script`（格式修复后全文）
+- `polished_script.revision_summary` 中的 FER 修复前后对比与违规统计
+
 ## 执行步骤
 
 1. 全文扫描五类违规项，逐条修复并计数
 2. 复算 FER，输出修复前后对比
 3. 校验场景头连续性（集号-场景号递增无跳漏）
 4. 输出格式自检结果（违规类型 × 数量 × 修复状态）
+
+## 失败条件
+
+- 修复后 FER 仍高于警告线。
+- 修复改动了台词语义或剧情事实。
 
 ## 自检清单
 

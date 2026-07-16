@@ -42,9 +42,13 @@ references:
 
 这是可选工具，不进入默认创作完成率。用于把终稿转成制作、预算、上架、宣发或互动改编物料。
 
+运行参数（SSOT：`contracts/parameters.yaml#role_parameter_refs`）：
+`deliverables`（交付项多选：storyboard/visual/marketing/interactive/budget/release）、
+`target_platform`（上架清单平台）、`production_context`（制片带/地区/币种等上下文）。
+
 ## 执行流程
 
-1. **先跑交付门禁**：质量达到当前可交付预设、合规通过且剧本完整
+1. **先跑交付门禁**：评分达到当前 `scoring_preset` 的 pass_threshold 且该预设 `delivery_eligible=true`、合规通过且剧本完整
 2. 汇总制片标签，输出复杂度/预算带与低成本替代方案
 3. 生成九列分镜、视觉物料与营销文案
 4. 按需生成互动改编，并执行平台上架清单

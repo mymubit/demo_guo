@@ -3,6 +3,20 @@
 > 挂载角色：`drama.delivery-tool`（对终稿生成分镜摘要）
 > 方法论长文：`knowledge/production/shanyin-director-methodology.md`（基于 551 个真实镜头统计）
 
+## 目标
+
+把终稿逐场转为摘要级九列分镜表，为拍摄与切片提供镜头语言基线。
+
+## 输入
+
+- `latest_script`（终稿全文）
+- `story_bible` 伏笔总表（回扣镜头成对校验）
+
+## 引用规则
+
+- `knowledge/production/shanyin-director-methodology.md`（镜头统计与节奏基准长文）
+- `foundation/constraints/script-format.yaml`（场景头对齐）
+
 ## 九列表格式
 
 | 列 | 填写规范 |
@@ -23,11 +37,20 @@
 - 竖屏 9:16：多用中近景/近景/特写，大全景仅场景建立时用
 - 动作-反应镜头对：重大信息公布用「反应链」（动作→反应A→B→C）；悬疑场景可用「省略动作」（只拍反应）
 
+## 输出
+
+- `production_package.storyboard[]`（每场九列摘要表）
+
 ## 执行步骤
 
 1. 对 `latest_script` 每场输出九列表（摘要级：关键镜头即可，非逐秒分镜）
 2. 每镜必填「叙事目的」；填不出目的的镜头回炉
 3. 校验伏笔/回扣镜头成对出现；主题靠视听动作传达而非台词
+
+## 失败条件
+
+- 存在无叙事目的的镜头。
+- 分镜与剧本场景头对不上号。
 
 ## 自检清单
 

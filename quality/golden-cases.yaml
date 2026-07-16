@@ -1,8 +1,38 @@
-version: "1.0.0"
+version: "1.1.0"
 cases:
   - {id: Q001, category: quality_gate, input: {score: 82, blocking_issues: []}, expected: {decision: pass}}
   - {id: Q002, category: quality_gate, input: {score: 74, blocking_issues: []}, expected: {decision: revise}}
   - {id: Q003, category: quality_gate, input: {score: 90, blocking_issues: [P1]}, expected: {decision: revise}}
+  # 质检环通过线跟随 scoring_preset（H5 修复回归）
+  - {id: Q016, category: quality_gate, input: {score: 76, blocking_issues: [], preset: strict}, expected: {decision: revise}}
+  - {id: Q017, category: quality_gate, input: {score: 65, blocking_issues: [], preset: relaxed}, expected: {decision: pass}}
+  # 交付门禁：pass_threshold ∧ delivery_eligible
+  - {id: Q018, category: delivery_gate, input: {score: 82, preset: relaxed, compliance_passed: true}, expected: {can_deliver: false}}
+  - {id: Q019, category: delivery_gate, input: {score: 76, preset: standard, compliance_passed: true}, expected: {can_deliver: true}}
+  - {id: Q020, category: delivery_gate, input: {score: 82, preset: standard, compliance_passed: false}, expected: {can_deliver: false}}
+  # 题材矩阵 v2：合成与组合约束
+  - id: Q021
+    category: theme_synthesis
+    input:
+      dims: {emotion: justice, identity: returning-elite, conflict: family, world: modern, audience_channel: male, protagonist_structure: single-male, flavor_tags: [war-god, urban-fantasy, angst-revenge]}
+    expected:
+      matrix_key: "justice-returning-elite-family-modern|ch:male|ps:single-male|angst-revenge+urban-fantasy+war-god"
+      synthesized: true
+  - id: Q022
+    category: theme_synthesis
+    input:
+      dims: {emotion: love, identity: ordinary, conflict: romance, world: modern, flavor_tags: [sweet-heavy, melo-heavy]}
+    expected: {synthesized: false, reason: constraint}
+  - id: Q023
+    category: theme_synthesis
+    input:
+      dims: {emotion: ambition, identity: underdog, conflict: power, world: modern, flavor_tags: [harem]}
+    expected: {synthesized: false, reason: constraint}
+  - id: Q024
+    category: theme_synthesis
+    input:
+      dims: {emotion: revenge, identity: underdog, conflict: family, world: modern, audience_channel: female, flavor_tags: [true-false-heiress, angst-revenge]}
+    expected: {synthesized: true}
   - {id: Q004, category: continuity, input: {conflicting_facts: 0}, expected: {result: pass}}
   - {id: Q005, category: continuity, input: {conflicting_facts: 2}, expected: {result: fail}}
   - {id: Q006, category: compliance, input: {highest_risk: p0}, expected: {result: 不通过, blocking: true}}

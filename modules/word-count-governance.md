@@ -3,6 +3,25 @@
 > 挂载角色：`drama.revision-master`（修复阶段字数与台词占比治理）
 > 数值 SSOT：`foundation/constraints/script-format.yaml`；本模块不重复维护区间。
 
+## 目标
+
+在不损伤情绪曲线与钩子的前提下，把每集字数与台词占比治理进 SSOT 区间。
+
+## 输入
+
+- `latest_script` 指定 `episode_range` 的全文
+- 评分报告 format 维度中的字数/占比扣分项
+
+## 引用规则
+
+- `foundation/constraints/script-format.yaml`
+- `t1.global.writing_requirements.commercial-format`
+
+## 输出
+
+- `polished_script.episodes[].script`（治理后全文）
+- `polished_script.revision_summary` 中的逐集统计表（修复前 → 修复后）
+
 ## 治理策略
 
 | 症状 | 优先处理顺序 |
@@ -17,6 +36,11 @@
 1. 逐集统计：字数、台词字符占比、场景数，对照 SSOT 区间
 2. 越界集按上表策略修复，修复时保持情绪曲线与钩子不受损
 3. 输出逐集统计表（修复前 → 修复后）
+
+## 失败条件
+
+- 用注水场景凑字数。
+- 治理后 EV 峰值或集末钩子被削弱。
 
 ## 自检清单
 

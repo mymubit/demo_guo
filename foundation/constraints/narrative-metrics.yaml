@@ -1,0 +1,27 @@
+# 叙事量化指标 SSOT
+# 数值只在本文件维护；rules/knowledge 通过引用消费，不得复述具体数字。
+# 历史冲突裁决记录：
+#   - S级反转铺垫：原 learned-rules(3+) 与 plotting-rules(5+) 冲突，裁决为 5
+#   - 开场窗口：原 10秒（quality-scoring）与 30秒（narrative-craft/rhythm-rules）并存，
+#     裁决为分层定义（3s/10s/30s 各有职责，不再互斥）
+#   - 冲突密度：原 s-class-standards(1.2) 与 industry-benchmarks(1.5) 冲突，
+#     裁决采用分级口径：S≥1.5 / A≥1.0 / B≥0.5（与平台 KPI 分级表对齐）
+version: "1.0.0"
+config_tier: git_ssot
+
+opening_hook:
+  # 分层窗口：三层同时生效，不互斥
+  first_impact_seconds: 3      # 前3秒必须产生强情绪（震惊/愤怒/心疼/好奇/反转期待任一）
+  main_hook_seconds: 10        # 10秒内主钩子成立（评分维度 hooks 的考核窗口）
+  structure_complete_seconds: 30  # 30秒内完成三段式
+  structure: [视觉冲击, 信息建立, 悬念确立]
+
+s_reversal_foreshadow:
+  min_episodes: 5              # S级身份反转最少误导铺垫集数
+  hint_within_episodes: 3      # 隐藏身份须在前3集内至少1次暗示，禁止零铺垫
+  reveal_window_ref: foundation/constraints/commercial-formulas.yaml#metrics.s_reversal_window
+
+conflict_density_per_minute:
+  S: 1.5
+  A: 1.0
+  B: 0.5

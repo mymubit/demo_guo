@@ -12,12 +12,16 @@
 - `t1.global.foreshadowing_rules.density`
 - `t1.global.foreshadowing_rules.payoff`
 - `t1.global.foreshadowing_rules.types`
-- `foundation/constraints/commercial-formulas.yaml#metrics.s_reversal_window`
+- `foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow`
+
+灵感库（可选参考，已验证的反转模式）：`inspirations/reversals.md`。
 
 ## 输出
-- `major_reversal_positions[]`
-- `foreshadowing_table[]`
+- `major_reversal_positions[]`（唯一写入者，见 `contracts/artifacts.yaml#field_writers`）
+- `foreshadowing_table[]`（唯一写入者）
 - 分集 `foreshadowing.setup/payoff`
+
+story-bible 阶段写全剧反转位与伏笔表；episode-designer 阶段只读全剧表、写分集埋点/回扣，禁止改全局反转位。
 
 ## 执行步骤
 1. 先确定揭露改变了什么认知与格局。

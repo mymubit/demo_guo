@@ -50,6 +50,31 @@ def _apply_delta(
     return reversal, curve, act, hooks
 
 
+class TagConstraintError(ValueError):
+    """标签组合违反 tag_constraints。"""
+
+
+def _canonical_tag_order(cfg: Dict[str, Any]) -> Dict[str, int]:
+    options = (cfg.get("flavor_tags") or {}).get("options") or []
+    return {opt["value"]: idx for idx, opt in enumerate(options) if opt.get("value")}
+
+
+def validate_tag_constraints(cfg: Dict[str, Any], genre_matrix: Dict[str, Any]) -> None:
+    """校验互斥与世界观依赖；违反抛 TagConstraintError。"""
+    constraints = cfg.get("tag_constraints") or {}
+    tags = set(genre_matrix.get("flavor_tags") or [])
+    for group in constraints.get("mutually_exclusive") or []:
+        hit = tags & set(group)
+        if len(hit) > 1:
+            raise TagConstraintError(f"互斥标签同选: {sorted(hit)}")
+    world = genre_matrix.get("world")
+    for tag, allowed_worlds in (constraints.get("requires_world") or {}).items():
+        if tag in tags and world and world not in allowed_worlds:
+            raise TagConstraintError(
+                f"标签 {tag} 要求世界观 {allowed_worlds}，当前 world={world}"
+            )
+
+
 def synthesize_rule_params(genre_matrix: Dict[str, Any]) -> Dict[str, Any]:
     cfg = _load_matrix()
     syn = cfg.get("param_synthesis") or {}
@@ -61,6 +86,8 @@ def synthesize_rule_params(genre_matrix: Dict[str, Any]) -> Dict[str, Any]:
     profile = dict(profiles.get(emotion) or {})
     if not profile:
         raise ValueError(f"unknown emotion axis: {emotion}")
+
+    validate_tag_constraints(cfg, genre_matrix)
 
     base = syn.get("base") or {}
     reversal = float(profile.get("reversal_density", base.get("reversal_density", 0.28)))
@@ -78,12 +105,28 @@ def synthesize_rule_params(genre_matrix: Dict[str, Any]) -> Dict[str, Any]:
             d = (syn.get(delta_key) or {}).get(val) or {}
             reversal, curve, act, hooks = _apply_delta(reversal, curve, act, hooks, d)
 
+    channel = genre_matrix.get("audience_channel") or "general"
+    channel_delta = (syn.get("channel_profiles") or {}).get(channel)
+    if channel_delta is None:
+        raise ValueError(f"unknown audience_channel: {channel}")
+    reversal, curve, act, hooks = _apply_delta(reversal, curve, act, hooks, channel_delta)
+
+    structure = genre_matrix.get("protagonist_structure")
+    if structure:
+        structure_delta = (syn.get("structure_deltas") or {}).get(structure)
+        if structure_delta is None:
+            raise ValueError(f"unknown protagonist_structure: {structure}")
+        reversal, curve, act, hooks = _apply_delta(reversal, curve, act, hooks, structure_delta)
+
     tags = genre_matrix.get("flavor_tags") or []
     if isinstance(tags, str):
         tags = [tags]
     tag_cfg = syn.get("flavor_tag_deltas") or {}
     max_tags = (cfg.get("flavor_tags") or {}).get("max_select", DEFAULT_MAX_TAGS)
-    for tag in tags[:max_tags]:
+    # 幂等保证：按 options 声明顺序（canonical order）叠加，与用户选择顺序无关
+    order = _canonical_tag_order(cfg)
+    canonical_tags = sorted(tags[:max_tags], key=lambda t: order.get(t, len(order)))
+    for tag in canonical_tags:
         d = tag_cfg.get(tag)
         if not d:
             continue
@@ -103,9 +146,14 @@ def synthesize_rule_params(genre_matrix: Dict[str, Any]) -> Dict[str, Any]:
             break
 
     dim_order = cfg.get("dim_order") or ["emotion", "identity", "conflict", "world"]
-    core_key = "-".join(str(genre_matrix.get(k, "any")) for k in dim_order)
-    tag_part = "+".join(sorted(tags[:max_tags])) if tags else ""
-    matrix_key = f"{core_key}|{tag_part}" if tag_part else core_key
+    key_parts = ["-".join(str(genre_matrix.get(k, "any")) for k in dim_order)]
+    if channel != "general":
+        key_parts.append(f"ch:{channel}")
+    if structure:
+        key_parts.append(f"ps:{structure}")
+    if canonical_tags:
+        key_parts.append("+".join(sorted(canonical_tags)))
+    matrix_key = "|".join(key_parts)
 
     return {
         "matrix_key": matrix_key,
@@ -143,7 +191,8 @@ def main() -> None:
         {"emotion": "revenge", "identity": "reborn", "conflict": "family", "world": "ancient", "flavor_tags": ["wuxia", "angst-revenge"]},
         {"emotion": "warmth", "identity": "ordinary", "conflict": "redemption", "world": "rural", "flavor_tags": ["nongtian", "food", "slow-burn"]},
         {"emotion": "suspense", "identity": "ordinary", "conflict": "survival", "world": "virtual", "flavor_tags": ["infinite-flow", "horror", "folk-horror", "crime-procedural"]},
-        {"emotion": "ambition", "identity": "bound", "conflict": "disparity", "world": "modern", "flavor_tags": ["son-in-law", "god-wealth", "down-market", "anti-pua", "male-lead"]},
+        {"emotion": "justice", "identity": "returning-elite", "conflict": "family", "world": "modern", "audience_channel": "male", "protagonist_structure": "single-male", "flavor_tags": ["war-god", "urban-fantasy", "angst-revenge"]},
+        {"emotion": "ambition", "identity": "bound", "conflict": "disparity", "world": "modern", "audience_channel": "male", "flavor_tags": ["son-in-law", "god-wealth", "down-market", "anti-pua"]},
     ]
     for dims in examples:
         result = resolve_from_matrix(dims)

@@ -1,5 +1,7 @@
 # genre_profile · 全局 fallback — hybrid 或未匹配 theme_code 时使用
-version: "1.2.0"
+# 位置说明：genre_profile scope 只加载 foundation/rules/genres/*.yaml，
+# 本文件从根级 genre-profile.yaml 迁入以进入真实注入路径（v1.3.0）。
+version: "1.3.0"
 tier: 2
 items:
   - rule_key: t2.global.genre_profile.emotion-anchor-summary

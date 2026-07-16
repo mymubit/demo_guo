@@ -70,8 +70,21 @@ artifacts:
     label_zh: 连续性检查点
     schema_version: 1
     schema_path: schemas/artifacts/memory_checkpoint/1.schema.json
-    producer: null
+    # 由剧本正文官逐集产出（continuity-snapshot 模块）；
+    # 同一内容同时内嵌于 episode_scripts.episodes[].memory_checkpoint，独立产物用于跨批加载。
+    producer: drama.script-writer
     array_paths: []
+
+# 字段唯一写入者 — 多模块协作产物中，每个关键字段只允许一个模块写入；
+# 其他模块只读。series-structure 只产骨架与占位，专责模块填充。
+field_writers:
+  story_bible:
+    series_structure.main_storyline: modules/series-structure.md
+    series_structure.six_stage_structure: modules/series-structure.md
+    conflict_escalation_chain: modules/conflict-escalation.md
+    major_reversal_positions: modules/reversal-foreshadowing.md
+    foreshadowing_table: modules/reversal-foreshadowing.md
+    paywall_distribution: modules/payment-checkpoint.md
 
 virtual_artifacts:
   latest_script:
