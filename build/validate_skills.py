@@ -549,8 +549,8 @@ def check_constraint_consistency() -> None:
     genre_files = {
         path.name for path in (ROOT / "foundation" / "rules" / "genres").glob("*.yaml")
     }
-    if genre_files != {"matrix.yaml"}:
-        err(f"最新态只允许 genres/matrix.yaml，当前={sorted(genre_files)}")
+    if genre_files != {"matrix.yaml", "fallback.yaml"}:
+        err(f"最新态只允许 genres/matrix.yaml + genres/fallback.yaml，当前={sorted(genre_files)}")
 
 
 def check_section_mapping() -> None:

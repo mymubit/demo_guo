@@ -49,7 +49,7 @@
 | `structure-rules.yaml`（tier 1） | series_structure, episode_card, continuity | 全剧结构、分集卡与连续性 |
 | `world-rules.yaml`（tier 1） | world_rules | 世界规则 |
 | `production-rules.yaml`（tier 1） | production_feasibility, budget_estimation, platform_ops | 制片可行性、预算分级与平台上架 |
-| `genre-profile.yaml` + `genres/matrix.yaml`（tier 2） | genre_rules, rhythm_rules（四轴合成） | 题材规则 |
+| `genres/matrix.yaml` + `genres/fallback.yaml`（tier 2） | genre_rules, rhythm_rules（四轴合成与兜底） | 题材规则 |
 
 > `quantitative_constraints` / `format_standard` 两个 section 的数值来自 `foundation/constraints/script-format.yaml`，由后端注入时合成，不在规则文件中重复。
 

@@ -16,17 +16,19 @@
 - `foundation/constraints/series-scale.yaml`
 
 ## 输出
-- `series_structure.main_storyline`
-- `series_structure.six_stage_structure`
-- `conflict_escalation_chain`
-- `major_reversal_positions`
-- `paywall_distribution`
-- `foreshadowing_table`
+- `series_structure.main_storyline`（唯一写入者）
+- `series_structure.six_stage_structure`（唯一写入者）
+
+以下字段本模块**只产骨架占位（阶段窗口），不写具体内容**，
+唯一写入者见 `contracts/artifacts.yaml#field_writers.story_bible`：
+- `conflict_escalation_chain` ← conflict-escalation
+- `major_reversal_positions` / `foreshadowing_table` ← reversal-foreshadowing
+- `paywall_distribution` ← payment-checkpoint
 
 ## 执行步骤
 1. 按题材参数或基础占比分配六阶段集数。
-2. 为每阶段定义目标、冲突升级和不可逆转折。
-3. 布置付费承诺、反转揭露和伏笔回扣窗口。
+2. 为每阶段定义目标、冲突升级方向和不可逆转折。
+3. 为付费承诺、反转揭露和伏笔回扣标注阶段窗口占位（不填具体集号与内容）。
 4. 校验所有阶段集数之和等于总集数。
 
 ## 失败条件
