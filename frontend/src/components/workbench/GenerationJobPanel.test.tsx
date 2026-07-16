@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { GenerationJobPanel } from '@/components/workbench/GenerationJobPanel'
 import type { GenerationJob } from '@/types/domain'
 
@@ -48,7 +49,7 @@ describe('GenerationJobPanel', () => {
     expect(screen.getByRole('progressbar')).toBeInTheDocument()
   })
 
-  it('does not treat failed as success', async () => {
+  it('does not treat failed as success and shows Chinese trouble card', async () => {
     const job: GenerationJob = {
       job_id: 'job-2',
       project_id: 'proj-1',
@@ -56,23 +57,33 @@ describe('GenerationJobPanel', () => {
       role: 'drama.topic-director',
       command_id: 'cmd-2',
     }
-    getGenerationStatus.mockResolvedValue({ ...job, status: 'failed', error: 'boom' })
+    getGenerationStatus.mockResolvedValue({
+      ...job,
+      status: 'failed',
+      error: 'LLM 配置不完整',
+    })
     subscribeJobEvents.mockImplementation((_projectId, _jobId, handlers) => {
       handlers.onDone()
       return () => undefined
     })
 
     const onCompleted = vi.fn()
-    render(<GenerationJobPanel projectId="proj-1" job={job} onCompleted={onCompleted} />)
+    render(
+      <MemoryRouter>
+        <GenerationJobPanel projectId="proj-1" job={job} onCompleted={onCompleted} />
+      </MemoryRouter>,
+    )
 
     await waitFor(() => {
       expect(getGenerationStatus).toHaveBeenCalled()
     })
     expect(onCompleted).not.toHaveBeenCalled()
     expect(screen.getByText('失败')).toBeInTheDocument()
+    expect(await screen.findByText('模型配置不完整')).toBeInTheDocument()
+    expect(screen.getByText('前往模型管理 →')).toBeInTheDocument()
   })
 
-  it('does not treat disabled as success', async () => {
+  it('does not treat disabled as success and guides to model hub', async () => {
     const job: GenerationJob = {
       job_id: 'job-3',
       project_id: 'proj-1',
@@ -80,20 +91,29 @@ describe('GenerationJobPanel', () => {
       role: 'drama.topic-director',
       command_id: 'cmd-3',
     }
-    getGenerationStatus.mockResolvedValue({ ...job, status: 'disabled', error: 'LLM off' })
+    getGenerationStatus.mockResolvedValue({
+      ...job,
+      status: 'disabled',
+      error: 'LLM 不可用 (disabled)',
+    })
     subscribeJobEvents.mockImplementation((_projectId, _jobId, handlers) => {
       handlers.onDone()
       return () => undefined
     })
 
     const onCompleted = vi.fn()
-    render(<GenerationJobPanel projectId="proj-1" job={job} onCompleted={onCompleted} />)
+    render(
+      <MemoryRouter>
+        <GenerationJobPanel projectId="proj-1" job={job} onCompleted={onCompleted} />
+      </MemoryRouter>,
+    )
 
     await waitFor(() => {
       expect(getGenerationStatus).toHaveBeenCalled()
     })
     expect(onCompleted).not.toHaveBeenCalled()
     expect(screen.getByText('已禁用')).toBeInTheDocument()
+    expect(await screen.findByText('模型未启用')).toBeInTheDocument()
   })
 
   it('subscribes once per job_id (effect does not re-subscribe on progress)', () => {

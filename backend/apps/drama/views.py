@@ -38,6 +38,8 @@ from apps.drama.serializers import (
     DramaProjectCreateSerializer,
     DramaProjectSerializer,
     ExternalReviewSerializer,
+    LlmProviderUpdateSerializer,
+    LlmProviderWriteSerializer,
     GenerationStartSerializer,
     StoryBibleApprovalSerializer,
     WorkflowCommandSerializer,
@@ -45,6 +47,8 @@ from apps.drama.serializers import (
 from apps.drama.services.artifact_service import ArtifactService
 from apps.drama.services.config_overlay import ConfigOverlayService
 from apps.drama.services.generation_service import GenerationService
+from apps.drama.services.llm_config_service import LlmConfigService
+from apps.drama.services.llm_provider import LlmProvider, LlmProviderError
 from apps.drama.services.project_settings import ProjectSettingsService
 from apps.drama.services.workflow_service import WorkflowService
 
@@ -490,3 +494,130 @@ class WorkbenchFormView(APIView):
 
         loader = get_skills_loader()
         return api_response(loader.export_workbench_form())
+
+
+class AdminLlmProviderListCreateView(APIView):
+    """LLM Provider 列表 / 创建。"""
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [DramaConfigReadPermission()]
+        return [DramaConfigWritePermission()]
+
+    def get(self, request: Request) -> Response:
+        resolved = LlmConfigService.resolve()
+        return api_response(
+            {
+                "runtime": {
+                    "status": LlmProvider.status().value,
+                    "source": resolved.source,
+                    "model": resolved.model if resolved.enabled else "",
+                    "base_url": resolved.base_url if resolved.enabled else "",
+                    "api_key_set": bool(resolved.api_key),
+                },
+                "providers": LlmConfigService.list_providers(),
+            }
+        )
+
+    def post(self, request: Request) -> Response:
+        serializer = LlmProviderWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        obj = LlmConfigService.create_provider(
+            dict(serializer.validated_data),
+            actor=request.user.username,
+        )
+        return api_response(
+            LlmConfigService.serialize_provider(obj),
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class AdminLlmProviderDetailView(APIView):
+    """LLM Provider 更新 / 删除。"""
+
+    def get_permissions(self):
+        if self.request.method == "GET":
+            return [DramaConfigReadPermission()]
+        return [DramaConfigWritePermission()]
+
+    def get(self, request: Request, provider_id) -> Response:
+        from apps.drama.models import DramaLlmProvider
+
+        obj = get_object_or_404(DramaLlmProvider, pk=provider_id)
+        return api_response(LlmConfigService.serialize_provider(obj))
+
+    def put(self, request: Request, provider_id) -> Response:
+        serializer = LlmProviderUpdateSerializer(data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        obj = LlmConfigService.update_provider(
+            provider_id,
+            dict(serializer.validated_data),
+            actor=request.user.username,
+        )
+        return api_response(LlmConfigService.serialize_provider(obj))
+
+    def delete(self, request: Request, provider_id) -> Response:
+        LlmConfigService.delete_provider(provider_id, actor=request.user.username)
+        return api_response(None)
+
+
+class AdminLlmProviderActivateView(APIView):
+    """设为当前使用的 LLM。"""
+
+    permission_classes = [DramaConfigWritePermission]
+
+    def post(self, request: Request, provider_id) -> Response:
+        obj = LlmConfigService.activate(provider_id, actor=request.user.username)
+        return api_response(LlmConfigService.serialize_provider(obj))
+
+
+class AdminLlmProviderTestView(APIView):
+    """连通性探测（使用指定配置或当前生效配置）。"""
+
+    permission_classes = [DramaConfigWritePermission]
+
+    def post(self, request: Request, provider_id=None) -> Response:
+        from apps.drama.models import DramaLlmProvider
+        from apps.drama.services.secret_crypto import decrypt_secret
+
+        if provider_id:
+            obj = get_object_or_404(DramaLlmProvider, pk=provider_id)
+            base_url = obj.base_url
+            api_key = decrypt_secret(obj.api_key_encrypted) or ""
+            model = obj.model_name
+        else:
+            cfg = LlmConfigService.resolve()
+            base_url, api_key, model = cfg.base_url, cfg.api_key, cfg.model
+
+        if not base_url or not api_key:
+            return api_response(
+                {"ok": False, "error": "Base URL 或 API Key 未配置"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        url = LlmProvider._chat_url(base_url)
+        try:
+            resp = __import__("requests").post(
+                url,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": model,
+                    "messages": [{"role": "user", "content": "ping"}],
+                    "max_tokens": 8,
+                },
+                timeout=(10, 30),
+            )
+            ok = resp.status_code < 400
+            return api_response(
+                {
+                    "ok": ok,
+                    "status_code": resp.status_code,
+                    "detail": (resp.text or "")[:300],
+                }
+            )
+        except LlmProviderError as exc:
+            return api_response({"ok": False, "error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as exc:  # noqa: BLE001
+            return api_response({"ok": False, "error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)

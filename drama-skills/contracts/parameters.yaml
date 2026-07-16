@@ -1,48 +1,59 @@
-# 可传递参数机器 SSOT — 类型、枚举、来源、默认值、必填约束
+# 可传递参数机器 SSOT — 类型、枚举、来源、默认值、必填约束、中文展示
 version: "1.0.0"
 
 parameters:
   entry_type:
     type: string
+    label_zh: 创作入口
     enum_source: orchestration.*.entry_type
     default: original_track
     required: true
+    options:
+      - {value: original_track, label_zh: 原创短剧}
+      - {value: story_adapt, label_zh: 故事改编}
 
   core_idea:
     type: string
+    label_zh: 核心创意
     required: false
     ui_widget: textarea
 
   synopsis:
     type: string
+    label_zh: 一句话梗概
     required: false
     ui_widget: textarea
 
   external_story:
     type: string
+    label_zh: 外部故事原文
     required: false
     ui_widget: textarea
 
   adapt_notes:
     type: object
+    label_zh: 改编说明
     required: false
     properties:
-      retained: {type: array, items_type: string}
-      enhanced: {type: array, items_type: string}
-      rewritten: {type: array, items_type: string}
+      retained: {type: array, items_type: string, label_zh: 保留}
+      enhanced: {type: array, items_type: string, label_zh: 强化}
+      rewritten: {type: array, items_type: string, label_zh: 重写}
 
   reference_dramas:
     type: array
+    label_zh: 参考短剧
     required: false
     items_type: string
 
   genre_matrix:
     type: object
+    label_zh: 题材矩阵
     required: false
     source: foundation/theme-matrix.yaml#axes
 
   flavor_tags:
     type: array
+    label_zh: 风味标签
     required: false
     source: foundation/theme-matrix.yaml#flavor_tags.options
     max_items_source: foundation/theme-matrix.yaml#flavor_tags.max_select
@@ -50,23 +61,27 @@ parameters:
 
   preset_theme_code:
     type: string
+    label_zh: 题材预设
     required: false
     nullable: true
     source: foundation/theme-matrix.yaml#preset_templates
 
   episode_count:
     type: integer
+    label_zh: 计划集数
     required: true
     minimum: 1
 
   target_platform:
     type: string
+    label_zh: 目标平台
     required: true
     source: foundation/constraints/platform-profiles.yaml#platforms
     default: generic
 
   batch_episode_max:
     type: integer
+    label_zh: 单批最大集数
     required: false
     minimum: 1
     maximum: 5
@@ -74,75 +89,110 @@ parameters:
 
   outline_mode:
     type: string
+    label_zh: 大纲模式
     required: false
     enum: [full, structure_only]
     default: full
+    options:
+      - {value: full, label_zh: 完整大纲}
+      - {value: structure_only, label_zh: 仅结构}
 
   episode_range:
     type: string
+    label_zh: 集数范围
     required: false
     pattern: '^\d+-\d+$'
     ui_widget: episode_range
 
   production_target_band:
     type: string
+    label_zh: 制作复杂度
     required: false
     enum: [lean, standard, complex]
     default: standard
+    options:
+      - {value: lean, label_zh: 精简}
+      - {value: standard, label_zh: 标准}
+      - {value: complex, label_zh: 复杂}
 
   production_context:
     type: object
+    label_zh: 制作上下文
     required: false
 
   production_region:
     type: string
+    label_zh: 制作地区
     required: false
 
   budget_currency:
     type: string
+    label_zh: 预算币种
     required: false
 
   pricing_version:
     type: string
+    label_zh: 报价版本
     required: false
 
   budget_excluded_items:
     type: array
+    label_zh: 预算排除项
     required: false
     items_type: string
 
   scoring_mode:
     type: string
+    label_zh: 评分模式
     required: false
     enum: [project, external]
     default: project
+    options:
+      - {value: project, label_zh: 项目内评分}
+      - {value: external, label_zh: 外部脚本评分}
 
   scoring_preset:
     type: string
+    label_zh: 评分预设
     required: false
     source: foundation/constraints/scoring-presets.yaml#presets
     default: standard
 
   check_mode:
     type: string
+    label_zh: 合规检查模式
     required: false
     enum: [standard, values-risk, full]
     default: standard
+    options:
+      - {value: standard, label_zh: 标准}
+      - {value: values-risk, label_zh: 价值观风险}
+      - {value: full, label_zh: 全面检查}
 
   focus_areas:
     type: array
+    label_zh: 修订关注点
     required: false
     items_type: string
 
   deliverables:
     type: array
+    label_zh: 交付物
     required: false
     enum_items: [storyboard, visual, marketing, interactive, budget, release]
     unique_items: true
     default: [storyboard, visual, marketing, budget]
+    options:
+      - {value: storyboard, label_zh: 分镜}
+      - {value: visual, label_zh: 视觉}
+      - {value: marketing, label_zh: 宣发}
+      - {value: interactive, label_zh: 互动}
+      - {value: budget, label_zh: 预算}
+      - {value: release, label_zh: 上架}
 
   enable_delivery:
     type: boolean
+    label_zh: 启用交付工具
     required: false
     default: false
 

@@ -19,7 +19,12 @@ export function DeliveryTabs({
   const [tab, setTab] = useState(tabs[0]?.id ?? 'storyboard')
 
   if (!packageData) {
-    return <EmptyState title="暂无交付包" description="启用交付并完成 delivery 阶段后可在此查看。" />
+    return (
+      <EmptyState
+        title="暂无交付包"
+        description="请先在创作设定中启用交付项，并完成「制作发行交付」阶段。"
+      />
+    )
   }
 
   const storyboard = (packageData.storyboard as unknown[]) ?? []
@@ -38,14 +43,15 @@ export function DeliveryTabs({
         onChange={(id) => setTab(id)}
       />
       <div className="sf-panel p-4">
-        {tab === 'storyboard' && <JsonList title="分镜" items={storyboard} />}
-        {tab === 'visual' && <JsonList title="视觉资产" items={visual} />}
-        {tab === 'marketing' && <JsonList title="宣发资产" items={marketing} />}
-        {tab === 'interactive' && (
-          <pre className="overflow-auto text-xs text-ink-muted">
-            {interactive ? JSON.stringify(interactive, null, 2) : '无互动改编内容'}
-          </pre>
-        )}
+        {tab === 'storyboard' && <ObjectList title="分镜" items={storyboard} />}
+        {tab === 'visual' && <ObjectList title="视觉资产" items={visual} />}
+        {tab === 'marketing' && <ObjectList title="宣发资产" items={marketing} />}
+        {tab === 'interactive' &&
+          (interactive && typeof interactive === 'object' ? (
+            <KeyCards data={interactive as Record<string, unknown>} />
+          ) : (
+            <p className="text-sm text-ink-muted">无互动改编内容</p>
+          ))}
         {tab === 'budget' && (
           <div className="space-y-2 text-sm">
             <p>
@@ -56,9 +62,13 @@ export function DeliveryTabs({
               成本驱动：
               {Array.isArray(production?.cost_drivers) ? production?.cost_drivers.join('、') : '—'}
             </p>
-            <pre className="overflow-auto rounded bg-canvas p-3 text-xs">
-              {JSON.stringify(production?.budget_range ?? production ?? {}, null, 2)}
-            </pre>
+            {production?.budget_range && typeof production.budget_range === 'object' ? (
+              <KeyCards data={production.budget_range as Record<string, unknown>} />
+            ) : production ? (
+              <KeyCards data={production} />
+            ) : (
+              <p className="text-ink-muted">暂无预算明细</p>
+            )}
           </div>
         )}
         {tab === 'release' && (
@@ -84,15 +94,42 @@ export function DeliveryTabs({
   )
 }
 
-function JsonList({ title, items }: { title: string; items: unknown[] }) {
+function ObjectList({ title, items }: { title: string; items: unknown[] }) {
   if (items.length === 0) return <p className="text-sm text-ink-muted">{title}为空</p>
   return (
     <ul className="space-y-2">
       {items.map((item, idx) => (
-        <li key={idx} className="rounded-lg bg-canvas p-3 text-xs text-ink-muted">
-          <pre className="whitespace-pre-wrap">{JSON.stringify(item, null, 2)}</pre>
+        <li key={idx} className="rounded-lg bg-canvas p-3 text-sm text-ink">
+          {item && typeof item === 'object' && !Array.isArray(item) ? (
+            <KeyCards data={item as Record<string, unknown>} compact />
+          ) : (
+            <span className="text-ink-muted">{String(item)}</span>
+          )}
         </li>
       ))}
     </ul>
+  )
+}
+
+function KeyCards({ data, compact }: { data: Record<string, unknown>; compact?: boolean }) {
+  const entries = Object.entries(data)
+  if (entries.length === 0) return <p className="text-sm text-ink-muted">暂无内容</p>
+  return (
+    <dl className={compact ? 'grid gap-2 sm:grid-cols-2' : 'grid gap-3 sm:grid-cols-2'}>
+      {entries.map(([key, value]) => (
+        <div key={key} className={compact ? '' : 'rounded-md bg-canvas p-2'}>
+          <dt className="text-xs text-ink-faint">{key}</dt>
+          <dd className="mt-0.5 whitespace-pre-wrap text-sm text-ink">
+            {typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+              ? String(value)
+              : Array.isArray(value)
+                ? value.map((v) => (typeof v === 'string' ? v : JSON.stringify(v))).join('、') || '—'
+                : value && typeof value === 'object'
+                  ? JSON.stringify(value)
+                  : '—'}
+          </dd>
+        </div>
+      ))}
+    </dl>
   )
 }

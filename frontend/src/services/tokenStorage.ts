@@ -6,7 +6,7 @@ export type PersistedAuth = {
   user?: {
     id: string
     nickname?: string
-    phone?: string
+    username?: string
     email?: string
   }
 }

@@ -246,7 +246,77 @@ class SkillsBundleLoader:
         workbench["module_catalog"] = self.modules_catalog.get("modules", [])
         workbench["schema_version"] = "workbench-form.v1"
         workbench["skills_bundle_version"] = self.bundle_version
+        workbench["theme_matrix"] = self._export_theme_matrix()
         return workbench
+
+    def _export_theme_matrix(self) -> dict[str, Any]:
+        """导出题材矩阵（含热门组合），供前端选题 UI 使用。"""
+        raw = self.load_seed_yaml("foundation/theme-matrix.yaml")
+        axes_src = raw.get("axes") or {}
+        dim_order = raw.get("dim_order") or list(axes_src.keys())
+        axes: dict[str, Any] = {}
+        for key in dim_order:
+            axis = axes_src.get(key) or {}
+            axes[key] = {
+                "label_zh": axis.get("label_zh", key),
+                "hint": axis.get("hint"),
+                "required": axis.get("min_select") == 1,
+                "options": [
+                    {
+                        "value": opt.get("value"),
+                        "label_zh": opt.get("label_zh", opt.get("value")),
+                        "desc": opt.get("desc"),
+                    }
+                    for opt in (axis.get("options") or [])
+                    if opt.get("value")
+                ],
+            }
+
+        flavor = raw.get("flavor_tags") or {}
+        featured = []
+        for combo in raw.get("featured_combos") or []:
+            dims = combo.get("dims") or {}
+            featured.append(
+                {
+                    "code": combo.get("id") or combo.get("code"),
+                    "label_zh": combo.get("label_zh") or combo.get("label"),
+                    "heat": combo.get("heat"),
+                    "emotion": dims.get("emotion"),
+                    "identity": dims.get("identity"),
+                    "conflict": dims.get("conflict"),
+                    "world": dims.get("world"),
+                    "flavor_tags": dims.get("flavor_tags") or combo.get("flavor_tags") or [],
+                }
+            )
+
+        presets = []
+        for item in raw.get("preset_templates") or []:
+            presets.append(
+                {
+                    "code": item.get("code") or item.get("id"),
+                    "label_zh": item.get("label_zh") or item.get("label"),
+                }
+            )
+
+        return {
+            "dim_order": dim_order,
+            "axes": axes,
+            "flavor_tags": {
+                "max_select": flavor.get("max_select", 5),
+                "categories": flavor.get("categories") or [],
+                "options": [
+                    {
+                        "value": opt.get("value"),
+                        "label_zh": opt.get("label_zh", opt.get("value")),
+                        "category": opt.get("category"),
+                    }
+                    for opt in (flavor.get("options") or [])
+                    if opt.get("value")
+                ],
+            },
+            "featured_combos": featured,
+            "preset_templates": presets,
+        }
 
     def project_runtime_projection(
         self,

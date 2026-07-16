@@ -170,7 +170,7 @@ export function buildThemeMatrixFromFields(
       code: o.value,
       label_zh: o.label_zh || o.label || o.value,
     })),
-    featured_combos: [],
+    featured_combos: embedded?.featured_combos ?? [],
   }
 }
 

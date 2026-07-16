@@ -11,7 +11,7 @@ export const API_BASE_URL =
     ? String(import.meta.env.VITE_API_BASE_URL)
     : ''
 
-const AUTH_REFRESH_PATH = '/api/auth/refresh/'
+const AUTH_REFRESH_PATH = '/api/v1/auth/token/refresh/'
 
 type RequestOptions = {
   params?: Record<string, unknown>

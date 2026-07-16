@@ -4,6 +4,10 @@ from django.urls import path
 from apps.drama.views import (
     AdminConfigRollbackView,
     AdminConfigView,
+    AdminLlmProviderActivateView,
+    AdminLlmProviderDetailView,
+    AdminLlmProviderListCreateView,
+    AdminLlmProviderTestView,
     ArtifactDetailView,
     ExternalScriptReviewView,
     GenerationJobDetailView,
@@ -82,5 +86,30 @@ urlpatterns = [
         "admin/config/rollback/",
         AdminConfigRollbackView.as_view(),
         name="drama-admin-config-rollback",
+    ),
+    path(
+        "admin/llm/providers/",
+        AdminLlmProviderListCreateView.as_view(),
+        name="drama-admin-llm-providers",
+    ),
+    path(
+        "admin/llm/providers/<uuid:provider_id>/",
+        AdminLlmProviderDetailView.as_view(),
+        name="drama-admin-llm-provider-detail",
+    ),
+    path(
+        "admin/llm/providers/<uuid:provider_id>/activate/",
+        AdminLlmProviderActivateView.as_view(),
+        name="drama-admin-llm-provider-activate",
+    ),
+    path(
+        "admin/llm/providers/<uuid:provider_id>/test/",
+        AdminLlmProviderTestView.as_view(),
+        name="drama-admin-llm-provider-test",
+    ),
+    path(
+        "admin/llm/test/",
+        AdminLlmProviderTestView.as_view(),
+        name="drama-admin-llm-test",
     ),
 ]

@@ -14,6 +14,8 @@ type Props = {
   onChangePreset?: (code: string | null) => void
 }
 
+/** 借鉴「点选即填」交互，视觉保持本站浅色面板 */
+
 export function ThemeMatrixPicker({
   matrix,
   genreMatrix,
@@ -31,7 +33,7 @@ export function ThemeMatrixPicker({
   const combos = useMemo(() => {
     const list = matrix.featured_combos ?? []
     const q = comboSearch.trim().toLowerCase()
-    if (!q) return list.slice(0, 9)
+    if (!q) return list.slice(0, 8)
     return list.filter((c) => {
       const label = (c.label_zh || c.label || c.code || '').toLowerCase()
       return label.includes(q) || c.code.toLowerCase().includes(q)
@@ -72,12 +74,14 @@ export function ThemeMatrixPicker({
   return (
     <div className="space-y-6">
       {summary.length > 0 ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <span className="font-medium text-gold-500">当前组合：</span>
+        <div className="rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800">
+          <span className="font-medium">当前组合：</span>
           {summary.join(' × ')}
-          {flavorTags.length > 0 ? ` · ${flavorTags.length} 标签` : ''}
+          {flavorTags.length > 0 ? ` · ${flavorTags.length} 个标签` : ''}
         </div>
-      ) : null}
+      ) : (
+        <p className="text-sm text-ink-muted">先点选下方轴心，或从热门组合一键填入。</p>
+      )}
 
       <section className="space-y-3">
         <div className="flex items-center gap-2 text-sm font-semibold text-ink">
@@ -85,7 +89,7 @@ export function ThemeMatrixPicker({
           热门组合
         </div>
         {(matrix.featured_combos?.length ?? 0) === 0 ? (
-          <p className="text-sm text-ink-muted">当前定义未提供热门组合</p>
+          <p className="text-sm text-ink-muted">暂无热门组合，请直接点选四轴。</p>
         ) : (
           <>
             <div className="relative">
@@ -94,10 +98,10 @@ export function ThemeMatrixPicker({
                 className="sf-control pl-9"
                 value={comboSearch}
                 onChange={(e) => setComboSearch(e.target.value)}
-                placeholder="筛选热门组合…"
+                placeholder="搜索热门组合…"
               />
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
               {combos.map((combo) => {
                 const active = presetThemeCode === combo.code
                 return (
@@ -111,23 +115,24 @@ export function ThemeMatrixPicker({
                         conflict: combo.conflict,
                         world: combo.world,
                       })
-                      if (combo.flavor_tags) onChangeFlavorTags(combo.flavor_tags.slice(0, maxSelect))
+                      if (combo.flavor_tags) {
+                        onChangeFlavorTags(combo.flavor_tags.slice(0, maxSelect))
+                      }
                       onChangePreset?.(combo.code)
                     }}
                     className={cn(
-                      'rounded-lg border px-3 py-3 text-left transition',
+                      'rounded-lg border px-3 py-2.5 text-left text-sm transition',
                       active
                         ? 'border-gold-400 bg-amber-50'
                         : 'border-slate-200 bg-white hover:border-brand-300',
                     )}
                   >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-medium text-ink">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="line-clamp-1 font-medium text-ink">
                         {combo.label_zh || combo.label || combo.code}
                       </span>
-                      {active ? <Check className="h-4 w-4 text-gold-500" /> : null}
+                      {active ? <Check className="h-3.5 w-3.5 shrink-0 text-gold-500" /> : null}
                     </div>
-                    {combo.heat ? <div className="mt-1 text-xs text-ink-faint">{combo.heat}</div> : null}
                   </button>
                 )
               })}
@@ -136,16 +141,16 @@ export function ThemeMatrixPicker({
         )}
       </section>
 
-      <section className="grid grid-cols-2 gap-4">
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {dimOrder.map((axisKey) => {
           const axis = matrix.axes[axisKey]
           if (!axis) return null
           const selected = genreMatrix[axisKey as keyof GenreMatrix]
           return (
-            <div key={axisKey} className="sf-panel p-4">
+            <div key={axisKey} className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
               <h4 className="text-sm font-semibold text-ink">{axis.label_zh}</h4>
               {axis.hint ? <p className="mt-1 text-xs text-ink-muted">{axis.hint}</p> : null}
-              <div className="mt-3 grid grid-cols-1 gap-2">
+              <div className="mt-3 grid grid-cols-2 gap-2">
                 {axis.options.map((opt) => {
                   const isSelected = selected === opt.value
                   return (
@@ -157,14 +162,18 @@ export function ThemeMatrixPicker({
                         onChangePreset?.(null)
                       }}
                       className={cn(
-                        'rounded-lg border px-3 py-2 text-left transition',
+                        'rounded-lg border px-2.5 py-2 text-left transition',
                         isSelected
                           ? 'border-brand-500 bg-brand-50 text-brand-700'
-                          : 'border-slate-200 hover:border-slate-300',
+                          : 'border-slate-200 bg-white hover:border-slate-300',
                       )}
                     >
                       <div className="text-sm font-medium">{opt.label_zh}</div>
-                      {opt.desc ? <div className="mt-0.5 line-clamp-2 text-xs text-ink-muted">{opt.desc}</div> : null}
+                      {opt.desc ? (
+                        <div className="mt-0.5 line-clamp-2 text-[11px] text-ink-muted">
+                          {opt.desc}
+                        </div>
+                      ) : null}
                     </button>
                   )
                 })}
@@ -196,12 +205,10 @@ export function ThemeMatrixPicker({
           onChange={(e) => setFlavorFilter(e.target.value)}
           placeholder="筛选标签…"
         />
-        <div className="space-y-4">
+        <div className="space-y-3">
           {flavorGroups.map((group) => (
             <div key={group.id}>
-              <div className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-faint">
-                {group.label_zh}
-              </div>
+              <div className="mb-2 text-xs font-medium text-ink-faint">{group.label_zh}</div>
               <div className="flex flex-wrap gap-2">
                 {group.options.map((opt) => {
                   const active = flavorTags.includes(opt.value)
@@ -211,7 +218,7 @@ export function ThemeMatrixPicker({
                       type="button"
                       onClick={() => toggleFlavor(opt.value)}
                       className={cn(
-                        'rounded-md border px-2.5 py-1 text-xs transition',
+                        'rounded-full border px-3 py-1 text-xs transition',
                         active
                           ? 'border-brand-500 bg-brand-500 text-white'
                           : 'border-slate-200 bg-white text-ink-muted hover:border-brand-300',

@@ -51,7 +51,7 @@ export function ModulePanel({
     >
       <div className="border-b border-slate-200 px-4 py-3">
         <div className="flex items-center justify-between gap-2">
-          <div className="text-xs font-medium tracking-wide text-ink-faint">能力模块</div>
+          <div className="text-xs font-medium tracking-wide text-ink-faint">本阶段能力</div>
           {onClose ? (
             <button
               type="button"
@@ -68,17 +68,22 @@ export function ModulePanel({
         </div>
         {stage ? (
           <div className="mt-1 truncate text-xs text-ink-muted">
-            {stage.role_label ?? stage.role}
+            角色：{stage.role_label ?? stage.role}
           </div>
         ) : null}
+        <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
+          以下为当前阶段会加载的技能模块（只读目录）。执行请用画布中的「执行本阶段」。
+        </p>
       </div>
       <div className="flex-1 space-y-4 overflow-auto p-3">
         {groups.length === 0 ? (
-          <p className="px-1 text-sm text-ink-muted">当前阶段无可展示模块</p>
+          <div className="rounded-lg border border-dashed border-slate-200 px-3 py-6 text-center text-sm text-ink-muted">
+            当前阶段暂无可见模块。可先完善创作设定，或切换到其他流水线阶段。
+          </div>
         ) : (
           groups.map(([domain, items]) => (
             <section key={domain}>
-              <div className="mb-2 px-1 text-xs font-medium uppercase tracking-wide text-ink-faint">
+              <div className="mb-2 px-1 text-xs font-medium tracking-wide text-ink-faint">
                 {DOMAIN_LABELS[domain] ?? domain}
               </div>
               <ul className="space-y-1.5">

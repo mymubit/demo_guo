@@ -1,39 +1,59 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Play } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { EmptyState, ErrorBanner, LoadingBlock } from '@/components/ui/Tabs'
 import {
   EpisodeScriptsView,
   NarrativePlanView,
   ProjectBriefView,
+  ReportArtifactView,
   StoryBibleView,
 } from '@/components/artifacts/ArtifactViews'
 import { DeliveryTabs } from '@/components/artifacts/DeliveryTabs'
 import { QualityLoopPanel } from '@/components/workbench/QualityLoopPanel'
 import { GenerationJobPanel } from '@/components/workbench/GenerationJobPanel'
+import { GenerationTroubleCard } from '@/components/workbench/GenerationTroubleCard'
 import { dramaApi } from '@/services/drama'
 import { formatApiError } from '@/services/errors'
-import { canExecuteStage } from '@/utils/pipeline'
+import { shouldShowFirstRunExecuteGuide } from '@/utils/firstRunGuide'
+import { canExecuteStage, explainExecuteGate } from '@/utils/pipeline'
 import { createCommandId } from '@/utils/cn'
 import type { DeliveryItem, GenerationJob, ProjectSettings, WorkflowState } from '@/types/domain'
 import type { StageDefinition } from '@/types/workbench'
 import { useState } from 'react'
+
+const STRUCTURED_ARTIFACTS = new Set([
+  'project_brief',
+  'story_bible',
+  'narrative_plan',
+  'episode_scripts',
+  'production_package',
+  'quality_report',
+  'compliance_report',
+  'polished_script',
+])
 
 export function StageCanvas({
   projectId,
   stage,
   settings,
   workflow,
+  forceFirstRunGuide = false,
+  onDismissFirstRunGuide,
 }: {
   projectId: string
   stage: StageDefinition
   settings: ProjectSettings
   workflow: WorkflowState
+  forceFirstRunGuide?: boolean
+  onDismissFirstRunGuide?: () => void
 }) {
   const qc = useQueryClient()
   const [job, setJob] = useState<GenerationJob | null>(null)
   const artifactKey = stage.artifact === 'production_package' ? 'production_package' : stage.artifact
-  const executable = canExecuteStage(stage, workflow)
+  const gateReason = explainExecuteGate(stage, workflow)
+  const executable = gateReason === null && canExecuteStage(stage, workflow)
 
   const artifactQuery = useQuery({
     queryKey: ['artifact', projectId, artifactKey],
@@ -127,6 +147,21 @@ export function StageCanvas({
       }
     | null
 
+  const themeIncomplete =
+    !settings.genre_matrix?.emotion ||
+    !settings.genre_matrix?.identity ||
+    !settings.genre_matrix?.conflict ||
+    !settings.genre_matrix?.world
+
+  const showFirstRunGuide = shouldShowFirstRunExecuteGuide({
+    settings,
+    workflow,
+    stage,
+    hasPayload: payload != null,
+    executable,
+    forceGuide: forceFirstRunGuide,
+  })
+
   return (
     <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
       <header className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-3">
@@ -141,9 +176,10 @@ export function StageCanvas({
           loading={runMutation.isPending}
           disabled={!executable}
           aria-disabled={!executable}
-          title={executable ? '执行本阶段' : '当前阶段不可执行（门禁未通过或已锁定）'}
+          title={executable ? '执行本阶段' : gateReason ?? '当前不可执行'}
           onClick={() => {
             if (!executable) return
+            onDismissFirstRunGuide?.()
             runMutation.mutate()
           }}
         >
@@ -152,7 +188,65 @@ export function StageCanvas({
       </header>
 
       <div className="mx-auto w-full max-w-[1600px] flex-1 space-y-4 overflow-auto p-[clamp(1rem,1.5vw,2rem)]">
-        {runMutation.isError ? <ErrorBanner message={formatApiError(runMutation.error)} /> : null}
+        {themeIncomplete ? (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <p className="font-medium">题材尚未选齐，生成质量可能受影响</p>
+            <p className="mt-1">
+              建议先到{' '}
+              <Link
+                className="font-medium underline underline-offset-2"
+                to={`/projects/${projectId}/settings?focus=theme`}
+              >
+                创作设定
+              </Link>{' '}
+              点选题材矩阵（情绪 / 身份 / 冲突 / 世界观），保存后再执行主链。
+            </p>
+          </div>
+        ) : null}
+
+        {showFirstRunGuide ? (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="font-medium">下一步：生成「{stage.label_zh}」</p>
+                <p className="mt-1 text-emerald-900/90">
+                  题材已就绪。点击右上角「执行本阶段」，即可启动主链第一步。
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  loading={runMutation.isPending}
+                  disabled={!executable}
+                  iconLeft={<Play className="h-3.5 w-3.5" />}
+                  onClick={() => {
+                    if (!executable) return
+                    onDismissFirstRunGuide?.()
+                    runMutation.mutate()
+                  }}
+                >
+                  立即执行
+                </Button>
+                {onDismissFirstRunGuide ? (
+                  <Button size="sm" variant="secondary" onClick={onDismissFirstRunGuide}>
+                    知道了
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {!executable && gateReason ? (
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-ink">
+            <p className="font-medium text-ink">当前无法执行本阶段</p>
+            <p className="mt-1 text-ink-muted">{gateReason}</p>
+          </div>
+        ) : null}
+
+        {runMutation.isError ? (
+          <GenerationTroubleCard message={formatApiError(runMutation.error)} status="failed" />
+        ) : null}
         {approvalMutation.isError ? <ErrorBanner message={formatApiError(approvalMutation.error)} /> : null}
         {artifactQuery.isError ? (
           <ErrorBanner
@@ -184,8 +278,12 @@ export function StageCanvas({
 
         {!artifactQuery.isLoading && !artifactQuery.isError && payload == null && stage.artifact !== 'production_package' ? (
           <EmptyState
-            title="暂无产物"
-            description={`阶段「${stage.label_zh}」尚未生成 ${stage.artifact}，请在门禁允许时点击「执行本阶段」。`}
+            title={`「${stage.label_zh}」暂无产物`}
+            description={
+              executable
+                ? `点击右上角「执行本阶段」，生成「${stage.label_zh}」内容。`
+                : gateReason ?? `完成前置阶段后，即可生成「${stage.label_zh}」。`
+            }
           />
         ) : null}
 
@@ -207,6 +305,13 @@ export function StageCanvas({
 
         {payload && stage.artifact === 'episode_scripts' ? <EpisodeScriptsView data={payload} /> : null}
 
+        {payload &&
+        (stage.artifact === 'quality_report' ||
+          stage.artifact === 'compliance_report' ||
+          stage.artifact === 'polished_script') ? (
+          <ReportArtifactView kind={stage.artifact} data={payload} />
+        ) : null}
+
         {stage.artifact === 'production_package' ? (
           <DeliveryTabs
             packageData={payload}
@@ -214,13 +319,8 @@ export function StageCanvas({
           />
         ) : null}
 
-        {payload &&
-        !['project_brief', 'story_bible', 'narrative_plan', 'episode_scripts', 'production_package'].includes(
-          stage.artifact,
-        ) ? (
-          <pre className="sf-panel overflow-auto p-4 text-xs text-ink-muted">
-            {JSON.stringify(payload, null, 2)}
-          </pre>
+        {payload && !STRUCTURED_ARTIFACTS.has(stage.artifact) ? (
+          <ReportArtifactView kind="generic" data={payload} />
         ) : null}
       </div>
     </div>

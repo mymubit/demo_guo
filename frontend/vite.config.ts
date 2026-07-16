@@ -11,6 +11,12 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    host: true,
+    watch: {
+      // Windows + Docker 卷挂载时需轮询，否则改文件浏览器看不到热更新
+      usePolling: true,
+      interval: 800,
+    },
     proxy: {
       '/api': {
         target: process.env.VITE_PROXY_TARGET || 'http://localhost:8000',

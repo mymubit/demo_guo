@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { ErrorBanner } from '@/components/ui/Tabs'
 import { Badge } from '@/components/ui/Badge'
+import { GenerationTroubleCard } from '@/components/workbench/GenerationTroubleCard'
 import { dramaApi } from '@/services/drama'
 import { subscribeJobEvents } from '@/services/sse'
 import { formatApiError } from '@/services/errors'
@@ -17,6 +18,29 @@ const STATUS_LABEL: Record<string, string> = {
   disabled: '已禁用',
 }
 
+const EVENT_TYPE_LABEL: Record<string, string> = {
+  status: '状态',
+  progress: '进度',
+  log: '日志',
+  message: '消息',
+  error: '错误',
+  warning: '警告',
+  artifact: '产物',
+  done: '完成',
+  heartbeat: '心跳',
+}
+
+function summarizeEventData(data: Record<string, unknown>): string {
+  const parts: string[] = []
+  for (const [key, value] of Object.entries(data)) {
+    if (value == null) continue
+    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+      parts.push(`${key}=${value}`)
+    }
+  }
+  return parts.slice(0, 4).join(' · ')
+}
+
 export function GenerationJobPanel({
   projectId,
   job,
@@ -27,9 +51,10 @@ export function GenerationJobPanel({
   onCompleted?: (job: GenerationJob) => void
 }) {
   const [events, setEvents] = useState<SseJobEvent[]>([])
-  const [error, setError] = useState<string | null>(null)
+  const [transportError, setTransportError] = useState<string | null>(null)
   const [status, setStatus] = useState(job?.status)
   const [progress, setProgress] = useState(job?.progress ?? 0)
+  const [jobError, setJobError] = useState<string | null>(job?.error ?? null)
   const onCompletedRef = useRef(onCompleted)
   onCompletedRef.current = onCompleted
 
@@ -37,15 +62,19 @@ export function GenerationJobPanel({
     if (!job?.job_id) return
 
     setEvents([])
-    setError(null)
+    setTransportError(null)
     setStatus(job.status)
     setProgress(job.progress ?? 0)
+    setJobError(job.error ?? null)
 
     const stop = subscribeJobEvents(projectId, job.job_id, {
       onEvent: (event) => {
         setEvents((prev) => [...prev.slice(-49), event])
         if (event.status) setStatus(event.status)
         if (typeof event.progress === 'number') setProgress(event.progress)
+        if (event.message && (event.type === 'error' || event.status === 'failed')) {
+          setJobError(event.message)
+        }
       },
       onDone: () => {
         const refresh = projectId
@@ -55,14 +84,15 @@ export function GenerationJobPanel({
           .then((latest) => {
             setStatus(latest.status)
             if (typeof latest.progress === 'number') setProgress(latest.progress)
+            if (latest.error) setJobError(latest.error)
             // failed / disabled must not be treated as success
             if (isSuccessfulJob(latest.status)) {
               onCompletedRef.current?.(latest)
             }
           })
-          .catch((err) => setError(formatApiError(err)))
+          .catch((err) => setTransportError(formatApiError(err)))
       },
-      onError: (err) => setError(formatApiError(err)),
+      onError: (err) => setTransportError(formatApiError(err)),
     })
 
     return stop
@@ -84,6 +114,7 @@ export function GenerationJobPanel({
             : 'default'
 
   const clamped = Math.min(100, Math.max(0, progress))
+  const showTrouble = status === 'failed' || status === 'disabled'
 
   return (
     <section className="sf-panel p-4" aria-label="生成任务进度">
@@ -107,28 +138,27 @@ export function GenerationJobPanel({
       <div className="sr-only" aria-live="polite">
         进度 {clamped}% · {STATUS_LABEL[status ?? ''] ?? status}
       </div>
-      {error ? (
+      {transportError ? (
         <div className="mt-3">
-          <ErrorBanner message={error} />
+          <ErrorBanner message={transportError} />
+        </div>
+      ) : null}
+      {showTrouble ? (
+        <div className="mt-3">
+          <GenerationTroubleCard message={jobError} status={status} />
         </div>
       ) : null}
       <ul className="mt-3 max-h-40 space-y-1 overflow-auto text-xs text-ink-muted" aria-live="polite">
         {events.map((e, idx) => (
           <li key={`${e.type}-${idx}`}>
-            [{e.type}] {e.message || JSON.stringify(e.data ?? {})}
+            [{EVENT_TYPE_LABEL[e.type] ?? e.type}]{' '}
+            {e.message ||
+              (e.data && typeof e.data === 'object'
+                ? summarizeEventData(e.data as Record<string, unknown>)
+                : '')}
           </li>
         ))}
       </ul>
-      {status === 'failed' && job.error ? (
-        <p className="mt-2 text-sm text-red-700" role="alert">
-          {job.error}
-        </p>
-      ) : null}
-      {status === 'disabled' && job.error ? (
-        <p className="mt-2 text-sm text-amber-800" role="status">
-          {job.error}
-        </p>
-      ) : null}
       <div className="mt-3">
         <Button
           variant="secondary"
@@ -140,6 +170,7 @@ export function GenerationJobPanel({
             void refresh.then((latest) => {
               setStatus(latest.status)
               if (typeof latest.progress === 'number') setProgress(latest.progress)
+              if (latest.error) setJobError(latest.error)
               if (isSuccessfulJob(latest.status)) onCompletedRef.current?.(latest)
             })
           }}
