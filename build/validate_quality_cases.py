@@ -13,11 +13,22 @@ sys.path.insert(0, str(ROOT))
 
 from runtime.workflow_engine import detect_trend  # noqa: E402
 
+sys.path.insert(0, str(ROOT / "build"))
+from synthesize_matrix_params import (  # noqa: E402
+    TagConstraintError,
+    synthesize_rule_params,
+)
+
 ERRORS: List[str] = []
 
 
 def load_yaml(relative_path: str) -> Dict[str, Any]:
     return yaml.safe_load((ROOT / relative_path).read_text(encoding="utf-8")) or {}
+
+
+def load_preset(preset: str) -> Dict[str, Any]:
+    presets = load_yaml("foundation/constraints/scoring-presets.yaml")["presets"]
+    return presets[preset]
 
 
 def production_band(tags: List[str]) -> str:
@@ -35,15 +46,32 @@ def evaluate_case(case: Dict[str, Any]) -> Dict[str, Any]:
     category = case["category"]
     data = case["input"]
     if category == "quality_gate":
-        threshold = load_yaml(
-            "foundation/constraints/quality-scoring.yaml"
-        )["grade_thresholds"]["B"]
+        # 质检环通过线跟随项目 scoring_preset（默认 standard）
+        preset = load_preset(data.get("preset", "standard"))
+        threshold = preset["pass_threshold"]
         decision = (
             "pass"
             if data["score"] >= threshold and not data["blocking_issues"]
             else "revise"
         )
         return {"decision": decision}
+    if category == "delivery_gate":
+        preset = load_preset(data.get("preset", "standard"))
+        can_deliver = (
+            data["score"] >= preset["pass_threshold"]
+            and preset["delivery_eligible"] is True
+            and data.get("compliance_passed") is True
+        )
+        return {"can_deliver": can_deliver}
+    if category == "theme_synthesis":
+        try:
+            result = synthesize_rule_params(dict(data["dims"]))
+        except TagConstraintError:
+            return {"synthesized": False, "reason": "constraint"}
+        output: Dict[str, Any] = {"synthesized": True}
+        if "matrix_key" in case.get("expected", {}):
+            output["matrix_key"] = result["matrix_key"]
+        return output
     if category == "continuity":
         return {"result": "pass" if data["conflicting_facts"] == 0 else "fail"}
     if category == "compliance":
@@ -71,11 +99,13 @@ def main() -> int:
         ERRORS.append("golden case id 重复")
     required_categories = {
         "quality_gate",
+        "delivery_gate",
         "continuity",
         "compliance",
         "production",
         "platform",
         "trend",
+        "theme_synthesis",
     }
     actual_categories = {case.get("category") for case in cases}
     if required_categories - actual_categories:

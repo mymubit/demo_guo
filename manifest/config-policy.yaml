@@ -17,8 +17,8 @@ protected_paths:
   - orchestration/**
   - foundation/rules/**
   - foundation/theme-matrix.yaml
-  - foundation/constraints/artifact-chunk-map.yaml
   - foundation/constraints/continuity-checkpoint.yaml
+  - foundation/constraints/narrative-metrics.yaml
   - foundation/constraints/series-scale.yaml
   - schemas/**
 

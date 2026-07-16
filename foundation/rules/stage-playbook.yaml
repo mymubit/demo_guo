@@ -1,5 +1,6 @@
 # stage_playbook · 阶段 playbook — Git SSOT（按 agent scope_key 过滤）
-version: "2.1.0"
+# 长文解释与案例：knowledge/craft/tier3-stage-rules.md（仅参考，数值与条款以本文件为准）
+version: "2.2.0"
 tier: 3
 items:
   - rule_key: t3.drama-topic-director.project_brief.market-integrated

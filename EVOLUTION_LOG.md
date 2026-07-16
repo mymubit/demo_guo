@@ -20,6 +20,19 @@
 
 ## 变更记录
 
+### 2026-07-16 · v5.2 全库审计修复（数值收口 + 题材矩阵 v2 + 契约闭合）
+
+- **数值收口**：新增 `foundation/constraints/narrative-metrics.yaml`（开场分层窗口 3s/10s/30s、S级铺垫 5 集、冲突密度 S1.5/A1.0/B0.5），裁决并消除 rules/knowledge 双源冲突（LR-005 vs plotting、10秒 vs 30秒、40-60% vs 55-75%、1.2 vs 1.5）
+- **合规提取补全**：恐怖内容三级处置、正义收束 35% 结尾窗口与触发词/正义词/洗白词清单、备案材料清单进入 `compliance-core.yaml`；`platform-profiles.yaml` 补种子检查项；删除 tier4 长文中的死索引区块（new_2026_p0_items 等，正文不存在）
+- **题材矩阵 v2.0**：受众频道（男频/女频/普适）升为必选维度；identity 轴 dual-lead → returning-elite（强者归来）；主角结构独立字段；标签 69→72（增战神/神医/高手下山/都市玄幻/真假千金/读心/先婚后爱/反派女配，删 5 个受众标签升维迁移）并分 hot/standard/longtail；新增 tag_constraints 互斥/世界观依赖；合成幂等（canonical 标签顺序）；推断词表去歧义并补男频词
+- **注入断链修复**：`genre-profile.yaml` → `genres/fallback.yaml`（进入 genre_profile 真实加载路径）；`memory_checkpoint.producer` = script-writer；`artifacts.yaml` 新增 field_writers 唯一写入者声明
+- **门禁跟随预设**：质检环与交付门禁改读当前 `scoring_preset` 的 pass_threshold ∧ delivery_eligible；`scoring-presets.yaml` 增平台推荐映射
+- **状态机补洞**：`all_batches_quality_passed` guard（末批质检对齐）、`project_brief_rejected/changed` 选题返工回流（仅原创通道）、`delivery_skipped` 自动事件声明；工作流场景 3→7 + guard 负向回归
+- **参数来源闭合**：workbench 新增 `command_scope_params`；校验器强制角色参数被 projection ∪ command_scope 完整覆盖
+- **双源治理**：删除 `foundation/methodology/*`（与 philosophy.yaml 重复）与 `artifact-chunk-map.yaml`（空壳指针）；`theme-templates.md` 降为指针页；`market-insights.md` 收敛为摄入区（基准表 SSOT = industry-benchmarks）；灵感库四文件挂载到 hook/dialogue/reversal/structure 模块
+- **校验器强化**：SKILL 参数漂移检测（清零 15 处）、模块七段结构检查、题材幂等与约束校验、golden cases 15→24（preset 门禁 + 题材合成/约束拒绝）
+- 注：v5.0 记录中提到的 `artifact-chunk-map.yaml` 兼容别名已在本版删除；`docs/DRAMA-SKILLS-V5-PLAN.md` 从未入库，相关链接已移除
+
 ### 2026-07-14 · 五阶段可执行契约与回归体系
 
 - **产物 Schema**：8 类业务产物与 memory checkpoint 全部具备 JSON Schema、合法样例和非法输入回归
@@ -61,7 +74,6 @@
 - **knowledge 按消费场景分 5 目录**：craft/（创作方法论）、market/（时效市场数据，后台配置候选）、quality/（质检标准）、production/（制作宣发）、system/（流程控制）；`knowledge-sections.md`、`output-schemas.md` 留在根目录（后端固定路径解析）；全库引用路径同步更新
 - **配置分级标注**：constraints 文件头部声明 `config_tier`——agent-runtime=seed_default（后台 drama-models 可覆盖）；quality-scoring 的阈值/熔断与 script-format 的字数/占比=seed_default（建议后台 system_config 覆盖）；格式 pattern、chunk-map=git_ssot
 - **校验器升级**：`validate_skills.py` 新增 knowledge 孤儿检测、模块孤儿检测、全库相对路径引用有效性、角色↔Section 映射存在性 4 项检查
-- 完整方案与后台配置中心设计见 `docs/DRAMA-SKILLS-V5-PLAN.md`
 
 ### 2026-07-02 · v5.0 主链收缩 + 双通道 + 质检环 + 进化机制补全
 

@@ -19,6 +19,7 @@
 - `foundation/constraints/narrative-metrics.yaml#opening_hook`（分层窗口数值 SSOT）
 
 钩子等级、密度、开场窗口与付费要求由上述规则和约束定义，本模块不重复维护。
+灵感库（可选参考，已验证的钩子模式）：`inspirations/hooks.md`。
 
 ## 黄金开场（首集，窗口数值见 narrative-metrics）
 

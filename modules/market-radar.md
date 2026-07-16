@@ -20,7 +20,7 @@
 
 ## 执行步骤
 
-1. **热点定位**：结合 `knowledge/market/douyin-formulas.md`（标签三级体系）与 `knowledge/market/market-insights.md`（平台基准），判断本选题所属标签组合的热度层级（通用型/场景型/情绪型）
+1. **热点定位**：结合 `knowledge/market/douyin-formulas.md`（标签三级体系）、`knowledge/market/industry-benchmarks.md`（平台基准）与 `knowledge/market/market-insights.md`（动态摄入），判断本选题所属标签组合的热度层级（通用型/场景型/情绪型）
 2. **竞品扫描**：列出同题材 2-3 部头部竞品，各提炼 1 条可借鉴点（inspiration）+ 1 条避雷点（avoidance）
 3. **空白点识别**：从「同标签组合下未被满足的情绪/身份/世界观变体」中找差异化切口（可用四轴矩阵换轴法：保留主情绪，替换身份或世界观轴）
 4. **平台适配**：只有在平台规则来源和验证时间有效时给出专项结论，否则标记待核验

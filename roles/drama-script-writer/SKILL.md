@@ -21,8 +21,7 @@ references:
 - ../../modules/continuity-snapshot.md
 - ../../modules/production-feasibility.md
 - ../../foundation/constraints/script-format.yaml
-- ../../foundation/methodology/cross-section.md
-- ../../foundation/methodology/mckee-value-shift.md
+- ../../foundation/rules/philosophy.yaml
 - ./tasks/write-episodes.md
 output_schema:
 - name: episode_scripts
@@ -75,5 +74,4 @@ output_schema:
 - `./role.yaml`
 - `./tasks/write-episodes.md`
 - `../../foundation/constraints/script-format.yaml`
-- `../../foundation/methodology/cross-section.md`
-- `../../foundation/methodology/mckee-value-shift.md`
+- `../../foundation/rules/philosophy.yaml`（横截面 / McKee 价值转变）

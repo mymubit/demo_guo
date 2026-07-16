@@ -15,6 +15,8 @@
 - `t1.global.foreshadowing_rules.density`
 - `foundation/constraints/series-scale.yaml`
 
+灵感库（可选参考，已验证的结构模式）：`inspirations/structures.md`。
+
 ## 输出
 - `series_structure.main_storyline`（唯一写入者）
 - `series_structure.six_stage_structure`（唯一写入者）

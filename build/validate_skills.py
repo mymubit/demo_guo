@@ -400,13 +400,11 @@ def check_scoring_presets() -> None:
 
 
 def check_artifact_chunk_map() -> None:
-    pointer = load_yaml(ROOT / "foundation" / "constraints" / "artifact-chunk-map.yaml")
-    source = pointer.get("source")
-    if source != "contracts/artifacts.yaml":
-        err("artifact-chunk-map: 必须仅引用 contracts/artifacts.yaml")
+    # v5.2：artifact-chunk-map.yaml 空壳指针已删除，直接读 contracts/artifacts.yaml
+    legacy_pointer = ROOT / "foundation" / "constraints" / "artifact-chunk-map.yaml"
+    if legacy_pointer.exists():
+        err("artifact-chunk-map.yaml 已废弃，禁止重新引入（SSOT: contracts/artifacts.yaml）")
     contract = load_artifacts_contract(ROOT)
-    if pointer.get("artifacts") or pointer.get("virtual_artifacts"):
-        err("artifact-chunk-map: 禁止内联产物定义")
     artifacts = set((contract.get("artifacts") or {}).keys())
     for key in contract.get("array_artifact_keys") or []:
         if key not in artifacts:
