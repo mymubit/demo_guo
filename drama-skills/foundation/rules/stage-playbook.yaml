@@ -1,5 +1,6 @@
 # stage_playbook · 阶段 playbook — Git SSOT（按 agent scope_key 过滤）
-version: "2.1.0"
+# 长文解释与案例：knowledge/craft/tier3-stage-rules.md（仅参考，数值与条款以本文件为准）
+version: "2.2.0"
 tier: 3
 items:
   - rule_key: t3.drama-topic-director.project_brief.market-integrated
@@ -9,7 +10,9 @@ items:
     title: 选题定调必须吸收市场判断
     priority: 10
     body: |
-      输出 project_brief 时必须包含故事梗概、市场机会判断、爆款因子、竞品避雷、差异化策略、首集钩子方向、首付费卡点方向和合规初筛。
+      输出 project_brief 时必须包含故事梗概、受众频道判断、市场机会判断、爆款因子、竞品避雷、
+      差异化策略、首集钩子方向、首付费卡点方向和题材敏感点预检（标注风险等级，不出合规结论，
+      合规裁决由 drama.compliance-guard 独立执行）。
       所有量化值读取 foundation/constraints/commercial-formulas.yaml。
   - rule_key: t3.drama-story-bible.dual-mode.same-schema
     section: philosophy
@@ -101,7 +104,8 @@ items:
     title: 交付前置门禁
     priority: 10
     body: |
-      执行交付检查前必须读取 quality_report 与 compliance_report；
-      无合规通过结论或评分低于 foundation/constraints/quality-scoring.yaml#grade_thresholds.B 时，
+      执行交付检查前必须读取 quality_report 与 compliance_report。
+      交付门禁以项目当前 scoring_preset 为准（foundation/constraints/scoring-presets.yaml）：
+      该 preset 的 delivery_eligible=false，或评分低于其 pass_threshold，或无合规通过结论时，
       只输出「不可交付+缺口清单」，不产出宣发物料。
       交付包必须包含制片复杂度/预算带与平台上架清单；政策未验证时不得标记可发布。

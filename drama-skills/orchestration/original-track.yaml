@@ -58,7 +58,7 @@ quality_loop:
   on_fail:
     conditions:
       any:
-        - {path: quality_report.overall_score, op: lt, value_ref: foundation/constraints/quality-scoring.yaml#grade_thresholds.B}
+        - {path: quality_report.overall_score, op: lt, value_ref: "foundation/constraints/scoring-presets.yaml#presets.{scoring_preset}.pass_threshold"}
         - {path: compliance_report.blocking_issues, op: not_empty}
     agent: drama.revision-master
     then: 修复稿交回 parallel_judges 复评，通过后才可继续生成下一批

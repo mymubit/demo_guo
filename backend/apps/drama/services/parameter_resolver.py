@@ -32,6 +32,18 @@ def load_source(root: Path, source: str) -> Any:
     return resolve_path(value, dotted_path)
 
 
+def _normalize_option_item(item: dict[str, Any]) -> dict[str, Any]:
+    option: dict[str, Any] = {
+        "value": item.get("value", item.get("theme_code")),
+        "label": item.get("label_zh", item.get("value")),
+    }
+    # 透传 UI 分层/分组元数据（与 drama-skills build/lib/source_loader.py 保持一致）
+    for extra in ("tier", "category", "desc"):
+        if item.get(extra) is not None:
+            option[extra] = item[extra]
+    return option
+
+
 def normalize_options(value: Any) -> list[dict[str, Any]]:
     if isinstance(value, dict):
         return [
@@ -40,10 +52,7 @@ def normalize_options(value: Any) -> list[dict[str, Any]]:
         ]
     if isinstance(value, list):
         return [
-            {
-                "value": item.get("value", item.get("theme_code")),
-                "label": item.get("label_zh", item.get("value")),
-            }
+            _normalize_option_item(item)
             if isinstance(item, dict)
             else {"value": item, "label": str(item)}
             for item in value

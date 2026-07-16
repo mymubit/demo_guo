@@ -4,11 +4,11 @@ from django.contrib.auth.models import User
 from django.test import override_settings
 from rest_framework.test import APITestCase
 
-from apps.drama.tests.helpers import FIXTURE_SETTINGS, auth_client, create_project, create_user
+from apps.drama.tests.helpers import FIXTURE_SETTINGS, SKILLS_ROOT, auth_client, create_project, create_user
 
 
 @override_settings(
-    DRAMA_SKILLS_ROOT="/workspace",
+    DRAMA_SKILLS_ROOT=SKILLS_ROOT,
     LLM_ENABLED=False,
     CELERY_TASK_ALWAYS_EAGER=True,
     CELERY_TASK_EAGER_PROPAGATES=True,

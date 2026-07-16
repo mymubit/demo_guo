@@ -21,8 +21,7 @@ references:
 - ../../modules/continuity-snapshot.md
 - ../../modules/production-feasibility.md
 - ../../foundation/constraints/script-format.yaml
-- ../../foundation/methodology/cross-section.md
-- ../../foundation/methodology/mckee-value-shift.md
+- ../../foundation/rules/philosophy.yaml
 - ./tasks/write-episodes.md
 output_schema:
 - name: episode_scripts
@@ -45,13 +44,16 @@ output_schema:
 
 ## 输入 / 输出
 
+参数契约 SSOT：`contracts/parameters.yaml#role_parameter_refs`（本表仅为速览，两边必须一致）
+
 | 方向 | 键 | 说明 |
 |------|-----|------|
 | 输出 | `episode_scripts` | schema v1 |
 | 输入（必填） | `story_bible` | 上游产物（人物层 + 结构层） |
 | 输入（必填） | `narrative_plan` | 分集设计 |
 | 输入（可选） | `project_brief` | 上游产物 |
-| 参数 | `episode_range` | 运行参数 |
+| 参数 | `episode_range` | 命令作用域（每批执行时传入） |
+| 参数 | `production_target_band` | 项目设置投影（制片预算带） |
 
 ## 标准输出要求
 
@@ -72,5 +74,4 @@ output_schema:
 - `./role.yaml`
 - `./tasks/write-episodes.md`
 - `../../foundation/constraints/script-format.yaml`
-- `../../foundation/methodology/cross-section.md`
-- `../../foundation/methodology/mckee-value-shift.md`
+- `../../foundation/rules/philosophy.yaml`（横截面 / McKee 价值转变）

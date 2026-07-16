@@ -94,10 +94,18 @@ def main() -> int:
             ERRORS.append(str(exc))
 
     derived = resolve_from_matrix(
-        {**project["genre_matrix"], "flavor_tags": project.get("flavor_tags", [])}
+        {
+            **project["genre_matrix"],
+            "audience_channel": project.get("audience_channel", "general"),
+            "protagonist_structure": project.get("protagonist_structure"),
+            "flavor_tags": project.get("flavor_tags", []),
+        }
     )
     if derived["matrix_key"] != project["derived"]["matrix_key"]:
-        ERRORS.append("项目派生 matrix_key 与合成器不一致")
+        ERRORS.append(
+            f"项目派生 matrix_key 与合成器不一致: "
+            f"fixture={project['derived']['matrix_key']} synthesized={derived['matrix_key']}"
+        )
 
     for message in ERRORS:
         print(f"ERROR {message}")

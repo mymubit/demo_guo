@@ -70,7 +70,6 @@ export function ProjectSettingsPage() {
   )
 
   const themeMatrix = definition.theme_matrix
-  const platformField = definition.fields.target_platform
 
   if (settingsQuery.isLoading) return <LoadingBlock />
   if (settingsQuery.isError) {
@@ -166,8 +165,9 @@ export function ProjectSettingsPage() {
                 <ThemeSection
                   draft={draft}
                   matrix={themeMatrix}
-                  platformField={platformField}
+                  fields={group.fields}
                   onPatch={patch}
+                  onFieldChange={updateField}
                 />
               ) : (
                 group.fields.map((field) => (
@@ -188,19 +188,36 @@ export function ProjectSettingsPage() {
   )
 }
 
+/** 由 ThemeMatrixPicker 专属渲染的字段；其余题材字段（频道/主角结构/平台）走通用 FieldEditor */
+const PICKER_FIELD_KEYS = new Set(['genre_matrix', 'flavor_tags', 'preset_theme_code'])
+
 function ThemeSection({
   draft,
   matrix,
-  platformField,
+  fields,
   onPatch,
+  onFieldChange,
 }: {
   draft: ProjectSettings
   matrix: ThemeMatrix
-  platformField?: SettingsFieldDef
+  fields: SettingsFieldDef[]
   onPatch: (updater: (prev: ProjectSettings) => ProjectSettings) => void
+  onFieldChange: (field: SettingsFieldDef, value: unknown) => void
 }) {
+  const editorFields = fields.filter((f) => !PICKER_FIELD_KEYS.has(f.key))
   return (
     <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        {editorFields.map((field) => (
+          <FieldEditor
+            key={field.key}
+            field={field}
+            draft={draft}
+            required={isFieldRequired(field, draft)}
+            onChange={(value) => onFieldChange(field, value)}
+          />
+        ))}
+      </div>
       <ThemeMatrixPicker
         matrix={matrix}
         genreMatrix={(draft.genre_matrix as GenreMatrix | undefined) ?? {}}
@@ -212,22 +229,6 @@ function ThemeSection({
         onChangeFlavorTags={(tags) => onPatch((prev) => ({ ...prev, flavor_tags: tags }))}
         onChangePreset={(code) => onPatch((prev) => ({ ...prev, preset_theme_code: code }))}
       />
-      {platformField ? (
-        <div>
-          <label className="sf-label">{platformField.label_zh}</label>
-          <select
-            className="sf-control"
-            value={draft.target_platform}
-            onChange={(e) => onPatch((prev) => ({ ...prev, target_platform: e.target.value }))}
-          >
-            {(platformField.options ?? []).map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      ) : null}
     </div>
   )
 }

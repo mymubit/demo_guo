@@ -64,7 +64,9 @@ export type ProjectSettings = {
   synopsis?: string
   external_story?: string
   adapt_notes?: AdaptNotes
+  audience_channel?: string
   genre_matrix?: GenreMatrix
+  protagonist_structure?: string | null
   flavor_tags?: string[]
   preset_theme_code?: string | null
   episode_count: number

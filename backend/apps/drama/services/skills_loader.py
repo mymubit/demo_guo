@@ -20,25 +20,12 @@ from apps.drama.services.parameter_resolver import (
 )
 
 
-_RULE_FILES = [
-    "foundation/rules/philosophy.yaml",
-    "foundation/rules/narrative-craft.yaml",
-    "foundation/rules/rhythm-rules.yaml",
-    "foundation/rules/character-rules.yaml",
-    "foundation/rules/dialogue-rules.yaml",
-    "foundation/rules/writing-rules.yaml",
-    "foundation/rules/plotting-rules.yaml",
-    "foundation/rules/scoring-core.yaml",
-    "foundation/rules/learned-rules.yaml",
-    "foundation/rules/stage-playbook.yaml",
-    "foundation/rules/compliance-core.yaml",
-    "foundation/rules/originality-rules.yaml",
-    "foundation/rules/concept-rules.yaml",
-    "foundation/rules/structure-rules.yaml",
-    "foundation/rules/world-rules.yaml",
-    "foundation/rules/production-rules.yaml",
-    "foundation/rules/genre-profile.yaml",
-]
+def _discover_rule_files(root: Path) -> list[str]:
+    """动态发现规则文件（根级 + genres/），避免硬编码清单与技能仓漂移。"""
+    rules_dir = root / "foundation" / "rules"
+    files = sorted(p for p in rules_dir.glob("*.yaml"))
+    files += sorted(p for p in (rules_dir / "genres").glob("*.yaml"))
+    return [str(p.relative_to(root)) for p in files]
 
 
 class SkillsBundleLoader:
@@ -348,7 +335,7 @@ class SkillsBundleLoader:
         theme_code = _resolve_theme_code(settings)
         items: list[tuple[int, str]] = []
 
-        for rel_path in _RULE_FILES:
+        for rel_path in _discover_rule_files(self.root):
             data = self._load_yaml(rel_path)
             tier = data.get("tier")
             for item in data.get("items", []):
@@ -433,12 +420,11 @@ def _deep_set(data: dict[str, Any], dotted: str, value: Any) -> None:
 
 
 def _resolve_theme_code(settings: dict[str, Any]) -> str:
+    # 四轴路径统一 theme_code=matrix（对齐 theme-matrix.yaml#resolve），
+    # 使 genres/matrix.yaml（scope_key=matrix）与 genres/fallback.yaml（scope_key=""）正确注入。
     matrix = settings.get("genre_matrix") or {}
     if matrix:
-        return "-".join(
-            matrix.get(axis, "")
-            for axis in ("emotion", "identity", "conflict", "world")
-        )
+        return "matrix"
     return settings.get("preset_theme_code") or ""
 
 

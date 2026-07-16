@@ -11,6 +11,7 @@ from django.db import transaction
 from apps.core.audit import audit_log
 from apps.core.exceptions import (
     OPTIMISTIC_LOCK_FAILED,
+    VALIDATION_ERROR,
     BusinessException,
 )
 from apps.core.schema_validator import SchemaValidator
@@ -167,12 +168,9 @@ class ProjectSettingsService:
         result = dict(settings)
         matrix = result.get("genre_matrix") or {}
         if matrix:
-            key = "-".join(
-                matrix.get(axis, "")
-                for axis in ("emotion", "identity", "conflict", "world")
-            )
+            self._validate_tag_constraints(result)
             result["derived"] = {
-                "matrix_key": key,
+                "matrix_key": self._matrix_key(result),
                 "rule_params_ref": "project_brief.rule_params",
             }
         platform = result.get("target_platform", "generic")
@@ -187,13 +185,56 @@ class ProjectSettingsService:
         }
         return result
 
+    def _matrix_key(self, settings: dict[str, Any]) -> str:
+        """与 drama-skills build/synthesize_matrix_params.py 的 matrix_key 规则保持一致。"""
+        matrix = settings.get("genre_matrix") or {}
+        theme = self.loader.load_seed_yaml("foundation/theme-matrix.yaml")
+        dim_order = theme.get("dim_order") or ["emotion", "identity", "conflict", "world"]
+        key_parts = ["-".join(str(matrix.get(axis, "")) for axis in dim_order)]
+        channel = settings.get("audience_channel") or "general"
+        if channel != "general":
+            key_parts.append(f"ch:{channel}")
+        structure = settings.get("protagonist_structure")
+        if structure:
+            key_parts.append(f"ps:{structure}")
+        tags = list(settings.get("flavor_tags") or [])
+        if tags:
+            max_tags = (theme.get("flavor_tags") or {}).get("max_select", 5)
+            key_parts.append("+".join(sorted(tags[:max_tags])))
+        return "|".join(key_parts)
+
+    def _validate_tag_constraints(self, settings: dict[str, Any]) -> None:
+        """theme-matrix#tag_constraints：互斥与世界观依赖，违反即拒绝保存。"""
+        theme = self.loader.load_seed_yaml("foundation/theme-matrix.yaml")
+        constraints = theme.get("tag_constraints") or {}
+        tags = set(settings.get("flavor_tags") or [])
+        for group in constraints.get("mutually_exclusive") or []:
+            hit = tags & set(group)
+            if len(hit) > 1:
+                raise BusinessException(
+                    VALIDATION_ERROR,
+                    f"互斥风味标签不能同时选择: {sorted(hit)}",
+                    http_status=422,
+                )
+        world = (settings.get("genre_matrix") or {}).get("world")
+        for tag, allowed_worlds in (constraints.get("requires_world") or {}).items():
+            if tag in tags and world and world not in allowed_worlds:
+                raise BusinessException(
+                    VALIDATION_ERROR,
+                    f"标签 {tag} 要求世界观 {allowed_worlds}，当前 world={world}",
+                    http_status=422,
+                )
+
     def _blueprint_inputs_changed(
         self, old: dict[str, Any], new: dict[str, Any]
     ) -> bool:
         keys = (
             "core_idea",
             "external_story",
+            "audience_channel",
             "genre_matrix",
+            "protagonist_structure",
+            "flavor_tags",
             "episode_count",
             "adapt_notes",
         )

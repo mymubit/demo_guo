@@ -7,7 +7,9 @@ items:
     title: 四级钩子
     priority: 10
     body: |
-      S级全剧核心 / A级跨2-3集 / B级集末 / C级场间。首集开场30秒：视觉冲击→信息建立→悬念确立。
+      S级全剧核心 / A级跨2-3集 / B级集末 / C级场间。
+      首集开场分层窗口（3秒冲击/10秒主钩/30秒三段式）读取
+      foundation/constraints/narrative-metrics.yaml#opening_hook。
   - rule_key: t1.global.episode_structure.four-act
     section: episode_structure
     title: 单集四段式占比

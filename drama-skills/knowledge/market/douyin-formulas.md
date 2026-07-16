@@ -30,8 +30,8 @@
   主角伪装弱者→被人轻视欺压→真实身份揭露→碾压反转
 
 关键设计：
-  隐藏身份要在3集内有暗示，不能完全不铺垫
-  揭露时机：全剧40-60%处（留足下半程的爽感）
+  隐藏身份暗示集数与揭露窗口读取 foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow
+  （揭露窗口 SSOT 为 commercial-formulas.yaml#s_reversal_window，禁止在本文另行取值）
   揭露后：不能立刻解决所有问题，要有新的挑战
 
 适用题材：豪门霸总/都市逆袭/古装权谋

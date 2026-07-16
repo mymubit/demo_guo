@@ -20,7 +20,9 @@ input_contract:
   parameter_refs:
   - core_idea
   - synopsis
+  - audience_channel
   - genre_matrix
+  - protagonist_structure
   - flavor_tags
   - preset_theme_code
   - episode_count

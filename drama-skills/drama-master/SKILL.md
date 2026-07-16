@@ -43,7 +43,7 @@ output_schema:
 ① 起点（决定通道）：
    A. 从零开始 / 只有一个想法        → 原创创作通道（先走选题定调官）
    B. 已有故事 / 小说 / 大纲         → 故事改编通道（直接进剧本蓝图官改编模式）
-② 题材（原创通道）：四轴矩阵（见 `foundation/theme-matrix.yaml`）或一句话创意
+② 题材（原创通道）：受众频道+四轴矩阵（见 `foundation/theme-matrix.yaml`）或一句话创意
 ③ 集数规模：正整数；工作台可提供常用区间快捷选择
 ④ 目标平台：读取 `foundation/constraints/platform-profiles.yaml`
 ⑤ 是否需要宣发交付包（可选工具）
@@ -127,7 +127,7 @@ output_schema:
 
 - `knowledge/craft/shanyin-screenwriting-methodology.md` — 横截面 / Ghost-Lie-Flaw / McKee
 - `knowledge/market/douyin-formulas.md` — 爆款公式
-- `foundation/theme-matrix.yaml` — 四轴矩阵与规则模板映射
+- `foundation/theme-matrix.yaml` — 频道+四轴矩阵与参数合成 SSOT
 - `knowledge/craft/theme-templates.md` — 规则模板量化参数
 - `knowledge/quality/tier4-compliance.md` — 合规红线
 - `knowledge/quality/originality-rules.md` — 改编模式原创性保护

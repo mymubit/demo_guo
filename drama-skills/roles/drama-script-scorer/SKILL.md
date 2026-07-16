@@ -34,6 +34,10 @@ references:
 
 评分预设（standard / strict / relaxed / rhythm_first）见 `knowledge/quality/scoring-presets.md`；S 级逐项核对清单见 `knowledge/quality/s-class-standards.md`。
 
+运行参数（SSOT：`contracts/parameters.yaml#role_parameter_refs`）：
+`scoring_mode`（project / external，命令作用域）、`scoring_preset`（项目设置投影）、
+`episode_range`（命令作用域，指定评分批次）。
+
 ## 十维评分
 
 评分 SSOT：`foundation/constraints/quality-scoring.yaml`。

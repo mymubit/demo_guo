@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""校验 theme-matrix.yaml：轴/标签/合成/deltas 完整性。"""
+"""校验 theme-matrix.yaml：频道/轴/结构/标签/约束/合成 deltas 完整性与幂等性。"""
 from __future__ import annotations
 
+import random
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Set
@@ -14,6 +15,8 @@ MATRIX_PATH = ROOT / "foundation" / "theme-matrix.yaml"
 
 sys.path.insert(0, str(ROOT / "build"))
 from synthesize_matrix_params import synthesize_rule_params  # noqa: E402
+
+VALID_TIERS = {"hot", "standard", "longtail"}
 
 
 def _load() -> Dict[str, Any]:
@@ -57,12 +60,54 @@ def validate() -> int:
     missing_tags = tags - tag_deltas
     if missing_tags:
         errors.append(f"flavor_tag_deltas 缺失: {sorted(missing_tags)}")
+    orphan_deltas = tag_deltas - tags
+    if orphan_deltas:
+        errors.append(f"flavor_tag_deltas 存在孤儿标签: {sorted(orphan_deltas)}")
 
     cat_tags: Set[str] = set()
     for cat in (cfg.get("flavor_tags") or {}).get("categories") or []:
         cat_tags.update(cat.get("tags") or [])
     if cat_tags != tags:
         errors.append(f"categories 与 options 不一致: 缺 {sorted(tags - cat_tags)} 多 {sorted(cat_tags - tags)}")
+
+    # 频道与主角结构：选项与 delta 必须闭合
+    channel_opts = {o["value"] for o in (cfg.get("audience_channel") or {}).get("options") or []}
+    channel_profiles = set((syn.get("channel_profiles") or {}).keys())
+    if channel_opts != channel_profiles:
+        errors.append(
+            f"channel_profiles 与 audience_channel.options 不一致: "
+            f"缺 {sorted(channel_opts - channel_profiles)} 多 {sorted(channel_profiles - channel_opts)}"
+        )
+    default_channel = (cfg.get("audience_channel") or {}).get("default")
+    if default_channel not in channel_opts:
+        errors.append(f"audience_channel.default={default_channel} 不在选项中")
+
+    structure_opts = {o["value"] for o in (cfg.get("protagonist_structure") or {}).get("options") or []}
+    structure_deltas = set((syn.get("structure_deltas") or {}).keys())
+    if structure_opts != structure_deltas:
+        errors.append(
+            f"structure_deltas 与 protagonist_structure.options 不一致: "
+            f"缺 {sorted(structure_opts - structure_deltas)} 多 {sorted(structure_deltas - structure_opts)}"
+        )
+
+    # tier 必须合法
+    for opt in (cfg.get("flavor_tags") or {}).get("options") or []:
+        if opt.get("tier") not in VALID_TIERS:
+            errors.append(f"标签 {opt.get('value')} tier 非法: {opt.get('tier')}")
+
+    # tag_constraints 引用必须真实存在
+    constraints = cfg.get("tag_constraints") or {}
+    worlds = _axis_values(cfg, "world")
+    for group in constraints.get("mutually_exclusive") or []:
+        for tag in group:
+            if tag not in tags:
+                errors.append(f"tag_constraints.mutually_exclusive 引用不存在标签: {tag}")
+    for tag, allowed in (constraints.get("requires_world") or {}).items():
+        if tag not in tags:
+            errors.append(f"tag_constraints.requires_world 引用不存在标签: {tag}")
+        for world in allowed or []:
+            if world not in worlds:
+                errors.append(f"tag_constraints.requires_world[{tag}] 引用不存在世界观: {world}")
 
     for preset in cfg.get("preset_templates") or []:
         dims = preset.get("dims") or {}
@@ -83,6 +128,32 @@ def validate() -> int:
         for tag in dims.get("flavor_tags") or []:
             if tag not in tags:
                 errors.append(f"featured {combo.get('id')} 无效 tag: {tag}")
+        channel = dims.get("audience_channel")
+        if channel and channel not in channel_opts:
+            errors.append(f"featured {combo.get('id')} 无效 audience_channel: {channel}")
+        structure = dims.get("protagonist_structure")
+        if structure and structure not in structure_opts:
+            errors.append(f"featured {combo.get('id')} 无效 protagonist_structure: {structure}")
+
+    # 幂等性：标签乱序合成结果必须一致
+    idempotency_dims = {
+        "emotion": "justice",
+        "identity": "returning-elite",
+        "conflict": "family",
+        "world": "modern",
+        "audience_channel": "male",
+        "protagonist_structure": "single-male",
+        "flavor_tags": ["war-god", "urban-fantasy", "angst-revenge", "down-market"],
+    }
+    baseline = synthesize_rule_params(idempotency_dims)
+    shuffled_tags = list(idempotency_dims["flavor_tags"])
+    rng = random.Random(42)
+    for _ in range(5):
+        rng.shuffle(shuffled_tags)
+        result = synthesize_rule_params({**idempotency_dims, "flavor_tags": list(shuffled_tags)})
+        if result != baseline:
+            errors.append(f"合成不幂等：标签顺序 {shuffled_tags} 与 baseline 结果不同")
+            break
 
     if errors:
         print("VALIDATE FAILED:")

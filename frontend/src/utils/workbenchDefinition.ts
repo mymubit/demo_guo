@@ -153,17 +153,27 @@ export function buildThemeMatrixFromFields(
   const flavorOptions = (flavor?.options ?? []).map((o) => ({
     value: o.value,
     label_zh: o.label_zh || o.label || o.value,
-    category: 'all',
+    category: o.category ?? 'all',
+    tier: o.tier,
   }))
+
+  // 按后端透传的 category 元数据分组；无分组信息时退化为单组
+  const categoryIds = [...new Set(flavorOptions.map((o) => o.category))]
+  const categories =
+    flavorOptions.length === 0
+      ? []
+      : categoryIds.map((id) => ({
+          id,
+          label_zh: id === 'all' ? '全部' : id,
+          tags: flavorOptions.filter((o) => o.category === id).map((o) => o.value),
+        }))
 
   return {
     dim_order: dimOrder,
     axes,
     flavor_tags: {
       max_select: flavor?.max_items ?? 5,
-      categories: flavorOptions.length
-        ? [{ id: 'all', label_zh: '全部', tags: flavorOptions.map((o) => o.value) }]
-        : [],
+      categories,
       options: flavorOptions,
     },
     preset_templates: (preset?.options ?? []).map((o) => ({

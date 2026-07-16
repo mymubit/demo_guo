@@ -51,7 +51,7 @@ TRIGGERS: Dict[str, List[str]] = {
 
 EXTRA_READING: Dict[str, List[str]] = {
     "drama.topic-director": [
-        "foundation/methodology/cross-section.md",
+        "foundation/rules/philosophy.yaml",
         "knowledge/market/douyin-formulas.md",
         "knowledge/market/industry-benchmarks.md",
         "knowledge/market/market-insights.md",
@@ -63,8 +63,8 @@ EXTRA_READING: Dict[str, List[str]] = {
     ],
     "drama.script-writer": [
         "foundation/constraints/script-format.yaml",
-        "foundation/methodology/cross-section.md",
-        "foundation/methodology/mckee-value-shift.md",
+        "foundation/rules/philosophy.yaml",
+        
     ],
     "drama.script-scorer": [
         "foundation/constraints/quality-scoring.yaml",
