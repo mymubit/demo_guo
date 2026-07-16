@@ -172,10 +172,18 @@ runtime_projection:
   workflow:
     batch_episode_max: creation_preferences.batch_episode_max
 
+# 命令作用域参数 — 不从项目设置投影，由每次执行命令的载荷提供。
+# 校验规则：每个角色的 parameter_refs 必须被 runtime_projection ∪ command_scope_params 完整覆盖。
+command_scope_params:
+  drama.episode-designer: [episode_range]
+  drama.script-writer: [episode_range]
+  drama.script-scorer: [episode_range, scoring_mode]
+  drama.revision-master: [episode_range, focus_areas]
+
 stages:
   - {id: strategy, orchestration_phase: strategy, stage_kind: main, role: drama.topic-director, visible_when: "entry_type == 'original_track'"}
   - {id: blueprint, orchestration_phase: blueprint, stage_kind: main, role: drama.story-bible, approval_required: true}
-  - {id: episode_design, orchestration_phase: episode_design, stage_kind: main, role: drama.episode-designer}
+  - {id: episode_design, orchestration_phase: episode_design, stage_kind: main, role: drama.episode-designer, batch_field: episode_range}
   - {id: writing, orchestration_phase: writing, stage_kind: main, role: drama.script-writer, batch_field: episode_range}
   - {id: quality_score, stage_kind: quality_loop, role: drama.script-scorer, parallel_group: quality}
   - {id: compliance, stage_kind: quality_loop, role: drama.compliance-guard, parallel_group: quality}

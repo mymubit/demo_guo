@@ -1,4 +1,4 @@
-version: "1.0.0"
+version: "1.1.0"
 state_schema: schemas/workflow-state.v1.schema.json
 
 initial_phase:
@@ -7,6 +7,9 @@ initial_phase:
 
 transitions:
   - {from: strategy, event: project_brief_completed, to: blueprint}
+  # 选题返工：original_track 专属；驳回未审批蓝图回选题，或已推进后整体重定调
+  - {from: blueprint, event: project_brief_rejected, to: strategy, guard: is_original_track}
+  - {from: "*", event: project_brief_changed, to: strategy, guard: is_original_track, action: invalidate_from_strategy}
   - {from: blueprint, event: story_bible_completed, to: blueprint_approval, status: waiting_approval}
   - {from: blueprint_approval, event: story_bible_approved, to: episode_design, action: approve_story_bible}
   - {from: blueprint_approval, event: story_bible_rejected, to: blueprint}
@@ -18,10 +21,18 @@ transitions:
   - {from: quality, event: quality_failed, to: revision, guard: can_auto_revise, action: increment_revision_round}
   - {from: quality, event: quality_failed, to: quality, guard: must_stop, status: waiting_user, action: require_user_decision}
   - {from: revision, event: polished_script_completed, to: quality, status: waiting_quality, action: reset_quality_join}
-  - {from: writing, event: all_batches_completed, to: delivery}
+  # 末批必须已通过质检（payload.total_batches 与 last_quality_passed_batch 对齐）才能进入交付
+  - {from: writing, event: all_batches_completed, to: delivery, guard: all_batches_quality_passed}
   - {from: delivery, event: delivery_skipped, to: completed, status: completed}
   - {from: delivery, event: production_package_completed, to: completed, status: completed}
   - {from: "*", event: story_bible_changed, to: blueprint_approval, status: waiting_approval, action: invalidate_downstream}
+
+# 运行时自动事件：由后端在指定条件下自动发出，不由用户/Agent 触发
+auto_events:
+  delivery_skipped:
+    emitted_by: runtime
+    when: "creation_preferences.enable_delivery == false"
+    note: 进入 delivery 阶段且交付未启用时立即自动发出，避免流程卡死在 delivery。
 
 user_decisions:
   accept_current: {to: writing, action: advance_batch}

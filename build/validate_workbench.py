@@ -261,6 +261,32 @@ def check_workbench() -> None:
             if not schema_has_path(project_schema, str(source_path), parameter_defs):
                 ERRORS.append(f"runtime_projection 来源不存在: {source_path}")
 
+    # 参数来源完整性：每个角色的 parameter_refs 必须被
+    # runtime_projection ∪ command_scope_params 完整覆盖，禁止来源不明的参数。
+    command_scope = workbench.get("command_scope_params") or {}
+    for target, params in command_scope.items():
+        if target not in role_metas:
+            ERRORS.append(f"command_scope_params 指向未注册角色: {target}")
+            continue
+        target_params = set(role_parameter_refs(target))
+        for param in params or []:
+            if param not in target_params:
+                ERRORS.append(f"command_scope_params: {target}.{param} 未在角色参数注册")
+    # 入口参数（entry_requirements/审批门）之外的角色参数必须有明确来源
+    entry_scope_params = {"external_story", "adapt_notes", "target_platform"}
+    for agent_id in role_metas:
+        refs = set(role_parameter_refs(agent_id))
+        projected = {
+            p for p in (workbench.get("runtime_projection") or {}).get(agent_id, {}) if p != "when"
+        }
+        command_scoped = set(command_scope.get(agent_id) or [])
+        uncovered = refs - projected - command_scoped - entry_scope_params
+        if uncovered:
+            ERRORS.append(
+                f"{agent_id}: 参数缺少来源声明（不在 runtime_projection/command_scope_params）: "
+                f"{sorted(uncovered)}"
+            )
+
     catalog = load_yaml("modules/catalog.yaml")
     panel = workbench.get("module_panel") or {}
     for module, meta in (catalog.get("modules") or {}).items():
