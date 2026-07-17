@@ -1,7 +1,8 @@
 # 输出契约 Schema（Output Schemas）
 
-> **机器 SSOT**：`contracts/artifacts.yaml` + `schemas/artifacts/<artifact_key>/1.schema.json`；本文件是人类可读说明。
-> 角色与产物索引以 `registry.yaml` 与 `contracts/artifacts.yaml` 为准。
+> **机器 SSOT**：`schemas/artifacts/<artifact_key>/1.schema.json`。
+> **Prompt 字段表**：运行时由 `schema_prompt_contract` 从 schema 生成，禁止在 prompt_builder 手写第二份必填清单。
+> 本 Markdown 仅供人读；若与 schema 冲突，以 schema 为准。
 
 ## schema 索引
 

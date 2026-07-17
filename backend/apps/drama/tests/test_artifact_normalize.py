@@ -377,6 +377,40 @@ class NarrativePlanNormalizeTests(TestCase):
         self.assertEqual(ep["ending_hook"], "青禾被点名")
         self.validator.validate_file(out, "schemas/artifacts/narrative_plan/1.schema.json")
 
+    def test_normalize_preserves_canonical_opening_hook(self) -> None:
+        """已是合法键名时 normalize 不改 opening_hook，防止回归。"""
+        raw = {
+            "episode_narrative_designs": [
+                {
+                    "episode": 1,
+                    "title": "入宫",
+                    "core_event": "暗语试探",
+                    "goal_conflict": "潜伏×暴露",
+                    "emotion_intensity": 7,
+                    "opening_hook": "殿前暗语对上",
+                    "ending_hook": "陆珩未拆穿",
+                    "satisfaction_points": ["过关"],
+                    "reversal": "知情不报",
+                    "paywall_hook": "身份将露",
+                    "rhythm_tag": "tight",
+                    "foreshadowing": {"setup": [], "payoff": []},
+                    "hook_grade": "A",
+                    "characters": ["沈玉楼"],
+                    "emotion_nodes": {
+                        "EV": {"value": 7},
+                        "ET": {"value": 3},
+                        "TP": {"content": "暗语试探"},
+                    },
+                }
+            ]
+        }
+        out = normalize_narrative_plan(raw, self.settings)
+        self.assertEqual(
+            out["episode_narrative_designs"][0]["opening_hook"],
+            "殿前暗语对上",
+        )
+        self.validator.validate_file(out, "schemas/artifacts/narrative_plan/1.schema.json")
+
     def test_valid_fixture_stays_valid(self) -> None:
         out = normalize_narrative_plan(FIXTURES["narrative_plan"], self.settings)
         self.validator.validate_file(out, "schemas/artifacts/narrative_plan/1.schema.json")

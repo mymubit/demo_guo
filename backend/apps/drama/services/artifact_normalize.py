@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-"""将 LLM 松散输出对齐到产物 schema（结构字段由 settings/合成器补全）。"""
+"""将 LLM 松散输出对齐到产物 schema（结构字段由 settings/合成器补全）。
+
+兼容兜底层，非字段名 SSOT。字段契约以 JSON Schema 与 schema_prompt_contract 为准；
+本模块仅处理别名映射与缺省补全，禁止在此新增第二份字段表。
+"""
 from __future__ import annotations
 
 from typing import Any
