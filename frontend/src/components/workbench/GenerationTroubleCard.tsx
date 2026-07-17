@@ -5,15 +5,13 @@ import { cn } from '@/utils/cn'
 export function GenerationTroubleCard({
   message,
   status,
-  context,
   className,
 }: {
   message?: string | null
   status?: string | null
-  context?: 'workbench' | 'external_review'
   className?: string
 }) {
-  const trouble = diagnoseGenerationFailure(message, { status, context })
+  const trouble = diagnoseGenerationFailure(message, { status })
   if (!trouble) return null
   return <TroubleBody trouble={trouble} className={className} />
 }

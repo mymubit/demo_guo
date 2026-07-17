@@ -11,7 +11,7 @@ import { useWorkbenchDefinition } from '@/hooks/useWorkbenchDefinition'
 import { dramaApi } from '@/services/drama'
 import { formatApiError } from '@/services/errors'
 import {
-  hasTopicDirectorInput,
+  isGenreMatrixComplete,
   isWorkflowFirstRun,
   resolveFirstRunStageId,
 } from '@/utils/firstRunGuide'
@@ -132,7 +132,7 @@ export function WorkbenchPage() {
     return <div className="p-8 text-sm text-ink-muted">工作台数据不完整</div>
   }
 
-  const topicReady = hasTopicDirectorInput(settingsQuery.data)
+  const themeReady = isGenreMatrixComplete(settingsQuery.data.genre_matrix)
   const firstRun = isWorkflowFirstRun(workflowQuery.data)
 
   return (
@@ -172,16 +172,14 @@ export function WorkbenchPage() {
         </div>
       </div>
 
-      {!topicReady ? (
+      {!themeReady ? (
         <div className="border-b border-amber-200 bg-amber-50 px-4 py-1.5 text-xs text-amber-900">
-          {settingsQuery.data.entry_type === 'story_adapt'
-            ? '改编通道需填写外部故事原文后才能执行蓝图。'
-            : '原创通道：核心创意与题材矩阵至少完善一项后再执行选题定调。'}
+          题材未选齐，建议先完善创作设定再执行主链。
           <Link
             className="ml-2 font-medium text-action underline underline-offset-2"
-            to={`/projects/${projectId}/settings`}
+            to={`/projects/${projectId}/settings?focus=theme`}
           >
-            去完善
+            去选题材
           </Link>
         </div>
       ) : null}
