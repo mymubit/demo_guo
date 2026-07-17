@@ -47,20 +47,22 @@ references:
 5. 用付费卡点模块落实承诺、卡点和兑现位置
 6. 逐集输出 episode card，跑各模块自检清单
 
-## 标准输出要求
+## 标准输出要求（键名必须与 schema 一致）
 
-- 每集标题
-- 每集核心事件
-- 每集出场人物
-- 每集 Goal × Conflict
-- 每集情绪强度
-- 每集爽点
-- 集首钩子
-- 集末钩子
-- 单集反转
-- 伏笔埋设 / 回扣
-- 付费卡点
-- 双轨节奏标注
+- `title`：每集标题
+- `core_event`：每集核心事件
+- `characters`：出场人物名数组
+- `goal_conflict`：Goal × Conflict
+- `emotion_intensity`：情绪强度 1–10
+- `satisfaction_points`：爽点字符串数组
+- `opening_hook`：集首钩子（禁止写成 open_hook / opening）
+- `ending_hook`：集末钩子（禁止写成 cliffhanger 顶层键）
+- `reversal`：单集反转
+- `foreshadowing.setup` / `foreshadowing.payoff`
+- `paywall_hook`：付费卡点
+- `rhythm_tag`：双轨节奏标注
+- `hook_grade`：S|A|B|C
+- `emotion_nodes.EV` / `ET` / `TP`
 
 ## 触发方式
 

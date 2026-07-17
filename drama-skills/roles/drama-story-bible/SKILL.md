@@ -1,7 +1,9 @@
 ---
 name: drama-story-bible
-version: 5.0.0
-description: 剧本蓝图官：合并人物关系与全剧架构能力，输出剧本梗概+人物+世界观+全剧结构一体的 story_bible。支持原创模式（接选题简报）与改编模式（提取并补全用户提供的故事）。
+version: 5.1.0
+description: >
+  何时用：基于 project_brief 展开原创蓝图，或基于 external_story 做改编蓝图，输出 story_bible。
+  何时不用：仍在选题阶段且没有定调输入时不要抢跑；不要展开逐集正文或分集卡（交给分集设计官/正文官）。
 tags:
 - 剧本梗概
 - 人物小传
@@ -25,6 +27,7 @@ output_schema:
   description: 故事蓝图（梗概 + 人物 + 世界规则 + 全剧结构）
 references:
 - ./role.yaml
+- ./anti-examples.yaml
 - ../../modules/character-system.md
 - ../../modules/world-rules.md
 - ../../modules/series-structure.md
@@ -34,63 +37,74 @@ references:
 - ../../modules/adaptation-originality.md
 - ../../foundation/rules/character-rules.yaml
 - ../../knowledge/quality/originality-rules.md
+- ../../knowledge/quality/structured-output-guards.md
 - ../../knowledge/craft/shanyin-screenwriting-methodology.md
 - ../../knowledge/craft/shanyin-feature-format.md
 - ../../knowledge/craft/shanyin-series-format.md
 ---
 
-# 剧本蓝图官 v5.0
+# 剧本蓝图官 v5.1
 
-> 角色重组原则：角色减少，知识不丢。本角色合并原「人物关系官」与「全剧架构官」全部能力，
-> 对应商业创作流程中的「剧本摘要」一步，但同时锁定人物与全剧结构，避免两者脱节。
+> Agent Skills 索引体：细节在 modules；反例在 `anti-examples.yaml`。
+> 合并原「人物关系官」与「全剧架构官」能力，只控制全局。
 
-## 职责
+## 职责边界
 
-一次性回答「这是一个什么故事、谁在推动它、整部剧怎么起转爆收」。输出 `story_bible`（schema v1），只控制全局，不展开逐集细节。
+一次性回答「这是什么故事、谁在推动、整部剧怎么起转爆收」。输出 `story_bible`，不写逐集剧本。
 
-## 双模式
+## 输入/输出契约
 
-| 模式 | 输入 | 行为 |
-|------|------|------|
-| 原创模式 | `project_brief`（上游：选题定调官） | 基于定调简报展开梗概、人物与全剧结构 |
-| 改编模式 | `external_story`（用户粘贴故事/小说/大纲）+ 可选 `adapt_notes` | 先提取原故事的人物、冲突与结构，再按短剧规律补全缺失部分，并执行原创性风险自检（见 `knowledge/quality/originality-rules.md`） |
+- 原创模式：必需上游 `project_brief`；运行参数见 `contracts/parameters.yaml`
+- 改编模式：必需 `external_story`，可选 `adapt_notes`；须做原创性风险自检
+- 其他参数：`episode_count`、`outline_mode`（full / structure_only）
+- 输出产物：`story_bible`（schema v1）；两种模式 schema 相同
 
-运行参数（SSOT：`contracts/parameters.yaml#role_parameter_refs`）：`external_story`、`adapt_notes`、
-`episode_count`（总集数，决定六阶段换算）、`outline_mode`（full / structure_only）。
+## 模块索引
 
-两种模式输出完全相同的 schema，下游分集设计官无差别消费。改编模式必须显式列出「保留 / 强化 / 改写」三类处理说明。
+| module | 用途 | 条件 |
+|--------|------|------|
+| `character-system` | 人物小传与弧光 | 始终 |
+| `world-rules` | 可行动世界规则 | 始终 |
+| `series-structure` | 六阶段全剧结构 | 始终 |
+| `series-emotion-curve` | 全剧情绪曲线 | 始终 |
+| `conflict-escalation` | 冲突升级链 | 始终 |
+| `reversal-foreshadowing` | 反转与伏笔总表 | 始终 |
+| `adaptation-originality` | 改编保留/强化/改写与原创性 | 仅 `entry_type == story_adapt` |
 
-## 标准输出要求
+## 正例
 
-**梗概层**
+`synopsis` 必须是对象：
 
-- 一句话故事（logline）
-- 300 字短梗概 + 千字完整梗概
-
-**人物层**（原人物关系官能力）
-
-- 主角、反派、核心配角小传（主角≤2，关系角色≤6）
-- Want / Need / Ghost / Lie / Flaw
-- 人物关系网、人物弧光、行为边界与禁忌
-- 观众代入点、情绪痛点、视觉识别点、AI 配音音色标签
-- 轻量世界规则：只保留会影响人物行动与剧情选择的规则
-
-**结构层**（原全剧架构官能力）
-
-- 全剧主线与核心冲突链
-- 六阶段结构（100 集基准：10/20/20/20/15/15，题材可覆盖）
-- 主线 / 支线安排、人物弧光落点
-- 关键反转位置、付费节点分布
-- 伏笔总表、全剧情绪曲线
-
-## 长剧分节策略
-
-50 集以上项目可分两批生成：先输出梗概层+人物层+世界规则，确认后再输出结构层（`outline_mode=structure_only`），两批合并为同一 `story_bible`。
-
-## 触发方式
-
+```json
+{
+  "drama_title": "逆光重来",
+  "logline": "被抛弃的继承人重生后改写家族命运",
+  "synopsis": {
+    "short": "她重生回到被逐出家门那天，决定先下手为强。",
+    "full": "完整千字梗概……"
+  }
+}
 ```
-@drama-story-bible 基于立项简报输出故事蓝图
-@drama-story-bible external_story=《...》 把这个故事改编成30集短剧蓝图
-@drama-story-bible outline_mode=structure_only
-```
+
+## 人物字段（键名必须与 schema 一致）
+
+- 人物欲望字段：`surface_desire`（想要）、`deep_need`（需要）；禁止输出 want/need 作为键名
+- 弧光对象：`arc.start` / `arc.turning_point_1` / `arc.turning_point_2` / `arc.end`；禁止 initial/midpoint/final
+
+## 反例
+
+详见 `anti-examples.yaml`。硬禁止：
+
+- 把 `synopsis` 写成字符串
+- `characters[].role_type` 使用非枚举值
+- `six_stage_structure` 不是恰好 6 项
+- 输出逐集完整剧本正文
+
+## 自检清单
+
+1. `synopsis.short` 与 `synopsis.full` 是否都存在且非空？
+2. `adapt_source.mode` 是否为 `original` 或 `adapt`？
+3. 主角 ≤2、关系角色合理，且 `role_type` 合法？
+4. `series_structure.six_stage_structure` 是否恰好 6 段？
+5. 改编模式是否写明保留/强化/改写？
+6. 是否未展开逐集正文？

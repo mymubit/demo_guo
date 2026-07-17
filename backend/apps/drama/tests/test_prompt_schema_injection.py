@@ -2,11 +2,31 @@
 """PromptBuilder 注入完整契约块：嵌套必填路径 + 示例 JSON。"""
 from __future__ import annotations
 
+from pathlib import Path
+
 from django.test import SimpleTestCase, override_settings
 
 from apps.drama.services.prompt_builder import PromptBuilder
 from apps.drama.services.skills_loader import SkillsBundleLoader
 from apps.drama.tests.helpers import SKILLS_ROOT
+
+
+class SkillKeyAlignmentTests(SimpleTestCase):
+    def test_episode_designer_skill_mentions_opening_hook_key(self) -> None:
+        text = (
+            Path(SKILLS_ROOT) / "roles/drama-episode-designer/SKILL.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("`opening_hook`", text)
+        self.assertIn("`ending_hook`", text)
+        self.assertIn("`paywall_hook`", text)
+
+    def test_story_bible_skill_mentions_surface_desire_key(self) -> None:
+        text = (
+            Path(SKILLS_ROOT) / "roles/drama-story-bible/SKILL.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("`surface_desire`", text)
+        self.assertIn("`deep_need`", text)
+        self.assertIn("`arc.start`", text)
 
 _SETTINGS = {
     "title": "玉石宫闱",
