@@ -74,6 +74,24 @@ class JudgeRuleInjectionTests(SimpleTestCase):
         self.assertIn("evidence", system)
         self.assertIn("deductions", system)
 
+    def test_scorer_prompt_includes_quality_report_skeleton_keys(self) -> None:
+        builder = PromptBuilder(loader=self.loader)
+        system, _ = builder.build(
+            "drama.script-scorer",
+            settings=_SETTINGS,
+            workflow_state={},
+            artifacts={},
+            latest_script={
+                "resolved_script_key": "external_script",
+                "value": {"episodes": [{"script": "x"}]},
+            },
+            scoring_mode="external",
+        )
+        self.assertIn("evidence", system)
+        self.assertIn("deductions", system)
+        self.assertIn("dimensions", system)
+        self.assertRegex(system, r"format|hooks|genre_fit")
+
     def test_scorer_rules_fit_budget_without_truncating_core(self) -> None:
         text = self.loader.collect_rules(
             "drama.script-scorer", _SETTINGS, max_chars=3600
