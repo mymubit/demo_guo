@@ -19,7 +19,7 @@ class SchemaValidator:
     """基于 jsonschema 的写入前校验。"""
 
     def __init__(self, schema_root: Path | None = None) -> None:
-        self.skills_root = Path(schema_root or settings.DRAMA_SKILLS_ROOT)
+        self.skills_root = Path(schema_root or settings.DRAMA_SKILLS_ROOT).resolve()
 
     def load_schema(self, relative_path: str) -> dict[str, Any]:
         path = self._resolve_path(relative_path)
