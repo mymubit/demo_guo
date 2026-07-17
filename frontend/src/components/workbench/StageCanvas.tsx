@@ -163,15 +163,16 @@ export function StageCanvas({
   })
 
   return (
-    <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-      <header className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-3">
+    <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-canvas">
+      <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-4">
         <div>
-          <h2 className="text-base font-semibold text-ink">{stage.label_zh}</h2>
-          <p className="text-xs text-ink-muted">
+          <h2 className="text-lg font-semibold text-ink">{stage.label_zh}</h2>
+          <p className="mt-0.5 text-sm text-ink-muted">
             当前由对应创作角色执行，完成后自动保存阶段产物
           </p>
         </div>
         <Button
+          variant="action"
           iconLeft={<Play className="h-4 w-4" />}
           loading={runMutation.isPending}
           disabled={!executable}
@@ -187,14 +188,14 @@ export function StageCanvas({
         </Button>
       </header>
 
-      <div className="mx-auto w-full max-w-[1600px] flex-1 space-y-4 overflow-auto p-[clamp(1rem,1.5vw,2rem)]">
+      <div className="w-full flex-1 space-y-5 overflow-auto px-[clamp(1.5rem,2.5vw,2.75rem)] py-[clamp(1.25rem,2vw,2rem)]">
         {themeIncomplete ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <p className="font-medium">题材尚未选齐，生成质量可能受影响</p>
             <p className="mt-1">
               建议先到{' '}
               <Link
-                className="font-medium underline underline-offset-2"
+                className="font-medium text-action underline underline-offset-2"
                 to={`/projects/${projectId}/settings?focus=theme`}
               >
                 创作设定
@@ -215,6 +216,7 @@ export function StageCanvas({
               </div>
               <div className="flex gap-2">
                 <Button
+                  variant="action"
                   size="sm"
                   loading={runMutation.isPending}
                   disabled={!executable}
@@ -238,7 +240,7 @@ export function StageCanvas({
         ) : null}
 
         {!executable && gateReason ? (
-          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-ink">
+          <div className="rounded-lg border border-border bg-surface px-4 py-3 text-sm text-ink">
             <p className="font-medium text-ink">当前无法执行本阶段</p>
             <p className="mt-1 text-ink-muted">{gateReason}</p>
           </div>

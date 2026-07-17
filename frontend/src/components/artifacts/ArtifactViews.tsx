@@ -128,7 +128,7 @@ export function ReportArtifactView({
                 <div key={idx} className="sf-panel p-3 text-sm">
                   <div className="font-medium text-ink">{row.type || `风险 ${idx + 1}`}</div>
                   {row.description ? <p className="mt-1 text-ink-muted">{row.description}</p> : null}
-                  {row.suggestion ? <p className="mt-1 text-xs text-brand-700">建议：{row.suggestion}</p> : null}
+                  {row.suggestion ? <p className="mt-1 text-xs text-action">建议：{row.suggestion}</p> : null}
                 </div>
               )
             })}
@@ -231,7 +231,7 @@ export function StoryBibleView({
               type="button"
               disabled={approvalPending}
               onClick={onReject}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm"
             >
               驳回
             </button>
@@ -239,7 +239,7 @@ export function StoryBibleView({
               type="button"
               disabled={approvalPending}
               onClick={onApprove}
-              className="rounded-lg bg-brand-500 px-3 py-2 text-sm font-medium text-white hover:bg-brand-600"
+              className="rounded-lg bg-action px-3 py-2 text-sm font-medium text-white hover:bg-action-hover"
             >
               批准蓝图
             </button>

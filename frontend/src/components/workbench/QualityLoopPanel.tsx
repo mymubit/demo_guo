@@ -52,19 +52,19 @@ export function QualityLoopPanel({
       : USER_DECISION_OPTIONS
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h3 className="sf-section-title">质检环</h3>
         <div className="text-xs text-ink-muted">修复轮次 · {workflow.revision_round}</div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <section className="sf-panel p-4">
+      <div className="grid grid-cols-2 gap-5">
+        <section className="sf-panel p-5">
           <h4 className="text-sm font-semibold text-ink">评分</h4>
           {qualityReport ? (
             <div className="mt-3 space-y-2 text-sm">
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-semibold text-brand-600">
+                <span className="text-3xl font-semibold text-action">
                   {qualityReport.overall_score ?? '—'}
                 </span>
                 <span className="text-ink-muted">{qualityReport.grade}</span>
@@ -86,7 +86,7 @@ export function QualityLoopPanel({
           )}
         </section>
 
-        <section className="sf-panel p-4">
+        <section className="sf-panel p-5">
           <h4 className="text-sm font-semibold text-ink">合规</h4>
           {complianceReport ? (
             <div className="mt-3 space-y-2 text-sm">
@@ -116,7 +116,7 @@ export function QualityLoopPanel({
       ) : null}
 
       {waitingUser ? (
-        <section className="sf-panel border-amber-200 bg-amber-50/60 p-4">
+        <section className="sf-panel border-amber-200 bg-amber-50/60 p-5">
           <h4 className="text-sm font-semibold text-amber-900">等待用户决策</h4>
           <p className="mt-1 text-sm text-amber-800">质检未自动通过，请三选一继续流程。</p>
           {decisionMutation.isError ? (
@@ -124,7 +124,7 @@ export function QualityLoopPanel({
               <ErrorBanner message={formatApiError(decisionMutation.error)} />
             </div>
           ) : null}
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-5 flex flex-wrap gap-2">
             {options.map((opt) => (
               <Button
                 key={opt.value}

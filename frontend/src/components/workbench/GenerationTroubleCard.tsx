@@ -5,13 +5,15 @@ import { cn } from '@/utils/cn'
 export function GenerationTroubleCard({
   message,
   status,
+  context,
   className,
 }: {
   message?: string | null
   status?: string | null
+  context?: 'workbench' | 'external_review'
   className?: string
 }) {
-  const trouble = diagnoseGenerationFailure(message, { status })
+  const trouble = diagnoseGenerationFailure(message, { status, context })
   if (!trouble) return null
   return <TroubleBody trouble={trouble} className={className} />
 }
@@ -50,7 +52,7 @@ function TroubleBody({
         <p className="mt-3">
           <Link
             to="/admin/model"
-            className="font-medium underline underline-offset-2 hover:opacity-80"
+            className="font-medium text-action underline underline-offset-2 hover:text-action-hover"
           >
             前往模型管理 →
           </Link>

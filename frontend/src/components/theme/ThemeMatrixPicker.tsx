@@ -80,7 +80,7 @@ export function ThemeMatrixPicker({
   return (
     <div className="space-y-6">
       {summary.length > 0 ? (
-        <div className="rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800">
+        <div className="rounded-lg border border-action/20 bg-action/10 px-4 py-3 text-sm text-action">
           <span className="font-medium">当前组合：</span>
           {summary.join(' × ')}
           {flavorTags.length > 0 ? ` · ${flavorTags.length} 个标签` : ''}
@@ -130,7 +130,7 @@ export function ThemeMatrixPicker({
                       'rounded-lg border px-3 py-2.5 text-left text-sm transition',
                       active
                         ? 'border-gold-400 bg-amber-50'
-                        : 'border-slate-200 bg-white hover:border-brand-300',
+                        : 'border-border bg-surface hover:border-action/40',
                     )}
                   >
                     <div className="flex items-center justify-between gap-1">
@@ -153,7 +153,7 @@ export function ThemeMatrixPicker({
           if (!axis) return null
           const selected = genreMatrix[axisKey as keyof GenreMatrix]
           return (
-            <div key={axisKey} className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+            <div key={axisKey} className="rounded-xl border border-border bg-canvas-muted/60 p-4">
               <h4 className="text-sm font-semibold text-ink">{axis.label_zh}</h4>
               {axis.hint ? <p className="mt-1 text-xs text-ink-muted">{axis.hint}</p> : null}
               <div className="mt-3 grid grid-cols-2 gap-2">
@@ -170,8 +170,8 @@ export function ThemeMatrixPicker({
                       className={cn(
                         'rounded-lg border px-2.5 py-2 text-left transition',
                         isSelected
-                          ? 'border-brand-500 bg-brand-50 text-brand-700'
-                          : 'border-slate-200 bg-white hover:border-slate-300',
+                          ? 'border-action bg-action/10 text-action'
+                          : 'border-border bg-surface hover:border-action/40',
                       )}
                     >
                       <div className="text-sm font-medium">{opt.label_zh}</div>
@@ -199,7 +199,7 @@ export function ThemeMatrixPicker({
           </h4>
           <button
             type="button"
-            className="text-xs text-ink-muted hover:text-brand-600"
+            className="text-xs text-ink-muted hover:text-action"
             onClick={() => onChangeFlavorTags([])}
           >
             清空
@@ -227,10 +227,10 @@ export function ThemeMatrixPicker({
                       className={cn(
                         'rounded-full border px-3 py-1 text-xs transition',
                         active
-                          ? 'border-brand-500 bg-brand-500 text-white'
+                          ? 'border-action bg-action text-white'
                           : isHot
-                            ? 'border-amber-300 bg-amber-50 text-ink hover:border-brand-300'
-                            : 'border-slate-200 bg-white text-ink-muted hover:border-brand-300',
+                            ? 'border-amber-300 bg-amber-50 text-ink hover:border-action/40'
+                            : 'border-border bg-surface text-ink-muted hover:border-action/40',
                       )}
                     >
                       {isHot && !active ? (

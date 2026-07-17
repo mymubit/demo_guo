@@ -45,18 +45,18 @@ export function ModulePanel({
   return (
     <aside
       className={cn(
-        'flex h-full w-[clamp(15rem,18vw,18.75rem)] shrink-0 flex-col border-l border-slate-200 bg-white',
+        'flex h-full w-[clamp(15rem,18vw,18.75rem)] shrink-0 flex-col border-l border-border bg-surface',
         className,
       )}
     >
-      <div className="border-b border-slate-200 px-4 py-3">
+      <div className="border-b border-border px-5 py-4">
         <div className="flex items-center justify-between gap-2">
           <div className="text-xs font-medium tracking-wide text-ink-faint">本阶段能力</div>
           {onClose ? (
             <button
               type="button"
               aria-label="关闭能力模块"
-              className="rounded-md p-1 text-ink-muted transition hover:bg-slate-100 hover:text-ink"
+              className="rounded-md p-1 text-ink-muted transition hover:bg-canvas-muted hover:text-ink"
               onClick={onClose}
             >
               <X className="h-4 w-4" />
@@ -75,22 +75,22 @@ export function ModulePanel({
           以下为当前阶段会加载的技能模块（只读目录）。执行请用画布中的「执行本阶段」。
         </p>
       </div>
-      <div className="flex-1 space-y-4 overflow-auto p-3">
+      <div className="flex-1 space-y-5 overflow-auto p-4">
         {groups.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-slate-200 px-3 py-6 text-center text-sm text-ink-muted">
+          <div className="rounded-lg border border-dashed border-border px-3 py-8 text-center text-sm text-ink-muted">
             当前阶段暂无可见模块。可先完善创作设定，或切换到其他流水线阶段。
           </div>
         ) : (
           groups.map(([domain, items]) => (
             <section key={domain}>
-              <div className="mb-2 px-1 text-xs font-medium tracking-wide text-ink-faint">
+              <div className="mb-2.5 px-1 text-xs font-medium tracking-wide text-ink-faint">
                 {DOMAIN_LABELS[domain] ?? domain}
               </div>
-              <ul className="space-y-1.5">
+              <ul className="space-y-2">
                 {items.map((m) => (
                   <li
                     key={m.id}
-                    className="rounded-lg border border-slate-200 bg-canvas px-3 py-2"
+                    className="rounded-lg border border-border bg-canvas px-3 py-2.5"
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm text-ink">{m.label_zh}</span>

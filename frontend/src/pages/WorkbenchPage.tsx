@@ -11,7 +11,7 @@ import { useWorkbenchDefinition } from '@/hooks/useWorkbenchDefinition'
 import { dramaApi } from '@/services/drama'
 import { formatApiError } from '@/services/errors'
 import {
-  isGenreMatrixComplete,
+  hasTopicDirectorInput,
   isWorkflowFirstRun,
   resolveFirstRunStageId,
 } from '@/utils/firstRunGuide'
@@ -132,23 +132,23 @@ export function WorkbenchPage() {
     return <div className="p-8 text-sm text-ink-muted">工作台数据不完整</div>
   }
 
-  const themeReady = isGenreMatrixComplete(settingsQuery.data.genre_matrix)
+  const topicReady = hasTopicDirectorInput(settingsQuery.data)
   const firstRun = isWorkflowFirstRun(workflowQuery.data)
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-3">
+    <div className="flex h-full min-h-0 flex-col bg-canvas">
+      <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-2">
         <div>
-          <h1 className="text-base font-semibold text-ink">
+          <h1 className="text-sm font-semibold text-ink">
             {settingsQuery.data.title || '创作工作台'}
           </h1>
-          <p className="text-xs text-ink-muted">
+          <p className="text-[11px] text-ink-muted">
             {settingsQuery.data.entry_type === 'original_track' ? '原创通道' : '改编通道'} ·{' '}
             {WORKFLOW_STATUS_LABELS[workflowQuery.data.status]}
             {firstRun ? ' · 首跑' : ''}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {isCompactPc ? (
             <Button
               variant="secondary"
@@ -172,14 +172,16 @@ export function WorkbenchPage() {
         </div>
       </div>
 
-      {!themeReady ? (
-        <div className="border-b border-amber-200 bg-amber-50 px-5 py-2 text-xs text-amber-900">
-          题材未选齐，建议先完善创作设定再执行主链。
+      {!topicReady ? (
+        <div className="border-b border-amber-200 bg-amber-50 px-4 py-1.5 text-xs text-amber-900">
+          {settingsQuery.data.entry_type === 'story_adapt'
+            ? '改编通道需填写外部故事原文后才能执行蓝图。'
+            : '原创通道：核心创意与题材矩阵至少完善一项后再执行选题定调。'}
           <Link
-            className="ml-2 font-medium underline underline-offset-2"
-            to={`/projects/${projectId}/settings?focus=theme`}
+            className="ml-2 font-medium text-action underline underline-offset-2"
+            to={`/projects/${projectId}/settings`}
           >
-            去选题材
+            去完善
           </Link>
         </div>
       ) : null}
@@ -215,7 +217,7 @@ export function WorkbenchPage() {
             <ModulePanel
               stage={activeStage}
               settings={settingsQuery.data}
-              className="absolute inset-y-0 right-0 z-30 w-[300px] shadow-xl"
+              className="absolute inset-y-0 right-0 z-30 w-[300px] shadow-panel"
               onClose={() => setIsModulePanelOpen(false)}
             />
           </>

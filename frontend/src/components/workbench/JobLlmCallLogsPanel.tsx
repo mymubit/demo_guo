@@ -41,11 +41,11 @@ function CallLogCard({ item, defaultOpen = false }: { item: LlmCallLogDetail; de
         : item.response_text || '（空）'
 
   return (
-    <div className="rounded-lg border border-line bg-white">
+    <div className="rounded-lg border border-border bg-surface">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-start gap-2 px-3 py-2.5 text-left hover:bg-slate-50"
+        className="flex w-full items-start gap-2 px-3 py-3 text-left hover:bg-canvas-muted"
       >
         <span className="mt-0.5 text-ink-muted">
           {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -76,7 +76,7 @@ function CallLogCard({ item, defaultOpen = false }: { item: LlmCallLogDetail; de
         </span>
       </button>
       {open ? (
-        <div className="border-t border-line px-3 pb-3 pt-2">
+        <div className="border-t border-border px-3 pb-3 pt-2">
           <div className="mb-2 flex gap-1">
             {(
               [
@@ -92,15 +92,15 @@ function CallLogCard({ item, defaultOpen = false }: { item: LlmCallLogDetail; de
                 className={cn(
                   'rounded-md px-2.5 py-1 text-xs font-medium',
                   tab === key
-                    ? 'bg-navy-900 text-white'
-                    : 'bg-slate-100 text-ink-muted hover:bg-slate-200',
+                    ? 'bg-action text-white'
+                    : 'bg-canvas-muted text-ink-muted hover:bg-canvas',
                 )}
               >
                 {label}
               </button>
             ))}
           </div>
-          <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-md bg-slate-50 p-3 text-xs leading-relaxed text-ink">
+          <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-md bg-canvas p-3 text-xs leading-relaxed text-ink">
             {body}
           </pre>
         </div>
@@ -136,7 +136,7 @@ export function JobLlmCallLogsPanel({
   const items = (query.data?.items ?? []) as LlmCallLogDetail[]
 
   return (
-    <section id="job-llm-logs" className="sf-panel space-y-3 p-4">
+    <section id="job-llm-logs" className="sf-panel space-y-4 p-5">
       <div className="flex items-center justify-between gap-2">
         <div>
           <h3 className="text-sm font-semibold text-ink">调用日志</h3>

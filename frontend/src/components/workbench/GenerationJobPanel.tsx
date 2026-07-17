@@ -117,7 +117,7 @@ export function GenerationJobPanel({
   const showTrouble = status === 'failed' || status === 'disabled'
 
   return (
-    <section className="sf-panel p-4" aria-label="生成任务进度">
+    <section className="sf-panel p-5" aria-label="生成任务进度">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h4 className="text-sm font-semibold text-ink">生成任务</h4>
@@ -126,14 +126,14 @@ export function GenerationJobPanel({
         <Badge tone={badgeTone}>{STATUS_LABEL[status ?? ''] ?? status}</Badge>
       </div>
       <div
-        className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100"
+        className="mt-4 h-2 overflow-hidden rounded-md bg-canvas-muted"
         role="progressbar"
         aria-valuenow={clamped}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-label="生成进度"
       >
-        <div className="h-full bg-brand-500 transition-all" style={{ width: `${clamped}%` }} />
+        <div className="h-full bg-action transition-all" style={{ width: `${clamped}%` }} />
       </div>
       <div className="sr-only" aria-live="polite">
         进度 {clamped}% · {STATUS_LABEL[status ?? ''] ?? status}
