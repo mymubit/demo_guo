@@ -25,3 +25,23 @@ npx vitest run src/components/layout/PageShell.test.tsx -v
 
 ## Concerns
 - 无。后续全页换装（Task 7+）可直接复用 PageShell。
+
+## Final-review fix pass
+
+### Changes
+- **M-1**: `test_shrink_strings_when_skeleton_exceeds_max_chars`（54dbbd6）+ `_shrink_strings` enum 保护（a453e4e）
+- **M-3**: SB001 `six_stage_structure` 六项补全 `stage`/`name`/`summary`（54dbbd6）
+- **I-1**: `task-3-report.md` 追加 progressive-disclosure 历史裁决
+
+### Tests
+
+```powershell
+cd backend
+$env:DRAMA_SKILLS_ROOT="c:\Users\99193\Desktop\demo_guo\drama-skills"
+py -3 manage.py test apps.drama.tests.test_schema_prompt_contract -v2 --settings=config.settings.test
+# Ran 13 tests — OK
+```
+
+### Commits
+- `54dbbd6` test + SB001 fewshot
+- `a453e4e` enum-safe shrink + reports

@@ -44,3 +44,7 @@
 - `StoryBibleView.tsx` 本地已用 `action` tone，但未进 commit；合并该 WIP 前无需再改。
 - Tabs 同文件 `LoadingBlock` 仍用 `border-brand-500`（非本 Task 范围）。
 - 全仓 typecheck 未绿，阻塞 CI 需其他 Task 处理。
+
+## Final-review adjudication (I-1)
+prompt_builder progressive-disclosure (knowledge/fewshot/anti/scoring) was pre-existing uncommitted WIP on flickForge, swept into 5e83c69 with Task 3.
+On this branch it is intentional product state; do not split history. Merge as-is with feature commits.
