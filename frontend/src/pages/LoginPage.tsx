@@ -94,7 +94,7 @@ export function LoginPage() {
               required
             />
           </div>
-          <Button type="submit" className="w-full" size="lg" loading={loading}>
+          <Button type="submit" variant="action" className="w-full" size="lg" loading={loading}>
             进入工作台
           </Button>
         </form>
