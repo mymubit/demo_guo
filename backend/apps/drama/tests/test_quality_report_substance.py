@@ -20,6 +20,22 @@ class SubstanceGateTests(SimpleTestCase):
         out = normalize_compliance_report(raw, {})
         self.assertTrue(compliance_report_too_thin(out))
 
+    def test_empty_suggestion_after_normalize_still_thin(self) -> None:
+        raw = {
+            "drama_title": "t",
+            "overall_result": "通过",
+            "blocking_issues": [],
+            "risk_items": [
+                {
+                    "type": "p2",
+                    "description": "结尾反派缺少明确法律收束，观众易不满",
+                    "suggestion": "",
+                }
+            ],
+        }
+        out = normalize_compliance_report(raw, {})
+        self.assertTrue(compliance_report_too_thin(out))
+
     def test_compliance_pass_with_detailed_p2_ok(self) -> None:
         raw = {
             "drama_title": "t",

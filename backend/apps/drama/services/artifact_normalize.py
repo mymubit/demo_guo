@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from apps.drama.services.matrix_synthesis import synthesize_rule_params
+from apps.drama.services.skills_loader import get_skills_loader
 
 _PROJECT_BRIEF_KEYS = frozenset(
     {
@@ -853,19 +854,6 @@ _QUALITY_DIMENSION_KEYS = (
     "genre_fit",
 )
 
-_QUALITY_DIMENSION_WEIGHTS: dict[str, float] = {
-    "format": 0.10,
-    "narrative": 0.15,
-    "conflict": 0.15,
-    "character": 0.10,
-    "emotion": 0.10,
-    "logic": 0.10,
-    "satisfaction": 0.10,
-    "hooks": 0.10,
-    "paywall": 0.05,
-    "genre_fit": 0.05,
-}
-
 _QUALITY_DIMENSION_NAME_ALIASES: dict[str, str] = {
     "格式规范": "format",
     "格式": "format",
@@ -913,7 +901,11 @@ def normalize_quality_report(
         or "未命名短剧"
     )
     overall = _as_number(raw.get("overall_score"), default=0.0)
-    dimensions = _normalize_quality_dimensions(raw.get("dimensions"), overall)
+    scoring_preset = _resolve_scoring_preset(raw, settings)
+    dimension_weights = _load_quality_dimension_weights(scoring_preset)
+    dimensions = _normalize_quality_dimensions(
+        raw.get("dimensions"), overall, dimension_weights
+    )
     overall = _rescale_overall_if_ten_point(overall, dimensions)
     needs_revision = raw.get("needs_revision")
     if not isinstance(needs_revision, bool):
@@ -928,10 +920,6 @@ def normalize_quality_report(
     grade = _as_nonempty_str(raw.get("grade"))
     if grade not in {"S", "A", "B", "C", "D"}:
         grade = _grade_from_score(overall)
-
-    scoring_preset = _as_nonempty_str(raw.get("scoring_preset")) or "standard"
-    if scoring_preset not in {"standard", "strict", "relaxed", "rhythm_first"}:
-        scoring_preset = "standard"
 
     resolved = _as_nonempty_str(raw.get("resolved_script_key")) or "external_script"
     if resolved not in {"polished_script", "episode_scripts", "external_script"}:
@@ -1067,13 +1055,58 @@ def normalize_compliance_report(
     }
 
 
-def _normalize_quality_dimensions(value: Any, overall: float) -> dict[str, Any]:
+def _resolve_scoring_preset(
+    raw: dict[str, Any],
+    settings: dict[str, Any],
+) -> str:
+    preset = _as_nonempty_str(raw.get("scoring_preset"))
+    if not preset:
+        prefs = settings.get("creation_preferences") or {}
+        preset = _as_nonempty_str(prefs.get("scoring_preset")) or "standard"
+    if preset not in {"standard", "strict", "relaxed", "rhythm_first"}:
+        return "standard"
+    return preset
+
+
+def _load_quality_dimension_weights(scoring_preset: str) -> dict[str, float]:
+    """从 quality-scoring.yaml + scoring-presets.yaml 读取十维权重 SSOT。"""
+    loader = get_skills_loader()
+    scoring = loader.load_seed_yaml("foundation/constraints/quality-scoring.yaml")
+    presets = loader.load_seed_yaml("foundation/constraints/scoring-presets.yaml")
+    preset_map = presets.get("presets") if isinstance(presets.get("presets"), dict) else {}
+    if scoring_preset not in preset_map:
+        scoring_preset = "standard"
+    preset = preset_map.get(scoring_preset) or {}
+    preset_weights = preset.get("weights") if isinstance(preset.get("weights"), dict) else {}
+
+    weights: dict[str, float] = {}
+    for dim in scoring.get("dimensions") or []:
+        if not isinstance(dim, dict):
+            continue
+        key = str(dim.get("key") or "")
+        if key not in _QUALITY_DIMENSION_KEYS:
+            continue
+        raw_weight = preset_weights.get(key, dim.get("weight"))
+        weights[key] = _as_number(raw_weight, default=0.0)
+
+    for key in _QUALITY_DIMENSION_KEYS:
+        weights.setdefault(key, 0.0)
+    return weights
+
+
+def _normalize_quality_dimensions(
+    value: Any,
+    overall: float,
+    dimension_weights: dict[str, float],
+) -> dict[str, Any]:
     mapped: dict[str, Any] = {}
     if isinstance(value, dict):
         for key, item in value.items():
             dim_key = _QUALITY_DIMENSION_NAME_ALIASES.get(str(key).strip(), str(key).strip())
             if dim_key in _QUALITY_DIMENSION_KEYS:
-                mapped[dim_key] = _normalize_score_dimension(item, dim_key, overall)
+                mapped[dim_key] = _normalize_score_dimension(
+                    item, dim_key, overall, dimension_weights
+                )
     elif isinstance(value, list):
         for item in value:
             if not isinstance(item, dict):
@@ -1086,13 +1119,15 @@ def _normalize_quality_dimensions(value: Any, overall: float) -> dict[str, Any]:
             )
             dim_key = _QUALITY_DIMENSION_NAME_ALIASES.get(name, name)
             if dim_key in _QUALITY_DIMENSION_KEYS:
-                mapped[dim_key] = _normalize_score_dimension(item, dim_key, overall)
+                mapped[dim_key] = _normalize_score_dimension(
+                    item, dim_key, overall, dimension_weights
+                )
 
     for key in _QUALITY_DIMENSION_KEYS:
         if key not in mapped:
             mapped[key] = {
                 "score": overall,
-                "weight": _QUALITY_DIMENSION_WEIGHTS[key],
+                "weight": dimension_weights[key],
                 "evidence": [],
                 "deductions": [],
             }
@@ -1103,18 +1138,20 @@ def _normalize_score_dimension(
     value: Any,
     key: str,
     overall: float,
+    dimension_weights: dict[str, float],
 ) -> dict[str, Any]:
+    default_weight = dimension_weights.get(key, 0.0)
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         return {
             "score": float(value),
-            "weight": _QUALITY_DIMENSION_WEIGHTS[key],
+            "weight": default_weight,
             "evidence": [],
             "deductions": [],
         }
     if not isinstance(value, dict):
         return {
             "score": overall,
-            "weight": _QUALITY_DIMENSION_WEIGHTS[key],
+            "weight": default_weight,
             "evidence": [],
             "deductions": [],
         }
@@ -1131,9 +1168,9 @@ def _normalize_score_dimension(
             value.get("deduction_reasons") or value.get("reasons")
         )
 
-    weight = _as_number(value.get("weight"), default=_QUALITY_DIMENSION_WEIGHTS[key])
+    weight = _as_number(value.get("weight"), default=default_weight)
     if weight < 0 or weight > 1:
-        weight = _QUALITY_DIMENSION_WEIGHTS[key]
+        weight = default_weight
 
     return {
         "score": _as_number(value.get("score"), default=overall),
@@ -1326,7 +1363,7 @@ def _normalize_compliance_risk_items(value: Any) -> list[dict[str, str]]:
         suggestion = (
             _as_nonempty_str(item.get("suggestion"))
             or _as_nonempty_str(item.get("fix"))
-            or "建议人工复核后修改"
+            or ""
         )
         result.append(
             {
