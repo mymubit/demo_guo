@@ -14,7 +14,7 @@ import {
   visibleGroups,
   writeSettingValue,
 } from '@/utils/settingsForm'
-import { hasTopicDirectorInput } from '@/utils/firstRunGuide'
+import { isGenreMatrixComplete } from '@/utils/firstRunGuide'
 import { rememberRecentProject } from '@/utils/recentProjects'
 import type { AdaptNotes, GenreMatrix, ProjectSettings } from '@/types/domain'
 import type { SettingsFieldDef, ThemeMatrix } from '@/types/workbench'
@@ -26,7 +26,8 @@ export function ProjectSettingsPage() {
   const { projectId = '' } = useParams()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const focusTheme = searchParams.get('focus') === 'theme'
+  const isFromNew = searchParams.get('from') === 'new'
+  const focusTheme = searchParams.get('focus') === 'theme' || isFromNew
   const qc = useQueryClient()
   const { definition } = useWorkbenchDefinition()
   const [draft, setDraft] = useState<ProjectSettings | null>(null)
@@ -111,7 +112,7 @@ export function ProjectSettingsPage() {
   const themeMatrix = definition.theme_matrix
   const platformField = definition.fields.target_platform
   const currentGroup = groups.find((g) => g.id === activeGroup) ?? groups[0]
-  const topicReady = draft ? hasTopicDirectorInput(draft) : false
+  const themeReady = isGenreMatrixComplete(draft?.genre_matrix)
 
   if (settingsQuery.isLoading) return <LoadingBlock />
   if (settingsQuery.isError) {
@@ -141,17 +142,17 @@ export function ProjectSettingsPage() {
       width="form"
       actions={
         <div className="flex gap-2">
-          <Link to={`/projects/${projectId}/workbench${topicReady ? '?guide=1' : ''}`}>
+          <Link to={`/projects/${projectId}/workbench${themeReady ? '?guide=1' : ''}`}>
             <Button variant="secondary">进入工作台</Button>
           </Link>
           <Button
             variant="action"
             loading={saveMutation.isPending && !saveMutation.variables?.enterWorkbench}
-            onClick={() => saveMutation.mutate({})}
+            onClick={() => saveMutation.mutate()}
           >
             {saveOk && !saveMutation.variables?.enterWorkbench ? '已保存' : '保存设定'}
           </Button>
-          {topicReady ? (
+          {themeReady ? (
             <Button
               variant="action"
               loading={saveMutation.isPending && Boolean(saveMutation.variables?.enterWorkbench)}
@@ -163,11 +164,18 @@ export function ProjectSettingsPage() {
         </div>
       }
     >
-      {!topicReady ? (
+      {isFromNew ? (
+        <div className="mb-4 rounded-lg border border-action/30 bg-action/10 px-4 py-3 text-sm text-action">
+          <p className="font-medium">项目已创建，请先完善题材与目标平台</p>
+          <p className="mt-1 text-action/90">
+            名称与灵感已保存。点选题材矩阵并确认平台后，可「保存并开始创作」进入工作台执行立项简报。
+          </p>
+        </div>
+      ) : null}
+
+      {!themeReady && !isFromNew ? (
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          {draft.entry_type === 'story_adapt'
-            ? '改编通道需填写外部故事原文。'
-            : '原创通道：核心创意与题材矩阵至少完善一项。'}
+          题材未选齐：请在「题材与受众」分组点选情绪 / 身份 / 冲突 / 世界观。
         </div>
       ) : null}
 
@@ -333,12 +341,6 @@ function ThemeSection({
         }
         onChangeFlavorTags={(tags) => onPatch((prev) => ({ ...prev, flavor_tags: tags }))}
         onChangePreset={(code) => onPatch((prev) => ({ ...prev, preset_theme_code: code }))}
-        onChangeAudienceChannel={(channel) =>
-          onPatch((prev) => ({ ...prev, audience_channel: channel }))
-        }
-        onChangeProtagonistStructure={(structure) =>
-          onPatch((prev) => ({ ...prev, protagonist_structure: structure }))
-        }
       />
     </div>
   )
