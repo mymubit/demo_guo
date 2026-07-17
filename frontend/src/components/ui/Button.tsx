@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import { cn } from '@/utils/cn'
 
-type Variant = 'brand' | 'secondary' | 'ghost' | 'danger' | 'gold'
+type Variant = 'action' | 'secondary' | 'ghost' | 'danger' | 'shell'
 type Size = 'sm' | 'md' | 'lg'
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -12,11 +12,11 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 }
 
 const variantClass: Record<Variant, string> = {
-  brand: 'bg-brand-500 text-white hover:bg-brand-600 border-transparent',
-  secondary: 'bg-white text-ink border-slate-200 hover:bg-slate-50',
-  ghost: 'bg-transparent text-ink-muted border-transparent hover:bg-slate-100',
-  danger: 'bg-red-600 text-white hover:bg-red-700 border-transparent',
-  gold: 'bg-gold-400 text-navy-950 hover:bg-gold-300 border-transparent font-medium',
+  action: 'bg-action text-white hover:bg-action-hover border-transparent',
+  secondary: 'bg-surface text-ink border-border hover:bg-canvas-muted',
+  ghost: 'bg-transparent text-ink-muted border-transparent hover:bg-canvas-muted',
+  danger: 'bg-danger text-white hover:opacity-90 border-transparent',
+  shell: 'bg-shell-accent text-shell hover:bg-shell-accent-hover border-transparent font-medium',
 }
 
 const sizeClass: Record<Size, string> = {
@@ -26,7 +26,7 @@ const sizeClass: Record<Size, string> = {
 }
 
 export function Button({
-  variant = 'brand',
+  variant = 'action',
   size = 'md',
   iconLeft,
   loading,
