@@ -92,6 +92,19 @@ class JudgeRuleInjectionTests(SimpleTestCase):
         self.assertIn("dimensions", system)
         self.assertRegex(system, r"format|hooks|genre_fit")
 
+        # render_contract_block 专有标记；_output_schema_hints 无法单独满足
+        self.assertIn("最小合法示例", system)
+        self.assertIn("  - dimensions.format", system)
+        self.assertIn("  - dimensions.hooks", system)
+
+        contract_anchor = system.index("最小合法示例")
+        json_fence = system.index("```json", contract_anchor)
+        json_end = system.index("```", json_fence + len("```json"))
+        json_example = system[json_fence:json_end]
+        self.assertIn('"format"', json_example)
+        self.assertIn('"evidence"', json_example)
+        self.assertIn('"dimensions"', json_example)
+
     def test_scorer_rules_fit_budget_without_truncating_core(self) -> None:
         text = self.loader.collect_rules(
             "drama.script-scorer", _SETTINGS, max_chars=3600
