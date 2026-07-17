@@ -63,6 +63,36 @@ class ExtractRequiredPathsTests(SimpleTestCase):
 
 
 @override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
+class StoryBibleFewshotSchemaTests(SimpleTestCase):
+    """Task 5: 首个 fewshot 必须是完整 schema 合法的 story_bible。"""
+
+    def test_first_fewshot_output_validates(self) -> None:
+        import yaml
+        from pathlib import Path
+
+        path = Path(SKILLS_ROOT) / "roles/drama-story-bible/fewshots.v1.yaml"
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        output = data["fewshots"][0]["output"]
+        SchemaValidator().validate_file(
+            output, "schemas/artifacts/story_bible/1.schema.json"
+        )
+
+    def test_first_fewshot_output_has_no_alias_keys(self) -> None:
+        import yaml
+        from pathlib import Path
+
+        path = Path(SKILLS_ROOT) / "roles/drama-story-bible/fewshots.v1.yaml"
+        data = yaml.safe_load(path.read_text(encoding="utf-8"))
+        output = data["fewshots"][0]["output"]
+        # want/initial 等别名键禁止出现在 fewshot output
+        self.assertNotIn("want", output)
+        self.assertNotIn("initial", output)
+        for char in output.get("characters", []):
+            self.assertNotIn("want", char)
+            self.assertNotIn("initial", char)
+
+
+@override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
 class BuildOutputSkeletonTests(SimpleTestCase):
     def test_narrative_plan_skeleton_validates(self) -> None:
         loader = SkillsBundleLoader()
