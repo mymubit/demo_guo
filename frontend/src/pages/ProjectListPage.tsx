@@ -60,7 +60,9 @@ export function ProjectListPage() {
           <p className="mt-1 text-sm text-ink-muted">管理原创与改编短剧项目，从最近作品快速继续</p>
         </div>
         <Link to="/projects/new">
-          <Button iconLeft={<Plus className="h-4 w-4" />}>新建创作</Button>
+          <Button variant="action" iconLeft={<Plus className="h-4 w-4" />}>
+            新建项目
+          </Button>
         </Link>
       </div>
 
@@ -76,11 +78,13 @@ export function ProjectListPage() {
           action={
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Link to="/projects/new">
-                <Button iconLeft={<Plus className="h-4 w-4" />}>新建第一部短剧</Button>
+                <Button variant="action" iconLeft={<Plus className="h-4 w-4" />}>
+                  新建第一部短剧
+                </Button>
               </Link>
               <Link
                 to="/admin/model"
-                className="text-sm text-navy-600 underline-offset-2 hover:underline"
+                className="text-sm text-action underline-offset-2 hover:underline"
               >
                 先配置模型 →
               </Link>
@@ -90,52 +94,50 @@ export function ProjectListPage() {
       ) : null}
 
       {query.data && query.data.length > 0 && continueProject ? (
-        <div className="space-y-6">
-          <section className="overflow-hidden rounded-xl border border-slate-200 shadow-panel">
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-gradient-to-r from-navy-900 to-navy-800 px-5 py-4 text-white">
-              <div className="min-w-0">
-                <div className="text-xs font-medium tracking-wide text-slate-300">继续创作</div>
-                <div className="mt-1 truncate text-lg font-semibold">
-                  {continueProject.title || '未命名项目'}
-                </div>
-                <div className="mt-1 text-xs text-slate-400">
-                  {entryLabel(continueProject.entry_type)}通道
-                  {continueProject.updated_at
-                    ? ` · 更新于 ${formatRelativeTime(continueProject.updated_at)}`
-                    : null}
-                </div>
+        <div className="space-y-8">
+          <section className="sf-panel flex flex-wrap items-center justify-between gap-4 p-5">
+            <div className="min-w-0">
+              <div className="text-xs font-medium tracking-wide text-ink-muted">继续创作</div>
+              <div className="mt-1 truncate text-lg font-semibold text-ink">
+                {continueProject.title || '未命名项目'}
               </div>
-              <div className="flex shrink-0 gap-2">
-                <Link to={`/projects/${continueProject.id}/settings`}>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="border-white/20 bg-white/10 text-white hover:bg-white/15"
-                  >
-                    创作设定
-                  </Button>
-                </Link>
-                <Link to={`/projects/${continueProject.id}/workbench`}>
-                  <Button size="sm" iconLeft={<ArrowRight className="h-3.5 w-3.5" />}>
-                    进入工作台
-                  </Button>
-                </Link>
+              <div className="mt-1 text-xs text-ink-faint">
+                {entryLabel(continueProject.entry_type)}通道
+                {continueProject.updated_at
+                  ? ` · 更新于 ${formatRelativeTime(continueProject.updated_at)}`
+                  : null}
               </div>
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <Link to={`/projects/${continueProject.id}/settings`}>
+                <Button variant="secondary" size="sm">
+                  创作设定
+                </Button>
+              </Link>
+              <Link to={`/projects/${continueProject.id}/workbench`}>
+                <Button
+                  variant="action"
+                  size="sm"
+                  iconLeft={<ArrowRight className="h-3.5 w-3.5" />}
+                >
+                  进入工作台
+                </Button>
+              </Link>
             </div>
           </section>
 
           {recent.length > 1 ? (
             <section>
-              <h2 className="mb-3 text-sm font-semibold text-ink">最近打开</h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <h2 className="mb-4 text-sm font-semibold text-ink">最近打开</h2>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {recent.map((item) => (
                   <Link
                     key={item.id}
                     to={`/projects/${item.id}/workbench`}
-                    className="sf-panel block p-4 transition hover:border-navy-300"
+                    className="sf-panel block p-4 transition hover:border-action/40"
                   >
                     <div className="flex items-start gap-3">
-                      <Clapperboard className="mt-0.5 h-4 w-4 shrink-0 text-navy-700" />
+                      <Clapperboard className="mt-0.5 h-4 w-4 shrink-0 text-action" />
                       <div className="min-w-0">
                         <div className="truncate font-medium text-ink">{item.title}</div>
                         <div className="mt-1 text-xs text-ink-muted">
@@ -150,26 +152,34 @@ export function ProjectListPage() {
           ) : null}
 
           <section>
-            <h2 className="mb-3 text-sm font-semibold text-ink">全部项目</h2>
-            <ul className="divide-y divide-slate-200 overflow-hidden rounded-xl border border-slate-200 bg-white">
+            <h2 className="mb-4 text-sm font-semibold text-ink">全部项目</h2>
+            <ul className="flex flex-col gap-3">
               {projects.map((project) => (
                 <li
                   key={project.id}
-                  className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-slate-50"
+                  className="sf-panel flex items-center justify-between gap-4 px-5 py-4 transition hover:border-action/30"
                 >
                   <div className="min-w-0">
                     <Link
                       to={`/projects/${project.id}/workbench`}
-                      className="text-base font-medium text-ink hover:text-brand-600"
+                      className="text-base font-medium text-ink hover:text-action"
                     >
                       {project.title || '未命名项目'}
                     </Link>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
-                      <Badge tone={project.entry_type === 'original_track' ? 'action' : 'gold'}>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
+                      <Badge tone={project.entry_type === 'original_track' ? 'action' : 'default'}>
                         {entryLabel(project.entry_type)}
                       </Badge>
                       {project.status ? (
-                        <Badge tone="default">
+                        <Badge
+                          tone={
+                            project.status === 'completed'
+                              ? 'success'
+                              : project.status === 'active'
+                                ? 'action'
+                                : 'default'
+                          }
+                        >
                           {STATUS_LABEL[project.status] ?? project.status}
                         </Badge>
                       ) : null}
@@ -190,7 +200,9 @@ export function ProjectListPage() {
                       </Button>
                     </Link>
                     <Link to={`/projects/${project.id}/workbench`}>
-                      <Button size="sm">进入工作台</Button>
+                      <Button variant="action" size="sm">
+                        进入工作台
+                      </Button>
                     </Link>
                   </div>
                 </li>

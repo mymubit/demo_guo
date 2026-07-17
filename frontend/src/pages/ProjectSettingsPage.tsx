@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/Button'
 import { ErrorBanner, LoadingBlock } from '@/components/ui/Tabs'
+import { PageShell } from '@/components/layout/PageShell'
 import { ThemeMatrixPicker } from '@/components/theme/ThemeMatrixPicker'
 import { useWorkbenchDefinition } from '@/hooks/useWorkbenchDefinition'
 import { dramaApi } from '@/services/drama'
@@ -13,20 +14,19 @@ import {
   visibleGroups,
   writeSettingValue,
 } from '@/utils/settingsForm'
-import { isGenreMatrixComplete } from '@/utils/firstRunGuide'
+import { hasTopicDirectorInput } from '@/utils/firstRunGuide'
 import { rememberRecentProject } from '@/utils/recentProjects'
 import type { AdaptNotes, GenreMatrix, ProjectSettings } from '@/types/domain'
 import type { SettingsFieldDef, ThemeMatrix } from '@/types/workbench'
 import { cn } from '@/utils/cn'
 
-/** 借鉴灵感页：分组聚焦、中文说明、减少技术噪音；视觉仍用本站浅色品牌 */
+/** 借鉴灵感页：分组聚焦、中文说明、减少技术噪音；视觉对齐冷雾 + action */
 
 export function ProjectSettingsPage() {
   const { projectId = '' } = useParams()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const isFromNew = searchParams.get('from') === 'new'
-  const focusTheme = searchParams.get('focus') === 'theme' || isFromNew
+  const focusTheme = searchParams.get('focus') === 'theme'
   const qc = useQueryClient()
   const { definition } = useWorkbenchDefinition()
   const [draft, setDraft] = useState<ProjectSettings | null>(null)
@@ -109,6 +109,9 @@ export function ProjectSettingsPage() {
   }, [groups, activeGroup, focusTheme, themeFocusApplied])
 
   const themeMatrix = definition.theme_matrix
+  const platformField = definition.fields.target_platform
+  const currentGroup = groups.find((g) => g.id === activeGroup) ?? groups[0]
+  const topicReady = draft ? hasTopicDirectorInput(draft) : false
 
   if (settingsQuery.isLoading) return <LoadingBlock />
   if (settingsQuery.isError) {
@@ -132,23 +135,25 @@ export function ProjectSettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-8 py-8">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-ink">创作设定</h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            按分组调整需求；题材用点选完成，不必记英文标识
-          </p>
-        </div>
+    <PageShell
+      title="创作设定"
+      description="按分组调整需求；题材用点选完成，不必记英文标识"
+      width="form"
+      actions={
         <div className="flex gap-2">
-          <Link to={`/projects/${projectId}/workbench${themeReady ? '?guide=1' : ''}`}>
+          <Link to={`/projects/${projectId}/workbench${topicReady ? '?guide=1' : ''}`}>
             <Button variant="secondary">进入工作台</Button>
           </Link>
-          <Button loading={saveMutation.isPending && !saveMutation.variables?.enterWorkbench} onClick={() => saveMutation.mutate()}>
+          <Button
+            variant="action"
+            loading={saveMutation.isPending && !saveMutation.variables?.enterWorkbench}
+            onClick={() => saveMutation.mutate({})}
+          >
             {saveOk && !saveMutation.variables?.enterWorkbench ? '已保存' : '保存设定'}
           </Button>
-          {themeReady ? (
+          {topicReady ? (
             <Button
+              variant="action"
               loading={saveMutation.isPending && Boolean(saveMutation.variables?.enterWorkbench)}
               onClick={() => saveMutation.mutate({ enterWorkbench: true })}
             >
@@ -156,20 +161,13 @@ export function ProjectSettingsPage() {
             </Button>
           ) : null}
         </div>
-      </div>
-
-      {isFromNew ? (
-        <div className="mb-4 rounded-lg border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800">
-          <p className="font-medium">项目已创建，请先完善题材与目标平台</p>
-          <p className="mt-1 text-brand-700/90">
-            名称与灵感已保存。点选题材矩阵并确认平台后，可「保存并开始创作」进入工作台执行立项简报。
-          </p>
-        </div>
-      ) : null}
-
-      {!themeReady && !isFromNew ? (
+      }
+    >
+      {!topicReady ? (
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          题材未选齐：请在「题材与受众」分组点选情绪 / 身份 / 冲突 / 世界观。
+          {draft.entry_type === 'story_adapt'
+            ? '改编通道需填写外部故事原文。'
+            : '原创通道：核心创意与题材矩阵至少完善一项。'}
         </div>
       ) : null}
 
@@ -221,8 +219,8 @@ export function ProjectSettingsPage() {
                 className={cn(
                   'w-full rounded-lg px-3 py-2 text-left text-sm transition',
                   currentGroup?.id === group.id
-                    ? 'bg-brand-50 font-medium text-brand-700'
-                    : 'text-ink-muted hover:bg-slate-100 hover:text-ink',
+                    ? 'bg-action/10 font-medium text-action'
+                    : 'text-ink-muted hover:bg-canvas-muted hover:text-ink',
                 )}
               >
                 {group.label_zh}
@@ -241,8 +239,8 @@ export function ProjectSettingsPage() {
                 className={cn(
                   'shrink-0 rounded-full px-3 py-1 text-xs',
                   currentGroup?.id === group.id
-                    ? 'bg-brand-500 text-white'
-                    : 'bg-slate-100 text-ink-muted',
+                    ? 'bg-action text-white'
+                    : 'bg-canvas-muted text-ink-muted',
                 )}
               >
                 {group.label_zh}
@@ -250,28 +248,17 @@ export function ProjectSettingsPage() {
             ))}
           </div>
 
-      <div className="space-y-8">
-        {groups.map((group) => (
-          <section key={group.id} className="sf-panel p-5">
-            <h2 className="sf-section-title">{group.label_zh}</h2>
-            <div className="mt-4 space-y-4">
-              {group.id === 'theme' && themeMatrix ? (
-                <ThemeSection
-                  draft={draft}
-                  matrix={themeMatrix}
-                  fields={group.fields}
-                  onPatch={patch}
-                  onFieldChange={updateField}
-                />
-              ) : (
-                group.fields.map((field) => (
-                  <FieldEditor
-                    key={field.key}
-                    field={field}
+          {currentGroup ? (
+            <section className="sf-panel p-6">
+              <h2 className="sf-section-title">{currentGroup.label_zh}</h2>
+              <div className="mt-5 space-y-5">
+                {currentGroup.id === 'theme' && themeMatrix ? (
+                  <ThemeSection
                     draft={draft}
                     matrix={themeMatrix}
-                    platformField={platformField}
+                    fields={currentGroup.fields}
                     onPatch={patch}
+                    onFieldChange={updateField}
                   />
                 ) : (
                   <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -302,7 +289,7 @@ export function ProjectSettingsPage() {
           ) : null}
         </div>
       </div>
-    </div>
+    </PageShell>
   )
 }
 
@@ -346,6 +333,12 @@ function ThemeSection({
         }
         onChangeFlavorTags={(tags) => onPatch((prev) => ({ ...prev, flavor_tags: tags }))}
         onChangePreset={(code) => onPatch((prev) => ({ ...prev, preset_theme_code: code }))}
+        onChangeAudienceChannel={(channel) =>
+          onPatch((prev) => ({ ...prev, audience_channel: channel }))
+        }
+        onChangeProtagonistStructure={(structure) =>
+          onPatch((prev) => ({ ...prev, protagonist_structure: structure }))
+        }
       />
     </div>
   )
@@ -465,8 +458,8 @@ function FieldEditor({
                 className={cn(
                   'rounded-lg border px-3 py-1.5 text-sm transition',
                   selected
-                    ? 'border-brand-500 bg-brand-50 text-brand-700'
-                    : 'border-slate-200 bg-white text-ink-muted hover:border-brand-300',
+                    ? 'border-action bg-action/10 text-action'
+                    : 'border-border bg-surface text-ink-muted hover:border-action/40',
                 )}
               >
                 {opt.label}
