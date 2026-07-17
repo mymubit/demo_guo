@@ -11,6 +11,17 @@ rule_policy:
   - global_core
   - genre_profile
   - stage_playbook
+  # 与 knowledge/knowledge-sections.md 对齐；避免 global_core 全量灌入后被 max_chars 截断丢评分细则
+  sections:
+  - scoring
+  - continuity
+  - world_rules
+  - format_standard
+  - episode_structure
+  - character_rules
+  - hook_effectiveness
+  - payment_checkpoint_3card
+  - learned_rules
   max_chars: 3600
 skill_dir: roles/drama-script-scorer
 # 独立技能：latest_script 由 artifact resolver 解析当前有效剧本。

@@ -6,16 +6,27 @@ import json
 import logging
 from typing import Any
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from apps.core.exceptions import BusinessException
+from apps.core.exceptions import SCHEMA_VALIDATION_FAILED, VALIDATION_ERROR, BusinessException
 from apps.core.schema_validator import SchemaValidator
-from apps.drama.models import DramaGenerationJob, DramaProject
+from apps.drama.models import DramaAuditEvent, DramaGenerationJob, DramaProject
 from apps.drama.services.artifact_service import ArtifactService
 from apps.drama.services.generation_gate import QUALITY_TRIGGER_ROLES, GenerationGate
-from apps.drama.services.json_parse import JsonParseError, parse_and_validate
+from apps.drama.services.artifact_normalize import (
+    compliance_report_too_thin,
+    normalize_artifact,
+    quality_report_evidence_too_sparse,
+)
+from apps.drama.services.json_parse import (
+    JsonParseError,
+    build_json_repair_user_prompt,
+    parse_llm_json,
+)
+from apps.drama.services.llm_call_context import get_last_llm_log_id, llm_call_scope
 from apps.drama.services.llm_provider import LlmProvider, LlmProviderError, LlmProviderStatus
 from apps.drama.services.prompt_builder import PromptBuilder
 from apps.drama.services.quality_gate import quality_gate_passed
@@ -114,6 +125,8 @@ class GenerationService:
         actor: str,
         owner: AbstractBaseUser,
         project: DramaProject | None = None,
+        source_filename: str = "",
+        script_title: str = "",
     ) -> DramaGenerationJob:
         if project is not None:
             existing = DramaGenerationJob.objects.filter(
@@ -140,6 +153,8 @@ class GenerationService:
                     )
                 return existing
 
+        filename = (source_filename or "").strip()[:255]
+        title = (script_title or "").strip()[:200]
         try:
             job = DramaGenerationJob.objects.create(
                 project=project,
@@ -156,6 +171,8 @@ class GenerationService:
                     "check_mode": check_mode,
                     "actor": actor,
                     "scoring_mode": "external",
+                    "source_filename": filename,
+                    "script_title": title,
                 },
             )
         except IntegrityError:
@@ -247,6 +264,207 @@ class GenerationService:
             locked.error_message = message
             locked.save(update_fields=["status", "error_message", "updated_at"])
 
+    def stale_after_seconds(self) -> int:
+        return int(getattr(settings, "GENERATION_JOB_STALE_SECONDS", 1500))
+
+    def is_stale_inflight(self, job: DramaGenerationJob) -> bool:
+        if job.status in TERMINAL_JOB_STATUSES:
+            return False
+        ref = job.updated_at or job.created_at
+        if ref is None:
+            return False
+        age = (timezone.now() - ref).total_seconds()
+        return age >= self.stale_after_seconds()
+
+    @transaction.atomic
+    def fail_if_stale(
+        self,
+        job: DramaGenerationJob,
+        *,
+        message: str | None = None,
+    ) -> DramaGenerationJob:
+        """非终态且超时未更新时标记失败，解除工作台「执行中」死锁。"""
+        locked = DramaGenerationJob.objects.select_for_update().get(pk=job.pk)
+        if locked.status in TERMINAL_JOB_STATUSES:
+            return locked
+        ref = locked.updated_at or locked.created_at
+        if ref is None:
+            return locked
+        age = (timezone.now() - ref).total_seconds()
+        if age < self.stale_after_seconds():
+            return locked
+        minutes = max(1, int(age // 60))
+        locked.status = DramaGenerationJob.Status.FAILED
+        locked.error_message = message or (
+            f"任务已卡住约 {minutes} 分钟（超过阈值 {self.stale_after_seconds()} 秒未结束）。"
+            "常见原因：Celery worker 中断、模型调用挂起后进程退出。"
+            "可重新点击「执行本阶段」。"
+        )
+        locked.save(update_fields=["status", "error_message", "updated_at"])
+        logger.warning(
+            "stale generation job marked failed job_id=%s age_s=%.0f status_was=running",
+            locked.id,
+            age,
+        )
+        return locked
+
+    @transaction.atomic
+    def abandon_job(
+        self,
+        job: DramaGenerationJob,
+        *,
+        actor: str = "user",
+        message: str | None = None,
+    ) -> DramaGenerationJob:
+        """用户主动结束卡住的进行中任务。"""
+        locked = DramaGenerationJob.objects.select_for_update().get(pk=job.pk)
+        if locked.status in TERMINAL_JOB_STATUSES:
+            return locked
+        events = list(locked.progress_events or [])
+        events.append(
+            {
+                "phase": "abandoned",
+                "message": "用户结束卡住的任务",
+                "actor": actor,
+                "ts": timezone.now().isoformat(),
+            }
+        )
+        locked.status = DramaGenerationJob.Status.FAILED
+        locked.error_message = message or (
+            f"用户 {actor} 手动结束卡住的任务，可重新执行本阶段。"
+        )
+        locked.progress_events = events
+        locked.save(
+            update_fields=["status", "error_message", "progress_events", "updated_at"]
+        )
+        return locked
+
+    def reprocess_review_from_llm_logs(self, job: DramaGenerationJob) -> DramaGenerationJob:
+        """用已有成功调用日志重新解析评分/合规结果并落库，不再调用模型。"""
+        from apps.drama.models import DramaLlmCallLog
+
+        if job.job_type not in (
+            DramaGenerationJob.JobType.EXTERNAL_REVIEW,
+            DramaGenerationJob.JobType.PARALLEL_JUDGE,
+        ):
+            raise BusinessException(
+                VALIDATION_ERROR,
+                "仅外部评测/并行评审任务支持重新解析",
+                http_status=400,
+            )
+
+        score_log = (
+            DramaLlmCallLog.objects.filter(
+                generation_job=job,
+                purpose=DramaLlmCallLog.Purpose.QUALITY_SCORING,
+                status=DramaLlmCallLog.Status.SUCCESS,
+            )
+            .order_by("-created_at")
+            .first()
+        )
+        compliance_log = (
+            DramaLlmCallLog.objects.filter(
+                generation_job=job,
+                purpose=DramaLlmCallLog.Purpose.COMPLIANCE_CHECK,
+                status=DramaLlmCallLog.Status.SUCCESS,
+            )
+            .order_by("-created_at")
+            .first()
+        )
+        if score_log is None or compliance_log is None:
+            missing = []
+            if score_log is None:
+                missing.append("质量评分")
+            if compliance_log is None:
+                missing.append("合规检查")
+            raise BusinessException(
+                VALIDATION_ERROR,
+                f"调用日志缺少成功的{'/'.join(missing)}回复，无法仅凭本地解析落库",
+                http_status=409,
+            )
+
+        settings = (job.project.settings if job.project else {}) or {}
+        payload = job.request_payload if isinstance(job.request_payload, dict) else {}
+        if payload.get("scoring_preset"):
+            prefs = dict(settings.get("creation_preferences") or {})
+            prefs["scoring_preset"] = payload["scoring_preset"]
+            settings = {**settings, "creation_preferences": prefs}
+        if payload.get("check_mode"):
+            prefs = dict(settings.get("creation_preferences") or {})
+            prefs["compliance_check_mode"] = payload["check_mode"]
+            settings = {**settings, "creation_preferences": prefs}
+
+        score_result = self._parse_report_from_llm_log(
+            score_log,
+            artifact_key="quality_report",
+            settings=settings,
+        )
+        compliance_result = self._parse_report_from_llm_log(
+            compliance_log,
+            artifact_key="compliance_report",
+            settings=settings,
+        )
+
+        self.append_progress(
+            job,
+            {
+                "phase": "reprocess_from_logs",
+                "message": "使用已有模型返回重新解析落库",
+                "score_log_id": str(score_log.id),
+                "compliance_log_id": str(compliance_log.id),
+            },
+        )
+        self._finalize_quality_results(job, score_result, compliance_result)
+        job.refresh_from_db()
+        if job.status == DramaGenerationJob.Status.COMPLETED:
+            with transaction.atomic():
+                locked = DramaGenerationJob.objects.select_for_update().get(pk=job.pk)
+                if locked.error_message:
+                    locked.error_message = ""
+                    locked.save(update_fields=["error_message", "updated_at"])
+                    job.error_message = ""
+        return job
+
+    def _parse_report_from_llm_log(
+        self,
+        log,
+        *,
+        artifact_key: str,
+        settings: dict[str, Any],
+    ) -> dict[str, Any]:
+        content = self._extract_llm_log_content(log)
+        if not content:
+            raise BusinessException(
+                SCHEMA_VALIDATION_FAILED,
+                f"{artifact_key} 调用日志回复为空，无法重新解析",
+                http_status=422,
+            )
+        if "…(已截断，原文" in content:
+            raise BusinessException(
+                SCHEMA_VALIDATION_FAILED,
+                f"{artifact_key} 调用日志正文已被截断，无法完整重新解析，请重新评测",
+                http_status=422,
+            )
+        schema_path = self.loader.artifact_schema_path(artifact_key)
+        return self._parse_normalize_validate(
+            content=content,
+            artifact_key=artifact_key,
+            settings=settings,
+            schema_path=schema_path,
+        )
+
+    @staticmethod
+    def _extract_llm_log_content(log) -> str:
+        body = log.response_body if isinstance(getattr(log, "response_body", None), dict) else None
+        if body:
+            try:
+                text = body["choices"][0]["message"]["content"]
+                if isinstance(text, str) and text.strip():
+                    return text
+            except (KeyError, IndexError, TypeError):
+                pass
+        return (getattr(log, "response_text", None) or "").strip()
+
     def execute_generation(self, job_id: str) -> None:
         """Celery worker 执行入口。"""
         job = self.get_job(job_id)
@@ -268,11 +486,27 @@ class GenerationService:
         payload = job.request_payload
         role = payload.get("role", "")
         try:
-            artifact_payload = self._generate_artifact(project, role, payload)
+            artifact_payload = self._generate_artifact(job, project, role, payload)
             self._persist_generation_result(job, project, role, payload, artifact_payload)
         except (LlmProviderError, JsonParseError) as exc:
+            self._audit_role_execution(
+                project,
+                payload,
+                role,
+                success=False,
+                error=str(exc),
+                job_id=str(job.id),
+            )
             self.mark_failed(job, str(exc))
         except BusinessException as exc:
+            self._audit_role_execution(
+                project,
+                payload,
+                role,
+                success=False,
+                error=str(exc),
+                job_id=str(job.id),
+            )
             self.mark_failed(job, str(exc))
         except Exception:
             logger.exception("Generation failed for job %s", job_id)
@@ -306,8 +540,94 @@ class GenerationService:
         job.job_type = DramaGenerationJob.JobType.PARALLEL_JUDGE
         job.save(update_fields=["celery_task_id", "job_type", "updated_at"])
 
+    def _invoke_llm(
+        self,
+        *,
+        job: DramaGenerationJob | None,
+        project: DramaProject | None,
+        role: str,
+        purpose: str,
+        system_prompt: str,
+        user_prompt: str,
+        json_mode: bool = True,
+    ) -> dict[str, Any]:
+        actor = "system"
+        if job and isinstance(job.request_payload, dict):
+            actor = job.request_payload.get("actor", "system")
+
+        with llm_call_scope(
+            project_id=str(project.id) if project else None,
+            job_id=str(job.id) if job else None,
+            role=role,
+            purpose=purpose,
+            actor=actor,
+        ):
+            if job:
+                self.append_progress(
+                    job,
+                    {"phase": "llm_started", "role": role, "purpose": purpose},
+                )
+            response = LlmProvider.chat_completion(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                json_mode=json_mode,
+                on_delta=(
+                    (
+                        lambda _text, elapsed_ms: self.append_progress(
+                            job,
+                            {
+                                "phase": "llm_streaming",
+                                "role": role,
+                                "purpose": purpose,
+                                "elapsed_ms": elapsed_ms,
+                            },
+                        )
+                    )
+                    if job
+                    else None
+                ),
+            )
+            if job:
+                self.append_progress(
+                    job,
+                    {
+                        "phase": "llm_done",
+                        "role": role,
+                        "purpose": purpose,
+                        "log_id": get_last_llm_log_id(),
+                    },
+                )
+            return response
+
+    def _audit_role_execution(
+        self,
+        project: DramaProject | None,
+        payload: dict[str, Any],
+        role: str,
+        *,
+        success: bool,
+        error: str = "",
+        artifact_key: str = "",
+        job_id: str = "",
+    ) -> None:
+        if not project:
+            return
+        DramaAuditEvent.objects.create(
+            project=project,
+            actor=payload.get("actor", "system"),
+            action="generation.role_completed" if success else "generation.role_failed",
+            detail={
+                "job_id": job_id,
+                "role": role,
+                "artifact_key": artifact_key,
+                "command_id": payload.get("command_id"),
+                "error": error or None,
+            },
+        )
+
     def _generate_artifact(
         self,
+        job: DramaGenerationJob,
         project: DramaProject,
         role: str,
         payload: dict[str, Any],
@@ -330,19 +650,176 @@ class GenerationService:
             input_payload=payload.get("input"),
             latest_script=latest_script,
         )
-        response = LlmProvider.chat_completion(
+        response = self._invoke_llm(
+            job=job,
+            project=project,
+            role=role,
+            purpose="artifact_generation",
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             json_mode=True,
         )
         content = response["choices"][0]["message"]["content"]
         artifact_key = self.loader.get_output_artifact_by_role(role)
-        schema_path = self.loader.artifact_schema_path(artifact_key)
-        return parse_and_validate(
-            content,
-            validator=self.validator,
-            schema_path=schema_path,
+        return self._materialize_artifact_payload(
+            job=job,
+            project=project,
+            role=role,
+            purpose="artifact_generation",
+            system_prompt=system_prompt,
+            content=content,
+            artifact_key=artifact_key,
+            settings=settings,
         )
+
+    def _materialize_artifact_payload(
+        self,
+        *,
+        job: DramaGenerationJob | None,
+        project: DramaProject | None,
+        role: str,
+        purpose: str,
+        system_prompt: str,
+        content: str,
+        artifact_key: str,
+        settings: dict[str, Any],
+    ) -> dict[str, Any]:
+        """解析→对齐→校验；失败时按 OutputFixingParser 思路单次纠错。"""
+        schema_path = self.loader.artifact_schema_path(artifact_key)
+        try:
+            payload = self._parse_normalize_validate(
+                content=content,
+                artifact_key=artifact_key,
+                settings=settings,
+                schema_path=schema_path,
+            )
+            if job:
+                self.append_progress(
+                    job,
+                    {
+                        "phase": "structured_ok",
+                        "role": role,
+                        "purpose": purpose,
+                        "repair_attempted": False,
+                        "repair_succeeded": None,
+                    },
+                )
+            return payload
+        except (JsonParseError, BusinessException) as first_exc:
+            if isinstance(first_exc, BusinessException) and first_exc.code != SCHEMA_VALIDATION_FAILED:
+                raise
+            if job:
+                self.append_progress(
+                    job,
+                    {
+                        "phase": "json_repair",
+                        "role": role,
+                        "purpose": purpose,
+                        "error": str(first_exc),
+                        "repair_attempted": True,
+                    },
+                )
+            logger.warning(
+                "产物结构化输出失败，发起单次纠错 role=%s artifact=%s err=%s",
+                role,
+                artifact_key,
+                first_exc,
+            )
+            repair_user = build_json_repair_user_prompt(
+                raw_content=content,
+                error_message=str(first_exc),
+                required_fields=self._artifact_required_fields(artifact_key),
+            )
+            try:
+                response = self._invoke_llm(
+                    job=job,
+                    project=project,
+                    role=role,
+                    purpose=f"{purpose}_json_repair",
+                    system_prompt=system_prompt,
+                    user_prompt=repair_user,
+                    json_mode=True,
+                )
+                repaired = response["choices"][0]["message"]["content"]
+                payload = self._parse_normalize_validate(
+                    content=repaired,
+                    artifact_key=artifact_key,
+                    settings=settings,
+                    schema_path=schema_path,
+                )
+            except Exception:
+                if job:
+                    self.append_progress(
+                        job,
+                        {
+                            "phase": "json_repair_failed",
+                            "role": role,
+                            "purpose": purpose,
+                            "repair_attempted": True,
+                            "repair_succeeded": False,
+                        },
+                    )
+                raise
+            if job:
+                self.append_progress(
+                    job,
+                    {
+                        "phase": "json_repair_ok",
+                        "role": role,
+                        "purpose": purpose,
+                        "repair_attempted": True,
+                        "repair_succeeded": True,
+                    },
+                )
+            return payload
+
+    def _parse_normalize_validate(
+        self,
+        *,
+        content: str,
+        artifact_key: str,
+        settings: dict[str, Any],
+        schema_path: str,
+    ) -> dict[str, Any]:
+        payload_obj = parse_llm_json(content)
+        payload_obj = normalize_artifact(artifact_key, payload_obj, settings)
+        try:
+            self.validator.validate_file(payload_obj, schema_path)
+        except BusinessException:
+            raise
+        except Exception as exc:
+            raise BusinessException(
+                SCHEMA_VALIDATION_FAILED,
+                f"产物 Schema 校验失败（模型已返回内容，但结构不合规，未落库）: {exc}",
+                http_status=422,
+            ) from exc
+        if artifact_key == "quality_report" and quality_report_evidence_too_sparse(
+            payload_obj
+        ):
+            raise BusinessException(
+                SCHEMA_VALIDATION_FAILED,
+                "十维评分缺少有效 evidence（禁止仅输出分数）。"
+                "每个维度必须至少 1 条不少于 8 字的具体剧本证据（含集数/场景/台词），"
+                "再输出 score；deductions 可为空数组但不能省略 evidence。",
+                http_status=422,
+            )
+        if artifact_key == "compliance_report" and compliance_report_too_thin(
+            payload_obj
+        ):
+            raise BusinessException(
+                SCHEMA_VALIDATION_FAILED,
+                "合规报告缺少具体阻断/风险描述（title+description）。禁止空标题或空话。",
+                http_status=422,
+            )
+        return payload_obj
+
+    def _artifact_required_fields(self, artifact_key: str) -> list[str]:
+        try:
+            schema = self.loader.load_artifact_schema(artifact_key)
+        except Exception:
+            return []
+        required = schema.get("required") or []
+        return [item for item in required if isinstance(item, str)]
 
     def _workflow_version_for_job(
         self, job: DramaGenerationJob, payload: dict[str, Any]
@@ -390,6 +867,14 @@ class GenerationService:
             "workflow_event": event,
         }
         self.mark_completed(job, result)
+        self._audit_role_execution(
+            project,
+            payload,
+            role,
+            success=True,
+            artifact_key=artifact_key,
+            job_id=str(job.id),
+        )
 
         if role in QUALITY_TRIGGER_ROLES:
             self._schedule_quality_chord(job, project, payload)
@@ -456,18 +941,26 @@ class GenerationService:
             latest_script=latest_script,
             scoring_mode=payload.get("scoring_mode", "project"),
         )
-        response = LlmProvider.chat_completion(
+        response = self._invoke_llm(
+            job=job,
+            project=project,
+            role=role,
+            purpose="quality_scoring",
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             json_mode=True,
         )
         content = response["choices"][0]["message"]["content"]
         artifact_key = self.loader.get_output_artifact_by_role(role)
-        schema_path = self.loader.artifact_schema_path(artifact_key)
-        return parse_and_validate(
-            content,
-            validator=self.validator,
-            schema_path=schema_path,
+        return self._materialize_artifact_payload(
+            job=job,
+            project=project,
+            role=role,
+            purpose="quality_scoring",
+            system_prompt=system_prompt,
+            content=content,
+            artifact_key=artifact_key,
+            settings=settings,
         )
 
     def _build_compliance_report(
@@ -500,18 +993,26 @@ class GenerationService:
             latest_script=latest_script,
             scoring_mode=payload.get("scoring_mode", "external"),
         )
-        response = LlmProvider.chat_completion(
+        response = self._invoke_llm(
+            job=job,
+            project=project,
+            role=role,
+            purpose="compliance_check",
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             json_mode=True,
         )
         content = response["choices"][0]["message"]["content"]
         artifact_key = self.loader.get_output_artifact_by_role(role)
-        schema_path = self.loader.artifact_schema_path(artifact_key)
-        return parse_and_validate(
-            content,
-            validator=self.validator,
-            schema_path=schema_path,
+        return self._materialize_artifact_payload(
+            job=job,
+            project=project,
+            role=role,
+            purpose="compliance_check",
+            system_prompt=system_prompt,
+            content=content,
+            artifact_key=artifact_key,
+            settings=settings,
         )
 
     def _finalize_quality_results(

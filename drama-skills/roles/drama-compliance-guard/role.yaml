@@ -11,6 +11,10 @@ rule_policy:
   - genre_profile
   - stage_playbook
   - compliance_block
+  # 与 knowledge/knowledge-sections.md 对齐；compliance_block 展开为 tier4 全部子 section
+  sections:
+  - compliance_block
+  - originality_rules
   max_chars: 3200
 skill_dir: roles/drama-compliance-guard
 # 独立技能：默认与评分官并行触发，统一审查 latest_script。
