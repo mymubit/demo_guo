@@ -52,12 +52,24 @@ fewshots:
     series_structure:
       main_storyline: 夺回人生
       six_stage_structure:
-      - {}
-      - {}
-      - {}
-      - {}
-      - {}
-      - {}
+      - stage: 1
+        name: 开局设局
+        summary: 建立角色与核心矛盾
+      - stage: 2
+        name: 危机升级
+        summary: 冲突首次激化
+      - stage: 3
+        name: 中点转折
+        summary: 局势逆转
+      - stage: 4
+        name: 全面冲突
+        summary: 多方博弈白热化
+      - stage: 5
+        name: 高潮前夜
+        summary: 伏笔收束准备终局
+      - stage: 6
+        name: 终局收束
+        summary: 核心矛盾解决
       conflict_escalation_chain: []
       major_reversal_positions: []
       paywall_distribution: []

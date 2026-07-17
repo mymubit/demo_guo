@@ -1,3 +1,6 @@
+import json
+from copy import deepcopy
+
 from django.test import SimpleTestCase, override_settings
 
 from apps.core.schema_validator import SchemaValidator
@@ -191,3 +194,25 @@ class BuildOutputSkeletonTests(SimpleTestCase):
         self.assertIn("artifact_key: narrative_plan", block)
         self.assertIn("episode_narrative_designs[].opening_hook", block)
         self.assertIn("```json", block)
+
+    def test_shrink_strings_when_skeleton_exceeds_max_chars(self) -> None:
+        loader = SkillsBundleLoader()
+        schema = loader.load_artifact_schema("story_bible")
+        padding = "占位" * 800
+        bloated = deepcopy(FIXTURES["story_bible"])
+        bloated["logline"] = padding
+        bloated["synopsis"]["full"] = padding
+        bloated["synopsis"]["short"] = padding
+        bloated["world_rules"]["setting_summary"] = padding
+        pre_shrink = build_output_skeleton(schema, fixture=bloated, max_chars=999_999)
+        pre_len = len(json.dumps(pre_shrink, ensure_ascii=False))
+        self.assertGreater(pre_len, 3500)
+
+        skeleton = build_output_skeleton(schema, fixture=bloated, max_chars=3500)
+        post_len = len(json.dumps(skeleton, ensure_ascii=False))
+        self.assertLessEqual(post_len, 3500)
+        self.assertLess(post_len, pre_len)
+        self.assertLess(len(skeleton["logline"]), len(padding))
+        SchemaValidator().validate_file(
+            skeleton, "schemas/artifacts/story_bible/1.schema.json"
+        )
