@@ -2,7 +2,27 @@ from __future__ import annotations
 
 import json
 from copy import deepcopy
-from typing import Any
+from typing import Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from apps.drama.services.skills_loader import SkillsBundleLoader
+
+
+def load_artifact_fixture(
+    loader: "SkillsBundleLoader", artifact_key: str
+) -> dict[str, Any] | None:
+    """从 build/fixtures/artifacts/valid-artifacts.json 读取产物示例。
+
+    生产代码通过 loader 读取技能仓，避免直接 import apps.drama.tests.helpers。
+    """
+    try:
+        data = loader.load_json("build/fixtures/artifacts/valid-artifacts.json")
+    except (FileNotFoundError, json.JSONDecodeError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    item = data.get(artifact_key)
+    return item if isinstance(item, dict) else None
 
 
 def extract_required_paths(
