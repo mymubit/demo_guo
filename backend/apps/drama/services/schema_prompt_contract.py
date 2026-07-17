@@ -99,7 +99,7 @@ def build_output_skeleton(
         skeleton = _synthesize_from_schema(schema)
     blob = json.dumps(skeleton, ensure_ascii=False)
     if len(blob) > max_chars:
-        skeleton = _shrink_strings(skeleton, max_chars=max_chars)
+        skeleton = _shrink_strings(skeleton, max_chars=max_chars, schema=schema)
     return skeleton
 
 
@@ -267,23 +267,56 @@ def _synthesize_primitive(schema: dict[str, Any]) -> Any:
     return "示例"
 
 
-def _shrink_strings(value: Any, *, max_chars: int) -> Any:
+def _collect_enum_values(schema: dict[str, Any], out: set[str]) -> None:
+    if not isinstance(schema, dict):
+        return
+    enum = schema.get("enum")
+    if isinstance(enum, list):
+        for item in enum:
+            if isinstance(item, str):
+                out.add(item)
+    props = schema.get("properties")
+    if isinstance(props, dict):
+        for child in props.values():
+            if isinstance(child, dict):
+                _collect_enum_values(child, out)
+    items = schema.get("items")
+    if isinstance(items, dict):
+        _collect_enum_values(items, out)
+    for key in ("allOf", "anyOf", "oneOf"):
+        for sub in schema.get(key) or []:
+            if isinstance(sub, dict):
+                _collect_enum_values(sub, out)
+
+
+def _shrink_strings(
+    value: Any, *, max_chars: int, schema: dict[str, Any] | None = None
+) -> Any:
     """按比例缩放字符串值，使 JSON blob 不超过 max_chars（保留结构与键名）。"""
+    protected: set[str] = set()
+    if schema is not None:
+        _collect_enum_values(schema, protected)
+
     blob = json.dumps(value, ensure_ascii=False)
     if len(blob) <= max_chars:
         return value
     strings: list[tuple[Any, Any, str]] = []
     _collect_strings(value, strings)
-    total_len = sum(len(s) for _, _, s in strings)
+    shrinkable = [(parent, key, s) for parent, key, s in strings if s not in protected]
+    total_len = sum(len(s) for _, _, s in shrinkable)
     if total_len == 0:
         return value
-    structural = len(blob) - total_len
-    target_total = max(max_chars - structural, 0)
-    scale = target_total / total_len
-    for parent, key, s in strings:
+    all_string_len = sum(len(s) for _, _, s in strings)
+    structural = len(blob) - all_string_len
+    protected_len = sum(len(s) for _, _, s in strings if s in protected)
+    target_shrinkable = max(max_chars - structural - protected_len, 0)
+    scale = target_shrinkable / total_len
+    for parent, key, s in shrinkable:
         new_len = int(len(s) * scale)
         if new_len < len(s):
             parent[key] = s[:new_len]
+    if len(json.dumps(value, ensure_ascii=False)) > max_chars:
+        return _shrink_strings(value, max_chars=max_chars, schema=schema)
     return value
 
 
