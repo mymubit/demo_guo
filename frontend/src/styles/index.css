@@ -26,6 +26,26 @@
   --danger: #dc2626;
   --success: #159947;
   --warning: #d97706;
+
+  /* shadcn 兼容映射 → Task 1 dual-accent tokens */
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--accent-action);
+  --primary-foreground: #ffffff;
+  --secondary: var(--canvas-muted);
+  --secondary-foreground: var(--ink);
+  --muted: var(--canvas-muted);
+  --muted-foreground: var(--ink-muted);
+  --accent: var(--canvas-muted);
+  --accent-foreground: var(--ink);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  --input: var(--border);
+  --ring: var(--accent-action);
 }
 
 html,

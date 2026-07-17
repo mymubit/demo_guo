@@ -1,3 +1,5 @@
+import tailwindcssAnimate from 'tailwindcss-animate'
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
@@ -30,6 +32,39 @@ export default {
         danger: 'var(--danger)',
         success: 'var(--success)',
         warning: 'var(--warning)',
+        // shadcn semantic tokens（映射到 index.css 中的 dual-accent 变量）
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
+        card: {
+          DEFAULT: 'var(--card)',
+          foreground: 'var(--card-foreground)',
+        },
+        popover: {
+          DEFAULT: 'var(--popover)',
+          foreground: 'var(--popover-foreground)',
+        },
+        primary: {
+          DEFAULT: 'var(--primary)',
+          foreground: 'var(--primary-foreground)',
+        },
+        secondary: {
+          DEFAULT: 'var(--secondary)',
+          foreground: 'var(--secondary-foreground)',
+        },
+        muted: {
+          DEFAULT: 'var(--muted)',
+          foreground: 'var(--muted-foreground)',
+        },
+        accent: {
+          DEFAULT: 'var(--accent)',
+          foreground: 'var(--accent-foreground)',
+        },
+        destructive: {
+          DEFAULT: 'var(--destructive)',
+          foreground: 'var(--destructive-foreground)',
+        },
+        input: 'var(--input)',
+        ring: 'var(--ring)',
         // 过渡期：旧 navy 类名仍可用，映射到 shell
         navy: {
           950: '#030d24',
@@ -54,7 +89,12 @@ export default {
       boxShadow: {
         panel: '0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.04)',
       },
+      borderRadius: {
+        lg: 'var(--radius, 0.5rem)',
+        md: 'calc(var(--radius, 0.5rem) - 2px)',
+        sm: 'calc(var(--radius, 0.5rem) - 4px)',
+      },
     },
   },
-  plugins: [],
+  plugins: [tailwindcssAnimate],
 }
