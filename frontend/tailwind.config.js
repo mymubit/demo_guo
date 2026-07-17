@@ -4,35 +4,44 @@ export default {
   theme: {
     extend: {
       colors: {
+        shell: {
+          DEFAULT: 'var(--shell-bg)',
+          elevated: 'var(--shell-bg-elevated)',
+          ink: 'var(--shell-ink)',
+          muted: 'var(--shell-ink-muted)',
+          accent: 'var(--accent-shell)',
+          'accent-hover': 'var(--accent-shell-hover)',
+        },
+        action: {
+          DEFAULT: 'var(--accent-action)',
+          hover: 'var(--accent-action-hover)',
+        },
+        canvas: {
+          DEFAULT: 'var(--canvas)',
+          muted: 'var(--canvas-muted)',
+        },
+        surface: 'var(--surface)',
+        border: 'var(--border)',
+        ink: {
+          DEFAULT: 'var(--ink)',
+          muted: 'var(--ink-muted)',
+          faint: 'var(--ink-faint)',
+        },
+        danger: 'var(--danger)',
+        success: 'var(--success)',
+        warning: 'var(--warning)',
+        // 过渡期：旧 navy 类名仍可用，映射到 shell
         navy: {
           950: '#030d24',
-          900: '#0a1628',
-          800: '#12203a',
+          900: 'var(--shell-bg)',
+          800: 'var(--shell-bg-elevated)',
           700: '#1a2d4d',
           600: '#243a5c',
         },
-        canvas: {
-          DEFAULT: '#f4f5f7',
-          muted: '#e8eaee',
-          raised: '#ffffff',
-        },
-        brand: {
-          50: '#eef2ff',
-          100: '#e0e7ff',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-        },
         gold: {
-          300: '#f7cb54',
-          400: '#f4b719',
+          300: 'var(--accent-shell-hover)',
+          400: 'var(--accent-shell)',
           500: '#d9a014',
-        },
-        ink: {
-          DEFAULT: '#0f172a',
-          muted: '#475569',
-          faint: '#94a3b8',
         },
       },
       fontFamily: {

@@ -3,16 +3,29 @@
 @tailwind utilities;
 
 :root {
-  --navy-950: #030d24;
-  --navy-900: #0a1628;
-  --navy-800: #12203a;
-  --canvas: #f4f5f7;
-  --canvas-muted: #e8eaee;
-  --brand-500: #6366f1;
-  --brand-600: #4f46e5;
-  --gold-400: #f4b719;
+  --shell-bg: #0a1628;
+  --shell-bg-elevated: #12203a;
+  --shell-ink: #e8eef7;
+  --shell-ink-muted: #94a3b8;
+  --accent-shell: #f4b719;
+  --accent-shell-hover: #f7cb54;
+
+  --canvas: #eef1f5;
+  --canvas-muted: #e4e9f0;
+  --surface: #ffffff;
+  --border: #d8dee8;
+
+  --accent-action: #0f2744;
+  --accent-action-hover: #163a66;
+  --focus-ring: rgba(15, 39, 68, 0.28);
+
   --ink: #0f172a;
   --ink-muted: #475569;
+  --ink-faint: #94a3b8;
+
+  --danger: #dc2626;
+  --success: #159947;
+  --warning: #d97706;
 }
 
 html,
@@ -32,9 +45,9 @@ body {
 
 @layer components {
   .sf-control {
-    @apply w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-ink
+    @apply w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink
       placeholder:text-ink-faint outline-none transition
-      focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20;
+      focus:border-action focus:ring-2 focus:ring-action/20;
   }
 
   .sf-label {
@@ -46,6 +59,6 @@ body {
   }
 
   .sf-panel {
-    @apply rounded-xl border border-slate-200/80 bg-canvas-raised shadow-panel;
+    @apply rounded-xl border border-border bg-surface shadow-panel;
   }
 }
