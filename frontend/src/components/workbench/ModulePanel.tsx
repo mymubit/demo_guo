@@ -94,7 +94,7 @@ export function ModulePanel({
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-sm text-ink">{m.label_zh}</span>
-                      <Badge tone={m.kind === 'core' ? 'brand' : 'default'}>
+                      <Badge tone={m.kind === 'core' ? 'action' : 'default'}>
                         {KIND_LABELS[m.kind] ?? m.kind}
                       </Badge>
                     </div>

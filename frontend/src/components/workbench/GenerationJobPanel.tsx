@@ -108,7 +108,7 @@ export function GenerationJobPanel({
       : status === 'failed'
         ? 'danger'
         : status === 'running'
-          ? 'brand'
+          ? 'action'
           : status === 'disabled'
             ? 'warning'
             : 'default'

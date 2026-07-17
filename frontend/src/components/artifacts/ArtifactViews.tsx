@@ -20,7 +20,7 @@ export function ProjectBriefView({ data }: { data: Record<string, unknown> }) {
       <div className="flex flex-wrap gap-2">
         {genre
           ? Object.entries(genre).map(([k, v]) => (
-              <Badge key={k} tone="brand">
+              <Badge key={k} tone="action">
                 {GENRE_AXIS_LABELS[k] ?? k}：{v}
               </Badge>
             ))
@@ -291,7 +291,7 @@ export function NarrativePlanView({ data }: { data: Record<string, unknown> }) {
               <h4 className="font-medium text-ink">
                 EP{String(card.episode)} · {String(card.title)}
               </h4>
-              <Badge tone="brand">{String(card.hook_grade ?? '')}</Badge>
+              <Badge tone="action">{String(card.hook_grade ?? '')}</Badge>
             </div>
             <p className="mt-2 text-sm text-ink-muted">{String(card.core_event ?? '')}</p>
             <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-ink-muted">

@@ -165,7 +165,7 @@ export function ProjectListPage() {
                       {project.title || '未命名项目'}
                     </Link>
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink-muted">
-                      <Badge tone={project.entry_type === 'original_track' ? 'brand' : 'gold'}>
+                      <Badge tone={project.entry_type === 'original_track' ? 'action' : 'gold'}>
                         {entryLabel(project.entry_type)}
                       </Badge>
                       {project.status ? (

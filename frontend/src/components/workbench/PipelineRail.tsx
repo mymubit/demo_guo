@@ -134,7 +134,7 @@ export function PipelineRail({
                     ? 'warning'
                     : workflow.status === 'completed'
                       ? 'success'
-                      : 'brand'
+                      : 'action'
               }
             >
               {WORKFLOW_STATUS_LABELS[workflow.status]}

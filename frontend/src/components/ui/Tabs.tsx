@@ -26,13 +26,13 @@ export function Tabs({
             onClick={() => onChange(item.id)}
             className={cn(
               'relative px-3 py-2 text-sm font-medium transition',
-              active ? 'text-brand-600' : 'text-ink-muted hover:text-ink',
+              active ? 'text-action' : 'text-ink-muted hover:text-ink',
               item.disabled && 'cursor-not-allowed opacity-40',
             )}
           >
             {item.label}
             {active ? (
-              <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-brand-500" />
+              <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-action" />
             ) : null}
           </button>
         )

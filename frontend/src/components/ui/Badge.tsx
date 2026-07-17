@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react'
 import { cn } from '@/utils/cn'
 
-type Tone = 'brand' | 'gold' | 'success' | 'warning' | 'danger' | 'info' | 'default'
+type Tone = 'action' | 'gold' | 'success' | 'warning' | 'danger' | 'info' | 'default'
 
 const toneClass: Record<Tone, string> = {
-  brand: 'bg-brand-50 text-brand-700 border-brand-100',
+  action: 'bg-action/10 text-action border-action/20',
   gold: 'bg-amber-50 text-amber-800 border-amber-100',
   success: 'bg-emerald-50 text-emerald-700 border-emerald-100',
   warning: 'bg-amber-50 text-amber-700 border-amber-100',
