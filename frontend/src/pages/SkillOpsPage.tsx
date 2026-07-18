@@ -99,6 +99,7 @@ export function SkillOpsPage() {
             刷新
           </Button>
           <Button
+            variant="action"
             size="sm"
             iconLeft={<Download className="h-3.5 w-3.5" />}
             onClick={() => exportMutation.mutate()}

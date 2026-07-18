@@ -10,8 +10,11 @@ import { NewProjectPage } from '@/pages/NewProjectPage'
 import { ProjectSettingsPage } from '@/pages/ProjectSettingsPage'
 import { WorkbenchPage } from '@/pages/WorkbenchPage'
 import { ExternalReviewPage } from '@/pages/ExternalReviewPage'
+import { ExternalReviewRecordsPage } from '@/pages/ExternalReviewRecordsPage'
 import { AdminConfigPage } from '@/pages/AdminConfigPage'
 import { ModelHubPage } from '@/pages/ModelHubPage'
+import { LlmLogsPage } from '@/pages/LlmLogsPage'
+import { SkillOpsPage } from '@/pages/SkillOpsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,8 +51,19 @@ export default function App() {
                   element={<Navigate to="workbench" replace />}
                 />
                 <Route path="/tools/script-review" element={<ExternalReviewPage />} />
+                <Route
+                  path="/tools/script-review/records"
+                  element={<ExternalReviewRecordsPage />}
+                />
                 <Route path="/admin/model" element={<ModelHubPage />} />
+                <Route path="/admin/llm/logs" element={<LlmLogsPage />} />
+                <Route path="/admin/llm/chains" element={<LlmLogsPage />} />
+                <Route
+                  path="/projects/:projectId/logs"
+                  element={<Navigate to="/admin/llm/logs" replace />}
+                />
                 <Route path="/admin/config" element={<AdminConfigPage />} />
+                <Route path="/admin/skill-ops" element={<SkillOpsPage />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/projects" replace />} />
