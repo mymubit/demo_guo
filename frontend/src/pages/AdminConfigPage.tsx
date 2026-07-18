@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/Button'
 import { Tabs, ErrorBanner, LoadingBlock } from '@/components/ui/Tabs'
+import { PageShell } from '@/components/layout/PageShell'
 import { useWorkbenchDefinition } from '@/hooks/useWorkbenchDefinition'
 import { adminApi } from '@/services/admin'
 import { ApiError, formatApiError } from '@/services/errors'
@@ -101,38 +102,39 @@ export function AdminConfigPage() {
   if (query.isLoading) return <LoadingBlock />
   if (query.isError) {
     return (
-      <div className="p-8">
+      <PageShell title="配置后台" width="form">
         <ErrorBanner message={formatApiError(query.error)} onRetry={() => void query.refetch()} />
-      </div>
+      </PageShell>
     )
   }
   if (!draft) return null
 
   if (!sections.length || !activeSection) {
     return (
-      <div className="p-8">
+      <PageShell title="配置后台" width="form">
         <ErrorBanner message="工作台定义未提供 admin_settings.sections" />
-      </div>
+      </PageShell>
     )
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-8 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-ink">配置后台</h1>
-        <p className="mt-1 text-sm text-ink-muted">
+    <PageShell
+      title="配置后台"
+      description={
+        <>
           {sections.length} 分区 overlay · 强制修改原因 · revision {draft.audit.revision} · skills{' '}
           {draft.skills_version}
-        </p>
-      </div>
-
+        </>
+      }
+      width="form"
+    >
       <Tabs
         items={sections.map((s) => ({ id: s.id, label: s.label_zh || s.id }))}
         value={sectionId}
         onChange={setSectionId}
       />
 
-      <div className="mt-4 space-y-4">
+      <div className="sf-panel mt-4 space-y-4 p-5">
         <div className="text-xs text-ink-muted">{activeSection.source}</div>
 
         {conflict ? (
@@ -170,7 +172,7 @@ export function AdminConfigPage() {
         </div>
 
         <div className="flex flex-wrap items-end gap-3">
-          <Button loading={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
+          <Button variant="action" loading={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
             保存覆盖（新 revision）
           </Button>
           <div className="flex items-end gap-2">
@@ -198,6 +200,6 @@ export function AdminConfigPage() {
           {draft.audit.change_reason}
         </p>
       </div>
-    </div>
+    </PageShell>
   )
 }

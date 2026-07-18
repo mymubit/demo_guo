@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { Button } from '@/components/ui/Button'
 import { ErrorBanner } from '@/components/ui/Tabs'
+import { PageShell } from '@/components/layout/PageShell'
 import { GenerationJobPanel } from '@/components/workbench/GenerationJobPanel'
 import { dramaApi } from '@/services/drama'
 import { formatApiError } from '@/services/errors'
@@ -39,14 +40,13 @@ export function ExternalReviewPage() {
   })
 
   return (
-    <div className="mx-auto max-w-3xl px-8 py-8">
-      <h1 className="text-2xl font-semibold text-ink">外部剧本评测</h1>
-      <p className="mt-1 text-sm text-ink-muted">
-        上传或粘贴外部剧本，并行运行评分官与合规官
-      </p>
-
+    <PageShell
+      title="外部剧本评测"
+      description="上传或粘贴外部剧本，并行运行评分官与合规官"
+      width="narrow"
+    >
       <form
-        className="mt-6 space-y-4"
+        className="sf-panel space-y-4 p-5"
         onSubmit={(e) => {
           e.preventDefault()
           mutation.mutate()
@@ -103,7 +103,12 @@ export function ExternalReviewPage() {
           />
         </div>
 
-        <Button type="submit" loading={mutation.isPending} disabled={!file && !content.trim()}>
+        <Button
+          type="submit"
+          variant="action"
+          loading={mutation.isPending}
+          disabled={!file && !content.trim()}
+        >
           开始评测
         </Button>
       </form>
@@ -113,6 +118,6 @@ export function ExternalReviewPage() {
           <GenerationJobPanel projectId={null} job={job} />
         </div>
       ) : null}
-    </div>
+    </PageShell>
   )
 }

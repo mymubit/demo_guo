@@ -204,7 +204,7 @@ export function ExternalReviewRecordsPage() {
         <div className="flex flex-wrap items-center gap-2">
           <Link
             to="/tools/script-review"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink hover:bg-canvas-muted/60"
           >
             <FileSearch className="h-4 w-4" />
             发起评测
@@ -244,7 +244,7 @@ export function ExternalReviewRecordsPage() {
 
       <div className="grid min-h-[32rem] gap-4 lg:grid-cols-[22rem_minmax(0,1fr)]">
         <aside className="sf-panel flex flex-col overflow-hidden">
-          <div className="border-b border-line px-4 py-3 text-sm font-medium text-ink">
+          <div className="border-b border-border px-4 py-3 text-sm font-medium text-ink-muted">
             最近记录
             <span className="ml-2 text-xs font-normal text-ink-faint">{items.length}</span>
           </div>
@@ -257,7 +257,7 @@ export function ExternalReviewRecordsPage() {
               <p className="text-sm text-ink-muted">暂无评测记录</p>
               <Link
                 to="/tools/script-review"
-                className="text-sm font-medium text-navy-700 underline-offset-2 hover:underline"
+                className="text-sm font-medium text-action underline-offset-2 hover:underline"
               >
                 去发起评测
               </Link>
@@ -268,13 +268,13 @@ export function ExternalReviewRecordsPage() {
                 const active = item.job_id === selectedId
                 const reports = reviewReports(item)
                 return (
-                  <li key={item.job_id} className="border-b border-line last:border-b-0">
+                  <li key={item.job_id} className="border-b border-border last:border-b-0">
                     <button
                       type="button"
                       onClick={() => selectJob(item.job_id)}
                       className={cn(
                         'flex w-full flex-col gap-1.5 px-4 py-3 text-left transition',
-                        active ? 'bg-navy-50' : 'hover:bg-slate-50',
+                        active ? 'bg-action/5' : 'hover:bg-canvas-muted/60',
                       )}
                     >
                       <div className="flex items-start justify-between gap-2">
