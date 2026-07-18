@@ -148,7 +148,7 @@ export function ProjectSettingsPage() {
           <Button
             variant="action"
             loading={saveMutation.isPending && !saveMutation.variables?.enterWorkbench}
-            onClick={() => saveMutation.mutate()}
+            onClick={() => saveMutation.mutate({})}
           >
             {saveOk && !saveMutation.variables?.enterWorkbench ? '已保存' : '保存设定'}
           </Button>

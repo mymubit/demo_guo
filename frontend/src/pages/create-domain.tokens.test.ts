@@ -8,7 +8,7 @@ describe('create-domain pages tokens', () => {
   for (const file of files) {
     it(`${file} has no indigo brand classes`, () => {
       const src = readFileSync(resolve(__dirname, file), 'utf8')
-      expect(src).not.toMatch(/brand-500|brand-600|bg-brand|text-brand|tone=\"brand\"|variant=\"brand\"/)
+      expect(src).not.toMatch(/brand-500|brand-600|bg-brand|text-brand|tone="brand"|variant="brand"/)
     })
   }
 })

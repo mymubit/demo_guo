@@ -203,9 +203,20 @@ describe('dynamic workbench-form contract', () => {
     expect(
       resolveStageStatus(
         blueprint,
-        workflow({ current_phase: 'blueprint_approval', status: 'waiting_approval' }),
+        workflow({
+          current_phase: 'blueprint_approval',
+          status: 'waiting_approval',
+          artifacts: { story_bible: { id: 'sb1' } },
+        }),
       ),
     ).toBe('waiting')
+    // 待审批但无蓝图：视为异常卡住，蓝图阶段不显示 waiting（避免假锁死整条流水线）
+    expect(
+      resolveStageStatus(
+        blueprint,
+        workflow({ current_phase: 'blueprint_approval', status: 'waiting_approval' }),
+      ),
+    ).not.toBe('waiting')
     expect(
       canExecuteStage(strategy, workflow({ current_phase: 'strategy', status: 'active' })),
     ).toBe(true)

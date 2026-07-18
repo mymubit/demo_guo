@@ -194,12 +194,25 @@ export type GenerationJob = {
   message?: string
   error?: string | null
   result?: unknown
+  /** 外部评测列表展示名（文件名 / 剧本名 / 正文首行） */
+  title?: string | null
+  source_filename?: string | null
   created_at?: string
   updated_at?: string
 }
 
 export type SseJobEvent = {
-  type: 'status' | 'progress' | 'log' | 'artifact' | 'error' | 'done'
+  type:
+    | 'status'
+    | 'progress'
+    | 'log'
+    | 'artifact'
+    | 'error'
+    | 'done'
+    | 'timeout'
+    | 'heartbeat'
+    | 'warning'
+    | 'message'
   job_id: string
   status?: GenerationJobStatus
   progress?: number
@@ -233,7 +246,9 @@ export type ExternalScriptReviewRequest = {
   check_mode: 'standard' | 'values-risk' | 'full'
   script_content?: string
   content?: string
+  source_filename?: string
   filename?: string
+  script_title?: string
   project_id?: string
 }
 

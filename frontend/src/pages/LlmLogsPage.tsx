@@ -267,7 +267,7 @@ export function LlmLogsPage(_props?: { mode?: 'logs' | 'chains' }) {
     enabled: Boolean(selectedId),
   })
 
-  const items = listQuery.data?.items ?? []
+  const items = useMemo(() => listQuery.data?.items ?? [], [listQuery.data?.items])
   const projectGroups = useMemo(() => groupByProject(items), [items])
 
   const activeProject = useMemo(() => {

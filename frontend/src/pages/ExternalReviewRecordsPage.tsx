@@ -338,11 +338,11 @@ export function ExternalReviewRecordsPage() {
               <GenerationJobPanel
                 projectId={null}
                 job={job}
-                onJobUpdate={(latest) => {
+                onJobUpdate={(latest: GenerationJob) => {
                   setJob(latest)
                   void listQuery.refetch()
                 }}
-                onCompleted={(latest) => {
+                onCompleted={(latest: GenerationJob) => {
                   setJob(latest)
                   void listQuery.refetch()
                 }}

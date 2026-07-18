@@ -52,11 +52,16 @@ export function rememberRecentProject(input: {
   writeRaw([next, ...others])
 }
 
+export function forgetRecentProject(projectId: string): void {
+  if (!projectId) return
+  writeRaw(readRaw().filter((item) => item.id !== projectId))
+}
+
 /** 用服务端列表刷新最近项目标题，并剔除已删除项 */
 export function syncRecentProjectsWithList(projects: DramaProjectSummary[]): RecentProjectRef[] {
   const byId = new Map(projects.map((p) => [p.id, p]))
   const synced = listRecentProjects()
-    .map((item) => {
+    .map((item): RecentProjectRef | null => {
       const live = byId.get(item.id)
       if (!live) return null
       return {
@@ -65,7 +70,7 @@ export function syncRecentProjectsWithList(projects: DramaProjectSummary[]): Rec
         entry_type: live.entry_type || item.entry_type,
       }
     })
-    .filter((item): item is RecentProjectRef => Boolean(item))
+    .filter((item): item is RecentProjectRef => item != null)
   writeRaw(synced)
   return synced
 }

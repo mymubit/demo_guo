@@ -165,7 +165,7 @@ export function ModelHubPage() {
   }
 
   const runtime = query.data?.runtime
-  const providers = query.data?.providers ?? []
+  const providers = useMemo(() => query.data?.providers ?? [], [query.data?.providers])
   const demoOverseas = useMemo(() => providers.filter(isLikelyDemoOverseas), [providers])
   const activePreset = selectedPresetId
     ? LLM_VENDOR_PRESETS.find((p) => p.id === selectedPresetId)

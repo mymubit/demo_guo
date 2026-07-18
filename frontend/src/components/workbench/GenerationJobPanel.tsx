@@ -44,10 +44,13 @@ function summarizeEventData(data: Record<string, unknown>): string {
 export function GenerationJobPanel({
   projectId,
   job,
+  onJobUpdate,
   onCompleted,
 }: {
   projectId: string | null
   job: GenerationJob | null
+  /** 轮询/SSE 刷新后同步最新 job（含失败态） */
+  onJobUpdate?: (job: GenerationJob) => void
   onCompleted?: (job: GenerationJob) => void
 }) {
   const [events, setEvents] = useState<SseJobEvent[]>([])
@@ -56,7 +59,9 @@ export function GenerationJobPanel({
   const [progress, setProgress] = useState(job?.progress ?? 0)
   const [jobError, setJobError] = useState<string | null>(job?.error ?? null)
   const onCompletedRef = useRef(onCompleted)
+  const onJobUpdateRef = useRef(onJobUpdate)
   onCompletedRef.current = onCompleted
+  onJobUpdateRef.current = onJobUpdate
 
   useEffect(() => {
     if (!job?.job_id) return
@@ -85,6 +90,7 @@ export function GenerationJobPanel({
             setStatus(latest.status)
             if (typeof latest.progress === 'number') setProgress(latest.progress)
             if (latest.error) setJobError(latest.error)
+            onJobUpdateRef.current?.(latest)
             // failed / disabled must not be treated as success
             if (isSuccessfulJob(latest.status)) {
               onCompletedRef.current?.(latest)

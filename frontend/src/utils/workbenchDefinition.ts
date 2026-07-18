@@ -1,6 +1,7 @@
 import { resolveUiWidget } from '@/config/workbench'
 import type {
   AdminSectionDef,
+  FlavorCategory,
   ModuleCatalogItem,
   SettingsFieldDef,
   SettingsGroupDef,
@@ -159,7 +160,7 @@ export function buildThemeMatrixFromFields(
 
   // 按后端透传的 category 元数据分组；无分组信息时退化为单组
   const categoryIds = [...new Set(flavorOptions.map((o) => o.category))]
-  const categories =
+  const categories: FlavorCategory[] =
     flavorOptions.length === 0
       ? []
       : categoryIds.map((id) => ({
@@ -179,8 +180,13 @@ export function buildThemeMatrixFromFields(
     preset_templates: (preset?.options ?? []).map((o) => ({
       code: o.value,
       label_zh: o.label_zh || o.label || o.value,
+      kind: 'preset' as const,
+      emotion: '',
+      identity: '',
+      conflict: '',
+      world: '',
     })),
-    featured_combos: embedded?.featured_combos ?? [],
+    featured_combos: [],
   }
 }
 
