@@ -91,7 +91,7 @@ export function ThemeMatrixPicker({
 
       <section className="space-y-3">
         <div className="flex items-center gap-2 text-sm font-semibold text-ink">
-          <Sparkles className="h-4 w-4 text-gold-400" />
+          <Sparkles className="h-4 w-4 text-action" />
           热门组合
         </div>
         {(matrix.featured_combos?.length ?? 0) === 0 ? (
@@ -129,7 +129,7 @@ export function ThemeMatrixPicker({
                     className={cn(
                       'rounded-lg border px-3 py-2.5 text-left text-sm transition',
                       active
-                        ? 'border-gold-400 bg-amber-50'
+                        ? 'border-action bg-action/5'
                         : 'border-border bg-surface hover:border-action/40',
                     )}
                   >
@@ -137,7 +137,7 @@ export function ThemeMatrixPicker({
                       <span className="line-clamp-1 font-medium text-ink">
                         {combo.label_zh || combo.label || combo.code}
                       </span>
-                      {active ? <Check className="h-3.5 w-3.5 shrink-0 text-gold-500" /> : null}
+                      {active ? <Check className="h-3.5 w-3.5 shrink-0 text-action" /> : null}
                     </div>
                   </button>
                 )
