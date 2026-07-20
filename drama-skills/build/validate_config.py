@@ -76,7 +76,7 @@ def main() -> int:
         ERRORS.append("启用交付后未生成交付工具参数")
 
     context = copy.deepcopy(project)
-    context["deliverables"] = project["creation_preferences"]["delivery_items"]
+    context["deliverables"] = project["creation_preferences"]["deliverables"]
     expressions: List[str] = []
     for definition in (
         (workbench.get("project_settings") or {}).get("fields") or {}

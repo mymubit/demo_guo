@@ -61,7 +61,7 @@
         "compliance_check_mode": {
           "$ref": "generated/parameters.schema.json#/$defs/check_mode"
         },
-        "delivery_items": {
+        "deliverables": {
           "$ref": "generated/parameters.schema.json#/$defs/deliverables"
         },
         "enable_delivery": {

@@ -149,7 +149,7 @@ axis_guidance:
       prefer: { world: [modern, ancient, republic, fantasy, virtual] }
       note: 重生穿越常配都市/古代/年代/幻想
     - when: { world: campus }
-      prefer: { identity: [student, ordinary, underdog, dual-lead] }
+      prefer: { identity: [student, ordinary, underdog, returning-elite] }
       discourage: { identity: [hidden-elite, protector], conflict: [workplace, power] }
       note: 校园时空少见隐藏大佬/职场权谋
     - when: { world: ancient }
@@ -160,7 +160,7 @@ axis_guidance:
       prefer: { conflict: [family, tradition, redemption, disparity, survival] }
       discourage: { conflict: [workplace] }
     - when: { world: virtual }
-      prefer: { conflict: [survival, power, romance], identity: [ordinary, reborn, dual-lead, outcast] }
+      prefer: { conflict: [survival, power, romance], identity: [ordinary, reborn, returning-elite, outcast] }
     - when: { conflict: romance }
       prefer: { emotion: [love, comedy, healing, warmth] }
     - when: { conflict: crime }

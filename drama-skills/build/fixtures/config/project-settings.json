@@ -30,7 +30,7 @@
     "scoring_preset": "standard",
     "compliance_check_mode": "standard",
     "enable_delivery": true,
-    "delivery_items": [
+    "deliverables": [
       "storyboard",
       "visual",
       "marketing",

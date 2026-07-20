@@ -20,6 +20,12 @@
 
 ## 变更记录
 
+### 2026-07-20 · 零兼容硬切（Skills 契约层）
+
+- **交付项统一**：工作台字段、`persist_path` 与 `runtime_projection` 全面改用 `deliverables`（`creation_preferences.deliverables`）；删除 `delivery_items` 双读路径
+- **题材硬切**：删除 `genres/fallback.yaml`；`validate_skills` 断言 `genres/` 仅允许 `matrix.yaml`；未匹配题材规则 → 运行时硬错误（见 Runtime 任务）
+- **identity 清理**：`theme-matrix.yaml` tag prefer 与 `output-schemas.md` 示例移除 `dual-lead`，对齐 `returning-elite`
+
 ### 2026-07-16 · v5.2 全库审计修复（数值收口 + 题材矩阵 v2 + 契约闭合）
 
 - **数值收口**：新增 `foundation/constraints/narrative-metrics.yaml`（开场分层窗口 3s/10s/30s、S级铺垫 5 集、冲突密度 S1.5/A1.0/B0.5），裁决并消除 rules/knowledge 双源冲突（LR-005 vs plotting、10秒 vs 30秒、40-60% vs 55-75%、1.2 vs 1.5）

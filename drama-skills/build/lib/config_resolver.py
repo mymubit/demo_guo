@@ -65,7 +65,7 @@ class ConfigResolver:
         result: Dict[str, Dict[str, Any]] = {}
         context = copy.deepcopy(project_settings)
         context["deliverables"] = deep_get(
-            project_settings, "creation_preferences.delivery_items"
+            project_settings, "creation_preferences.deliverables"
         )
         for target, mappings in projection.items():
             condition = mappings.get("when")

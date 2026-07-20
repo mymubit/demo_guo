@@ -30,7 +30,7 @@
   "title": "string",
   "genre_matrix": {
     "emotion": "revenge|love|healing|suspense|ambition|comedy|justice|warmth|nostalgia",
-    "identity": "underdog|reborn|hidden-elite|ordinary|outcast|student|protector|bound|dual-lead",
+    "identity": "underdog|reborn|hidden-elite|ordinary|outcast|student|protector|bound|returning-elite",
     "conflict": "family|workplace|romance|power|survival|crime|disparity|redemption|tradition",
     "world": "modern|ancient|republic|rural|fantasy|campus|scifi|virtual|overseas",
     "flavor_tags": ["wuxia", "nongtian", "infinite-flow", "..."]

@@ -1,6 +1,6 @@
 # genre_profile 参考（题材规范）
 
-> **参考长文**；可执行规则 SSOT：`foundation/rules/genres/matrix.yaml` + `foundation/rules/genres/fallback.yaml`
+> **参考长文**；可执行规则 SSOT：`foundation/rules/genres/matrix.yaml`
 > 
 > **使用方式**：创作前根据题材选择对应区块，作为 global_core 的补充约束。
 > **适用角色**：drama.story-bible（人物/世界/结构）、drama.episode-designer（分集）、drama.script-writer（台词）

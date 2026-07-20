@@ -27,7 +27,7 @@ project_settings:
       fields: [scoring_preset, compliance_check_mode]
     delivery:
       label_zh: 交付偏好
-      fields: [enable_delivery, delivery_items]
+      fields: [enable_delivery, deliverables]
 
   fields:
     entry_type:
@@ -126,9 +126,9 @@ project_settings:
       parameter_ref: enable_delivery
       persist_path: creation_preferences.enable_delivery
       config_scope: project
-    delivery_items:
+    deliverables:
       parameter_ref: deliverables
-      persist_path: creation_preferences.delivery_items
+      persist_path: creation_preferences.deliverables
       visible_when: "enable_delivery == true"
       config_scope: project
 
@@ -163,7 +163,7 @@ runtime_projection:
     check_mode: creation_preferences.compliance_check_mode
     target_platform: target_platform
   drama.delivery-tool:
-    deliverables: creation_preferences.delivery_items
+    deliverables: creation_preferences.deliverables
     target_platform: target_platform
     production_context: production_context
     when: "creation_preferences.enable_delivery == true"
