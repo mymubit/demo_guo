@@ -20,7 +20,8 @@ class SubstanceGateTests(SimpleTestCase):
         out = normalize_compliance_report(raw, {})
         self.assertTrue(compliance_report_too_thin(out))
 
-    def test_empty_suggestion_gets_fallback_not_thin(self) -> None:
+    def test_empty_suggestion_remains_thin(self) -> None:
+        """normalize 不再补默认 suggestion；空建议仍视为过薄。"""
         raw = {
             "drama_title": "t",
             "overall_result": "通过",
@@ -34,8 +35,8 @@ class SubstanceGateTests(SimpleTestCase):
             ],
         }
         out = normalize_compliance_report(raw, {})
-        self.assertFalse(compliance_report_too_thin(out))
-        self.assertGreaterEqual(len(out["risk_items"][0]["suggestion"]), 8)
+        self.assertEqual(out["risk_items"][0]["suggestion"], "")
+        self.assertTrue(compliance_report_too_thin(out))
 
     def test_compliance_pass_with_detailed_p2_ok(self) -> None:
         raw = {

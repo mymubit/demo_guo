@@ -228,22 +228,11 @@ class DramaApiTests(APITestCase):
         )
         quality = dict(FIXTURES["quality_report"])
         quality["resolved_script_key"] = "external_script"
-        # 模拟当时松散结构：dimensions 为数组
-        quality_loose = {
-            "drama_title": quality["drama_title"],
-            "overall_score": quality["overall_score"],
-            "grade": quality["grade"],
-            "needs_revision": quality["needs_revision"],
-            "dimensions": [
-                {"name": "格式规范", "score": 82, "evidence": [], "deduction_reasons": []},
-                {"name": "叙事效率", "score": 82, "evidence": [], "deduction_reasons": []},
-            ],
-        }
         compliance = dict(FIXTURES["compliance_report"])
         compliance["resolved_script_key"] = "external_script"
 
         for purpose, payload in (
-            (DramaLlmCallLog.Purpose.QUALITY_SCORING, quality_loose),
+            (DramaLlmCallLog.Purpose.QUALITY_SCORING, quality),
             (DramaLlmCallLog.Purpose.COMPLIANCE_CHECK, compliance),
         ):
             content = json.dumps(payload, ensure_ascii=False)

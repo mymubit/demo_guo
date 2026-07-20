@@ -1,20 +1,23 @@
 # -*- coding: utf-8 -*-
-"""project_brief 契约对齐测试。"""
+"""产物 normalize 合成补全测试（零兼容：不做别名/形状改写）。"""
 from __future__ import annotations
 
-from django.test import SimpleTestCase, TestCase, override_settings
+from django.test import SimpleTestCase, override_settings
 
 from apps.core.schema_validator import SchemaValidator
 from apps.drama.services.artifact_normalize import (
+    normalize_compliance_report,
     normalize_narrative_plan,
     normalize_project_brief,
+    normalize_quality_report,
     normalize_story_bible,
+    quality_report_evidence_too_sparse,
 )
 from apps.drama.tests.helpers import FIXTURES, SKILLS_ROOT
 
 
 @override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
-class ProjectBriefNormalizeTests(TestCase):
+class ProjectBriefNormalizeTests(SimpleTestCase):
     def setUp(self) -> None:
         self.validator = SchemaValidator()
         self.settings = {
@@ -39,8 +42,6 @@ class ProjectBriefNormalizeTests(TestCase):
 
     def test_fills_structural_fields_from_settings(self) -> None:
         raw = {
-            "one_line_theme": "弃女入宫，暗中执棋",
-            "synopsis": "她被送入深宫后步步崛起。",
             "core_idea": "以弃女身份建立权力基本盘",
             "core_conflict": "生存渴望 vs 阶层壁垒",
             "hook_concept": "棋子入局却执棋",
@@ -58,10 +59,8 @@ class ProjectBriefNormalizeTests(TestCase):
                 "act_ratio": {"act1": 0.1},
                 "hook_types": ["suspense"],
             },
-            "blockbuster_factors": [
-                {"factor": "身份反转", "description": "弃女实为隐藏精英"},
-            ],
-            "sensitivity_pre_check": [{"risk": "历史虚无", "level": "medium"}],
+            "blockbuster_factors": ["身份反转"],
+            "compliance_risk": "medium",
             "market_opportunity": "女频权谋热度高",
             "differentiation_strategy": "不靠恩宠靠情报网",
             "first_episode_hook": "送亲遇刺",
@@ -86,6 +85,20 @@ class ProjectBriefNormalizeTests(TestCase):
             out, "schemas/artifacts/project_brief/1.schema.json"
         )
 
+    def test_does_not_rewrite_blockbuster_factor_objects(self) -> None:
+        raw = {
+            "core_idea": "x",
+            "core_conflict": "y",
+            "hook_concept": "z",
+            "target_audience": "a",
+            "compliance_risk": "low",
+            "blockbuster_factors": [
+                {"factor": "身份反转", "description": "弃女实为隐藏精英"},
+            ],
+        }
+        out = normalize_project_brief(raw, self.settings)
+        self.assertNotIn("blockbuster_factors", out)
+
     def test_valid_fixture_stays_valid(self) -> None:
         out = normalize_project_brief(FIXTURES["project_brief"], self.settings)
         self.validator.validate_file(
@@ -94,7 +107,7 @@ class ProjectBriefNormalizeTests(TestCase):
 
 
 @override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
-class StoryBibleNormalizeTests(TestCase):
+class StoryBibleNormalizeTests(SimpleTestCase):
     def setUp(self) -> None:
         self.validator = SchemaValidator()
         self.settings = {
@@ -103,75 +116,30 @@ class StoryBibleNormalizeTests(TestCase):
             "entry_type": "original_track",
         }
 
-    def test_fills_missing_synopsis_short(self) -> None:
+    def test_does_not_fill_missing_synopsis_short(self) -> None:
         raw = {
             "drama_title": "玉碎宫门",
             "logline": "弃女入宫，暗中执棋",
             "synopsis": {"full": "她被送入深宫后步步崛起，最终执掌朝局。"},
-            "adapt_source": {"mode": "original"},
-            "world_rules": {
-                "setting_summary": "大周朝堂",
-                "root_rules": ["后宫不得干政"],
-                "power_structure": "帝后外戚博弈",
-            },
-            "characters": [
-                {
-                    "name": "沈玉碎",
-                    "role_type": "protagonist",
-                    "surface_desire": "活下去",
-                    "deep_need": "被看见",
-                    "ghost": "被弃之痛",
-                    "lie": "示弱才能活",
-                    "flaw": "过度隐忍",
-                    "arc": {
-                        "start": "棋子",
-                        "turning_point_1": "第一次反杀",
-                        "turning_point_2": "身份暴露",
-                        "end": "执棋者",
-                    },
-                    "voice_tag": "冷而克制",
-                    "visual_anchor": "一枚玉碎簪",
-                }
-            ],
-            "relationship_map": [],
-            "series_structure": {
-                "main_storyline": "弃女崛起",
-                "six_stage_structure": [
-                    {"stage": 1},
-                    {"stage": 2},
-                    {"stage": 3},
-                    {"stage": 4},
-                    {"stage": 5},
-                    {"stage": 6},
-                ],
-                "conflict_escalation_chain": ["入宫", "夺权"],
-                "major_reversal_positions": [],
-                "paywall_distribution": [],
-                "foreshadowing_table": [],
-                "series_emotion_curve": [],
-            },
         }
         out = normalize_story_bible(raw, self.settings)
-        self.assertIn("short", out["synopsis"])
-        self.assertTrue(out["synopsis"]["short"])
-        self.assertEqual(out["synopsis"]["full"], raw["synopsis"]["full"])
-        self.validator.validate_file(out, "schemas/artifacts/story_bible/1.schema.json")
+        self.assertEqual(out["synopsis"], {"full": "她被送入深宫后步步崛起，最终执掌朝局。"})
+        self.assertNotIn("short", out["synopsis"])
 
-    def test_string_synopsis_becomes_object(self) -> None:
+    def test_string_synopsis_not_rewritten_to_object(self) -> None:
         raw = dict(FIXTURES["story_bible"])
         raw["synopsis"] = "她被送入深宫后步步崛起。"
         out = normalize_story_bible(raw, self.settings)
-        self.assertIsInstance(out["synopsis"], dict)
-        self.assertIn("short", out["synopsis"])
-        self.assertIn("full", out["synopsis"])
-        self.validator.validate_file(out, "schemas/artifacts/story_bible/1.schema.json")
+        self.assertEqual(out["synopsis"], "她被送入深宫后步步崛起。")
+        with self.assertRaises(Exception):
+            self.validator.validate_file(out, "schemas/artifacts/story_bible/1.schema.json")
 
     def test_valid_fixture_stays_valid(self) -> None:
         out = normalize_story_bible(FIXTURES["story_bible"], self.settings)
         self.validator.validate_file(out, "schemas/artifacts/story_bible/1.schema.json")
 
-    def test_llm_loose_aliases_preserve_content(self) -> None:
-        """模型常用 want/initial/规则对象/情绪曲线对象，归一化后不得变成「待补充」。"""
+    def test_llm_loose_aliases_not_rewritten(self) -> None:
+        """别名键（want/initial 等）不得改写成正式键。"""
         raw = {
             "drama_title": "玉碎宫门",
             "logline": "宫女潜入深宫复仇",
@@ -179,74 +147,33 @@ class StoryBibleNormalizeTests(TestCase):
                 "short": "沈玉楼入宫复仇，却发现盟友即真凶。",
                 "full": "沈玉楼以宫女身份入宫，逐步攀升并追查灭门真相。",
             },
-            "adapt_source": {"mode": "original"},
-            "world_rules": {
-                "setting_summary": "架空古代王朝宫廷",
-                "root_rules": [
-                    {
-                        "rule": "宫女不得擅自进入禁宫",
-                        "trigger": "跨入未授权区域",
-                        "applicable_to": "所有宫女",
-                        "violation_cost": "杖责或处死",
-                        "visible_manifestation": "令牌通行",
-                    }
-                ],
-                "power_structure": {
-                    "description": "皇帝为顶点，司礼监与后宫制衡。",
-                    "key_actors": [
-                        {
-                            "name": "陆珩",
-                            "position": "司礼监掌印",
-                            "resources": "暗探网络",
-                            "motivation": "掩盖灭门案",
-                        }
-                    ],
-                },
-            },
             "characters": [
                 {
                     "name": "沈玉楼",
                     "role_type": "protagonist",
-                    "background": "沈家灭门唯一幸存者",
                     "want": "复仇夺权",
                     "need": "保持人性底线",
-                    "ghost": "灭门夜记忆",
-                    "lie": "复仇即正义",
-                    "flaw": "过度自信",
                     "arc": {
                         "initial": "隐忍复仇者",
                         "midpoint": "开始不择手段",
                         "low_point": "信念崩塌",
                         "final": "成为规则制定者",
                     },
-                    "voice_tag": "冷静锋利",
-                    "visual_anchor": "腕上碎玉红绳",
                 }
             ],
-            "relationship_map": [
-                {
-                    "from": "沈玉楼",
-                    "to": "陆珩",
-                    "type": "同盟与猜忌",
-                    "description": "先合作后决裂再联手",
-                }
-            ],
-            "series_structure": {
-                "main_storyline": "入宫复仇至权力之巅",
-                "six_stage_structure": [
+            "world_rules": {
+                "setting_summary": "架空古代王朝宫廷",
+                "root_rules": [
                     {
-                        "stage": 1,
-                        "name": "入宫与潜伏",
-                        "episode_range": "1-6",
-                        "target": "建立动机",
-                        "irreversible_turn": "与陆珩结盟",
-                    },
-                    {"stage": 2, "name": "初露锋芒"},
-                    {"stage": 3, "name": "信任危机"},
-                    {"stage": 4, "name": "决裂"},
-                    {"stage": 5, "name": "低谷"},
-                    {"stage": 6, "name": "终局"},
+                        "rule": "宫女不得擅自进入禁宫",
+                        "trigger": "跨入未授权区域",
+                    }
                 ],
+                "power_structure": {
+                    "description": "皇帝为顶点，司礼监与后宫制衡。",
+                },
+            },
+            "series_structure": {
                 "conflict_escalation_chain": [
                     {
                         "stage": 1,
@@ -254,82 +181,46 @@ class StoryBibleNormalizeTests(TestCase):
                         "description": "身份暴露危机",
                     }
                 ],
-                "major_reversal_positions": [
-                    {"episode": 22, "type": "S级", "description": "发现陆珩在场"}
-                ],
-                "paywall_distribution": [],
-                "foreshadowing_table": [
-                    {
-                        "id": "f1",
-                        "description": "碎玉与扳指同源",
-                        "setup_episodes": [1, 5],
-                        "payoff_episode": 22,
-                        "status": "setup",
-                    }
-                ],
                 "series_emotion_curve": {
                     "description": "希望-紧张-绝望-觉醒",
-                    "key_points": [
-                        {"episode": 1, "emotion": "希望", "event": "入宫"},
-                        {"episode": 22, "emotion": "震惊", "event": "发现真凶"},
-                    ],
+                    "key_points": [{"episode": 1, "emotion": "希望"}],
                 },
             },
         }
         out = normalize_story_bible(raw, self.settings)
-        self.validator.validate_file(out, "schemas/artifacts/story_bible/1.schema.json")
-
         char = out["characters"][0]
-        self.assertEqual(char["surface_desire"], "复仇夺权")
-        self.assertEqual(char["deep_need"], "保持人性底线")
-        self.assertEqual(char["arc"]["start"], "隐忍复仇者")
-        self.assertEqual(char["arc"]["turning_point_1"], "开始不择手段")
-        self.assertEqual(char["arc"]["turning_point_2"], "信念崩塌")
-        self.assertEqual(char["arc"]["end"], "成为规则制定者")
-        self.assertEqual(char["audience_identification"], "沈家灭门唯一幸存者")
-        self.assertNotIn("待补充", char["surface_desire"])
+        self.assertIn("want", char)
+        self.assertNotIn("surface_desire", char)
+        self.assertIn("initial", char["arc"])
+        self.assertNotIn("start", char["arc"])
+        self.assertIsInstance(out["world_rules"]["root_rules"][0], dict)
+        self.assertIsInstance(out["world_rules"]["power_structure"], dict)
+        self.assertIsInstance(out["series_structure"]["conflict_escalation_chain"][0], dict)
+        self.assertIsInstance(out["series_structure"]["series_emotion_curve"], dict)
+        with self.assertRaises(Exception):
+            self.validator.validate_file(out, "schemas/artifacts/story_bible/1.schema.json")
 
-        rules = out["world_rules"]["root_rules"]
-        self.assertEqual(len(rules), 1)
-        self.assertIn("宫女不得擅自进入禁宫", rules[0])
-        self.assertIn("触发：", rules[0])
-        self.assertIn("司礼监掌印", out["world_rules"]["power_structure"])
-        self.assertIn("陆珩", out["world_rules"]["power_structure"])
-
-        chain = out["series_structure"]["conflict_escalation_chain"]
-        self.assertEqual(len(chain), 1)
-        self.assertIn("身份暴露危机", chain[0])
-        curve = out["series_structure"]["series_emotion_curve"]
-        self.assertEqual(len(curve), 2)
-        self.assertEqual(curve[0]["episode"], 1)
-        self.assertEqual(curve[0].get("curve_summary"), "希望-紧张-绝望-觉醒")
-
-    def test_stringified_conflict_dicts_are_humanized(self) -> None:
+    def test_stringified_conflict_dicts_not_humanized(self) -> None:
         raw = dict(FIXTURES["story_bible"])
         raw["series_structure"] = dict(raw["series_structure"])
-        raw["series_structure"]["conflict_escalation_chain"] = [
-            "{'stage': 1, 'conflict_type': '外部（宫规）', 'description': '身份暴露危机'}",
-            {
-                "stage": 2,
-                "conflict_type": "人际",
-                "description": "卷入后妃争斗",
-            },
-        ]
+        raw_text = (
+            "{'stage': 1, 'conflict_type': '外部（宫规）', 'description': '身份暴露危机'}"
+        )
+        raw["series_structure"]["conflict_escalation_chain"] = [raw_text]
         out = normalize_story_bible(raw, self.settings)
         chain = out["series_structure"]["conflict_escalation_chain"]
-        self.assertEqual(chain[0], "第1幕 · 外部（宫规）：身份暴露危机")
-        self.assertEqual(chain[1], "第2幕 · 人际：卷入后妃争斗")
-        self.assertNotIn("{", chain[0])
-        self.validator.validate_file(out, "schemas/artifacts/story_bible/1.schema.json")
+        self.assertEqual(chain[0], raw_text)
+        self.assertIn("{", chain[0])
+        self.assertNotEqual(chain[0], "第1幕 · 外部（宫规）：身份暴露危机")
 
 
 @override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
-class NarrativePlanNormalizeTests(TestCase):
+class NarrativePlanNormalizeTests(SimpleTestCase):
     def setUp(self) -> None:
         self.validator = SchemaValidator()
         self.settings = {"title": "玉碎宫门"}
 
-    def test_fills_missing_opening_hook(self) -> None:
+    def test_does_not_invent_missing_opening_hook(self) -> None:
         raw = {
             "episode_narrative_designs": [
                 {
@@ -338,7 +229,6 @@ class NarrativePlanNormalizeTests(TestCase):
                     "core_event": "暗语试探",
                     "goal_conflict": "潜伏×暴露",
                     "emotion_intensity": 7,
-                    # 故意缺少 opening_hook / ending_hook
                     "satisfaction_points": ["过关"],
                     "reversal": "陆珩知情不报",
                     "paywall_hook": "身份将露",
@@ -350,15 +240,12 @@ class NarrativePlanNormalizeTests(TestCase):
         }
         out = normalize_narrative_plan(raw, self.settings)
         ep = out["episode_narrative_designs"][0]
-        self.assertIn("opening_hook", ep)
-        self.assertTrue(ep["opening_hook"])
-        self.assertIn("ending_hook", ep)
-        self.assertTrue(ep["ending_hook"])
-        self.assertEqual(ep["foreshadowing"], {"setup": [], "payoff": []})
-        self.assertIn("EV", ep["emotion_nodes"])
-        self.validator.validate_file(out, "schemas/artifacts/narrative_plan/1.schema.json")
+        self.assertNotIn("opening_hook", ep)
+        self.assertNotIn("ending_hook", ep)
+        with self.assertRaises(Exception):
+            self.validator.validate_file(out, "schemas/artifacts/narrative_plan/1.schema.json")
 
-    def test_opening_hook_aliases(self) -> None:
+    def test_opening_hook_aliases_not_rewritten(self) -> None:
         raw = {
             "episode_narrative_designs": [
                 {
@@ -373,12 +260,13 @@ class NarrativePlanNormalizeTests(TestCase):
         }
         out = normalize_narrative_plan(raw, self.settings)
         ep = out["episode_narrative_designs"][0]
-        self.assertEqual(ep["opening_hook"], "酒宴发难")
-        self.assertEqual(ep["ending_hook"], "青禾被点名")
-        self.validator.validate_file(out, "schemas/artifacts/narrative_plan/1.schema.json")
+        self.assertEqual(ep.get("open_hook"), "酒宴发难")
+        self.assertEqual(ep.get("cliffhanger"), "青禾被点名")
+        self.assertNotIn("opening_hook", ep)
+        self.assertNotIn("ending_hook", ep)
 
     def test_normalize_preserves_canonical_opening_hook(self) -> None:
-        """已是合法键名时 normalize 不改 opening_hook，防止回归。"""
+        """已是合法键名时 normalize 不改 opening_hook。"""
         raw = {
             "episode_narrative_designs": [
                 {
@@ -421,9 +309,7 @@ class QualityReportNormalizeTests(SimpleTestCase):
     def setUp(self) -> None:
         self.validator = SchemaValidator()
 
-    def test_dimensions_array_converted_to_object(self) -> None:
-        from apps.drama.services.artifact_normalize import normalize_quality_report
-
+    def test_chinese_dimension_aliases_not_rewritten(self) -> None:
         raw = {
             "drama_title": "边关开荒",
             "overall_score": 72,
@@ -436,30 +322,14 @@ class QualityReportNormalizeTests(SimpleTestCase):
                     "evidence": ["场景标题基本统一，对白标注规范"],
                     "deduction_reasons": ["缺少价值转变标注(-10)"],
                 },
-                {
-                    "name": "叙事效率",
-                    "score": 73,
-                    "evidence": ["三幕式完整但中段节奏偏慢"],
-                    "deduction_reasons": ["情节重复(-8)"],
-                },
             ],
         }
         out = normalize_quality_report(raw, {"title": "边关开荒"})
-        self.assertIsInstance(out["dimensions"], dict)
-        self.assertIn("format", out["dimensions"])
-        self.assertEqual(out["dimensions"]["format"]["score"], 75)
-        self.assertEqual(
-            out["dimensions"]["format"]["deductions"],
-            ["缺少价值转变标注(-10)"],
-        )
-        self.assertIn("genre_fit", out["dimensions"])
-        self.assertEqual(out["verdict"], "需要修改")
-        # 未给出的维度会被补齐为空 evidence，不能通过现行 score_dimension 契约
-        self.assertEqual(out["dimensions"]["genre_fit"]["evidence"], [])
+        self.assertIsInstance(out["dimensions"], list)
+        self.assertEqual(out["dimensions"][0]["name"], "格式规范")
+        self.assertNotIn("format", out["dimensions"] if isinstance(out["dimensions"], dict) else {})
 
-    def test_promotes_comment_and_reconciles_verdict(self) -> None:
-        from apps.drama.services.artifact_normalize import normalize_quality_report
-
+    def test_comment_not_promoted_to_evidence(self) -> None:
         raw = {
             "drama_title": "边关开荒",
             "overall_score": 82,
@@ -468,24 +338,14 @@ class QualityReportNormalizeTests(SimpleTestCase):
             "verdict": "重大返工",
             "dimensions": {
                 "hooks": {"score": 82, "comment": "第1集开场冲突成立，前3秒有身份危机"},
-                "logic": {"score": 75, "evidence": "因果链基本自洽，动机交代清楚"},
             },
         }
         out = normalize_quality_report(raw, {})
-        self.assertEqual(out["verdict"], "通过")
-        self.assertFalse(out["needs_revision"])
-        self.assertIn("第1集开场冲突成立", out["dimensions"]["hooks"]["evidence"][0])
-        self.assertEqual(
-            out["dimensions"]["logic"]["evidence"],
-            ["因果链基本自洽，动机交代清楚"],
-        )
+        self.assertEqual(out["verdict"], "重大返工")
+        self.assertEqual(out["dimensions"]["hooks"].get("comment"), "第1集开场冲突成立，前3秒有身份危机")
+        self.assertNotIn("evidence", out["dimensions"]["hooks"])
 
     def test_score_only_dimensions_flagged_sparse(self) -> None:
-        from apps.drama.services.artifact_normalize import (
-            normalize_quality_report,
-            quality_report_evidence_too_sparse,
-        )
-
         raw = {
             "drama_title": "边关开荒",
             "overall_score": 82,
@@ -509,11 +369,6 @@ class QualityReportNormalizeTests(SimpleTestCase):
         self.assertTrue(quality_report_evidence_too_sparse(out))
 
     def test_any_dimension_without_evidence_is_sparse(self) -> None:
-        from apps.drama.services.artifact_normalize import (
-            normalize_quality_report,
-            quality_report_evidence_too_sparse,
-        )
-
         dims = {
             k: {"score": 80, "evidence": [f"第1集{k}有明确场景与台词支撑"], "deductions": []}
             for k in (
@@ -527,9 +382,7 @@ class QualityReportNormalizeTests(SimpleTestCase):
         )
         self.assertTrue(quality_report_evidence_too_sparse(out))
 
-    def test_ten_point_dimension_scores_scaled_when_overall_is_percent(self) -> None:
-        from apps.drama.services.artifact_normalize import normalize_quality_report
-
+    def test_ten_point_scores_not_rescaled(self) -> None:
         dims = {
             key: {
                 "score": 8,
@@ -556,117 +409,109 @@ class QualityReportNormalizeTests(SimpleTestCase):
             "dimensions": dims,
         }
         out = normalize_quality_report(raw, {})
-        self.assertEqual(out["dimensions"]["hooks"]["score"], 80.0)
-        # 短证据在新篇幅门禁下视为 sparse；本用例只验证十分制缩放
-        from apps.drama.services.artifact_normalize import quality_report_evidence_too_sparse
+        self.assertEqual(out["dimensions"]["hooks"]["score"], 8)
+        self.assertEqual(out["overall_score"], 78)
 
-        self.assertTrue(quality_report_evidence_too_sparse(out))
-
-    def test_compliance_blocking_gets_title(self) -> None:
-        from apps.drama.services.artifact_normalize import normalize_compliance_report
-
-        raw = {
-            "title": "边关开荒",
-            "overall_result": "不通过",
-            "blocking_issues": [
-                {
-                    "category": "犯罪正义收束",
-                    "level": "p1",
-                    "description": "犯罪描写密集但正义收束不足",
-                }
-            ],
-            "risk_items": [],
-        }
-        out = normalize_compliance_report(raw, {})
-        self.assertEqual(out["blocking_issues"][0]["title"], "犯罪正义收束")
-
-    def test_compliance_report_aliases(self) -> None:
-        from apps.drama.services.artifact_normalize import normalize_compliance_report
-
-        raw = {
-            "title": "边关开荒",
-            "overall_result": "pass",
-            "risk_items": [
-                {"type": "P1", "issue": "暴力描写偏多", "fix": "弱化血腥细节"},
-            ],
-        }
-        out = normalize_compliance_report(raw, {})
-        self.assertEqual(out["overall_result"], "通过")
-        self.assertEqual(out["risk_items"][0]["type"], "p1")
-        self.assertEqual(out["risk_items"][0]["description"], "暴力描写偏多")
-        self.validator.validate_file(
-            out, "schemas/artifacts/compliance_report/1.schema.json"
-        )
-
-    def test_chinese_dimension_array_keeps_string_evidence_and_deduction_reason(self) -> None:
-        from apps.drama.services.artifact_normalize import (
-            normalize_quality_report,
-            quality_report_evidence_too_sparse,
-        )
-
-        def long_ev(seed: str) -> str:
-            base = (
-                f"第1集场景「{seed}」：开场台词与动作形成明确冲突；"
-                "第3集茶席对峙推进人物关系；第8集婚礼排场兑现打脸；"
-                "第12集瘴气危机暴露能力代价；第20集旧伤伏笔回收；"
-                "第28集树王灵根揭示主线赌注；第35集舍身相救完成情感兑现。"
+    def test_explicit_verdict_detail_preserved(self) -> None:
+        detail = ("overall quality is solid with clear three-act pacing and consistent arcs. ") * 6
+        dims = {
+            k: {
+                "score": 80,
+                "evidence": [
+                    f"ep1 {k} opening conflict is clear with dialogue and action setup.",
+                    f"ep8 {k} payoff recovers ep1 foreshadowing with acceptable pacing.",
+                    f"ep12 {k} crisis shows ability cost and consistent character motivation.",
+                ],
+                "deductions": [f"{k} mid-bridge slightly long, can cut half an episode."],
+            }
+            for k in (
+                "format",
+                "narrative",
+                "conflict",
+                "character",
+                "emotion",
+                "logic",
+                "satisfaction",
+                "hooks",
+                "paywall",
+                "genre_fit",
             )
-            text = base * 12
-            return text if len(text) >= 900 else (text + ("补充论据。" * 80))
-
-        dims = []
-        for name in (
-            "格式规范",
-            "叙事效率",
-            "冲突处理",
-            "角色一致性",
-            "情感深度",
-            "逻辑一致性",
-            "爽点密度",
-            "钩子强度",
-            "付费点优化",
-            "赛道匹配",
-        ):
-            dims.append(
-                {
-                    "name": name,
-                    "score": 8,
-                    "evidence": long_ev(name),
-                    "deduction_reason": f"{name}仍有可压缩的重复桥段，建议合并同类冲突。",
-                }
-            )
-        raw = {
-            "drama_title": "发配边关，罪妻开荒养出战神",
-            "overall_score": 78,
-            "grade": "B",
-            "pass_threshold": 60,
-            "verdict": "剧本质量良好，达到B级标准，可继续推进后续制作，建议优化部分情节重复和标题匹配问题。"
-            + ("总评补充论证。" * 280),
-            "continuity_summary": (
-                "整体连续性好，伏笔（陆野旧伤、树王灵根）回扣到位，人物关系与能力设定前后一致，无重大矛盾。"
-                "能力升级与代价交代连贯，集末钩子与下集承接无明显断裂。"
-                * 5
-            ),
-            "dimensions": dims,
-            "defects": [],
-            "revision_priorities": [],
         }
-        out = normalize_quality_report(raw, {})
+        out = normalize_quality_report(
+            {
+                "drama_title": "border farm",
+                "overall_score": 86,
+                "verdict": "通过",
+                "verdict_detail": detail,
+                "dimensions": dims,
+            },
+            {},
+        )
+        self.assertEqual(out["verdict"], "通过")
+        self.assertEqual(out.get("verdict_detail"), detail)
         self.assertFalse(quality_report_evidence_too_sparse(out))
-        self.assertEqual(out["dimensions"]["format"]["score"], 80.0)
-        self.assertGreaterEqual(len(out["dimensions"]["format"]["evidence"][0]), 800)
-        self.assertIn("格式规范", out["dimensions"]["format"]["deductions"][0])
-        self.assertEqual(out["verdict"], "条件通过")
-        self.assertGreaterEqual(len(out.get("verdict_detail") or ""), 1500)
-        self.assertGreaterEqual(len(out["continuity_summary"].get("summary") or ""), 300)
-        self.validator.validate_file(out, "schemas/artifacts/quality_report/1.schema.json")
+
+    def test_string_defects_not_rewritten_to_objects(self) -> None:
+        dims = {
+            k: {
+                "score": 80,
+                "evidence": [f"ep1 {k} has a concrete scene and dialogue beat."],
+                "deductions": [],
+            }
+            for k in (
+                "format",
+                "narrative",
+                "conflict",
+                "character",
+                "emotion",
+                "logic",
+                "satisfaction",
+                "hooks",
+                "paywall",
+                "genre_fit",
+            )
+        }
+        out = normalize_quality_report(
+            {
+                "drama_title": "t",
+                "overall_score": 80,
+                "dimensions": dims,
+                "defects": ["mid episodes drag slightly"],
+                "revision_priorities": ["compress ep10-12"],
+            },
+            {},
+        )
+        self.assertEqual(out["defects"], ["mid episodes drag slightly"])
+        self.assertEqual(out["revision_priorities"], ["compress ep10-12"])
+
+    def test_injects_weight_from_scoring_preset(self) -> None:
+        out = normalize_quality_report(
+            {
+                "drama_title": "t",
+                "overall_score": 80,
+                "needs_revision": False,
+                "dimensions": {
+                    "hooks": {"score": 80, "evidence": ["ep1 hooks clear"], "deductions": []},
+                },
+            },
+            {},
+        )
+        self.assertIsInstance(out["dimensions"]["hooks"]["weight"], float)
+        self.assertEqual(out["scored_artifact"], "latest_script")
+        self.assertEqual(out["scoring_preset"], "standard")
+
+    def test_chinese_prose_continuity_not_rewritten(self) -> None:
+        out = normalize_quality_report(
+            {
+                "drama_title": "t",
+                "overall_score": 80,
+                "continuity_summary": "整体连续性好，无重大矛盾。",
+            },
+            {},
+        )
+        self.assertEqual(out["continuity_summary"], "整体连续性好，无重大矛盾。")
 
     def test_short_dimension_analysis_is_sparse(self) -> None:
-        from apps.drama.services.artifact_normalize import (
-            normalize_quality_report,
-            quality_report_evidence_too_sparse,
-        )
-
         dims = {
             k: {
                 "score": 80,
@@ -696,3 +541,40 @@ class QualityReportNormalizeTests(SimpleTestCase):
             {},
         )
         self.assertTrue(quality_report_evidence_too_sparse(out))
+
+
+@override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
+class ComplianceReportNormalizeTests(SimpleTestCase):
+    def test_does_not_invent_blocking_title_from_category(self) -> None:
+        raw = {
+            "drama_title": "边关开荒",
+            "overall_result": "不通过",
+            "blocking_issues": [
+                {
+                    "category": "犯罪正义收束",
+                    "level": "p1",
+                    "description": "犯罪描写密集但正义收束不足",
+                }
+            ],
+            "risk_items": [],
+        }
+        out = normalize_compliance_report(raw, {})
+        self.assertNotIn("title", out["blocking_issues"][0])
+        self.assertEqual(out["blocking_issues"][0]["category"], "犯罪正义收束")
+
+    def test_compliance_report_aliases_not_rewritten(self) -> None:
+        raw = {
+            "drama_title": "边关开荒",
+            "overall_result": "pass",
+            "risk_items": [
+                {"type": "P1", "issue": "暴力描写偏多", "fix": "弱化血腥细节"},
+            ],
+        }
+        out = normalize_compliance_report(raw, {})
+        self.assertEqual(out["overall_result"], "pass")
+        self.assertEqual(out["risk_items"][0]["issue"], "暴力描写偏多")
+        self.assertNotIn("description", out["risk_items"][0])
+        with self.assertRaises(Exception):
+            SchemaValidator().validate_file(
+                out, "schemas/artifacts/compliance_report/1.schema.json"
+            )

@@ -57,8 +57,12 @@ class SubstanceGatesWiringTests(SimpleTestCase):
     def test_compliance_report_thin_hits_substance_gate(self) -> None:
         thin = {
             "drama_title": "测试剧",
+            "check_mode": "standard",
+            "target_platform": "generic",
+            "checked_artifact": "latest_script",
+            "resolved_script_key": "external_script",
             "overall_result": "不通过",
-            "blocking_issues": [{"description": ""}],
+            "blocking_issues": [{"title": "x", "description": ""}],
             "risk_items": [],
         }
         content = json.dumps(thin, ensure_ascii=False)
