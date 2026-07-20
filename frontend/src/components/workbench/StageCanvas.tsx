@@ -2,7 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Play } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
-import { EmptyState, ErrorBanner, LoadingBlock } from '@/components/ui/Tabs'
+import { ErrorBanner, LoadingBlock } from '@/components/ui/Tabs'
+import { FilterEmptyState } from '@/components/layout/FilterEmptyState'
+import { PageSection } from '@/components/layout/PageSection'
 import {
   EpisodeScriptsView,
   NarrativePlanView,
@@ -16,12 +18,12 @@ import { GenerationJobPanel } from '@/components/workbench/GenerationJobPanel'
 import { GenerationTroubleCard } from '@/components/workbench/GenerationTroubleCard'
 import { dramaApi } from '@/services/drama'
 import { formatApiError } from '@/services/errors'
-import { shouldShowFirstRunExecuteGuide } from '@/utils/firstRunGuide'
+import { isThemeRequirementMet, shouldShowFirstRunExecuteGuide } from '@/utils/firstRunGuide'
 import { canExecuteStage, explainExecuteGate } from '@/utils/pipeline'
 import { createCommandId } from '@/utils/cn'
 import type { DeliveryItem, GenerationJob, ProjectSettings, WorkflowState } from '@/types/domain'
 import type { StageDefinition } from '@/types/workbench'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const STRUCTURED_ARTIFACTS = new Set([
   'project_brief',
@@ -50,10 +52,27 @@ export function StageCanvas({
   onDismissFirstRunGuide?: () => void
 }) {
   const qc = useQueryClient()
-  const [job, setJob] = useState<GenerationJob | null>(null)
+  const [sessionJob, setSessionJob] = useState<GenerationJob | null>(null)
   const artifactKey = stage.artifact === 'production_package' ? 'production_package' : stage.artifact
   const gateReason = explainExecuteGate(stage, workflow)
   const executable = gateReason === null && canExecuteStage(stage, workflow)
+
+  useEffect(() => {
+    setSessionJob(null)
+  }, [stage.id])
+
+  const latestJobQuery = useQuery({
+    queryKey: ['generation-latest', projectId, stage.role, artifactKey],
+    queryFn: () =>
+      dramaApi.getLatestGeneration(projectId, {
+        role: stage.role,
+        artifact_key: artifactKey || undefined,
+      }),
+    enabled: Boolean(projectId && stage.role),
+    retry: false,
+  })
+
+  const job = sessionJob ?? latestJobQuery.data ?? null
 
   const artifactQuery = useQuery({
     queryKey: ['artifact', projectId, artifactKey],
@@ -85,6 +104,8 @@ export function StageCanvas({
   const refreshWorkbench = () => {
     void qc.invalidateQueries({ queryKey: ['workflow', projectId] })
     void qc.invalidateQueries({ queryKey: ['artifact', projectId] })
+    void qc.invalidateQueries({ queryKey: ['generation-latest', projectId] })
+    void qc.invalidateQueries({ queryKey: ['job-llm-logs'] })
   }
 
   const runMutation = useMutation({
@@ -106,7 +127,7 @@ export function StageCanvas({
       })
     },
     onSuccess: (started) => {
-      setJob(started)
+      setSessionJob(started)
     },
   })
 
@@ -147,11 +168,7 @@ export function StageCanvas({
       }
     | null
 
-  const themeIncomplete =
-    !settings.genre_matrix?.emotion ||
-    !settings.genre_matrix?.identity ||
-    !settings.genre_matrix?.conflict ||
-    !settings.genre_matrix?.world
+  const themeIncomplete = !isThemeRequirementMet(settings)
 
   const showFirstRunGuide = shouldShowFirstRunExecuteGuide({
     settings,
@@ -164,13 +181,13 @@ export function StageCanvas({
 
   return (
     <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-canvas">
-      <header className="flex items-center justify-between border-b border-border/80 bg-surface/90 px-8 py-5">
-        <div className="min-w-0 max-w-2xl">
-          <h2 className="text-xl font-semibold tracking-tight text-ink">{stage.label_zh}</h2>
-          <p className="mt-1 text-sm leading-relaxed text-ink-muted">
-            当前由对应创作角色执行，完成后自动保存阶段产物
-          </p>
-        </div>
+      <header className="flex items-center justify-between border-b border-border/80 bg-surface/90 px-8 py-4">
+        <PageSection
+          eyebrow="阶段画布"
+          title={stage.label_zh}
+          description="当前由对应创作角色执行，完成后自动保存阶段产物"
+          className="mb-0"
+        />
         <Button
           variant="action"
           iconLeft={<Play className="h-4 w-4" />}
@@ -191,16 +208,16 @@ export function StageCanvas({
       <div className="w-full flex-1 space-y-6 overflow-auto px-[clamp(2rem,3.5vw,3.5rem)] py-[clamp(1.5rem,2.5vw,2.5rem)]">
         {themeIncomplete ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            <p className="font-medium">题材尚未选齐，生成质量可能受影响</p>
+            <p className="font-medium">题材尚未满足，生成将被门禁拦截</p>
             <p className="mt-1">
-              建议先到{' '}
+              请先到{' '}
               <Link
                 className="font-medium text-action underline underline-offset-2"
                 to={`/projects/${projectId}/settings?focus=theme`}
               >
                 创作设定
               </Link>{' '}
-              点选题材矩阵（情绪 / 身份 / 冲突 / 世界观），保存后再执行主链。
+              完成题材四轴矩阵，或选择预设题材码后再执行。
             </p>
           </div>
         ) : null}
@@ -261,6 +278,9 @@ export function StageCanvas({
           <GenerationJobPanel
             projectId={projectId}
             job={job}
+            onJobUpdate={(latest) => {
+              setSessionJob(latest)
+            }}
             onCompleted={() => {
               refreshWorkbench()
             }}
@@ -279,50 +299,65 @@ export function StageCanvas({
         {artifactQuery.isLoading ? <LoadingBlock label="加载产物…" /> : null}
 
         {!artifactQuery.isLoading && !artifactQuery.isError && payload == null && stage.artifact !== 'production_package' ? (
-          <EmptyState
+          <FilterEmptyState
             title={`「${stage.label_zh}」暂无产物`}
             description={
               executable
                 ? `点击右上角「执行本阶段」，生成「${stage.label_zh}」内容。`
                 : gateReason ?? `完成前置阶段后，即可生成「${stage.label_zh}」。`
             }
+            variant="inbox"
+            className="min-h-[12rem]"
           />
         ) : null}
 
-        {payload && stage.artifact === 'project_brief' ? <ProjectBriefView data={payload} /> : null}
+        {payload ? (
+          <PageSection eyebrow="阶段产物" title={stage.label_zh}>
+            <div className="space-y-4">
+              {stage.artifact === 'project_brief' ? <ProjectBriefView data={payload} /> : null}
 
-        {payload && stage.artifact === 'story_bible' ? (
-          <StoryBibleView
-            data={payload}
-            waitingApproval={
-              workflow.status === 'waiting_approval' || workflow.current_phase === 'blueprint_approval'
-            }
-            approvalPending={approvalMutation.isPending}
-            onApprove={() => approvalMutation.mutate('approve')}
-            onReject={() => approvalMutation.mutate('reject')}
-          />
-        ) : null}
+              {stage.artifact === 'story_bible' ? (
+                <StoryBibleView
+                  data={payload}
+                  waitingApproval={
+                    workflow.status === 'waiting_approval' ||
+                    workflow.current_phase === 'blueprint_approval'
+                  }
+                  approvalPending={approvalMutation.isPending}
+                  onApprove={() => approvalMutation.mutate('approve')}
+                  onReject={() => approvalMutation.mutate('reject')}
+                />
+              ) : null}
 
-        {payload && stage.artifact === 'narrative_plan' ? <NarrativePlanView data={payload} /> : null}
+              {stage.artifact === 'narrative_plan' ? <NarrativePlanView data={payload} /> : null}
 
-        {payload && stage.artifact === 'episode_scripts' ? <EpisodeScriptsView data={payload} /> : null}
+              {stage.artifact === 'episode_scripts' ? <EpisodeScriptsView data={payload} /> : null}
 
-        {payload &&
-        (stage.artifact === 'quality_report' ||
-          stage.artifact === 'compliance_report' ||
-          stage.artifact === 'polished_script') ? (
-          <ReportArtifactView kind={stage.artifact} data={payload} />
-        ) : null}
+              {stage.artifact === 'quality_report' ||
+              stage.artifact === 'compliance_report' ||
+              stage.artifact === 'polished_script' ? (
+                <ReportArtifactView kind={stage.artifact} data={payload} />
+              ) : null}
 
-        {stage.artifact === 'production_package' ? (
+              {stage.artifact === 'production_package' ? (
+                <DeliveryTabs
+                  packageData={payload}
+                  enabledItems={
+                    (settings.creation_preferences.deliverables ?? []) as DeliveryItem[]
+                  }
+                />
+              ) : null}
+
+              {!STRUCTURED_ARTIFACTS.has(stage.artifact) ? (
+                <ReportArtifactView kind="generic" data={payload} />
+              ) : null}
+            </div>
+          </PageSection>
+        ) : stage.artifact === 'production_package' ? (
           <DeliveryTabs
             packageData={payload}
-            enabledItems={(settings.creation_preferences.delivery_items ?? []) as DeliveryItem[]}
+            enabledItems={(settings.creation_preferences.deliverables ?? []) as DeliveryItem[]}
           />
-        ) : null}
-
-        {payload && !STRUCTURED_ARTIFACTS.has(stage.artifact) ? (
-          <ReportArtifactView kind="generic" data={payload} />
         ) : null}
       </div>
     </div>

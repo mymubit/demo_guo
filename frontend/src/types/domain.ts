@@ -43,7 +43,7 @@ export type CreationPreferences = {
   scoring_preset: string
   compliance_check_mode: 'standard' | 'values-risk' | 'full'
   enable_delivery: boolean
-  delivery_items?: DeliveryItem[]
+  deliverables?: DeliveryItem[]
 }
 
 export type ProjectSettingsAudit = {
@@ -245,9 +245,7 @@ export type ExternalScriptReviewRequest = {
   scoring_preset: string
   check_mode: 'standard' | 'values-risk' | 'full'
   script_content?: string
-  content?: string
   source_filename?: string
-  filename?: string
   script_title?: string
   project_id?: string
 }

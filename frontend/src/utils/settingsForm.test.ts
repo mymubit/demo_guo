@@ -20,7 +20,7 @@ describe('settings field visibility (definition-driven)', () => {
     expect(isFieldVisible(definition.fields.adapt_notes, adapt)).toBe(true)
   })
 
-  it('shows delivery_items only when enable_delivery is true', () => {
+  it('shows deliverables only when enable_delivery is true', () => {
     const off = testProjectSettings({
       creation_preferences: {
         batch_episode_max: 5,
@@ -28,7 +28,7 @@ describe('settings field visibility (definition-driven)', () => {
         scoring_preset: 'standard',
         compliance_check_mode: 'standard',
         enable_delivery: false,
-        delivery_items: ['storyboard'],
+        deliverables: ['storyboard'],
       },
     })
     const on = testProjectSettings({
@@ -38,8 +38,8 @@ describe('settings field visibility (definition-driven)', () => {
       },
     })
 
-    expect(isFieldVisible(definition.fields.delivery_items, off)).toBe(false)
-    expect(isFieldVisible(definition.fields.delivery_items, on)).toBe(true)
+    expect(isFieldVisible(definition.fields.deliverables, off)).toBe(false)
+    expect(isFieldVisible(definition.fields.deliverables, on)).toBe(true)
   })
 
   it('flags non-generic platform without verified_at as unverified', () => {

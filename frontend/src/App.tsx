@@ -57,7 +57,6 @@ export default function App() {
                 />
                 <Route path="/admin/model" element={<ModelHubPage />} />
                 <Route path="/admin/llm/logs" element={<LlmLogsPage />} />
-                <Route path="/admin/llm/chains" element={<LlmLogsPage />} />
                 <Route
                   path="/projects/:projectId/logs"
                   element={<Navigate to="/admin/llm/logs" replace />}

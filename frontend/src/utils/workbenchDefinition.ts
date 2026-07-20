@@ -193,7 +193,7 @@ export function buildThemeMatrixFromFields(
 export function deliveryTabsFromFields(
   fields: Record<string, SettingsFieldDef>,
 ): Array<{ id: string; label: string }> {
-  const delivery = fields.delivery_items
+  const delivery = fields.deliverables
   if (!delivery) return []
   if (delivery.options?.length) {
     return delivery.options.map((o) => ({ id: o.value, label: o.label }))
@@ -229,8 +229,7 @@ export function normalizeWorkbenchDefinition(
     throw new Error('工作台定义缺少 module_catalog')
   }
 
-  const skills_bundle_version =
-    raw.skills_bundle_version || raw.bundle_version || ''
+  const skills_bundle_version = raw.skills_bundle_version || ''
   if (!skills_bundle_version) {
     throw new Error('工作台定义缺少 skills_bundle_version')
   }

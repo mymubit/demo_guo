@@ -120,23 +120,22 @@ export function evaluateCondition(expression: string | undefined | null, ctx: Co
   return evalAtomic(expr, ctx)
 }
 
-/** Build condition context from project settings flat + nested aliases. */
+/** Build condition context from project settings. */
 export function settingsConditionContext(settings: {
   entry_type?: string
   enable_delivery?: boolean
-  creation_preferences?: { enable_delivery?: boolean; delivery_items?: string[] }
-  delivery_items?: string[]
+  creation_preferences?: { enable_delivery?: boolean; deliverables?: string[] }
+  deliverables?: string[]
   [key: string]: unknown
 }): ConditionContext {
   const enableDelivery =
     settings.enable_delivery ?? settings.creation_preferences?.enable_delivery ?? false
-  const deliveryItems =
-    settings.delivery_items ?? settings.creation_preferences?.delivery_items ?? []
+  const deliverables =
+    settings.deliverables ?? settings.creation_preferences?.deliverables ?? []
   return {
     ...settings,
     entry_type: settings.entry_type,
     enable_delivery: enableDelivery,
-    delivery_items: deliveryItems,
-    deliverables: deliveryItems,
+    deliverables,
   }
 }

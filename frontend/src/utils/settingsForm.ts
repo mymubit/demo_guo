@@ -8,7 +8,6 @@ export function isFieldVisible(field: SettingsFieldDef, settings: ProjectSetting
     entry_type: settings.entry_type,
     enable_delivery: settings.creation_preferences?.enable_delivery,
     creation_preferences: settings.creation_preferences,
-    delivery_items: settings.creation_preferences?.delivery_items,
   })
   return evaluateCondition(field.visible_when, ctx)
 }

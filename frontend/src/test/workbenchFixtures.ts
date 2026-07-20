@@ -19,7 +19,7 @@ export function testProjectSettings(partial?: Partial<ProjectSettings>): Project
       scoring_preset: 'standard',
       compliance_check_mode: 'standard',
       enable_delivery: false,
-      delivery_items: ['storyboard', 'visual', 'marketing', 'budget'],
+      deliverables: ['storyboard', 'visual', 'marketing', 'budget'],
     },
     flavor_tags: [],
     reference_dramas: [],
@@ -51,7 +51,7 @@ export function testWorkbenchFormApi(
         },
         delivery: {
           label_zh: '交付偏好',
-          fields: ['enable_delivery', 'delivery_items'],
+          fields: ['enable_delivery', 'deliverables'],
         },
       },
       fields: {
@@ -150,9 +150,9 @@ export function testWorkbenchFormApi(
           persist_path: 'creation_preferences.enable_delivery',
           default: false,
         },
-        delivery_items: {
+        deliverables: {
           type: 'array',
-          persist_path: 'creation_preferences.delivery_items',
+          persist_path: 'creation_preferences.deliverables',
           visible_when: 'enable_delivery == true',
           items_enum: ['storyboard', 'visual', 'marketing', 'interactive', 'budget', 'release'],
           default: ['storyboard', 'visual'],

@@ -51,7 +51,13 @@ describe('dynamic workbench-form contract', () => {
       normalizeWorkbenchDefinition({
         ...testWorkbenchFormApi(),
         skills_bundle_version: undefined,
-        bundle_version: undefined,
+      }),
+    ).toThrow(/skills_bundle_version/)
+    expect(() =>
+      normalizeWorkbenchDefinition({
+        ...testWorkbenchFormApi(),
+        skills_bundle_version: undefined,
+        bundle_version: '9.9.9',
       }),
     ).toThrow(/skills_bundle_version/)
     expect(() =>
@@ -100,8 +106,8 @@ describe('dynamic workbench-form contract', () => {
     expect(field.default).toBe('original_track')
 
     const delivery = normalizeSettingsField(
-      'delivery_items',
-      testWorkbenchFormApi().project_settings.fields.delivery_items,
+      'deliverables',
+      testWorkbenchFormApi().project_settings.fields.deliverables,
     )
     expect(delivery.ui_widget).toBe('checklist')
     expect(delivery.options?.map((o) => o.value)).toContain('storyboard')
@@ -128,7 +134,7 @@ describe('dynamic workbench-form contract', () => {
     expect(rebuilt?.axes.world.options.map((o) => o.value)).toContain('urban')
   })
 
-  it('8. derives delivery tabs from delivery_items contract', () => {
+  it('8. derives delivery tabs from deliverables contract', () => {
     const def = testWorkbenchDefinition()
     const tabs = deliveryTabsFromFields(def.fields)
     expect(tabs.map((t) => t.id)).toEqual([
@@ -169,8 +175,8 @@ describe('dynamic workbench-form contract', () => {
         enable_delivery: true,
       },
     })
-    expect(isFieldVisible(def.fields.delivery_items, off)).toBe(false)
-    expect(isFieldVisible(def.fields.delivery_items, on)).toBe(true)
+    expect(isFieldVisible(def.fields.deliverables, off)).toBe(false)
+    expect(isFieldVisible(def.fields.deliverables, on)).toBe(true)
   })
 
   it('10. drives pipeline stages from API definition (no static STAGES)', () => {
@@ -182,7 +188,7 @@ describe('dynamic workbench-form contract', () => {
     const withDelivery = mainPipelineStages(def.stages, {
       entry_type: 'original_track',
       enable_delivery: true,
-      creation_preferences: { enable_delivery: true, delivery_items: ['budget'] },
+      creation_preferences: { enable_delivery: true, deliverables: ['budget'] },
     })
     expect(withDelivery.some((s) => s.id === 'delivery')).toBe(true)
     expect(withDelivery.find((s) => s.id === 'delivery')?.label_zh).toBe('制作发行交付包')
@@ -243,7 +249,7 @@ describe('dynamic workbench-form contract', () => {
         scoring_preset: 'standard',
         compliance_check_mode: 'standard',
         enable_delivery: true,
-        delivery_items: ['storyboard'],
+        deliverables: ['storyboard'],
       },
     })
 

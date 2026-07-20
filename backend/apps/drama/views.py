@@ -260,9 +260,7 @@ class ExternalScriptReviewView(APIView):
                 "scoring_preset": request.data.get("scoring_preset", "standard"),
                 "check_mode": request.data.get("check_mode", "standard"),
                 "script_title": request.data.get("script_title", ""),
-                "source_filename": request.data.get("source_filename")
-                or request.data.get("filename")
-                or "",
+                "source_filename": request.data.get("source_filename") or "",
             }
             # FormData 未带字段时 get 为 None；UUIDField 默认不允许 null，勿写入空值
             raw_project_id = request.data.get("project_id")
@@ -278,9 +276,7 @@ class ExternalScriptReviewView(APIView):
                 if not meta["source_filename"]:
                     meta["source_filename"] = getattr(uploaded, "name", "") or ""
             else:
-                script_content = request.data.get("script_content") or request.data.get(
-                    "content", ""
-                )
+                script_content = request.data.get("script_content") or ""
         elif "text/plain" in content_type or "text/markdown" in content_type:
             script_content = request.body.decode("utf-8")
             meta = {
@@ -292,7 +288,7 @@ class ExternalScriptReviewView(APIView):
             }
         else:
             meta = request.data
-            script_content = meta.get("script_content") or meta.get("content", "")
+            script_content = meta.get("script_content") or ""
 
         serializer = ExternalReviewSerializer(data={**meta, "script_content": script_content})
         serializer.is_valid(raise_exception=True)
@@ -303,9 +299,7 @@ class ExternalScriptReviewView(APIView):
             project = get_object_or_404(DramaProject, id=data["project_id"])
             self.check_object_permissions(request, project)
 
-        source_filename = (
-            data.get("source_filename") or data.get("filename") or ""
-        ).strip()
+        source_filename = (data.get("source_filename") or "").strip()
         script_title = (data.get("script_title") or "").strip()
 
         job = GenerationService().start_external_review(

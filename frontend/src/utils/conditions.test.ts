@@ -42,15 +42,25 @@ describe('evaluateCondition', () => {
     expect(evaluateCondition('', {})).toBe(true)
   })
 
-  it('builds settings condition context aliases', () => {
+  it('reads deliverables from creation_preferences', () => {
     const ctx = settingsConditionContext({
       entry_type: 'original_track',
+      creation_preferences: {
+        enable_delivery: true,
+        deliverables: ['storyboard'],
+      },
+    })
+    expect(ctx.enable_delivery).toBe(true)
+    expect(ctx.deliverables).toEqual(['storyboard'])
+  })
+
+  it('ignores legacy delivery_items key', () => {
+    const ctx = settingsConditionContext({
       creation_preferences: {
         enable_delivery: true,
         delivery_items: ['storyboard'],
       },
     })
-    expect(ctx.enable_delivery).toBe(true)
-    expect(ctx.deliverables).toEqual(['storyboard'])
+    expect(ctx.deliverables).toEqual([])
   })
 })

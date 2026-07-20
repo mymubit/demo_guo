@@ -192,7 +192,6 @@ export type WorkbenchFormApiResponse = {
   version?: string
   /** Skills bundle version — used as React Query cache partition key */
   skills_bundle_version?: string
-  bundle_version?: string
   project_schema?: string
   parameters_contract?: string
   project_settings: {

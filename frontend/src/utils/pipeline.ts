@@ -40,7 +40,7 @@ function stagePhase(stage: StageDefinition): WorkflowPhase | null {
 type StageFilterCtx = {
   entry_type?: string
   enable_delivery?: boolean
-  creation_preferences?: { enable_delivery?: boolean; delivery_items?: string[] }
+  creation_preferences?: { enable_delivery?: boolean; deliverables?: string[] }
 }
 
 export function visibleStages(

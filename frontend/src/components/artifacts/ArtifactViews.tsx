@@ -465,11 +465,6 @@ export function ReportArtifactView({
 
   if (kind === 'polished_script') {
     const episodes = (data.episodes as Array<Record<string, unknown>> | undefined) ?? []
-    const legacyContent =
-      (typeof data.content === 'string' && data.content) ||
-      (typeof data.script_content === 'string' && data.script_content) ||
-      (typeof data.polished_text === 'string' && data.polished_text) ||
-      ''
     const resolved = Array.isArray(data.resolved_issues) ? data.resolved_issues : []
     const remaining = Array.isArray(data.remaining_issues) ? data.remaining_issues : []
     const summary = Array.isArray(data.revision_summary) ? data.revision_summary : []
@@ -504,10 +499,6 @@ export function ReportArtifactView({
         )}
         {episodes.length > 0 ? (
           <EpisodeScriptsView data={{ episodes }} heading="修复后分集正文" />
-        ) : legacyContent ? (
-          <pre className="sf-panel max-h-[70vh] overflow-auto whitespace-pre-wrap p-4 text-sm leading-relaxed text-ink">
-            {legacyContent}
-          </pre>
         ) : (
           <KeyValueFallback data={data} omit={['episodes', 'revision_summary', 'resolved_issues', 'remaining_issues']} />
         )}

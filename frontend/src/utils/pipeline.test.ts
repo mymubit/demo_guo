@@ -45,7 +45,7 @@ describe('pipeline status (definition-driven)', () => {
     const withDelivery = mainPipelineStages(definition.stages, {
       entry_type: 'original_track',
       enable_delivery: true,
-      creation_preferences: { enable_delivery: true, delivery_items: ['budget'] },
+      creation_preferences: { enable_delivery: true, deliverables: ['budget'] },
     })
     expect(withDelivery.some((s) => s.id === 'delivery')).toBe(true)
   })

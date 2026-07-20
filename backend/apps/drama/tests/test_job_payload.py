@@ -44,7 +44,7 @@ class JobPayloadTests(TestCase):
         self.assertEqual(data["title"], "宫斗逆袭")
         self.assertEqual(data["source_filename"], "宫斗逆袭.txt")
 
-    def test_external_review_title_falls_back_to_filename(self):
+    def test_external_review_title_falls_back_to_source_filename(self):
         job = DramaGenerationJob.objects.create(
             owner=self.user,
             project=None,
@@ -58,6 +58,21 @@ class JobPayloadTests(TestCase):
         data = serialize_generation_job(job)
         self.assertEqual(data["title"], "投稿A.md")
         self.assertEqual(data["source_filename"], "投稿A.md")
+
+    def test_external_review_ignores_legacy_filename_key(self):
+        job = DramaGenerationJob.objects.create(
+            owner=self.user,
+            project=None,
+            job_type=DramaGenerationJob.JobType.EXTERNAL_REVIEW,
+            status=DramaGenerationJob.Status.QUEUED,
+            request_payload={
+                "filename": "legacy-only.txt",
+                "script_content": "第一场 内景",
+            },
+        )
+        data = serialize_generation_job(job)
+        self.assertEqual(data["title"], "第一场 内景")
+        self.assertIsNone(data["source_filename"])
 
     def test_external_review_title_falls_back_to_first_line(self):
         job = DramaGenerationJob.objects.create(

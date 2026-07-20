@@ -34,7 +34,7 @@ _PHASE_PROGRESS: dict[str, int] = {
 def resolve_external_review_title(payload: dict[str, Any] | None) -> str | None:
     """解析外部评测列表展示名：剧本名 > 文件名 > 正文首行。"""
     data = payload or {}
-    for key in ("script_title", "title", "source_filename", "filename"):
+    for key in ("script_title", "title", "source_filename"):
         value = data.get(key)
         if isinstance(value, str):
             text = value.strip()
@@ -130,7 +130,7 @@ def serialize_generation_job(job: DramaGenerationJob) -> dict[str, Any]:
         DramaGenerationJob.JobType.PARALLEL_JUDGE,
     ):
         title = resolve_external_review_title(payload)
-        raw_name = payload.get("source_filename") or payload.get("filename")
+        raw_name = payload.get("source_filename")
         if isinstance(raw_name, str) and raw_name.strip():
             source_filename = raw_name.strip()[:120]
 

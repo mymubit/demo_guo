@@ -12,8 +12,6 @@ export function modulesForStage(
     entry_type: settings.entry_type,
     enable_delivery: settings.creation_preferences.enable_delivery,
     creation_preferences: settings.creation_preferences,
-    delivery_items: settings.creation_preferences.delivery_items,
-    deliverables: settings.creation_preferences.delivery_items,
   })
 
   return modules.filter((m) => {

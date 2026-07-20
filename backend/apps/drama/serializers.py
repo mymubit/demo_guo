@@ -86,10 +86,6 @@ class ExternalReviewSerializer(serializers.Serializer):
     script_title = serializers.CharField(
         max_length=200, required=False, allow_blank=True, default=""
     )
-    # 兼容前端 filename 字段
-    filename = serializers.CharField(
-        max_length=255, required=False, allow_blank=True, default=""
-    )
 
 
 class ConfigRollbackSerializer(serializers.Serializer):

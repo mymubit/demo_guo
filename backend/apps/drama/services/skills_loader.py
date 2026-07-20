@@ -283,7 +283,7 @@ class SkillsBundleLoader:
             dims = combo.get("dims") or {}
             featured.append(
                 {
-                    "code": combo.get("id") or combo.get("code"),
+                    "code": combo.get("id"),
                     "label_zh": combo.get("label_zh") or combo.get("label"),
                     "heat": combo.get("heat"),
                     "kind": "featured",
@@ -303,7 +303,7 @@ class SkillsBundleLoader:
             dims = item.get("dims") or {}
             presets.append(
                 {
-                    "code": item.get("theme_code") or item.get("code") or item.get("id"),
+                    "code": item.get("theme_code"),
                     "label_zh": item.get("label_zh") or item.get("label"),
                     "kind": "preset",
                     "emotion": dims.get("emotion"),

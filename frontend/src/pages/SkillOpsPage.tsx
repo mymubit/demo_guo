@@ -1,13 +1,24 @@
 import { useMemo, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Download, Link2, RefreshCw, ShieldAlert } from 'lucide-react'
+import { ChevronDown, ChevronRight, Download, Link2, RefreshCw } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { EmptyState, ErrorBanner, LoadingBlock } from '@/components/ui/Tabs'
-import { PageShell } from '@/components/layout/PageShell'
+import { ErrorBanner, LoadingBlock } from '@/components/ui/Tabs'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { FilterEmptyState } from '@/components/layout/FilterEmptyState'
+import { ListPageToolbar } from '@/components/layout/ListPageToolbar'
+import { OpsPageShell } from '@/components/ops/OpsPageShell'
+import { OpsStatusStrip } from '@/components/ops/OpsStatusStrip'
 import { adminApi, type SkillFailureItem, type SkillOpsOverview } from '@/services/admin'
 import { formatApiError } from '@/services/errors'
+import { formatRoleLabel } from '@/utils/roleLabels'
 
 function formatTime(iso: string | null | undefined): string {
   if (!iso) return '—'
@@ -24,9 +35,12 @@ function formatTime(iso: string | null | undefined): string {
   }
 }
 
-function shortId(id: string | null | undefined, len = 8): string {
-  if (!id) return '—'
-  return id.length <= len ? id : `${id.slice(0, len)}…`
+function failureTypeLabel(item: SkillFailureItem): string {
+  const msg = (item.error_message || '').toLowerCase()
+  if (/schema|不合规|required property|校验失败|is not of type/.test(msg)) return 'Schema 未通过'
+  if (/json|parse|decode|unexpected token|expecting property/.test(msg)) return 'JSON 非法'
+  if (/repair|纠错/.test(msg)) return '纠错失败'
+  return '结构化失败'
 }
 
 function downloadJson(filename: string, data: unknown) {
@@ -81,11 +95,11 @@ export function SkillOpsPage() {
   }, [data?.failures])
 
   return (
-    <PageShell
+    <OpsPageShell
       title="技能运维"
       description={
         data?.purpose ??
-        '只收集「JSON/Schema 翻车」样本，用来改技能反例；超时和模型参数问题不在这里处理。'
+        '收集 JSON/Schema 翻车样本，用来改技能反例；超时和模型参数问题请去 LLM 调用或模型管理。'
       }
       actions={
         <>
@@ -99,67 +113,93 @@ export function SkillOpsPage() {
             刷新
           </Button>
           <Button
-            variant="action"
+            variant="secondary"
             size="sm"
             iconLeft={<Download className="h-3.5 w-3.5" />}
             onClick={() => exportMutation.mutate()}
             disabled={exportMutation.isPending || (data?.failure_count ?? 0) === 0}
           >
-            导出反例草稿
+            导出失败样本
           </Button>
         </>
       }
-    >
-      <div className="flex flex-col gap-5">
-        {message ? (
+      status={
+        message ? (
           <div className="rounded-lg border border-border bg-canvas-muted px-3 py-2 text-sm text-ink-muted">
             {message}
           </div>
-        ) : null}
+        ) : null
+      }
+      toolbar={
+        data ? (
+          <ListPageToolbar
+            count={data.failures.length}
+            countLabel="条"
+            filters={[
+              {
+                id: 'role',
+                label: '角色',
+                value: roleFilter,
+                onChange: setRoleFilter,
+                options: [
+                  { value: '', label: '全部' },
+                  ...roleOptions.map((role) => ({
+                    value: role,
+                    label: formatRoleLabel(role),
+                  })),
+                ],
+              },
+            ]}
+          />
+        ) : undefined
+      }
+    >
+      {overviewQuery.isError ? <ErrorBanner message={formatApiError(overviewQuery.error)} /> : null}
+      {overviewQuery.isLoading ? <LoadingBlock label="加载技能运维数据…" /> : null}
 
-        {overviewQuery.isError ? <ErrorBanner message={formatApiError(overviewQuery.error)} /> : null}
-        {overviewQuery.isLoading ? <LoadingBlock label="加载技能运维数据…" /> : null}
+      {data ? (
+        <div className="space-y-5">
+          <section className="grid gap-3 sm:grid-cols-3">
+            <StatCard
+              label="可回流失败"
+              value={String(data.failure_count)}
+              hint="含 json_repair / Schema / 非法 JSON"
+            />
+            <StatCard
+              label="离线评测通过率"
+              value={
+                evalSummary?.pass_rate != null
+                  ? `${Math.round(Number(evalSummary.pass_rate) * 100)}%`
+                  : '—'
+              }
+              hint={
+                evalSummary
+                  ? `${evalSummary.passed}/${evalSummary.total} 通过`
+                  : '尚无 summary.json'
+              }
+            />
+            <StatCard
+              label="纠错成功率"
+              value={
+                repair?.repair_success_rate != null
+                  ? `${Math.round(Number(repair.repair_success_rate) * 100)}%`
+                  : '—'
+              }
+              hint={
+                repair && repair.repair_calls > 0
+                  ? `${repair.repair_success}/${repair.repair_calls} 次 json_repair 成功`
+                  : '尚无纠错调用'
+              }
+            />
+          </section>
 
-        {data ? (
-          <>
-            <section className="grid gap-3 sm:grid-cols-3">
-              <StatCard
-                label="可回流的结构化失败"
-                value={String(data.failure_count)}
-                hint="json_repair / Schema / 非法 JSON"
-              />
-              <StatCard
-                label="离线评测通过率"
-                value={
-                  evalSummary?.pass_rate != null
-                    ? `${Math.round(Number(evalSummary.pass_rate) * 100)}%`
-                    : '—'
-                }
-                hint={
-                  evalSummary
-                    ? `${evalSummary.passed}/${evalSummary.total} 通过`
-                    : '尚无 summary.json'
-                }
-              />
-              <StatCard
-                label="纠错调用成功率"
-                value={
-                  repair?.repair_success_rate != null
-                    ? `${Math.round(Number(repair.repair_success_rate) * 100)}%`
-                    : '—'
-                }
-                hint={
-                  repair && repair.repair_calls > 0
-                    ? `${repair.repair_success}/${repair.repair_calls} 次纠错成功`
-                    : '尚无 json_repair 调用'
-                }
-              />
-            </section>
-
-            {noise?.infra || noise?.provider_config ? (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                已过滤噪音：基础设施/超时 {noise?.infra ?? 0} 条，模型参数（如不支持 json_object）
-                {noise?.provider_config ?? 0} 条。这些请去
+          {noise?.infra || noise?.provider_config ? (
+            <OpsStatusStrip
+              tone="warning"
+              summary={`已过滤噪音：超时/基建 ${noise?.infra ?? 0} · 模型参数 ${noise?.provider_config ?? 0}`}
+            >
+              <p>
+                这些样本不写进技能反例。请到
                 <Link className="mx-1 font-medium underline" to="/admin/llm/logs">
                   LLM 调用
                 </Link>
@@ -167,50 +207,39 @@ export function SkillOpsPage() {
                 <Link className="mx-1 font-medium underline" to="/admin/model">
                   模型管理
                 </Link>
-                处理，不用写进技能反例。
-              </div>
-            ) : null}
+                处理。
+              </p>
+            </OpsStatusStrip>
+          ) : null}
 
-            <section className="sf-panel overflow-hidden">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <ShieldAlert className="h-4 w-4 text-amber-600" />
-                  <h2 className="text-sm font-semibold text-ink">结构化失败（可改技能）</h2>
-                </div>
-                <label className="flex items-center gap-2 text-xs text-ink-muted">
-                  角色
-                  <select
-                    className="sf-control w-auto py-1"
-                    value={roleFilter}
-                    onChange={(e) => setRoleFilter(e.target.value)}
-                  >
-                    <option value="">全部</option>
-                    {roleOptions.map((role) => (
-                      <option key={role} value={role}>
-                        {role}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
-              {data.failures.length === 0 ? (
-                <EmptyState
-                  title="暂无可回流失败"
-                  description="生成任务出现 JSON/Schema 不合规时，会显示在这里，便于改 anti-examples。"
-                />
-              ) : (
-                <ul className="divide-y divide-border">
+          {data.failures.length === 0 ? (
+            <FilterEmptyState
+              title="暂无可回流失败"
+              description="生成任务出现 JSON/Schema 不合规时，会显示在这里，便于改 anti-examples。"
+              variant="inbox"
+            />
+          ) : (
+            <div className="sf-panel overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="w-36">角色</TableHead>
+                    <TableHead className="w-32">失败类型</TableHead>
+                    <TableHead className="w-36">时间</TableHead>
+                    <TableHead className="w-28 text-right">操作</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {data.failures.map((item) => (
                     <FailureRow key={item.id} item={item} />
                   ))}
-                </ul>
-              )}
-            </section>
-          </>
-        ) : null}
-      </div>
-    </PageShell>
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </div>
+      ) : null}
+    </OpsPageShell>
   )
 }
 
@@ -227,42 +256,65 @@ function StatCard({
     <div className="sf-panel px-4 py-3">
       <div className="text-xs font-medium text-ink-muted">{label}</div>
       <div className="mt-1 text-2xl font-semibold tracking-tight text-ink">{value}</div>
-      <div className="mt-1 text-xs text-ink-muted">{hint}</div>
+      <div className="mt-1 text-xs text-ink-faint">{hint}</div>
     </div>
   )
 }
 
 function FailureRow({ item }: { item: SkillFailureItem }) {
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const roleLabel = formatRoleLabel(item.role)
+  const typeLabel = failureTypeLabel(item)
+
   return (
-    <li className="px-4 py-3">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-xs text-ink-muted">{shortId(item.id)}</span>
-            <Badge tone="warning">结构化</Badge>
-            <span className="text-sm font-medium text-ink">{item.role || '—'}</span>
-            <span className="text-xs text-ink-muted">{item.purpose}</span>
-          </div>
-          <p className="mt-1 text-sm text-ink">{item.error_message || '结构化输出失败'}</p>
-          {item.response_preview ? (
-            <pre className="mt-2 max-h-24 overflow-auto rounded-lg bg-canvas-muted p-2 text-[11px] text-ink-muted">
-              {item.response_preview}
-            </pre>
-          ) : null}
-        </div>
-        <div className="shrink-0 text-right text-xs text-ink-muted">
-          <div>{formatTime(item.created_at)}</div>
-          {item.job_id ? (
-            <Link
-              className="mt-1 inline-flex items-center gap-1 text-action hover:underline"
-              to={`/admin/llm/chains?job_id=${item.job_id}`}
+    <TableRow className="hover:bg-canvas-muted/60">
+      <TableCell>
+        <div className="text-sm font-medium text-ink">{roleLabel}</div>
+        {item.role ? (
+          <div className="mt-0.5 font-mono text-[11px] text-ink-faint">{item.role}</div>
+        ) : null}
+      </TableCell>
+      <TableCell>
+        <div className="text-sm text-ink">{typeLabel}</div>
+        {item.error_message ? (
+          <p className="mt-0.5 line-clamp-2 text-[11px] text-ink-muted">{item.error_message}</p>
+        ) : null}
+        {item.response_preview ? (
+          <div className="mt-1">
+            <button
+              type="button"
+              className="inline-flex items-center gap-1 text-[11px] text-ink-faint hover:text-ink-muted"
+              onClick={() => setPreviewOpen((v) => !v)}
             >
-              <Link2 className="h-3 w-3" />
-              调用链
-            </Link>
-          ) : null}
-        </div>
-      </div>
-    </li>
+              {previewOpen ? (
+                <ChevronDown className="h-3 w-3" />
+              ) : (
+                <ChevronRight className="h-3 w-3" />
+              )}
+              {previewOpen ? '收起预览' : '展开预览'}
+            </button>
+            {previewOpen ? (
+              <pre className="mt-1 max-h-24 overflow-auto rounded-lg bg-canvas-muted p-2 text-[11px] text-ink-muted">
+                {item.response_preview}
+              </pre>
+            ) : null}
+          </div>
+        ) : null}
+      </TableCell>
+      <TableCell className="text-xs text-ink-muted">{formatTime(item.created_at)}</TableCell>
+      <TableCell className="text-right">
+        {item.job_id ? (
+          <Link
+            className="inline-flex items-center gap-1 text-xs font-medium text-action hover:underline"
+            to={`/admin/llm/logs?job_id=${item.job_id}`}
+          >
+            <Link2 className="h-3 w-3" />
+            看调用链
+          </Link>
+        ) : (
+          <span className="text-xs text-ink-faint">—</span>
+        )}
+      </TableCell>
+    </TableRow>
   )
 }
