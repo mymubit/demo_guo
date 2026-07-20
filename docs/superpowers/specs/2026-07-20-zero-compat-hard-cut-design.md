@@ -1,6 +1,6 @@
 # 零兼容硬切 — 设计规格
 
-> 状态：待用户审阅  
+> 状态：已批准；实现计划见 `docs/superpowers/plans/2026-07-20-zero-compat-hard-cut.md`  
 > 日期：2026-07-20  
 > 范围：`backend/`、`frontend/src/`、`drama-skills/`  
 > 实施路径：契约先行、分层硬切（方案 2）
