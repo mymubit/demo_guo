@@ -3,9 +3,9 @@
 
 渐进披露：
 - L0 角色边界 + SKILL 索引体
-- L1 按需 modules（enable_when）
-- L2 rules（max_chars）
-- L3 输出契约 + 反例 + 轻量知识
+- L1 按需 modules（enable_when；默认全文，不做预算截断）
+- L2 rules（sections 收窄；默认全文）
+- L3 输出契约 + 反例 + 知识引用（默认全文）
 """
 from __future__ import annotations
 
@@ -18,8 +18,6 @@ from apps.drama.services.schema_prompt_contract import (
     render_contract_block,
 )
 from apps.drama.services.skills_loader import SkillsBundleLoader, get_skills_loader
-
-_KNOWLEDGE_MAX_CHARS = 1200
 
 
 class PromptBuilder:
@@ -41,12 +39,11 @@ class PromptBuilder:
     ) -> tuple[str, str]:
         contract = self.loader.get_role_contract(role)
         entry = self.loader.get_role_entry(role)
-        max_chars = int((contract.get("rule_policy") or {}).get("max_chars", 3200))
-
-        knowledge_budget = (
-            1800
-            if role in {"drama.script-scorer", "drama.compliance-guard"}
-            else _KNOWLEDGE_MAX_CHARS
+        # rule_policy.max_chars：缺省 0=不截断；仅显式正数时启用预算
+        rule_policy = contract.get("rule_policy") or {}
+        max_chars = int(rule_policy.get("max_chars") or 0)
+        knowledge_budget = int(
+            (contract.get("knowledge_policy") or {}).get("max_chars") or 0
         )
         skill_text = self.loader.load_skill(role)
         modules_text = self.loader.load_modules_for_role(role, settings)
@@ -125,7 +122,6 @@ class PromptBuilder:
             "output": {
                 "artifact_key": artifact_key,
                 "schema_version": schema_version,
-                "schema_required": _schema_required_fields(artifact_key, self.loader),
                 "schema_required_paths": schema_required_paths,
             },
         }
@@ -157,15 +153,6 @@ def _settings_subset(settings: dict[str, Any]) -> dict[str, Any]:
         "derived",
     )
     return {key: settings[key] for key in keys if key in settings}
-
-
-def _schema_required_fields(artifact_key: str, loader: SkillsBundleLoader) -> list[str]:
-    try:
-        schema = loader.load_artifact_schema(artifact_key)
-    except Exception:
-        return []
-    required = schema.get("required") or []
-    return [str(item) for item in required]
 
 
 def _safe_load_artifact_schema(

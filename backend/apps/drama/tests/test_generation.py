@@ -125,33 +125,24 @@ class JsonParseTests(SimpleTestCase):
         with self.assertRaises(JsonParseError):
             parse_llm_json("[1,2]")
 
-    def test_parse_llm_json_extracts_from_prose(self):
+    def test_parse_llm_json_rejects_prose_wrapped_json(self):
         raw = '下面是结果：\n{"title": "玉碎宫门", "ok": true}\n谢谢。'
-        self.assertEqual(parse_llm_json(raw)["title"], "玉碎宫门")
+        with self.assertRaises(JsonParseError):
+            parse_llm_json(raw)
 
     def test_parse_llm_json_repairs_trailing_comma(self):
         raw = '{"a": 1, "b": [2, 3,],}'
         self.assertEqual(parse_llm_json(raw), {"a": 1, "b": [2, 3]})
 
-    def test_parse_llm_json_repairs_simple_single_quotes(self):
+    def test_parse_llm_json_rejects_single_quotes(self):
         raw = "{'title': '玉碎宫门', 'ok': true}"
-        self.assertEqual(parse_llm_json(raw)["title"], "玉碎宫门")
+        with self.assertRaises(JsonParseError):
+            parse_llm_json(raw)
 
-    def test_parse_llm_json_skips_prefix_braces(self):
+    def test_parse_llm_json_rejects_inline_fence_with_prose(self):
         raw = '先看 {草稿}：\n```json\n{"score": 88}\n```'
-        self.assertEqual(parse_llm_json(raw)["score"], 88)
-
-    def test_build_json_repair_user_prompt_includes_error(self):
-        from apps.drama.services.json_parse import build_json_repair_user_prompt
-
-        prompt = build_json_repair_user_prompt(
-            raw_content='{"a":1',
-            error_message="Expecting ',' delimiter",
-            required_fields=["title", "logline"],
-        )
-        self.assertIn("Expecting ',' delimiter", prompt)
-        self.assertIn("title, logline", prompt)
-        self.assertIn('{"a":1', prompt)
+        with self.assertRaises(JsonParseError):
+            parse_llm_json(raw)
 
 
 @override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
@@ -182,6 +173,17 @@ class GenerationGateTests(TestCase):
             entry_type="story_adapt",
             external_story="",
         )
+        adapt.settings = {
+            **adapt.settings,
+            "preset_theme_code": "family-revenge",
+            "genre_matrix": {
+                "emotion": "爽",
+                "identity": "强者",
+                "conflict": "复仇",
+                "world": "都市",
+            },
+        }
+        adapt.save(update_fields=["settings"])
         with self.assertRaises(BusinessException) as ctx:
             self.gate.validate_start(
                 adapt,
@@ -190,6 +192,53 @@ class GenerationGateTests(TestCase):
                 expected_version=0,
             )
         self.assertEqual(ctx.exception.code, WORKFLOW_GATE_BLOCKED)
+        self.assertIn("external_story", str(ctx.exception))
+
+    def test_story_adapt_requires_theme_any_of(self):
+        from apps.core.exceptions import BusinessException
+
+        adapt = ProjectSettingsService().create_project(
+            self.user,
+            "改编无题材",
+            entry_type="story_adapt",
+            external_story="古早小说大纲……",
+        )
+        # 清空题材相关设定
+        settings = dict(adapt.settings)
+        settings.pop("genre_matrix", None)
+        settings["preset_theme_code"] = None
+        adapt.settings = settings
+        adapt.save(update_fields=["settings"])
+        with self.assertRaises(BusinessException) as ctx:
+            self.gate.validate_start(
+                adapt,
+                role="drama.story-bible",
+                command_id="gate-adapt-theme",
+                expected_version=0,
+            )
+        self.assertEqual(ctx.exception.code, WORKFLOW_GATE_BLOCKED)
+        self.assertIn("genre_matrix", str(ctx.exception))
+        self.assertIn("preset_theme_code", str(ctx.exception))
+
+    def test_story_adapt_allows_preset_theme_code(self):
+        adapt = ProjectSettingsService().create_project(
+            self.user,
+            "改编预设题材",
+            entry_type="story_adapt",
+            external_story="古早小说大纲……",
+        )
+        settings = dict(adapt.settings)
+        settings.pop("genre_matrix", None)
+        settings["preset_theme_code"] = "family-revenge"
+        adapt.settings = settings
+        adapt.save(update_fields=["settings"])
+        artifact_key = self.gate.validate_start(
+            adapt,
+            role="drama.story-bible",
+            command_id="gate-adapt-ok",
+            expected_version=0,
+        )
+        self.assertEqual(artifact_key, "story_bible")
 
     def test_idempotent_job_conflict(self):
         from apps.core.exceptions import BusinessException
@@ -313,19 +362,16 @@ class GenerationServiceTests(TestCase):
         )
 
     @patch("apps.drama.services.generation_service.LlmProvider.chat_completion")
-    def test_execute_generation_repairs_invalid_json_once(self, mock_llm):
-        mock_llm.side_effect = [
-            {
-                "choices": [
-                    {
-                        "message": {
-                            "content": "这是说明文字\n{not json",
-                        }
+    def test_execute_generation_fails_invalid_json_without_repair(self, mock_llm):
+        mock_llm.return_value = {
+            "choices": [
+                {
+                    "message": {
+                        "content": "这是说明文字\n{not json",
                     }
-                ]
-            },
-            _mock_llm_response(FIXTURES["project_brief"]),
-        ]
+                }
+            ]
+        }
         job = DramaGenerationJob.objects.create(
             project=self.project,
             job_type=DramaGenerationJob.JobType.GENERATION,
@@ -342,13 +388,13 @@ class GenerationServiceTests(TestCase):
                 "actor": self.user.username,
             },
         )
-        with override_settings(LLM_ENABLED=True, LLM_API_BASE_URL="http://test", LLM_API_KEY="k"):
+        with override_settings(
+            LLM_ENABLED=True, LLM_API_BASE_URL="http://test", LLM_API_KEY="k"
+        ):
             self.svc.execute_generation(str(job.id))
         job.refresh_from_db()
-        self.assertEqual(job.status, DramaGenerationJob.Status.COMPLETED)
-        self.assertEqual(mock_llm.call_count, 2)
-        repair_kwargs = mock_llm.call_args_list[1].kwargs
-        self.assertIn("无法解析", repair_kwargs.get("user_prompt", ""))
+        self.assertEqual(job.status, DramaGenerationJob.Status.FAILED)
+        self.assertEqual(mock_llm.call_count, 1)
 
     @patch("apps.drama.services.generation_service.LlmProvider.chat_completion")
     def test_writing_triggers_quality_and_gate(self, mock_llm):

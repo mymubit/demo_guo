@@ -424,15 +424,20 @@ class SkillsBundleLoader:
         *,
         as_index: bool = False,
     ) -> str:
-        """加载角色模块；尊重 module_policy.evaluate_enable_when。"""
+        """加载角色模块；尊重 module_policy.evaluate_enable_when；max_chars>0 时才截断。"""
         contract = self.get_role_contract(agent_id)
         module_ids = list(contract.get("modules") or [])
         policy = contract.get("module_policy") or {}
         evaluate = bool(policy.get("evaluate_enable_when"))
+        max_chars = int(policy.get("max_chars") or 0)
         catalog = (self.modules_catalog.get("modules") or {}) if evaluate else {}
+        # 无 evaluate 时仍可读 catalog 的 enable_when（若角色未开 evaluate 则忽略）
+        if not catalog:
+            catalog = self.modules_catalog.get("modules") or {}
         context = module_enable_context(settings) if evaluate else {}
 
         parts: list[str] = []
+        used = 0
         for module_id in module_ids:
             meta = catalog.get(module_id) or {}
             expr = meta.get("enable_when")
@@ -448,10 +453,19 @@ class SkillsBundleLoader:
             if as_index:
                 label = meta.get("label_zh") or module_id
                 first_line = body.splitlines()[0].strip() if body else ""
-                parts.append(f"- `{module_id}`（{label}）: {first_line[:80]}")
+                chunk = f"- `{module_id}`（{label}）: {first_line[:80]}"
             else:
-                parts.append(f"### {module_id}\n{body}")
-        return "\n\n".join(parts)
+                chunk = f"### {module_id}\n{body}"
+            sep = "\n\n" if parts else ""
+            piece = f"{sep}{chunk}"
+            if max_chars > 0 and used + len(piece) > max_chars:
+                remain = max_chars - used
+                if remain >= 80:
+                    parts.append(f"{sep}{chunk[: remain - 20]}…(模块预算截断)")
+                break
+            parts.append(piece)
+            used += len(piece)
+        return "".join(parts)
 
     def load_anti_examples(self, agent_id: str, *, max_items: int = 6) -> str:
         """加载角色反例摘要，供 Prompt L3 注入。"""
@@ -487,9 +501,9 @@ class SkillsBundleLoader:
         agent_id: str,
         settings: dict[str, Any] | None = None,
         *,
-        max_chars: int = 1200,
+        max_chars: int = 0,
     ) -> str:
-        """按角色 references 与题材/平台轻量注入知识片段（非向量检索）。"""
+        """按角色 references 与题材/平台注入知识；max_chars<=0 时全文注入。"""
         settings = settings or {}
         entry = self.get_role_entry(agent_id)
         skill_dir = entry.get("skill_dir") or f"roles/{agent_id.replace('.', '-')}"
@@ -521,7 +535,7 @@ class SkillsBundleLoader:
                 score += 1
             if "originality" in name and settings.get("entry_type") == "story_adapt":
                 score += 4
-            # 裁判角色优先注入本职知识，避免预算被次要文档占满
+            # 裁判角色优先注入本职知识
             if agent_id == "drama.compliance-guard":
                 if "tier4" in name or "compliance" in name:
                     score += 6
@@ -532,11 +546,17 @@ class SkillsBundleLoader:
                     score += 6
             ranked.append((score, path))
         ranked.sort(key=lambda item: (-item[0], str(item[1])))
+        if max_chars <= 0:
+            chunks = [
+                f"### {path.name}\n{path.read_text(encoding='utf-8').strip()}"
+                for _, path in ranked
+            ]
+            return "\n\n".join(chunks)
+
         chunks: list[str] = []
         used = 0
         for _, path in ranked[:3]:
             body = path.read_text(encoding="utf-8").strip()
-            # 跳过过长前言，取正文前段
             snippet = body[:800]
             piece = f"### {path.name}\n{snippet}"
             if used + len(piece) > max_chars:
@@ -589,7 +609,7 @@ class SkillsBundleLoader:
         agent_id: str,
         settings: dict[str, Any],
         *,
-        max_chars: int = 3200,
+        max_chars: int = 0,
     ) -> str:
         contract = self.get_role_contract(agent_id)
         rule_policy = contract.get("rule_policy") or {}
@@ -597,7 +617,7 @@ class SkillsBundleLoader:
         allowed_sections = [
             str(s) for s in (rule_policy.get("sections") or []) if str(s).strip()
         ]
-        theme_code = _resolve_theme_code(settings)
+        theme_code = _resolve_theme_code(settings, root=self.root)
         # (pack_rank, priority, section, text)
         items: list[tuple[int, int, str, str]] = []
 
@@ -700,13 +720,60 @@ def _deep_set(data: dict[str, Any], dotted: str, value: Any) -> None:
     current[parts[-1]] = value
 
 
-def _resolve_theme_code(settings: dict[str, Any]) -> str:
-    # 四轴路径统一 theme_code=matrix（对齐 theme-matrix.yaml#resolve），
-    # 使 genres/matrix.yaml（scope_key=matrix）与 genres/fallback.yaml（scope_key=""）正确注入。
-    matrix = settings.get("genre_matrix") or {}
-    if matrix:
+def _discover_genre_keys(root: Path) -> frozenset[str]:
+    keys: set[str] = set()
+    genres_dir = root / "foundation" / "rules" / "genres"
+    if genres_dir.is_dir():
+        for path in sorted(genres_dir.glob("*.yaml")):
+            data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+            key = str(data.get("genre_key") or path.stem).strip()
+            if key:
+                keys.add(key)
+    return frozenset(keys)
+
+
+def _load_preset_theme_codes(root: Path) -> frozenset[str]:
+    path = root / "foundation" / "theme-matrix.yaml"
+    if not path.exists():
+        return frozenset()
+    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    codes: set[str] = set()
+    for item in raw.get("preset_templates") or []:
+        if not isinstance(item, dict):
+            continue
+        code = str(item.get("theme_code") or "").strip()
+        if code:
+            codes.add(code)
+    return frozenset(codes)
+
+
+_GENRE_MATRIX_AXES = ("emotion", "identity", "conflict", "world")
+
+
+def _resolve_theme_code(settings: dict[str, Any], *, root: Path) -> str:
+    """解析题材规则 scope_key：四轴走 matrix；预设须映射到已存在 genre 规则文件。"""
+    matrix = settings.get("genre_matrix")
+    if isinstance(matrix, dict) and all(
+        str(matrix.get(axis) or "").strip() for axis in _GENRE_MATRIX_AXES
+    ):
         return "matrix"
-    return settings.get("preset_theme_code") or ""
+
+    preset = str(settings.get("preset_theme_code") or "").strip()
+    genre_keys = _discover_genre_keys(root)
+    if preset:
+        if preset in genre_keys:
+            return preset
+        if preset in _load_preset_theme_codes(root) and "matrix" in genre_keys:
+            return "matrix"
+        raise ValueError(
+            f"preset_theme_code={preset!r} 无法映射到已存在的题材规则文件；"
+            f"可用 genre_key: {', '.join(sorted(genre_keys)) or '(无)'}"
+        )
+
+    raise ValueError(
+        "缺少有效题材设定：请配置完整的 genre_matrix（emotion/identity/conflict/world）"
+        "或 preset_theme_code（须映射到已存在的题材规则文件）"
+    )
 
 
 # compliance_block 在 role_policy.sections 中是元 section，对应 compliance-core 各子 section
@@ -745,16 +812,19 @@ def _rule_matches_sections(
 
 
 def _rule_pack_rank(agent_id: str, section: str, tier: int | None) -> int:
-    """截断预算内优先保留裁判核心规则。"""
+    """截断预算内优先保留本阶段 playbook，其次裁判/角色核心规则。"""
+    # tier 3 = stage_playbook：任意角色最高优先，避免被 global 噪声挤掉
+    if tier == 3:
+        return 0
     if agent_id == "drama.compliance-guard":
         if tier == 4 or section in _COMPLIANCE_ITEM_SECTIONS:
-            return 0
-        if section == "originality_rules":
             return 1
-        return 2
+        if section == "originality_rules":
+            return 2
+        return 3
     if agent_id == "drama.script-scorer":
         if section == "scoring":
-            return 0
+            return 1
         if section in {
             "continuity",
             "hook_effectiveness",
@@ -762,8 +832,8 @@ def _rule_pack_rank(agent_id: str, section: str, tier: int | None) -> int:
             "character_rules",
             "episode_structure",
         }:
-            return 1
-        return 2
+            return 2
+        return 3
     return 1
 
 
@@ -771,7 +841,10 @@ def _join_rules_within_budget(
     items: list[tuple[int, int, str, str]],
     max_chars: int,
 ) -> str:
-    """按完整规则块拼接，避免硬截断切在规则中间导致尾部关键项丢失。"""
+    """按完整规则块拼接；max_chars<=0 表示不截断。"""
+    if max_chars <= 0:
+        return "\n\n".join(text for _pack, _prio, _section, text in items)
+
     chunks: list[str] = []
     used = 0
     for _pack, _prio, _section, text in items:
@@ -800,8 +873,8 @@ def _rule_matches_scope(
             return item.get("scope_key") == agent_id
         return item.get("scope_type") in (None, "global")
     if tier == 2 and "genre_profile" in scopes:
-        scope_key = item.get("scope_key", "")
-        return scope_key in ("", theme_code) or not scope_key
+        scope_key = str(item.get("scope_key") or "")
+        return scope_key == theme_code
     if tier == 3 and "stage_playbook" in scopes:
         return item.get("scope_key") == agent_id
     if tier == 4 and "compliance_block" in scopes:

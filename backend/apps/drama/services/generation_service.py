@@ -16,16 +16,8 @@ from apps.core.schema_validator import SchemaValidator
 from apps.drama.models import DramaAuditEvent, DramaGenerationJob, DramaProject
 from apps.drama.services.artifact_service import ArtifactService
 from apps.drama.services.generation_gate import QUALITY_TRIGGER_ROLES, GenerationGate
-from apps.drama.services.artifact_normalize import (
-    compliance_report_too_thin,
-    normalize_artifact,
-    quality_report_evidence_too_sparse,
-)
-from apps.drama.services.json_parse import (
-    JsonParseError,
-    build_json_repair_user_prompt,
-    parse_llm_json,
-)
+from apps.drama.services.artifact_ingest import ingest_llm_artifact
+from apps.drama.services.json_parse import JsonParseError
 from apps.drama.services.llm_call_context import get_last_llm_log_id, llm_call_scope
 from apps.drama.services.llm_provider import LlmProvider, LlmProviderError, LlmProviderStatus
 from apps.drama.services.prompt_builder import PromptBuilder
@@ -684,94 +676,26 @@ class GenerationService:
         artifact_key: str,
         settings: dict[str, Any],
     ) -> dict[str, Any]:
-        """解析→对齐→校验；失败时按 OutputFixingParser 思路单次纠错。"""
+        """解析→对齐→校验；失败直接抛错，不再发起 LLM json_repair。"""
         schema_path = self.loader.artifact_schema_path(artifact_key)
-        try:
-            payload = self._parse_normalize_validate(
-                content=content,
-                artifact_key=artifact_key,
-                settings=settings,
-                schema_path=schema_path,
+        payload = self._parse_normalize_validate(
+            content=content,
+            artifact_key=artifact_key,
+            settings=settings,
+            schema_path=schema_path,
+        )
+        if job:
+            self.append_progress(
+                job,
+                {
+                    "phase": "structured_ok",
+                    "role": role,
+                    "purpose": purpose,
+                    "repair_attempted": False,
+                    "repair_succeeded": None,
+                },
             )
-            if job:
-                self.append_progress(
-                    job,
-                    {
-                        "phase": "structured_ok",
-                        "role": role,
-                        "purpose": purpose,
-                        "repair_attempted": False,
-                        "repair_succeeded": None,
-                    },
-                )
-            return payload
-        except (JsonParseError, BusinessException) as first_exc:
-            if isinstance(first_exc, BusinessException) and first_exc.code != SCHEMA_VALIDATION_FAILED:
-                raise
-            if job:
-                self.append_progress(
-                    job,
-                    {
-                        "phase": "json_repair",
-                        "role": role,
-                        "purpose": purpose,
-                        "error": str(first_exc),
-                        "repair_attempted": True,
-                    },
-                )
-            logger.warning(
-                "产物结构化输出失败，发起单次纠错 role=%s artifact=%s err=%s",
-                role,
-                artifact_key,
-                first_exc,
-            )
-            repair_user = build_json_repair_user_prompt(
-                raw_content=content,
-                error_message=str(first_exc),
-                required_fields=self._artifact_required_fields(artifact_key),
-            )
-            try:
-                response = self._invoke_llm(
-                    job=job,
-                    project=project,
-                    role=role,
-                    purpose=f"{purpose}_json_repair",
-                    system_prompt=system_prompt,
-                    user_prompt=repair_user,
-                    json_mode=True,
-                )
-                repaired = response["choices"][0]["message"]["content"]
-                payload = self._parse_normalize_validate(
-                    content=repaired,
-                    artifact_key=artifact_key,
-                    settings=settings,
-                    schema_path=schema_path,
-                )
-            except Exception:
-                if job:
-                    self.append_progress(
-                        job,
-                        {
-                            "phase": "json_repair_failed",
-                            "role": role,
-                            "purpose": purpose,
-                            "repair_attempted": True,
-                            "repair_succeeded": False,
-                        },
-                    )
-                raise
-            if job:
-                self.append_progress(
-                    job,
-                    {
-                        "phase": "json_repair_ok",
-                        "role": role,
-                        "purpose": purpose,
-                        "repair_attempted": True,
-                        "repair_succeeded": True,
-                    },
-                )
-            return payload
+        return payload
 
     def _parse_normalize_validate(
         self,
@@ -781,46 +705,14 @@ class GenerationService:
         settings: dict[str, Any],
         schema_path: str,
     ) -> dict[str, Any]:
-        payload_obj = parse_llm_json(content)
-        payload_obj = normalize_artifact(artifact_key, payload_obj, settings)
-        try:
-            self.validator.validate_file(payload_obj, schema_path)
-        except BusinessException:
-            raise
-        except Exception as exc:
-            raise BusinessException(
-                SCHEMA_VALIDATION_FAILED,
-                f"产物 Schema 校验失败（模型已返回内容，但结构不合规，未落库）: {exc}",
-                http_status=422,
-            ) from exc
-        if artifact_key == "quality_report" and quality_report_evidence_too_sparse(
-            payload_obj
-        ):
-            raise BusinessException(
-                SCHEMA_VALIDATION_FAILED,
-                "十维评分篇幅不足或缺少有效 evidence（禁止空壳分数报告）。"
-                "每个维度分析（evidence+deductions）约 1000 字、不得少于 800 字，"
-                "须含具体集数/场景/台词；另须提供 verdict_detail 总评约 2000 字"
-                "（不得少于 1500 字）。",
-                http_status=422,
-            )
-        if artifact_key == "compliance_report" and compliance_report_too_thin(
-            payload_obj
-        ):
-            raise BusinessException(
-                SCHEMA_VALIDATION_FAILED,
-                "合规报告缺少具体阻断/风险描述（title+description）。禁止空标题或空话。",
-                http_status=422,
-            )
-        return payload_obj
-
-    def _artifact_required_fields(self, artifact_key: str) -> list[str]:
-        try:
-            schema = self.loader.load_artifact_schema(artifact_key)
-        except Exception:
-            return []
-        required = schema.get("required") or []
-        return [item for item in required if isinstance(item, str)]
+        """委托统一落库管线（parse → normalize → schema → substance）。"""
+        return ingest_llm_artifact(
+            content=content,
+            artifact_key=artifact_key,
+            settings=settings,
+            schema_path=schema_path,
+            validator=self.validator,
+        )
 
     def _workflow_version_for_job(
         self, job: DramaGenerationJob, payload: dict[str, Any]

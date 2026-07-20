@@ -78,6 +78,7 @@ class PromptSchemaInjectionTests(SimpleTestCase):
             artifacts={},
         )
         self.assertIn("schema_required_paths", user)
+        self.assertNotIn('"schema_required"', user)
         self.assertIn("episode_narrative_designs[].opening_hook", user)
 
     def test_project_brief_keeps_behavior_constraints_without_top_required(self) -> None:
