@@ -133,6 +133,10 @@ DRAMA_SKILLS_ROOT = os.getenv(
     "DRAMA_SKILLS_ROOT",
     str(BASE_DIR.parent / "drama-skills"),
 )
+# 注入策略预算护栏：false 时忽略 role.yaml 中 module/rule/knowledge 的 max_chars（逃生阀）
+SKILLS_INJECTION_POLICY_ENFORCED = os.getenv(
+    "SKILLS_INJECTION_POLICY_ENFORCED", "true"
+).lower() in ("1", "true", "yes")
 
 # LLM（OpenAI 兼容 HTTP）；本地开发默认关闭，避免误调外网
 LLM_API_BASE_URL = os.getenv("LLM_API_BASE_URL", "")

@@ -423,13 +423,18 @@ class SkillsBundleLoader:
         settings: dict[str, Any] | None = None,
         *,
         as_index: bool = False,
+        budget_max_chars: int | None = None,
     ) -> dict[str, Any]:
         """结构化加载角色模块；返回 text + included/skipped + truncated。"""
         contract = self.get_role_contract(agent_id)
         module_ids = list(contract.get("modules") or [])
         policy = contract.get("module_policy") or {}
         evaluate = bool(policy.get("evaluate_enable_when"))
-        max_chars = int(policy.get("max_chars") or 0)
+        max_chars = (
+            int(budget_max_chars)
+            if budget_max_chars is not None
+            else int(policy.get("max_chars") or 0)
+        )
         catalog = self.modules_catalog.get("modules") or {}
         context = module_enable_context(settings) if evaluate else {}
 
@@ -545,6 +550,7 @@ class SkillsBundleLoader:
         settings: dict[str, Any] | None = None,
         *,
         max_chars: int = 0,
+        as_index: bool = False,
     ) -> dict[str, Any]:
         """结构化知识注入；返回 text + included/skipped + truncated。"""
         settings = settings or {}
@@ -611,16 +617,22 @@ class SkillsBundleLoader:
             except ValueError:
                 return path.name
 
+        def _piece(path: Path, body: str) -> tuple[str, str]:
+            if as_index:
+                first = body.splitlines()[0].strip() if body else ""
+                return f"- `{path.name}`: {first[:120]}", "index"
+            return f"### {path.name}\n{body}", "full"
+
         included: list[dict[str, Any]] = []
         skipped: list[dict[str, Any]] = []
         if max_chars <= 0:
             chunks: list[str] = []
             for _, path in ranked:
                 body = path.read_text(encoding="utf-8").strip()
-                chunk = f"### {path.name}\n{body}"
+                chunk, mode = _piece(path, body)
                 chunks.append(chunk)
                 included.append(
-                    {"path": _rel(path), "chars": len(chunk), "mode": "full"}
+                    {"path": _rel(path), "chars": len(chunk), "mode": mode}
                 )
             return {
                 "text": "\n\n".join(chunks),
@@ -635,7 +647,7 @@ class SkillsBundleLoader:
         truncated = False
         for index, (_, path) in enumerate(ranked):
             body = path.read_text(encoding="utf-8").strip()
-            if index >= 3:
+            if not as_index and index >= 3:
                 skipped.append(
                     {
                         "path": _rel(path),
@@ -646,9 +658,12 @@ class SkillsBundleLoader:
                 )
                 truncated = True
                 continue
-            snippet = body[:800]
-            piece = f"### {path.name}\n{snippet}"
-            mode = "truncated" if len(snippet) < len(body) else "full"
+            if as_index:
+                piece, mode = _piece(path, body)
+            else:
+                snippet = body[:800]
+                piece = f"### {path.name}\n{snippet}"
+                mode = "truncated" if len(snippet) < len(body) else "full"
             if used + len(piece) > max_chars:
                 remain = max_chars - used
                 if remain < 80:
@@ -657,7 +672,7 @@ class SkillsBundleLoader:
                             "path": _rel(path),
                             "chars": len(body),
                             "reason": "budget",
-                            "mode": "full",
+                            "mode": mode,
                         }
                     )
                     truncated = True

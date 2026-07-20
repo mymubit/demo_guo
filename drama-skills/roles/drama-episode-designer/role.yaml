@@ -11,12 +11,29 @@ modules:
 - conflict-escalation
 - reversal-foreshadowing
 - payment-checkpoint
+module_policy:
+  source: modules/catalog.yaml
+  evaluate_enable_when: true
+  as_index: false
+  max_chars: 0
 rule_policy:
   scopes:
   - global_core
   - genre_profile
   - stage_playbook
-  max_chars: 3600
+  max_chars: 0
+  sections:
+  - episode_card
+  - episode_emotion_8nodes
+  - qdn_emotion_model
+  - hook_effectiveness
+  - emotion_externalization_dict
+  - episode_structure
+  - rhythm_rules
+  - foreshadowing_rules
+  - conflict_escalation
+  - payment_checkpoint_3card
+  - learned_rules
 skill_dir: roles/drama-episode-designer
 input_contract:
   parameter_refs:

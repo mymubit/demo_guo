@@ -6,12 +6,18 @@ role_tier: judge
 workspace_order: 501
 modules:
 - continuity-audit
+module_policy:
+  source: modules/catalog.yaml
+  evaluate_enable_when: true
+  as_index: false
+  max_chars: 0
 rule_policy:
   scopes:
   - global_core
   - genre_profile
   - stage_playbook
-  # 与 knowledge/knowledge-sections.md 对齐；避免 global_core 全量灌入后被 max_chars 截断丢评分细则
+  max_chars: 0
+  # 与 knowledge/knowledge-sections.md 对齐；靠 sections 收窄，不做 max_chars 截断
   sections:
   - scoring
   - continuity
@@ -22,7 +28,6 @@ rule_policy:
   - hook_effectiveness
   - payment_checkpoint_3card
   - learned_rules
-  max_chars: 3600
 skill_dir: roles/drama-script-scorer
 # 独立技能：latest_script 由 artifact resolver 解析当前有效剧本。
 input_contract:

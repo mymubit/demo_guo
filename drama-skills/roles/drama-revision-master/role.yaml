@@ -8,12 +8,27 @@ modules:
 - dialogue-polish
 - format-fix
 - word-count-governance
+module_policy:
+  source: modules/catalog.yaml
+  evaluate_enable_when: true
+  as_index: false
+  max_chars: 0
 rule_policy:
   scopes:
   - global_core
   - genre_profile
   - stage_playbook
-  max_chars: 3600
+  max_chars: 0
+  sections:
+  - writing_prohibitions
+  - writing_requirements
+  - ai_tone_forbidden
+  - emotion_externalization_dict
+  - dialogue_quality
+  - rhythm_rules
+  - quantitative_constraints
+  - format_standard
+  - learned_rules
 skill_dir: roles/drama-revision-master
 # 独立技能：由评分环触发（低于 B 级）或用户手动调用；产出修复稿后必须交回评分官复评。
 input_contract:

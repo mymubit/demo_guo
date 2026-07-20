@@ -189,6 +189,8 @@ export type InjectionManifest = {
     rule_max_chars?: number
     knowledge_max_chars?: number
     module_as_index?: boolean
+    knowledge_mode?: string
+    policy_enforced?: boolean
   }
   system_chars?: number
   user_chars?: number

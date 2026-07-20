@@ -9,12 +9,34 @@ modules:
 - dialogue-craft
 - continuity-snapshot
 - production-feasibility
+module_policy:
+  source: modules/catalog.yaml
+  evaluate_enable_when: true
+  as_index: false
+  max_chars: 0
 rule_policy:
   scopes:
   - global_core
   - genre_profile
   - stage_playbook
-  max_chars: 4200
+  max_chars: 0
+  sections:
+  - episode_structure
+  - continuity
+  - production_feasibility
+  - quantitative_constraints
+  - writing_prohibitions
+  - writing_requirements
+  - information_asymmetry_mechanics
+  - emotion_externalization_dict
+  - ai_tone_forbidden
+  - dialogue_craft
+  - qdn_emotion_model
+  - format_standard
+  - hook_effectiveness
+  - episode_emotion_8nodes
+  - dialogue_quality
+  - learned_rules
 skill_dir: roles/drama-script-writer
 tasks:
   default: write-episodes

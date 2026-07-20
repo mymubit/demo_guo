@@ -15,13 +15,30 @@ modules:
 module_policy:
   source: modules/catalog.yaml
   evaluate_enable_when: true
+  as_index: false
+  max_chars: 0
+knowledge_policy:
+  mode: full
+  max_chars: 6000
 rule_policy:
   scopes:
   - global_core
   - genre_profile
   - stage_playbook
   - compliance_block
-  max_chars: 3600
+  max_chars: 0
+  sections:
+  - production_feasibility
+  - budget_estimation
+  - platform_ops
+  - platform_specific
+  - three_phase_compliance_checklist
+  - format_standard
+  - dialogue_quality
+  - hook_effectiveness
+  - scoring
+  - foreshadowing_rules
+  - learned_rules
 skill_dir: roles/drama-delivery-tool
 input_contract:
   required_artifacts:

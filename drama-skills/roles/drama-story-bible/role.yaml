@@ -11,16 +11,36 @@ modules:
 - series-emotion-curve
 - conflict-escalation
 - reversal-foreshadowing
+- payment-checkpoint
 - adaptation-originality
 module_policy:
   source: modules/catalog.yaml
   evaluate_enable_when: true
+  as_index: false
+  max_chars: 0
+knowledge_policy:
+  mode: full
+  max_chars: 8000
 rule_policy:
   scopes:
   - global_core
   - genre_profile
   - stage_playbook
-  max_chars: 2400
+  max_chars: 0
+  sections:
+  - philosophy
+  - character_rules
+  - world_rules
+  - series_structure
+  - emotion_externalization_dict
+  - episode_structure
+  - rhythm_rules
+  - foreshadowing_rules
+  - qdn_emotion_model
+  - payment_checkpoint_3card
+  - conflict_escalation
+  - originality_rules
+  - learned_rules
 skill_dir: roles/drama-story-bible
 # 双模式：原创模式吃 project_brief；改编模式吃 external_story，
 # 两种模式输出同一 story_bible schema v1，下游角色无差别消费。

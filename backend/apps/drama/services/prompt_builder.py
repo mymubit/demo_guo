@@ -19,6 +19,16 @@ from apps.drama.services.schema_prompt_contract import (
     render_contract_block,
 )
 from apps.drama.services.skills_loader import SkillsBundleLoader, get_skills_loader
+from django.conf import settings as django_settings
+
+
+def _effective_max_chars(raw: int) -> int:
+    """SKILLS_INJECTION_POLICY_ENFORCED=false 时忽略预算（逃生阀）。"""
+    if raw <= 0:
+        return 0
+    if not getattr(django_settings, "SKILLS_INJECTION_POLICY_ENFORCED", True):
+        return 0
+    return int(raw)
 
 
 class PromptBuilder:
@@ -40,24 +50,36 @@ class PromptBuilder:
     ) -> tuple[str, str, dict[str, Any]]:
         contract = self.loader.get_role_contract(role)
         entry = self.loader.get_role_entry(role)
-        # rule_policy.max_chars：缺省 0=不截断；仅显式正数时启用预算
+        # rule_policy.max_chars：缺省 0=不截断；仅显式正数且 ENFORCED 时启用预算
         rule_policy = contract.get("rule_policy") or {}
-        max_chars = int(rule_policy.get("max_chars") or 0)
+        max_chars = _effective_max_chars(int(rule_policy.get("max_chars") or 0))
         knowledge_policy = contract.get("knowledge_policy") or {}
-        knowledge_budget = int(knowledge_policy.get("max_chars") or 0)
+        knowledge_budget = _effective_max_chars(
+            int(knowledge_policy.get("max_chars") or 0)
+        )
+        knowledge_mode = str(knowledge_policy.get("mode") or "full").strip().lower()
         module_policy = contract.get("module_policy") or {}
         module_as_index = bool(module_policy.get("as_index"))
+        module_budget = _effective_max_chars(int(module_policy.get("max_chars") or 0))
 
         skill_text = self.loader.load_skill(role)
         modules_asm = self.loader.assemble_modules_for_role(
-            role, settings, as_index=module_as_index
+            role,
+            settings,
+            as_index=module_as_index,
+            budget_max_chars=module_budget,
         )
         rules_asm = self.loader.assemble_rules_for_role(
             role, settings, max_chars=max_chars
         )
         anti_text = self.loader.load_anti_examples(role)
+        # mode=index：按模块索引风格只注文件名+首行；sections 暂与 full 同路径，靠 max_chars 护栏
+        knowledge_as_index = knowledge_mode == "index"
         knowledge_asm = self.loader.assemble_knowledge_for_role(
-            role, settings, max_chars=knowledge_budget
+            role,
+            settings,
+            max_chars=knowledge_budget,
+            as_index=knowledge_as_index,
         )
         fewshot_text = self.loader.load_fewshots(role)
         modules_text = modules_asm["text"]
@@ -197,6 +219,10 @@ class PromptBuilder:
                 "rule_max_chars": max_chars,
                 "knowledge_max_chars": knowledge_budget,
                 "module_as_index": module_as_index,
+                "knowledge_mode": knowledge_mode,
+                "policy_enforced": bool(
+                    getattr(django_settings, "SKILLS_INJECTION_POLICY_ENFORCED", True)
+                ),
             },
         )
         return system_prompt, user_prompt, manifest

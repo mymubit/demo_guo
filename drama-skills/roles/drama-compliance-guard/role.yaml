@@ -5,17 +5,22 @@ dept: quality
 role_tier: judge
 workspace_order: 502
 modules: []
+module_policy:
+  source: modules/catalog.yaml
+  evaluate_enable_when: true
+  as_index: false
+  max_chars: 0
 rule_policy:
   scopes:
   - global_core
   - genre_profile
   - stage_playbook
   - compliance_block
+  max_chars: 0
   # 与 knowledge/knowledge-sections.md 对齐；compliance_block 展开为 tier4 全部子 section
   sections:
   - compliance_block
   - originality_rules
-  max_chars: 3200
 skill_dir: roles/drama-compliance-guard
 # 独立技能：默认与评分官并行触发，统一审查 latest_script。
 input_contract:

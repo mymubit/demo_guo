@@ -225,6 +225,10 @@ function InjectionPanel({ detail }: { detail: LlmCallLogDetail }) {
             evaluate_enable_when=
             {String(Boolean(manifest.policies.evaluate_enable_when))} · as_index=
             {String(Boolean(manifest.policies.module_as_index))}
+            {manifest.policies.knowledge_mode
+              ? ` · knowledge_mode=${manifest.policies.knowledge_mode}`
+              : ''}
+            {manifest.policies.policy_enforced === false ? ' · 预算未强制' : ''}
           </p>
           <p>
             max_chars modules/rules/knowledge=
