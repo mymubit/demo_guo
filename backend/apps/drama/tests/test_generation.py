@@ -80,7 +80,7 @@ class PromptBuilderTests(TestCase):
         user = create_user()
         project = create_project(user)
         builder = PromptBuilder()
-        system, user_prompt = builder.build(
+        system, user_prompt, _manifest = builder.build(
             "drama.topic-director",
             settings=project.settings,
             workflow_state=project.workflow_state.state,

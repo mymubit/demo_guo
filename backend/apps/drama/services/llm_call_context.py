@@ -5,7 +5,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
-from typing import Iterator
+from typing import Any, Iterator
 
 
 @dataclass(frozen=True)
@@ -19,6 +19,9 @@ class LlmCallContext:
 
 _llm_call_context: ContextVar[LlmCallContext | None] = ContextVar("llm_call_context", default=None)
 _last_llm_log_id: ContextVar[str | None] = ContextVar("last_llm_log_id", default=None)
+_injection_manifest: ContextVar[dict[str, Any] | None] = ContextVar(
+    "injection_manifest", default=None
+)
 
 
 def get_llm_call_context() -> LlmCallContext | None:
@@ -31,6 +34,14 @@ def get_last_llm_log_id() -> str | None:
 
 def set_last_llm_log_id(log_id: str | None) -> None:
     _last_llm_log_id.set(log_id)
+
+
+def get_injection_manifest() -> dict[str, Any] | None:
+    return _injection_manifest.get()
+
+
+def set_injection_manifest(manifest: dict[str, Any] | None) -> None:
+    _injection_manifest.set(manifest)
 
 
 @contextmanager
@@ -52,7 +63,9 @@ def llm_call_scope(
         )
     )
     _last_llm_log_id.set(None)
+    manifest_token = _injection_manifest.set(None)
     try:
         yield
     finally:
         _llm_call_context.reset(token)
+        _injection_manifest.reset(manifest_token)

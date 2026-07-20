@@ -159,6 +159,40 @@ export type LlmCallLogItem = {
   system_prompt_preview: string | null
   user_prompt_preview: string | null
   response_preview: string | null
+  injection_system_chars?: number | null
+  injection_truncated?: boolean | null
+}
+
+export type InjectionManifest = {
+  version: number
+  agent_id: string
+  bundle_version?: string
+  built_at?: string
+  layers: Record<string, { chars: number; truncated?: boolean }>
+  modules?: {
+    included?: Array<{ id: string; label_zh?: string; chars?: number; mode?: string }>
+    skipped?: Array<{ id: string; label_zh?: string; reason?: string; chars?: number }>
+  }
+  knowledge?: {
+    included?: Array<{ path: string; chars?: number; mode?: string }>
+    skipped?: Array<{ path: string; reason?: string; chars?: number }>
+  }
+  rules?: {
+    sections_included?: string[]
+    item_count?: number
+    truncated?: boolean
+    max_chars?: number
+  }
+  policies?: {
+    evaluate_enable_when?: boolean
+    module_max_chars?: number
+    rule_max_chars?: number
+    knowledge_max_chars?: number
+    module_as_index?: boolean
+  }
+  system_chars?: number
+  user_chars?: number
+  checksum?: string
 }
 
 export type LlmCallLogDetail = LlmCallLogItem & {
@@ -167,6 +201,7 @@ export type LlmCallLogDetail = LlmCallLogItem & {
   response_text: string
   response_body: unknown
   provider_request_id: string | null
+  injection_manifest?: InjectionManifest | null
 }
 
 export type LlmCallLogsResponse = {

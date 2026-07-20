@@ -18,7 +18,11 @@ from apps.drama.services.artifact_service import ArtifactService
 from apps.drama.services.generation_gate import QUALITY_TRIGGER_ROLES, GenerationGate
 from apps.drama.services.artifact_ingest import ingest_llm_artifact
 from apps.drama.services.json_parse import JsonParseError
-from apps.drama.services.llm_call_context import get_last_llm_log_id, llm_call_scope
+from apps.drama.services.llm_call_context import (
+    get_last_llm_log_id,
+    llm_call_scope,
+    set_injection_manifest,
+)
 from apps.drama.services.llm_provider import LlmProvider, LlmProviderError, LlmProviderStatus
 from apps.drama.services.prompt_builder import PromptBuilder
 from apps.drama.services.quality_gate import quality_gate_passed
@@ -542,6 +546,7 @@ class GenerationService:
         system_prompt: str,
         user_prompt: str,
         json_mode: bool = True,
+        injection_manifest: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         actor = "system"
         if job and isinstance(job.request_payload, dict):
@@ -554,6 +559,8 @@ class GenerationService:
             purpose=purpose,
             actor=actor,
         ):
+            if injection_manifest is not None:
+                set_injection_manifest(injection_manifest)
             if job:
                 self.append_progress(
                     job,
@@ -634,7 +641,7 @@ class GenerationService:
         ):
             latest_script = self.artifacts.latest_script(project)
 
-        system_prompt, user_prompt = self.prompts.build(
+        system_prompt, user_prompt, manifest = self.prompts.build(
             role,
             settings=settings,
             workflow_state=wf_state,
@@ -650,6 +657,7 @@ class GenerationService:
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             json_mode=True,
+            injection_manifest=manifest,
         )
         content = response["choices"][0]["message"]["content"]
         artifact_key = self.loader.get_output_artifact_by_role(role)
@@ -825,7 +833,7 @@ class GenerationService:
                 "value": {"episodes": [{"script": payload["script_content"]}]},
             }
 
-        system_prompt, user_prompt = self.prompts.build(
+        system_prompt, user_prompt, manifest = self.prompts.build(
             role,
             settings=settings,
             workflow_state=project.workflow_state.state if project else {},
@@ -842,6 +850,7 @@ class GenerationService:
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             json_mode=True,
+            injection_manifest=manifest,
         )
         content = response["choices"][0]["message"]["content"]
         artifact_key = self.loader.get_output_artifact_by_role(role)
@@ -878,7 +887,7 @@ class GenerationService:
                 "value": {"episodes": [{"script": payload["script_content"]}]},
             }
 
-        system_prompt, user_prompt = self.prompts.build(
+        system_prompt, user_prompt, manifest = self.prompts.build(
             role,
             settings=settings,
             workflow_state=project.workflow_state.state if project else {},
@@ -894,6 +903,7 @@ class GenerationService:
             system_prompt=system_prompt,
             user_prompt=user_prompt,
             json_mode=True,
+            injection_manifest=manifest,
         )
         content = response["choices"][0]["message"]["content"]
         artifact_key = self.loader.get_output_artifact_by_role(role)

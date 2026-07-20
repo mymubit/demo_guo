@@ -47,7 +47,7 @@ class PromptSchemaInjectionTests(SimpleTestCase):
         self.builder = PromptBuilder(loader=SkillsBundleLoader(root=SKILLS_ROOT))
 
     def test_episode_designer_prompt_locks_opening_hook_key(self) -> None:
-        system, _user = self.builder.build(
+        system, _user, _manifest = self.builder.build(
             "drama.episode-designer",
             settings=_SETTINGS,
             workflow_state={"current_phase": "episode_design"},
@@ -60,7 +60,7 @@ class PromptSchemaInjectionTests(SimpleTestCase):
         self.assertNotIn("必填字段: episode_narrative_designs\n", system)
 
     def test_story_bible_prompt_locks_surface_desire_and_arc_start(self) -> None:
-        system, _user = self.builder.build(
+        system, _user, _manifest = self.builder.build(
             "drama.story-bible",
             settings=_SETTINGS,
             workflow_state={"current_phase": "blueprint"},
@@ -71,7 +71,7 @@ class PromptSchemaInjectionTests(SimpleTestCase):
         self.assertIn('"surface_desire"', system)
 
     def test_user_prompt_carries_full_schema_required_paths(self) -> None:
-        _system, user = self.builder.build(
+        _system, user, _manifest = self.builder.build(
             "drama.episode-designer",
             settings=_SETTINGS,
             workflow_state={"current_phase": "episode_design"},
@@ -82,7 +82,7 @@ class PromptSchemaInjectionTests(SimpleTestCase):
         self.assertIn("episode_narrative_designs[].opening_hook", user)
 
     def test_project_brief_keeps_behavior_constraints_without_top_required(self) -> None:
-        system, _user = self.builder.build(
+        system, _user, _manifest = self.builder.build(
             "drama.topic-director",
             settings=_SETTINGS,
             workflow_state={"current_phase": "blueprint"},

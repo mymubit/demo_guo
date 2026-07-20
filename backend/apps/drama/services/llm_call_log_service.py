@@ -10,7 +10,7 @@ from django.db import transaction
 from django.db.models import QuerySet
 
 from apps.drama.models import DramaGenerationJob, DramaLlmCallLog, DramaProject
-from apps.drama.services.llm_call_context import get_llm_call_context, set_last_llm_log_id
+from apps.drama.services.llm_call_context import get_llm_call_context, get_injection_manifest, set_last_llm_log_id
 
 logger = logging.getLogger(__name__)
 
@@ -115,6 +115,7 @@ class LlmCallLogService:
         role: str = "",
         purpose: str = "",
         actor: str = "system",
+        injection_manifest: dict[str, Any] | None = None,
     ) -> DramaLlmCallLog | None:
         if not cls.is_enabled():
             return None
@@ -125,6 +126,8 @@ class LlmCallLogService:
         role = role or (ctx.role if ctx else "")
         purpose = purpose or (ctx.purpose if ctx else DramaLlmCallLog.Purpose.ARTIFACT_GENERATION)
         actor = actor or (ctx.actor if ctx else "system")
+        if injection_manifest is None:
+            injection_manifest = get_injection_manifest()
 
         seq_in_job = 0
         job = None
@@ -166,6 +169,7 @@ class LlmCallLogService:
                 completion_tokens=usage["completion_tokens"],
                 total_tokens=usage["total_tokens"],
                 provider_request_id=str((response_json or {}).get("id") or ""),
+                injection_manifest=injection_manifest if isinstance(injection_manifest, dict) else None,
             )
             set_last_llm_log_id(str(log.id))
             logger.info(
@@ -217,6 +221,12 @@ class LlmCallLogService:
             "system_prompt_preview": (log.system_prompt or "")[:_PREVIEW_CHARS] or None,
             "user_prompt_preview": (log.user_prompt or "")[:_PREVIEW_CHARS] or None,
             "response_preview": (log.response_text or "")[:_PREVIEW_CHARS] or None,
+            "injection_system_chars": (
+                (log.injection_manifest or {}).get("system_chars")
+                if isinstance(log.injection_manifest, dict)
+                else None
+            ),
+            "injection_truncated": _manifest_any_truncated(log.injection_manifest),
         }
 
     @classmethod
@@ -229,6 +239,7 @@ class LlmCallLogService:
                 "response_text": log.response_text,
                 "response_body": log.response_body,
                 "provider_request_id": log.provider_request_id or None,
+                "injection_manifest": log.injection_manifest,
             }
         )
         return data
@@ -286,3 +297,18 @@ class LlmCallLogService:
         if status:
             qs = qs.filter(status=status)
         return qs.order_by("-created_at")[:limit]
+
+
+def _manifest_any_truncated(manifest: Any) -> bool | None:
+    if not isinstance(manifest, dict):
+        return None
+    layers = manifest.get("layers") or {}
+    if not isinstance(layers, dict):
+        return False
+    for stat in layers.values():
+        if isinstance(stat, dict) and stat.get("truncated"):
+            return True
+    rules = manifest.get("rules") or {}
+    if isinstance(rules, dict) and rules.get("truncated"):
+        return True
+    return False

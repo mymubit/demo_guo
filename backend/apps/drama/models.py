@@ -319,6 +319,7 @@ class DramaLlmCallLog(models.Model):
     completion_tokens = models.PositiveIntegerField("Completion Tokens", null=True, blank=True)
     total_tokens = models.PositiveIntegerField("Total Tokens", null=True, blank=True)
     provider_request_id = models.CharField("厂商 Request ID", max_length=128, blank=True, default="")
+    injection_manifest = models.JSONField("注入清单", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

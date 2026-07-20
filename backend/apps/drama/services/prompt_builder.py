@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from apps.drama.services.injection_manifest import build_injection_manifest, layer_stat
 from apps.drama.services.schema_prompt_contract import (
     extract_required_paths,
     load_artifact_fixture,
@@ -36,23 +37,32 @@ class PromptBuilder:
         input_payload: dict[str, Any] | None = None,
         latest_script: dict[str, Any] | None = None,
         scoring_mode: str = "project",
-    ) -> tuple[str, str]:
+    ) -> tuple[str, str, dict[str, Any]]:
         contract = self.loader.get_role_contract(role)
         entry = self.loader.get_role_entry(role)
         # rule_policy.max_chars：缺省 0=不截断；仅显式正数时启用预算
         rule_policy = contract.get("rule_policy") or {}
         max_chars = int(rule_policy.get("max_chars") or 0)
-        knowledge_budget = int(
-            (contract.get("knowledge_policy") or {}).get("max_chars") or 0
-        )
+        knowledge_policy = contract.get("knowledge_policy") or {}
+        knowledge_budget = int(knowledge_policy.get("max_chars") or 0)
+        module_policy = contract.get("module_policy") or {}
+        module_as_index = bool(module_policy.get("as_index"))
+
         skill_text = self.loader.load_skill(role)
-        modules_text = self.loader.load_modules_for_role(role, settings)
-        rules_text = self.loader.collect_rules(role, settings, max_chars=max_chars)
+        modules_asm = self.loader.assemble_modules_for_role(
+            role, settings, as_index=module_as_index
+        )
+        rules_asm = self.loader.assemble_rules_for_role(
+            role, settings, max_chars=max_chars
+        )
         anti_text = self.loader.load_anti_examples(role)
-        knowledge_text = self.loader.load_knowledge_for_role(
+        knowledge_asm = self.loader.assemble_knowledge_for_role(
             role, settings, max_chars=knowledge_budget
         )
         fewshot_text = self.loader.load_fewshots(role)
+        modules_text = modules_asm["text"]
+        rules_text = rules_asm["text"]
+        knowledge_text = knowledge_asm["text"]
         runtime = self.loader.project_runtime_projection(role, settings, workflow_state)
         artifact_key = self.loader.get_output_artifact_by_role(role)
         schema_version = self.loader.artifact_schema_version(artifact_key)
@@ -81,9 +91,14 @@ class PromptBuilder:
             else ""
         )
 
-        system_parts = [
+        header_lines = [
             f"你是 {entry.get('name_zh', role)}（agent_id={role}）。",
             contract.get("role", ""),
+        ]
+        header_text = "\n".join(header_lines)
+
+        system_parts = [
+            *header_lines,
             "",
             "## 职责与技能",
             skill_text,
@@ -100,16 +115,15 @@ class PromptBuilder:
             system_parts.extend(["", "## Few-shot 示例", fewshot_text])
         if anti_text:
             system_parts.extend(["", "## 输出反例（禁止复现）", anti_text])
-        system_parts.extend(
-            [
-                "",
-                "## 输出契约",
-                f"- artifact_key: {artifact_key}",
-                f"- schema_version: {schema_version}",
-                "仅输出符合 schema 的 JSON 对象，不要输出解释文字，不要包裹 markdown 代码围栏。",
-                *_output_schema_hints(artifact_key, self.loader),
-            ]
-        )
+        contract_header_parts = [
+            "",
+            "## 输出契约",
+            f"- artifact_key: {artifact_key}",
+            f"- schema_version: {schema_version}",
+            "仅输出符合 schema 的 JSON 对象，不要输出解释文字，不要包裹 markdown 代码围栏。",
+            *_output_schema_hints(artifact_key, self.loader),
+        ]
+        system_parts.extend(contract_header_parts)
         if contract_block:
             system_parts.extend(["", contract_block])
         system_prompt = "\n".join(part for part in system_parts if part is not None)
@@ -131,7 +145,61 @@ class PromptBuilder:
             user_body["scoring_mode"] = scoring_mode
 
         user_prompt = json.dumps(user_body, ensure_ascii=False, indent=2)
-        return system_prompt, user_prompt
+
+        # contract 层 = 输出契约标题块 + 可选 skeleton（不含前面各层）
+        contract_layer_text = "\n".join(
+            part for part in [*contract_header_parts, *(["", contract_block] if contract_block else [])]
+            if part is not None
+        )
+
+        layers = {
+            "header": layer_stat(len(header_text)),
+            "skill": layer_stat(len(skill_text)),
+            "modules": layer_stat(
+                len(modules_text), truncated=bool(modules_asm.get("truncated"))
+            ),
+            "rules": layer_stat(
+                len(rules_text), truncated=bool(rules_asm.get("truncated"))
+            ),
+            "knowledge": layer_stat(
+                len(knowledge_text), truncated=bool(knowledge_asm.get("truncated"))
+            ),
+            "fewshots": layer_stat(len(fewshot_text)),
+            "anti": layer_stat(len(anti_text)),
+            "scoring_inline": layer_stat(len(scoring_inline)),
+            "contract": layer_stat(len(contract_layer_text)),
+        }
+        manifest = build_injection_manifest(
+            agent_id=role,
+            bundle_version=self.loader.bundle_version,
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            layers=layers,
+            modules={
+                "included": list(modules_asm.get("included") or []),
+                "skipped": list(modules_asm.get("skipped") or []),
+            },
+            knowledge={
+                "included": list(knowledge_asm.get("included") or []),
+                "skipped": list(knowledge_asm.get("skipped") or []),
+            },
+            rules={
+                "sections_included": list(rules_asm.get("sections_included") or []),
+                "item_count": int(rules_asm.get("item_count") or 0),
+                "truncated": bool(rules_asm.get("truncated")),
+                "max_chars": int(rules_asm.get("max_chars") or 0),
+            },
+            policies={
+                "evaluate_enable_when": bool(
+                    modules_asm.get("evaluate_enable_when")
+                ),
+                "module_max_chars": int(modules_asm.get("max_chars") or 0),
+                "rule_max_chars": max_chars,
+                "knowledge_max_chars": knowledge_budget,
+                "module_as_index": module_as_index,
+            },
+        )
+        return system_prompt, user_prompt, manifest
 
 
 def _settings_subset(settings: dict[str, Any]) -> dict[str, Any]:

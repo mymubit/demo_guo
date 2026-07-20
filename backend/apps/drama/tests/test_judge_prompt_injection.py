@@ -32,7 +32,6 @@ class JudgeRuleInjectionTests(SimpleTestCase):
         text = self.loader.collect_rules(
             "drama.script-scorer",
             _SETTINGS,
-            max_chars=3600,
         )
         self.assertIn("十维权重摘要", text)
         self.assertIn("S级一票否决", text)
@@ -44,7 +43,6 @@ class JudgeRuleInjectionTests(SimpleTestCase):
         text = self.loader.collect_rules(
             "drama.compliance-guard",
             _SETTINGS,
-            max_chars=3200,
         )
         self.assertIn("九维风险评估", text)
         self.assertIn("P2 建议优化", text)
@@ -55,7 +53,7 @@ class JudgeRuleInjectionTests(SimpleTestCase):
 
     def test_script_scorer_prompt_inlines_quality_scoring_dimensions(self) -> None:
         builder = PromptBuilder(loader=self.loader)
-        system, _user = builder.build(
+        system, _user, _manifest = builder.build(
             "drama.script-scorer",
             settings=_SETTINGS,
             workflow_state={},
@@ -79,7 +77,7 @@ class JudgeRuleInjectionTests(SimpleTestCase):
 
     def test_scorer_prompt_includes_quality_report_skeleton_keys(self) -> None:
         builder = PromptBuilder(loader=self.loader)
-        system, _ = builder.build(
+        system, _, _manifest = builder.build(
             "drama.script-scorer",
             settings=_SETTINGS,
             workflow_state={},
@@ -108,18 +106,14 @@ class JudgeRuleInjectionTests(SimpleTestCase):
         self.assertIn('"evidence"', json_example)
         self.assertIn('"dimensions"', json_example)
 
-    def test_scorer_rules_fit_budget_without_truncating_core(self) -> None:
-        text = self.loader.collect_rules(
-            "drama.script-scorer", _SETTINGS, max_chars=3600
-        )
-        self.assertNotIn("...", text[-5:])  # 核心规则应完整装入；若仍截断需先提 max_chars 再测
+    def test_scorer_rules_inject_full_without_truncation_marker(self) -> None:
+        text = self.loader.collect_rules("drama.script-scorer", _SETTINGS)
+        self.assertNotIn("...", text[-5:])
         self.assertIn("十维权重摘要", text)
         self.assertIn("S级一票否决", text)
 
     def test_compliance_prompt_keeps_nine_dimension_and_phases(self) -> None:
-        text = self.loader.collect_rules(
-            "drama.compliance-guard", _SETTINGS, max_chars=3200
-        )
+        text = self.loader.collect_rules("drama.compliance-guard", _SETTINGS)
         self.assertIn("九维风险评估", text)
         self.assertIn("三阶段合规检查", text)
         self.assertIn("P2 建议优化", text)

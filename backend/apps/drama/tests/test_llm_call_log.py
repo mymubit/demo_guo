@@ -5,7 +5,10 @@ from unittest.mock import MagicMock, patch
 from django.test import TestCase
 
 from apps.drama.models import DramaLlmCallLog
-from apps.drama.services.llm_call_context import llm_call_scope
+from apps.drama.services.llm_call_context import (
+    llm_call_scope,
+    set_injection_manifest,
+)
 from apps.drama.services.llm_call_log_service import LlmCallLogService
 from apps.drama.tests.helpers import create_project, create_user
 
@@ -44,6 +47,38 @@ class LlmCallLogServiceTests(TestCase):
         self.assertEqual(summary["role_label"], "选题定调官")
         self.assertIsNone(summary.get("job_status"))
 
+    def test_record_persists_injection_manifest_from_context(self):
+        user = create_user("log-manifest")
+        project = create_project(user)
+        manifest = {
+            "version": 1,
+            "agent_id": "drama.topic-director",
+            "system_chars": 12,
+            "layers": {"skill": {"chars": 10, "truncated": False}},
+        }
+        with llm_call_scope(
+            project_id=str(project.id),
+            role="drama.topic-director",
+            purpose=DramaLlmCallLog.Purpose.ARTIFACT_GENERATION,
+            actor=user.username,
+        ):
+            set_injection_manifest(manifest)
+            log = LlmCallLogService.record(
+                system_prompt="sys",
+                user_prompt="user",
+                model_name="test-model",
+                base_url="https://example.com/v1",
+                status=DramaLlmCallLog.Status.SUCCESS,
+                latency_ms=1,
+                response_text="{}",
+            )
+        self.assertIsNotNone(log)
+        assert log is not None
+        self.assertEqual(log.injection_manifest["system_chars"], 12)
+        detail = LlmCallLogService.serialize_detail(log)
+        self.assertEqual(detail["injection_manifest"]["agent_id"], "drama.topic-director")
+        self.assertEqual(detail["injection_system_chars"], 12)
+        self.assertIs(detail["injection_truncated"], False)
     def test_record_keeps_long_raw_prompts_without_soft_truncate(self):
         """三栏原文不做 20 万软截断；完整落库便于排障。"""
         user = create_user("log-long")
