@@ -55,6 +55,12 @@ from apps.drama.services.llm_config_service import LlmConfigService
 from apps.drama.services.llm_provider import LlmProvider, LlmProviderError
 from apps.drama.services.project_settings import ProjectSettingsService
 from apps.drama.services.skill_ops_service import export_skill_failures, skill_ops_overview
+from apps.drama.services.skills_inventory_service import (
+    build_prompt_breakdown,
+    build_role_bundle_content,
+    build_skills_inventory,
+    read_skills_content,
+)
 from apps.drama.services.workflow_service import WorkflowService
 
 
@@ -631,6 +637,81 @@ class WorkbenchFormView(APIView):
 
         loader = get_skills_loader()
         return api_response(loader.export_workbench_form())
+
+
+class SkillsInventoryView(APIView):
+    """角色 ↔ 原子技能装配库存（静态字数 + 反向索引）。"""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        return api_response(build_skills_inventory())
+
+
+class RolePromptBreakdownView(APIView):
+    """角色 system prompt 分层字数（可选按项目设定 dry-run）。"""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request, agent_id: str) -> Response:
+        from apps.drama.services.skills_loader import get_skills_loader
+
+        loader = get_skills_loader()
+        try:
+            loader.get_role_entry(agent_id)
+        except KeyError as exc:
+            raise BusinessException(VALIDATION_ERROR, str(exc)) from exc
+
+        project_id = (request.query_params.get("project_id") or "").strip()
+        settings: dict = {}
+        project_uuid = None
+        if project_id:
+            project = get_object_or_404(DramaProject, id=project_id, owner=request.user)
+            settings = dict(project.settings or {})
+            project_uuid = str(project.id)
+
+        data = build_prompt_breakdown(agent_id, settings=settings, loader=loader)
+        data["project_id"] = project_uuid
+        data["settings_mode"] = "project" if project_id else "default"
+        return api_response(data)
+
+
+class SkillsContentView(APIView):
+    """技能仓正文按需读取（module / role_skill / path / role_rules）。"""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request) -> Response:
+        kind = (request.query_params.get("kind") or "").strip()
+        try:
+            data = read_skills_content(
+                kind=kind,
+                module_id=request.query_params.get("id"),
+                agent_id=request.query_params.get("agent_id"),
+                path=request.query_params.get("path"),
+            )
+        except ValueError as exc:
+            raise BusinessException(VALIDATION_ERROR, str(exc)) from exc
+        except KeyError as exc:
+            raise BusinessException(VALIDATION_ERROR, str(exc)) from exc
+        except FileNotFoundError as exc:
+            raise BusinessException(VALIDATION_ERROR, str(exc)) from exc
+        return api_response(data)
+
+
+class RoleBundleContentView(APIView):
+    """角色挂载全文（SKILL / 模块 / 知识 / 规则等）。"""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request: Request, agent_id: str) -> Response:
+        try:
+            data = build_role_bundle_content(agent_id)
+        except KeyError as exc:
+            raise BusinessException(VALIDATION_ERROR, str(exc)) from exc
+        except FileNotFoundError as exc:
+            raise BusinessException(VALIDATION_ERROR, str(exc)) from exc
+        return api_response(data)
 
 
 class AdminLlmProviderListCreateView(APIView):

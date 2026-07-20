@@ -27,6 +27,10 @@ from apps.drama.views import (
     ProjectDetailView,
     ProjectListCreateView,
     ProjectSettingsView,
+    RoleBundleContentView,
+    RolePromptBreakdownView,
+    SkillsContentView,
+    SkillsInventoryView,
     StoryBibleApprovalView,
     ThemeMatrixView,
     WorkbenchFormView,
@@ -116,6 +120,26 @@ urlpatterns = [
     ),
     path("theme-matrix/", ThemeMatrixView.as_view(), name="drama-theme-matrix"),
     path("meta/workbench-form/", WorkbenchFormView.as_view(), name="drama-workbench-form"),
+    path(
+        "meta/skills-inventory/",
+        SkillsInventoryView.as_view(),
+        name="drama-skills-inventory",
+    ),
+    path(
+        "meta/roles/<str:agent_id>/prompt-breakdown/",
+        RolePromptBreakdownView.as_view(),
+        name="drama-role-prompt-breakdown",
+    ),
+    path(
+        "meta/roles/<str:agent_id>/bundle-content/",
+        RoleBundleContentView.as_view(),
+        name="drama-role-bundle-content",
+    ),
+    path(
+        "meta/skills-content/",
+        SkillsContentView.as_view(),
+        name="drama-skills-content",
+    ),
     path("admin/config/", AdminConfigView.as_view(), name="drama-admin-config"),
     path(
         "admin/config/rollback/",
