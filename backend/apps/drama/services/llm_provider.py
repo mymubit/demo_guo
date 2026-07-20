@@ -55,12 +55,12 @@ def _llm_timeouts() -> tuple[int, int]:
 
 def _capped_max_tokens(cfg_max_tokens: int, *, purpose: str = "") -> int:
     cap = int(getattr(settings, "LLM_COMPLETION_MAX_TOKENS", 8192))
-    if purpose in {"quality_scoring", "quality_scoring_json_repair"}:
+    if purpose == "quality_scoring":
         scorer_cap = int(getattr(settings, "LLM_SCORER_MAX_TOKENS", 24576))
         cap = max(cap, scorer_cap)
     requested = int(cfg_max_tokens) if cfg_max_tokens else cap
     # 评分长文：若后台配置的 max_tokens 过小，抬到评分上限（仍受 LLM_SCORER_MAX_TOKENS 封顶）
-    if purpose in {"quality_scoring", "quality_scoring_json_repair"}:
+    if purpose == "quality_scoring":
         requested = max(requested, min(cap, int(getattr(settings, "LLM_SCORER_MAX_TOKENS", 24576))))
     return max(256, min(requested, cap))
 

@@ -49,11 +49,11 @@
 **Interfaces:**
 - Produces: workbench 字段 key=`deliverables`，`persist_path=creation_preferences.deliverables`；genres 目录仅 `matrix.yaml`
 
-- [ ] **Step 1:** 删除 `fallback.yaml`；改 `validate_skills.py` 断言 `genre_files == {"matrix.yaml"}`
-- [ ] **Step 2:** `workbench.yaml` 全量替换 `delivery_items` 字段名为 `deliverables`，persist/projection 对齐
-- [ ] **Step 3:** 清 `dual-lead`；更新 knowledge/README
-- [ ] **Step 4:** 运行 `python drama-skills/build/validate_skills.py` → 期望通过
-- [ ] **Step 5:** Commit: `chore(skills): hard-cut deliverables and remove genre fallback`
+- [x] **Step 1:** 删除 `fallback.yaml`；改 `validate_skills.py` 断言 `genre_files == {"matrix.yaml"}`
+- [x] **Step 2:** `workbench.yaml` 全量替换 `delivery_items` 字段名为 `deliverables`，persist/projection 对齐
+- [x] **Step 3:** 清 `dual-lead`；更新 knowledge/README
+- [x] **Step 4:** 运行 `python drama-skills/build/validate_skills.py` → 期望通过
+- [x] **Step 5:** Commit: `chore(skills): hard-cut deliverables and remove genre fallback`
 
 ---
 
@@ -73,11 +73,11 @@
 - `module_enable_context`：`"deliverables": prefs.get("deliverables") or []`
 - theme 解析失败抛 `BusinessException` 或明确 `ValueError`
 
-- [ ] **Step 1:** 改写/新增失败测试：散文夹 JSON 失败；仅有 `delivery_items` 时 condition 为假；无 matrix/preset 时 loader 报错；删除/改写 `test_build_json_repair_*` 与单引号测试
-- [ ] **Step 2:** 跑相关测试确认 RED
-- [ ] **Step 3:** 实现最小 JSON / condition / theme / prompt / generation 改动
-- [ ] **Step 4:** 跑测试 GREEN
-- [ ] **Step 5:** Commit: `refactor(runtime): strip json repair and dual-key condition fallbacks`
+- [x] **Step 1:** 改写/新增失败测试：散文夹 JSON 失败；仅有 `delivery_items` 时 condition 为假；无 matrix/preset 时 loader 报错；删除/改写 `test_build_json_repair_*` 与单引号测试
+- [x] **Step 2:** 跑相关测试确认 RED
+- [x] **Step 3:** 实现最小 JSON / condition / theme / prompt / generation 改动
+- [x] **Step 4:** 跑测试 GREEN
+- [x] **Step 5:** Commit: `refactor(runtime): strip json repair and dual-key condition fallbacks`
 
 ---
 
@@ -91,11 +91,11 @@
 **Interfaces:**
 - `normalize_artifact(key, raw, settings) -> dict`：不重命名 LLM 键；非法形状原样交给 schema（或仅做 settings 字段注入）
 
-- [ ] **Step 1:** 将 `test_llm_loose_aliases_*`、`test_opening_hook_aliases`、`test_compliance_report_aliases` 改为断言「别名键不会被改写成正式键」或删除并由 ingest/schema 失败用例替代
-- [ ] **Step 2:** RED
-- [ ] **Step 3:** 删除 `_ROLE_TYPE_ALIASES`、hook 别名、对象→string 改写、str(dict) 历史还原、十分制缩放、待补充占位等；更新模块 docstring
-- [ ] **Step 4:** GREEN（含 `test_artifact_ingest` / generation 相关）
-- [ ] **Step 5:** Commit: `refactor(normalize): remove LLM alias and shape compatibility layer`
+- [x] **Step 1:** 将 `test_llm_loose_aliases_*`、`test_opening_hook_aliases`、`test_compliance_report_aliases` 改为断言「别名键不会被改写成正式键」或删除并由 ingest/schema 失败用例替代
+- [x] **Step 2:** RED
+- [x] **Step 3:** 删除 `_ROLE_TYPE_ALIASES`、hook 别名、对象→string 改写、str(dict) 历史还原、十分制缩放、待补充占位等；更新模块 docstring
+- [x] **Step 4:** GREEN（含 `test_artifact_ingest` / generation 相关）
+- [x] **Step 5:** Commit: `refactor(normalize): remove LLM alias and shape compatibility layer`
 
 ---
 
@@ -112,11 +112,11 @@
 - Modify: fixtures/tests：`workbenchFixtures.ts`、`workbenchDefinition.test.ts`、`conditions.test.ts`、`settingsForm.test.ts`、`pipeline.test.ts`
 - Modify: skills_loader 选项 `id or code` 双读（若仍存在）收紧
 
-- [ ] **Step 1:** 后端/前端测试改为只认新字段；断言旧字段不被读取
-- [ ] **Step 2:** RED
-- [ ] **Step 3:** 实现表面清理
-- [ ] **Step 4:** `pytest` 相关 + `cd frontend && npx vitest run` 相关 → GREEN
-- [ ] **Step 5:** Commit: `refactor: remove API and UI backward-compat shims`
+- [x] **Step 1:** 后端/前端测试改为只认新字段；断言旧字段不被读取
+- [x] **Step 2:** RED
+- [x] **Step 3:** 实现表面清理
+- [x] **Step 4:** `pytest` 相关 + `cd frontend && npx vitest run` 相关 → GREEN
+- [x] **Step 5:** Commit: `refactor: remove API and UI backward-compat shims`
 
 ---
 
@@ -124,11 +124,11 @@
 
 **Files:** 全仓 grep 确认无残留运行时双读
 
-- [ ] **Step 1:** Grep：`delivery_items`、`fallback.yaml`、`json_repair`、`extract_json_object`、`or request.data.get("filename")`、`bundle_version \|\|`、`open_hook` 映射等
-- [ ] **Step 2:** `python drama-skills/build/validate_skills.py`
-- [ ] **Step 3:** `cd backend && python -m pytest apps/drama/tests/ -q --tb=line`（或项目惯用命令）
-- [ ] **Step 4:** `cd frontend && npx vitest run` 相关失败则修
-- [ ] **Step 5:** Commit 若有扫尾：`test: lock zero-compat hard-cut regressions`
+- [x] **Step 1:** Grep：`delivery_items`、`fallback.yaml`、`json_repair`、`extract_json_object`、`or request.data.get("filename")`、`bundle_version \|\|`、`open_hook` 映射等
+- [x] **Step 2:** `python drama-skills/build/validate_skills.py`
+- [x] **Step 3:** `cd backend && python -m pytest apps/drama/tests/ -q --tb=line`（或项目惯用命令）
+- [x] **Step 4:** `cd frontend && npx vitest run` 相关失败则修
+- [x] **Step 5:** Commit 若有扫尾：`test: lock zero-compat hard-cut regressions`
 
 ---
 
