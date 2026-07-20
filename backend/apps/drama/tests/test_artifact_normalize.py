@@ -557,12 +557,10 @@ class QualityReportNormalizeTests(SimpleTestCase):
         }
         out = normalize_quality_report(raw, {})
         self.assertEqual(out["dimensions"]["hooks"]["score"], 80.0)
-        self.assertFalse(
-            __import__(
-                "apps.drama.services.artifact_normalize",
-                fromlist=["quality_report_evidence_too_sparse"],
-            ).quality_report_evidence_too_sparse(out)
-        )
+        # 短证据在新篇幅门禁下视为 sparse；本用例只验证十分制缩放
+        from apps.drama.services.artifact_normalize import quality_report_evidence_too_sparse
+
+        self.assertTrue(quality_report_evidence_too_sparse(out))
 
     def test_compliance_blocking_gets_title(self) -> None:
         from apps.drama.services.artifact_normalize import normalize_compliance_report
@@ -599,3 +597,102 @@ class QualityReportNormalizeTests(SimpleTestCase):
         self.validator.validate_file(
             out, "schemas/artifacts/compliance_report/1.schema.json"
         )
+
+    def test_chinese_dimension_array_keeps_string_evidence_and_deduction_reason(self) -> None:
+        from apps.drama.services.artifact_normalize import (
+            normalize_quality_report,
+            quality_report_evidence_too_sparse,
+        )
+
+        def long_ev(seed: str) -> str:
+            base = (
+                f"第1集场景「{seed}」：开场台词与动作形成明确冲突；"
+                "第3集茶席对峙推进人物关系；第8集婚礼排场兑现打脸；"
+                "第12集瘴气危机暴露能力代价；第20集旧伤伏笔回收；"
+                "第28集树王灵根揭示主线赌注；第35集舍身相救完成情感兑现。"
+            )
+            text = base * 12
+            return text if len(text) >= 900 else (text + ("补充论据。" * 80))
+
+        dims = []
+        for name in (
+            "格式规范",
+            "叙事效率",
+            "冲突处理",
+            "角色一致性",
+            "情感深度",
+            "逻辑一致性",
+            "爽点密度",
+            "钩子强度",
+            "付费点优化",
+            "赛道匹配",
+        ):
+            dims.append(
+                {
+                    "name": name,
+                    "score": 8,
+                    "evidence": long_ev(name),
+                    "deduction_reason": f"{name}仍有可压缩的重复桥段，建议合并同类冲突。",
+                }
+            )
+        raw = {
+            "drama_title": "发配边关，罪妻开荒养出战神",
+            "overall_score": 78,
+            "grade": "B",
+            "pass_threshold": 60,
+            "verdict": "剧本质量良好，达到B级标准，可继续推进后续制作，建议优化部分情节重复和标题匹配问题。"
+            + ("总评补充论证。" * 280),
+            "continuity_summary": (
+                "整体连续性好，伏笔（陆野旧伤、树王灵根）回扣到位，人物关系与能力设定前后一致，无重大矛盾。"
+                "能力升级与代价交代连贯，集末钩子与下集承接无明显断裂。"
+                * 5
+            ),
+            "dimensions": dims,
+            "defects": [],
+            "revision_priorities": [],
+        }
+        out = normalize_quality_report(raw, {})
+        self.assertFalse(quality_report_evidence_too_sparse(out))
+        self.assertEqual(out["dimensions"]["format"]["score"], 80.0)
+        self.assertGreaterEqual(len(out["dimensions"]["format"]["evidence"][0]), 800)
+        self.assertIn("格式规范", out["dimensions"]["format"]["deductions"][0])
+        self.assertEqual(out["verdict"], "条件通过")
+        self.assertGreaterEqual(len(out.get("verdict_detail") or ""), 1500)
+        self.assertGreaterEqual(len(out["continuity_summary"].get("summary") or ""), 300)
+        self.validator.validate_file(out, "schemas/artifacts/quality_report/1.schema.json")
+
+    def test_short_dimension_analysis_is_sparse(self) -> None:
+        from apps.drama.services.artifact_normalize import (
+            normalize_quality_report,
+            quality_report_evidence_too_sparse,
+        )
+
+        dims = {
+            k: {
+                "score": 80,
+                "evidence": [f"第1集{k}有明确场景与台词支撑示例，但篇幅仍偏短"],
+                "deductions": [],
+            }
+            for k in (
+                "format",
+                "narrative",
+                "conflict",
+                "character",
+                "emotion",
+                "logic",
+                "satisfaction",
+                "hooks",
+                "paywall",
+                "genre_fit",
+            )
+        }
+        out = normalize_quality_report(
+            {
+                "drama_title": "t",
+                "overall_score": 80,
+                "verdict_detail": "短",
+                "dimensions": dims,
+            },
+            {},
+        )
+        self.assertTrue(quality_report_evidence_too_sparse(out))

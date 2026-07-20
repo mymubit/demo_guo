@@ -90,7 +90,11 @@ class ProjectSettingsService:
         if episode_count is not None:
             settings["episode_count"] = episode_count
         if entry_type == "original_track":
-            settings["core_idea"] = core_idea if core_idea is not None else title
+            # 允许仅题材矩阵入场：空字符串表示未填创意（与 topic-director any_of 对齐）
+            if core_idea is not None:
+                settings["core_idea"] = core_idea
+            else:
+                settings["core_idea"] = title
         elif core_idea:
             settings["core_idea"] = core_idea
         if external_story is not None:

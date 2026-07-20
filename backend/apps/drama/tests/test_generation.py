@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from apps.core.exceptions import IDEMPOTENCY_CONFLICT, WORKFLOW_GATE_BLOCKED
 from apps.drama.models import DramaArtifactVersion, DramaGenerationJob
@@ -19,13 +19,7 @@ from apps.drama.services.prompt_builder import PromptBuilder
 from apps.drama.services.quality_gate import quality_gate_passed
 from apps.drama.services.skills_loader import SkillsBundleLoader
 from apps.drama.services.workflow_service import WorkflowService
-from apps.drama.tests.helpers import SKILLS_ROOT, create_project, create_user
-
-FIXTURES = json.loads(
-    Path("/workspace/build/fixtures/artifacts/valid-artifacts.json").read_text(
-        encoding="utf-8"
-    )
-)
+from apps.drama.tests.helpers import FIXTURES, SKILLS_ROOT, create_project, create_user
 
 
 def _mock_llm_response(payload: dict) -> dict:
@@ -96,14 +90,33 @@ class PromptBuilderTests(TestCase):
         self.assertIn("drama.topic-director", system)
         self.assertNotIn("drama.story-bible", system)
         self.assertIn("runtime_projection", user_prompt)
+        self.assertIn("输出反例", system)
         self.assertLessEqual(
             len(builder.loader.collect_rules("drama.topic-director", project.settings)),
-            3203,
+            2703,
         )
+
+    def test_story_bible_skips_adapt_module_on_original_track(self):
+        user = create_user()
+        project = create_project(user)
+        builder = PromptBuilder()
+        modules = builder.loader.load_modules_for_role(
+            "drama.story-bible", project.settings
+        )
+        self.assertNotIn("adaptation-originality", modules)
+        adapt_settings = {
+            **project.settings,
+            "entry_type": "story_adapt",
+            "external_story": "古早小说大纲……",
+        }
+        modules_adapt = builder.loader.load_modules_for_role(
+            "drama.story-bible", adapt_settings
+        )
+        self.assertIn("adaptation-originality", modules_adapt)
 
 
 @override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
-class JsonParseTests(TestCase):
+class JsonParseTests(SimpleTestCase):
     def test_strip_markdown_fence(self):
         raw = '```json\n{"a": 1}\n```'
         self.assertEqual(strip_markdown_fence(raw), '{"a": 1}')
@@ -111,6 +124,34 @@ class JsonParseTests(TestCase):
     def test_parse_llm_json_rejects_array(self):
         with self.assertRaises(JsonParseError):
             parse_llm_json("[1,2]")
+
+    def test_parse_llm_json_extracts_from_prose(self):
+        raw = '下面是结果：\n{"title": "玉碎宫门", "ok": true}\n谢谢。'
+        self.assertEqual(parse_llm_json(raw)["title"], "玉碎宫门")
+
+    def test_parse_llm_json_repairs_trailing_comma(self):
+        raw = '{"a": 1, "b": [2, 3,],}'
+        self.assertEqual(parse_llm_json(raw), {"a": 1, "b": [2, 3]})
+
+    def test_parse_llm_json_repairs_simple_single_quotes(self):
+        raw = "{'title': '玉碎宫门', 'ok': true}"
+        self.assertEqual(parse_llm_json(raw)["title"], "玉碎宫门")
+
+    def test_parse_llm_json_skips_prefix_braces(self):
+        raw = '先看 {草稿}：\n```json\n{"score": 88}\n```'
+        self.assertEqual(parse_llm_json(raw)["score"], 88)
+
+    def test_build_json_repair_user_prompt_includes_error(self):
+        from apps.drama.services.json_parse import build_json_repair_user_prompt
+
+        prompt = build_json_repair_user_prompt(
+            raw_content='{"a":1',
+            error_message="Expecting ',' delimiter",
+            required_fields=["title", "logline"],
+        )
+        self.assertIn("Expecting ',' delimiter", prompt)
+        self.assertIn("title, logline", prompt)
+        self.assertIn('{"a":1', prompt)
 
 
 @override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
@@ -270,6 +311,44 @@ class GenerationServiceTests(TestCase):
                 project=self.project, artifact_key="project_brief"
             ).exists()
         )
+
+    @patch("apps.drama.services.generation_service.LlmProvider.chat_completion")
+    def test_execute_generation_repairs_invalid_json_once(self, mock_llm):
+        mock_llm.side_effect = [
+            {
+                "choices": [
+                    {
+                        "message": {
+                            "content": "这是说明文字\n{not json",
+                        }
+                    }
+                ]
+            },
+            _mock_llm_response(FIXTURES["project_brief"]),
+        ]
+        job = DramaGenerationJob.objects.create(
+            project=self.project,
+            job_type=DramaGenerationJob.JobType.GENERATION,
+            status=DramaGenerationJob.Status.QUEUED,
+            command_id="gen-repair",
+            role="drama.topic-director",
+            artifact_key="project_brief",
+            workflow_version=0,
+            request_payload={
+                "command_id": "gen-repair",
+                "expected_version": 0,
+                "role": "drama.topic-director",
+                "input": {},
+                "actor": self.user.username,
+            },
+        )
+        with override_settings(LLM_ENABLED=True, LLM_API_BASE_URL="http://test", LLM_API_KEY="k"):
+            self.svc.execute_generation(str(job.id))
+        job.refresh_from_db()
+        self.assertEqual(job.status, DramaGenerationJob.Status.COMPLETED)
+        self.assertEqual(mock_llm.call_count, 2)
+        repair_kwargs = mock_llm.call_args_list[1].kwargs
+        self.assertIn("无法解析", repair_kwargs.get("user_prompt", ""))
 
     @patch("apps.drama.services.generation_service.LlmProvider.chat_completion")
     def test_writing_triggers_quality_and_gate(self, mock_llm):

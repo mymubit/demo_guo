@@ -46,7 +46,7 @@ export function testWorkbenchFormApi(
           fields: ['entry_type', 'core_idea', 'external_story', 'adapt_notes'],
         },
         theme: {
-          label_zh: '题材与受众',
+          label_zh: '题材与平台',
           fields: ['genre_matrix', 'flavor_tags', 'preset_theme_code', 'target_platform'],
         },
         delivery: {

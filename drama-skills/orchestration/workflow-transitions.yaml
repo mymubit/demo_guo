@@ -25,7 +25,11 @@ transitions:
   - {from: writing, event: all_batches_completed, to: delivery, guard: all_batches_quality_passed}
   - {from: delivery, event: delivery_skipped, to: completed, status: completed}
   - {from: delivery, event: production_package_completed, to: completed, status: completed}
-  - {from: "*", event: story_bible_changed, to: blueprint_approval, status: waiting_approval, action: invalidate_downstream}
+  # 已有蓝图时：题材/受众等输入变更 → 需重新审批（下游失效）
+  - {from: "*", event: story_bible_changed, to: blueprint_approval, status: waiting_approval, action: invalidate_downstream, guard: has_story_bible}
+  # 尚无蓝图时：不可进入「待审批」（否则无产物可审、也无法执行）
+  - {from: "*", event: story_bible_changed, to: strategy, status: active, action: invalidate_downstream, guard: is_original_track}
+  - {from: "*", event: story_bible_changed, to: blueprint, status: active, action: invalidate_downstream}
 
 # 运行时自动事件：由后端在指定条件下自动发出，不由用户/Agent 触发
 auto_events:

@@ -7,6 +7,7 @@ export type GenerationTroubleKind =
   | 'llm_network'
   | 'llm_openai_overseas'
   | 'llm_http'
+  | 'schema_validation'
   | 'workflow_gate'
   | 'generic'
 
@@ -27,13 +28,17 @@ export type GenerationTrouble = {
  */
 export function diagnoseGenerationFailure(
   rawMessage: string | null | undefined,
-  opts?: { status?: string | null },
+  opts?: { status?: string | null; context?: 'workbench' | 'external_review' },
 ): GenerationTrouble | null {
   const raw = (rawMessage ?? '').trim()
   if (!raw && opts?.status !== 'failed' && opts?.status !== 'disabled') return null
 
   const text = raw || '任务未成功完成'
   const lower = text.toLowerCase()
+  const isExternal = opts?.context === 'external_review'
+  const retryHint = isExternal
+    ? '回到「外部评测」重新上传/粘贴后再次开始评测'
+    : '刷新任务状态后，在工作台重新执行本阶段'
 
   if (
     /llm\s*已禁用|llm_enabled\s*=?\s*false|llm\s*不可用\s*\(?\s*disabled/i.test(text) ||
@@ -46,7 +51,9 @@ export function diagnoseGenerationFailure(
       steps: [
         '打开「模型管理」，选用国内厂商预设（DeepSeek / 通义 / 智谱等）',
         '填写有效 API Key，保存并设为「当前使用」',
-        '可用「探测」确认连通后，回到工作台重新执行本阶段',
+        isExternal
+          ? '可用「探测」确认连通后，重新发起外部评测'
+          : '可用「探测」确认连通后，回到工作台重新执行本阶段',
       ],
       showModelHubLink: true,
       raw: text,
@@ -61,7 +68,7 @@ export function diagnoseGenerationFailure(
       steps: [
         '进入「模型管理」补全 Base URL 与 API Key',
         '确认配置已启用且标记为「当前」',
-        '保存后回到工作台重试执行',
+        isExternal ? '保存后重新发起外部评测' : '保存后回到工作台重试执行',
       ],
       showModelHubLink: true,
       raw: text,
@@ -109,14 +116,15 @@ export function diagnoseGenerationFailure(
     }
   }
 
-  if (/timeout|timed?\s*out|read timed out|connect timed out/i.test(lower)) {
+  if (/timeout|timed?\s*out|read timed out|connect timed out|等待任务进度超时/i.test(lower)) {
     return {
       kind: 'llm_timeout',
       title: '模型请求超时',
-      summary: '连接或读取超时，常见于网络不稳或海外接口不可达。',
+      summary: '生成时间过长或等待窗口不足（剧本蓝图等长 JSON 较常见）。',
       steps: [
-        '若当前指向 api.openai.com，请改用国内厂商接口',
-        '检查本机/服务器出口网络后重试',
+        '重启后端/Celery 后再点「执行本阶段」重试（需加载最新超时与流式调用）',
+        '在「模型管理」把 Max Tokens 调到 4096～8192，避免一次吐太长',
+        '若环境变量仍写着旧值，将 LLM_READ_TIMEOUT 与 GENERATION_SSE_MAX_WAIT_SECONDS 提到 600+',
       ],
       showModelHubLink: true,
       raw: text,
@@ -172,14 +180,71 @@ export function diagnoseGenerationFailure(
     }
   }
 
+  if (/不是合法\s*json|jsondecodeerror|expecting property name|unexpected token|json\.loads/i.test(text)) {
+    return {
+      kind: 'schema_validation',
+      title: '模型返回了无法解析的 JSON',
+      summary:
+        '大模型有回复，但内容不是合法 JSON（常见：尾逗号、单引号、字段名未加双引号）。产物未落库，所以侧栏仍显示「进行中」。',
+      steps: [
+        '直接再点一次「执行本阶段」（系统会做一次自动纠错重试）',
+        '到「查看调用链」打开最近一次回复，确认是否被截断或夹杂说明文字',
+        '若反复失败，可在「模型管理」换一个更稳的国内模型后再试',
+      ],
+      showModelHubLink: true,
+      raw: text,
+    }
+  }
+
+  if (/schema|校验失败|required property|不合规|未落库|is not of type/i.test(text)) {
+    return {
+      kind: 'schema_validation',
+      title: '模型已返回，但产物结构不合规',
+      summary: isExternal
+        ? '模型调用其实已成功；只是当时结构校验失败没落库。可直接「用已有结果重新解析」，不必再跑一遍模型。'
+        : '调用日志里的「成功」只表示大模型调用成功；落库前的 Schema 校验未通过，所以工作台没有产物。',
+      steps: isExternal
+        ? [
+            '点击下方「用已有结果重新解析」落库（不重新调用模型）',
+            '若提示缺少日志，再到「调用链」核对评分/合规两次成功回复',
+            '仅当日志缺失或正文被截断时，才需要重新评测',
+          ]
+        : [
+            '直接重试「执行本阶段」（系统会尽量自动补齐常见缺字段，如开场钩子 opening_hook）',
+            '若仍失败，到「调用日志」查看模型原文，对照缺的字段（如 synopsis.short、opening_hook）',
+            '确认当前模型稳定输出 JSON 后再执行',
+          ],
+      showModelHubLink: false,
+      raw: text,
+    }
+  }
+
+  if (/评分.?子任务失败|合规.?子任务失败|并行评审/i.test(text)) {
+    return {
+      kind: 'generic',
+      title: '外部评测子任务失败',
+      summary: text.length > 160 ? `${text.slice(0, 160)}…` : text,
+      steps: isExternal
+        ? [
+            '若调用日志里评分/合规已成功，点击「用已有结果重新解析」即可落库',
+            '到「调用链」确认两次调用是否都有成功回复',
+            '仅当日志缺失时，才需要重新发起评测',
+          ]
+        : [
+            '到「调用日志」按任务 ID 查看评分/合规两次调用的返回',
+            '确认模型管理中当前模型可用后重试',
+            retryHint,
+          ],
+      showModelHubLink: !isExternal,
+      raw: text,
+    }
+  }
+
   return {
     kind: 'generic',
     title: opts?.status === 'disabled' ? '任务未执行' : '生成失败',
     summary: text.length > 120 ? `${text.slice(0, 120)}…` : text,
-    steps: [
-      '可先到「模型管理」确认当前模型可用',
-      '刷新任务状态后，在工作台重新执行本阶段',
-    ],
+    steps: ['可先到「模型管理」确认当前模型可用', retryHint],
     showModelHubLink: /llm|model|api key|openai/i.test(text),
     raw: text,
   }

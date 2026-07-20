@@ -1,0 +1,17 @@
+version: "1.0.0"
+artifact_key: quality_report
+checks:
+  - id: has_score
+    type: field_nonempty
+    path: overall_score
+  - id: has_verdict
+    type: field_nonempty
+    path: verdict
+  - id: has_dimensions
+    type: object_keys
+    path: dimensions
+    keys: [format, narrative, conflict]
+  - id: continuity_result
+    type: enum
+    path: continuity_summary.result
+    values: [pass, fail, warn, 通过, 风险, 不通过]

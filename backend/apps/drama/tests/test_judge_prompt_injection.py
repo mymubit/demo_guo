@@ -73,6 +73,9 @@ class JudgeRuleInjectionTests(SimpleTestCase):
         self.assertIn("scoring_preset=standard", system)
         self.assertIn("evidence", system)
         self.assertIn("deductions", system)
+        self.assertIn("篇幅硬要求", system)
+        self.assertIn("1000", system)
+        self.assertIn("verdict_detail", system)
 
     def test_scorer_prompt_includes_quality_report_skeleton_keys(self) -> None:
         builder = PromptBuilder(loader=self.loader)

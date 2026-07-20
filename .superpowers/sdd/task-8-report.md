@@ -52,5 +52,5 @@ Tests  3 passed (3)
 
 **Commit**
 ```
-fix(pages): strip Task8 WIP; keep create-domain visual restyle only
+0bea66b fix(pages): strip Task8 WIP; keep create-domain visual restyle only
 ```

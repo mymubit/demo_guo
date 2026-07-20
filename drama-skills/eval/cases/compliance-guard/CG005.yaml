@@ -1,0 +1,30 @@
+id: CG005
+role: drama.compliance-guard
+settings:
+  entry_type: original_track
+  title: 合规样例5
+  target_platform: generic
+upstream_artifacts: {}
+fixture_response:
+  drama_title: 合规样例5
+  check_mode: standard
+  target_platform: generic
+  platform_policy_version: null
+  platform_policy_verified_at: null
+  checked_artifact: latest_script
+  resolved_script_key: episode_scripts
+  overall_result: 风险
+  blocking_issues:
+  - code: P1
+    detail: 样例风险
+  risk_items: []
+assertions:
+  schema: true
+  required_fields:
+  - overall_result
+  - check_mode
+  rubric:
+  - has_result
+  - result_enum
+  - has_mode
+  - blocking_is_list

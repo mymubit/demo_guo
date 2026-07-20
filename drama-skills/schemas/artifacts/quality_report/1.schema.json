@@ -136,6 +136,9 @@
             "fail"
           ]
         },
+        "summary": {
+          "type": "string"
+        },
         "issues": {
           "type": "array",
           "items": {
@@ -164,6 +167,10 @@
         "需要修改",
         "重大返工"
       ]
+    },
+    "verdict_detail": {
+      "type": "string",
+      "description": "模型给出的长段总评原文；verdict 仍为枚举结论"
     }
   },
   "additionalProperties": false

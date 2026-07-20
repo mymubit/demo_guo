@@ -6,10 +6,14 @@ description: 从零选题的标准通道：4 个生产角色主链，每批正�
 project_settings_schema: schemas/project-settings.v1.schema.json
 
 entry_requirements:
+  # 与 drama.topic-director.required_params_any_of 对齐：创意 / 梗概 / 题材矩阵至少其一
   required_settings:
-    - core_idea
     - episode_count
     - target_platform
+  required_settings_any_of:
+    - core_idea
+    - synopsis
+    - genre_matrix
 
 phases:
   - phase: strategy

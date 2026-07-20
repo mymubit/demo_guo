@@ -85,7 +85,7 @@ export function LoadingBlock({ label = '加载中…' }: { label?: string }) {
       aria-busy="true"
     >
       <span
-        className="h-4 w-4 animate-spin rounded-full border-2 border-brand-500 border-r-transparent"
+        className="h-4 w-4 animate-spin rounded-full border-2 border-action border-r-transparent"
         aria-hidden="true"
       />
       {label}

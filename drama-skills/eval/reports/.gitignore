@@ -1,0 +1,3 @@
+reports/*
+!reports/summary.json
+!reports/.gitkeep

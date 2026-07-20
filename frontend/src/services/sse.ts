@@ -89,6 +89,7 @@ export function subscribeJobEvents(
           if (
             parsed.type === 'done' ||
             parsed.type === 'error' ||
+            parsed.type === 'timeout' ||
             parsed.done ||
             parsed.status === 'completed' ||
             parsed.status === 'failed' ||

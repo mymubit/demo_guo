@@ -20,7 +20,7 @@ rule_policy:
   - global_core
   - genre_profile
   - stage_playbook
-  max_chars: 4200
+  max_chars: 2400
 skill_dir: roles/drama-story-bible
 # 双模式：原创模式吃 project_brief；改编模式吃 external_story，
 # 两种模式输出同一 story_bible schema v1，下游角色无差别消费。

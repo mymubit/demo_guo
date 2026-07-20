@@ -1,0 +1,76 @@
+id: SB008
+role: drama.story-bible
+settings:
+  entry_type: story_adapt
+  title: 蓝图样例8
+  episode_count: 30
+  audience_channel: female
+  genre_matrix:
+    emotion: revenge
+    identity: reborn
+    conflict: family
+    world: modern
+  external_story: 用户粘贴的古早故事……
+upstream_artifacts: {}
+fixture_response:
+  drama_title: 蓝图样例8
+  logline: 样例8的一句话故事
+  synopsis:
+    short: 短梗概
+    full: 完整梗概
+  adapt_source:
+    mode: original
+    retained: []
+    enhanced: []
+    rewritten: []
+    originality_check: 原创
+  world_rules:
+    setting_summary: 现代家族企业
+    root_rules:
+    - 股权决定话语权
+    power_structure: 董事会控制资源
+  characters:
+  - name: 林夏
+    role_type: protagonist
+    surface_desire: 夺回股权
+    deep_need: 建立自我价值
+    ghost: 被家族抛弃
+    lie: 只有被认可才有价值
+    flaw: 过度证明
+    arc:
+      start: 依赖认可
+      turning_point_1: 独立决策
+      turning_point_2: 放弃讨好
+      end: 自我确认
+    audience_identification: 职场与家庭边界
+    voice_tag: 短句直接
+    visual_anchor: 旧怀表
+  relationship_map: []
+  series_structure:
+    main_storyline: 夺回人生
+    six_stage_structure:
+    - {}
+    - {}
+    - {}
+    - {}
+    - {}
+    - {}
+    conflict_escalation_chain: []
+    major_reversal_positions: []
+    paywall_distribution: []
+    foreshadowing_table: []
+    series_emotion_curve: []
+assertions:
+  schema: true
+  required_fields:
+  - drama_title
+  - logline
+  - synopsis
+  - characters
+  - series_structure
+  rubric:
+  - synopsis_object
+  - has_logline
+  - has_title
+  - six_stages
+  - has_characters

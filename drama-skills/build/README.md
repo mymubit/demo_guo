@@ -13,6 +13,8 @@
 | `validate_config.py` | 配置覆盖、条件表达式、派生与投影校验 |
 | `validate_workflow.py` | 流程状态机、并发、幂等与 latest_script 校验 |
 | `validate_quality_cases.py` | 质量、合规、连续性、制片和趋势回归 |
+| `eval_role_llm.py` | 角色 LLM 离线评测（`eval/cases` + rubrics） |
+| `optimize_role_dspy.py` | 可选：DSPy 打样优化（不进生产依赖） |
 | `generate_parameter_schemas.py` | 从 `contracts/parameters.yaml` 生成参数 JSON Schema 与 project-settings 外壳 |
 | `export_workbench_schema.py` | 导出前端可消费的工作台表单 JSON（只读参数契约） |
 
@@ -27,5 +29,6 @@ python build/validate_artifacts.py
 python build/validate_config.py
 python build/validate_workflow.py
 python build/validate_quality_cases.py
+python build/eval_role_llm.py --roles topic-director,story-bible --offline
 python -m unittest discover -s build/tests -p "test_*.py" -v
 ```

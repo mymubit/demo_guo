@@ -1,0 +1,17 @@
+version: "1.0.0"
+artifact_key: compliance_report
+checks:
+  - id: has_result
+    type: field_nonempty
+    path: overall_result
+  - id: result_enum
+    type: enum
+    path: overall_result
+    values: [通过, 风险, 不通过]
+  - id: has_mode
+    type: field_nonempty
+    path: check_mode
+  - id: blocking_is_list
+    type: list_min
+    path: blocking_issues
+    min: 0

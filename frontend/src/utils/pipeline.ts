@@ -61,10 +61,20 @@ export function resolveStageStatus(
   const target = stagePhase(stage)
   if (!target) return 'pending'
 
-  const current = workflow.current_phase
+  // 误入待审批但无蓝图：按入口阶段展示，避免整条流水线假锁死
+  let current = workflow.current_phase
+  if (
+    workflow.status === 'waiting_approval' &&
+    !workflow.artifacts?.story_bible &&
+    current === 'blueprint_approval'
+  ) {
+    current = workflow.entry_type === 'story_adapt' ? 'blueprint' : 'strategy'
+  }
 
   if (target === 'blueprint' && (current === 'blueprint' || current === 'blueprint_approval')) {
-    if (workflow.status === 'waiting_approval') return 'waiting'
+    if (workflow.status === 'waiting_approval' && workflow.artifacts?.story_bible) {
+      return 'waiting'
+    }
     return 'active'
   }
 
@@ -116,7 +126,11 @@ export function explainExecuteGate(
   }
   if (workflow.status === 'completed') return '项目已完成，无需再执行本阶段。'
   if (workflow.status === 'waiting_approval') {
-    return '故事蓝图待审批：请先在蓝图阶段通过或驳回后再继续。'
+    const hasBible = Boolean(workflow.artifacts?.story_bible)
+    if (hasBible) {
+      return '故事蓝图待审批：请先在蓝图阶段通过或驳回后再继续。'
+    }
+    // 异常卡住：待审批但无蓝图产物 —— 不拦截执行，落到下方阶段状态判断
   }
   if (workflow.status === 'waiting_user') {
     return '质检环等待你的决策：请先在质量面板选择修订或放行。'

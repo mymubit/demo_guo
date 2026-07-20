@@ -207,10 +207,16 @@ def _output_schema_hints(artifact_key: str, loader: SkillsBundleLoader) -> list[
                 "- dimensions 必须是对象，键为 format/narrative/conflict/character/"
                 "emotion/logic/satisfaction/hooks/paywall/genre_fit。",
                 "- 每个维度必须含 score、weight、evidence、deductions；"
-                "evidence 必须为非空字符串数组，每条不少于 8 字，须引用具体集数/场景/台词；"
+                "evidence 必须为非空字符串数组，须引用具体集数/场景/台词；"
                 "禁止空数组、禁止只输出分数。",
-                "- deductions 可为空数组；先写 evidence，再打 0-100 分。",
-                "- needs_revision=false 时 verdict 不得为「重大返工」。",
+                "- 【篇幅硬要求】每个维度分析正文（evidence 各条拼接，可计入 deductions）"
+                "约 1000 字、不得少于 800 字；写清优点/问题/证据，禁止一句话糊弄。",
+                "- 【篇幅硬要求】另写 verdict_detail 总评约 2000 字、不得少于 1500 字；"
+                "覆盖整体强弱、关键缺陷、返修优先级与可否进下一批的理由。"
+                "continuity_summary.summary 建议不少于 300 字。",
+                "- deductions 写扣分与代价；先写 evidence，再打 0-100 分。",
+                "- needs_revision=false 时 verdict 不得为「重大返工」。"
+                "verdict 仍用枚举（通过/条件通过/需要修改/重大返工），长文放 verdict_detail。",
             ]
         )
     if artifact_key == "compliance_report":
@@ -253,6 +259,20 @@ def _inline_quality_scoring(
         f"- grade_thresholds={json.dumps(scoring.get('grade_thresholds') or {}, ensure_ascii=False)}",
         "- 十维定义与权重（先证据后打分；每维必须输出 evidence[] 与 deductions[]）：",
     ]
+    length = scoring.get("output_length") if isinstance(scoring.get("output_length"), dict) else {}
+    if length:
+        lines.extend(
+            [
+                "## 篇幅硬要求（基础量，少则说不清）",
+                f"- 每维分析约 {length.get('dimension_analysis_target_chars', 1000)} 字"
+                f"（evidence+deductions 合计，下限 {length.get('dimension_analysis_min_chars', 800)} 字）",
+                f"- verdict_detail 总评约 {length.get('verdict_detail_target_chars', 2000)} 字"
+                f"（下限 {length.get('verdict_detail_min_chars', 1500)} 字）",
+                f"- continuity_summary.summary 建议不少于"
+                f" {length.get('continuity_summary_min_chars', 300)} 字",
+                "- 禁止「分数+一句话」空壳报告；宁可多写具体集数/场景/台词引用。",
+            ]
+        )
     for dim in scoring.get("dimensions") or []:
         if not isinstance(dim, dict):
             continue

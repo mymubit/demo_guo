@@ -53,14 +53,19 @@ describe('firstRunGuide', () => {
     expect(resolveFirstRunStageId(stages, workflow())).toBe('strategy')
   })
 
-  it('shows execute guide when theme ready and stage executable', () => {
+  it('shows execute guide when core_idea or theme ready and stage executable', () => {
     const strategy = stages.find((s) => s.id === 'strategy')!
-    const settings = testProjectSettings({
+    const withTheme = testProjectSettings({
+      core_idea: '',
       genre_matrix: { emotion: 'e', identity: 'i', conflict: 'c', world: 'w' },
+    })
+    const withIdeaOnly = testProjectSettings({
+      core_idea: '一个逆袭故事',
+      genre_matrix: undefined,
     })
     expect(
       shouldShowFirstRunExecuteGuide({
-        settings,
+        settings: withTheme,
         workflow: workflow(),
         stage: strategy,
         hasPayload: false,
@@ -69,7 +74,16 @@ describe('firstRunGuide', () => {
     ).toBe(true)
     expect(
       shouldShowFirstRunExecuteGuide({
-        settings,
+        settings: withIdeaOnly,
+        workflow: workflow(),
+        stage: strategy,
+        hasPayload: false,
+        executable: true,
+      }),
+    ).toBe(true)
+    expect(
+      shouldShowFirstRunExecuteGuide({
+        settings: withTheme,
         workflow: workflow(),
         stage: strategy,
         hasPayload: true,

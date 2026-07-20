@@ -1,0 +1,456 @@
+{
+  "total": 64,
+  "passed": 64,
+  "pass_rate": 1.0,
+  "failed": [],
+  "results": [
+    {
+      "id": "TD001",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD002",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD003",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD004",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD005",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD006",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD007",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD008",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD009",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD010",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD011",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD012",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD013",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD014",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD015",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD016",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD017",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD018",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD019",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "TD020",
+      "role": "drama.topic-director",
+      "artifact_key": "project_brief",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB001",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB002",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB003",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB004",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB005",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB006",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB007",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB008",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB009",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB010",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB011",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB012",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB013",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB014",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB015",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB016",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB017",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB018",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB019",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SB020",
+      "role": "drama.story-bible",
+      "artifact_key": "story_bible",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SC001",
+      "role": "drama.script-scorer",
+      "artifact_key": "quality_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SC002",
+      "role": "drama.script-scorer",
+      "artifact_key": "quality_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SC003",
+      "role": "drama.script-scorer",
+      "artifact_key": "quality_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SC004",
+      "role": "drama.script-scorer",
+      "artifact_key": "quality_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SC005",
+      "role": "drama.script-scorer",
+      "artifact_key": "quality_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SC006",
+      "role": "drama.script-scorer",
+      "artifact_key": "quality_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SC007",
+      "role": "drama.script-scorer",
+      "artifact_key": "quality_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SC008",
+      "role": "drama.script-scorer",
+      "artifact_key": "quality_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SC009",
+      "role": "drama.script-scorer",
+      "artifact_key": "quality_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SC010",
+      "role": "drama.script-scorer",
+      "artifact_key": "quality_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SC011",
+      "role": "drama.script-scorer",
+      "artifact_key": "quality_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "SC012",
+      "role": "drama.script-scorer",
+      "artifact_key": "quality_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "CG001",
+      "role": "drama.compliance-guard",
+      "artifact_key": "compliance_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "CG002",
+      "role": "drama.compliance-guard",
+      "artifact_key": "compliance_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "CG003",
+      "role": "drama.compliance-guard",
+      "artifact_key": "compliance_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "CG004",
+      "role": "drama.compliance-guard",
+      "artifact_key": "compliance_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "CG005",
+      "role": "drama.compliance-guard",
+      "artifact_key": "compliance_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "CG006",
+      "role": "drama.compliance-guard",
+      "artifact_key": "compliance_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "CG007",
+      "role": "drama.compliance-guard",
+      "artifact_key": "compliance_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "CG008",
+      "role": "drama.compliance-guard",
+      "artifact_key": "compliance_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "CG009",
+      "role": "drama.compliance-guard",
+      "artifact_key": "compliance_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "CG010",
+      "role": "drama.compliance-guard",
+      "artifact_key": "compliance_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "CG011",
+      "role": "drama.compliance-guard",
+      "artifact_key": "compliance_report",
+      "ok": true,
+      "errors": []
+    },
+    {
+      "id": "CG012",
+      "role": "drama.compliance-guard",
+      "artifact_key": "compliance_report",
+      "ok": true,
+      "errors": []
+    }
+  ]
+}

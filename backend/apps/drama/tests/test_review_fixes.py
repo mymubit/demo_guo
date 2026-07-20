@@ -19,13 +19,7 @@ from apps.drama.models import DramaArtifactVersion, DramaGenerationJob
 from apps.drama.services.config_overlay import ConfigOverlayService
 from apps.drama.services.generation_service import GenerationService, TERMINAL_JOB_STATUSES
 from apps.drama.tasks import _parallel_judge_callback, _score_subtask, run_parallel_judge_task
-from apps.drama.tests.helpers import SKILLS_ROOT, create_project, create_user
-
-FIXTURES = json.loads(
-    Path("/workspace/build/fixtures/artifacts/valid-artifacts.json").read_text(
-        encoding="utf-8"
-    )
-)
+from apps.drama.tests.helpers import FIXTURES, SKILLS_ROOT, auth_client, create_project, create_user
 
 
 def _mock_llm_response(payload: dict) -> dict:
@@ -533,3 +527,24 @@ class SSEEventTests(TestCase):
         chunks = list(response.streaming_content)
         body = b"".join(chunks).decode("utf-8")
         self.assertIn('"type": "timeout"', body)
+
+    def test_sse_accept_event_stream_not_406(self):
+        """Accept: text/event-stream 必须通过 DRF 内容协商，不能 406。"""
+        job = DramaGenerationJob.objects.create(
+            project=self.project,
+            job_type=DramaGenerationJob.JobType.GENERATION,
+            status=DramaGenerationJob.Status.COMPLETED,
+            command_id="sse-accept",
+            progress_events=[{"phase": "started"}],
+        )
+        client = auth_client(self.user)
+        response = client.get(
+            f"/api/v1/drama/projects/{self.project.id}/generation/{job.id}/stream/",
+            HTTP_ACCEPT="text/event-stream",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            response.get("Content-Type", "").startswith("text/event-stream")
+        )
+        body = b"".join(response.streaming_content).decode("utf-8")
+        self.assertIn('"type": "done"', body)

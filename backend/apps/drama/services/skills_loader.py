@@ -18,6 +18,10 @@ from apps.drama.services.parameter_resolver import (
     resolve_enum,
     resolve_max_items,
 )
+from apps.drama.services.condition_eval import (
+    evaluate_condition,
+    module_enable_context,
+)
 
 
 def _discover_rule_files(root: Path) -> list[str]:
@@ -260,6 +264,20 @@ class SkillsBundleLoader:
             }
 
         flavor = raw.get("flavor_tags") or {}
+
+        def _axis_options(block: dict[str, Any]) -> list[dict[str, Any]]:
+            return [
+                {
+                    "value": opt.get("value"),
+                    "label_zh": opt.get("label_zh", opt.get("value")),
+                    "desc": opt.get("desc"),
+                }
+                for opt in (block.get("options") or [])
+                if opt.get("value")
+            ]
+
+        audience_channel = raw.get("audience_channel") or {}
+        protagonist_structure = raw.get("protagonist_structure") or {}
         featured = []
         for combo in raw.get("featured_combos") or []:
             dims = combo.get("dims") or {}
@@ -268,20 +286,33 @@ class SkillsBundleLoader:
                     "code": combo.get("id") or combo.get("code"),
                     "label_zh": combo.get("label_zh") or combo.get("label"),
                     "heat": combo.get("heat"),
+                    "kind": "featured",
                     "emotion": dims.get("emotion"),
                     "identity": dims.get("identity"),
                     "conflict": dims.get("conflict"),
                     "world": dims.get("world"),
                     "flavor_tags": dims.get("flavor_tags") or combo.get("flavor_tags") or [],
+                    "audience_channel": dims.get("audience_channel"),
+                    "protagonist_structure": dims.get("protagonist_structure"),
                 }
             )
 
+        # preset_templates 使用 theme_code（非 code/id）；导出完整四轴供「常用题材」点选
         presets = []
         for item in raw.get("preset_templates") or []:
+            dims = item.get("dims") or {}
             presets.append(
                 {
-                    "code": item.get("code") or item.get("id"),
+                    "code": item.get("theme_code") or item.get("code") or item.get("id"),
                     "label_zh": item.get("label_zh") or item.get("label"),
+                    "kind": "preset",
+                    "emotion": dims.get("emotion"),
+                    "identity": dims.get("identity"),
+                    "conflict": dims.get("conflict"),
+                    "world": dims.get("world"),
+                    "flavor_tags": dims.get("flavor_tags") or [],
+                    "audience_channel": dims.get("audience_channel"),
+                    "protagonist_structure": dims.get("protagonist_structure"),
                 }
             )
 
@@ -296,6 +327,7 @@ class SkillsBundleLoader:
                         "value": opt.get("value"),
                         "label_zh": opt.get("label_zh", opt.get("value")),
                         "category": opt.get("category"),
+                        "tier": opt.get("tier", "standard"),
                     }
                     for opt in (flavor.get("options") or [])
                     if opt.get("value")
@@ -303,6 +335,20 @@ class SkillsBundleLoader:
             },
             "featured_combos": featured,
             "preset_templates": presets,
+            "axis_guidance": raw.get("axis_guidance") or {},
+            "audience_channel": {
+                "label_zh": audience_channel.get("label_zh", "受众频道"),
+                "hint": audience_channel.get("hint"),
+                "required": audience_channel.get("required", True),
+                "default": audience_channel.get("default", "general"),
+                "options": _axis_options(audience_channel),
+            },
+            "protagonist_structure": {
+                "label_zh": protagonist_structure.get("label_zh", "主角结构"),
+                "hint": protagonist_structure.get("hint"),
+                "required": protagonist_structure.get("required", False),
+                "options": _axis_options(protagonist_structure),
+            },
         }
 
     def project_runtime_projection(
@@ -371,14 +417,159 @@ class SkillsBundleLoader:
             return ""
         return path.read_text(encoding="utf-8").strip()
 
-    def load_modules_for_role(self, agent_id: str) -> str:
+    def load_modules_for_role(
+        self,
+        agent_id: str,
+        settings: dict[str, Any] | None = None,
+        *,
+        as_index: bool = False,
+    ) -> str:
+        """加载角色模块；尊重 module_policy.evaluate_enable_when。"""
         contract = self.get_role_contract(agent_id)
+        module_ids = list(contract.get("modules") or [])
+        policy = contract.get("module_policy") or {}
+        evaluate = bool(policy.get("evaluate_enable_when"))
+        catalog = (self.modules_catalog.get("modules") or {}) if evaluate else {}
+        context = module_enable_context(settings) if evaluate else {}
+
         parts: list[str] = []
-        for module_id in contract.get("modules", []):
+        for module_id in module_ids:
+            meta = catalog.get(module_id) or {}
+            expr = meta.get("enable_when")
+            if evaluate and expr:
+                try:
+                    if not evaluate_condition(str(expr), context):
+                        continue
+                except ValueError:
+                    continue
             body = self.load_module(module_id)
-            if body:
+            if not body:
+                continue
+            if as_index:
+                label = meta.get("label_zh") or module_id
+                first_line = body.splitlines()[0].strip() if body else ""
+                parts.append(f"- `{module_id}`（{label}）: {first_line[:80]}")
+            else:
                 parts.append(f"### {module_id}\n{body}")
         return "\n\n".join(parts)
+
+    def load_anti_examples(self, agent_id: str, *, max_items: int = 6) -> str:
+        """加载角色反例摘要，供 Prompt L3 注入。"""
+        entry = self.get_role_entry(agent_id)
+        skill_dir = entry.get("skill_dir") or f"roles/{agent_id.replace('.', '-')}"
+        path = self.root / skill_dir / "anti-examples.yaml"
+        if not path.exists():
+            return ""
+        data = self._load_yaml(str(path.relative_to(self.root)))
+        examples = list(data.get("examples") or [])[:max_items]
+        lines: list[str] = []
+        for item in examples:
+            title = item.get("title") or item.get("id") or "anti-example"
+            bits = [f"- {title}"]
+            forbid = item.get("forbid_fields") or []
+            if forbid:
+                bits.append(f"禁止字段: {', '.join(str(x) for x in forbid)}")
+            require = item.get("require_nonempty") or []
+            if require:
+                bits.append(f"必填非空: {', '.join(str(x) for x in require)}")
+            note = item.get("note")
+            if note:
+                bits.append(str(note))
+            if item.get("bad") is not None:
+                bits.append(f"错误形态: {json.dumps(item['bad'], ensure_ascii=False)}")
+            if item.get("good") is not None:
+                bits.append(f"正确形态: {json.dumps(item['good'], ensure_ascii=False)}")
+            lines.append("；".join(bits))
+        return "\n".join(lines)
+
+    def load_knowledge_for_role(
+        self,
+        agent_id: str,
+        settings: dict[str, Any] | None = None,
+        *,
+        max_chars: int = 1200,
+    ) -> str:
+        """按角色 references 与题材/平台轻量注入知识片段（非向量检索）。"""
+        settings = settings or {}
+        entry = self.get_role_entry(agent_id)
+        skill_dir = entry.get("skill_dir") or f"roles/{agent_id.replace('.', '-')}"
+        skill_path = self.root / skill_dir / "SKILL.md"
+        if not skill_path.exists():
+            return ""
+        text = skill_path.read_text(encoding="utf-8")
+        fm = _parse_frontmatter(text)
+        refs = [str(r) for r in (fm.get("references") or []) if isinstance(r, str)]
+        knowledge_refs = [
+            r for r in refs if "/knowledge/" in r.replace("\\", "/") or r.startswith("../../knowledge/")
+        ]
+        platform = str(settings.get("target_platform") or "generic")
+        world = ((settings.get("genre_matrix") or {}) if isinstance(settings.get("genre_matrix"), dict) else {}).get(
+            "world"
+        )
+        ranked: list[tuple[int, Path]] = []
+        for ref in knowledge_refs:
+            path = (self.root / skill_dir / ref).resolve()
+            if not path.exists() or not path.is_file():
+                continue
+            score = 0
+            name = path.name.lower()
+            if platform != "generic" and platform.lower() in name:
+                score += 3
+            if world and str(world).lower() in name:
+                score += 2
+            if "market" in path.parts or "formula" in name:
+                score += 1
+            if "originality" in name and settings.get("entry_type") == "story_adapt":
+                score += 4
+            # 裁判角色优先注入本职知识，避免预算被次要文档占满
+            if agent_id == "drama.compliance-guard":
+                if "tier4" in name or "compliance" in name:
+                    score += 6
+                elif "originality" in name:
+                    score += 3
+            if agent_id == "drama.script-scorer":
+                if "s-class" in name or "scoring-preset" in name:
+                    score += 6
+            ranked.append((score, path))
+        ranked.sort(key=lambda item: (-item[0], str(item[1])))
+        chunks: list[str] = []
+        used = 0
+        for _, path in ranked[:3]:
+            body = path.read_text(encoding="utf-8").strip()
+            # 跳过过长前言，取正文前段
+            snippet = body[:800]
+            piece = f"### {path.name}\n{snippet}"
+            if used + len(piece) > max_chars:
+                remain = max_chars - used
+                if remain < 80:
+                    break
+                piece = piece[: remain - 3] + "..."
+            chunks.append(piece)
+            used += len(piece)
+            if used >= max_chars:
+                break
+        return "\n\n".join(chunks)
+
+    def load_fewshots(self, agent_id: str, *, max_shots: int = 2) -> str:
+        """加载人工审阅后的 fewshots.v1.yaml（若存在）。"""
+        entry = self.get_role_entry(agent_id)
+        skill_dir = entry.get("skill_dir") or f"roles/{agent_id.replace('.', '-')}"
+        path = self.root / skill_dir / "fewshots.v1.yaml"
+        if not path.exists():
+            return ""
+        data = self._load_yaml(str(path.relative_to(self.root)))
+        shots = list(data.get("fewshots") or [])[:max_shots]
+        if not shots:
+            return ""
+        lines = ["以下为审阅通过的 few-shot 示例（模仿字段形态，勿照抄剧情）："]
+        for index, shot in enumerate(shots, 1):
+            lines.append(
+                f"{index}. input={json.dumps(shot.get('input') or {}, ensure_ascii=False)}"
+            )
+            lines.append(
+                f"   output={json.dumps(shot.get('output') or {}, ensure_ascii=False)}"
+            )
+        return "\n".join(lines)
 
     def load_knowledge_sections_index(self) -> str:
         path = self.root / "knowledge/knowledge-sections.md"
@@ -401,9 +592,14 @@ class SkillsBundleLoader:
         max_chars: int = 3200,
     ) -> str:
         contract = self.get_role_contract(agent_id)
-        scopes = (contract.get("rule_policy") or {}).get("scopes", ["global_core"])
+        rule_policy = contract.get("rule_policy") or {}
+        scopes = rule_policy.get("scopes", ["global_core"])
+        allowed_sections = [
+            str(s) for s in (rule_policy.get("sections") or []) if str(s).strip()
+        ]
         theme_code = _resolve_theme_code(settings)
-        items: list[tuple[int, str]] = []
+        # (pack_rank, priority, section, text)
+        items: list[tuple[int, int, str, str]] = []
 
         for rel_path in _discover_rule_files(self.root):
             data = self._load_yaml(rel_path)
@@ -411,17 +607,19 @@ class SkillsBundleLoader:
             for item in data.get("items", []):
                 if not _rule_matches_scope(item, tier, scopes, agent_id, theme_code):
                     continue
+                section = str(item.get("section") or "")
+                if not _rule_matches_sections(section, allowed_sections, tier):
+                    continue
                 body = (item.get("body") or "").strip()
-                if body:
-                    title = item.get("title", item.get("rule_key", ""))
-                    priority = int(item.get("priority", 100))
-                    items.append((priority, f"- {title}\n{body}"))
+                if not body:
+                    continue
+                title = item.get("title", item.get("rule_key", ""))
+                priority = int(item.get("priority", 100))
+                pack_rank = _rule_pack_rank(agent_id, section, tier)
+                items.append((pack_rank, priority, section, f"- {title}\n{body}"))
 
-        items.sort(key=lambda pair: pair[0])
-        text = "\n\n".join(body for _, body in items)
-        if len(text) > max_chars:
-            return text[: max_chars - 3] + "..."
-        return text
+        items.sort(key=lambda row: (row[0], row[1]))
+        return _join_rules_within_budget(items, max_chars)
 
     def load_seed_yaml(self, relative_path: str) -> dict[str, Any]:
         return self._load_yaml(relative_path)
@@ -468,6 +666,19 @@ def _strip_frontmatter(text: str) -> str:
     return text.strip()
 
 
+def _parse_frontmatter(text: str) -> dict[str, Any]:
+    if not text.startswith("---"):
+        return {}
+    parts = text.split("---", 2)
+    if len(parts) < 3:
+        return {}
+    try:
+        data = yaml.safe_load(parts[1]) or {}
+    except yaml.YAMLError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
 def _deep_get(data: dict[str, Any], dotted: str) -> Any:
     current: Any = data
     for part in dotted.split("."):
@@ -496,6 +707,85 @@ def _resolve_theme_code(settings: dict[str, Any]) -> str:
     if matrix:
         return "matrix"
     return settings.get("preset_theme_code") or ""
+
+
+# compliance_block 在 role_policy.sections 中是元 section，对应 compliance-core 各子 section
+_COMPLIANCE_ITEM_SECTIONS = frozenset(
+    {
+        "p0_categories",
+        "p1_categories",
+        "p2_advisories",
+        "nine_dimension_risk_assessment",
+        "justice_tail_rule",
+        "values_bottom_line",
+        "title_compliance_rules",
+        "platform_specific",
+        "three_phase_compliance_checklist",
+        "fuse_behavior",
+        "compliance_block",
+    }
+)
+
+
+def _rule_matches_sections(
+    section: str,
+    allowed_sections: list[str],
+    tier: int | None,
+) -> bool:
+    """未声明 sections 时保持全量 scope 行为；声明后按 section 收窄。"""
+    if not allowed_sections:
+        return True
+    if section in allowed_sections:
+        return True
+    if "compliance_block" in allowed_sections and (
+        tier == 4 or section in _COMPLIANCE_ITEM_SECTIONS
+    ):
+        return True
+    return False
+
+
+def _rule_pack_rank(agent_id: str, section: str, tier: int | None) -> int:
+    """截断预算内优先保留裁判核心规则。"""
+    if agent_id == "drama.compliance-guard":
+        if tier == 4 or section in _COMPLIANCE_ITEM_SECTIONS:
+            return 0
+        if section == "originality_rules":
+            return 1
+        return 2
+    if agent_id == "drama.script-scorer":
+        if section == "scoring":
+            return 0
+        if section in {
+            "continuity",
+            "hook_effectiveness",
+            "payment_checkpoint_3card",
+            "character_rules",
+            "episode_structure",
+        }:
+            return 1
+        return 2
+    return 1
+
+
+def _join_rules_within_budget(
+    items: list[tuple[int, int, str, str]],
+    max_chars: int,
+) -> str:
+    """按完整规则块拼接，避免硬截断切在规则中间导致尾部关键项丢失。"""
+    chunks: list[str] = []
+    used = 0
+    for _pack, _prio, _section, text in items:
+        sep = "\n\n" if chunks else ""
+        piece = f"{sep}{text}"
+        if used + len(piece) <= max_chars:
+            chunks.append(piece)
+            used += len(piece)
+            continue
+        remain = max_chars - used
+        if remain >= 80:
+            chunks.append(f"{sep}{text[: remain - 3]}...")
+        break
+    return "".join(chunks)
 
 
 def _rule_matches_scope(

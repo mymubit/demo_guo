@@ -30,9 +30,39 @@ function formatLatency(ms: number | null | undefined): string {
   return `${(ms / 1000).toFixed(1)} s`
 }
 
-function CallLogCard({ item, defaultOpen = false }: { item: LlmCallLogDetail; defaultOpen?: boolean }) {
+function isStoredTruncated(text: string): boolean {
+  return text.includes('…(已截断，原文')
+}
+
+/** 原始三栏全文展示：不切片、不默认折叠正文 */
+function RawLogBody({ content }: { content: string }) {
+  const truncated = isStoredTruncated(content)
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-ink-faint">
+        <span>{content.length.toLocaleString()} 字符 · 原始全文</span>
+        {truncated ? (
+          <span className="font-medium text-amber-700">落库时曾触发硬顶截断，排障请对照 response_body</span>
+        ) : null}
+      </div>
+      <pre className="max-h-[min(70vh,48rem)] overflow-auto whitespace-pre-wrap break-words rounded-md bg-canvas p-3 text-xs leading-relaxed text-ink">
+        {content}
+      </pre>
+    </div>
+  )
+}
+
+function CallLogCard({
+  item,
+  defaultOpen = false,
+  defaultTab = 'user',
+}: {
+  item: LlmCallLogDetail
+  defaultOpen?: boolean
+  defaultTab?: DetailTab
+}) {
   const [open, setOpen] = useState(defaultOpen)
-  const [tab, setTab] = useState<DetailTab>('user')
+  const [tab, setTab] = useState<DetailTab>(defaultTab)
   const body =
     tab === 'system'
       ? item.system_prompt || '（空）'
@@ -77,6 +107,9 @@ function CallLogCard({ item, defaultOpen = false }: { item: LlmCallLogDetail; de
       </button>
       {open ? (
         <div className="border-t border-border px-3 pb-3 pt-2">
+          <p className="mb-2 text-[11px] text-ink-faint">
+            用户输入 / 系统提示 / 模型输出为排障原始数据，完整保留、不做摘要删减。
+          </p>
           <div className="mb-2 flex gap-1">
             {(
               [
@@ -100,9 +133,7 @@ function CallLogCard({ item, defaultOpen = false }: { item: LlmCallLogDetail; de
               </button>
             ))}
           </div>
-          <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words rounded-md bg-canvas p-3 text-xs leading-relaxed text-ink">
-            {body}
-          </pre>
+          <RawLogBody content={body} />
         </div>
       ) : null}
     </div>
@@ -139,9 +170,9 @@ export function JobLlmCallLogsPanel({
     <section id="job-llm-logs" className="sf-panel space-y-4 p-5">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <h3 className="text-sm font-semibold text-ink">调用日志</h3>
+          <h3 className="text-sm font-semibold text-ink">调用日志（原始数据）</h3>
           <p className="mt-0.5 text-xs text-ink-muted">
-            查看本任务原始系统提示、用户输入与模型输出
+            系统提示、用户输入、模型输出完整保留，供对照排障；与下方结构化报告分开
           </p>
         </div>
         <Button
@@ -161,9 +192,18 @@ export function JobLlmCallLogsPanel({
       ) : null}
       {items.length > 0 ? (
         <div className="space-y-2">
-          {items.map((item, index) => (
-            <CallLogCard key={item.id} item={item} defaultOpen={index === 0} />
-          ))}
+          {items.map((item) => {
+            const isScorer =
+              item.purpose === 'quality_scoring' || item.role.includes('script-scorer')
+            return (
+              <CallLogCard
+                key={item.id}
+                item={item}
+                defaultOpen={isScorer}
+                defaultTab={isScorer ? 'response' : 'user'}
+              />
+            )
+          })}
         </div>
       ) : null}
     </section>

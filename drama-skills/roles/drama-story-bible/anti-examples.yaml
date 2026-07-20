@@ -1,0 +1,26 @@
+version: "1.0.0"
+examples:
+  - id: SB-AE001
+    severity: high
+    title: synopsis 不能是字符串
+    bad:
+      synopsis: 她重生后复仇成功。
+    good:
+      synopsis:
+        short: 她重生后先揭穿假继承人。
+        full: 完整梗概文本……
+  - id: SB-AE002
+    severity: high
+    title: 人物 role_type 枚举
+    note: characters[].role_type 只能是 protagonist | antagonist | supporting
+  - id: SB-AE003
+    severity: high
+    title: 六阶段必须恰好 6 项
+    note: series_structure.six_stage_structure 长度必须为 6，不足勿用空对象滥竽充数以外的字段凑数。
+  - id: SB-AE004
+    severity: medium
+    title: 禁止输出逐集剧本
+    forbid_fields:
+      - episode_scripts
+      - scenes
+    note: 蓝图官只输出全局结构，不写分场正文。

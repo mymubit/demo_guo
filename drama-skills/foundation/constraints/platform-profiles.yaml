@@ -16,21 +16,28 @@ default:
 # 必须在运行时核验最新政策后才能声称合规。
 platforms:
   generic:
+    label_zh: 通用
     policy_status: common_rules_only
     notes: [仅执行通用格式、质量与合规规则]
     seed_checks: []
   douyin:
+    label_zh: 抖音
     policy_status: requires_runtime_verification
-    notes: [开场留存敏感, 暴力内容需专项检查]
+    notes:
+      - 开场留存敏感
+      - 暴力内容需专项检查
+      - 选题定调须给出可拍的前3秒钩子方向，避免纯气氛空镜开场
     seed_checks:
       - 前3秒内不得出现 P1 级内容
       - 暴力场景执行恐怖内容分级处置（compliance-core#p0_categories.horror-grading）
   kuaishou:
+    label_zh: 快手
     policy_status: requires_runtime_verification
     notes: [未成年人内容需专项检查]
     seed_checks:
       - 未成年角色场景执行更严格的安全情境检查
   wechat_miniprogram:
+    label_zh: 微信小程序
     policy_status: requires_runtime_verification
     notes: [备案材料与AI内容标识需专项检查]
     seed_checks:

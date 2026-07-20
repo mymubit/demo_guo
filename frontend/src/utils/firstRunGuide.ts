@@ -9,6 +9,26 @@ export function isGenreMatrixComplete(
   return Boolean(matrix.emotion && matrix.identity && matrix.conflict && matrix.world)
 }
 
+/**
+ * 选题定调官 required_params_any_of：core_idea | synopsis | genre_matrix
+ * 改编通道编排要求：external_story
+ */
+export function hasTopicDirectorInput(
+  settings: Pick<
+    ProjectSettings,
+    'entry_type' | 'core_idea' | 'synopsis' | 'external_story' | 'genre_matrix'
+  >,
+): boolean {
+  if (settings.entry_type === 'story_adapt') {
+    return Boolean(settings.external_story?.trim())
+  }
+  return Boolean(
+    settings.core_idea?.trim() ||
+      settings.synopsis?.trim() ||
+      isGenreMatrixComplete(settings.genre_matrix),
+  )
+}
+
 /** 主链尚未产生任何产物，视为首跑空台 */
 export function isWorkflowFirstRun(workflow: WorkflowState | null | undefined): boolean {
   if (!workflow) return true
@@ -46,7 +66,7 @@ export function shouldShowFirstRunExecuteGuide(input: {
 }): boolean {
   const { settings, workflow, stage, hasPayload, executable, forceGuide } = input
   if (hasPayload || !executable) return false
-  if (!isGenreMatrixComplete(settings.genre_matrix)) return false
+  if (!hasTopicDirectorInput(settings)) return false
   if (forceGuide) return true
   if (!isWorkflowFirstRun(workflow)) return false
   return resolveStageStatus(stage, workflow) === 'active'

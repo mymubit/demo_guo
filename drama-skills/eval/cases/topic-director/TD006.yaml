@@ -1,0 +1,76 @@
+id: TD006
+role: drama.topic-director
+settings:
+  entry_type: original_track
+  title: 逆光重来
+  core_idea: 被家族抛弃的继承人重生
+  audience_channel: female
+  genre_matrix:
+    emotion: revenge
+    identity: reborn
+    conflict: family
+    world: modern
+  episode_count: 30
+  target_platform: generic
+upstream_artifacts: {}
+fixture_response:
+  title: 逆光重来
+  genre_matrix:
+    emotion: revenge
+    identity: reborn
+    conflict: family
+    world: modern
+    flavor_tags: []
+    audience_channel: female
+  theme_code: matrix
+  matrix_key: revenge-reborn-family-modern|ch:female
+  rule_params:
+    reversal_density: 0.4
+    emotion_curve:
+    - 3
+    - 2
+    - 1
+    - 4
+    - 7
+    - 8
+    - 9
+    - 10
+    act_ratio:
+    - 0.1
+    - 0.2
+    - 0.2
+    - 0.2
+    - 0.15
+    - 0.15
+    hook_types:
+    - 身份反转
+  preset_theme_code: null
+  episode_count: 30
+  episode_duration: 2
+  core_idea: 被家族抛弃的继承人重生后夺回人生
+  target_audience: 都市女性
+  core_conflict: 个人尊严与家族控制
+  hook_concept: 主角提前知道背叛
+  commercial_hook: 重生复仇
+  reference_works: []
+  compliance_risk: low
+  market_opportunity: 人格共鸣
+  blockbuster_factors:
+  - 信息差
+  competitor_references: []
+  differentiation_strategy: 职业能力破局
+  first_episode_hook: 婚礼现场反击
+  paywall_direction: 关键证据即将公开
+assertions:
+  schema: true
+  required_fields:
+  - title
+  - genre_matrix
+  - first_episode_hook
+  - paywall_direction
+  rubric:
+  - has_hook
+  - has_paywall
+  - factors_are_strings
+  - risk_enum
+  - matrix_axes

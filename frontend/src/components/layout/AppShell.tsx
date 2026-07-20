@@ -92,15 +92,30 @@ function NavItemLink({ item }: { item: NavItem }) {
       className={({ isActive }) => {
         const active = item.match ? item.match(location.pathname) : isActive
         return cn(
-          'flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition',
+          'group relative flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm transition',
           active
-            ? 'bg-shell-accent/15 text-white ring-1 ring-shell-accent/40'
+            ? 'bg-shell-accent/20 font-medium text-white'
             : 'text-shell-muted hover:bg-white/5 hover:text-white',
         )
       }}
     >
-      <Icon className="h-4 w-4 shrink-0" />
-      {item.label}
+      {({ isActive }) => {
+        const active = item.match ? item.match(location.pathname) : isActive
+        return (
+          <>
+            <span
+              className={cn(
+                'absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-shell-accent transition',
+                active ? 'opacity-100' : 'opacity-0',
+              )}
+            />
+            <Icon
+              className={cn('h-4 w-4 shrink-0', active ? 'text-shell-accent' : 'text-shell-muted')}
+            />
+            {item.label}
+          </>
+        )
+      }}
     </NavLink>
   )
 }
@@ -145,16 +160,23 @@ export function AppShell() {
       className="flex h-dvh min-h-[720px] min-w-pc bg-canvas"
       style={{ minWidth: PC_MIN_WIDTH }}
     >
-      <aside className="flex w-[clamp(11rem,15vw,15rem)] shrink-0 flex-col border-r border-shell-elevated bg-shell text-shell-ink">
-        <div className="flex items-center gap-2 border-b border-white/10 px-5 py-5">
-          <Clapperboard className="h-5 w-5 text-shell-accent" />
-          <div>
-            <div className="text-sm font-semibold tracking-wide text-white">ScriptForge</div>
-            <div className="text-[11px] text-slate-400">短剧创作工作台</div>
+      <aside className="relative flex w-[clamp(13rem,16vw,16.5rem)] shrink-0 flex-col bg-shell text-shell-ink">
+        <div className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-shell-accent/50 via-white/10 to-transparent" />
+        <div className="border-b border-white/10 px-4 py-5">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-shell-accent/15 ring-1 ring-shell-accent/35">
+              <Clapperboard className="h-4 w-4 text-shell-accent" />
+            </div>
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold tracking-wide text-white">
+                ScriptForge
+              </div>
+              <div className="text-[11px] text-shell-muted">影棚工台</div>
+            </div>
           </div>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-4 overflow-y-auto p-3">
+        <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-2 py-4">
           {NAV_GROUPS.map((group) => {
             const isOps = group.collapsible
             const open = !isOps || opsOpen || opsActive
@@ -164,7 +186,7 @@ export function AppShell() {
                   <button
                     type="button"
                     onClick={() => setOpsOpen((v) => !v)}
-                    className="mb-1.5 flex w-full items-center justify-between px-3 text-[11px] font-medium tracking-wide text-slate-500 hover:text-slate-300"
+                    className="mb-1.5 flex w-full items-center justify-between px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-shell-muted hover:text-shell-ink"
                   >
                     <span>{group.label}</span>
                     <ChevronDown
@@ -172,7 +194,7 @@ export function AppShell() {
                     />
                   </button>
                 ) : (
-                  <div className="mb-1.5 px-3 text-[11px] font-medium tracking-wide text-slate-500">
+                  <div className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-shell-muted">
                     {group.label}
                   </div>
                 )}
@@ -188,24 +210,24 @@ export function AppShell() {
           })}
 
           {latest ? (
-            <div className="border-t border-white/10 pt-3">
-              <div className="mb-1.5 px-3 text-[11px] font-medium tracking-wide text-slate-500">
+            <div className="mt-auto border-t border-white/10 pt-4">
+              <div className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-shell-muted">
                 最近项目
               </div>
               <NavLink
                 to={`/projects/${latest.id}/workbench`}
                 title={latest.title}
                 className={cn(
-                  'flex items-start gap-2 rounded-lg px-3 py-2 text-sm transition',
+                  'flex items-start gap-2 rounded-md px-3 py-2.5 text-sm transition',
                   onLatestWorkbench
-                    ? 'bg-shell-accent/15 text-white ring-1 ring-shell-accent/40'
+                    ? 'bg-shell-accent/20 text-white'
                     : 'text-shell-muted hover:bg-white/5 hover:text-white',
                 )}
               >
                 <ArrowRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-shell-accent" />
                 <span className="min-w-0">
                   <span className="block truncate font-medium">{latest.title}</span>
-                  <span className="mt-0.5 block text-[11px] text-slate-500">回工作台</span>
+                  <span className="mt-0.5 block text-[11px] text-shell-muted">回工作台</span>
                 </span>
               </NavLink>
             </div>
@@ -213,13 +235,13 @@ export function AppShell() {
         </nav>
 
         <div className="border-t border-white/10 p-3">
-          <div className="mb-2 truncate px-2 text-xs text-slate-400">
+          <div className="mb-2 truncate px-2 text-xs text-shell-muted">
             {auth?.user?.nickname || auth?.user?.username || '已登录'}
           </div>
           <Button
             variant="ghost"
             size="sm"
-            className="w-full justify-start text-slate-300 hover:bg-white/5 hover:text-white"
+            className="w-full justify-start text-shell-muted hover:bg-white/5 hover:text-white"
             iconLeft={<LogOut className="h-3.5 w-3.5" />}
             onClick={async () => {
               await logout()

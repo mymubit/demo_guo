@@ -1108,23 +1108,19 @@ function MetaPanel({ detail }: { detail: LlmCallLogDetail }) {
 }
 
 function PromptBody({ content }: { content?: string | null }) {
-  const [expanded, setExpanded] = useState(false)
   const text = content || '（空）'
-  const long = text.length > 1200
+  const truncatedInDb = text.includes('…(已截断，原文')
   return (
-    <div>
-      <pre className="whitespace-pre-wrap rounded-lg border border-border bg-canvas-muted p-3 text-xs leading-relaxed text-ink">
-        {expanded || !long ? text : `${text.slice(0, 1200)}…`}
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-ink-faint">
+        <span>{text.length.toLocaleString()} 字符 · 原始全文（不切片）</span>
+        {truncatedInDb ? (
+          <span className="font-medium text-amber-700">落库曾触发硬顶截断</span>
+        ) : null}
+      </div>
+      <pre className="max-h-[min(70vh,48rem)] overflow-auto whitespace-pre-wrap rounded-lg border border-border bg-canvas-muted p-3 text-xs leading-relaxed text-ink">
+        {text}
       </pre>
-      {long ? (
-        <button
-          type="button"
-          className="mt-2 text-xs text-action hover:underline"
-          onClick={() => setExpanded((v) => !v)}
-        >
-          {expanded ? '收起' : '展开全文'}
-        </button>
-      ) : null}
     </div>
   )
 }

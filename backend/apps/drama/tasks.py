@@ -35,9 +35,12 @@ def _score_subtask(self, job_id: str) -> dict:
         return {}
     try:
         return service._build_quality_report(job, job.request_payload)
-    except Exception:
+    except Exception as exc:
         logger.exception("Quality scoring subtask failed for job %s", job_id)
-        service.mark_failed_if_active(job_id, "评分子任务失败")
+        detail = str(exc).strip() or exc.__class__.__name__
+        if len(detail) > 240:
+            detail = detail[:240] + "…"
+        service.mark_failed_if_active(job_id, f"评分子任务失败: {detail}")
         raise
 
 
@@ -49,9 +52,12 @@ def _compliance_subtask(self, job_id: str) -> dict:
         return {}
     try:
         return service._build_compliance_report(job, job.request_payload)
-    except Exception:
+    except Exception as exc:
         logger.exception("Compliance subtask failed for job %s", job_id)
-        service.mark_failed_if_active(job_id, "合规子任务失败")
+        detail = str(exc).strip() or exc.__class__.__name__
+        if len(detail) > 240:
+            detail = detail[:240] + "…"
+        service.mark_failed_if_active(job_id, f"合规子任务失败: {detail}")
         raise
 
 

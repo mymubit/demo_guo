@@ -798,9 +798,10 @@ class GenerationService:
         ):
             raise BusinessException(
                 SCHEMA_VALIDATION_FAILED,
-                "十维评分缺少有效 evidence（禁止仅输出分数）。"
-                "每个维度必须至少 1 条不少于 8 字的具体剧本证据（含集数/场景/台词），"
-                "再输出 score；deductions 可为空数组但不能省略 evidence。",
+                "十维评分篇幅不足或缺少有效 evidence（禁止空壳分数报告）。"
+                "每个维度分析（evidence+deductions）约 1000 字、不得少于 800 字，"
+                "须含具体集数/场景/台词；另须提供 verdict_detail 总评约 2000 字"
+                "（不得少于 1500 字）。",
                 http_status=422,
             )
         if artifact_key == "compliance_report" and compliance_report_too_thin(

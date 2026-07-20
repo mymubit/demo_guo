@@ -78,8 +78,18 @@ class ExternalReviewSerializer(serializers.Serializer):
     check_mode = serializers.ChoiceField(
         choices=["standard", "values-risk", "full"],
     )
-    script_content = serializers.CharField(required=False, allow_blank=True)
-    project_id = serializers.UUIDField(required=False)
+    script_content = serializers.CharField(required=True, allow_blank=False, trim_whitespace=True)
+    project_id = serializers.UUIDField(required=False, allow_null=True)
+    source_filename = serializers.CharField(
+        max_length=255, required=False, allow_blank=True, default=""
+    )
+    script_title = serializers.CharField(
+        max_length=200, required=False, allow_blank=True, default=""
+    )
+    # 兼容前端 filename 字段
+    filename = serializers.CharField(
+        max_length=255, required=False, allow_blank=True, default=""
+    )
 
 
 class ConfigRollbackSerializer(serializers.Serializer):

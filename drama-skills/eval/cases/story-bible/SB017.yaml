@@ -1,0 +1,123 @@
+id: SB017
+role: drama.story-bible
+settings:
+  entry_type: original_track
+  title: 蓝图样例17
+  episode_count: 30
+  audience_channel: female
+  genre_matrix:
+    emotion: revenge
+    identity: reborn
+    conflict: family
+    world: modern
+upstream_artifacts:
+  project_brief:
+    title: 逆光重来
+    genre_matrix:
+      emotion: revenge
+      identity: reborn
+      conflict: family
+      world: modern
+      flavor_tags: []
+      audience_channel: female
+    theme_code: matrix
+    matrix_key: revenge-reborn-family-modern|ch:female
+    rule_params:
+      reversal_density: 0.4
+      emotion_curve:
+      - 3
+      - 2
+      - 1
+      - 4
+      - 7
+      - 8
+      - 9
+      - 10
+      act_ratio:
+      - 0.1
+      - 0.2
+      - 0.2
+      - 0.2
+      - 0.15
+      - 0.15
+      hook_types:
+      - 身份反转
+    preset_theme_code: null
+    episode_count: 30
+    episode_duration: 2
+    core_idea: 被家族抛弃的继承人重生后夺回人生
+    target_audience: 都市女性
+    core_conflict: 个人尊严与家族控制
+    hook_concept: 主角提前知道背叛
+    commercial_hook: 重生复仇
+    reference_works: []
+    compliance_risk: low
+    market_opportunity: 人格共鸣
+    blockbuster_factors:
+    - 信息差
+    competitor_references: []
+    differentiation_strategy: 职业能力破局
+    first_episode_hook: 婚礼现场反击
+    paywall_direction: 关键证据即将公开
+fixture_response:
+  drama_title: 蓝图样例17
+  logline: 样例17的一句话故事
+  synopsis:
+    short: 短梗概
+    full: 完整梗概
+  adapt_source:
+    mode: original
+    retained: []
+    enhanced: []
+    rewritten: []
+    originality_check: 原创
+  world_rules:
+    setting_summary: 现代家族企业
+    root_rules:
+    - 股权决定话语权
+    power_structure: 董事会控制资源
+  characters:
+  - name: 林夏
+    role_type: protagonist
+    surface_desire: 夺回股权
+    deep_need: 建立自我价值
+    ghost: 被家族抛弃
+    lie: 只有被认可才有价值
+    flaw: 过度证明
+    arc:
+      start: 依赖认可
+      turning_point_1: 独立决策
+      turning_point_2: 放弃讨好
+      end: 自我确认
+    audience_identification: 职场与家庭边界
+    voice_tag: 短句直接
+    visual_anchor: 旧怀表
+  relationship_map: []
+  series_structure:
+    main_storyline: 夺回人生
+    six_stage_structure:
+    - {}
+    - {}
+    - {}
+    - {}
+    - {}
+    - {}
+    conflict_escalation_chain: []
+    major_reversal_positions: []
+    paywall_distribution: []
+    foreshadowing_table: []
+    series_emotion_curve: []
+assertions:
+  schema: true
+  required_fields:
+  - drama_title
+  - logline
+  - synopsis
+  - characters
+  - series_structure
+  rubric:
+  - synopsis_object
+  - has_logline
+  - has_title
+  - six_stages
+  - has_characters

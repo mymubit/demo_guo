@@ -170,6 +170,13 @@ class WorkflowServiceTests(TestCase):
         self.assertEqual(final["current_phase"], "completed")
         self.assertEqual(final["status"], "completed")
 
+    def test_settings_invalidate_without_bible_stays_executable(self):
+        """尚无蓝图时题材变更不得跳进 waiting_approval。"""
+        state = self.svc.invalidate_downstream(self.project, actor=self.user.username)
+        self.assertEqual(state["current_phase"], "strategy")
+        self.assertEqual(state["status"], "active")
+        self.assertNotEqual(state["status"], "waiting_approval")
+
     def test_project_brief_rework_invalidates_all(self):
         """选题重定调回流 strategy 并清空蓝图与下游。"""
         state = self._advance_to_writing_with_passed_batch()

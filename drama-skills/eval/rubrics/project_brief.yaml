@@ -1,0 +1,20 @@
+version: "1.0.0"
+artifact_key: project_brief
+checks:
+  - id: has_hook
+    type: field_nonempty
+    path: first_episode_hook
+  - id: has_paywall
+    type: field_nonempty
+    path: paywall_direction
+  - id: factors_are_strings
+    type: list_of_strings
+    path: blockbuster_factors
+  - id: risk_enum
+    type: enum
+    path: compliance_risk
+    values: [low, medium, high]
+  - id: matrix_axes
+    type: object_keys
+    path: genre_matrix
+    keys: [emotion, identity, conflict, world]

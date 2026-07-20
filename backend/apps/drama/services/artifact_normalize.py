@@ -929,25 +929,18 @@ def normalize_quality_report(
     if resolved not in {"polished_script", "episode_scripts", "external_script"}:
         resolved = "external_script"
 
-    continuity = raw.get("continuity_summary")
-    if not isinstance(continuity, dict):
-        continuity = {"result": "pass", "issues": []}
-    else:
-        result = _as_nonempty_str(continuity.get("result")) or "pass"
-        if result not in {"pass", "warning", "fail"}:
-            lower = result.lower()
-            if lower in {"pass", "passed", "ok"}:
-                result = "pass"
-            elif lower in {"warn", "warning"}:
-                result = "warning"
-            else:
-                result = "fail"
-        continuity = {
-            "result": result,
-            "issues": continuity.get("issues")
-            if isinstance(continuity.get("issues"), list)
-            else [],
-        }
+    continuity = _normalize_continuity_summary(raw.get("continuity_summary"))
+
+    raw_verdict_text = _as_nonempty_str(raw.get("verdict"))
+    verdict_detail = None
+    if raw_verdict_text and raw_verdict_text not in {
+        "通过",
+        "条件通过",
+        "需要修改",
+        "重大返工",
+    }:
+        # 模型常返回长段总评；枚举 verdict 由分数推导，原文保留到 verdict_detail
+        verdict_detail = raw_verdict_text
 
     out: dict[str, Any] = {
         "drama_title": title,
@@ -969,10 +962,62 @@ def normalize_quality_report(
         ),
         "verdict": verdict,
     }
+    if verdict_detail:
+        out["verdict_detail"] = verdict_detail
     if raw.get("config_revision") is not None:
         out["config_revision"] = str(raw.get("config_revision"))
     if "evolution_proposal" in raw:
         out["evolution_proposal"] = raw.get("evolution_proposal")
+    return out
+
+
+def _normalize_continuity_summary(value: Any) -> dict[str, Any]:
+    """兼容模型把 continuity_summary 写成整段中文，而不是 {result, issues}。"""
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return {"result": "pass", "issues": []}
+        lower = text.lower()
+        # 注意：勿用「重大矛盾」子串匹配「无重大矛盾」
+        negates_fail = any(
+            tok in text for tok in ("无重大矛盾", "没有重大矛盾", "未见重大矛盾", "无明显矛盾")
+        )
+        if not negates_fail and (
+            any(tok in text for tok in ("存在重大矛盾", "严重不连续", "叙事断裂"))
+            or "fail" in lower
+        ):
+            result = "fail"
+        elif any(tok in text for tok in ("轻微问题", "略有问题", "小问题", "需留意")) or "warn" in lower:
+            result = "warning"
+        else:
+            result = "pass"
+        return {
+            "result": result,
+            "summary": text,
+            "issues": [],
+        }
+
+    if not isinstance(value, dict):
+        return {"result": "pass", "issues": []}
+
+    result = _as_nonempty_str(value.get("result")) or "pass"
+    if result not in {"pass", "warning", "fail"}:
+        lower = result.lower()
+        if lower in {"pass", "passed", "ok"}:
+            result = "pass"
+        elif lower in {"warn", "warning"}:
+            result = "warning"
+        else:
+            result = "fail"
+    out: dict[str, Any] = {
+        "result": result,
+        "issues": value.get("issues") if isinstance(value.get("issues"), list) else [],
+    }
+    summary = _as_nonempty_str(value.get("summary")) or _as_nonempty_str(
+        value.get("description")
+    )
+    if summary:
+        out["summary"] = summary
     return out
 
 
@@ -1161,7 +1206,16 @@ def _normalize_score_dimension(
         }
 
     evidence = _coerce_text_list(value.get("evidence"))
-    for alt_key in ("comment", "analysis", "summary", "reason", "notes"):
+    for alt_key in (
+        "comment",
+        "analysis",
+        "summary",
+        "reason",
+        "notes",
+        "依据",
+        "证据",
+        "说明",
+    ):
         if evidence:
             break
         evidence = _coerce_text_list(value.get(alt_key))
@@ -1169,7 +1223,11 @@ def _normalize_score_dimension(
     deductions = _coerce_text_list(value.get("deductions"))
     if not deductions:
         deductions = _coerce_text_list(
-            value.get("deduction_reasons") or value.get("reasons")
+            value.get("deduction_reasons")
+            or value.get("deduction_reason")
+            or value.get("reasons")
+            or value.get("扣分原因")
+            or value.get("扣分")
         )
 
     weight = _as_number(value.get("weight"), default=default_weight)
@@ -1270,10 +1328,16 @@ def _reconcile_quality_verdict(
 
 
 def quality_report_evidence_too_sparse(payload: dict[str, Any]) -> bool:
-    """任一维度缺少有效 evidence → 视为空壳评分（禁止只吐分数）。"""
+    """任一维度缺少有效 evidence，或分析/总评篇幅不足 → 视为空壳评分。"""
     dims = payload.get("dimensions")
     if not isinstance(dims, dict) or not dims:
         return True
+
+    length_cfg = _load_quality_output_length()
+    dim_min = int(length_cfg.get("dimension_analysis_min_chars") or 800)
+    verdict_min = int(length_cfg.get("verdict_detail_min_chars") or 1500)
+    continuity_min = int(length_cfg.get("continuity_summary_min_chars") or 300)
+
     for dim in dims.values():
         if not isinstance(dim, dict):
             return True
@@ -1282,7 +1346,44 @@ def quality_report_evidence_too_sparse(payload: dict[str, Any]) -> bool:
             return True
         if not any(isinstance(x, str) and len(x.strip()) >= 8 for x in evidence):
             return True
+        analysis_chars = _dimension_analysis_char_count(dim)
+        if analysis_chars < dim_min:
+            return True
+
+    verdict_detail = str(payload.get("verdict_detail") or "").strip()
+    if len(verdict_detail) < verdict_min:
+        return True
+
+    continuity = payload.get("continuity_summary")
+    if isinstance(continuity, dict):
+        summary = str(continuity.get("summary") or "").strip()
+        if summary and len(summary) < continuity_min:
+            return True
     return False
+
+
+def _load_quality_output_length() -> dict[str, Any]:
+    try:
+        scoring = get_skills_loader().load_seed_yaml(
+            "foundation/constraints/quality-scoring.yaml"
+        )
+        length = scoring.get("output_length")
+        return length if isinstance(length, dict) else {}
+    except Exception:
+        return {}
+
+
+def _dimension_analysis_char_count(dim: dict[str, Any]) -> int:
+    chunks: list[str] = []
+    for key in ("evidence", "deductions"):
+        value = dim.get(key)
+        if isinstance(value, str):
+            chunks.append(value.strip())
+        elif isinstance(value, list):
+            for item in value:
+                if isinstance(item, str) and item.strip():
+                    chunks.append(item.strip())
+    return sum(len(part) for part in chunks)
 
 
 def compliance_report_too_thin(payload: dict[str, Any]) -> bool:
@@ -1369,6 +1470,12 @@ def _normalize_compliance_risk_items(value: Any) -> list[dict[str, str]]:
             or _as_nonempty_str(item.get("fix"))
             or ""
         )
+        if not suggestion:
+            # 模型常把建议写进 description；补默认建议避免合规薄报告拦截重解析
+            if "建议" in description:
+                suggestion = description
+            else:
+                suggestion = "请按风险描述完善对应收束、表达或平台合规处理。"
         result.append(
             {
                 "type": risk_type,

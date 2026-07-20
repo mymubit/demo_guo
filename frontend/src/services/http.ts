@@ -98,6 +98,22 @@ function getClient(): AxiosInstance {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    // FormData 必须由浏览器自动带 boundary；默认 application/json 会导致文件丢失
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      const headers = config.headers as {
+        delete?: (name: string) => void
+        set?: (name: string, value: string | false) => void
+      } & Record<string, unknown>
+      if (typeof headers.delete === 'function') {
+        headers.delete('Content-Type')
+        headers.delete('content-type')
+      } else if (typeof headers.set === 'function') {
+        headers.set('Content-Type', false)
+      } else {
+        delete headers['Content-Type']
+        delete headers['content-type']
+      }
+    }
     return config
   })
 

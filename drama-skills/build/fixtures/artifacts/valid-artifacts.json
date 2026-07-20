@@ -207,61 +207,81 @@
       "format": {
         "score": 82,
         "weight": 0.1,
-        "evidence": [],
+        "evidence": [
+          "场景头与对白格式统一，字数控制合格"
+        ],
         "deductions": []
       },
       "narrative": {
         "score": 82,
         "weight": 0.15,
-        "evidence": [],
+        "evidence": [
+          "三幕式完整，建置对抗结局节奏清楚"
+        ],
         "deductions": []
       },
       "conflict": {
         "score": 82,
         "weight": 0.15,
-        "evidence": [],
+        "evidence": [
+          "核心冲突明确，对抗强度逐集升级"
+        ],
         "deductions": []
       },
       "character": {
         "score": 82,
         "weight": 0.1,
-        "evidence": [],
+        "evidence": [
+          "主角弧光清晰，行为与人设一致"
+        ],
         "deductions": []
       },
       "emotion": {
         "score": 82,
         "weight": 0.1,
-        "evidence": [],
+        "evidence": [
+          "单集情绪节点到位，共情点可兑现"
+        ],
         "deductions": []
       },
       "logic": {
         "score": 82,
         "weight": 0.1,
-        "evidence": [],
+        "evidence": [
+          "因果链自洽，世界观规则未破窗"
+        ],
         "deductions": []
       },
       "satisfaction": {
         "score": 82,
         "weight": 0.1,
-        "evidence": [],
+        "evidence": [
+          "每集至少一处有效爽点或强悬念"
+        ],
         "deductions": []
       },
       "hooks": {
         "score": 82,
         "weight": 0.1,
-        "evidence": [],
+        "evidence": [
+          "开场钩子有冲击，集末悬念可追看"
+        ],
         "deductions": []
       },
       "paywall": {
         "score": 82,
         "weight": 0.05,
-        "evidence": [],
+        "evidence": [
+          "付费卡点位于冲突峰值前"
+        ],
         "deductions": []
       },
       "genre_fit": {
         "score": 82,
         "weight": 0.05,
-        "evidence": [],
+        "evidence": [
+          "题材元素完整，受众匹配度高"
+        ],
         "deductions": []
       }
     },

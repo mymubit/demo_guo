@@ -137,22 +137,30 @@ export function WorkbenchPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-canvas">
-      <div className="flex items-center justify-between border-b border-border bg-surface px-4 py-2">
-        <div>
-          <h1 className="text-sm font-semibold text-ink">
-            {settingsQuery.data.title || '创作工作台'}
-          </h1>
-          <p className="text-[11px] text-ink-muted">
-            {settingsQuery.data.entry_type === 'original_track' ? '原创通道' : '改编通道'} ·{' '}
-            {WORKFLOW_STATUS_LABELS[workflowQuery.data.status]}
-            {firstRun ? ' · 首跑' : ''}
-          </p>
+      {/* 影棚紧凑顶栏：与下方冷雾画布拉开密度差 */}
+      <div className="flex h-11 shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-shell px-3 text-shell-ink">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="hidden h-5 w-0.5 shrink-0 rounded-full bg-shell-accent sm:block" />
+          <div className="min-w-0">
+            <h1 className="truncate text-sm font-semibold tracking-wide text-white">
+              {settingsQuery.data.title || '创作工作台'}
+            </h1>
+            <p className="truncate text-[11px] text-shell-muted">
+              {settingsQuery.data.entry_type === 'original_track' ? '原创通道' : '改编通道'}
+              <span className="mx-1.5 text-white/20">·</span>
+              <span className="text-shell-accent">
+                {WORKFLOW_STATUS_LABELS[workflowQuery.data.status]}
+              </span>
+              {firstRun ? <span className="text-shell-muted"> · 首跑</span> : null}
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1.5">
           {isCompactPc ? (
             <Button
-              variant="secondary"
+              variant="ghost"
               size="sm"
+              className="text-shell-muted hover:bg-white/10 hover:text-white"
               iconLeft={<PanelRightOpen className="h-3.5 w-3.5" />}
               aria-expanded={isModulePanelOpen}
               onClick={() => setIsModulePanelOpen((value) => !value)}
@@ -162,8 +170,9 @@ export function WorkbenchPage() {
           ) : null}
           <Link to={`/projects/${projectId}/settings`}>
             <Button
-              variant="secondary"
+              variant="ghost"
               size="sm"
+              className="text-shell-muted hover:bg-white/10 hover:text-white"
               iconLeft={<Settings2 className="h-3.5 w-3.5" />}
             >
               创作设定

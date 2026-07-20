@@ -8,7 +8,7 @@ from typing import Any
 from django.db import transaction
 
 from apps.core.audit import audit_log
-from apps.core.exceptions import OPTIMISTIC_LOCK_FAILED, BusinessException
+from apps.core.exceptions import OPTIMISTIC_LOCK_FAILED, VALIDATION_ERROR, BusinessException
 from apps.core.schema_validator import SchemaValidator
 from apps.drama.models import DramaAuditEvent, DramaConfigRevision
 from apps.drama.services.config_resolver import ConfigResolver
@@ -28,6 +28,28 @@ class ConfigOverlayService:
     def get_current(self) -> dict[str, Any] | None:
         latest = DramaConfigRevision.objects.order_by("-revision").first()
         return latest.overlay if latest else None
+
+    def get_current_or_empty(self) -> dict[str, Any]:
+        """后台读取：无 revision 时返回可编辑的空壳，避免前端白屏。"""
+        current = self.get_current()
+        if current:
+            return current
+        return self.build_empty_overlay()
+
+    def build_empty_overlay(self) -> dict[str, Any]:
+        now = datetime.now(timezone.utc).isoformat()
+        return {
+            "schema_version": "ops-config-overlay.v1",
+            "tenant_id": "default",
+            "skills_version": self.loader.bundle_version,
+            "overrides": {},
+            "audit": {
+                "revision": 0,
+                "updated_by": "system",
+                "updated_at": now,
+                "change_reason": "尚未创建覆盖，当前使用技能仓库默认值",
+            },
+        }
 
     def get_revision(self, revision: int) -> DramaConfigRevision:
         return DramaConfigRevision.objects.get(revision=revision)
@@ -49,17 +71,24 @@ class ConfigOverlayService:
                 http_status=409,
             )
 
-        self.validator.validate_file(payload, self.SCHEMA_PATH)
-        seeds = self._load_seed_files()
-        self.resolver.apply_overlay(seeds, payload)
-
         now = datetime.now(timezone.utc).isoformat()
         audit = dict(payload.get("audit", {}))
         audit["revision"] = current_revision + 1
         audit["updated_at"] = now
         audit["updated_by"] = actor
+        if not str(audit.get("change_reason", "")).strip():
+            raise BusinessException(
+                VALIDATION_ERROR,
+                "必须填写修改原因",
+                http_status=400,
+            )
         payload = dict(payload)
         payload["audit"] = audit
+
+        # 先写入服务端 revision，再做 schema 校验（允许首存从 revision=0 起步）
+        self.validator.validate_file(payload, self.SCHEMA_PATH)
+        seeds = self._load_seed_files()
+        self.resolver.apply_overlay(seeds, payload)
 
         DramaConfigRevision.objects.create(
             revision=current_revision + 1,

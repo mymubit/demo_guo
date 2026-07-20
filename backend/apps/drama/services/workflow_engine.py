@@ -168,6 +168,9 @@ class WorkflowEngine:
             return not self._guard_passes(state, "can_auto_revise")
         if guard == "is_original_track":
             return state.get("entry_type") == "original_track"
+        if guard == "has_story_bible":
+            artifacts = state.get("artifacts") or {}
+            return bool(artifacts.get("story_bible"))
         if guard == "all_batches_quality_passed":
             # 末批质检通过后 advance_batch 记录 last_quality_passed_batch；
             # 事件载荷必须携带 total_batches，两者对齐才允许进入交付。

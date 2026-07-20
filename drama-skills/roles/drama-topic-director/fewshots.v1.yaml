@@ -1,0 +1,148 @@
+version: 1.0.0
+source: eval/cases offline fixtures
+note: 人工审阅后再被 PromptBuilder 引用；禁止无审自动覆盖 SKILL.md
+fewshots:
+- case_id: TD001
+  input:
+    title: 逆光重来
+    entry_type: original_track
+    core_idea: 被家族抛弃的继承人重生
+    genre_matrix:
+      emotion: revenge
+      identity: reborn
+      conflict: family
+      world: modern
+  output:
+    title: 逆光重来
+    core_idea: 被家族抛弃的继承人重生后夺回人生
+    first_episode_hook: 婚礼现场反击
+    paywall_direction: 关键证据即将公开
+    blockbuster_factors:
+    - 信息差
+    compliance_risk: low
+- case_id: TD002
+  input:
+    title: 战神归来
+    entry_type: original_track
+    core_idea: 被家族抛弃的继承人重生
+    genre_matrix:
+      emotion: justice
+      identity: reborn
+      conflict: family
+      world: modern
+  output:
+    title: 战神归来
+    core_idea: 被家族抛弃的继承人重生后夺回人生
+    first_episode_hook: 婚礼现场反击
+    paywall_direction: 关键证据即将公开
+    blockbuster_factors:
+    - 信息差
+    compliance_risk: low
+- case_id: TD003
+  input:
+    title: 甜宠攻略
+    entry_type: original_track
+    core_idea: 被家族抛弃的继承人重生
+    genre_matrix:
+      emotion: love
+      identity: reborn
+      conflict: family
+      world: modern
+  output:
+    title: 甜宠攻略
+    core_idea: 被家族抛弃的继承人重生后夺回人生
+    first_episode_hook: 婚礼现场反击
+    paywall_direction: 关键证据即将公开
+    blockbuster_factors:
+    - 信息差
+    compliance_risk: low
+- case_id: TD004
+  input:
+    title: 商战沉浮
+    entry_type: original_track
+    core_idea: 被家族抛弃的继承人重生
+    genre_matrix:
+      emotion: ambition
+      identity: reborn
+      conflict: family
+      world: modern
+  output:
+    title: 商战沉浮
+    core_idea: 被家族抛弃的继承人重生后夺回人生
+    first_episode_hook: 婚礼现场反击
+    paywall_direction: 关键证据即将公开
+    blockbuster_factors:
+    - 信息差
+    compliance_risk: low
+- case_id: TD005
+  input:
+    title: 宫廷棋局
+    entry_type: original_track
+    core_idea: 宫廷棋局的一句话梗概
+    genre_matrix:
+      emotion: ambition
+      identity: reborn
+      conflict: family
+      world: modern
+  output:
+    title: 宫廷棋局
+    core_idea: 被家族抛弃的继承人重生后夺回人生
+    first_episode_hook: 婚礼现场反击
+    paywall_direction: 关键证据即将公开
+    blockbuster_factors:
+    - 信息差
+    compliance_risk: low
+- case_id: TD006
+  input:
+    title: 逆光重来
+    entry_type: original_track
+    core_idea: 被家族抛弃的继承人重生
+    genre_matrix:
+      emotion: revenge
+      identity: reborn
+      conflict: family
+      world: modern
+  output:
+    title: 逆光重来
+    core_idea: 被家族抛弃的继承人重生后夺回人生
+    first_episode_hook: 婚礼现场反击
+    paywall_direction: 关键证据即将公开
+    blockbuster_factors:
+    - 信息差
+    compliance_risk: low
+- case_id: TD007
+  input:
+    title: 战神归来
+    entry_type: original_track
+    core_idea: 被家族抛弃的继承人重生
+    genre_matrix:
+      emotion: justice
+      identity: reborn
+      conflict: family
+      world: modern
+  output:
+    title: 战神归来
+    core_idea: 被家族抛弃的继承人重生后夺回人生
+    first_episode_hook: 婚礼现场反击
+    paywall_direction: 关键证据即将公开
+    blockbuster_factors:
+    - 信息差
+    compliance_risk: low
+- case_id: TD008
+  input:
+    title: 甜宠攻略
+    entry_type: original_track
+    core_idea: 被家族抛弃的继承人重生
+    genre_matrix:
+      emotion: love
+      identity: reborn
+      conflict: family
+      world: modern
+  output:
+    title: 甜宠攻略
+    core_idea: 被家族抛弃的继承人重生后夺回人生
+    first_episode_hook: 婚礼现场反击
+    paywall_direction: 关键证据即将公开
+    blockbuster_factors:
+    - 信息差
+    compliance_risk: low

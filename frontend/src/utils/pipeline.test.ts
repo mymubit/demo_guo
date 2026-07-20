@@ -63,9 +63,19 @@ describe('pipeline status (definition-driven)', () => {
     expect(
       resolveStageStatus(
         blueprint,
-        workflow({ current_phase: 'blueprint_approval', status: 'waiting_approval' }),
+        workflow({
+          current_phase: 'blueprint_approval',
+          status: 'waiting_approval',
+          artifacts: { story_bible: { version: 1 } },
+        }),
       ),
     ).toBe('waiting')
+    expect(
+      resolveStageStatus(
+        strategy,
+        workflow({ current_phase: 'blueprint_approval', status: 'waiting_approval', artifacts: {} }),
+      ),
+    ).toBe('active')
   })
 
   it('marks quality waiting_user as waiting', () => {
@@ -109,6 +119,16 @@ describe('pipeline status (definition-driven)', () => {
     )
     expect(
       canExecuteStage(strategy, workflow({ current_phase: 'strategy', status: 'waiting_approval' })),
+    ).toBe(true)
+    expect(
+      canExecuteStage(
+        strategy,
+        workflow({
+          current_phase: 'strategy',
+          status: 'waiting_approval',
+          artifacts: { story_bible: { version: 1 } },
+        }),
+      ),
     ).toBe(false)
     expect(
       canExecuteStage(
@@ -133,7 +153,20 @@ describe('pipeline status (definition-driven)', () => {
       explainExecuteGate(writing, workflow({ current_phase: 'strategy', status: 'active' })),
     ).toMatch(/尚未解锁/)
     expect(
-      explainExecuteGate(strategy, workflow({ current_phase: 'strategy', status: 'waiting_approval' })),
+      explainExecuteGate(
+        strategy,
+        workflow({
+          current_phase: 'strategy',
+          status: 'waiting_approval',
+          artifacts: { story_bible: { version: 1 } },
+        }),
+      ),
     ).toMatch(/待审批/)
+    expect(
+      explainExecuteGate(
+        strategy,
+        workflow({ current_phase: 'blueprint_approval', status: 'waiting_approval', artifacts: {} }),
+      ),
+    ).toBe(null)
   })
 })

@@ -44,11 +44,15 @@ export type FeaturedCombo = {
   label_zh?: string
   label?: string
   heat?: string
+  /** preset=常用题材模板；featured=创新杂交组合 */
+  kind?: 'preset' | 'featured'
   emotion: string
   identity: string
   conflict: string
   world: string
   flavor_tags?: string[]
+  audience_channel?: string
+  protagonist_structure?: string
 }
 
 /** Theme matrix view-model derived from resolved parameter fields (not a static copy). */
@@ -63,7 +67,31 @@ export type ThemeMatrix = {
     options: FlavorTagOption[]
   }
   featured_combos?: FeaturedCombo[]
-  preset_templates?: Array<{ code: string; label_zh: string }>
+  /** 与 featured 同形：含四轴，供常用题材点选 */
+  preset_templates?: FeaturedCombo[]
+  /** 自定义四轴软引导（prefer/discourage） */
+  axis_guidance?: {
+    display_order?: string[]
+    soft_rules?: Array<{
+      when: Record<string, string>
+      prefer?: Record<string, string[]>
+      discourage?: Record<string, string[]>
+      note?: string
+    }>
+  }
+  audience_channel?: {
+    label_zh: string
+    hint?: string
+    required?: boolean
+    default?: string
+    options: AxisOption[]
+  }
+  protagonist_structure?: {
+    label_zh: string
+    hint?: string
+    required?: boolean
+    options: AxisOption[]
+  }
 }
 
 export type ModuleCatalogItem = {

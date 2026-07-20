@@ -1,0 +1,86 @@
+id: SC002
+role: drama.script-scorer
+settings:
+  entry_type: original_track
+  title: 评分样例2
+  target_platform: generic
+upstream_artifacts: {}
+fixture_response:
+  drama_title: 评分样例2
+  scored_artifact: latest_script
+  resolved_script_key: episode_scripts
+  scoring_preset: standard
+  pass_threshold: 75
+  config_revision: '1'
+  overall_score: 72
+  grade: A
+  can_continue_next_batch: true
+  needs_revision: false
+  dimensions:
+    format:
+      score: 82
+      weight: 0.1
+      evidence: []
+      deductions: []
+    narrative:
+      score: 82
+      weight: 0.15
+      evidence: []
+      deductions: []
+    conflict:
+      score: 82
+      weight: 0.15
+      evidence: []
+      deductions: []
+    character:
+      score: 82
+      weight: 0.1
+      evidence: []
+      deductions: []
+    emotion:
+      score: 82
+      weight: 0.1
+      evidence: []
+      deductions: []
+    logic:
+      score: 82
+      weight: 0.1
+      evidence: []
+      deductions: []
+    satisfaction:
+      score: 82
+      weight: 0.1
+      evidence: []
+      deductions: []
+    hooks:
+      score: 82
+      weight: 0.1
+      evidence: []
+      deductions: []
+    paywall:
+      score: 82
+      weight: 0.05
+      evidence: []
+      deductions: []
+    genre_fit:
+      score: 82
+      weight: 0.05
+      evidence: []
+      deductions: []
+  defects: []
+  continuity_summary:
+    result: pass
+    issues: []
+  revision_priorities: []
+  evolution_proposal: null
+  verdict: 通过
+assertions:
+  schema: true
+  required_fields:
+  - overall_score
+  - verdict
+  - dimensions
+  rubric:
+  - has_score
+  - has_verdict
+  - has_dimensions

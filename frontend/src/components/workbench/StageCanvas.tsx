@@ -8,8 +8,8 @@ import {
   NarrativePlanView,
   ProjectBriefView,
   ReportArtifactView,
-  StoryBibleView,
 } from '@/components/artifacts/ArtifactViews'
+import { StoryBibleView } from '@/components/artifacts/StoryBibleView'
 import { DeliveryTabs } from '@/components/artifacts/DeliveryTabs'
 import { QualityLoopPanel } from '@/components/workbench/QualityLoopPanel'
 import { GenerationJobPanel } from '@/components/workbench/GenerationJobPanel'
@@ -164,10 +164,10 @@ export function StageCanvas({
 
   return (
     <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-canvas">
-      <header className="flex items-center justify-between border-b border-border bg-surface px-6 py-4">
-        <div>
-          <h2 className="text-lg font-semibold text-ink">{stage.label_zh}</h2>
-          <p className="mt-0.5 text-sm text-ink-muted">
+      <header className="flex items-center justify-between border-b border-border/80 bg-surface/90 px-8 py-5">
+        <div className="min-w-0 max-w-2xl">
+          <h2 className="text-xl font-semibold tracking-tight text-ink">{stage.label_zh}</h2>
+          <p className="mt-1 text-sm leading-relaxed text-ink-muted">
             当前由对应创作角色执行，完成后自动保存阶段产物
           </p>
         </div>
@@ -188,7 +188,7 @@ export function StageCanvas({
         </Button>
       </header>
 
-      <div className="w-full flex-1 space-y-5 overflow-auto px-[clamp(1.5rem,2.5vw,2.75rem)] py-[clamp(1.25rem,2vw,2rem)]">
+      <div className="w-full flex-1 space-y-6 overflow-auto px-[clamp(2rem,3.5vw,3.5rem)] py-[clamp(1.5rem,2.5vw,2.5rem)]">
         {themeIncomplete ? (
           <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <p className="font-medium">题材尚未选齐，生成质量可能受影响</p>

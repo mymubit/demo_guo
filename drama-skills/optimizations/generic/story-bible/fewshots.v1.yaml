@@ -1,0 +1,132 @@
+version: 1.0.0
+source: eval/cases offline fixtures
+note: 人工审阅后再被 PromptBuilder 引用；禁止无审自动覆盖 SKILL.md
+fewshots:
+- case_id: SB001
+  input:
+    title: 蓝图样例1
+    entry_type: original_track
+    core_idea: null
+    genre_matrix:
+      emotion: revenge
+      identity: reborn
+      conflict: family
+      world: modern
+  output:
+    drama_title: 蓝图样例1
+    logline: 样例1的一句话故事
+    synopsis:
+      short: 短梗概
+      full: 完整梗概
+- case_id: SB002
+  input:
+    title: 蓝图样例2
+    entry_type: original_track
+    core_idea: null
+    genre_matrix:
+      emotion: revenge
+      identity: reborn
+      conflict: family
+      world: modern
+  output:
+    drama_title: 蓝图样例2
+    logline: 样例2的一句话故事
+    synopsis:
+      short: 短梗概
+      full: 完整梗概
+- case_id: SB003
+  input:
+    title: 蓝图样例3
+    entry_type: original_track
+    core_idea: null
+    genre_matrix:
+      emotion: revenge
+      identity: reborn
+      conflict: family
+      world: modern
+  output:
+    drama_title: 蓝图样例3
+    logline: 样例3的一句话故事
+    synopsis:
+      short: 短梗概
+      full: 完整梗概
+- case_id: SB004
+  input:
+    title: 蓝图样例4
+    entry_type: story_adapt
+    core_idea: null
+    genre_matrix:
+      emotion: revenge
+      identity: reborn
+      conflict: family
+      world: modern
+  output:
+    drama_title: 蓝图样例4
+    logline: 样例4的一句话故事
+    synopsis:
+      short: 短梗概
+      full: 完整梗概
+- case_id: SB005
+  input:
+    title: 蓝图样例5
+    entry_type: original_track
+    core_idea: null
+    genre_matrix:
+      emotion: revenge
+      identity: reborn
+      conflict: family
+      world: modern
+  output:
+    drama_title: 蓝图样例5
+    logline: 样例5的一句话故事
+    synopsis:
+      short: 短梗概
+      full: 完整梗概
+- case_id: SB006
+  input:
+    title: 蓝图样例6
+    entry_type: original_track
+    core_idea: null
+    genre_matrix:
+      emotion: revenge
+      identity: reborn
+      conflict: family
+      world: modern
+  output:
+    drama_title: 蓝图样例6
+    logline: 样例6的一句话故事
+    synopsis:
+      short: 短梗概
+      full: 完整梗概
+- case_id: SB007
+  input:
+    title: 蓝图样例7
+    entry_type: original_track
+    core_idea: null
+    genre_matrix:
+      emotion: revenge
+      identity: reborn
+      conflict: family
+      world: modern
+  output:
+    drama_title: 蓝图样例7
+    logline: 样例7的一句话故事
+    synopsis:
+      short: 短梗概
+      full: 完整梗概
+- case_id: SB008
+  input:
+    title: 蓝图样例8
+    entry_type: story_adapt
+    core_idea: null
+    genre_matrix:
+      emotion: revenge
+      identity: reborn
+      conflict: family
+      world: modern
+  output:
+    drama_title: 蓝图样例8
+    logline: 样例8的一句话故事
+    synopsis:
+      short: 短梗概
+      full: 完整梗概

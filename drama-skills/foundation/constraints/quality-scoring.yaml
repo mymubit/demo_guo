@@ -4,12 +4,20 @@
 #   dimensions（维度/权重/描述）= git_ssot：评分方法论，改动需评审进 Git
 #   grade_thresholds / revision_threshold / fuse_rules = seed_default：
 #     业务运营参数，商业网站应支持后台（system_config）覆盖，本文件提供默认值
-version: "1.2.0"
+version: "1.3.0"
 config_tiers:
   dimensions: git_ssot
   business_defaults: seed_default
 framework: geval
 score_scale: 100
+
+# 输出篇幅（基础量）：太短则无法说明问题；runtime substance gate 按下限拒绝空壳
+output_length:
+  dimension_analysis_target_chars: 1000
+  dimension_analysis_min_chars: 800
+  verdict_detail_target_chars: 2000
+  verdict_detail_min_chars: 1500
+  continuity_summary_min_chars: 300
 
 grade_thresholds:
   S: 90

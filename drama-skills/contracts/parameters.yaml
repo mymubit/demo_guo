@@ -47,6 +47,7 @@ parameters:
 
   audience_channel:
     type: string
+    label_zh: 受众频道
     required: true
     source: foundation/theme-matrix.yaml#audience_channel.options
     default: general
@@ -59,6 +60,7 @@ parameters:
 
   protagonist_structure:
     type: string
+    label_zh: 主角结构
     required: false
     nullable: true
     source: foundation/theme-matrix.yaml#protagonist_structure.options
@@ -169,6 +171,11 @@ parameters:
     required: false
     source: foundation/constraints/scoring-presets.yaml#presets
     default: standard
+    options:
+      - {value: standard, label_zh: 标准}
+      - {value: strict, label_zh: 严格}
+      - {value: relaxed, label_zh: 宽松}
+      - {value: rhythm_first, label_zh: 节奏优先}
 
   check_mode:
     type: string

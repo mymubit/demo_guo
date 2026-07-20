@@ -23,6 +23,12 @@ FIXTURE_SETTINGS = json.loads(
     )
 )
 
+FIXTURES = json.loads(
+    (Path(SKILLS_ROOT) / "build/fixtures/artifacts/valid-artifacts.json").read_text(
+        encoding="utf-8"
+    )
+)
+
 
 def create_user(username: str = "tester", password: str = "test-pass-123") -> User:
     return User.objects.create_user(username=username, password=password)

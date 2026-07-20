@@ -1,0 +1,36 @@
+version: "1.0.0"
+examples:
+  - id: TD-AE001
+    severity: high
+    title: 禁止输出 schema 外元数据
+    forbid_fields:
+      - artifact_key
+      - schema_version
+      - sensitivity_pre_check
+      - rule_params
+    note: rule_params 由系统按题材矩阵合成，模型不要输出。
+  - id: TD-AE002
+    severity: high
+    title: blockbuster_factors 必须是字符串数组
+    bad:
+      blockbuster_factors:
+        - factor: 身份反转
+          description: 弃女实为隐藏精英
+    good:
+      blockbuster_factors:
+        - 身份反转
+        - 打脸节奏
+  - id: TD-AE003
+    severity: medium
+    title: compliance_risk 枚举错误
+    bad:
+      compliance_risk: 中等
+    good:
+      compliance_risk: medium
+    note: 只能是 low | medium | high
+  - id: TD-AE004
+    severity: medium
+    title: 缺少首集钩子与付费方向
+    require_nonempty:
+      - first_episode_hook
+      - paywall_direction

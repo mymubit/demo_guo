@@ -82,6 +82,42 @@ def warn(msg: str) -> None:
     WARNINGS.append(msg)
 
 
+# 已按 Agent Skills 规范升级的试点角色：强制校验 description/分区/反例文件
+AGENT_SKILL_PILOT_ROLES = {
+    "drama.topic-director",
+    "drama.story-bible",
+}
+
+
+def _check_agent_skill_format(
+    agent_id: str,
+    skill_dir: Path,
+    skill_md: Path,
+    fm: Dict[str, Any],
+    skill_text: str,
+) -> None:
+    """校验 Agent Skills 写法：何时用/不用、分区、反例文件。"""
+    desc = str(fm.get("description") or "")
+    require_strict = agent_id in AGENT_SKILL_PILOT_ROLES or (skill_dir / "anti-examples.yaml").exists()
+    if not require_strict:
+        if desc and ("何时用" not in desc or "何时不用" not in desc):
+            warn(f"{agent_id}: description 建议写明「何时用 / 何时不用」")
+        return
+
+    if not desc:
+        err(f"{agent_id}: SKILL.md frontmatter 缺少 description")
+    else:
+        if "何时用" not in desc:
+            err(f"{agent_id}: description 须包含「何时用」")
+        if "何时不用" not in desc:
+            err(f"{agent_id}: description 须包含「何时不用」")
+    for heading in ("## 职责边界", "## 输入/输出契约", "## 模块索引", "## 反例", "## 自检清单"):
+        if heading not in skill_text:
+            err(f"{agent_id}: SKILL.md 缺少分区 {heading}")
+    if not (skill_dir / "anti-examples.yaml").exists():
+        err(f"{agent_id}: 试点角色缺少 anti-examples.yaml")
+
+
 def load_yaml(path: Path) -> Dict[str, Any]:
     try:
         return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
@@ -166,6 +202,17 @@ def check_registry_roles(registry: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
             for param in (meta.get("input_contract") or {}).get("parameter_refs") or []:
                 if f"`{param}`" not in skill_text and param not in skill_text:
                     err(f"{agent_id}: SKILL.md 未提及参数 {param}（与 role.yaml 漂移）")
+            _check_agent_skill_format(agent_id, skill_dir, skill_md, fm, skill_text)
+
+        anti = skill_dir / "anti-examples.yaml"
+        if anti.exists():
+            data = load_yaml(anti)
+            examples = data.get("examples") or []
+            if not examples:
+                err(f"{agent_id}: anti-examples.yaml 缺少 examples")
+            for item in examples:
+                if not item.get("id"):
+                    err(f"{agent_id}: anti-examples 条目缺少 id")
 
         contract = meta.get("input_contract") or {}
         if "params" in contract:

@@ -55,3 +55,11 @@ items:
     title: LR-010 危机集节奏
     priority: 19
     body: "大反转/身份揭示/决裂集须为紧+重双轨组合。"
+  - rule_key: t1.global.learned_rules.lr011
+    section: learned_rules
+    title: LR-011 结构化输出
+    priority: 20
+    body: >-
+      角色产物必须是合法 JSON 对象：synopsis 等复合字段保持对象形态；
+      禁止输出 artifact_key/schema_version/rule_params；枚举值不得同义改写。
+      详见 knowledge/quality/structured-output-guards.md。

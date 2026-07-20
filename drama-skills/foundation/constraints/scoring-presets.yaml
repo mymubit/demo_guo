@@ -12,6 +12,7 @@ platform_recommendations:
 
 presets:
   standard:
+    label_zh: 标准
     pass_threshold: 75
     delivery_eligible: true
     weights:
@@ -26,6 +27,7 @@ presets:
       paywall: 0.05
       genre_fit: 0.05
   strict:
+    label_zh: 严格
     pass_threshold: 80
     delivery_eligible: true
     weights:
@@ -40,6 +42,7 @@ presets:
       paywall: 0.04
       genre_fit: 0.04
   relaxed:
+    label_zh: 宽松
     pass_threshold: 60
     delivery_eligible: false
     weights:
@@ -54,6 +57,7 @@ presets:
       paywall: 0.05
       genre_fit: 0.05
   rhythm_first:
+    label_zh: 节奏优先
     pass_threshold: 75
     delivery_eligible: true
     weights:

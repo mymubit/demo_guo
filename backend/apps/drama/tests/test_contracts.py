@@ -11,14 +11,7 @@ from rest_framework.test import APITestCase
 from apps.drama.models import DramaArtifactVersion
 from apps.drama.services.artifact_service import ArtifactService
 from apps.drama.services.skills_loader import SkillsBundleLoader, get_skills_loader
-from apps.drama.tests.helpers import SKILLS_ROOT, create_project, create_user
-
-SKILLS_ROOT = "/workspace"
-FIXTURES = json.loads(
-    Path("/workspace/build/fixtures/artifacts/valid-artifacts.json").read_text(
-        encoding="utf-8"
-    )
-)
+from apps.drama.tests.helpers import FIXTURES, SKILLS_ROOT, create_project, create_user
 
 
 @override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)

@@ -140,7 +140,15 @@ LLM_API_KEY = os.getenv("LLM_API_KEY", "")
 LLM_MODEL = os.getenv("LLM_MODEL", "gpt-4o-mini")
 LLM_ENABLED = os.getenv("LLM_ENABLED", "false").lower() in ("1", "true", "yes")
 LLM_CONNECT_TIMEOUT = int(os.getenv("LLM_CONNECT_TIMEOUT", "30"))
-LLM_READ_TIMEOUT = int(os.getenv("LLM_READ_TIMEOUT", "120"))
+# 流式读超时=相邻数据包间隔；Celery 改超时后必须重启 worker
+LLM_READ_TIMEOUT = int(os.getenv("LLM_READ_TIMEOUT", "900"))
+# 单次补全 token 上限（防止模型管理里设过大导致极慢）
+LLM_COMPLETION_MAX_TOKENS = int(os.getenv("LLM_COMPLETION_MAX_TOKENS", "8192"))
+# 评分官长文输出（十维×约1000字 + 总评约2000字）需要更高补全上限
+LLM_SCORER_MAX_TOKENS = int(os.getenv("LLM_SCORER_MAX_TOKENS", "24576"))
+LLM_CALL_LOG_ENABLED = os.getenv("LLM_CALL_LOG_ENABLED", "true").lower() in ("1", "true", "yes")
+# 三栏原文（system/user/response）完整落库；仅超过该硬顶才截断防炸库（默认 5MB）
+LLM_CALL_LOG_MAX_TEXT_CHARS = int(os.getenv("LLM_CALL_LOG_MAX_TEXT_CHARS", "5000000"))
 
 # Celery
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", os.getenv("REDIS_URL", "redis://127.0.0.1:6379/1"))
@@ -157,9 +165,15 @@ CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
-# 生成任务 SSE
+# 生成任务 SSE：必须 ≥ LLM 读超时，否则前端先断、后台还在跑
 GENERATION_SSE_HEARTBEAT_SECONDS = int(os.getenv("GENERATION_SSE_HEARTBEAT_SECONDS", "15"))
-GENERATION_SSE_MAX_WAIT_SECONDS = int(os.getenv("GENERATION_SSE_MAX_WAIT_SECONDS", "300"))
+GENERATION_SSE_MAX_WAIT_SECONDS = int(
+    os.getenv("GENERATION_SSE_MAX_WAIT_SECONDS", str(LLM_READ_TIMEOUT + 180))
+)
+# 非终态超过此时长视为卡死（worker 崩溃等），查询时自动标记失败
+GENERATION_JOB_STALE_SECONDS = int(
+    os.getenv("GENERATION_JOB_STALE_SECONDS", str(LLM_READ_TIMEOUT + 600))
+)
 
 LOGGING = {
     "version": 1,

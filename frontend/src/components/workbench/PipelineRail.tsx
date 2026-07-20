@@ -80,19 +80,27 @@ function StageButton({
         onSelect(stage)
       }}
       className={cn(
-        'flex w-full items-start gap-1.5 rounded-md px-2.5 py-1.5 text-left transition',
-        active ? 'bg-shell-accent/15 ring-1 ring-shell-accent/40' : 'hover:bg-canvas-muted',
+        'group relative flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left transition',
+        active ? 'bg-shell-accent/15' : 'hover:bg-canvas-muted',
         locked && 'cursor-not-allowed opacity-50 hover:bg-transparent',
-        highlight && !locked && 'ring-1 ring-amber-200 bg-amber-50/70',
+        highlight && !locked && !active && 'bg-amber-50/80',
       )}
     >
-      <Icon className={cn('mt-0.5 h-4 w-4 shrink-0', statusTone[status])} />
+      <span
+        className={cn(
+          'absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-shell-accent transition',
+          active ? 'opacity-100' : 'opacity-0',
+        )}
+      />
+      <Icon className={cn('mt-0.5 h-3.5 w-3.5 shrink-0', statusTone[status])} />
       <div className="min-w-0">
-        <div className="text-sm font-medium text-ink">
+        <div className={cn('text-[13px] font-medium leading-tight text-ink', active && 'text-ink')}>
           {index != null ? `${index}. ` : ''}
           {stage.label_zh}
         </div>
-        <div className="truncate text-xs text-ink-muted">{STATUS_LABEL_ZH[status]}</div>
+        <div className="mt-0.5 truncate text-[10px] leading-tight text-ink-muted">
+          {STATUS_LABEL_ZH[status]}
+        </div>
       </div>
     </button>
   )
@@ -120,10 +128,12 @@ export function PipelineRail({
   const qualityHighlight = isQualityPhaseHighlight(workflow)
 
   return (
-    <aside className="flex h-full w-[clamp(12.5rem,16vw,15rem)] shrink-0 flex-col border-r border-border bg-surface">
-      <div className="border-b border-border px-3 py-2">
-        <div className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">流水线</div>
-        <div className="mt-0.5 text-sm font-semibold text-ink">创作主链</div>
+    <aside className="flex h-full w-[clamp(11.5rem,14vw,13.5rem)] shrink-0 flex-col border-r border-border bg-surface">
+      <div className="border-b border-border px-2.5 py-2">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-faint">
+          流水线
+        </div>
+        <div className="mt-0.5 text-[13px] font-semibold text-ink">创作主链</div>
         {workflow ? (
           <div className="mt-1.5">
             <Badge
@@ -142,7 +152,7 @@ export function PipelineRail({
           </div>
         ) : null}
       </div>
-      <ol className="flex-1 space-y-0.5 overflow-auto p-1.5">
+      <ol className="flex-1 space-y-px overflow-auto p-1">
         {stages.map((stage, index) => {
           const status = resolveStageStatus(stage, workflow)
           return (
@@ -159,16 +169,16 @@ export function PipelineRail({
         })}
 
         {qualityStages.length > 0 ? (
-          <li className="pt-3">
+          <li className="pt-2">
             <div
               className={cn(
-                'mb-1 px-3 text-[11px] font-semibold uppercase tracking-wide text-ink-faint',
+                'mb-0.5 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-ink-faint',
                 qualityHighlight && 'text-amber-700',
               )}
             >
               质检环
             </div>
-            <ul className="space-y-1">
+            <ul className="space-y-px">
               {qualityStages.map((stage) => {
                 const status = resolveStageStatus(stage, workflow)
                 const highlight =

@@ -5,6 +5,10 @@ import { USER_DECISION_OPTIONS } from '@/config/workbench'
 import { dramaApi } from '@/services/drama'
 import { formatApiError } from '@/services/errors'
 import { createCommandId } from '@/utils/cn'
+import {
+  complianceRiskTypeLabelZh,
+  qualityDimensionLabelZh,
+} from '@/utils/reportLabels'
 import type { UserDecisionOption, WorkflowState } from '@/types/domain'
 
 type QualityReportLite = {
@@ -74,7 +78,7 @@ export function QualityLoopPanel({
                 <ul className="mt-2 grid grid-cols-2 gap-1 text-xs text-ink-muted">
                   {Object.entries(qualityReport.dimensions).map(([k, v]) => (
                     <li key={k} className="flex justify-between rounded bg-canvas px-2 py-1">
-                      <span>{k}</span>
+                      <span>{qualityDimensionLabelZh(k)}</span>
                       <span>{v.score ?? '—'}</span>
                     </li>
                   ))}
@@ -97,7 +101,9 @@ export function QualityLoopPanel({
               <ul className="space-y-1">
                 {(complianceReport.risk_items ?? []).slice(0, 6).map((item, idx) => (
                   <li key={`${item.type}-${idx}`} className="rounded bg-canvas px-2 py-1.5 text-xs">
-                    <span className="font-medium uppercase text-amber-700">{item.type}</span>
+                    <span className="font-medium text-amber-700">
+                      {complianceRiskTypeLabelZh(item.type)}
+                    </span>
                     <span className="ml-2 text-ink-muted">{item.description}</span>
                   </li>
                 ))}

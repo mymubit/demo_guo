@@ -23,7 +23,7 @@
 | drama.episode-designer | episode_card, episode_emotion_8nodes, qdn_emotion_model, hook_effectiveness, emotion_externalization_dict, episode_structure, rhythm_rules, foreshadowing_rules, conflict_escalation, payment_checkpoint_3card, learned_rules |
 | drama.script-writer | episode_structure, continuity, production_feasibility, quantitative_constraints, writing_prohibitions, writing_requirements, information_asymmetry_mechanics, emotion_externalization_dict, ai_tone_forbidden, dialogue_craft, qdn_emotion_model, format_standard, hook_effectiveness, episode_emotion_8nodes, dialogue_quality, learned_rules |
 | drama.script-scorer | scoring, continuity, world_rules, format_standard, episode_structure, character_rules, hook_effectiveness, payment_checkpoint_3card, learned_rules |
-| drama.compliance-guard | compliance_block, originality_rules, learned_rules |
+| drama.compliance-guard | compliance_block, originality_rules |
 | drama.revision-master | writing_prohibitions, writing_requirements, ai_tone_forbidden, emotion_externalization_dict, dialogue_quality, rhythm_rules, quantitative_constraints, format_standard, learned_rules |
 | drama.delivery-tool | production_feasibility, budget_estimation, platform_ops, platform_specific, three_phase_compliance_checklist, format_standard, dialogue_quality, hook_effectiveness, scoring, foreshadowing_rules, learned_rules |
 

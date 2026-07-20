@@ -1,0 +1,21 @@
+version: "1.0.0"
+artifact_key: story_bible
+checks:
+  - id: synopsis_object
+    type: object_keys
+    path: synopsis
+    keys: [short, full]
+  - id: has_logline
+    type: field_nonempty
+    path: logline
+  - id: has_title
+    type: field_nonempty
+    path: drama_title
+  - id: six_stages
+    type: list_length
+    path: series_structure.six_stage_structure
+    length: 6
+  - id: has_characters
+    type: list_min
+    path: characters
+    min: 1

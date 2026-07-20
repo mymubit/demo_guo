@@ -209,12 +209,12 @@ external_tools:
 admin_settings:
   policy: manifest/config-policy.yaml
   sections:
-    - {id: model_routing, source: foundation/constraints/agent-runtime.yaml}
-    - {id: script_format, source: foundation/constraints/script-format.yaml}
-    - {id: quality_thresholds, source: foundation/constraints/quality-scoring.yaml}
-    - {id: commercial, source: foundation/constraints/commercial-formulas.yaml}
-    - {id: scoring_presets, source: foundation/constraints/scoring-presets.yaml}
-    - {id: platform_policies, source: foundation/constraints/platform-profiles.yaml}
-    - {id: production_feasibility, source: foundation/constraints/production-feasibility.yaml}
+    - {id: model_routing, source: foundation/constraints/agent-runtime.yaml, label_zh: 模型与路由}
+    - {id: script_format, source: foundation/constraints/script-format.yaml, label_zh: 剧本格式}
+    - {id: quality_thresholds, source: foundation/constraints/quality-scoring.yaml, label_zh: 质量阈值}
+    - {id: commercial, source: foundation/constraints/commercial-formulas.yaml, label_zh: 商业公式}
+    - {id: scoring_presets, source: foundation/constraints/scoring-presets.yaml, label_zh: 评分预设}
+    - {id: platform_policies, source: foundation/constraints/platform-profiles.yaml, label_zh: 平台政策}
+    - {id: production_feasibility, source: foundation/constraints/production-feasibility.yaml, label_zh: 制作可行性}
   require_audit_reason: true
   allow_git_ssot_override: false

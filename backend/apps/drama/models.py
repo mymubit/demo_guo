@@ -261,3 +261,77 @@ class DramaLlmProvider(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+
+class DramaLlmCallLog(models.Model):
+    """LLM 调用全链路日志（prompt / response / 耗时 / token）。"""
+
+    class Status(models.TextChoices):
+        SUCCESS = "success", "成功"
+        ERROR = "error", "失败"
+
+    class Purpose(models.TextChoices):
+        ARTIFACT_GENERATION = "artifact_generation", "角色产物生成"
+        QUALITY_SCORING = "quality_scoring", "质量评分"
+        COMPLIANCE_CHECK = "compliance_check", "合规检查"
+        CONNECTIVITY_TEST = "connectivity_test", "连通性测试"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    project = models.ForeignKey(
+        DramaProject,
+        on_delete=models.CASCADE,
+        related_name="llm_call_logs",
+        null=True,
+        blank=True,
+    )
+    generation_job = models.ForeignKey(
+        "DramaGenerationJob",
+        on_delete=models.SET_NULL,
+        related_name="llm_call_logs",
+        null=True,
+        blank=True,
+    )
+    actor = models.CharField("操作人", max_length=128, default="system")
+    role = models.CharField("技能角色", max_length=64, blank=True, default="")
+    purpose = models.CharField(
+        "调用用途",
+        max_length=64,
+        choices=Purpose.choices,
+        default=Purpose.ARTIFACT_GENERATION,
+    )
+    seq_in_job = models.PositiveIntegerField("任务内序号", default=0)
+    model_name = models.CharField("模型", max_length=128, blank=True, default="")
+    base_url = models.CharField("接口地址", max_length=512, blank=True, default="")
+    system_prompt = models.TextField("系统提示词", blank=True, default="")
+    user_prompt = models.TextField("用户提示词", blank=True, default="")
+    response_text = models.TextField("模型回复正文", blank=True, default="")
+    response_body = models.JSONField("原始响应", null=True, blank=True)
+    status = models.CharField(
+        "状态",
+        max_length=16,
+        choices=Status.choices,
+        default=Status.SUCCESS,
+    )
+    http_status = models.PositiveIntegerField("HTTP 状态码", null=True, blank=True)
+    error_message = models.TextField("错误信息", blank=True, default="")
+    latency_ms = models.PositiveIntegerField("耗时(ms)", default=0)
+    prompt_tokens = models.PositiveIntegerField("Prompt Tokens", null=True, blank=True)
+    completion_tokens = models.PositiveIntegerField("Completion Tokens", null=True, blank=True)
+    total_tokens = models.PositiveIntegerField("Total Tokens", null=True, blank=True)
+    provider_request_id = models.CharField("厂商 Request ID", max_length=128, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "drama_llm_call_log"
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["project", "-created_at"]),
+            models.Index(fields=["generation_job", "seq_in_job"]),
+            models.Index(fields=["role", "-created_at"]),
+            models.Index(fields=["status", "-created_at"]),
+        ]
+        verbose_name = "LLM 调用日志"
+        verbose_name_plural = verbose_name
+
+    def __str__(self) -> str:
+        return f"{self.role or self.purpose} @ {self.created_at:%Y-%m-%d %H:%M:%S}"

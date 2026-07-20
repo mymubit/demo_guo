@@ -9,12 +9,15 @@ modules:
 - market-radar
 - formula-analysis
 - tear-down-6d
+module_policy:
+  source: modules/catalog.yaml
+  evaluate_enable_when: true
 rule_policy:
   scopes:
   - global_core
   - genre_profile
   - stage_playbook
-  max_chars: 3200
+  max_chars: 2700
 skill_dir: roles/drama-topic-director
 input_contract:
   parameter_refs:
