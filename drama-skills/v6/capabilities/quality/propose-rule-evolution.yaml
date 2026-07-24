@@ -1,0 +1,8 @@
+id: capability.propose-rule-evolution
+version: 1
+inputs: [quality_history]
+outputs: [evolution_log_entry, evolution_proposal]
+rules:
+  - evolution.log-batch-below-threshold
+  - evolution.propose-after-two-dimension-failures
+side_effects: none

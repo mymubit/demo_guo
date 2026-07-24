@@ -1,0 +1,26 @@
+id: operation.design-episode-plan
+version: 1
+persona: persona.episode-designer
+user_inputs: [episode_count, duration_target, planning_requests, user_constraints]
+system_inputs: [engine_version, artifact_schema_versions, active_rule_versions, caller_identity]
+reads: [project_brief, story_bible, project_settings]
+writes: [episode_plan]
+scope:
+  required: full_series
+required_params: [project_id, episode_count, duration_target, base_version]
+capabilities:
+  - capability.decompose-story-stage
+  - capability.design-episode-card
+  - capability.design-emotion-nodes
+  - capability.design-hooks
+  - capability.map-foreshadowing
+  - capability.design-paywall
+  - capability.plan-world-rule-reveals
+constraints:
+  user_levels: [must_preserve, must_change, preference, avoid, question, system_lock]
+  readonly: [story_bible, project_brief.approved_constraints]
+  write_scope: episode_plan_only
+validation: [schema, scope, story_bible_invariants, continuity, hook_distribution, paywall_distribution, base_version]
+outputs: [candidate, validation, structural_diff, semantic_diff, narrative_impact_diff, change_set, impact_plan]
+stages: [command, plan, execution_pack, candidate, validation, change_set, impact_plan, commit]
+transaction: {plan_required: true, candidate_only: true, validation_required: true, atomic_commit: true}

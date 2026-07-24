@@ -1,0 +1,22 @@
+{
+  "drama_title": "测试短剧",
+  "source_artifact": "latest_script",
+  "storyboard": [],
+  "visual_assets": [],
+  "marketing_assets": [],
+  "production_plan": {
+    "complexity_score": 40,
+    "complexity_band": "standard",
+    "cost_drivers": ["室内对白戏为主"],
+    "high_cost_scenes": [],
+    "lower_cost_alternatives": ["用特写替代群戏"]
+  },
+  "release_checklist": {
+    "target_platform": "generic",
+    "policy_version": null,
+    "verified_at": null,
+    "blocking_items": [],
+    "missing_materials": [],
+    "can_release": true
+  }
+}

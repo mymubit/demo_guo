@@ -7,6 +7,7 @@ items:
   - rule_key: t1.global.philosophy.cross-section
     section: philosophy
     title: 山音横截面理论
+    description: 开场从最大张力切入，不讲人生编年史
     priority: 10
     source_ref: knowledge/craft/shanyin-screenwriting-methodology.md
     body: |
@@ -16,6 +17,7 @@ items:
   - rule_key: t1.global.philosophy.mckee-value-shift
     section: philosophy
     title: McKee 价值转变
+    description: 每场戏必须有可感知的价值极性变化
     priority: 11
     source_ref: knowledge/craft/shanyin-screenwriting-methodology.md
     body: |

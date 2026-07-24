@@ -1,0 +1,24 @@
+{
+  "title": "测试选题",
+  "genre_matrix": {
+    "emotion": "revenge",
+    "identity": "reborn",
+    "conflict": "family",
+    "world": "modern",
+    "audience_channel": "female"
+  },
+  "theme_code": "matrix",
+  "matrix_key": "revenge-reborn-family-modern|ch:female",
+  "rule_params": {
+    "reversal_density": 0.4,
+    "emotion_curve": [3, 2, 1, 4, 7, 8, 9, 10],
+    "act_ratio": [0.1, 0.2, 0.2, 0.2, 0.15, 0.15],
+    "hook_types": ["身份反转"]
+  },
+  "episode_count": 30,
+  "core_idea": "被家族抛弃的继承人重生后夺回人生",
+  "target_audience": "都市女性",
+  "core_conflict": "个人尊严与家族控制",
+  "hook_concept": "主角提前知道背叛",
+  "compliance_risk": "low"
+}

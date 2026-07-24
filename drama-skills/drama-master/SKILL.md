@@ -45,7 +45,7 @@ output_schema:
    B. 已有故事 / 小说 / 大纲         → 故事改编通道（直接进剧本蓝图官改编模式）
 ② 题材（原创通道）：受众频道+四轴矩阵（见 `foundation/theme-matrix.yaml`）或一句话创意
 ③ 集数规模：正整数；工作台可提供常用区间快捷选择
-④ 目标平台：读取 `foundation/constraints/platform-profiles.yaml`
+④ 目标平台：读取 `foundation/presets/platform-profiles.yaml`
 ⑤ 是否需要宣发交付包（可选工具）
 ```
 
@@ -114,11 +114,11 @@ output_schema:
 
 ## 技能进化闭环
 
-创作与摄入产生的进化信号统一交给 `@drama-intake`（四轨道定义见 `drama-intake/SKILL.md`）：
+创作与摄入产生的进化信号统一交给 `@drama-intake`（双轨道见 `drama-intake/SKILL.md`）：
 
-- 评分官某维度连续 2 次 <70 → 轨道一：规则进化提案
-- 创作中发现好钩子/反转/对白/结构 → 轨道二：灵感归档
-- 用户提交外部文章/教材/剧本 → 按内容路由轨道一/三/四
+- 评分官某维度连续 2 次 <70 → 轨道 A：规则升级提案
+- 创作中发现好钩子/反转/对白/结构 → 轨道 B：写入 `inspirations/inspirations.md`
+- 用户提交外部文章/教材/剧本 → 按内容路由轨道 A / B
 - 新模式 3+ 案例验证 → 升格为正式规则
 
 ---
@@ -126,7 +126,7 @@ output_schema:
 ## 参考文档
 
 - `knowledge/craft/shanyin-screenwriting-methodology.md` — 横截面 / Ghost-Lie-Flaw / McKee
-- `knowledge/market/douyin-formulas.md` — 爆款公式
+- `knowledge/market/douyin-formulas/` — 爆款公式（按题材 catalog 匹配）
 - `foundation/theme-matrix.yaml` — 频道+四轴矩阵与参数合成 SSOT
 - `knowledge/craft/theme-templates.md` — 规则模板量化参数
 - `knowledge/quality/tier4-compliance.md` — 合规红线

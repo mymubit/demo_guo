@@ -1,0 +1,12 @@
+id: capability.assess-originality
+version: 1
+inputs: [latest_script, title, reference_materials, target_market, comparison_tools, ai_assets]
+outputs: [originality_report]
+rules:
+  - originality.scan.cover-six-protected-elements
+  - originality.expression.borrow-only-abstract-mechanism
+  - originality.similarity.use-canonical-thresholds
+  - originality.comparison.never-fabricate-pass
+  - originality.ai-rights.forbid-identifiable-imitation
+  - originality.ai-rights.require-release-label
+side_effects: none

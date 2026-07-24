@@ -44,8 +44,12 @@ class SchemaValidator:
         self.validate(instance, schema, schema_path=path)
 
     def _resolve_path(self, relative_path: str) -> Path:
-        if relative_path.startswith("schemas/"):
+        # schemas/ 与 v6/ 均相对 skills_root；其余相对 schemas/
+        if relative_path.startswith("schemas/") or relative_path.startswith("v6/"):
             return self.skills_root / relative_path
+        candidate = self.skills_root / relative_path
+        if candidate.exists():
+            return candidate
         return self.skills_root / "schemas" / relative_path
 
     def _build_validator(

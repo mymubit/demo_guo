@@ -1,0 +1,33 @@
+version: 1
+fields:
+  creative_request: {label_zh: 创作要求, widget: textarea, project_default: core_idea, placeholder: 描述核心创意、受众期待和必须成立的卖点}
+  audience: {label_zh: 目标受众, widget: text, project_default: audience_channel}
+  platform: {label_zh: 目标平台, widget: text, project_default: target_platform}
+  format_preferences: {label_zh: 形式偏好, widget: textarea, placeholder: 节奏、体量和叙事形式偏好}
+  user_constraints: {label_zh: 硬性约束, widget: textarea, placeholder: 必须保留、必须修改和避免事项}
+  story_direction: {label_zh: 故事方向, widget: textarea, placeholder: 主线、冲突与主题方向}
+  character_requests: {label_zh: 角色要求, widget: textarea, placeholder: 人物关系、动机与成长方向}
+  world_requests: {label_zh: 世界观要求, widget: textarea, placeholder: 世界规则、权力结构与边界}
+  structure_requests: {label_zh: 结构要求, widget: textarea, placeholder: 阶段、反转、伏笔与付费点要求}
+  episode_count: {label_zh: 总集数, widget: number, project_default: episode_count, minimum: 1}
+  duration_target: {label_zh: 单集时长目标, widget: number, placeholder: 秒}
+  planning_requests: {label_zh: 分集规划要求, widget: textarea, placeholder: 重点集、钩子、情绪与付费节点要求}
+  episode_range: {label_zh: 本次集数范围, widget: episode_range}
+  change_requests: {label_zh: 分集改动要求, widget: textarea, placeholder: 需要重排或强化的分集内容}
+  writing_requests: {label_zh: 本批写作要求, widget: textarea, placeholder: 本批次重点执行的情节与场面}
+  style_preferences: {label_zh: 文本风格, widget: textarea, placeholder: 对白、节奏、镜头和情绪表达偏好}
+  preservation_requests: {label_zh: 必须保留, widget: textarea, placeholder: 本次执行不得改变的设定或内容}
+  scoring_focus: {label_zh: 评分重点, widget: textarea, placeholder: 独立评分需要重点检查的维度}
+  review_notes: {label_zh: 评审备注, widget: textarea, placeholder: 给评分角色的补充背景}
+  target_platform: {label_zh: 审查平台, widget: text, project_default: target_platform}
+  policy_version: {label_zh: 政策版本, widget: text, project_default: platform_policy.policy_version}
+  review_focus: {label_zh: 合规重点, widget: textarea, placeholder: 指定风险与重点核查内容}
+  revision_requests: {label_zh: 补充修订要求, widget: textarea, placeholder: 在报告问题之外补充修订目标}
+  accepted_findings: {label_zh: 接受的报告问题, widget: findings_checklist}
+  delivery_scope:
+    label_zh: 交付范围
+    widget: checklist
+    project_default: creation_preferences.deliverables
+    options: [{value: storyboard, label_zh: 分镜}, {value: visual, label_zh: 视觉}, {value: marketing, label_zh: 营销}, {value: interactive, label_zh: 互动}, {value: budget, label_zh: 预算}, {value: release, label_zh: 发行}]
+  production_assumptions: {label_zh: 制作假设, widget: textarea, placeholder: 预算、场景、演员和拍摄限制}
+  release_request: {label_zh: 发行要求, widget: textarea, placeholder: 档期、渠道和物料侧重点}

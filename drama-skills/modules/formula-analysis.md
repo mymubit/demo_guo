@@ -29,7 +29,7 @@
 
 1. 读取商业公式中的五类指标并逐项预估
 2. 任一指标低于标准 → 在 `project_brief.blockbuster_factors` 中标注补强方案
-3. 用「人格共鸣」检验：除了爽感，观众能否说出「这个角色像我」（2026 转型趋势，见 `knowledge/market/douyin-formulas.md`）
+3. 用「人格共鸣」检验：除了爽感，观众能否说出「这个角色像我」（2026 转型趋势，见 `knowledge/market/douyin-formulas/` 命中题材的公式文件）
 
 ## 失败条件
 

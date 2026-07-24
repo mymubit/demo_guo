@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""配置覆盖策略解析（移植自 build/lib/config_resolver.py）。"""
+"""配置覆盖策略解析（移植自 tools/lib/config_resolver.py）。"""
 from __future__ import annotations
 
 import copy

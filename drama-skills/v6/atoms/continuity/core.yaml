@@ -1,0 +1,45 @@
+version: 1
+domain: continuity
+rules:
+  - id: continuity.context.use-explicit-episode-scope
+    version: 1
+    category: continuity
+    statement: Require an explicit episode range and reject writing outside that range.
+    severity: hard
+    applies_when: {operation_kind: write_episode}
+    source_refs:
+      - v5://foundation/rules/04-scene-dialogue.yaml#t1.global.writing_requirements.episode-scope
+    consumers: [capability.prepare-episode-writing]
+    validation: {type: deterministic, validator: explicit-episode-scope}
+  - id: continuity.context.require-immediate-predecessor
+    version: 1
+    category: continuity
+    statement: For episode N greater than one, accept only episode N-1 as previous-episode full text.
+    severity: hard
+    applies_when: {operation_kind: write_episode}
+    source_refs:
+      - v5://foundation/rules/03-structure.yaml#t1.global.continuity.checkpoint
+      - v5://foundation/rules/04-scene-dialogue.yaml#t1.global.writing_requirements.episode-scope
+    consumers: [capability.load-episode-context, capability.prepare-episode-writing]
+    validation: {type: deterministic, validator: immediate-predecessor}
+  - id: continuity.checkpoint.emit-after-each-episode
+    version: 1
+    category: continuity
+    statement: Emit one memory checkpoint after each completed episode and bind its episode number to that episode.
+    severity: hard
+    applies_when: {episode_completed: true}
+    source_refs:
+      - v5://foundation/rules/03-structure.yaml#t1.global.continuity.checkpoint
+      - v5://foundation/constraints/continuity-checkpoint.yaml
+    consumers: [capability.emit-memory-checkpoint]
+    validation: {type: deterministic, validator: checkpoint-episode-binding}
+  - id: continuity.checkpoint.require-canonical-state
+    version: 1
+    category: continuity
+    statement: Record character states, active clues, foreshadowing, rhythm state, and next-episode constraints in every memory checkpoint.
+    severity: hard
+    applies_when: {episode_completed: true}
+    source_refs:
+      - v5://foundation/constraints/continuity-checkpoint.yaml
+    consumers: [capability.emit-memory-checkpoint, capability.load-episode-context]
+    validation: {type: schema, validator: memory-checkpoint-schema}

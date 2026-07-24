@@ -46,11 +46,103 @@ class SkillsProgressiveLoadTests(SimpleTestCase):
         self.assertIn("禁止字段", anti)
         knowledge = loader.load_knowledge_for_role(
             "drama.topic-director",
-            {"target_platform": "douyin", "entry_type": "original_track"},
+            {
+                "target_platform": "douyin",
+                "entry_type": "original_track",
+                "audience_channel": "female",
+                "genre_matrix": {
+                    "emotion": "revenge",
+                    "identity": "hidden-elite",
+                    "conflict": "family",
+                    "world": "modern",
+                },
+            },
         )
         self.assertTrue(knowledge)
+        self.assertIn("隐藏身份", knowledge)
         few = loader.load_fewshots("drama.topic-director")
         self.assertIn("few-shot", few.lower())
+
+    def test_douyin_formulas_skipped_when_platform_not_douyin(self):
+        loader = SkillsBundleLoader()
+        knowledge = loader.load_knowledge_for_role(
+            "drama.topic-director",
+            {
+                "target_platform": "generic",
+                "entry_type": "original_track",
+                "genre_matrix": {
+                    "emotion": "revenge",
+                    "identity": "hidden-elite",
+                    "conflict": "family",
+                    "world": "modern",
+                },
+            },
+        )
+        self.assertNotIn("隐藏身份", knowledge)
+        self.assertNotIn("_shared", knowledge)
+
+    def test_douyin_formulas_injected_only_for_douyin_platform(self):
+        loader = SkillsBundleLoader()
+        settings_base = {
+            "entry_type": "original_track",
+            "genre_matrix": {
+                "emotion": "revenge",
+                "identity": "hidden-elite",
+                "conflict": "family",
+                "world": "modern",
+            },
+        }
+        for platform, should_include in (
+            ("douyin", True),
+            ("kuaishou", False),
+            ("generic", False),
+        ):
+            text = loader.load_knowledge_for_role(
+                "drama.topic-director",
+                {**settings_base, "target_platform": platform},
+            )
+            if should_include:
+                self.assertIn("隐藏身份", text, platform)
+            else:
+                self.assertNotIn("隐藏身份", text, platform)
+
+    def test_douyin_formulas_require_genre_match(self):
+        loader = SkillsBundleLoader()
+        # 平台对但题材不匹配任何公式 → 整包不注入
+        unmatched = loader.load_knowledge_for_role(
+            "drama.topic-director",
+            {
+                "target_platform": "douyin",
+                "entry_type": "original_track",
+                "audience_channel": "general",
+                "genre_matrix": {
+                    "emotion": "nostalgia",
+                    "identity": "student",
+                    "conflict": "survival",
+                    "world": "campus",
+                },
+            },
+        )
+        self.assertNotIn("隐藏身份", unmatched)
+        self.assertNotIn("古风美学", unmatched)
+        self.assertNotIn("标签三级体系", unmatched)
+
+        # 古装 → 命中 ancient-aesthetic
+        ancient = loader.load_knowledge_for_role(
+            "drama.topic-director",
+            {
+                "target_platform": "douyin",
+                "entry_type": "original_track",
+                "genre_matrix": {
+                    "emotion": "love",
+                    "identity": "underdog",
+                    "conflict": "power",
+                    "world": "ancient",
+                },
+            },
+        )
+        self.assertIn("古风美学", ancient)
+        self.assertIn("标签三级体系", ancient)
 
     def test_resolve_theme_code_hard_fails_without_theme(self):
         loader = SkillsBundleLoader()

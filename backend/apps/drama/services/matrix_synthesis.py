@@ -13,7 +13,7 @@ from django.conf import settings
 @lru_cache(maxsize=1)
 def _load_synthesize_module() -> Any:
     root = Path(settings.DRAMA_SKILLS_ROOT)
-    path = root / "build" / "synthesize_matrix_params.py"
+    path = root / "tools" / "optimizers" / "synthesize_matrix_params.py"
     if not path.is_file():
         raise FileNotFoundError(f"找不到矩阵合成脚本: {path}")
     spec = importlib.util.spec_from_file_location("drama_synthesize_matrix_params", path)

@@ -1,0 +1,8 @@
+id: capability.plan-script-revision
+version: 1
+inputs: [latest_script, quality_report, compliance_report, user_issues]
+outputs: [revision_plan]
+rules:
+  - revision.scope.only-address-authorized-findings
+  - revision.require-passing-rescore-before-next-batch
+side_effects: none

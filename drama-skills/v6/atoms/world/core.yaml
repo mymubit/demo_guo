@@ -1,0 +1,144 @@
+version: 1
+domain: world
+rules:
+  - id: world.rule.must-change-action
+    version: 1
+    category: world
+    statement: Keep a world rule only when it changes a character goal, choice, cost, consequence, or resource allocation.
+    severity: hard
+    applies_when: {artifact_component: world_system}
+    source_refs:
+      - v5://foundation/rules/world-rules.yaml#t1.global.world_rules.actionable
+    consumers: [capability.design-world-rules]
+    validation: {type: semantic, validator: world-rule-actionability}
+  - id: world.rule.define-operational-fields
+    version: 1
+    category: world
+    statement: Define applicable subjects, trigger conditions, effects, violation cost, and visible expression for every world rule.
+    severity: hard
+    applies_when: {artifact_component: world_system}
+    source_refs:
+      - v5://foundation/rules/world-rules.yaml#t1.global.world_rules.actionable
+    consumers: [capability.design-world-rules]
+    validation: {type: schema, validator: world-rule-fields}
+  - id: world.rule.drive-concrete-choice
+    version: 1
+    category: world
+    statement: Make every active world rule drive at least one concrete character choice in the planned story.
+    severity: hard
+    applies_when: {world_rule_status: active}
+    source_refs:
+      - v5://modules/world-rules.md#self-check
+    consumers: [capability.design-world-rules, capability.plan-world-rule-reveals]
+    validation: {type: deterministic, validator: world-rule-choice-reference}
+  - id: world.power.identify-scarce-resource-controller
+    version: 1
+    category: world
+    statement: Identify every scarce resource and the actor or institution that controls it.
+    severity: hard
+    applies_when: {artifact_component: world_system}
+    source_refs:
+      - v5://foundation/rules/world-rules.yaml#t1.global.world_rules.power-structure
+    consumers: [capability.design-power-structure]
+    validation: {type: schema, validator: resource-controller}
+  - id: world.power.identify-rule-maker-and-cost-bearer
+    version: 1
+    category: world
+    statement: Identify who makes each governing rule and who bears its normal cost.
+    severity: hard
+    applies_when: {artifact_component: world_system}
+    source_refs:
+      - v5://foundation/rules/world-rules.yaml#t1.global.world_rules.power-structure
+    consumers: [capability.design-power-structure]
+    validation: {type: schema, validator: rule-maker-cost-bearer}
+  - id: world.power.define-exploitable-loophole
+    version: 1
+    category: world
+    statement: Define at least one established institutional loophole the protagonist can exploit without inventing a new rule.
+    severity: soft
+    applies_when: {artifact_component: world_system}
+    source_refs:
+      - v5://foundation/rules/world-rules.yaml#t1.global.world_rules.power-structure
+    consumers: [capability.design-power-structure]
+    validation: {type: schema, validator: institutional-loophole}
+  - id: world.power.sustain-main-conflict
+    version: 1
+    category: world
+    statement: Make the power and resource structure continuously generate main-story conflict rather than remain background description.
+    severity: hard
+    applies_when: {artifact_component: world_system}
+    source_refs:
+      - v5://foundation/rules/world-rules.yaml#t1.global.world_rules.power-structure
+    consumers: [capability.design-power-structure]
+    validation: {type: semantic, validator: power-structure-conflict}
+  - id: world.reveal.through-action-and-consequence
+    version: 1
+    category: world
+    statement: Reveal a world rule through character action and visible consequence, not concentrated narration or explanatory dialogue.
+    severity: hard
+    applies_when: {world_rule_first_appears: true}
+    source_refs:
+      - v5://foundation/rules/world-rules.yaml#t1.global.world_rules.information-release
+    consumers: [capability.plan-world-rule-reveals]
+    validation: {type: semantic, validator: world-rule-dramatized-reveal}
+  - id: world.reveal.limit-new-layer-per-episode
+    version: 1
+    category: world
+    statement: Introduce no more than the configured number of new world-rule layers in one episode.
+    severity: hard
+    applies_when: {artifact: episode_plan}
+    source_refs:
+      - v5://foundation/rules/world-rules.yaml#t1.global.world_rules.information-release
+    consumers: [capability.plan-world-rule-reveals]
+    validation: {type: deterministic, validator: world-rule-layer-count}
+  - id: world.reveal.immediately-affect-choice
+    version: 1
+    category: world
+    statement: Make a newly revealed world rule immediately affect a character choice in its first appearance.
+    severity: hard
+    applies_when: {world_rule_first_appears: true}
+    source_refs:
+      - v5://foundation/rules/world-rules.yaml#t1.global.world_rules.information-release
+    consumers: [capability.plan-world-rule-reveals]
+    validation: {type: deterministic, validator: reveal-choice-reference}
+  - id: world.consistency.same-condition-same-consequence
+    version: 1
+    category: world
+    statement: Produce the same consequence whenever the same world-rule conditions occur.
+    severity: hard
+    applies_when: {world_rule_status: active}
+    source_refs:
+      - v5://foundation/rules/world-rules.yaml#t1.global.world_rules.consistency
+    consumers: [capability.validate-world-consistency]
+    validation: {type: deterministic, validator: condition-consequence-consistency}
+  - id: world.exception.predeclare-source-and-cost
+    version: 1
+    category: world
+    statement: Predeclare the source, trigger, and cost of every exception before the exception resolves a conflict.
+    severity: hard
+    applies_when: {world_rule_has_exception: true}
+    source_refs:
+      - v5://foundation/rules/world-rules.yaml#t1.global.world_rules.consistency
+    consumers: [capability.validate-world-consistency]
+    validation: {type: schema, validator: world-rule-exception-fields}
+  - id: world.rule.register-before-use
+    version: 1
+    category: world
+    statement: Register every active world rule in the approved world system before downstream episode plans or scripts use it.
+    severity: hard
+    applies_when: {operation_kind: downstream_generation}
+    source_refs:
+      - v5://foundation/rules/world-rules.yaml#t1.global.world_rules.consistency
+    consumers: [capability.validate-world-consistency]
+    validation: {type: deterministic, validator: registered-world-rule-reference}
+  - id: world.rule.forbid-temporary-solution-rule
+    version: 1
+    category: world
+    statement: Do not invent a new world rule inside an episode solely to resolve the current conflict.
+    severity: hard
+    applies_when: {operation_kind: downstream_generation}
+    source_refs:
+      - v5://foundation/rules/world-rules.yaml#t1.global.world_rules.consistency
+      - v5://modules/world-rules.md#self-check
+    consumers: [capability.validate-world-consistency]
+    validation: {type: semantic, validator: no-deus-ex-rule}

@@ -1,0 +1,7 @@
+version: 1
+cases:
+  - {id: p0-blocks, rule: compliance.p0.block-on-redline, input: {severity: P0}, expected: block}
+  - {id: p2-nonblocking, rule: compliance.p2.record-without-blocking, input: {severity: P2}, expected: pass-with-advisory}
+  - {id: unchecked-no-pass, rule: compliance.risk.never-default-unchecked-to-pass, input: {dimension_status: not-checked}, expected: revise}
+  - {id: justice-ending-window, rule: compliance.justice.require-ending-closure, input: {story_progress: 0.65}, expected: pass}
+  - {id: motive-keeps-accountability, rule: compliance.values.allow-motive-with-accountability, input: {responsibility_retained: true, consequence_present: true}, expected: pass}

@@ -46,16 +46,6 @@ class ProjectExecutePermission(BasePermission):
         return obj.owner_id == request.user.id
 
 
-class ProjectApprovePermission(BasePermission):
-    """project.approve：故事蓝图审批。"""
-
-    def has_permission(self, request: Request, view: APIView) -> bool:
-        return bool(request.user and request.user.is_authenticated)
-
-    def has_object_permission(self, request: Request, view: APIView, obj: DramaProject) -> bool:
-        return obj.owner_id == request.user.id
-
-
 class DramaConfigReadPermission(BasePermission):
     """drama_config.read。"""
 

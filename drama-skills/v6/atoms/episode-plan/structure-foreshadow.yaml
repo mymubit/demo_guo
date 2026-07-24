@@ -1,0 +1,98 @@
+version: 1
+domain: episode-plan
+rules:
+  - id: foreshadow.type.use-canonical-set
+    version: 1
+    category: foreshadowing
+    statement: Classify foreshadowing only as identity, motivation, relationship, situation, or truth.
+    severity: hard
+    applies_when: {has_foreshadowing: true}
+    source_refs:
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.foreshadowing_rules.types
+    consumers: [capability.map-foreshadowing, operation.revise-episode-plan]
+    validation: {type: schema, validator: canonical-foreshadow-type}
+  - id: foreshadow.reversal.design-backward
+    version: 1
+    category: foreshadowing
+    statement: Design a reversal backward from the reveal through fair clues to concrete setup episodes.
+    severity: hard
+    applies_when: {has_reversal: true}
+    source_refs:
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.foreshadowing_rules.types
+      - v5://modules/reversal-foreshadowing.md
+    consumers: [capability.map-foreshadowing, operation.revise-episode-plan]
+    validation: {type: semantic, validator: backward-reversal-design}
+  - id: foreshadow.clue.appear-ordinary-before-reveal
+    version: 1
+    category: foreshadowing
+    statement: Present each fair clue as an apparently ordinary detail before the reveal makes its significance visible.
+    severity: soft
+    applies_when: {has_reversal: true}
+    source_refs:
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.foreshadowing_rules.types
+    consumers: [capability.map-foreshadowing, operation.revise-episode-plan]
+    validation: {type: semantic, validator: clue-ordinary-before-reveal}
+  - id: foreshadow.payoff.deliver-emotional-value
+    version: 1
+    category: foreshadowing
+    statement: A foreshadow payoff must deliver emotional value within the configured deadline rather than only disclose plot information.
+    severity: hard
+    applies_when: {foreshadow_status: paid_off}
+    source_refs:
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.foreshadowing_rules.payoff
+    consumers: [capability.map-foreshadowing, operation.revise-episode-plan]
+    validation: {type: semantic, validator: foreshadow-emotional-payoff}
+  - id: foreshadow.overdue.enter-memory-checkpoint
+    version: 1
+    category: continuity
+    statement: Keep every overdue unresolved foreshadow entry in the memory checkpoint until it is paid off or explicitly retired.
+    severity: hard
+    applies_when: {foreshadow_status: overdue}
+    source_refs:
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.foreshadowing_rules.payoff
+    consumers: [capability.map-foreshadowing, capability.load-episode-context]
+    validation: {type: deterministic, validator: overdue-foreshadow-checkpoint}
+  - id: series.stage.use-canonical-order
+    version: 1
+    category: structure
+    statement: Allocate a series only across the canonical opening, warming, climax, turning, sprint, and ending stages in that order.
+    severity: hard
+    applies_when: {artifact: story_bible}
+    source_refs:
+      - v5://foundation/rules/03-structure.yaml#t1.global.series_structure.six-stage
+      - v5://foundation/constraints/series-scale.yaml#stage_order
+    consumers: [capability.decompose-story-stage, operation.revise-episode-plan]
+    validation: {type: deterministic, validator: canonical-stage-order}
+  - id: series.stage.allocate-largest-remainder
+    version: 1
+    category: structure
+    statement: Convert stage ratios to whole episodes with the largest-remainder method while assigning at least one episode to every stage and preserving the total episode count.
+    severity: hard
+    applies_when: {artifact: story_bible}
+    source_refs:
+      - v5://foundation/rules/03-structure.yaml#t1.global.series_structure.six-stage
+      - v5://foundation/constraints/series-scale.yaml#allocation
+    consumers: [capability.decompose-story-stage, operation.revise-episode-plan]
+    validation: {type: deterministic, validator: largest-remainder-stage-allocation}
+  - id: series.stage.override-only-from-project-brief
+    version: 1
+    category: structure
+    statement: Override base stage ratios only with the approved project brief act-ratio parameters; reject other hard-coded ratios.
+    severity: hard
+    applies_when: {artifact: story_bible}
+    source_refs:
+      - v5://foundation/rules/03-structure.yaml#t1.global.series_structure.six-stage
+      - v5://foundation/rules/03-structure.yaml#t1.global.rhythm_rules.act-pacing
+    consumers: [capability.decompose-story-stage, operation.revise-episode-plan]
+    validation: {type: deterministic, validator: stage-ratio-source}
+  - id: execution.episode-context.load-minimum-sufficient-set
+    version: 1
+    category: continuity
+    statement: When generating episode N, load only episode N-1, the latest memory checkpoint, the current episode card, unresolved foreshadowing, and still-active global constraints.
+    severity: hard
+    applies_when: {operation_kind: write_episode}
+    source_refs:
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.foreshadowing_rules.payoff
+      - v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr008
+    consumers: [capability.load-episode-context]
+    validation: {type: deterministic, validator: episode-context-allowlist}

@@ -64,15 +64,11 @@ jobs:
       - name: Drama Skills contracts
         working-directory: drama-skills
         run: |
-          python build/validate_skills.py
-          python build/validate_theme_matrix.py
-          python build/validate_workbench.py
-          python build/validate_artifacts.py
-          python build/validate_config.py
-          python build/validate_workflow.py
-          python build/validate_quality_cases.py
-          python -m unittest discover -s build/tests -p "test_*.py" -v
+          python tools/validators/validate_all.py
+          python -m unittest discover -s tools/tests -p "test_*.py" -v
 
+  # V3：docker-compose.test.yml → migrate + unit tests + scripts/verify_real_stack.py
+  # （Redis / PG / Celery worker + orchestrator；不再引用已删 GenerationService）
   real-celery-stack:
     runs-on: ubuntu-latest
     steps:

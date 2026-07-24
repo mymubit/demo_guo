@@ -15,10 +15,8 @@ from apps.core.exceptions import (
     BusinessException,
 )
 from apps.core.schema_validator import SchemaValidator
-from apps.drama.models import DramaAuditEvent, DramaProject, DramaWorkflowState
+from apps.drama.models import DramaAuditEvent, DramaProject, DramaProjectRuntime
 from apps.drama.services.skills_loader import get_skills_loader
-from apps.drama.services.workflow_engine import WorkflowEngine
-from apps.drama.services.workflow_service import WorkflowService
 
 
 class ProjectSettingsService:
@@ -76,6 +74,9 @@ class ProjectSettingsService:
         episode_count: int | None = None,
         core_idea: str | None = None,
         external_story: str | None = None,
+        audience_channel: str | None = None,
+        target_platform: str | None = None,
+        reference_dramas: list[str] | None = None,
     ) -> DramaProject:
         project = DramaProject.objects.create(
             owner=owner,
@@ -99,12 +100,22 @@ class ProjectSettingsService:
             settings["core_idea"] = core_idea
         if external_story is not None:
             settings["external_story"] = external_story
+        if audience_channel:
+            settings["audience_channel"] = audience_channel
+        if target_platform:
+            settings["target_platform"] = target_platform
+        if reference_dramas:
+            settings["reference_dramas"] = reference_dramas
         project.settings = settings
         project.save(update_fields=["settings", "skills_version", "updated_at"])
 
-        engine = WorkflowEngine(self.loader.workflow_transitions)
-        state = engine.create(str(project.id), entry_type)
-        DramaWorkflowState.objects.create(project=project, state=state, version=0)
+        state = {
+            "schema_version": "v6-project-runtime.v1",
+            "revision": 0,
+            "last_operation": None,
+            "last_call_id": None,
+        }
+        DramaProjectRuntime.objects.create(project=project, metadata=state, revision=0)
 
         DramaAuditEvent.objects.create(
             project=project,
@@ -142,7 +153,6 @@ class ProjectSettingsService:
         self.validator.validate_file(derived, self.schema_path)
 
         old_settings = project.settings
-        blueprint_changed = self._blueprint_inputs_changed(old_settings, derived)
 
         now = datetime.now(timezone.utc).isoformat()
         audit = derived.get("audit", {})
@@ -156,9 +166,6 @@ class ProjectSettingsService:
         project.settings_revision = expected_revision + 1
         project.title = derived.get("title") or project.title
         project.save(update_fields=["settings", "settings_revision", "title", "updated_at"])
-
-        if blueprint_changed:
-            WorkflowService().invalidate_downstream(project, actor=actor)
 
         DramaAuditEvent.objects.create(
             project=project,
@@ -179,7 +186,7 @@ class ProjectSettingsService:
             }
         platform = result.get("target_platform", "generic")
         profiles = self.loader.load_seed_yaml(
-            "foundation/constraints/platform-profiles.yaml"
+            "foundation/presets/platform-profiles.yaml"
         ).get("platforms", {})
         profile = profiles.get(platform, {})
         result["platform_policy"] = {
@@ -190,7 +197,7 @@ class ProjectSettingsService:
         return result
 
     def _matrix_key(self, settings: dict[str, Any]) -> str:
-        """与 drama-skills build/synthesize_matrix_params.py 的 matrix_key 规则保持一致。"""
+        """与 drama-skills tools/optimizers/synthesize_matrix_params.py 的 matrix_key 规则保持一致。"""
         matrix = settings.get("genre_matrix") or {}
         theme = self.loader.load_seed_yaml("foundation/theme-matrix.yaml")
         dim_order = theme.get("dim_order") or ["emotion", "identity", "conflict", "world"]
@@ -228,18 +235,3 @@ class ProjectSettingsService:
                     f"标签 {tag} 要求世界观 {allowed_worlds}，当前 world={world}",
                     http_status=422,
                 )
-
-    def _blueprint_inputs_changed(
-        self, old: dict[str, Any], new: dict[str, Any]
-    ) -> bool:
-        keys = (
-            "core_idea",
-            "external_story",
-            "audience_channel",
-            "genre_matrix",
-            "protagonist_structure",
-            "flavor_tags",
-            "episode_count",
-            "adapt_notes",
-        )
-        return any(old.get(k) != new.get(k) for k in keys)

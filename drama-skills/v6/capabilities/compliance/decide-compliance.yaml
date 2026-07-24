@@ -1,0 +1,13 @@
+id: capability.decide-compliance
+version: 1
+inputs: [compliance_assessment]
+outputs: [compliance_report]
+rules:
+  - compliance.p0.block-on-redline
+  - compliance.p1.require-resolution
+  - compliance.p2.record-without-blocking
+  - compliance.risk.never-default-unchecked-to-pass
+  - compliance.delivery.require-materials
+  - compliance.fuse.block-p0-or-unresolved-p1
+  - originality.comparison.never-fabricate-pass
+side_effects: none

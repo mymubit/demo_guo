@@ -5,7 +5,7 @@ parameters:
   entry_type:
     type: string
     label_zh: 创作入口
-    enum_source: orchestration.*.entry_type
+    enum: [original_track, story_adapt]
     default: original_track
     required: true
     options:
@@ -90,7 +90,7 @@ parameters:
     type: string
     label_zh: 目标平台
     required: true
-    source: foundation/constraints/platform-profiles.yaml#platforms
+    source: foundation/presets/platform-profiles.yaml#platforms
     default: generic
 
   batch_episode_max:
@@ -169,7 +169,7 @@ parameters:
     type: string
     label_zh: 评分预设
     required: false
-    source: foundation/constraints/scoring-presets.yaml#presets
+    source: foundation/presets/scoring-presets.yaml#presets
     default: standard
     options:
       - {value: standard, label_zh: 标准}

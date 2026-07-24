@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills-v6://contracts/capability",
+  "type": "object",
+  "required": ["id", "version", "inputs", "outputs", "rules", "side_effects"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^capability\\.[a-z0-9-]+$"},
+    "version": {"type": "integer", "minimum": 1},
+    "inputs": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "outputs": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "rules": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "side_effects": {"const": "none"}
+  },
+  "additionalProperties": false
+}

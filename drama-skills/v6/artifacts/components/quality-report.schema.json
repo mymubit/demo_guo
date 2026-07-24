@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills-v6://artifacts/components/quality-report",
+  "type": "object",
+  "required": ["scored_artifact", "independent_judge", "scoring_preset", "dimensions", "overall_score", "grade", "revision_required", "vetoes", "continuity_final_review", "can_continue_next_batch"],
+  "properties": {
+    "scored_artifact": {"const": "latest_script"},
+    "independent_judge": {"const": true},
+    "scoring_preset": {"enum": ["standard", "strict", "relaxed", "rhythm_first"]},
+    "dimensions": {"type": "array", "minItems": 10, "maxItems": 10, "items": {"$ref": "#/$defs/dimension"}},
+    "overall_score": {"type": "number", "minimum": 0, "maximum": 100},
+    "grade": {"enum": ["S", "A", "B", "C", "D"]},
+    "revision_required": {"type": "array", "items": {"type": "string"}},
+    "vetoes": {"type": "array", "items": {"$ref": "#/$defs/veto"}},
+    "continuity_final_review": {"enum": ["pass", "warning", "fail"]},
+    "can_continue_next_batch": {"type": "boolean"}
+  },
+  "$defs": {
+    "dimension": {"type": "object", "required": ["name", "weight", "evidence", "deductions", "score"], "properties": {"name": {"enum": ["format", "narrative", "conflict", "character", "emotion", "logic", "satisfaction", "hooks", "paywall", "genre_fit"]}, "weight": {"type": "number", "minimum": 0, "maximum": 1}, "evidence": {"type": "array", "minItems": 1, "items": {"type": "string"}}, "deductions": {"type": "array", "items": {"type": "string"}}, "score": {"type": "number", "minimum": 0, "maximum": 100}}, "additionalProperties": false},
+    "veto": {"type": "object", "required": ["kind", "evidence"], "properties": {"kind": {"enum": ["opening-impact", "antagonist-harmful-acts", "series-spanning-suspense"]}, "evidence": {"type": "string", "minLength": 1}}, "additionalProperties": false}
+  },
+  "additionalProperties": false
+}

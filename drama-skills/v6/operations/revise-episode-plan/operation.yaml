@@ -1,0 +1,63 @@
+id: operation.revise-episode-plan
+version: 1
+persona: persona.episode-designer
+user_inputs:
+  - episode_range
+  - change_requests
+  - preservation_requests
+system_inputs:
+  - engine_version
+  - artifact_schema_versions
+  - active_rule_versions
+  - caller_identity
+reads:
+  - story_bible
+  - current_episode_plan
+  - project_settings
+  - adjacent_episode_context
+writes:
+  - episode_plan
+scope:
+  required: episode_range
+  adjacent_context_before: 1
+  adjacent_context_after: 1
+required_params:
+  - episode_range
+  - change_requests
+  - base_version
+capabilities:
+  - capability.decompose-story-stage
+  - capability.design-episode-card
+  - capability.design-emotion-nodes
+  - capability.design-hooks
+  - capability.map-foreshadowing
+  - capability.design-paywall
+constraints:
+  user_levels: [must_preserve, must_change, preference, avoid, question, system_lock]
+  readonly:
+    - story_bible.major_reversal_positions
+    - story_bible.foreshadowing_table
+    - story_bible.paywall_distribution
+  write_scope: requested_episodes_only
+validation:
+  - schema
+  - scope
+  - preservation
+  - field_permissions
+  - narrative_invariants
+  - adjacency
+  - base_version
+outputs:
+  - candidate
+  - validation
+  - structural_diff
+  - semantic_diff
+  - narrative_impact_diff
+  - change_set
+  - impact_plan
+stages: [command, plan, execution_pack, candidate, validation, change_set, impact_plan, commit]
+transaction:
+  plan_required: true
+  candidate_only: true
+  validation_required: true
+  atomic_commit: true

@@ -14,8 +14,7 @@ WORKDIR="$(mktemp -d)"
 trap 'rm -rf "$WORKDIR"' EXIT
 
 echo "==> 校验技能库"
-python3 "$SKILLS_ROOT/build/validate_skills.py"
-python3 "$SKILLS_ROOT/build/validate_theme_matrix.py"
+python3 "$SKILLS_ROOT/tools/validators/validate_all.py"
 
 if ! git ls-remote "$REPO_URL" HEAD &>/dev/null; then
   echo "错误: 无法访问远程仓库 $REPO_URL"
@@ -56,8 +55,7 @@ if [[ ! -f "$WORKDIR/repo/REPOSITORY.md" ]]; then
 ## 校验
 
 ```bash
-python3 build/validate_skills.py
-python3 build/validate_theme_matrix.py
+python3 tools/validators/validate_all.py
 ```
 EOF
 fi

@@ -1,0 +1,10 @@
+id: capability.check-release-readiness
+version: 1
+inputs: [target_platform, platform_policy, ai_content_labeling, filing_materials, title_check, rights_authorization, quality_report, compliance_report]
+outputs: [release_check]
+rules:
+  - release.check.require-canonical-evidence
+  - release.policy.block-unverified-or-expired
+  - compliance.fuse.block-p0-or-unresolved-p1
+  - originality.ai-rights.require-release-label
+side_effects: none

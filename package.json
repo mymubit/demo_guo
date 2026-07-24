@@ -9,7 +9,7 @@
     "test:frontend": "npm --prefix frontend test",
     "lint:frontend": "npm --prefix frontend run lint",
     "build:frontend": "npm --prefix frontend run build",
-    "test:skills": "python drama-skills/build/validate_skills.py && python drama-skills/build/validate_workbench.py && python drama-skills/build/validate_artifacts.py && python drama-skills/build/validate_config.py && python drama-skills/build/validate_workflow.py && python drama-skills/build/validate_quality_cases.py",
+    "test:skills": "python drama-skills/tools/validators/validate_skills.py && python drama-skills/tools/validators/validate_workbench.py && python drama-skills/tools/validators/validate_artifacts.py && python drama-skills/tools/validators/validate_config.py && python drama-skills/tools/validators/validate_workflow.py && python drama-skills/tools/validators/validate_quality_cases.py",
     "test:real": "sh scripts/test-real.sh"
   }
 }

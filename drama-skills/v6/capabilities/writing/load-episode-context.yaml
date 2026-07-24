@@ -1,0 +1,10 @@
+id: capability.load-episode-context
+version: 1
+inputs: [previous_episode, memory_checkpoint, current_episode_card, unresolved_foreshadowing, active_global_constraints]
+outputs: [episode_execution_context]
+rules:
+  - execution.episode-context.load-minimum-sufficient-set
+  - continuity.context.require-immediate-predecessor
+  - continuity.checkpoint.require-canonical-state
+  - foreshadow.overdue.enter-memory-checkpoint
+side_effects: none

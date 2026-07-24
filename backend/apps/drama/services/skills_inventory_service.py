@@ -220,6 +220,7 @@ def build_role_attachments(
         },
         "knowledge_refs": knowledge_refs,
         "knowledge_policy": {
+            "mode": str(knowledge_policy.get("mode") or "index").strip().lower(),
             "max_chars": int(knowledge_policy.get("max_chars") or 0),
         },
         "fewshots": fewshots,
@@ -315,6 +316,211 @@ def build_skills_inventory(loader: SkillsBundleLoader | None = None) -> dict[str
         "modules": modules_out,
         "knowledge_files": knowledge_files,
         "rule_sections": rule_sections,
+        "injection_overview": build_injection_optimization_overview(loader),
+    }
+
+
+def _is_inject_doc_file(path: Path) -> bool:
+    try:
+        head = path.read_text(encoding="utf-8")[:500]
+    except OSError:
+        return False
+    return "inject: doc" in head.lower()
+
+
+def _list_inject_doc_files(loader: SkillsBundleLoader) -> list[dict[str, Any]]:
+    root = loader.root / "knowledge"
+    if not root.is_dir():
+        return []
+    out: list[dict[str, Any]] = []
+    for path in sorted(root.rglob("*.md")):
+        if not _is_inject_doc_file(path):
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        rel = str(path.relative_to(loader.root)).replace("\\", "/")
+        out.append({"path": rel, "chars": len(text), "status": "永不注入"})
+    return out
+
+
+def _skill_reference_paths(loader: SkillsBundleLoader, agent_id: str) -> list[str]:
+    """SKILL.md references 里指向 knowledge 的路径（含仍挂着的 doc 长文）。"""
+    try:
+        entry = loader.get_role_entry(agent_id)
+    except KeyError:
+        return []
+    skill_dir = entry.get("skill_dir") or f"roles/{agent_id.replace('.', '-')}"
+    skill_path = loader.root / skill_dir / "SKILL.md"
+    if not skill_path.is_file():
+        return []
+    try:
+        text = skill_path.read_text(encoding="utf-8")
+    except OSError:
+        return []
+    fm = _parse_frontmatter(text)
+    refs = [str(r) for r in (fm.get("references") or []) if isinstance(r, str)]
+    resolved: list[str] = []
+    for ref in refs:
+        raw = ref.replace("\\", "/")
+        if "knowledge/" not in raw:
+            continue
+        # ../../knowledge/foo.md → knowledge/foo.md
+        idx = raw.find("knowledge/")
+        rel = raw[idx:]
+        path = (loader.root / rel).resolve()
+        if path.is_file():
+            resolved.append(rel)
+    return resolved
+
+
+def build_injection_optimization_overview(
+    loader: SkillsBundleLoader | None = None,
+) -> dict[str, Any]:
+    """运维页「优化成果」：改前长文 vs 改后 exec，带可核对节省量。"""
+    loader = loader or get_skills_loader()
+    excluded_docs = _list_inject_doc_files(loader)
+    excluded_by_path = {d["path"]: d for d in excluded_docs}
+    excluded_total = sum(int(d["chars"]) for d in excluded_docs)
+
+    rows: list[dict[str, Any]] = []
+    for entry in loader.registry.get("roles") or []:
+        agent_id = str(entry.get("agent_id") or "")
+        if not agent_id.startswith("drama."):
+            continue
+        try:
+            contract = loader.get_role_contract(agent_id)
+            breakdown = build_prompt_breakdown(agent_id, settings={}, loader=loader)
+        except Exception:
+            continue
+
+        knowledge_policy = contract.get("knowledge_policy") or {}
+        module_policy = contract.get("module_policy") or {}
+        manifest = breakdown.get("injection_manifest") or {}
+        layers = breakdown.get("layers") or {}
+        know_layer = layers.get("knowledge") if isinstance(layers, dict) else {}
+        knowledge_after = int((know_layer or {}).get("chars") or 0)
+        truncated = bool((know_layer or {}).get("truncated")) or any(
+            isinstance(v, dict) and v.get("truncated") for v in (layers or {}).values()
+        )
+
+        # 改前：SKILL 仍引用的 inject:doc 长文全文合计（若当时全文注入）
+        ref_paths = _skill_reference_paths(loader, agent_id)
+        blocked_docs: list[dict[str, Any]] = []
+        knowledge_before_docs = 0
+        for rel in ref_paths:
+            doc = excluded_by_path.get(rel)
+            if not doc:
+                # 再读一次确认
+                path = loader.root / rel
+                if path.is_file() and _is_inject_doc_file(path):
+                    try:
+                        chars = len(path.read_text(encoding="utf-8"))
+                    except OSError:
+                        continue
+                    doc = {"path": rel, "chars": chars, "status": "永不注入"}
+                else:
+                    continue
+            blocked_docs.append(doc)
+            knowledge_before_docs += int(doc["chars"])
+
+        know_included = list((manifest.get("knowledge") or {}).get("included") or [])
+        exec_files: list[dict[str, Any]] = []
+        for item in know_included:
+            if not isinstance(item, dict):
+                continue
+            path = str(item.get("path") or "").replace("\\", "/")
+            if "-exec." not in path:
+                continue
+            exec_files.append(
+                {
+                    "path": path,
+                    "chars": int(item.get("chars") or 0),
+                    "status": "已注入",
+                }
+            )
+        exec_chars = sum(int(e["chars"]) for e in exec_files)
+        # 知识层节省：停注长文 − 现用 exec（同角色有对照时才有意义）
+        knowledge_saved = max(0, knowledge_before_docs - exec_chars)
+        system_chars = int(breakdown.get("system_total") or 0)
+        # 若仍注入长文，system 还会再大 knowledge_saved
+        system_if_docs = system_chars + knowledge_saved
+
+        wins: list[str] = []
+        if knowledge_saved > 0:
+            wins.append(f"知识少灌 {knowledge_saved:,} 字")
+        if exec_files:
+            wins.append(f"改用 exec×{len(exec_files)}")
+        if blocked_docs:
+            wins.append(f"挡住长文×{len(blocked_docs)}")
+        if bool(module_policy.get("evaluate_enable_when")):
+            skipped = len((manifest.get("modules") or {}).get("skipped") or [])
+            if skipped:
+                wins.append(f"条件跳过模块×{skipped}")
+        budget = int(knowledge_policy.get("max_chars") or 0)
+        if budget > 0:
+            wins.append(f"知识预算≤{budget:,}")
+
+        rows.append(
+            {
+                "agent_id": agent_id,
+                "name_zh": entry.get("name_zh") or agent_id,
+                "system_chars": system_chars,
+                "system_chars_if_docs": system_if_docs,
+                "knowledge_before_chars": knowledge_before_docs,
+                "knowledge_after_chars": knowledge_after,
+                "knowledge_exec_chars": exec_chars,
+                "knowledge_saved_chars": knowledge_saved,
+                "blocked_docs": blocked_docs,
+                "exec_files": exec_files,
+                "modules_included": len(
+                    (manifest.get("modules") or {}).get("included") or []
+                ),
+                "modules_skipped": len(
+                    (manifest.get("modules") or {}).get("skipped") or []
+                ),
+                "evaluate_enable_when": bool(module_policy.get("evaluate_enable_when")),
+                "knowledge_max_chars": budget,
+                "truncated": truncated,
+                "wins": wins,
+                # 兼容旧前端字段
+                "highlights": wins,
+                "knowledge_exec_paths": [e["path"] for e in exec_files],
+            }
+        )
+
+    rows.sort(key=lambda r: int(r.get("knowledge_saved_chars") or 0), reverse=True)
+    saved_sum = sum(int(r.get("knowledge_saved_chars") or 0) for r in rows)
+    exec_sum = sum(int(r.get("knowledge_exec_chars") or 0) for r in rows)
+    roles_with_save = sum(1 for r in rows if int(r.get("knowledge_saved_chars") or 0) > 0)
+
+    return {
+        "title": "注入优化对照（改前长文 vs 改后 exec）",
+        "summary": (
+            f"仓库内 {len(excluded_docs)} 篇 inject:doc 长文共 {excluded_total:,} 字永不进 prompt；"
+            f"有对照的角色合计少灌约 {saved_sum:,} 字（改用 exec {exec_sum:,} 字）。"
+        ),
+        "excluded_docs": excluded_docs,
+        "excluded_docs_chars": excluded_total,
+        "roles": rows,
+        "totals": {
+            "role_count": len(rows),
+            "system_chars_sum": sum(int(r.get("system_chars") or 0) for r in rows),
+            "knowledge_saved_sum": saved_sum,
+            "exec_chars_sum": exec_sum,
+            "excluded_docs_count": len(excluded_docs),
+            "excluded_docs_chars": excluded_total,
+            "roles_with_knowledge_save": roles_with_save,
+            "roles_with_exec": sum(1 for r in rows if r.get("exec_files")),
+            "roles_with_knowledge_budget": sum(
+                1 for r in rows if int(r.get("knowledge_max_chars") or 0) > 0
+            ),
+            "roles_with_enable_when": sum(
+                1 for r in rows if r.get("evaluate_enable_when")
+            ),
+            "roles_truncated": sum(1 for r in rows if r.get("truncated")),
+        },
     }
 
 
@@ -347,7 +553,6 @@ def build_prompt_breakdown(
     _system, _user, manifest = PromptBuilder(loader=loader).build(
         agent_id,
         settings=build_settings,
-        workflow_state={},
         artifacts={},
     )
 
@@ -559,3 +764,232 @@ def build_role_bundle_content(
         "anti_examples": anti,
         "rules": rules,
     }
+
+
+def _module_id_set(entries: Any) -> set[str]:
+    if not isinstance(entries, list):
+        return set()
+    return {str(m.get("id") or "") for m in entries if isinstance(m, dict) and m.get("id")}
+
+
+def _knowledge_path_set(entries: Any) -> set[str]:
+    if not isinstance(entries, list):
+        return set()
+    return {
+        str(m.get("path") or "")
+        for m in entries
+        if isinstance(m, dict) and m.get("path")
+    }
+
+
+def _any_truncated(manifest: dict[str, Any]) -> bool:
+    layers = manifest.get("layers") or {}
+    if isinstance(layers, dict):
+        for stat in layers.values():
+            if isinstance(stat, dict) and stat.get("truncated"):
+                return True
+    for key in ("rules", "knowledge", "modules"):
+        block = manifest.get(key) or {}
+        if isinstance(block, dict) and block.get("truncated"):
+            return True
+    return False
+
+
+def diff_injection_manifests(
+    dry: dict[str, Any],
+    live: dict[str, Any],
+) -> dict[str, Any]:
+    """对比干跑与真实调用的 InjectionManifest（模块 / 知识 / 截断 / 字数）。"""
+    dry_mods = _module_id_set((dry.get("modules") or {}).get("included"))
+    live_mods = _module_id_set((live.get("modules") or {}).get("included"))
+    dry_know = _knowledge_path_set((dry.get("knowledge") or {}).get("included"))
+    live_know = _knowledge_path_set((live.get("knowledge") or {}).get("included"))
+    dry_chars = int(dry.get("system_chars") or 0)
+    live_chars = int(live.get("system_chars") or 0)
+    mismatches: list[dict[str, Any]] = []
+    if dry_mods != live_mods:
+        mismatches.append(
+            {
+                "kind": "modules",
+                "only_dry": sorted(dry_mods - live_mods),
+                "only_live": sorted(live_mods - dry_mods),
+            }
+        )
+    if dry_know != live_know:
+        mismatches.append(
+            {
+                "kind": "knowledge",
+                "only_dry": sorted(dry_know - live_know),
+                "only_live": sorted(live_know - dry_know),
+            }
+        )
+    dry_trunc = _any_truncated(dry)
+    live_trunc = _any_truncated(live)
+    if dry_trunc != live_trunc:
+        mismatches.append(
+            {
+                "kind": "truncated",
+                "dry": dry_trunc,
+                "live": live_trunc,
+            }
+        )
+    char_delta = abs(dry_chars - live_chars)
+    if dry_chars > 0 and (char_delta > 2000 or char_delta / dry_chars > 0.1):
+        mismatches.append(
+            {
+                "kind": "system_chars",
+                "dry": dry_chars,
+                "live": live_chars,
+                "delta": live_chars - dry_chars,
+            }
+        )
+    return {
+        "matched": len(mismatches) == 0,
+        "mismatches": mismatches,
+        "dry_system_chars": dry_chars,
+        "live_system_chars": live_chars,
+        "dry_truncated": dry_trunc,
+        "live_truncated": live_trunc,
+        "dry_checksum": dry.get("checksum"),
+        "live_checksum": live.get("checksum"),
+    }
+
+
+def fetch_latest_live_manifest(agent_id: str) -> dict[str, Any] | None:
+    """取该角色最近一条带 injection_manifest 的调用。"""
+    from apps.drama.models import DramaLlmCallLog
+
+    qs = (
+        DramaLlmCallLog.objects.filter(role=agent_id)
+        .exclude(injection_manifest__isnull=True)
+        .order_by("-created_at")
+    )
+    for log in qs[:20]:
+        manifest = log.injection_manifest
+        if isinstance(manifest, dict) and manifest.get("layers") is not None:
+            return {
+                "llm_log_id": str(log.id),
+                "created_at": log.created_at.isoformat() if log.created_at else None,
+                "status": log.status,
+                "injection_manifest": manifest,
+            }
+    return None
+
+
+def build_live_injection_compare(
+    agent_id: str,
+    dry_manifest: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """干跑 manifest vs 最近真实调用。"""
+    if not isinstance(dry_manifest, dict):
+        return {"available": False, "reason": "no_dry_manifest"}
+    live = fetch_latest_live_manifest(agent_id)
+    if not live:
+        return {"available": False, "reason": "no_live_call"}
+    diff = diff_injection_manifests(dry_manifest, live["injection_manifest"])
+    return {
+        "available": True,
+        "llm_log_id": live["llm_log_id"],
+        "created_at": live["created_at"],
+        "status": live["status"],
+        **diff,
+    }
+
+
+def build_injection_observation_todos(
+    *,
+    loader: SkillsBundleLoader | None = None,
+    lookback: int = 30,
+) -> list[dict[str, Any]]:
+    """Inventory 只读待办：常 truncated / 干跑与最近调用 mismatch。"""
+    from apps.drama.models import DramaLlmCallLog
+
+    loader = loader or get_skills_loader()
+    todos: list[dict[str, Any]] = []
+    roles = [
+        str(e.get("agent_id") or "")
+        for e in (loader.registry.get("roles") or [])
+        if e.get("agent_id") and str(e.get("agent_id")).startswith("drama.")
+    ]
+    for agent_id in roles:
+        if not agent_id:
+            continue
+        recent = list(
+            DramaLlmCallLog.objects.filter(role=agent_id)
+            .exclude(injection_manifest__isnull=True)
+            .order_by("-created_at")[:lookback]
+        )
+        trunc_count = 0
+        for log in recent:
+            m = log.injection_manifest
+            if isinstance(m, dict) and _any_truncated(m):
+                trunc_count += 1
+        if trunc_count >= 2 or (
+            len(recent) >= 1 and trunc_count == len(recent) and trunc_count > 0
+        ):
+            todos.append(
+                {
+                    "kind": "often_truncated",
+                    "agent_id": agent_id,
+                    "message": f"近 {len(recent)} 次调用中有 {trunc_count} 次预算截断",
+                    "reason_zh": (
+                        f"{agent_id} 最近 {len(recent)} 次里有 {trunc_count} 次知识/规则被预算截断，"
+                        "可能丢硬约束。"
+                    ),
+                    "severity": "warn",
+                    "count": trunc_count,
+                    "sample_size": len(recent),
+                    "actions": [
+                        {
+                            "kind": "roles",
+                            "label": "去装配",
+                            "query": {"tab": "roles", "role": agent_id},
+                        },
+                        {
+                            "kind": "live",
+                            "label": "看调用",
+                            "query": {"tab": "live", "role": agent_id},
+                        },
+                    ],
+                }
+            )
+        try:
+            dry = build_prompt_breakdown(agent_id, settings={}, loader=loader)
+            compare = build_live_injection_compare(
+                agent_id, dry.get("injection_manifest")
+            )
+        except Exception:
+            continue
+        if compare.get("available") and not compare.get("matched"):
+            log_id = compare.get("llm_log_id")
+            actions: list[dict[str, Any]] = [
+                {
+                    "kind": "roles",
+                    "label": "去装配",
+                    "query": {"tab": "roles", "role": agent_id},
+                }
+            ]
+            if log_id:
+                actions.append(
+                    {
+                        "kind": "live",
+                        "label": "看这次注入",
+                        "query": {"tab": "live", "log_id": str(log_id)},
+                    }
+                )
+            todos.append(
+                {
+                    "kind": "dry_live_mismatch",
+                    "agent_id": agent_id,
+                    "message": "干跑与最近真实调用注入清单不一致",
+                    "reason_zh": (
+                        f"{agent_id} 的干跑装配与最近一次真实调用不一致"
+                        "（模块/知识/截断或字数漂移）。"
+                    ),
+                    "severity": "warn",
+                    "llm_log_id": log_id,
+                    "mismatches": compare.get("mismatches") or [],
+                    "actions": actions,
+                }
+            )
+    return todos

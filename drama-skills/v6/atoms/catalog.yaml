@@ -1,0 +1,34 @@
+version: 1
+status: migration-pending
+domains:
+  - concept
+  - character
+  - structure
+  - emotion
+  - conflict
+  - hook
+  - foreshadowing
+  - payment
+  - scene
+  - dialogue
+  - continuity
+  - production
+  - quality
+  - compliance
+rule_files:
+  - v6/atoms/episode-plan/core.yaml
+  - v6/atoms/episode-plan/structure-foreshadow.yaml
+  - v6/atoms/character/core.yaml
+  - v6/atoms/world/core.yaml
+  - v6/atoms/emotion/core.yaml
+  - v6/atoms/scene/core.yaml
+  - v6/atoms/dialogue-advisory/core.yaml
+  - v6/atoms/continuity/core.yaml
+  - v6/atoms/production/core.yaml
+  - v6/atoms/compliance/core.yaml
+  - v6/atoms/originality/core.yaml
+  - v6/atoms/concept/core.yaml
+  - v6/atoms/learned/core.yaml
+  - v6/atoms/architecture/core.yaml
+  - v6/atoms/story-bible/core.yaml
+  - v6/atoms/quality/core.yaml

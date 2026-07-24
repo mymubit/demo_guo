@@ -136,24 +136,6 @@ class ProjectSettingsServiceTests(TestCase):
             )
         self.assertEqual(ctx.exception.code, VALIDATION_ERROR)
 
-    def test_channel_change_invalidates_blueprint(self):
-        """受众频道变化属于蓝图输入变化，须触发下游失效。"""
-        from apps.drama.services.project_settings import ProjectSettingsService
-
-        svc = ProjectSettingsService()
-        self.assertTrue(
-            svc._blueprint_inputs_changed(
-                {"audience_channel": "female"},
-                {"audience_channel": "male"},
-            )
-        )
-        self.assertFalse(
-            svc._blueprint_inputs_changed(
-                {"audience_channel": "female"},
-                {"audience_channel": "female"},
-            )
-        )
-
     def test_matrix_theme_rules_injected(self):
         """genre_matrix 设置下 theme_code=matrix，四轴合成规则必须注入。"""
         from apps.drama.services.skills_loader import get_skills_loader

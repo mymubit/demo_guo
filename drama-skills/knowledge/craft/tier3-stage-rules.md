@@ -18,7 +18,7 @@
 ### 输入 / 输出
 
 - 输入：主题 / 故事梗概 / 题材矩阵 / 参考剧
-- 输出 schema：`story_bible` v1
+- 输出 schema：`project_brief` v1
 
 ---
 
@@ -150,7 +150,7 @@
 2. 输出 quality_report（schema v1）
 3. defects 路由至 drama.revision-master；低于 B 级（75）阻断下一批生成
 4. overall_score < 70 → 记录至 EVOLUTION_LOG，考虑规则补丁
-5. 某维度连续 2 次 < 70 → 经 @drama-intake 轨道一提案更新 foundation/rules/
+5. 某维度连续 2 次 < 70 → 经 @drama-intake 轨道 A 提案更新 foundation/rules/
 ```
 
 评分维度 SSOT：`foundation/constraints/quality-scoring.yaml`

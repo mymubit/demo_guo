@@ -37,7 +37,7 @@ def _normalize_option_item(item: dict[str, Any]) -> dict[str, Any]:
         "value": item.get("value", item.get("theme_code")),
         "label": item.get("label_zh", item.get("value")),
     }
-    # 透传 UI 分层/分组元数据（与 drama-skills build/lib/source_loader.py 保持一致）
+    # 透传 UI 分层/分组元数据（与 drama-skills tools/lib/source_loader.py 保持一致）
     for extra in ("tier", "category", "desc"):
         if item.get(extra) is not None:
             option[extra] = item[extra]
@@ -67,12 +67,6 @@ def load_yaml(root: Path, relative_path: str) -> dict[str, Any]:
 def resolve_enum(spec: dict[str, Any], root: Path) -> list[Any] | None:
     if "enum" in spec:
         return list(spec["enum"])
-    enum_source = spec.get("enum_source")
-    if enum_source == "orchestration.*.entry_type":
-        return [
-            load_yaml(root, "orchestration/original-track.yaml")["entry_type"],
-            load_yaml(root, "orchestration/story-adapt-track.yaml")["entry_type"],
-        ]
     return None
 
 

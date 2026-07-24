@@ -1,6 +1,8 @@
 agent_id: drama.revision-master
 name: Revision Master
 name_zh: 剧本修复官
+v6_persona: persona.revision-master
+operations: [operation.revise-script]
 dept: quality
 role_tier: production
 workspace_order: 503
@@ -13,6 +15,10 @@ module_policy:
   evaluate_enable_when: true
   as_index: false
   max_chars: 0
+knowledge_policy:
+  # C5：修复参考长文仅 index
+  mode: index
+  max_chars: 1600
 rule_policy:
   scopes:
   - global_core
@@ -38,7 +44,7 @@ input_contract:
   - quality_report
   - compliance_report
   - story_bible
-  - narrative_plan
+  - episode_plan
   parameter_refs:
   - episode_range
   - focus_areas

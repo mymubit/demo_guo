@@ -1,0 +1,14 @@
+version: 1
+constraints:
+  protected-elements.classes:
+    values: [character-name, title-or-slogan, key-plot-structure, signature-dialogue, character-image-or-voiceprint, target-market-rights]
+    source_refs: [v5://foundation/rules/originality-rules.yaml#t1.global.originality.protected-elements]
+  similarity.title-semantic:
+    p1_when_greater_than: 0.72
+    source_refs: [v5://foundation/rules/originality-rules.yaml#t1.global.originality.similarity-thresholds]
+  similarity.dialogue:
+    p1_when_greater_than: 0.80
+    source_refs: [v5://foundation/rules/originality-rules.yaml#t1.global.originality.similarity-thresholds]
+  similarity.episode-position-structure:
+    p1_when_greater_than: 0.20
+    source_refs: [v5://foundation/rules/originality-rules.yaml#t1.global.originality.similarity-thresholds]

@@ -1,0 +1,13 @@
+version: 6.0.0
+status: active
+artifacts:
+  project_brief: {label_zh: 项目简报, version: 1, schema: v6/artifacts/components/project-brief.schema.json, producer: operation.create-project-brief}
+  story_bible: {label_zh: 故事圣经, version: 1, schema: v6/artifacts/components/story-bible.schema.json, producer: operation.compose-story-bible}
+  character_system: {label_zh: 人物系统, version: 1, schema: v6/artifacts/components/character-system.schema.json, producer: operation.compose-story-bible}
+  world_system: {label_zh: 世界系统, version: 1, schema: v6/artifacts/components/world-system.schema.json, producer: operation.compose-story-bible}
+  emotion_system: {label_zh: 情绪系统, version: 1, schema: v6/artifacts/components/emotion-system.schema.json, producer: operation.compose-story-bible}
+  episode_plan: {label_zh: 全剧分集计划, version: 2, schema: v6/artifacts/episode-plan/2.schema.json, producer: operation.design-episode-plan}
+  episode_scripts: {label_zh: 分集剧本, version: 1, schema: v6/artifacts/components/episode-scripts.schema.json, producer: operation.write-episodes}
+  quality_report: {label_zh: 剧本质量报告, version: 1, schema: v6/artifacts/components/quality-report.schema.json, producer: operation.score-script}
+  compliance_report: {label_zh: 合规审查报告, version: 1, schema: v6/artifacts/components/compliance-report.schema.json, producer: operation.check-compliance}
+  production_package: {label_zh: 制作交付包, version: 1, schema: v6/artifacts/components/production-package.schema.json, producer: operation.prepare-delivery}

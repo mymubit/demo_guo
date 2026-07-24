@@ -1,0 +1,14 @@
+version: 1
+cases:
+  - id: voice-tag-precedes-profile
+    rule: dialogue.voice.prioritize-character-tag
+    input: {voice_tag: avoids-direct-refusal, profession: student}
+    expected: voice-tag-first
+  - id: social-profile-is-nonblocking
+    rule: dialogue.voice.treat-profile-as-advisory
+    input: {social_profile: physical-worker}
+    expected: suggestions-only
+  - id: ai-tone-is-contextual
+    rule: dialogue.ai-tone.flag-context-not-token
+    input: {candidate_terms: [therefore]}
+    expected: no-token-level-block

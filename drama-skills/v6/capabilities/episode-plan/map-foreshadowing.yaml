@@ -1,0 +1,17 @@
+id: capability.map-foreshadowing
+version: 1
+inputs: [story_bible.foreshadowing_table, episode_card_candidates, episode_range]
+outputs: [foreshadow_setup_candidates, foreshadow_payoff_candidates]
+rules:
+  - learned.identity-reveal.use-canonical-window
+  - foreshadow.density.require-a-grade-per-ten-episodes
+  - foreshadow.reversal.requires-verifiable-setup
+  - foreshadow.entry.track-setup-and-payoff
+  - foreshadow.s-reversal.meet-setup-window
+  - foreshadow.identity-hint.appear-early
+  - foreshadow.type.use-canonical-set
+  - foreshadow.reversal.design-backward
+  - foreshadow.clue.appear-ordinary-before-reveal
+  - foreshadow.payoff.deliver-emotional-value
+  - foreshadow.overdue.enter-memory-checkpoint
+side_effects: none

@@ -1,0 +1,206 @@
+version: 1
+domain: scene
+rules:
+  - id: episode.structure.use-four-segments
+    version: 1
+    category: structure
+    statement: Structure each episode as hook, situation, escalation, and cliffhanger using configured ratios as planning guidance.
+    severity: soft
+    applies_when: {artifact: episode_script}
+    source_refs:
+      - v5://foundation/rules/narrative-craft.yaml#t1.global.episode_structure.four-act
+    consumers: [capability.design-episode-structure]
+    validation: {type: deterministic, validator: episode-segment-ratios}
+  - id: episode.ending.leave-open-question-or-threat
+    version: 1
+    category: hook
+    statement: End every non-final episode with an unresolved question or a new threat that follows from the episode action.
+    severity: hard
+    applies_when: {episode_is_final: false}
+    source_refs:
+      - v5://foundation/rules/narrative-craft.yaml#t1.global.episode_structure.four-act
+    consumers: [capability.design-episode-structure]
+    validation: {type: semantic, validator: episode-ending-open-loop}
+  - id: information.asymmetry.use-canonical-type
+    version: 1
+    category: information
+    statement: Classify an information gap as audience-knows, character-knows, or mutual-knowledge-game.
+    severity: hard
+    applies_when: {has_information_gap: true}
+    source_refs:
+      - v5://foundation/rules/narrative-craft.yaml#t1.global.information_asymmetry_mechanics.core
+    consumers: [capability.plan-information-asymmetry]
+    validation: {type: schema, validator: canonical-information-gap-type}
+  - id: information.truth.delay-core-reveal
+    version: 1
+    category: information
+    statement: Delay a core truth until its planned reveal while releasing only evidence needed for current character choices.
+    severity: hard
+    applies_when: {information_kind: core_truth}
+    source_refs:
+      - v5://foundation/rules/narrative-craft.yaml#t1.global.information_asymmetry_mechanics.core
+    consumers: [capability.plan-information-asymmetry]
+    validation: {type: deterministic, validator: information-release-window}
+  - id: information.mystery.replace-closed-loop
+    version: 1
+    category: information
+    statement: When resolving a major mystery, open a consequential next question in the same beat or episode.
+    severity: hard
+    applies_when: {mystery_resolved: true}
+    source_refs:
+      - v5://foundation/rules/narrative-craft.yaml#t1.global.information_asymmetry_mechanics.core
+    consumers: [capability.plan-information-asymmetry]
+    validation: {type: deterministic, validator: rolling-mystery}
+  - id: scene.unit.define-goal-conflict-risk
+    version: 1
+    category: scene
+    statement: Define character goal, active obstacle, and risk before writing each scene.
+    severity: hard
+    applies_when: {artifact_component: scene_system}
+    source_refs:
+      - v5://foundation/rules/04-scene-dialogue.yaml#t1.global.writing_requirements.scene-unit
+      - v5://modules/scene-writing.md
+    consumers: [capability.write-scene]
+    validation: {type: schema, validator: scene-goal-conflict-risk}
+  - id: scene.unit.require-value-change
+    version: 1
+    category: scene
+    statement: Change at least one core value state between scene entry and scene exit; otherwise delete, merge, or rewrite the scene.
+    severity: hard
+    applies_when: {artifact_component: scene_system}
+    source_refs:
+      - v5://foundation/rules/04-scene-dialogue.yaml#t1.global.writing_requirements.scene-unit
+      - v5://modules/scene-writing.md
+    consumers: [capability.write-scene]
+    validation: {type: deterministic, validator: scene-value-change}
+  - id: scene.entry.start-late
+    version: 1
+    category: scene
+    statement: Enter a scene at the latest point that preserves the necessary goal, obstacle, and risk.
+    severity: soft
+    applies_when: {artifact_component: scene_system}
+    source_refs:
+      - v5://modules/scene-writing.md
+    consumers: [capability.write-scene]
+    validation: {type: semantic, validator: scene-late-entry}
+  - id: scene.exit.leave-after-value-change
+    version: 1
+    category: scene
+    statement: Exit soon after the value change and provide a concrete handoff to the next scene.
+    severity: soft
+    applies_when: {artifact_component: scene_system}
+    source_refs:
+      - v5://modules/scene-writing.md
+    consumers: [capability.write-scene]
+    validation: {type: semantic, validator: scene-early-exit}
+  - id: scene.content.keep-filmable
+    version: 1
+    category: scene
+    statement: Express all scene information through image, action, spatial relation, sound, or performable dialogue.
+    severity: hard
+    applies_when: {artifact_component: scene_system}
+    source_refs:
+      - v5://foundation/rules/04-scene-dialogue.yaml#t1.global.writing_prohibitions.unfilmable
+    consumers: [capability.write-scene]
+    validation: {type: semantic, validator: filmable-scene-content}
+  - id: scene.content.forbid-parenthetical-interiority
+    version: 1
+    category: scene
+    statement: Do not use parenthetical explanations, internal psychology, theme explanation, or unfilmable author commentary.
+    severity: hard
+    applies_when: {artifact_component: scene_system}
+    source_refs:
+      - v5://foundation/rules/04-scene-dialogue.yaml#t1.global.writing_prohibitions.unfilmable
+    consumers: [capability.write-scene, capability.validate-screenplay-format]
+    validation: {type: deterministic, validator: prohibited-screenplay-content}
+  - id: dialogue.line.require-action-intent
+    version: 1
+    category: dialogue
+    statement: Give every key line a performable action intent such as probe, conceal, attack, defend, exchange, recruit, or refuse.
+    severity: hard
+    applies_when: {dialogue_line_is_key: true}
+    source_refs:
+      - v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_craft.intention
+    consumers: [capability.write-dialogue]
+    validation: {type: schema, validator: dialogue-action-intent}
+  - id: dialogue.line.forbid-known-setting-exposition
+    version: 1
+    category: dialogue
+    statement: Do not make a character speak only to explain setting information already known to the scene participants.
+    severity: hard
+    applies_when: {artifact_component: scene_system}
+    source_refs:
+      - v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_craft.intention
+    consumers: [capability.write-dialogue]
+    validation: {type: semantic, validator: no-known-setting-exposition}
+  - id: dialogue.subtext.separate-line-from-desire
+    version: 1
+    category: dialogue
+    statement: In a strong emotional scene, make the spoken line differ from the character's real desire and expose the gap through avoidance, question, pause, topic shift, or prop action.
+    severity: hard
+    applies_when: {scene_emotional_weight: strong}
+    source_refs:
+      - v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_craft.subtext
+    consumers: [capability.write-dialogue]
+    validation: {type: semantic, validator: dialogue-subtext}
+  - id: dialogue.line.limit-main-information-point
+    version: 1
+    category: dialogue
+    statement: Carry one primary information point in each dialogue line.
+    severity: soft
+    applies_when: {artifact_component: scene_system}
+    source_refs:
+      - v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_craft.subtext
+    consumers: [capability.write-dialogue]
+    validation: {type: semantic, validator: dialogue-information-count}
+  - id: dialogue.rhythm.follow-power-change
+    version: 1
+    category: dialogue
+    statement: Change sentence length, interruption frequency, and forms of address when scene power changes.
+    severity: hard
+    applies_when: {scene_has_power_shift: true}
+    source_refs:
+      - v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_craft.scene-rhythm
+    consumers: [capability.write-dialogue]
+    validation: {type: semantic, validator: dialogue-power-rhythm}
+  - id: dialogue.exchange.compress-static-question-answer
+    version: 1
+    category: dialogue
+    statement: Compress consecutive questions and answers that do not change information, relationship, action, or power.
+    severity: hard
+    applies_when: {has_consecutive_question_answer: true}
+    source_refs:
+      - v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_craft.scene-rhythm
+    consumers: [capability.write-dialogue]
+    validation: {type: semantic, validator: static-question-answer}
+  - id: dialogue.voice.remain-character-specific
+    version: 1
+    category: dialogue
+    statement: Preserve character-specific vocabulary, sentence style, and avoidance patterns so speaker identity remains recognizable without the name label.
+    severity: hard
+    applies_when: {artifact_component: scene_system}
+    source_refs:
+      - v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_quality.voice-by-class
+    consumers: [capability.write-dialogue]
+    validation: {type: semantic, validator: masked-speaker-recognition}
+  - id: dialogue.ai-tone.repair-stacked-connectors
+    version: 1
+    category: dialogue
+    statement: When formal connectors or narrator-like phrases accumulate, rewrite as spoken short lines with one information point and character-specific voice.
+    severity: hard
+    applies_when: {ai_tone_detected: true}
+    source_refs:
+      - v5://foundation/rules/04-scene-dialogue.yaml#t1.global.ai_tone_forbidden.core
+    consumers: [capability.write-dialogue, capability.validate-screenplay-format]
+    validation: {type: semantic, validator: ai-tone-repair}
+  - id: screenplay.format.use-canonical-patterns
+    version: 1
+    category: format
+    statement: Use only the configured scene-header, dialogue, and action patterns.
+    severity: hard
+    applies_when: {artifact: episode_script}
+    source_refs:
+      - v5://foundation/rules/04-scene-dialogue.yaml#t1.global.writing_requirements.commercial-format
+      - v5://foundation/rules/04-scene-dialogue.yaml#t1.global.writing_prohibitions.format-ssot
+    consumers: [capability.validate-screenplay-format]
+    validation: {type: deterministic, validator: screenplay-format-patterns}

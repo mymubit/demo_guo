@@ -89,6 +89,91 @@ const OPTION_FALLBACK_ZH: Record<string, string> = {
   'system-panel': '系统面板',
   'transmigration-book': '穿书穿剧',
   matrix: '题材矩阵',
+  // 角色类型 / 改编模式
+  protagonist: '主角',
+  antagonist: '反派',
+  supporting: '配角',
+  original: '原创',
+  adapt: '改编',
+  // 复杂度 / 评级 / 判定
+  standard: '标准',
+  strict: '严格',
+  relaxed: '宽松',
+  rhythm_first: '节奏优先',
+  simple: '简单',
+  moderate: '适中',
+  complex: '复杂',
+  pass: '通过',
+  fail: '未通过',
+  warn: '警告',
+  warning: '警告',
+  blocked: '阻断',
+  approved: '已通过',
+  rejected: '已拒绝',
+  pending: '待处理',
+  candidate: '候选',
+  committed: '已确认',
+  draft: '草稿',
+  true: '是',
+  false: '否',
+  yes: '是',
+  no: '否',
+  s: 'S 级',
+  a: 'A 级',
+  b: 'B 级',
+  c: 'C 级',
+}
+
+/** 英文码按词素拼中文（未知枚举兜底，避免 Title Case 英文） */
+const ENUM_TOKEN_ZH: Record<string, string> = {
+  single: '单',
+  dual: '双',
+  multi: '多',
+  male: '男',
+  female: '女',
+  power: '强',
+  elite: '大佬',
+  hidden: '隐藏',
+  returning: '归来',
+  war: '战',
+  god: '神',
+  divine: '神',
+  doctor: '医',
+  ceo: '霸总',
+  domineering: '强势',
+  flash: '闪',
+  marriage: '婚',
+  secret: '隐藏',
+  baby: '萌宝',
+  angst: '虐',
+  revenge: '复仇',
+  sweet: '甜',
+  heavy: '重',
+  awakening: '觉醒',
+  system: '系统',
+  panel: '面板',
+  transmigration: '穿越',
+  book: '书',
+  paywall: '付费墙',
+  hook: '钩子',
+  cliffhanger: '悬念',
+  midpoint: '中点',
+  climax: '高潮',
+  opening: '开场',
+  ending: '收尾',
+  episode: '分集',
+  scene: '场次',
+  character: '角色',
+  world: '世界',
+  story: '故事',
+  emotion: '情绪',
+  rhythm: '节奏',
+  score: '得分',
+  grade: '等级',
+  risk: '风险',
+  low: '低',
+  medium: '中',
+  high: '高',
 }
 
 /** 正文里常见英文剧本术语 / 评级词 */
@@ -111,6 +196,9 @@ const PROSE_TERM_ZH: Array<[RegExp, string]> = [
   [/\bA级\b/g, '优质'],
   [/\bB级\b/g, '合格'],
   [/\bCP\b/g, '搭档关系'],
+  [/\bprotagonist\b/gi, '主角'],
+  [/\bantagonist\b/gi, '反派'],
+  [/\bsupporting\b/gi, '配角'],
 ]
 
 export function axisFieldLabelZh(key: string): string {
@@ -144,4 +232,50 @@ export function localizeProseForDisplay(text: string): string {
     out = out.replace(pattern, zh)
   }
   return out
+}
+
+function isAsciiCodeToken(text: string): boolean {
+  if (/[\u4e00-\u9fff]/.test(text)) return false
+  if (/\s/.test(text)) return false
+  return /^[A-Za-z][A-Za-z0-9_-]*$/.test(text)
+}
+
+/** 将 snake/kebab 英文码拼成中文；拼不出则返回空，避免露出英文码 */
+function composeEnumZh(raw: string): string {
+  const parts = raw
+    .toLowerCase()
+    .split(/[_-]+/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+  if (parts.length === 0) return ''
+  const mapped = parts.map((p) => ENUM_TOKEN_ZH[p] || OPTION_FALLBACK_ZH[p] || '')
+  if (mapped.every(Boolean)) return mapped.join('')
+  if (parts.length === 1 && mapped[0]) return mapped[0]
+  return ''
+}
+
+/**
+ * 叶值展示中文化：枚举码 → 中文；合规风险 → 低/中/高；正文轻度术语替换。
+ * 未知英文码尽量中文化或隐藏码感，不 Title Case 英文。
+ */
+export function localizeDisplayValue(value: unknown, fieldHint?: string): string {
+  if (value == null) return ''
+  if (typeof value === 'boolean') return value ? '是' : '否'
+  if (typeof value === 'number') return String(value)
+  const text = String(value).trim()
+  if (!text) return ''
+  if (fieldHint === 'compliance_risk') return complianceRiskLabelZh(text)
+
+  const lower = text.toLowerCase()
+  const enumHit = OPTION_FALLBACK_ZH[text] || OPTION_FALLBACK_ZH[lower]
+  if (enumHit) return enumHit
+
+  if (isAsciiCodeToken(text)) {
+    const composed = composeEnumZh(text)
+    if (composed) return composed
+    // 单段无映射英文码：不当作正文展示，避免「Protagonist」类噪声
+    if (text.length <= 24) return ''
+  }
+
+  return localizeProseForDisplay(text)
 }

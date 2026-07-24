@@ -94,3 +94,12 @@ export function mapApiError(error: unknown): ApiError {
 export function formatApiError(error: unknown): string {
   return mapApiError(error).message
 }
+
+/** 工作台排障：稳定业务码 + 人话（总纲 A11）。 */
+export function formatApiErrorWithCode(error: unknown): string {
+  const err = mapApiError(error)
+  if (err.code > 0 && err.code !== API_ERROR_CODES.SERVER_ERROR) {
+    return `[${err.code}] ${err.message}`
+  }
+  return err.message
+}

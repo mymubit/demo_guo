@@ -1,0 +1,21 @@
+{
+  "phase": "delivery",
+  "target_platform": "declared-platform",
+  "platform_rule_version": "2026-07",
+  "platform_review_status": "verified",
+  "findings": [{"id": "risk-1", "severity": "P2", "category": "crime-display", "evidence": "one non-instructional violent image", "status": "open", "recommendation": "reduce visual detail"}],
+  "risk_dimensions": [
+    {"name": "values", "status": "pass", "evidence": "responsibility retained"},
+    {"name": "character-portrayal", "status": "pass", "evidence": "no protected group stereotyping"},
+    {"name": "minor-protection", "status": "pass", "evidence": "no minors in unsafe content"},
+    {"name": "copyright", "status": "pass", "evidence": "rights evidence present"},
+    {"name": "social-sensitivity", "status": "pass", "evidence": "review complete"},
+    {"name": "false-promotion", "status": "pass", "evidence": "no false promise"},
+    {"name": "horror", "status": "pass", "evidence": "no systematic horror display"},
+    {"name": "crime-display", "status": "risk", "evidence": "P2 finding recorded"},
+    {"name": "platform-redlines", "status": "pass", "evidence": "current policy checked"}
+  ],
+  "materials": {"full_screenplay": true, "world_and_characters": true, "episode_outline_or_synopsis": true, "quality_report": true, "ai_content_labeling": true},
+  "conclusion": "pass",
+  "downstream_allowed": true
+}

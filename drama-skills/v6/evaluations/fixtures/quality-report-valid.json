@@ -1,0 +1,16 @@
+{
+  "scored_artifact": "latest_script", "independent_judge": true, "scoring_preset": "standard",
+  "dimensions": [
+    {"name": "format", "weight": 0.10, "evidence": ["canonical scene headers"], "deductions": [], "score": 82},
+    {"name": "narrative", "weight": 0.15, "evidence": ["causal episode progression"], "deductions": [], "score": 84},
+    {"name": "conflict", "weight": 0.15, "evidence": ["structural family conflict"], "deductions": [], "score": 85},
+    {"name": "character", "weight": 0.10, "evidence": ["visible motivation chain"], "deductions": [], "score": 81},
+    {"name": "emotion", "weight": 0.10, "evidence": ["externalized emotion"], "deductions": [], "score": 80},
+    {"name": "logic", "weight": 0.10, "evidence": ["registered world rules"], "deductions": [], "score": 83},
+    {"name": "satisfaction", "weight": 0.10, "evidence": ["evidence payoff"], "deductions": [], "score": 82},
+    {"name": "hooks", "weight": 0.10, "evidence": ["open episode question"], "deductions": [], "score": 84},
+    {"name": "paywall", "weight": 0.05, "evidence": ["promise mapped to payoff"], "deductions": [], "score": 78},
+    {"name": "genre_fit", "weight": 0.05, "evidence": ["family suspense alignment"], "deductions": [], "score": 82}
+  ],
+  "overall_score": 82.45, "grade": "A", "revision_required": [], "vetoes": [], "continuity_final_review": "pass", "can_continue_next_batch": true
+}

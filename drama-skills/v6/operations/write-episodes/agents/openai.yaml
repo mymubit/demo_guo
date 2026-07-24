@@ -1,0 +1,6 @@
+interface:
+  display_name: "Write Episodes"
+  short_description: "Write scoped episodes with traceable inputs and outputs"
+  default_prompt: "Use $write-episodes to write the requested episodes from the approved plan."
+policy:
+  allow_implicit_invocation: true

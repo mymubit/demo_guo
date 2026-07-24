@@ -1,0 +1,28 @@
+version: 1
+cases:
+  - id: antagonist-defeat-pass
+    rule: antagonist.defeat.preserve-logic
+    input:
+      established_choice: 反派亲自采购伪造账本纸张
+      defeat_event: 供应商记录证明采购人与时间
+    expected: pass
+  - id: antagonist-defeat-fail
+    rule: antagonist.defeat.preserve-logic
+    input:
+      established_choice: 反派长期谨慎销毁记录
+      defeat_event: 反派突然当众承认全部罪行且无触发原因
+    expected: fail
+  - id: arc-event-causality-pass
+    rule: character.arc.turn-from-lie-through-events
+    input:
+      lie: 不能相信任何人
+      trigger_event: 盟友替主角承担泄密指控
+      state_after: 主角开始有限共享证据
+    expected: pass
+  - id: arc-event-causality-fail
+    rule: character.arc.turn-from-lie-through-events
+    input:
+      lie: 不能相信任何人
+      trigger_event: null
+      state_after: 主角突然完全信任所有人
+    expected: fail

@@ -1,0 +1,16 @@
+version: 1
+source_version: v5-working-tree
+target_version: v6
+allowed_dispositions: [pending, migrate, split, merge, rewrite, archive, reject]
+rules:
+  - every V5 file must have exactly one mapping entry
+  - migrate, split, merge, and rewrite entries must name at least one v6 target
+  - archive and reject entries must record a decision before verification
+  - verified entries must have passing target tests
+  - V6 runtime code must not import V5 runtime or orchestration code
+completion_gates:
+  classified_coverage: 1.0
+  verified_coverage: 1.0
+  unresolved_rule_conflicts: 0
+  active_objects_without_consumers: 0
+  v5_runtime_dependencies: 0

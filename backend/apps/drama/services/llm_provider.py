@@ -147,14 +147,27 @@ class LlmProvider:
         user_prompt: str,
         json_mode: bool = True,
         on_delta: Callable[[str, int], None] | None = None,
+        config: ResolvedLlmConfig | None = None,
     ) -> dict[str, Any]:
-        status = cls.status()
-        if status == LlmProviderStatus.DISABLED:
-            raise LlmProviderError("LLM 已禁用（后台未启用且 LLM_ENABLED=false）")
-        if status == LlmProviderStatus.MISCONFIGURED:
-            raise LlmProviderError("LLM 配置不完整，请在后台填写 Base URL 与 API Key")
+        """
+        OpenAI 兼容 chat completions。
 
-        cfg = cls._resolved()
+        config 非空时（如 V3 角色映射）优先使用该配置，不再读 active provider。
+        """
+        if config is not None:
+            cfg = config
+            if not cfg.enabled:
+                raise LlmProviderError("LLM 已禁用（角色映射供应商未启用）")
+            if not cfg.base_url or not cfg.api_key:
+                raise LlmProviderError("LLM 配置不完整，请在后台填写 Base URL 与 API Key")
+        else:
+            status = cls.status()
+            if status == LlmProviderStatus.DISABLED:
+                raise LlmProviderError("LLM 已禁用（后台未启用且 LLM_ENABLED=false）")
+            if status == LlmProviderStatus.MISCONFIGURED:
+                raise LlmProviderError("LLM 配置不完整，请在后台填写 Base URL 与 API Key")
+            cfg = cls._resolved()
+
         use_response_format = bool(json_mode and cls._supports_json_object_format(cfg.base_url))
         # 长产物（蓝图等）用流式组装，避免整段响应卡死在读超时上
         return cls._post_chat_stream(
@@ -163,6 +176,7 @@ class LlmProvider:
             user_prompt=user_prompt,
             use_response_format=use_response_format,
             allow_retry_without_format=bool(json_mode),
+            include_stream_usage=True,
             on_delta=on_delta,
         )
 
@@ -175,6 +189,7 @@ class LlmProvider:
         user_prompt: str,
         use_response_format: bool,
         allow_retry_without_format: bool,
+        include_stream_usage: bool = True,
         on_delta: Callable[[str, int], None] | None = None,
     ) -> dict[str, Any]:
         url = cls._chat_url(cfg.base_url)
@@ -191,9 +206,13 @@ class LlmProvider:
         }
         if use_response_format:
             body["response_format"] = {"type": "json_object"}
+        # OpenAI 兼容：请求流式末包带 usage（不支持则降级重试）
+        if include_stream_usage:
+            body["stream_options"] = {"include_usage": True}
 
         started = time.monotonic()
         parts: list[str] = []
+        usage_payload: dict[str, Any] | None = None
         try:
             with requests.post(
                 url,
@@ -207,6 +226,16 @@ class LlmProvider:
             ) as response:
                 if response.status_code >= 400:
                     err_text = (response.text or "")[:2000]
+                    if include_stream_usage and "stream_options" in err_text.lower():
+                        return cls._post_chat_stream(
+                            cfg=cfg,
+                            system_prompt=system_prompt,
+                            user_prompt=user_prompt,
+                            use_response_format=use_response_format,
+                            allow_retry_without_format=allow_retry_without_format,
+                            include_stream_usage=False,
+                            on_delta=on_delta,
+                        )
                     if (
                         allow_retry_without_format
                         and use_response_format
@@ -223,6 +252,7 @@ class LlmProvider:
                             user_prompt=user_prompt,
                             use_response_format=False,
                             allow_retry_without_format=False,
+                            include_stream_usage=include_stream_usage,
                             on_delta=on_delta,
                         )
                     latency_ms = int((time.monotonic() - started) * 1000)
@@ -248,6 +278,9 @@ class LlmProvider:
                         break
                     try:
                         chunk = json.loads(data)
+                        chunk_usage = chunk.get("usage")
+                        if isinstance(chunk_usage, dict) and chunk_usage:
+                            usage_payload = chunk_usage
                         choices = chunk.get("choices") or []
                         if not choices:
                             continue
@@ -281,11 +314,13 @@ class LlmProvider:
                 )
                 raise LlmProviderError("LLM 流式响应为空")
 
-            payload = {
+            payload: dict[str, Any] = {
                 "choices": [{"message": {"role": "assistant", "content": content}}],
                 "model": cfg.model,
                 "object": "chat.completion",
             }
+            if usage_payload:
+                payload["usage"] = usage_payload
             LlmCallLogService.record(
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,

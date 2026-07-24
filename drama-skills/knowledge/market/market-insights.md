@@ -1,7 +1,7 @@
 # 市场洞察摄入区
 
 > 来自外部内容摄入的市场数据、平台规律、受众分析。
-> 由 `drama-intake` 轨道三自动归档，`drama.topic-director` 做市场判断时读取引用。
+> 由 `drama-intake` 轨道 B 自动归档，`drama.topic-director` 做市场判断时读取引用。
 >
 > **静态基准数据 SSOT：`knowledge/market/industry-benchmarks.md`**（市场规模/成本/KPI/赛道热度）。
 > 本文件只保留动态摄入记录，不再维护基准表，避免双源漂移。

@@ -28,6 +28,6 @@
 ## 校验
 
 ```bash
-python build/validate_theme_matrix.py   # 枚举/delta/约束/幂等
-python build/synthesize_matrix_params.py  # 合成示例
+python tools/validators/validate_theme_matrix.py   # 枚举/delta/约束/幂等
+python tools/optimizers/synthesize_matrix_params.py  # 合成示例
 ```

@@ -1,0 +1,34 @@
+# LLM 产物统一落库管线 — runtime 约束说明（非业务阈值 SSOT）
+# 角色 / SKILL 禁止私自解析模型输出；一律由 backend artifact_ingest 处理。
+version: "1.0.0"
+config_tier: documentation
+
+pipeline:
+  steps:
+    - id: parse
+      impl: apps.drama.services.json_parse.parse_llm_json
+      note: 抽取 JSON、剥离 markdown 围栏、轻量尾逗号修复
+    - id: normalize
+      impl: apps.drama.services.artifact_normalize.normalize_artifact
+      note: 按 artifact_key 别名映射与缺省；非字段 SSOT
+    - id: schema
+      impl: apps.core.schema_validator.SchemaValidator
+      note: drama-skills/schemas/artifacts/*/1.schema.json
+    - id: substance
+      impl: apps.drama.services.substance_gates.run_substance_gate
+      note: 按产物注册的实质门禁；未知产物跳过
+
+entry_point: apps.drama.services.artifact_ingest.ingest_llm_artifact
+
+substance_gates:
+  quality_report:
+    checker: quality_report_evidence_too_sparse
+    thresholds_from: foundation/constraints/quality-scoring.yaml#output_length
+  compliance_report:
+    checker: compliance_report_too_thin
+    note: 阻断项须有 title+description；风险项须有 description+suggestion
+
+rules:
+  - 工作台主链、外部评测、reprocess 必须共用 entry_point
+  - 禁止在 GenerationService / 角色服务内再实现 parse+normalize 副本
+  - 新增产物类型时：先补 schema，再补 normalize 分支，最后按需 register_gate

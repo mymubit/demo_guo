@@ -1,0 +1,5 @@
+version: 1
+cases:
+  - {id: revenge-thirty-second-boundary, rule: learned.revenge-opening.show-oppression-within-thirty-seconds, input: {seconds: 30}, expected: pass}
+  - {id: progressive-sixty-percent-boundary, rule: learned.progressive-beats.meet-sixty-percent, input: {progressive: 3, total: 5}, expected: pass}
+  - {id: breathing-ten-episode-window, rule: learned.breathing-episode.limit-rolling-window, input: {episodes: [1, 11]}, expected: pass}

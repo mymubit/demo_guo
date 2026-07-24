@@ -1,0 +1,14 @@
+version: 1
+cases:
+  - id: explicit-episode-range
+    rule: continuity.context.use-explicit-episode-scope
+    input: {episode: 8, episode_range: [8, 9]}
+    expected: pass
+  - id: immediate-predecessor-only
+    rule: continuity.context.require-immediate-predecessor
+    input: {episode: 8, previous_episode: 7}
+    expected: pass
+  - id: checkpoint-per-completed-episode
+    rule: continuity.checkpoint.emit-after-each-episode
+    input: {completed_episode: 8, checkpoint_episode: 8}
+    expected: pass

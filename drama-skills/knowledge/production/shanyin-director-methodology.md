@@ -1,5 +1,7 @@
 # 山音超级导演大师方法论
 
+> **inject: doc** — 人读长文，运行时不注入；执行清单见 `shanyin-director-exec.md`。
+>
 > **来源**：https://github.com/Shanyin-ai/shanyin-director-master（251 stars · MIT）
 > **作者**：@山音（AIGC艺术家/独立导演）
 > **摄取时间**：2026-06-22

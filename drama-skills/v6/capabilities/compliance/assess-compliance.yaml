@@ -1,0 +1,19 @@
+id: capability.assess-compliance
+version: 1
+inputs: [latest_script, compliance_phase, target_platform, platform_rule_version, delivery_materials]
+outputs: [compliance_assessment]
+rules:
+  - compliance.p0.block-on-redline
+  - compliance.horror.use-three-level-disposition
+  - compliance.p1.require-resolution
+  - compliance.p2.record-without-blocking
+  - compliance.risk.cover-nine-dimensions
+  - compliance.platform.record-target-and-version
+  - compliance.phase.use-canonical-checklist
+  - compliance.delivery.require-materials
+  - compliance.justice.apply-density-thresholds
+  - compliance.justice.require-ending-closure
+  - compliance.whitewash.require-responsibility-consequence
+  - compliance.values.forbid-glorified-harm
+  - compliance.values.allow-motive-with-accountability
+side_effects: none

@@ -42,6 +42,16 @@ describe('evaluateCondition', () => {
     expect(evaluateCondition('', {})).toBe(true)
   })
 
+  it('evaluates is not empty for arrays and strings', () => {
+    expect(evaluateCondition('reference_dramas is not empty', { reference_dramas: ['某剧'] })).toBe(
+      true,
+    )
+    expect(evaluateCondition('reference_dramas is not empty', { reference_dramas: [] })).toBe(false)
+    expect(evaluateCondition('reference_dramas is not empty', {})).toBe(false)
+    expect(evaluateCondition('synopsis is not empty', { synopsis: '有梗概' })).toBe(true)
+    expect(evaluateCondition('synopsis is not empty', { synopsis: '' })).toBe(false)
+  })
+
   it('reads deliverables from creation_preferences', () => {
     const ctx = settingsConditionContext({
       entry_type: 'original_track',

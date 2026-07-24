@@ -1,0 +1,6 @@
+interface:
+  display_name: "Score Script"
+  short_description: "Score a script version with evidence and visible gates"
+  default_prompt: "Use $score-script to score the latest approved script range."
+policy:
+  allow_implicit_invocation: true

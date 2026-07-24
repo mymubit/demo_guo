@@ -1,0 +1,75 @@
+version: 1
+domain: architecture
+rules:
+  - id: blueprint.scope.forbid-episode-scene-expansion
+    version: 1
+    category: structure
+    statement: Limit the series blueprint to storylines, stage turns, paywall positions, reversal windows, and foreshadowing summary; do not expand episode scenes.
+    severity: hard
+    applies_when: {artifact: story_bible}
+    source_refs: [v5://foundation/rules/03-structure.yaml#t1.global.series_structure.boundary]
+    consumers: [capability.validate-blueprint-boundary]
+    validation: {type: deterministic, validator: blueprint-field-boundary}
+  - id: blueprint.world.keep-only-actionable-rules
+    version: 1
+    category: structure
+    statement: Keep only world rules that change character action, cost, or choice in the series blueprint.
+    severity: hard
+    applies_when: {artifact: story_bible}
+    source_refs: [v5://foundation/rules/03-structure.yaml#t1.global.series_structure.boundary]
+    consumers: [capability.validate-blueprint-boundary]
+    validation: {type: semantic, validator: actionable-world-rule-boundary}
+  - id: philosophy.cross-section.start-at-maximum-tension
+    version: 1
+    category: scene
+    statement: Start episode one scene one at the selected high-tension cross-section with Goal and Conflict immediately active, not with life chronology.
+    severity: hard
+    applies_when: {episode: 1, scene: 1}
+    source_refs: [v5://foundation/rules/philosophy.yaml#t1.global.philosophy.cross-section]
+    consumers: [capability.validate-blueprint-boundary, capability.write-scene]
+    validation: {type: deterministic, validator: opening-cross-section}
+  - id: philosophy.opening.define-tone-not-explain-theme
+    version: 1
+    category: scene
+    statement: Use the first scene to establish the work's tone through action and conflict rather than explain its theme.
+    severity: hard
+    applies_when: {episode: 1, scene: 1}
+    source_refs: [v5://foundation/rules/philosophy.yaml#t1.global.philosophy.cross-section]
+    consumers: [capability.write-scene]
+    validation: {type: semantic, validator: opening-tone-without-theme-exposition}
+  - id: foreshadow.density.require-a-grade-per-ten-episodes
+    version: 1
+    category: foreshadowing
+    statement: Include at least one A-grade or stronger foreshadow entry in every ten-episode block.
+    severity: hard
+    applies_when: {artifact: episode_plan}
+    source_refs: [v5://foundation/rules/plotting-rules.yaml#t1.global.foreshadowing_rules.density]
+    consumers: [capability.map-foreshadowing]
+    validation: {type: deterministic, validator: foreshadow-density-window}
+  - id: genre.matrix.consume-synthesized-rule-params
+    version: 1
+    category: genre
+    statement: Consume reversal density, eight-node emotion curve, and hook types synthesized from the project brief genre matrix; do not substitute unrelated archetype templates.
+    severity: hard
+    applies_when: {genre_key: matrix}
+    source_refs: [v5://foundation/rules/genres/matrix.yaml#t2.matrix.genre_rules.from-brief]
+    consumers: [capability.synthesize-genre-parameters]
+    validation: {type: schema, validator: matrix-rule-params}
+  - id: genre.matrix.hooks-and-emotion-follow-params
+    version: 1
+    category: genre
+    statement: Keep designed hook types within project brief hook_types and align the emotion target to all eight synthesized nodes.
+    severity: hard
+    applies_when: {genre_key: matrix}
+    source_refs: [v5://foundation/rules/genres/matrix.yaml#t2.matrix.genre_rules.from-brief]
+    consumers: [capability.synthesize-genre-parameters, capability.design-hooks, capability.design-emotion-nodes]
+    validation: {type: deterministic, validator: matrix-hook-emotion-alignment}
+  - id: genre.matrix.use-brief-act-ratio
+    version: 1
+    category: rhythm
+    statement: Use project_brief.rule_params.act_ratio for six-stage allocation; if absent, return to topic parameter synthesis before downstream work.
+    severity: hard
+    applies_when: {genre_key: matrix}
+    source_refs: [v5://foundation/rules/genres/matrix.yaml#t2.matrix.rhythm_rules.from-brief]
+    consumers: [capability.synthesize-genre-parameters, capability.decompose-story-stage]
+    validation: {type: deterministic, validator: matrix-act-ratio-source}

@@ -5,6 +5,7 @@ items:
   - rule_key: t1.global.originality.protected-elements
     section: originality_rules
     title: 六类受保护元素
+    description: 只借鉴抽象机制，不复用可识别表达组合
     priority: 10
     source_ref: knowledge/quality/originality-rules.md
     body: |
@@ -13,6 +14,7 @@ items:
   - rule_key: t1.global.originality.rewrite-strategy
     section: originality_rules
     title: 原创化改写
+    description: 改关系/场景/因果，禁止只换人名
     priority: 11
     source_ref: knowledge/quality/originality-rules.md
     body: |
@@ -20,6 +22,7 @@ items:
   - rule_key: t1.global.originality.similarity-thresholds
     section: originality_rules
     title: 相似度阈值
+    description: 超阈值标 P1；无检索须声明未比对
     priority: 12
     source_ref: knowledge/quality/originality-rules.md
     body: |
@@ -28,6 +31,7 @@ items:
   - rule_key: t1.global.originality.ai-rights
     section: originality_rules
     title: AI 形象与声纹权利
+    description: 禁止可识别模仿现有 IP/真人
     priority: 13
     source_ref: knowledge/quality/originality-rules.md
     body: |

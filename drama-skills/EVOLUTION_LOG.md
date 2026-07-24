@@ -1,24 +1,31 @@
 # Drama Skills 进化日志
 
-> 记录技能库的四轨道进化。四轨道唯一定义见 `drama-intake/SKILL.md`；提交外部内容见 `INTAKE_PROTOCOL.md`。
+> 记录技能库进化。双轨道唯一定义见 drama-intake/SKILL.md（阶段 E）；提交外部内容见 INTAKE_PROTOCOL.md。
 
-## 四轨道（引用 drama-intake 定义）
+## 双轨道（引用 drama-intake 定义）
 
 | 轨道 | 名称 | 触发 | 写入位置 |
 |------|------|------|----------|
-| 一 | 规则进化 | 方法论/阈值/LR 提案；评分维度连续 2 次 <70 | `foundation/rules/*.yaml` |
-| 二 | 灵感归档 | 创作中发现好钩子/反转/对白/结构 | `inspirations/` |
-| 三 | 市场知识 | 行业数据/平台趋势/受众分析 | `knowledge/market/market-insights.md` |
-| 四 | 新模式发现 | 库中无覆盖的新规律（3+ 案例验证后经轨道一升格） | `inspirations/new-patterns.md` |
+| A | 规则升级 | 方法论/频率/LR；评分连续 2 次 <70；模式 3+ 升格 | oundation/rules/*.yaml |
+| B | 素材沉淀 | 灵感案例 / 市场数据 / 待验证模式 | inspirations/inspirations.md 或 knowledge/market/market-insights.md |
+
+旧四轨对照：一→A；二/三/四→B（升格仍走 A）。
 
 ## v5.0 基线（2026-07-02）
 
 - **角色**：8 个 = 4 主链生产（topic-director / story-bible / episode-designer / script-writer）+ 3 质检环独立技能（script-scorer / compliance-guard / revision-master）+ 1 可选工具（delivery-tool）
 - **编排**：双通道 `orchestration/original-track.yaml`（原创）/ `story-adapt-track.yaml`（故事改编），在 story_bible 汇合
-- **质检环**：每批正文后评分+合规并行；低于 B 级（75）或 P1 → 修复 → 强制复评
+- **质检环**：默认先评分再合规（B′；可配置并行）；低于 B 级（75）或 P1 → 修复 → 强制复评
 - **规则**：四 Scope 不变（global_core / genre_profile / stage_playbook / compliance_block）
 
 ## 变更记录
+
+### 2026-07-21 · 阶段 E：进化瘦身（4→2 轨 + inspirations 单文件）
+
+- **双轨道**：A 规则升级 / B 素材沉淀（定义收敛于 `drama-intake/SKILL.md` v5.1）
+- **inspirations**：五文件正文合并为 `inspirations/inspirations.md`；旧文件保留为指针（可回滚）
+- **质检**：默认串行评分→合规已由 B′ 落地（见总纲）；本阶段不重复改编排
+- **市场路径不变**：`market-insights.md` 仍为行业动态写入点（归轨道 B）
 
 ### 2026-07-20 · 零兼容硬切（Skills 契约层）
 
@@ -104,7 +111,7 @@
 - 四轴扩至 9×9×9×9（6561 骨架组合）
 - 风味标签 48 项 / 10 类，最多选 5
 - 创新组合 featured_combos 扩至 20 条
-- 约定：高分新组合 → `inspirations/new-patterns.md` 归档驱动进化
+- 约定：高分新组合 → `inspirations/inspirations.md`「待验证模式」归档驱动进化
 
 ### 2026-06-25 · 四轴扩展 7+7+7+7 + 风味标签层
 

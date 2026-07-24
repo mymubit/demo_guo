@@ -1,0 +1,12 @@
+id: capability.score-latest-script
+version: 1
+inputs: [latest_script, scoring_preset, continuity_report]
+outputs: [quality_report]
+rules:
+  - quality.geval.record-evidence-before-score
+  - quality.score.use-ssot-thresholds
+  - quality.dimensions.require-canonical-ten
+  - quality.preset.preserve-ten-dimension-model
+  - quality.veto.cap-grade-at-b
+  - quality.judge.read-latest-script-only
+side_effects: none

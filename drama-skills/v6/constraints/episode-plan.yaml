@@ -1,0 +1,104 @@
+version: 1
+constraints:
+  hook.grades:
+    values: [S, A, B, C]
+    meanings:
+      S: 全剧核心钩子
+      A: 跨二至三集钩子
+      B: 单集集末钩子
+      C: 场间钩子
+    source_refs:
+      - v5://foundation/rules/05-hooks-payoff.yaml#t1.global.hook_effectiveness.levels
+  hook.ending.minimum-grade:
+    value: B
+    source_refs:
+      - v5://modules/hook-system.md#self-check
+  hook.pre-paywall.required-grade:
+    value: S
+    source_refs:
+      - v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr003
+  hook.opening.first-impact-seconds:
+    value: 3
+    unit: seconds
+    source_refs:
+      - v5://foundation/constraints/narrative-metrics.yaml#opening_hook.first_impact_seconds
+  hook.opening.main-hook-seconds:
+    value: 10
+    unit: seconds
+    source_refs:
+      - v5://foundation/constraints/narrative-metrics.yaml#opening_hook.main_hook_seconds
+  hook.opening.structure-complete-seconds:
+    value: 30
+    unit: seconds
+    source_refs:
+      - v5://foundation/constraints/narrative-metrics.yaml#opening_hook.structure_complete_seconds
+  hook.first-episode.minimum-count:
+    value: 7
+    counted_grades: [B, A, S]
+    source_refs:
+      - v5://foundation/constraints/commercial-formulas.yaml#metrics.first_episode_hook_count
+  payment.promise.maximum-payoff-delay:
+    value: 1
+    unit: episodes
+    source_refs:
+      - v5://foundation/constraints/commercial-formulas.yaml#metrics.payment_promise_payoff
+  payment.card-types:
+    values: [emotion, suspense, satisfaction]
+    source_refs:
+      - v5://foundation/rules/05-hooks-payoff.yaml#t1.global.payment_checkpoint_3card.types
+  payment.first-checkpoint-window:
+    minimum_episode: 3
+    maximum_episode: 5
+    source_refs:
+      - v5://foundation/constraints/commercial-formulas.yaml#metrics.first_payment_checkpoint
+  payment.habit-checkpoint-window:
+    minimum_episode: 8
+    maximum_episode: 12
+    source_refs:
+      - v5://foundation/constraints/commercial-formulas.yaml#metrics.habit_payment_checkpoint
+  foreshadow.s-reversal.minimum-setup:
+    value: 5
+    unit: episodes
+    source_refs:
+      - v5://foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow.min_episodes
+  foreshadow.identity-hint.maximum-episode:
+    value: 3
+    unit: episode
+    source_refs:
+      - v5://foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow.hint_within_episodes
+  foreshadow.types:
+    values: [identity, motivation, relationship, situation, truth]
+    source_refs:
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.foreshadowing_rules.types
+  foreshadow.payoff.maximum-emotional-delay:
+    value: 3
+    unit: episodes
+    source_refs:
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.foreshadowing_rules.payoff
+  reversal.s-window:
+    start_ratio: 0.55
+    end_ratio: 0.75
+    source_refs:
+      - v5://foundation/constraints/commercial-formulas.yaml#metrics.s_reversal_window
+  conflict.minimum-types:
+    value: 3
+    available_types: [external, interpersonal, internal, fate]
+    meanings:
+      external: 环境或社会冲突
+      interpersonal: 关系或利益冲突
+      internal: Ghost 或 Lie 引发的内心冲突
+      fate: 结构性命运对立
+    source_refs:
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.conflict_escalation.four-types
+  series.stage-order:
+    values: [opening, warming, climax, turning, sprint, ending]
+    base_ratios: [0.10, 0.20, 0.20, 0.20, 0.15, 0.15]
+    allocation_method: largest_remainder
+    minimum_episodes_per_stage: 1
+    source_refs:
+      - v5://foundation/constraints/series-scale.yaml#stage_order
+  rhythm.same-grid.maximum-run:
+    value: 2
+    unit: episodes
+    source_refs:
+      - v5://foundation/rules/03-structure.yaml#t1.global.rhythm_rules.act-pacing

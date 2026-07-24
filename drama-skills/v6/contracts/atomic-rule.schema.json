@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills-v6://contracts/atomic-rule",
+  "type": "object",
+  "required": ["id", "version", "category", "statement", "severity", "source_refs", "consumers", "validation"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^[a-z0-9]+(?:[.-][a-z0-9]+)+$"},
+    "version": {"type": "integer", "minimum": 1},
+    "category": {"type": "string"},
+    "statement": {"type": "string", "minLength": 1},
+    "severity": {"enum": ["hard", "soft", "advisory"]},
+    "applies_when": {"type": "object"},
+    "source_refs": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true},
+    "consumers": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "validation": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": {"enum": ["schema", "deterministic", "semantic", "human"]},
+        "validator": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

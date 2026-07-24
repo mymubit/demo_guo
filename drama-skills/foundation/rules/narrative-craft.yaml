@@ -1,15 +1,8 @@
-# global_core · 叙事 craft 摘要 — hook/结构/情绪/信息差
-version: "1.1.0"
+# global_core · 叙事 craft 摘要 — 结构/情绪/信息差
+# hook_effectiveness 已迁至 05-hooks-payoff.yaml（C2）
+version: "1.2.0"
 tier: 1
 items:
-  - rule_key: t1.global.hook_effectiveness.levels
-    section: hook_effectiveness
-    title: 四级钩子
-    priority: 10
-    body: |
-      S级全剧核心 / A级跨2-3集 / B级集末 / C级场间。
-      首集开场分层窗口（3秒冲击/10秒主钩/30秒三段式）读取
-      foundation/constraints/narrative-metrics.yaml#opening_hook。
   - rule_key: t1.global.episode_structure.four-act
     section: episode_structure
     title: 单集四段式占比

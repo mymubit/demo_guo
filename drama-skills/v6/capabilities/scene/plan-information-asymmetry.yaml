@@ -1,0 +1,9 @@
+id: capability.plan-information-asymmetry
+version: 1
+inputs: [episode_card, character_knowledge_state, unresolved_mysteries]
+outputs: [information_release_plan]
+rules:
+  - information.asymmetry.use-canonical-type
+  - information.truth.delay-core-reveal
+  - information.mystery.replace-closed-loop
+side_effects: none

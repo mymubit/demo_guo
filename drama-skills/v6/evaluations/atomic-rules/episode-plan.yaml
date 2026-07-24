@@ -1,0 +1,50 @@
+version: 1
+cases:
+  - id: hook-adjacency-pass
+    rule: hook.ending.connect-next-opening
+    input:
+      ending_hook: 女主在紫外灯下发现账本纸张年份不符
+      next_opening: 女主封存账本并比对纸张供应记录
+    expected: pass
+  - id: hook-adjacency-fail
+    rule: hook.ending.connect-next-opening
+    input:
+      ending_hook: 女主发现账本是伪造的
+      next_opening: 三个月后男主参加公司庆功宴
+    expected: fail
+  - id: preserve-global-structure-pass
+    rule: episode-plan.scope.global-structure-readonly
+    input:
+      changed_paths: [episode_plan.episodes.8, episode_plan.episodes.9]
+    expected: pass
+  - id: preserve-global-structure-fail
+    rule: episode-plan.scope.global-structure-readonly
+    input:
+      changed_paths: [story_bible.major_reversal_positions]
+    expected: fail
+  - id: conflict-quality-pass
+    rule: conflict.escalation.change-quality
+    input:
+      before: 反派公开威胁女主
+      after: 反派提交伪造证据使女主失去继承资格
+    expected: pass
+  - id: conflict-quality-fail
+    rule: conflict.escalation.change-quality
+    input:
+      before: 反派辱骂女主
+      after: 反派再次用相同理由辱骂女主
+    expected: fail
+  - id: reversal-setup-fail
+    rule: foreshadow.reversal.requires-verifiable-setup
+    input:
+      prior_clues: []
+      reversal: 管家突然承认自己是真正继承人
+      downstream_change: none
+    expected: fail
+  - id: payment-promise-pass
+    rule: payment.hook.must-map-promise-to-payoff
+    input:
+      promise: 谁伪造了账本
+      payoff_episode: 11
+      next_promise: 谁在幕后指使
+    expected: pass

@@ -1,0 +1,10 @@
+version: 1
+personas:
+  - {id: persona.topic-director, source: v6/personas/topic-director.yaml}
+  - {id: persona.story-architect, source: v6/personas/story-architect.yaml}
+  - {id: persona.episode-designer, source: v6/personas/episode-designer.yaml}
+  - {id: persona.script-writer, source: v6/personas/script-writer.yaml}
+  - {id: persona.script-scorer, source: v6/personas/script-scorer.yaml}
+  - {id: persona.compliance-guard, source: v6/personas/compliance-guard.yaml}
+  - {id: persona.revision-master, source: v6/personas/revision-master.yaml}
+  - {id: persona.delivery-producer, source: v6/personas/delivery-producer.yaml}

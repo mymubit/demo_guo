@@ -3,31 +3,25 @@
 @tailwind utilities;
 
 :root {
-  --shell-bg: #0a1628;
-  --shell-bg-elevated: #12203a;
-  --shell-ink: #e8eef7;
-  --shell-ink-muted: #94a3b8;
-  --accent-shell: #f4b719;
-  --accent-shell-hover: #f7cb54;
-
-  --canvas: #eef1f5;
-  --canvas-muted: #e4e9f0;
-  --surface: #ffffff;
-  --border: #d8dee8;
-
-  --accent-action: #0f2744;
-  --accent-action-hover: #163a66;
-  --focus-ring: rgba(15, 39, 68, 0.28);
-
-  --ink: #0f172a;
-  --ink-muted: #475569;
-  --ink-faint: #94a3b8;
-
-  --danger: #dc2626;
-  --success: #159947;
-  --warning: #d97706;
-
-  /* shadcn 兼容映射 → Task 1 dual-accent tokens */
+  --shell-bg: #171816;
+  --shell-bg-elevated: #232521;
+  --shell-ink: #f4f2eb;
+  --shell-ink-muted: #a6aaa0;
+  --accent-shell: #d9ff57;
+  --accent-shell-hover: #e5ff82;
+  --canvas: #f3f4ef;
+  --canvas-muted: #e9ebe4;
+  --surface: #fbfcf8;
+  --border: #d9ddd2;
+  --accent-action: #24564a;
+  --accent-action-hover: #193f37;
+  --focus-ring: rgba(36, 86, 74, 0.22);
+  --ink: #1a1d1a;
+  --ink-muted: #5b625b;
+  --ink-faint: #858d84;
+  --danger: #c53f35;
+  --success: #2e755b;
+  --warning: #a96810;
   --background: var(--canvas);
   --foreground: var(--ink);
   --card: var(--surface);
@@ -35,50 +29,61 @@
   --popover: var(--surface);
   --popover-foreground: var(--ink);
   --primary: var(--accent-action);
-  --primary-foreground: #ffffff;
+  --primary-foreground: #fff;
   --secondary: var(--canvas-muted);
   --secondary-foreground: var(--ink);
   --muted: var(--canvas-muted);
   --muted-foreground: var(--ink-muted);
-  --accent: var(--canvas-muted);
+  --accent: #e4ecd9;
   --accent-foreground: var(--ink);
   --destructive: var(--danger);
-  --destructive-foreground: #ffffff;
+  --destructive-foreground: #fff;
   --input: var(--border);
   --ring: var(--accent-action);
 }
 
 html,
 body,
-#root {
-  height: 100%;
-}
+#root { height: 100%; }
+
+html { background: var(--canvas); }
 
 body {
   margin: 0;
-  min-width: 1280px;
+  min-width: 320px;
   background: var(--canvas);
   color: var(--ink);
-  font-family: 'IBM Plex Sans', 'Noto Sans SC', ui-sans-serif, system-ui, sans-serif;
+  font-family: Inter, "Noto Sans SC", "Microsoft YaHei UI", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0;
   -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; scrollbar-color: #b8beb4 transparent; scrollbar-width: thin; }
+button, input, select, textarea { font: inherit; letter-spacing: 0; }
+button, a { -webkit-tap-highlight-color: transparent; }
+::selection { background: rgba(36, 86, 74, .18); }
+
+@layer base {
+  :focus-visible { @apply outline-none ring-2 ring-offset-2 ring-offset-canvas; box-shadow: 0 0 0 2px var(--focus-ring); }
 }
 
 @layer components {
   .sf-control {
-    @apply w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm text-ink
-      placeholder:text-ink-faint outline-none transition
-      focus:border-action focus:ring-2 focus:ring-[color:var(--focus-ring)];
+    @apply w-full rounded-md border border-border bg-surface px-3 py-2.5 text-sm text-ink
+      placeholder:text-ink-faint outline-none transition duration-200
+      hover:border-ink-faint focus:border-action focus:ring-2 focus:ring-[color:var(--focus-ring)];
   }
+  .sf-label { @apply mb-2 block text-xs font-semibold text-ink; }
+  .sf-section-title { @apply text-base font-semibold text-ink; }
+  .sf-panel { @apply rounded-lg border border-border bg-surface shadow-[0_1px_2px_rgba(26,29,26,.04)]; }
+  .sf-page-enter { animation: sf-page-enter .28s ease-out both; }
+}
 
-  .sf-label {
-    @apply mb-1.5 block text-sm font-medium text-ink;
-  }
+@keyframes sf-page-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
-  .sf-section-title {
-    @apply text-lg font-semibold tracking-tight text-ink;
-  }
-
-  .sf-panel {
-    @apply rounded-xl border border-border bg-surface shadow-panel;
-  }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
 }

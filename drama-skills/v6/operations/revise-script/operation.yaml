@@ -1,0 +1,30 @@
+id: operation.revise-script
+version: 1
+persona: persona.revision-master
+user_inputs: [episode_range, revision_requests, preservation_requests, accepted_findings]
+system_inputs: [engine_version, artifact_schema_versions, active_rule_versions, caller_identity]
+reads: [project_brief, story_bible, episode_plan, latest_episode_scripts, quality_report, compliance_report, adjacent_episode_scripts, prior_memory_checkpoint]
+writes: [episode_scripts, memory_checkpoint]
+scope:
+  required: episode_range
+  adjacent_context_before: 1
+  adjacent_context_after: 1
+required_params: [project_id, episode_range, base_version, accepted_findings]
+capabilities:
+  - capability.plan-script-revision
+  - capability.load-episode-context
+  - capability.prepare-episode-writing
+  - capability.write-scene
+  - capability.write-dialogue
+  - capability.externalize-emotion
+  - capability.validate-screenplay-format
+  - capability.lint-dialogue-style
+  - capability.emit-memory-checkpoint
+constraints:
+  user_levels: [must_preserve, must_change, preference, avoid, question, system_lock]
+  readonly: [story_bible, episode_plan, reports, episode_scripts.outside_requested_range, adjacent_episode_scripts]
+  write_scope: requested_episodes_and_checkpoint_only
+validation: [schema, scope, accepted_findings, preservation, continuity, story_bible_invariants, episode_plan_alignment, screenplay_format, base_version]
+outputs: [candidate, validation, structural_diff, semantic_diff, narrative_impact_diff, change_set, impact_plan]
+stages: [command, plan, execution_pack, candidate, validation, change_set, impact_plan, commit]
+transaction: {plan_required: true, candidate_only: true, validation_required: true, atomic_commit: true}

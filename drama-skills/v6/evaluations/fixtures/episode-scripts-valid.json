@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "artifact_version": 3,
+  "source_call_id": "call-write-episodes-8",
+  "based_on": {"story_bible": 2, "episode_plan": 12, "prior_memory_checkpoint": 7},
+  "episode_range": {"start": 8, "count": 1},
+  "episodes": [
+    {
+      "episode_number": 8,
+      "title": "The replaced ledger",
+      "script": "8-1 DAY INT. ARCHIVE ROOM\nThe protagonist compares the paper years and closes the door.",
+      "word_count": 920,
+      "dialogue_ratio": 0.42,
+      "scene_count": 4,
+      "golden_lines": ["The lie is newer than the paper."],
+      "format_check": {"valid": true},
+      "production_notes": {"tags": ["interior"], "complexity_score": 2, "complexity_band": "lean", "high_cost_scenes": [], "lower_cost_alternatives": []}
+    }
+  ]
+}

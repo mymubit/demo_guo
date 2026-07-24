@@ -1,0 +1,34 @@
+version: 1
+constraints:
+  character.protagonist.maximum-count:
+    value: 2
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.density-arc
+  character.core-supporting.count-range:
+    minimum: 2
+    maximum: 4
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.density-arc
+  character.relationship.maximum-count:
+    value: 6
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.density-arc
+  character.arc.turning-point-ratios:
+    first: 0.30
+    second: 0.70
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.density-arc
+  character.visual-identification.maximum-seconds:
+    value: 15
+    unit: seconds
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.density-arc
+  character.age-tendency-bands:
+    advisory_only: true
+    bands:
+      twenties: {priority: preference, risk: impulsiveness}
+      thirties: {priority: practical_tradeoff, risk: irreversible_mistake}
+      forties: {priority: stability, risk: disruption}
+      fifty_plus: {priority: legacy_and_meaning, risk: loneliness}
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.age-logic

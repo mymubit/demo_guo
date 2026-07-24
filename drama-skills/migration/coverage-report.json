@@ -1,0 +1,14 @@
+{
+  "inventory_files": 302,
+  "mapped_files": 302,
+  "dispositions": {
+    "archive": 15,
+    "merge": 2,
+    "migrate": 35,
+    "rewrite": 203,
+    "split": 47
+  },
+  "classified_coverage": 1.0,
+  "verified_coverage": 0.0,
+  "errors": []
+}

@@ -7,9 +7,9 @@ from typing import Any
 from django.db import transaction
 
 from apps.core.schema_validator import SchemaValidator
-from apps.drama.models import DramaArtifactVersion, DramaProject, DramaWorkflowState
+from apps.drama.models import DramaArtifactVersion, DramaProject
 from apps.drama.services.skills_loader import get_skills_loader
-from apps.drama.services.workflow_engine import WorkflowError, resolve_latest_script
+from apps.drama.services.script_resolver import resolve_latest_script
 
 
 SENSITIVE_KEYS = {"api_key", "secret", "password", "token"}
@@ -52,10 +52,7 @@ class ArtifactService:
         episode_range: str | None = None,
     ) -> dict[str, Any]:
         artifacts = self._artifacts_map(project)
-        try:
-            return resolve_latest_script(artifacts, episode_range)
-        except WorkflowError as exc:
-            raise ValueError(str(exc)) from exc
+        return resolve_latest_script(artifacts, episode_range)
 
     @transaction.atomic
     def save_artifact(
@@ -78,7 +75,6 @@ class ArtifactService:
         else:
             raise ValueError(f"产物 {artifact_key} 缺少 schema_version")
 
-        wf = DramaWorkflowState.objects.select_for_update().get(project=project)
         latest = (
             DramaArtifactVersion.objects.select_for_update()
             .filter(project=project, artifact_key=artifact_key)
@@ -93,12 +89,6 @@ class ArtifactService:
             schema_version=resolved_version,
             payload=payload,
         )
-        state = dict(wf.state)
-        artifacts = dict(state.get("artifacts", {}))
-        artifacts[artifact_key] = payload
-        state["artifacts"] = artifacts
-        wf.state = state
-        wf.save(update_fields=["state", "updated_at"])
         return record
 
     def _artifacts_map(self, project: DramaProject) -> dict[str, Any]:
@@ -109,8 +99,6 @@ class ArtifactService:
             .distinct("artifact_key")
         ):
             result[record.artifact_key] = record.payload
-        state_artifacts = project.workflow_state.state.get("artifacts", {})
-        result.update(state_artifacts)
         return result
 
     def _redact(self, data: Any) -> Any:

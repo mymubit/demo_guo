@@ -1,7 +1,9 @@
 ---
 name: drama-episode-designer
-version: 5.0.0
-description: 分集设计官：吸收叙事工程与分集大纲能力，把 story_bible 拆成逐集 episode cards。
+version: 6.0.0
+description: >
+  何时用：story_bible 已批准后，把全剧结构拆成可执行的 episode_plan，或按范围修订分集卡。
+  何时不用：蓝图未批准时不抢跑；不写正式剧本正文。
 tags:
 - 分集梗概
 - 单集钩子
@@ -18,7 +20,7 @@ modules:
 - reversal-foreshadowing
 - payment-checkpoint
 output_schema:
-- name: narrative_plan
+- name: episode_plan
   type: object
   description: 分集设计方案（逐集 cards）
 references:
@@ -29,10 +31,11 @@ references:
 - ../../modules/conflict-escalation.md
 - ../../modules/reversal-foreshadowing.md
 - ../../modules/payment-checkpoint.md
+- ../../knowledge/craft/shanyin-series-exec.md
 - ../../knowledge/craft/shanyin-series-format.md
 ---
 
-# 分集设计官 v5.0
+# 分集设计官 v6.0
 
 ## 职责
 
@@ -53,13 +56,12 @@ references:
 - `core_event`：每集核心事件
 - `characters`：出场人物名数组
 - `goal_conflict`：Goal × Conflict
-- `emotion_intensity`：情绪强度 1–10
 - `satisfaction_points`：爽点字符串数组
 - `opening_hook`：集首钩子（禁止写成 open_hook / opening）
 - `ending_hook`：集末钩子（禁止写成 cliffhanger 顶层键）
 - `reversal`：单集反转
-- `foreshadowing.setup` / `foreshadowing.payoff`
-- `paywall_hook`：付费卡点
+- `foreshadowing[]`：线索、埋设集、兑现集与状态
+- `paywall`：卡点类型、承诺与兑现集
 - `rhythm_tag`：双轨节奏标注
 - `hook_grade`：S|A|B|C
 - `emotion_nodes.EV` / `ET` / `TP`

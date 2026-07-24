@@ -1,0 +1,9 @@
+id: capability.design-world-rules
+version: 1
+inputs: [core_concept, genre_profile, character_system, target_platform]
+outputs: [world_rule_candidates]
+rules:
+  - world.rule.must-change-action
+  - world.rule.define-operational-fields
+  - world.rule.drive-concrete-choice
+side_effects: none

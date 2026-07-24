@@ -88,11 +88,11 @@
 | 当前剧本统一为 latest_script | 角色不再各自维护剧本版本优先级 |
 | script-writer 分批 `episode_range` | 控制 token；LR-008 逐集上下文 |
 | 数值不进 SKILL 正文 | 统一引用 `script-format.yaml` / `quality-scoring.yaml` |
-| 进化统一走 drama-intake 四轨道 | 评分官提案、灵感、外部摄入、新模式一个入口，可审计 |
+| 进化统一走 drama-intake 双轨道 | 评分官提案、灵感、外部摄入、新模式一个入口，可审计 |
 
 ## 扩展指南
 
 - **新增主链角色**：改 `registry.yaml`、新建 `roles/<slug>/`、补 `stage-playbook.yaml` 条目、更新 orchestration
 - **新增题材**：扩展 `foundation/theme-matrix.yaml`，继续由 `genres/matrix.yaml` 统一解析
-- **新增 LR**：经 `@drama-intake` 轨道一 → `foundation/rules/learned-rules.yaml`
-- 改完运行 `python build/validate_skills.py`
+- **新增 LR**：经 `@drama-intake` 轨道 A → `foundation/rules/learned-rules.yaml`
+- 改完运行 `python tools/validators/validate_skills.py`

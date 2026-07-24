@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills-v6://artifacts/components/originality-report",
+  "type": "object",
+  "required": ["comparison_status", "protected_elements", "similarity", "findings", "rewrite_plan", "ai_assets", "conclusion"],
+  "properties": {
+    "comparison_status": {"enum": ["completed", "not-completed"]},
+    "protected_elements": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"$ref": "#/$defs/protectedElement"}},
+    "similarity": {"$ref": "#/$defs/similarity"},
+    "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+    "rewrite_plan": {"type": ["object", "null"]},
+    "ai_assets": {"type": "array", "items": {"$ref": "#/$defs/aiAsset"}},
+    "conclusion": {"enum": ["pass", "rewrite-required", "not-completed"]}
+  },
+  "$defs": {
+    "protectedElement": {"type": "object", "required": ["class", "status", "evidence"], "properties": {"class": {"enum": ["character-name", "title-or-slogan", "key-plot-structure", "signature-dialogue", "character-image-or-voiceprint", "target-market-rights"]}, "status": {"enum": ["clear", "risk", "not-checked"]}, "evidence": {"type": "string"}}, "additionalProperties": false},
+    "similarity": {"type": "object", "required": ["title_semantic", "dialogue", "episode_position_structure"], "properties": {"title_semantic": {"type": ["number", "null"], "minimum": 0, "maximum": 1}, "dialogue": {"type": ["number", "null"], "minimum": 0, "maximum": 1}, "episode_position_structure": {"type": ["number", "null"], "minimum": 0, "maximum": 1}}, "additionalProperties": false},
+    "finding": {"type": "object", "required": ["id", "severity", "element_class", "evidence", "status"], "properties": {"id": {"type": "string"}, "severity": {"const": "P1"}, "element_class": {"type": "string"}, "evidence": {"type": "string"}, "status": {"enum": ["open", "resolved"]}}, "additionalProperties": false},
+    "aiAsset": {"type": "object", "required": ["id", "kind", "identifiable_imitation", "rights_source", "label_required", "label_status"], "properties": {"id": {"type": "string"}, "kind": {"enum": ["character-image", "portrait", "voiceprint", "other"]}, "identifiable_imitation": {"type": "boolean"}, "rights_source": {"type": "string"}, "label_required": {"type": "boolean"}, "label_status": {"enum": ["applied", "not-required", "missing"]}}, "additionalProperties": false}
+  },
+  "additionalProperties": false
+}

@@ -32,6 +32,21 @@ def _discover_rule_files(root: Path) -> list[str]:
     return [str(p.relative_to(root)) for p in files]
 
 
+# C4：seed 预设迁入 foundation/presets/；旧 constraints 路径仍可解析
+SEED_PATH_ALIASES: dict[str, str] = {
+    "foundation/constraints/scoring-presets.yaml": "foundation/presets/scoring-presets.yaml",
+    "foundation/constraints/platform-profiles.yaml": "foundation/presets/platform-profiles.yaml",
+    "foundation/constraints/agent-runtime.yaml": "foundation/presets/agent-runtime.yaml",
+    "foundation/constraints/production-feasibility.yaml": "foundation/presets/production-feasibility.yaml",
+}
+
+
+def resolve_seed_path(relative_path: str) -> str:
+    """将历史 constraints 预设路径解析到 presets/。"""
+    normalized = str(relative_path).replace("\\", "/").lstrip("/")
+    return SEED_PATH_ALIASES.get(normalized, normalized)
+
+
 class SkillsBundleLoader:
     """从 DRAMA_SKILLS_ROOT 读取 manifest、编排与集中契约。"""
 
@@ -53,25 +68,37 @@ class SkillsBundleLoader:
         return self._load_yaml(rel)
 
     @property
-    def workbench(self) -> dict[str, Any]:
-        rel = self.manifest.get("workbench", {}).get("definition", "workbench/workbench.yaml")
-        return self._load_yaml(rel)
+    def v6_manifest(self) -> dict[str, Any]:
+        path = self.root / "v6" / "manifest.yaml"
+        return self._load_yaml("v6/manifest.yaml") if path.exists() else {}
+
+    @property
+    def v6_workbench(self) -> dict[str, Any]:
+        relative = self.v6_manifest.get("workbench")
+        if not relative:
+            raise ValueError("V6 manifest does not declare a workbench")
+        return self._load_yaml(relative)
+
+    def get_v6_operation(self, operation_id: str) -> dict[str, Any]:
+        for relative_path in self.v6_manifest.get("operations") or []:
+            operation = self._load_yaml(relative_path)
+            if operation.get("id") == operation_id:
+                return operation
+        raise KeyError(f"unknown V6 operation: {operation_id}")
+
+    def get_v6_workbench_operation(self, operation_id: str) -> dict[str, Any]:
+        for item in self.v6_workbench.get("operations") or []:
+            if item.get("id") == operation_id:
+                return item
+        raise KeyError(f"V6 operation is not mounted in V6 workbench: {operation_id}")
 
     @property
     def config_policy(self) -> dict[str, Any]:
-        return self._load_yaml("manifest/config-policy.yaml")
-
-    @property
-    def workflow_transitions(self) -> dict[str, Any]:
-        path = self.manifest.get("orchestration", {}).get("transitions")
-        return self._load_yaml(path) if path else {}
+        return self._load_yaml(self.v6_manifest["config_policy"])
 
     @property
     def agent_runtime(self) -> dict[str, Any]:
-        rel = self.manifest.get("configuration_sources", {}).get(
-            "agent_runtime", "foundation/constraints/agent-runtime.yaml"
-        )
-        return self._load_yaml(rel)
+        return self._load_yaml(self.v6_manifest["agent_runtime"])
 
     @property
     def bundle_version(self) -> str:
@@ -79,6 +106,9 @@ class SkillsBundleLoader:
 
     @property
     def artifacts_contract(self) -> dict[str, Any]:
+        v6_catalog = (self.v6_manifest.get("catalogs") or {}).get("artifacts")
+        if v6_catalog:
+            return self._load_yaml(v6_catalog)
         rel = self.manifest.get("artifact_contracts", {}).get(
             "contracts", "contracts/artifacts.yaml"
         )
@@ -86,16 +116,11 @@ class SkillsBundleLoader:
 
     @property
     def parameters_contract(self) -> dict[str, Any]:
-        rel = self.manifest.get("workbench", {}).get(
-            "parameters_contract", "contracts/parameters.yaml"
-        )
-        return self._load_yaml(rel)
+        return self._load_yaml(self.v6_manifest["parameters_contract"])
 
     @property
     def project_settings_schema_path(self) -> str:
-        return self.manifest.get("workbench", {}).get(
-            "project_settings_schema", "schemas/project-settings.v1.schema.json"
-        )
+        return self.v6_manifest["project_settings_schema"]
 
     def get_role_entry(self, agent_id: str) -> dict[str, Any]:
         for role in self.registry.get("roles", []):
@@ -123,8 +148,15 @@ class SkillsBundleLoader:
 
     def get_output_artifact_by_role(self, role: str) -> str:
         for key, definition in (self.artifacts_contract.get("artifacts") or {}).items():
-            if (definition or {}).get("producer") == role:
+            producer = (definition or {}).get("producer")
+            if producer == role or self._producer_matches_role(producer, role):
                 return key
+        raise KeyError(f"unknown artifact producer: {role}")
+
+    @staticmethod
+    def _producer_matches_role(producer: str | None, role: str) -> bool:
+        aliases = {"drama.topic-director": "operation.create-project-brief", "drama.story-bible": "operation.compose-story-bible", "drama.episode-designer": "operation.design-episode-plan", "drama.script-writer": "operation.write-episodes", "drama.script-scorer": "operation.score-script", "drama.compliance-guard": "operation.check-compliance", "drama.revision-master": "operation.revise-script", "drama.delivery-tool": "operation.prepare-delivery"}
+        return aliases.get(role) == producer
         raise KeyError(f"角色 {role} 无产出产物")
 
     def get_parameter_definition(self, param_name: str) -> dict[str, Any]:
@@ -164,16 +196,18 @@ class SkillsBundleLoader:
                 result[producer] = key
         return result
 
-    def export_workbench_form(self) -> dict[str, Any]:
-        workbench = copy.deepcopy(self.workbench)
+    def export_project_form(self) -> dict[str, Any]:
+        relative = self.v6_manifest.get("project_form")
+        if not relative:
+            raise ValueError("V6 manifest does not declare project_form")
+        form = copy.deepcopy(self._load_yaml(relative))
         parameters = self.parameters_contract.get("parameters") or {}
-        raw_fields = workbench["project_settings"]["fields"]
+        raw_fields = form["fields"]
         resolved_fields: dict[str, Any] = {}
         for name, definition in raw_fields.items():
             resolved_fields[name] = self._merge_parameter_definition(
                 name, definition, parameters
             )
-        workbench["project_settings"]["fields"] = resolved_fields
 
         for definition in resolved_fields.values():
             if "options_source" in definition:
@@ -207,38 +241,14 @@ class SkillsBundleLoader:
             ):
                 definition.pop(contract_only, None)
 
-        role_outputs = self.producer_artifact_map()
-        registry_roles = {
-            role["agent_id"]: role for role in self.registry.get("roles", [])
+        return {
+            "schema_version": "v6-project-form.v1",
+            "skills_version": self.v6_manifest.get("version"),
+            "groups": form["groups"],
+            "fields": resolved_fields,
+            "theme_matrix": self._export_theme_matrix(),
+            "policy_sections": form.get("policy_sections") or [],
         }
-        phase_labels: dict[str, str] = {}
-        for entry_type in ("original_track", "story_adapt"):
-            for phase in self.get_orchestration_track(entry_type).get("phases", []):
-                phase_labels.setdefault(
-                    phase["phase"],
-                    phase.get("label", phase["phase"]),
-                )
-        for stage in workbench.get("stages", []):
-            role_id = stage.get("role")
-            if role_id in role_outputs:
-                artifact_key = role_outputs[role_id]
-                stage["artifact"] = artifact_key
-                stage["artifact_label"] = self.get_artifact_contract(artifact_key).get(
-                    "label_zh", artifact_key
-                )
-            stage["label_zh"] = phase_labels.get(
-                stage.get("orchestration_phase"),
-                (registry_roles.get(role_id) or {}).get("name_zh", stage["id"]),
-            )
-            stage["role_label"] = (registry_roles.get(role_id) or {}).get(
-                "name_zh", role_id
-            )
-
-        workbench["module_catalog"] = self.modules_catalog.get("modules", [])
-        workbench["schema_version"] = "workbench-form.v1"
-        workbench["skills_bundle_version"] = self.bundle_version
-        workbench["theme_matrix"] = self._export_theme_matrix()
-        return workbench
 
     def _export_theme_matrix(self) -> dict[str, Any]:
         """导出题材矩阵（含热门组合），供前端选题 UI 使用。"""
@@ -351,45 +361,29 @@ class SkillsBundleLoader:
             },
         }
 
-    def project_runtime_projection(
+    def role_parameter_context(
         self,
         agent_id: str,
         settings: dict[str, Any],
-        workflow_state: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        projection_cfg = (self.workbench.get("runtime_projection") or {}).get(agent_id, {})
-        if not projection_cfg:
-            return {}
-        when_expr = projection_cfg.get("when")
-        if when_expr and not _eval_when(when_expr, settings):
-            return {}
-        parameters = self.parameters_contract.get("parameters") or {}
+        role = self.get_role_contract(agent_id)
+        requested = set(role.get("parameter_refs") or [])
+        form = self._load_yaml(self.v6_manifest["project_form"])
         result: dict[str, Any] = {}
-        for param, source_path in projection_cfg.items():
-            if param == "when":
+        for field in (form.get("fields") or {}).values():
+            parameter = field.get("parameter_ref")
+            if parameter not in requested:
                 continue
-            if param not in parameters:
-                continue
-            value = _deep_get(settings, source_path)
+            value = _deep_get(settings, field.get("persist_path", parameter))
             if value is not None:
-                result[param] = value
-        wf_projection = (self.workbench.get("runtime_projection") or {}).get("workflow", {})
-        if workflow_state and wf_projection:
-            for param, source_path in wf_projection.items():
-                if param not in parameters:
-                    continue
-                if param not in result:
-                    value = _deep_get(settings, source_path)
-                    if value is not None:
-                        result[param] = value
-            result["batch_cursor"] = workflow_state.get("batch_cursor")
-            result["revision_round"] = workflow_state.get("revision_round")
+                result[parameter] = value
         return result
 
     def apply_parameter_defaults(self, settings: dict[str, Any]) -> dict[str, Any]:
         """按 parameters contract 填充缺失默认值，不信任调用方内联类型/默认。"""
         result = copy.deepcopy(settings)
-        fields = (self.workbench.get("project_settings") or {}).get("fields") or {}
+        form = self._load_yaml(self.v6_manifest["project_form"])
+        fields = form.get("fields") or {}
         for field_def in fields.values():
             param_ref = field_def.get("parameter_ref")
             if not param_ref:
@@ -443,7 +437,7 @@ class SkillsBundleLoader:
         skipped: list[dict[str, Any]] = []
         used = 0
         truncated = False
-        for module_id in module_ids:
+        for index, module_id in enumerate(module_ids):
             meta = catalog.get(module_id) or {}
             label = meta.get("label_zh") or module_id
             expr = meta.get("enable_when")
@@ -486,9 +480,30 @@ class SkillsBundleLoader:
                         }
                     )
                     used += len(cut)
+                    next_index = index + 1
                 else:
                     skipped.append({**base_item, "chars": len(body), "reason": "budget"})
+                    next_index = index
                 truncated = True
+                # 预算耗尽后仍遍历剩余，保留 enable_when / budget 可观测性
+                for rest_id in module_ids[next_index:]:
+                    rest_meta = catalog.get(rest_id) or {}
+                    rest_expr = rest_meta.get("enable_when")
+                    rest_item = {
+                        "id": rest_id,
+                        "label_zh": rest_meta.get("label_zh") or rest_id,
+                        "enable_when": rest_expr,
+                        "chars": 0,
+                    }
+                    if evaluate and rest_expr:
+                        try:
+                            if not evaluate_condition(str(rest_expr), context):
+                                skipped.append({**rest_item, "reason": "enable_when"})
+                                continue
+                        except ValueError:
+                            skipped.append({**rest_item, "reason": "enable_when"})
+                            continue
+                    skipped.append({**rest_item, "reason": "budget"})
                 break
             parts.append(piece)
             included.append({**base_item, "chars": len(chunk), "mode": mode})
@@ -568,6 +583,13 @@ class SkillsBundleLoader:
             return empty
         text = skill_path.read_text(encoding="utf-8")
         fm = _parse_frontmatter(text)
+        contract = self.get_role_contract(agent_id)
+        knowledge_policy = contract.get("knowledge_policy") or {}
+        includes = [
+            str(p).replace("\\", "/").lstrip("/")
+            for p in (knowledge_policy.get("includes") or [])
+            if str(p).strip()
+        ]
         refs = [str(r) for r in (fm.get("references") or []) if isinstance(r, str)]
         knowledge_refs = [
             r
@@ -582,33 +604,56 @@ class SkillsBundleLoader:
         )
         ranked: list[tuple[int, Path]] = []
         seen: set[Path] = set()
-        for ref in knowledge_refs:
-            path = (self.root / skill_dir / ref).resolve()
-            for score_boost, file_path in _expand_knowledge_ref_paths(
-                path, settings=settings, platform=platform
-            ):
+
+        def _is_doc_only(file_path: Path) -> bool:
+            try:
+                head = file_path.read_text(encoding="utf-8")[:400]
+            except OSError:
+                return False
+            return "inject: doc" in head.lower()
+
+        if includes:
+            for index, rel in enumerate(includes):
+                file_path = (self.root / rel).resolve()
+                if not file_path.is_file():
+                    continue
                 if file_path in seen:
                     continue
                 seen.add(file_path)
-                score = score_boost
-                name = file_path.name.lower()
-                if platform != "generic" and platform in name:
-                    score += 3
-                if world and str(world).lower() in name:
-                    score += 2
-                if "market" in file_path.parts or "formula" in name:
-                    score += 1
-                if "originality" in name and settings.get("entry_type") == "story_adapt":
-                    score += 4
-                if agent_id == "drama.compliance-guard":
-                    if "tier4" in name or "compliance" in name:
-                        score += 6
-                    elif "originality" in name:
+                if _is_doc_only(file_path):
+                    continue
+                # includes 顺序即优先级；越靠前分越高
+                ranked.append((1000 - index, file_path))
+        else:
+            for ref in knowledge_refs:
+                path = (self.root / skill_dir / ref).resolve()
+                for score_boost, file_path in _expand_knowledge_ref_paths(
+                    path, settings=settings, platform=platform
+                ):
+                    if file_path in seen:
+                        continue
+                    seen.add(file_path)
+                    if _is_doc_only(file_path):
+                        continue
+                    score = score_boost
+                    name = file_path.name.lower()
+                    if platform != "generic" and platform in name:
                         score += 3
-                if agent_id == "drama.script-scorer":
-                    if "s-class" in name or "scoring-preset" in name:
-                        score += 6
-                ranked.append((score, file_path))
+                    if world and str(world).lower() in name:
+                        score += 2
+                    if "market" in file_path.parts or "formula" in name:
+                        score += 1
+                    if "originality" in name and settings.get("entry_type") == "story_adapt":
+                        score += 4
+                    if agent_id == "drama.compliance-guard":
+                        if "tier4" in name or "compliance" in name:
+                            score += 6
+                        elif "originality" in name:
+                            score += 3
+                    if agent_id == "drama.script-scorer":
+                        if "s-class" in name or "scoring-preset" in name:
+                            score += 6
+                    ranked.append((score, file_path))
         ranked.sort(key=lambda item: (-item[0], str(item[1])))
 
         def _rel(path: Path) -> str:
@@ -720,8 +765,14 @@ class SkillsBundleLoader:
             agent_id, settings, max_chars=max_chars
         )["text"]
 
-    def load_fewshots(self, agent_id: str, *, max_shots: int = 2) -> str:
+    def load_fewshots(self, agent_id: str, *, max_shots: int | None = None) -> str:
         """加载人工审阅后的 fewshots.v1.yaml（若存在）。"""
+        contract = self.get_role_contract(agent_id)
+        policy = contract.get("fewshot_policy") or {}
+        if max_shots is None:
+            raw = policy.get("max_shots", 2)
+            max_shots = int(raw) if raw is not None else 2
+        max_shots = max(0, int(max_shots))
         entry = self.get_role_entry(agent_id)
         skill_dir = entry.get("skill_dir") or f"roles/{agent_id.replace('.', '-')}"
         path = self.root / skill_dir / "fewshots.v1.yaml"
@@ -746,13 +797,6 @@ class SkillsBundleLoader:
         if not path.exists():
             return ""
         return path.read_text(encoding="utf-8")
-
-    def get_orchestration_track(self, entry_type: str) -> dict[str, Any]:
-        orch = self.manifest.get("orchestration", {})
-        rel = orch.get(entry_type) or orch.get("original_track")
-        if not rel:
-            raise FileNotFoundError(f"缺少编排轨道: {entry_type}")
-        return self._load_yaml(rel)
 
     def assemble_rules_for_role(
         self,
@@ -784,9 +828,11 @@ class SkillsBundleLoader:
                 if not body:
                     continue
                 title = item.get("title", item.get("rule_key", ""))
+                desc = str(item.get("description") or "").strip()
+                header = f"- {title}" if not desc else f"- {title}（{desc}）"
                 priority = int(item.get("priority", 100))
                 pack_rank = _rule_pack_rank(agent_id, section, tier)
-                items.append((pack_rank, priority, section, f"- {title}\n{body}"))
+                items.append((pack_rank, priority, section, f"{header}\n{body}"))
 
         items.sort(key=lambda row: (row[0], row[1]))
         text, truncated, used_sections, item_count = _join_rules_within_budget_meta(
@@ -812,7 +858,7 @@ class SkillsBundleLoader:
         )["text"]
 
     def load_seed_yaml(self, relative_path: str) -> dict[str, Any]:
-        return self._load_yaml(relative_path)
+        return self._load_yaml(resolve_seed_path(relative_path))
 
     def _merge_parameter_definition(
         self,

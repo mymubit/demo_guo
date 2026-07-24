@@ -1,0 +1,5 @@
+version: 1
+cases:
+  - {id: original-mode-source, rule: story-bible.mode.use-one-schema, input: {mode: original, source: project_brief}, expected: pass}
+  - {id: component-references, rule: story-bible.compose.reference-versioned-components, input: {components: [project_brief, character_system, world_system, originality_report]}, expected: pass}
+  - {id: six-contiguous-stages, rule: story-bible.series.require-six-contiguous-stages, input: {stage_count: 6}, expected: pass}

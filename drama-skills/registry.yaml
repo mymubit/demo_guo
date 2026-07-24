@@ -1,7 +1,7 @@
 # Drama Skills 全局索引 — Git SSOT
-# v5.0：主链收缩为 4 生产角色（选题→蓝图→分集→正文），评分/合规/修复独立为质检环技能。
+# v6.0：主链由 operation 驱动 4 个生产角色（选题→蓝图→分集→正文），评分/合规/修复为显式质检操作。
 # 双入口：原创通道（original-track）与故事改编通道（story-adapt-track），在剧本蓝图处汇合。
-version: 5.0.0
+version: 6.0.0
 departments:
 - code: strategy
   name_zh: 选题定调部
@@ -32,8 +32,8 @@ roles:
   modules:
   - concept-development
   - market-radar
-  - formula-analysis
   - tear-down-6d
+  - formula-analysis
 - agent_id: drama.story-bible
   skill_dir: roles/drama-story-bible
   name: Story Bible
@@ -48,6 +48,7 @@ roles:
   - series-emotion-curve
   - conflict-escalation
   - reversal-foreshadowing
+  - payment-checkpoint
   - adaptation-originality
 - agent_id: drama.episode-designer
   skill_dir: roles/drama-episode-designer
@@ -124,7 +125,7 @@ tools:
   description: 创作总入口：双通道路由（原创 / 故事改编）+ 阶段路由 + 质检环调度
 - id: drama-intake
   skill_dir: drama-intake
-  description: 技能进化入口：外部内容摄入 + 四轨道进化（规则/灵感/市场知识/新模式）
+  description: 技能进化入口：外部内容摄入 + 双轨道进化（A 规则升级 / B 素材沉淀）
 contracts:
   artifacts: contracts/artifacts.yaml
   parameters: contracts/parameters.yaml

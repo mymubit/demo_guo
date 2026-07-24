@@ -1,0 +1,127 @@
+version: 1
+domain: emotion
+rules:
+  - id: emotion.expression.use-filmable-channel
+    version: 1
+    category: emotion
+    statement: Express emotion through action, prop, environment, spatial behavior, or dialogue rhythm that can be filmed.
+    severity: hard
+    applies_when: {operation_kind: scene_or_dialogue}
+    source_refs:
+      - v5://foundation/rules/narrative-craft.yaml#t1.global.emotion_externalization_dict.usage
+    consumers: [capability.externalize-emotion]
+    validation: {type: semantic, validator: filmable-emotion-expression}
+  - id: emotion.expression.forbid-adjective-only-interiority
+    version: 1
+    category: emotion
+    statement: Do not use an adjective-only statement of internal emotion as the final dramatic expression.
+    severity: hard
+    applies_when: {operation_kind: scene_or_dialogue}
+    source_refs:
+      - v5://foundation/rules/narrative-craft.yaml#t1.global.emotion_externalization_dict.usage
+      - v5://foundation/rules/04-scene-dialogue.yaml#t1.global.writing_prohibitions.ai-emotion
+    consumers: [capability.externalize-emotion]
+    validation: {type: semantic, validator: no-direct-emotion-label}
+  - id: emotion.qdn.record-evidence-by-dimension
+    version: 1
+    category: emotion
+    statement: Record separate evidence for quality, depth, and need-satisfaction instead of emitting an unsupported aggregate QDN score.
+    severity: hard
+    applies_when: {artifact_component: emotion_system}
+    source_refs:
+      - v5://foundation/rules/narrative-craft.yaml#t1.global.qdn_emotion_model.summary
+    consumers: [capability.design-series-emotion-curve, capability.design-episode-emotion-profile]
+    validation: {type: schema, validator: qdn-evidence-dimensions}
+  - id: emotion.landmark.define-ev-et-tp
+    version: 1
+    category: emotion
+    statement: Identify EV as the selected emotion-value node, ET as the episode trough, and TP as the event that changes the core value state.
+    severity: hard
+    applies_when: {artifact_component: emotion_system}
+    source_refs:
+      - v5://foundation/rules/narrative-craft.yaml#t1.global.qdn_emotion_model.summary
+      - v5://foundation/constraints/series-scale.yaml#emotion_terms
+    consumers: [capability.design-episode-emotion-profile]
+    validation: {type: deterministic, validator: emotion-landmark-references}
+  - id: emotion.rhythm.use-dual-track
+    version: 1
+    category: emotion
+    statement: Label plot density and emotional investment independently using the configured dual-track values.
+    severity: hard
+    applies_when: {artifact_component: emotion_system}
+    source_refs:
+      - v5://foundation/rules/narrative-craft.yaml#t1.global.qdn_emotion_model.summary
+    consumers: [capability.design-series-emotion-curve, capability.design-episode-emotion-profile]
+    validation: {type: schema, validator: canonical-dual-track-rhythm}
+  - id: emotion.episode.require-eight-event-nodes
+    version: 1
+    category: emotion
+    statement: Define exactly the configured number of ordered emotion nodes for every episode, each with a target value and triggering event.
+    severity: hard
+    applies_when: {artifact_component: emotion_system}
+    source_refs:
+      - v5://foundation/rules/narrative-craft.yaml#t1.global.episode_emotion_8nodes.summary
+      - v5://modules/episode-emotion-nodes.md
+    consumers: [capability.design-episode-emotion-profile]
+    validation: {type: schema, validator: eight-event-nodes}
+  - id: emotion.ev.avoid-three-episode-platform
+    version: 1
+    category: emotion
+    statement: Do not allow the configured number of consecutive episodes to remain on an EV platform below the configured difference threshold.
+    severity: hard
+    applies_when: {artifact_component: emotion_system}
+    source_refs:
+      - v5://foundation/rules/narrative-craft.yaml#t1.global.episode_emotion_8nodes.summary
+    consumers: [capability.validate-emotion-continuity]
+    validation: {type: deterministic, validator: ev-platform-run}
+  - id: emotion.series.include-trough-and-recovery
+    version: 1
+    category: emotion
+    statement: Include at least one meaningful trough followed by recovery; do not design a curve that only rises.
+    severity: hard
+    applies_when: {artifact_component: emotion_system}
+    source_refs:
+      - v5://modules/series-emotion-curve.md#failure-conditions
+    consumers: [capability.design-series-emotion-curve]
+    validation: {type: deterministic, validator: trough-and-recovery}
+  - id: emotion.peak.link-event-and-choice
+    version: 1
+    category: emotion
+    statement: Link every major emotion peak to a structural event and a character choice.
+    severity: hard
+    applies_when: {emotion_point_kind: peak}
+    source_refs:
+      - v5://modules/series-emotion-curve.md#failure-conditions
+    consumers: [capability.design-series-emotion-curve]
+    validation: {type: schema, validator: peak-event-choice-link}
+  - id: emotion.paywall.place-on-rising-edge
+    version: 1
+    category: emotion
+    statement: Place a payment checkpoint on a meaningful emotional rising edge rather than a flat or falling segment.
+    severity: soft
+    applies_when: {has_payment_checkpoint: true}
+    source_refs:
+      - v5://modules/series-emotion-curve.md
+    consumers: [capability.design-series-emotion-curve]
+    validation: {type: deterministic, validator: paywall-rising-edge}
+  - id: emotion.breathing-episode.do-not-repeat
+    version: 1
+    category: emotion
+    statement: Do not schedule breathing episodes consecutively, and use each breathing episode to deepen a relationship or advance a secondary plot.
+    severity: hard
+    applies_when: {episode_tone: breathing}
+    source_refs:
+      - v5://modules/series-emotion-curve.md
+      - v5://knowledge/craft/shanyin-series-format.md#inter-episode-rhythm
+    consumers: [capability.design-series-emotion-curve, capability.validate-emotion-continuity]
+    validation: {type: deterministic, validator: breathing-episode-run}
+  - id: emotion.ending.pay-off-prior-choice
+    version: 1
+    category: emotion
+    statement: Make the ending emotion a consequence and payoff of prior character choices.
+    severity: hard
+    applies_when: {emotion_point_kind: ending}
+    source_refs:
+      - v5://modules/series-emotion-curve.md#self-check
+    consumers: [capability.design-series-emotion-curve]
+    validation: {type: semantic, validator: ending-choice-payoff}

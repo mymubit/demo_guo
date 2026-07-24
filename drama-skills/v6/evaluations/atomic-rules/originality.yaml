@@ -1,0 +1,5 @@
+version: 1
+cases:
+  - {id: exact-threshold-no-trigger, rule: originality.similarity.use-canonical-thresholds, input: {title: 0.72, dialogue: 0.80, structure: 0.20}, expected: pass}
+  - {id: unavailable-no-pass, rule: originality.comparison.never-fabricate-pass, input: {comparison_status: not-completed}, expected: not-completed}
+  - {id: structural-rewrite, rule: originality.rewrite.change-four-structural-dimensions, input: {changed: [character-relationships, scene, timing, causal-chain]}, expected: pass}

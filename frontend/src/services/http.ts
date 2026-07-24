@@ -18,6 +18,7 @@ type RequestOptions = {
   data?: unknown
   headers?: Record<string, string>
   rawResponse?: boolean
+  responseType?: AxiosRequestConfig['responseType']
   skipAuthRefresh?: boolean
   signal?: AbortSignal
 }
@@ -130,7 +131,14 @@ function getClient(): AxiosInstance {
         rawResponse?: boolean
       }) | undefined
       const status = error.response?.status as number | undefined
-      const body = error.response?.data as Envelope | undefined
+      let body = error.response?.data as Envelope | Blob | undefined
+      if (body instanceof Blob) {
+        try {
+          body = JSON.parse(await body.text()) as Envelope
+        } catch {
+          body = undefined
+        }
+      }
 
       if (
         status === 401 &&
@@ -194,6 +202,7 @@ export async function request<T = unknown>(
     data: options.data,
     headers: options.headers,
     signal: options.signal,
+    responseType: options.responseType,
     rawResponse: options.rawResponse,
     skipAuthRefresh: options.skipAuthRefresh,
   } as AxiosRequestConfig)

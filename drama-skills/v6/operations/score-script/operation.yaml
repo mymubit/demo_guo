@@ -1,0 +1,21 @@
+id: operation.score-script
+version: 1
+persona: persona.script-scorer
+user_inputs: [episode_range, scoring_focus, review_notes]
+system_inputs: [engine_version, artifact_schema_versions, active_rule_versions, caller_identity]
+reads: [project_brief, story_bible, episode_plan, latest_episode_scripts, prior_quality_report]
+writes: [quality_report]
+scope:
+  required: episode_range
+required_params: [project_id, episode_range, script_version]
+capabilities:
+  - capability.score-latest-script
+  - capability.validate-cross-project-guardrails
+constraints:
+  user_levels: [must_preserve, must_change, preference, avoid, question, system_lock]
+  readonly: [project_brief, story_bible, episode_plan, latest_episode_scripts]
+  write_scope: quality_report_only
+validation: [schema, scope, evidence_coverage, scoring_dimensions, score_calculation, veto_rules, script_version]
+outputs: [candidate, validation, structural_diff, semantic_diff, change_set, impact_plan]
+stages: [command, plan, execution_pack, candidate, validation, change_set, impact_plan, commit]
+transaction: {plan_required: true, candidate_only: true, validation_required: true, atomic_commit: true}

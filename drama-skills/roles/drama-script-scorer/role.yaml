@@ -1,6 +1,8 @@
 agent_id: drama.script-scorer
 name: Script Scorer
 name_zh: 剧本评分官
+v6_persona: persona.script-scorer
+operations: [operation.score-script]
 dept: quality
 role_tier: judge
 workspace_order: 501
@@ -11,6 +13,10 @@ module_policy:
   evaluate_enable_when: true
   as_index: false
   max_chars: 0
+knowledge_policy:
+  # C5：评分长文（s-class 等）仅 index；数值仍走 constraints 内联
+  mode: index
+  max_chars: 1600
 rule_policy:
   scopes:
   - global_core
@@ -36,13 +42,13 @@ input_contract:
   optional_artifacts:
   - project_brief
   - story_bible
-  - narrative_plan
+  - episode_plan
   input_modes:
     project:
-      required_artifacts: [latest_script, story_bible, narrative_plan]
+      required_artifacts: [latest_script, story_bible, episode_plan]
     external:
       required_artifacts: [latest_script]
-      optional_artifacts: [project_brief, story_bible, narrative_plan]
+      optional_artifacts: [project_brief, story_bible, episode_plan]
   parameter_refs:
   - scoring_mode
   - scoring_preset

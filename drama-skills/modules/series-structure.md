@@ -15,7 +15,7 @@
 - `t1.global.foreshadowing_rules.density`
 - `foundation/constraints/series-scale.yaml`
 
-灵感库（可选参考，已验证的结构模式）：`inspirations/structures.md`。
+灵感库（可选参考）：`inspirations/inspirations.md`（结构创意）。
 
 ## 输出
 - `series_structure.main_storyline`（唯一写入者）
@@ -25,7 +25,7 @@
 唯一写入者见 `contracts/artifacts.yaml#field_writers.story_bible`：
 - `conflict_escalation_chain` ← conflict-escalation
 - `major_reversal_positions` / `foreshadowing_table` ← reversal-foreshadowing
-- `paywall_distribution` ← payment-checkpoint
+- `paywall_distribution` ← payment-checkpoint（由 `drama.story-bible` 挂载该模块写入；分集官只写单集 paywall_hook）
 
 ## 执行步骤
 1. 按题材参数或基础占比分配六阶段集数。

@@ -1,0 +1,11 @@
+version: 1
+constraints:
+  foreshadow.a-grade-density:
+    values: {episode_block: 10, minimum_count: 1, minimum_grade: A}
+    source_refs: [v5://foundation/rules/plotting-rules.yaml#t1.global.foreshadowing_rules.density]
+  genre.emotion-node-count:
+    value: 8
+    source_refs: [v5://foundation/rules/genres/matrix.yaml#t2.matrix.genre_rules.from-brief]
+  genre.act-stage-count:
+    value: 6
+    source_refs: [v5://foundation/rules/genres/matrix.yaml#t2.matrix.rhythm_rules.from-brief]

@@ -11,8 +11,8 @@ optimizations/<provider-or-model>/<role-slug>/fewshots.v1.yaml
 生成：
 
 ```bash
-python build/optimize_role_dspy.py --role topic-director --write
-python build/optimize_role_dspy.py --role story-bible --write
+python tools/optimizers/optimize_role_dspy.py --role topic-director --write
+python tools/optimizers/optimize_role_dspy.py --role story-bible --write
 ```
 
 禁止脚本直接覆盖 `roles/*/SKILL.md`。

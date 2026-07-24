@@ -1,0 +1,27 @@
+{
+  "mode": "original",
+  "source": {"kind": "project_brief", "artifact_version": 1},
+  "adaptation_treatment": null,
+  "main_storyline": "A dismissed auditor follows a forged ledger through a family power struggle.",
+  "necessary_subplots": ["conditional trust with the assistant"],
+  "components": {
+    "project_brief": {"schema": "project-brief", "schema_version": 1, "artifact_version": 1},
+    "character_system": {"schema": "character-system", "schema_version": 1, "artifact_version": 1},
+    "world_system": {"schema": "world-system", "schema_version": 1, "artifact_version": 1},
+    "emotion_system": {"schema": "emotion-system", "schema_version": 1, "artifact_version": 1},
+    "originality_report": {"schema": "originality-report", "schema_version": 1, "artifact_version": 1}
+  },
+  "series_structure": {
+    "episode_count": 12,
+    "ratio_source": "project-brief",
+    "stages": [
+      {"name": "opening", "start_episode": 1, "end_episode": 2, "function": "establish accusation", "turning_point": "ledger names brother"},
+      {"name": "warming", "start_episode": 3, "end_episode": 4, "function": "build evidence", "turning_point": "copy is burned"},
+      {"name": "climax", "start_episode": 5, "end_episode": 6, "function": "public conflict", "turning_point": "assistant defects"},
+      {"name": "turning", "start_episode": 7, "end_episode": 8, "function": "reverse evidence", "turning_point": "paper year mismatch"},
+      {"name": "sprint", "start_episode": 9, "end_episode": 10, "function": "recover original", "turning_point": "warehouse opens"},
+      {"name": "ending", "start_episode": 11, "end_episode": 12, "function": "resolve responsibility", "turning_point": "brother testifies"}
+    ],
+    "paywall_positions": [4, 8], "reversal_windows": [{"start": 7, "end": 9}], "foreshadowing_summary": [{"item": "warehouse key", "setup": 3, "payoff": 10}]
+  }
+}

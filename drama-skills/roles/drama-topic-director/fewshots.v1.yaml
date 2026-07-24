@@ -1,148 +1,70 @@
 version: 1.0.0
 source: eval/cases offline fixtures
-note: 人工审阅后再被 PromptBuilder 引用；禁止无审自动覆盖 SKILL.md
+note: 人工审阅后再被 PromptBuilder 引用；禁止无审自动覆盖 SKILL.md；max_shots=2 仅取前两条
 fewshots:
 - case_id: TD001
   input:
     title: 逆光重来
     entry_type: original_track
-    core_idea: 被家族抛弃的继承人重生
+    core_idea: 被家族抛弃的继承人重生，用职业能力夺回话语权
     genre_matrix:
       emotion: revenge
       identity: reborn
       conflict: family
       world: modern
+      audience_channel: female
   output:
     title: 逆光重来
-    core_idea: 被家族抛弃的继承人重生后夺回人生
-    first_episode_hook: 婚礼现场反击
-    paywall_direction: 关键证据即将公开
+    core_idea: 被家族抛弃的继承人重生后，用证据与专业能力夺回人生，而非空喊复仇
+    target_audience: 偏爱打脸爽感与职场/家族权谋的都市女性向观众
+    core_conflict: 个人尊严与家族控制权；旧伤害要被当众承认
+    hook_concept: 重生信息差：她知道谁会在关键节点背叛，提前布局反杀
+    market_opportunity: 重生复仇赛道仍热，但缺「职场硬核证据链+家族董事会权斗」组合；空白在专业能力打脸而非纯嘴炮。
+    differentiation_strategy: 每集打脸绑定一份可核验证据（合同/股权/录音），禁止只靠重生预知装神；反派动机落到利益而非脸谱坏。
+    first_episode_hook: 重生当天婚礼上，她当众出示假继承人伪造的股权文件复印件，宾客哗然，新郎脸色骤变
+    paywall_direction: 观众想看董事会如何反扑、证据链下一段落在谁手里，催付费看家族反杀与身份翻盘
     blockbuster_factors:
     - 信息差
-    compliance_risk: low
+    - 当众打脸
+    - 证据链反转
+    compliance_risk: medium
+    competitor_references:
+    - title: 重生之门
+      inspiration: 信息差制造的预判爽感与节奏加速
+      avoidance: 避免全知旁白过长、主角只靠嘴炮无动作
+    - title: 逆袭人生
+      inspiration: 职场专业能力作为破局武器
+      avoidance: 避免反派工具人化、动机只剩「坏」
 - case_id: TD002
   input:
-    title: 战神归来
+    title: 归园田居
     entry_type: original_track
-    core_idea: 被家族抛弃的继承人重生
+    core_idea: 城市失败者返乡，用做饭与邻里关系完成自我救赎
     genre_matrix:
-      emotion: justice
-      identity: reborn
-      conflict: family
-      world: modern
+      emotion: warmth
+      identity: ordinary
+      conflict: redemption
+      world: rural
+      audience_channel: general
   output:
-    title: 战神归来
-    core_idea: 被家族抛弃的继承人重生后夺回人生
-    first_episode_hook: 婚礼现场反击
-    paywall_direction: 关键证据即将公开
+    title: 归园田居
+    core_idea: 城市挫败青年回到乡土农家，靠做饭、经营与邻里往来慢慢自我救赎
+    target_audience: 喜欢慢节奏乡土烟火、全年龄向的治愈观众
+    core_conflict: 内心空洞与简单生活的对照；旧秘密带来的信任危机
+    hook_concept: 第一顿饭失败→被邻居救场→食物成为疗愈入口
+    market_opportunity: 乡土治愈热度上升，缺「做菜过程可视化+邻里秘密缓揭」；空白在感官记忆绑定人物弧光。
+    differentiation_strategy: 每道招牌菜绑定一位邻居的往事；冲突落在信任试探与身份摊牌，禁止空喊「治愈」口号。
+    first_episode_hook: 返乡第一顿饭糊锅，陌生邻居递来热汤并点破他不会过日子，结尾他翻出旧伤相关物件
+    paywall_direction: 观众想知道城市身份能否被邻里接受，催付费看秘密摊牌与关系重建
     blockbuster_factors:
-    - 信息差
+    - 烟火治愈
+    - 邻里群像
+    - 秘密缓揭
     compliance_risk: low
-- case_id: TD003
-  input:
-    title: 甜宠攻略
-    entry_type: original_track
-    core_idea: 被家族抛弃的继承人重生
-    genre_matrix:
-      emotion: love
-      identity: reborn
-      conflict: family
-      world: modern
-  output:
-    title: 甜宠攻略
-    core_idea: 被家族抛弃的继承人重生后夺回人生
-    first_episode_hook: 婚礼现场反击
-    paywall_direction: 关键证据即将公开
-    blockbuster_factors:
-    - 信息差
-    compliance_risk: low
-- case_id: TD004
-  input:
-    title: 商战沉浮
-    entry_type: original_track
-    core_idea: 被家族抛弃的继承人重生
-    genre_matrix:
-      emotion: ambition
-      identity: reborn
-      conflict: family
-      world: modern
-  output:
-    title: 商战沉浮
-    core_idea: 被家族抛弃的继承人重生后夺回人生
-    first_episode_hook: 婚礼现场反击
-    paywall_direction: 关键证据即将公开
-    blockbuster_factors:
-    - 信息差
-    compliance_risk: low
-- case_id: TD005
-  input:
-    title: 宫廷棋局
-    entry_type: original_track
-    core_idea: 宫廷棋局的一句话梗概
-    genre_matrix:
-      emotion: ambition
-      identity: reborn
-      conflict: family
-      world: modern
-  output:
-    title: 宫廷棋局
-    core_idea: 被家族抛弃的继承人重生后夺回人生
-    first_episode_hook: 婚礼现场反击
-    paywall_direction: 关键证据即将公开
-    blockbuster_factors:
-    - 信息差
-    compliance_risk: low
-- case_id: TD006
-  input:
-    title: 逆光重来
-    entry_type: original_track
-    core_idea: 被家族抛弃的继承人重生
-    genre_matrix:
-      emotion: revenge
-      identity: reborn
-      conflict: family
-      world: modern
-  output:
-    title: 逆光重来
-    core_idea: 被家族抛弃的继承人重生后夺回人生
-    first_episode_hook: 婚礼现场反击
-    paywall_direction: 关键证据即将公开
-    blockbuster_factors:
-    - 信息差
-    compliance_risk: low
-- case_id: TD007
-  input:
-    title: 战神归来
-    entry_type: original_track
-    core_idea: 被家族抛弃的继承人重生
-    genre_matrix:
-      emotion: justice
-      identity: reborn
-      conflict: family
-      world: modern
-  output:
-    title: 战神归来
-    core_idea: 被家族抛弃的继承人重生后夺回人生
-    first_episode_hook: 婚礼现场反击
-    paywall_direction: 关键证据即将公开
-    blockbuster_factors:
-    - 信息差
-    compliance_risk: low
-- case_id: TD008
-  input:
-    title: 甜宠攻略
-    entry_type: original_track
-    core_idea: 被家族抛弃的继承人重生
-    genre_matrix:
-      emotion: love
-      identity: reborn
-      conflict: family
-      world: modern
-  output:
-    title: 甜宠攻略
-    core_idea: 被家族抛弃的继承人重生后夺回人生
-    first_episode_hook: 婚礼现场反击
-    paywall_direction: 关键证据即将公开
-    blockbuster_factors:
-    - 信息差
-    compliance_risk: low
+    competitor_references:
+    - title: 去有风的地方
+      inspiration: 慢节奏烟火与感官细节营造疗愈感
+      avoidance: 避免长时间无冲突的散文式散漫
+    - title: 小巷人家
+      inspiration: 邻里群像用小事件推进关系
+      avoidance: 避免群像平均用力导致主角动机模糊

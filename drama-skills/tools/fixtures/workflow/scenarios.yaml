@@ -1,0 +1,98 @@
+scenarios:
+  original_pass:
+    entry_type: original_track
+    events:
+      - {event: project_brief_completed}
+      - {event: stage_confirmed, payload: {phase: strategy}}
+      - {event: story_bible_completed}
+      - {event: story_bible_approved}
+      - {event: episode_plan_completed}
+      - {event: stage_confirmed, payload: {phase: episode_design}}
+      - {event: episode_batch_completed}
+      - {event: quality_score_completed, payload: {overall_score: 82}}
+      - {event: compliance_completed, payload: {blocking_issues: []}}
+      - {event: quality_passed}
+    expected_phase: writing
+    expected_batch_cursor: 2
+  adapt_revision:
+    entry_type: story_adapt
+    events:
+      - {event: story_bible_completed}
+      - {event: story_bible_approved}
+      - {event: episode_plan_completed}
+      - {event: stage_confirmed, payload: {phase: episode_design}}
+      - {event: episode_batch_completed}
+      - {event: quality_score_completed, payload: {overall_score: 68}}
+      - {event: compliance_completed, payload: {blocking_issues: []}}
+      - {event: quality_failed}
+    expected_phase: revision
+    expected_revision_round: 1
+  blueprint_invalidation:
+    entry_type: original_track
+    seed_artifacts:
+      story_bible: {seed: true}
+    events:
+      - {event: project_brief_completed}
+      - {event: stage_confirmed, payload: {phase: strategy}}
+      - {event: story_bible_completed}
+      - {event: story_bible_approved}
+      - {event: episode_plan_completed}
+      - {event: story_bible_changed}
+    expected_phase: blueprint_approval
+    expected_approval: false
+  full_delivery:
+    entry_type: original_track
+    events:
+      - {event: project_brief_completed}
+      - {event: stage_confirmed, payload: {phase: strategy}}
+      - {event: story_bible_completed}
+      - {event: story_bible_approved}
+      - {event: episode_plan_completed}
+      - {event: stage_confirmed, payload: {phase: episode_design}}
+      - {event: episode_batch_completed}
+      - {event: quality_score_completed, payload: {overall_score: 82}}
+      - {event: compliance_completed, payload: {blocking_issues: []}}
+      - {event: quality_passed}
+      - {event: all_batches_completed, payload: {total_batches: 1}}
+      - {event: stage_confirmed, payload: {phase: writing}}
+      - {event: production_package_completed}
+      - {event: stage_confirmed, payload: {phase: delivery}}
+    expected_phase: completed
+  delivery_skipped_path:
+    entry_type: original_track
+    events:
+      - {event: project_brief_completed}
+      - {event: stage_confirmed, payload: {phase: strategy}}
+      - {event: story_bible_completed}
+      - {event: story_bible_approved}
+      - {event: episode_plan_completed}
+      - {event: stage_confirmed, payload: {phase: episode_design}}
+      - {event: episode_batch_completed}
+      - {event: quality_score_completed, payload: {overall_score: 82}}
+      - {event: compliance_completed, payload: {blocking_issues: []}}
+      - {event: quality_passed}
+      - {event: all_batches_completed, payload: {total_batches: 1}}
+      - {event: stage_confirmed, payload: {phase: writing}}
+      - {event: delivery_skipped}
+      - {event: stage_confirmed, payload: {phase: delivery}}
+    expected_phase: completed
+  blueprint_rejected:
+    entry_type: original_track
+    events:
+      - {event: project_brief_completed}
+      - {event: stage_confirmed, payload: {phase: strategy}}
+      - {event: story_bible_completed}
+      - {event: story_bible_rejected}
+    expected_phase: blueprint
+  brief_rework:
+    entry_type: original_track
+    events:
+      - {event: project_brief_completed}
+      - {event: stage_confirmed, payload: {phase: strategy}}
+      - {event: story_bible_completed}
+      - {event: story_bible_approved}
+      - {event: episode_plan_completed}
+      - {event: project_brief_changed}
+    expected_phase: strategy
+    expected_approval: false
+    expected_batch_cursor: 1

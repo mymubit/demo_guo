@@ -1,0 +1,23 @@
+id: operation.create-project-brief
+version: 1
+persona: persona.topic-director
+user_inputs: [creative_request, audience, platform, format_preferences, user_constraints]
+system_inputs: [engine_version, artifact_schema_versions, active_rule_versions, caller_identity]
+reads: [creative_request, project_settings, approved_reference_material]
+writes: [project_brief]
+scope:
+  required: project_id
+required_params: [project_id, creative_request, base_version]
+capabilities:
+  - capability.develop-core-concept
+  - capability.synthesize-genre-parameters
+  - capability.build-project-brief
+  - capability.validate-cross-project-guardrails
+constraints:
+  user_levels: [must_preserve, must_change, preference, avoid, question, system_lock]
+  readonly: [approved_reference_material]
+  write_scope: project_brief_only
+validation: [schema, scope, user_constraints, originality_boundary, cross_project_guardrails, base_version]
+outputs: [candidate, validation, structural_diff, semantic_diff, change_set, impact_plan]
+stages: [command, plan, execution_pack, candidate, validation, change_set, impact_plan, commit]
+transaction: {plan_required: true, candidate_only: true, validation_required: true, atomic_commit: true}

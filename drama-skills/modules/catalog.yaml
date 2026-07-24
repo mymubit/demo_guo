@@ -7,7 +7,7 @@ modules:
   concept-development: {label_zh: 核心概念形成, domain: concept, kind: core, lifecycle: active, target_roles: [drama.topic-director], workbench_visible: true}
   market-radar: {label_zh: 市场雷达, domain: concept, kind: core, lifecycle: active, target_roles: [drama.topic-director], workbench_visible: true}
   formula-analysis: {label_zh: 商业公式分析, domain: concept, kind: core, lifecycle: active, target_roles: [drama.topic-director], workbench_visible: true}
-  tear-down-6d: {label_zh: 六维拉片, domain: concept, kind: core, lifecycle: active, target_roles: [drama.topic-director], workbench_visible: true}
+  tear-down-6d: {label_zh: 六维拉片, domain: concept, kind: core, lifecycle: active, target_roles: [drama.topic-director], workbench_visible: true, enable_when: "reference_dramas is not empty"}
 
   character-system: {label_zh: 人物系统, domain: character, kind: core, lifecycle: active, target_roles: [drama.story-bible], workbench_visible: true}
   world-rules: {label_zh: 世界规则, domain: structure, kind: core, lifecycle: active, target_roles: [drama.story-bible], workbench_visible: true}
@@ -20,7 +20,7 @@ modules:
   episode-card: {label_zh: 标准分集卡, domain: episode, kind: core, lifecycle: active, target_roles: [drama.episode-designer], workbench_visible: true}
   episode-emotion-nodes: {label_zh: 单集情绪节点, domain: emotion, kind: core, lifecycle: active, target_roles: [drama.episode-designer], workbench_visible: true}
   hook-system: {label_zh: 钩子体系, domain: episode, kind: core, lifecycle: active, target_roles: [drama.episode-designer], workbench_visible: true}
-  payment-checkpoint: {label_zh: 付费卡点, domain: episode, kind: core, lifecycle: active, target_roles: [drama.episode-designer], workbench_visible: true}
+  payment-checkpoint: {label_zh: 付费卡点, domain: episode, kind: core, lifecycle: active, target_roles: [drama.story-bible, drama.episode-designer], workbench_visible: true}
 
   scene-writing: {label_zh: 场景写作, domain: writing, kind: core, lifecycle: active, target_roles: [drama.script-writer], workbench_visible: true}
   dialogue-craft: {label_zh: 首稿对白, domain: writing, kind: core, lifecycle: active, target_roles: [drama.script-writer], workbench_visible: true}

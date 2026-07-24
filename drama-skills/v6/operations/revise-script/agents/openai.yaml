@@ -1,0 +1,6 @@
+interface:
+  display_name: "Revise Script"
+  short_description: "Revise accepted findings within a locked script scope"
+  default_prompt: "Use $revise-script to revise the accepted findings in the selected episodes."
+policy:
+  allow_implicit_invocation: true

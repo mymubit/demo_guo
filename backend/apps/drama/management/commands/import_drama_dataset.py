@@ -90,10 +90,10 @@ class Command(BaseCommand):
                     workflow,
                     "workflow-state.v1.schema.json",
                 )
-                state = project.workflow_state
-                state.state = workflow
-                state.version = workflow["version"]
-                state.save(update_fields=["state", "version", "updated_at"])
+                runtime = project.runtime
+                runtime.metadata = workflow
+                runtime.revision = workflow["version"]
+                runtime.save(update_fields=["metadata", "revision", "updated_at"])
             imported += 1
 
         if options["dry_run"]:

@@ -1,0 +1,44 @@
+# global_core · 钩子 / 付费簇（C2 试点）
+# section id 保持 hook_effectiveness / payment_checkpoint_3card（兼容既有 role_policy）
+# 数值 SSOT 仍在 foundation/constraints/；本文件只聚合叙述规则 + 指向表
+version: "1.0.0"
+tier: 1
+cluster: hooks-payoff
+
+constraint_ssot:
+  - foundation/constraints/commercial-formulas.yaml#metrics.first_episode_hook_count
+  - foundation/constraints/commercial-formulas.yaml#metrics.first_payment_checkpoint
+  - foundation/constraints/commercial-formulas.yaml#metrics.habit_payment_checkpoint
+  - foundation/constraints/commercial-formulas.yaml#metrics.payment_promise_payoff
+  - foundation/constraints/commercial-formulas.yaml#metrics.s_reversal_window
+  - foundation/constraints/narrative-metrics.yaml#opening_hook
+  - foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow
+
+items:
+  - rule_key: t1.global.hook_effectiveness.levels
+    section: hook_effectiveness
+    title: 四级钩子
+    description: S/A/B/C 钩子层级与首集开场窗口
+    priority: 10
+    body: |
+      S级全剧核心 / A级跨2-3集 / B级集末 / C级场间。
+      首集开场分层窗口（3秒冲击/10秒主钩/30秒三段式）读取
+      foundation/constraints/narrative-metrics.yaml#opening_hook。
+      首集 B 级及以上钩子数量目标读取
+      foundation/constraints/commercial-formulas.yaml#metrics.first_episode_hook_count。
+  - rule_key: t1.global.payment_checkpoint_3card.types
+    section: payment_checkpoint_3card
+    title: 三卡付费关卡类型
+    description: 情感卡 / 悬念卡 / 爽感卡
+    priority: 10
+    body: |
+      情感卡：关系临界 / 告白前夕 / 分离危机。悬念卡：真相边缘 / 身份将揭 / 幕后浮现。
+      爽感卡：打脸前夜 / 复仇倒计时 / 实力将曝。
+  - rule_key: t1.global.payment_checkpoint_3card.timing
+    section: payment_checkpoint_3card
+    title: 卡点时机与兑现
+    priority: 11
+    body: |
+      所有集数窗口、兑现期限、S级反转窗口和首集钩子目标只读取
+      foundation/constraints/commercial-formulas.yaml；不得把习惯养成卡点误作首个付费卡点。
+      S 级反转铺垫集数读取 foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow。

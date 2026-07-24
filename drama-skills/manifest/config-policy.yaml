@@ -23,7 +23,7 @@ protected_paths:
   - schemas/**
 
 overlay_files:
-  foundation/constraints/agent-runtime.yaml:
+  foundation/presets/agent-runtime.yaml:
     allowed_paths:
       - agents.*.max_completion_tokens
       - agents.*.max_prompt_tokens
@@ -49,18 +49,18 @@ overlay_files:
       - metrics.*.max_episodes_after_payment
       - metrics.*.start_ratio
       - metrics.*.end_ratio
-  foundation/constraints/scoring-presets.yaml:
+  foundation/presets/scoring-presets.yaml:
     allowed_paths:
       - presets.*.pass_threshold
       - presets.*.weights.*
-  foundation/constraints/platform-profiles.yaml:
+  foundation/presets/platform-profiles.yaml:
     allowed_paths:
       - platforms.*.policy_status
       - platforms.*.policy_version
       - platforms.*.policy_source
       - platforms.*.verified_at
       - platforms.*.notes
-  foundation/constraints/production-feasibility.yaml:
+  foundation/presets/production-feasibility.yaml:
     allowed_paths:
       - tags.*.weight
       - complexity_bands.*.min_score

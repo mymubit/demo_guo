@@ -1,0 +1,138 @@
+version: 1
+domain: compliance
+rules:
+  - id: compliance.p0.block-on-redline
+    version: 1
+    category: compliance
+    statement: Classify trafficking, minors in criminal contexts, extreme sexual violence, live dissection, cannibalism, and prolonged torture display as P0 blockers.
+    severity: hard
+    applies_when: {compliance_scan: true}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.p0_categories.redlines]
+    consumers: [capability.assess-compliance, capability.decide-compliance]
+    validation: {type: semantic, validator: p0-redline-classifier}
+  - id: compliance.horror.use-three-level-disposition
+    version: 1
+    category: compliance
+    statement: Map extreme horror to P0, high-risk horror to P1, and isolated medium-risk horror to P2, recording the disposition in the report.
+    severity: hard
+    applies_when: {contains_horror: true}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.p0_categories.horror-grading]
+    consumers: [capability.assess-compliance]
+    validation: {type: deterministic, validator: horror-disposition}
+  - id: compliance.p1.require-resolution
+    version: 1
+    category: compliance
+    statement: Record sensitive professions without justice closure, incest or child abuse, detailed criminal methods without legal closure, and villain whitewashing as unresolved P1 until fixed and rechecked.
+    severity: hard
+    applies_when: {compliance_scan: true}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.p1_categories.must-fix]
+    consumers: [capability.assess-compliance, capability.decide-compliance]
+    validation: {type: semantic, validator: p1-category-classifier}
+  - id: compliance.p2.record-without-blocking
+    version: 1
+    category: compliance
+    statement: Record P2 risk and recommendation without blocking delivery when no P0 or unresolved P1 exists.
+    severity: hard
+    applies_when: {finding_severity: P2}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.p2_advisories.optimize]
+    consumers: [capability.assess-compliance, capability.decide-compliance]
+    validation: {type: deterministic, validator: p2-nonblocking}
+  - id: compliance.risk.cover-nine-dimensions
+    version: 1
+    category: compliance
+    statement: Assess values, character portrayal, minor protection, copyright, social sensitivity, false promotion, horror, crime display, and platform redlines as nine separate dimensions.
+    severity: hard
+    applies_when: {compliance_scan: true}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.risk_assessment.nine-dimensions]
+    consumers: [capability.assess-compliance]
+    validation: {type: schema, validator: nine-dimension-coverage}
+  - id: compliance.risk.never-default-unchecked-to-pass
+    version: 1
+    category: compliance
+    statement: Preserve every unchecked risk dimension as not-checked and prohibit a pass conclusion while any dimension remains unchecked.
+    severity: hard
+    applies_when: {compliance_scan: true}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.risk_assessment.nine-dimensions]
+    consumers: [capability.decide-compliance]
+    validation: {type: deterministic, validator: unchecked-dimension-gate}
+  - id: compliance.platform.record-target-and-version
+    version: 1
+    category: compliance
+    statement: Record target platform and verified rule version; when absent, run general rules and mark platform-specific review as not checked.
+    severity: hard
+    applies_when: {compliance_scan: true}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.platform_specific.declared-target]
+    consumers: [capability.assess-compliance]
+    validation: {type: deterministic, validator: platform-declaration}
+  - id: compliance.phase.use-canonical-checklist
+    version: 1
+    category: compliance
+    statement: Use project, episode, and delivery checklists with phase-specific required checks and evidence.
+    severity: hard
+    applies_when: {compliance_scan: true}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.three_phase_checklist.gates]
+    consumers: [capability.assess-compliance]
+    validation: {type: deterministic, validator: phase-checklist}
+  - id: compliance.delivery.require-materials
+    version: 1
+    category: compliance
+    statement: At delivery require full screenplay, world and character package, episode outline or synopsis, quality report, and platform-required AI-content labeling.
+    severity: hard
+    applies_when: {compliance_phase: delivery}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.three_phase_checklist.gates]
+    consumers: [capability.assess-compliance, capability.decide-compliance]
+    validation: {type: deterministic, validator: delivery-materials}
+  - id: compliance.fuse.block-p0-or-unresolved-p1
+    version: 1
+    category: compliance
+    statement: Refuse a passing compliance report and stop downstream production or release when any P0 or unresolved P1 finding exists.
+    severity: hard
+    applies_when: {operation_kind: compliance_decision}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.fuse_behavior.guard]
+    consumers: [capability.decide-compliance, capability.check-release-readiness]
+    validation: {type: deterministic, validator: compliance-fuse}
+  - id: compliance.justice.apply-density-thresholds
+    version: 1
+    category: compliance
+    statement: When crime evidence occurs at least twice, require two justice closures, or three when crime evidence occurs at least five times.
+    severity: hard
+    applies_when: {crime_evidence_count_at_least: 2}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.justice_tail_rule.core]
+    consumers: [capability.assess-compliance]
+    validation: {type: deterministic, validator: justice-closure-density}
+  - id: compliance.justice.require-ending-closure
+    version: 1
+    category: compliance
+    statement: When the justice-closure rule is triggered, place at least one justice closure in the final 35 percent of the story.
+    severity: hard
+    applies_when: {crime_evidence_count_at_least: 2}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.justice_tail_rule.core]
+    consumers: [capability.assess-compliance]
+    validation: {type: deterministic, validator: justice-ending-closure}
+  - id: compliance.whitewash.require-responsibility-consequence
+    version: 1
+    category: compliance
+    statement: Treat a villain-sympathy marker without retained responsibility and consequence as an open P1 whitewashing finding.
+    severity: hard
+    applies_when: {villain_sympathy_marker: true}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.justice_tail_rule.whitewash-detection]
+    consumers: [capability.assess-compliance]
+    validation: {type: deterministic, validator: whitewash-responsibility-consequence}
+  - id: compliance.values.forbid-glorified-harm
+    version: 1
+    category: compliance
+    statement: Flag glorification of crime, abuse, discrimination, or antisocial behavior when responsibility and consequences are removed.
+    severity: hard
+    applies_when: {harmful_behavior_portrayed: true}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.values_bottom_line.core]
+    consumers: [capability.assess-compliance]
+    validation: {type: semantic, validator: harmful-behavior-framing}
+  - id: compliance.values.allow-motive-with-accountability
+    version: 1
+    category: compliance
+    statement: Allow a motivated antagonist while requiring the story to preserve responsibility and consequences.
+    severity: hard
+    applies_when: {antagonist_has_motive: true}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.values_bottom_line.core]
+    consumers: [capability.assess-compliance]
+    validation: {type: deterministic, validator: motive-accountability}

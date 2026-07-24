@@ -1,0 +1,57 @@
+{
+  "schema_version": 2,
+  "artifact_version": 13,
+  "source_call_id": "call_eprev_01",
+  "based_on": {
+    "story_bible": 7,
+    "episode_plan": 12
+  },
+  "episodes": [
+    {
+      "episode": 10,
+      "title": "账本疑云",
+      "core_event": "女主通过纸张年份确认关键账本系案发后伪造",
+      "goal_conflict": "女主要封存账本，反派试图当场销毁证据",
+      "characters": ["女主", "反派"],
+      "opening_hook": "女主发现账本墨迹在紫外灯下呈现异常反光",
+      "ending_hook": "纸张供应记录显示这批账本纸晚于案发时间三年",
+      "hook_grade": "A",
+      "satisfaction_points": ["女主用可验证证据反制伪证"],
+      "reversal": "原本指控女主的账本反而成为反派伪造证据的证明",
+      "emotion_nodes": {
+        "EV": {
+          "event": "女主确认纸张年份异常",
+          "emotion": "笃定",
+          "intensity": 8,
+          "character_action": "封存账本并拍摄防伪编号"
+        },
+        "ET": {
+          "event": "反派夺走账本准备焚毁",
+          "emotion": "惊惧",
+          "intensity": 3,
+          "character_action": "女主启动手机云端直播保全证据"
+        },
+        "TP": {
+          "event": "供应商记录证明账本纸晚于案发时间",
+          "emotion": "震惊转为反击",
+          "intensity": 9,
+          "character_action": "女主当众要求暂停继承审议"
+        }
+      },
+      "paywall": {
+        "card_type": "suspense",
+        "promise": "谁指使反派伪造账本",
+        "payoff_episode": 11
+      },
+      "foreshadowing": [
+        {
+          "clue": "第八集出现的纸张水印",
+          "setup_episode": 8,
+          "payoff_episode": 10,
+          "status": "paid_off"
+        }
+      ],
+      "rhythm_tag": "tight-heavy"
+    }
+  ]
+}

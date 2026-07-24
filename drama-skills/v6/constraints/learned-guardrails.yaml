@@ -1,0 +1,23 @@
+version: 1
+constraints:
+  revenge-opening.maximum-seconds:
+    value: 30
+    source_refs: [v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr001]
+  monologue.maximum-consecutive-lines:
+    value: 3
+    source_refs: [v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr002]
+  identity-reveal.minimum-setup-episodes:
+    value: 5
+    source_refs: [v5://foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow.min_episodes]
+  identity-reveal.hint-within-episodes:
+    value: 3
+    source_refs: [v5://foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow.hint_within_episodes]
+  identity-reveal.reveal-window:
+    values: {minimum_ratio: 0.55, maximum_ratio: 0.75}
+    source_refs: [v5://foundation/constraints/commercial-formulas.yaml#metrics.s_reversal_window]
+  progressive-beats.minimum-ratio:
+    value: 0.60
+    source_refs: [v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr006]
+  breathing-episode.rolling-window:
+    values: {episodes: 10, maximum_count: 1}
+    source_refs: [v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr009]

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Compose Story Bible"
+  short_description: "Compose a complete, versioned story bible"
+  default_prompt: "Use $compose-story-bible to compose the story bible from the approved project brief."
+policy:
+  allow_implicit_invocation: true

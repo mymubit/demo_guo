@@ -1,7 +1,9 @@
 ---
 name: drama-revision-master
-version: 5.0.0
-description: 剧本修复官：独立修复技能，按评分/合规报告修复剧本正文，修复稿必须交回评分官复评。
+version: 6.0.0
+description: >
+  何时用：用户接受具体评分或合规问题后，按 accepted_findings 修订指定集数剧本并输出 checkpoint。
+  何时不用：没有报告问题或未选择 accepted_findings 时不执行；不重新设计 story_bible 或 episode_plan。
 tags:
 - 修复
 - 对白精修
@@ -14,9 +16,9 @@ modules:
 - format-fix
 - word-count-governance
 output_schema:
-- name: polished_script
+- name: episode_scripts
   type: object
-  description: 修复后的剧本与修改说明
+  description: 修订后的指定范围剧本，与 memory_checkpoint 原子提交
 references:
 - ./role.yaml
 - ../../modules/dialogue-polish.md
@@ -24,13 +26,13 @@ references:
 - ../../modules/word-count-governance.md
 ---
 
-# 剧本修复官 v5.0
+# 剧本修复官 v6.0
 
 ## 职责
 
 根据 `quality_report`、`compliance_report` 或用户指定问题，对已有剧本文本做可执行修复。不得推翻已确认的选题、故事蓝图和分集设计。
 
-**质检环位置**：评分官判定未达到当前质量门禁或合规官提出 P1 必修项时触发；输出 `polished_script` 后必须交回评分官复评，复评通过才可继续生成下一批。
+**质检环位置**：只修复用户接受的 findings；原位更新 `episode_scripts` 并提交独立 `memory_checkpoint`，随后执行 V6 复评。
 
 ## 标准输出要求
 

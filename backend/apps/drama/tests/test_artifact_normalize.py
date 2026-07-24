@@ -7,7 +7,6 @@ from django.test import SimpleTestCase, override_settings
 from apps.core.schema_validator import SchemaValidator
 from apps.drama.services.artifact_normalize import (
     normalize_compliance_report,
-    normalize_narrative_plan,
     normalize_project_brief,
     normalize_quality_report,
     normalize_story_bible,
@@ -85,6 +84,46 @@ class ProjectBriefNormalizeTests(SimpleTestCase):
             out, "schemas/artifacts/project_brief/1.schema.json"
         )
 
+    def test_canonicalizes_chinese_axis_labels(self) -> None:
+        """模型常输出「复仇+爽感」等中文标签，normalize 应收束为英文枚举。"""
+        settings = {
+            **self.settings,
+            "flavor_tags": [],
+            "genre_matrix": {
+                "emotion": "revenge",
+                "identity": "reborn",
+                "conflict": "family",
+                "world": "modern",
+            },
+        }
+        raw = {
+            "core_idea": "弃女翻盘",
+            "core_conflict": "复仇 vs 代价",
+            "hook_concept": "假死归来",
+            "target_audience": "女频",
+            "audience_channel": "female",
+            "genre_matrix": {
+                "emotion": "复仇+爽感",
+                "identity": "重生",
+                "conflict": "家庭伦理",
+                "world": "现代都市",
+            },
+            "blockbuster_factors": ["身份反转"],
+            "compliance_risk": "low",
+            "market_opportunity": "女频复仇热",
+            "differentiation_strategy": "证据链驱动",
+            "first_episode_hook": "葬礼反杀",
+            "paywall_direction": "真凶现身",
+        }
+        out = normalize_project_brief(raw, settings)
+        self.assertEqual(out["genre_matrix"]["emotion"], "revenge")
+        self.assertEqual(out["genre_matrix"]["identity"], "reborn")
+        self.assertEqual(out["genre_matrix"]["conflict"], "family")
+        self.assertEqual(out["genre_matrix"]["world"], "modern")
+        self.validator.validate_file(
+            out, "schemas/artifacts/project_brief/1.schema.json"
+        )
+
     def test_does_not_rewrite_blockbuster_factor_objects(self) -> None:
         raw = {
             "core_idea": "x",
@@ -116,15 +155,15 @@ class StoryBibleNormalizeTests(SimpleTestCase):
             "entry_type": "original_track",
         }
 
-    def test_does_not_fill_missing_synopsis_short(self) -> None:
+    def test_partial_synopsis_fills_missing_short(self) -> None:
         raw = {
             "drama_title": "玉碎宫门",
             "logline": "弃女入宫，暗中执棋",
             "synopsis": {"full": "她被送入深宫后步步崛起，最终执掌朝局。"},
         }
         out = normalize_story_bible(raw, self.settings)
-        self.assertEqual(out["synopsis"], {"full": "她被送入深宫后步步崛起，最终执掌朝局。"})
-        self.assertNotIn("short", out["synopsis"])
+        self.assertEqual(out["synopsis"]["full"], "她被送入深宫后步步崛起，最终执掌朝局。")
+        self.assertEqual(out["synopsis"]["short"], "她被送入深宫后步步崛起，最终执掌朝局。")
 
     def test_string_synopsis_not_rewritten_to_object(self) -> None:
         raw = dict(FIXTURES["story_bible"])
@@ -137,6 +176,118 @@ class StoryBibleNormalizeTests(SimpleTestCase):
     def test_valid_fixture_stays_valid(self) -> None:
         out = normalize_story_bible(FIXTURES["story_bible"], self.settings)
         self.validator.validate_file(out, "schemas/artifacts/story_bible/1.schema.json")
+
+    def test_missing_adapt_source_defaults_to_original(self) -> None:
+        raw = dict(FIXTURES["story_bible"])
+        raw.pop("adapt_source", None)
+        out = normalize_story_bible(raw, {**self.settings, "entry_type": "original"})
+        self.assertEqual(out["adapt_source"]["mode"], "original")
+        self.validator.validate_file(out, "schemas/artifacts/story_bible/1.schema.json")
+
+    def test_missing_adapt_source_defaults_to_adapt_for_adapt_entry(self) -> None:
+        raw = dict(FIXTURES["story_bible"])
+        raw.pop("adapt_source", None)
+        out = normalize_story_bible(raw, {**self.settings, "entry_type": "adapt"})
+        self.assertEqual(out["adapt_source"]["mode"], "adapt")
+
+    def test_missing_world_rules_gets_minimal_defaults(self) -> None:
+        raw = dict(FIXTURES["story_bible"])
+        raw.pop("world_rules", None)
+        out = normalize_story_bible(raw, self.settings)
+        rules = out["world_rules"]
+        self.assertIsInstance(rules, dict)
+        self.assertTrue(rules["setting_summary"])
+        self.assertIsInstance(rules["root_rules"], list)
+        self.assertGreaterEqual(len(rules["root_rules"]), 1)
+        self.assertTrue(rules["power_structure"])
+        self.validator.validate_file(out, "schemas/artifacts/story_bible/1.schema.json")
+
+    def test_partial_world_rules_fills_required_fields(self) -> None:
+        raw = dict(FIXTURES["story_bible"])
+        raw["world_rules"] = {"setting_summary": "现代都市"}
+        out = normalize_story_bible(raw, self.settings)
+        self.assertEqual(out["world_rules"]["setting_summary"], "现代都市")
+        self.assertIsInstance(out["world_rules"]["root_rules"], list)
+        self.assertTrue(out["world_rules"]["power_structure"])
+        self.validator.validate_file(out, "schemas/artifacts/story_bible/1.schema.json")
+
+    def test_empty_payload_normalizes_to_schema_valid(self) -> None:
+        """LLM 漏掉几乎全部字段时，归一化后仍须过 schema（占位骨架）。"""
+        from apps.drama.skills_bridge.validate import validate_artifact_payload
+
+        out = normalize_story_bible({}, self.settings)
+        errors = validate_artifact_payload("story_bible", out)
+        self.assertEqual(errors, [], errors)
+
+    def test_each_required_top_level_key_can_be_omitted(self) -> None:
+        """逐个剥离 fixture 顶层必填键，归一化后仍须过 schema。"""
+        from apps.drama.skills_bridge.validate import validate_artifact_payload
+
+        required = [
+            "drama_title",
+            "logline",
+            "synopsis",
+            "adapt_source",
+            "world_rules",
+            "characters",
+            "relationship_map",
+            "series_structure",
+        ]
+        for key in required:
+            raw = dict(FIXTURES["story_bible"])
+            raw.pop(key, None)
+            out = normalize_story_bible(raw, self.settings)
+            errors = validate_artifact_payload("story_bible", out)
+            self.assertEqual(errors, [], f"omit {key}: {errors}")
+
+    def test_user_reported_missing_world_rules_only(self) -> None:
+        """对齐线上报错：仅缺 world_rules 时必须能过校验，无需用户重试碰运气。"""
+        from apps.drama.skills_bridge.validate import validate_artifact_payload
+
+        raw = dict(FIXTURES["story_bible"])
+        raw.pop("world_rules", None)
+        out = normalize_story_bible(raw, {**self.settings, "title": "重生之逆袭人生"})
+        errors = validate_artifact_payload("story_bible", out)
+        self.assertEqual(errors, [], errors)
+        self.assertIn("setting_summary", out["world_rules"])
+
+    def test_character_missing_required_fields_get_filled(self) -> None:
+        """对齐线上：characters 缺 ghost 等必填时补齐后过 schema。"""
+        from apps.drama.skills_bridge.validate import validate_artifact_payload
+
+        raw = dict(FIXTURES["story_bible"])
+        chars = [dict(raw["characters"][0])]
+        for key in ("ghost", "lie", "flaw", "voice_tag", "visual_anchor"):
+            chars[0].pop(key, None)
+        raw["characters"] = chars
+        out = normalize_story_bible(raw, self.settings)
+        errors = validate_artifact_payload("story_bible", out)
+        self.assertEqual(errors, [], errors)
+        self.assertEqual(out["characters"][0]["ghost"], "待细化")
+
+    def test_each_character_required_field_can_be_omitted(self) -> None:
+        from apps.drama.skills_bridge.validate import validate_artifact_payload
+
+        required = [
+            "name",
+            "role_type",
+            "surface_desire",
+            "deep_need",
+            "ghost",
+            "lie",
+            "flaw",
+            "arc",
+            "voice_tag",
+            "visual_anchor",
+        ]
+        for key in required:
+            raw = dict(FIXTURES["story_bible"])
+            char = dict(raw["characters"][0])
+            char.pop(key, None)
+            raw["characters"] = [char]
+            out = normalize_story_bible(raw, self.settings)
+            errors = validate_artifact_payload("story_bible", out)
+            self.assertEqual(errors, [], f"omit character.{key}: {errors}")
 
     def test_llm_loose_aliases_not_rewritten(self) -> None:
         """别名键（want/initial 等）不得改写成正式键。"""
@@ -212,96 +363,6 @@ class StoryBibleNormalizeTests(SimpleTestCase):
         self.assertEqual(chain[0], raw_text)
         self.assertIn("{", chain[0])
         self.assertNotEqual(chain[0], "第1幕 · 外部（宫规）：身份暴露危机")
-
-
-@override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
-class NarrativePlanNormalizeTests(SimpleTestCase):
-    def setUp(self) -> None:
-        self.validator = SchemaValidator()
-        self.settings = {"title": "玉碎宫门"}
-
-    def test_does_not_invent_missing_opening_hook(self) -> None:
-        raw = {
-            "episode_narrative_designs": [
-                {
-                    "episode": 1,
-                    "title": "入宫",
-                    "core_event": "暗语试探",
-                    "goal_conflict": "潜伏×暴露",
-                    "emotion_intensity": 7,
-                    "satisfaction_points": ["过关"],
-                    "reversal": "陆珩知情不报",
-                    "paywall_hook": "身份将露",
-                    "rhythm_tag": "tight",
-                    "hook_grade": "A",
-                    "characters": ["沈玉楼", "陆珩"],
-                }
-            ]
-        }
-        out = normalize_narrative_plan(raw, self.settings)
-        ep = out["episode_narrative_designs"][0]
-        self.assertNotIn("opening_hook", ep)
-        self.assertNotIn("ending_hook", ep)
-        with self.assertRaises(Exception):
-            self.validator.validate_file(out, "schemas/artifacts/narrative_plan/1.schema.json")
-
-    def test_opening_hook_aliases_not_rewritten(self) -> None:
-        raw = {
-            "episode_narrative_designs": [
-                {
-                    "episode": 2,
-                    "title": "锋芒",
-                    "core_event": "陷害对手",
-                    "open_hook": "酒宴发难",
-                    "cliffhanger": "青禾被点名",
-                    "emotion_intensity": 8,
-                }
-            ]
-        }
-        out = normalize_narrative_plan(raw, self.settings)
-        ep = out["episode_narrative_designs"][0]
-        self.assertEqual(ep.get("open_hook"), "酒宴发难")
-        self.assertEqual(ep.get("cliffhanger"), "青禾被点名")
-        self.assertNotIn("opening_hook", ep)
-        self.assertNotIn("ending_hook", ep)
-
-    def test_normalize_preserves_canonical_opening_hook(self) -> None:
-        """已是合法键名时 normalize 不改 opening_hook。"""
-        raw = {
-            "episode_narrative_designs": [
-                {
-                    "episode": 1,
-                    "title": "入宫",
-                    "core_event": "暗语试探",
-                    "goal_conflict": "潜伏×暴露",
-                    "emotion_intensity": 7,
-                    "opening_hook": "殿前暗语对上",
-                    "ending_hook": "陆珩未拆穿",
-                    "satisfaction_points": ["过关"],
-                    "reversal": "知情不报",
-                    "paywall_hook": "身份将露",
-                    "rhythm_tag": "tight",
-                    "foreshadowing": {"setup": [], "payoff": []},
-                    "hook_grade": "A",
-                    "characters": ["沈玉楼"],
-                    "emotion_nodes": {
-                        "EV": {"value": 7},
-                        "ET": {"value": 3},
-                        "TP": {"content": "暗语试探"},
-                    },
-                }
-            ]
-        }
-        out = normalize_narrative_plan(raw, self.settings)
-        self.assertEqual(
-            out["episode_narrative_designs"][0]["opening_hook"],
-            "殿前暗语对上",
-        )
-        self.validator.validate_file(out, "schemas/artifacts/narrative_plan/1.schema.json")
-
-    def test_valid_fixture_stays_valid(self) -> None:
-        out = normalize_narrative_plan(FIXTURES["narrative_plan"], self.settings)
-        self.validator.validate_file(out, "schemas/artifacts/narrative_plan/1.schema.json")
 
 
 @override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
@@ -542,6 +603,96 @@ class QualityReportNormalizeTests(SimpleTestCase):
         )
         self.assertTrue(quality_report_evidence_too_sparse(out))
 
+    def test_missing_resolved_script_key_defaults_for_project(self) -> None:
+        from apps.drama.skills_bridge.validate import validate_artifact_payload
+
+        raw = dict(FIXTURES["quality_report"])
+        raw.pop("resolved_script_key", None)
+        out = normalize_quality_report(raw, {"title": "测试短剧"})
+        self.assertEqual(out["resolved_script_key"], "episode_scripts")
+        self.assertEqual(validate_artifact_payload("quality_report", out), [])
+
+    def test_missing_resolved_script_key_defaults_external(self) -> None:
+        from apps.drama.skills_bridge.validate import validate_artifact_payload
+
+        raw = dict(FIXTURES["quality_report"])
+        raw.pop("resolved_script_key", None)
+        out = normalize_quality_report(
+            raw,
+            {
+                "title": "发配边关",
+                "resolved_script_key": "external_script",
+                "external_script_review": True,
+            },
+        )
+        self.assertEqual(out["resolved_script_key"], "external_script")
+        self.assertEqual(validate_artifact_payload("quality_report", out), [])
+
+    def test_each_required_quality_key_can_be_omitted(self) -> None:
+        from apps.drama.skills_bridge.validate import validate_artifact_payload
+
+        required = [
+            "drama_title",
+            "scored_artifact",
+            "resolved_script_key",
+            "scoring_preset",
+            "pass_threshold",
+            "overall_score",
+            "grade",
+            "can_continue_next_batch",
+            "needs_revision",
+            "dimensions",
+            "defects",
+            "continuity_summary",
+            "revision_priorities",
+            "verdict",
+        ]
+        for key in required:
+            raw = dict(FIXTURES["quality_report"])
+            raw.pop(key, None)
+            out = normalize_quality_report(raw, {"title": "测试短剧"})
+            errors = validate_artifact_payload("quality_report", out)
+            self.assertEqual(errors, [], f"omit {key}: {errors}")
+
+    def test_empty_quality_payload_normalizes_to_schema_valid(self) -> None:
+        from apps.drama.skills_bridge.validate import validate_artifact_payload
+
+        out = normalize_quality_report({}, {"title": "发配边关"})
+        self.assertEqual(validate_artifact_payload("quality_report", out), [])
+
+    def test_strips_unexpected_top_level_keys_from_llm(self) -> None:
+        """对齐线上：LLM 多吐字段导致 additionalProperties 失败。"""
+        from apps.drama.services.artifact_normalize import (
+            _schema_top_level_allowed_keys,
+            normalize_artifact,
+        )
+        from apps.drama.skills_bridge.validate import validate_artifact_payload
+
+        _schema_top_level_allowed_keys.cache_clear()
+        raw = dict(FIXTURES["quality_report"])
+        raw.update(
+            {
+                "external_review_note": "外界评审备注",
+                "must_fix_issues": [{"title": "必须修"}],
+                "revision_priority": "先改节奏",
+                "suggested_optimizations": ["加强钩子"],
+                "total_score": 88,
+            }
+        )
+        # 故意去掉 overall_score，验证 total_score 别名收束
+        raw.pop("overall_score", None)
+        out = normalize_artifact("quality_report", raw, {"title": "发配边关"})
+        for key in (
+            "external_review_note",
+            "must_fix_issues",
+            "revision_priority",
+            "suggested_optimizations",
+            "total_score",
+        ):
+            self.assertNotIn(key, out)
+        self.assertEqual(out["overall_score"], 88)
+        self.assertEqual(validate_artifact_payload("quality_report", out), [])
+
 
 @override_settings(DRAMA_SKILLS_ROOT=SKILLS_ROOT, LLM_ENABLED=False)
 class ComplianceReportNormalizeTests(SimpleTestCase):
@@ -578,3 +729,34 @@ class ComplianceReportNormalizeTests(SimpleTestCase):
             SchemaValidator().validate_file(
                 out, "schemas/artifacts/compliance_report/1.schema.json"
             )
+
+    def test_missing_resolved_script_key_on_compliance(self) -> None:
+        from apps.drama.skills_bridge.validate import validate_artifact_payload
+
+        raw = dict(FIXTURES["compliance_report"])
+        raw.pop("resolved_script_key", None)
+        out = normalize_compliance_report(
+            raw, {"title": "发配边关", "resolved_script_key": "external_script"}
+        )
+        self.assertEqual(out["resolved_script_key"], "external_script")
+        self.assertEqual(validate_artifact_payload("compliance_report", out), [])
+
+    def test_each_required_compliance_key_can_be_omitted(self) -> None:
+        from apps.drama.skills_bridge.validate import validate_artifact_payload
+
+        required = [
+            "drama_title",
+            "check_mode",
+            "target_platform",
+            "checked_artifact",
+            "resolved_script_key",
+            "overall_result",
+            "blocking_issues",
+            "risk_items",
+        ]
+        for key in required:
+            raw = dict(FIXTURES["compliance_report"])
+            raw.pop(key, None)
+            out = normalize_compliance_report(raw, {"title": "测试短剧"})
+            errors = validate_artifact_payload("compliance_report", out)
+            self.assertEqual(errors, [], f"omit {key}: {errors}")

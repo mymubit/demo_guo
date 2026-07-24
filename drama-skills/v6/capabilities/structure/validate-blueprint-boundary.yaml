@@ -1,0 +1,9 @@
+id: capability.validate-blueprint-boundary
+version: 1
+inputs: [story_bible]
+outputs: [blueprint_boundary_findings]
+rules:
+  - blueprint.scope.forbid-episode-scene-expansion
+  - blueprint.world.keep-only-actionable-rules
+  - philosophy.cross-section.start-at-maximum-tension
+side_effects: none

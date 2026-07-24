@@ -1,7 +1,9 @@
 ---
 name: drama-delivery-tool
-version: 5.0.0
-description: 宣发交付工具：吸收制作发行能力，输出 production_package。
+version: 6.0.0
+description: >
+  何时用：剧本通过评分与合规门槛后，根据明确 delivery_scope 输出 production_package。
+  何时不用：质量报告或合规报告未就绪时不交付；不修改创作产物。
 tags:
 - 宣发
 - 交付
@@ -32,11 +34,12 @@ references:
 - ../../modules/budget-estimator.md
 - ../../modules/platform-ops-checklist.md
 - ../../knowledge/production/story-to-game.md
+- ../../knowledge/production/shanyin-director-exec.md
 - ../../knowledge/production/shanyin-director-methodology.md
 - ../../knowledge/production/shanyin-director-styles.md
 ---
 
-# 宣发交付工具 v5.0
+# 制作交付官 v6.0
 
 ## 职责
 

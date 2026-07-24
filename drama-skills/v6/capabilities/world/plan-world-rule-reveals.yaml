@@ -1,0 +1,10 @@
+id: capability.plan-world-rule-reveals
+version: 1
+inputs: [world_rule_candidates, series_stage_plan]
+outputs: [world_rule_reveal_plan]
+rules:
+  - world.rule.drive-concrete-choice
+  - world.reveal.through-action-and-consequence
+  - world.reveal.limit-new-layer-per-episode
+  - world.reveal.immediately-affect-choice
+side_effects: none

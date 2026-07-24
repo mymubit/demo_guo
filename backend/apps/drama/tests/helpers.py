@@ -17,16 +17,17 @@ SKILLS_ROOT = os.environ.get(
     str(Path(__file__).resolve().parents[4] / "drama-skills"),
 )
 
+def _skills_fixture(*parts: str) -> Path:
+    root = Path(SKILLS_ROOT)
+    return root.joinpath("tools", "fixtures", *parts)
+
+
 FIXTURE_SETTINGS = json.loads(
-    (Path(SKILLS_ROOT) / "build/fixtures/config/project-settings.json").read_text(
-        encoding="utf-8"
-    )
+    _skills_fixture("config", "project-settings.json").read_text(encoding="utf-8")
 )
 
 FIXTURES = json.loads(
-    (Path(SKILLS_ROOT) / "build/fixtures/artifacts/valid-artifacts.json").read_text(
-        encoding="utf-8"
-    )
+    _skills_fixture("artifacts", "valid-artifacts.json").read_text(encoding="utf-8")
 )
 
 

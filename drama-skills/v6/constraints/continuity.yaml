@@ -1,0 +1,14 @@
+version: 1
+constraints:
+  context.allowed-inputs:
+    values: [previous_episode, memory_checkpoint, current_episode_card, unresolved_foreshadowing, active_global_constraints]
+    source_refs:
+      - v5://foundation/rules/03-structure.yaml#t1.global.continuity.checkpoint
+  checkpoint.required-fields:
+    values: [episode, character_states, active_clues, foreshadowing, rhythm_state, next_episode_constraints]
+    source_refs:
+      - v5://foundation/constraints/continuity-checkpoint.yaml#required_fields
+  checkpoint.optional-fields:
+    values: [relationship_changes, prop_states]
+    source_refs:
+      - v5://foundation/constraints/continuity-checkpoint.yaml#optional_fields

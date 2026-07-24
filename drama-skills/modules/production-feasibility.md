@@ -5,7 +5,7 @@
 
 ## 输入
 - 当前集场景与动作
-- `foundation/constraints/production-feasibility.yaml`
+- `foundation/presets/production-feasibility.yaml`
 
 ## 引用规则
 - `t1.global.production_feasibility.tagging`

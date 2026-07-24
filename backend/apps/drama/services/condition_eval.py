@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""工作台/模块条件表达式安全求值（对齐 drama-skills/build/lib/condition_eval.py）。"""
+"""工作台/模块条件表达式安全求值（对齐 drama-skills/tools/lib/condition_eval.py）。"""
 from __future__ import annotations
 
 import re

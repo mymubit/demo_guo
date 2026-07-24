@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills-v6://artifacts/components/compliance-report",
+  "type": "object",
+  "required": ["phase", "target_platform", "platform_rule_version", "platform_review_status", "findings", "risk_dimensions", "materials", "conclusion", "downstream_allowed"],
+  "properties": {
+    "phase": {"enum": ["project", "episode", "delivery"]},
+    "target_platform": {"type": ["string", "null"]},
+    "platform_rule_version": {"type": ["string", "null"]},
+    "platform_review_status": {"enum": ["verified", "not-checked", "expired"]},
+    "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+    "risk_dimensions": {"type": "array", "minItems": 9, "maxItems": 9, "items": {"$ref": "#/$defs/dimension"}},
+    "materials": {"$ref": "#/$defs/materials"},
+    "conclusion": {"enum": ["pass", "revise", "block"]},
+    "downstream_allowed": {"type": "boolean"}
+  },
+  "$defs": {
+    "finding": {
+      "type": "object", "required": ["id", "severity", "category", "evidence", "status", "recommendation"],
+      "properties": {"id": {"type": "string"}, "severity": {"enum": ["P0", "P1", "P2"]}, "category": {"type": "string"}, "evidence": {"type": "string", "minLength": 1}, "status": {"enum": ["open", "resolved"]}, "recommendation": {"type": "string", "minLength": 1}},
+      "additionalProperties": false
+    },
+    "dimension": {
+      "type": "object", "required": ["name", "status", "evidence"],
+      "properties": {"name": {"enum": ["values", "character-portrayal", "minor-protection", "copyright", "social-sensitivity", "false-promotion", "horror", "crime-display", "platform-redlines"]}, "status": {"enum": ["pass", "risk", "not-checked"]}, "evidence": {"type": "string"}},
+      "additionalProperties": false
+    },
+    "materials": {
+      "type": "object", "required": ["full_screenplay", "world_and_characters", "episode_outline_or_synopsis", "quality_report", "ai_content_labeling"],
+      "properties": {"full_screenplay": {"type": "boolean"}, "world_and_characters": {"type": "boolean"}, "episode_outline_or_synopsis": {"type": "boolean"}, "quality_report": {"type": "boolean"}, "ai_content_labeling": {"type": "boolean"}},
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

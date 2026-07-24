@@ -1,0 +1,93 @@
+version: 1
+domain: learned-guardrails
+rules:
+  - id: learned.revenge-opening.show-oppression-within-thirty-seconds
+    version: 1
+    category: hook
+    statement: For revenge or counterattack stories, show the protagonist being oppressed within the first 30 seconds of episode one to establish sympathy and anger.
+    severity: hard
+    applies_when: {genre: revenge-or-counterattack}
+    source_refs: [v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr001]
+    consumers: [capability.validate-cross-project-guardrails]
+    validation: {type: deterministic, validator: revenge-opening-window}
+  - id: learned.romance-monologue.limit-consecutive-lines
+    version: 1
+    category: scene
+    statement: In romance or healing stories, limit one character's consecutive internal monologue to three lines and prefer interaction or externalization.
+    severity: hard
+    applies_when: {genre: romance-or-healing}
+    source_refs: [v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr002]
+    consumers: [capability.validate-cross-project-guardrails]
+    validation: {type: deterministic, validator: monologue-run-length}
+  - id: learned.identity-reveal.use-canonical-window
+    version: 1
+    category: foreshadowing
+    statement: For an S-grade identity reversal, provide at least five setup episodes, include a hint within the first three episodes, and reveal between 55 and 75 percent of the series.
+    severity: hard
+    applies_when: {reversal_kind: s-grade-identity}
+    source_refs: [v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr005, v5://foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow]
+    consumers: [capability.validate-cross-project-guardrails, capability.map-foreshadowing]
+    validation: {type: deterministic, validator: identity-reveal-window}
+  - id: learned.identity-reveal.require-ritualized-scene
+    version: 1
+    category: scene
+    statement: Stage an S-grade identity reveal with a visible ritual, public recognition, symbolic action, or consequential transfer of status.
+    severity: soft
+    applies_when: {reversal_kind: s-grade-identity}
+    source_refs: [v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr005]
+    consumers: [capability.validate-cross-project-guardrails]
+    validation: {type: semantic, validator: ritualized-identity-reveal}
+  - id: learned.progressive-beats.meet-sixty-percent
+    version: 1
+    category: rhythm
+    statement: Make at least 60 percent of each episode's beats progressive.
+    severity: hard
+    applies_when: {artifact: episode_script}
+    source_refs: [v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr006]
+    consumers: [capability.validate-cross-project-guardrails]
+    validation: {type: deterministic, validator: progressive-beat-ratio}
+  - id: learned.progressive-beat.change-story-state
+    version: 1
+    category: rhythm
+    statement: A progressive beat must change goal, obstacle, information, relationship, resource, or irreversible consequence.
+    severity: hard
+    applies_when: {beat_kind: progressive}
+    source_refs: [v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr006]
+    consumers: [capability.validate-cross-project-guardrails]
+    validation: {type: deterministic, validator: progressive-beat-state-change}
+  - id: learned.breathing-episode.limit-rolling-window
+    version: 1
+    category: rhythm
+    statement: Schedule at most one loose-light breathing episode in every rolling ten-episode window and never place two consecutively.
+    severity: hard
+    applies_when: {artifact: episode_plan}
+    source_refs: [v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr009]
+    consumers: [capability.validate-cross-project-guardrails, capability.validate-emotion-continuity]
+    validation: {type: deterministic, validator: breathing-episode-density}
+  - id: learned.crisis-episode.require-tight-heavy
+    version: 1
+    category: rhythm
+    statement: Use a tight-heavy dual-track rhythm for major reversals, identity reveals, and relationship-break episodes.
+    severity: hard
+    applies_when: {episode_kind: crisis}
+    source_refs: [v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr010]
+    consumers: [capability.validate-cross-project-guardrails, capability.validate-emotion-continuity]
+    validation: {type: deterministic, validator: crisis-episode-rhythm}
+  - id: learned.structured-output.require-json-object
+    version: 1
+    category: quality
+    statement: Require role artifacts to be valid JSON objects and preserve composite fields such as synopsis as objects.
+    severity: hard
+    applies_when: {artifact_output: true}
+    source_refs: [v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr011]
+    consumers: [capability.validate-cross-project-guardrails]
+    validation: {type: deterministic, validator: structured-output-object}
+  - id: learned.structured-output.forbid-runtime-metadata
+    version: 1
+    category: quality
+    statement: Forbid artifact_key, schema_version, and rule_params in role artifact payloads, and require canonical enum values without synonym rewriting.
+    severity: hard
+    applies_when: {artifact_output: true}
+    source_refs: [v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr011]
+    consumers: [capability.validate-cross-project-guardrails]
+    validation: {type: deterministic, validator: structured-output-metadata-enum}

@@ -1,0 +1,9 @@
+id: capability.validate-title-compliance
+version: 1
+inputs: [title, originality_report, title_claims, protected_name_evidence]
+outputs: [title_compliance_finding]
+rules:
+  - compliance.title.require-originality-and-honest-promise
+  - originality.scan.cover-six-protected-elements
+  - originality.comparison.never-fabricate-pass
+side_effects: none

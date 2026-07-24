@@ -1,0 +1,6 @@
+interface:
+  display_name: "Check Compliance"
+  short_description: "Check a script against a verified platform policy"
+  default_prompt: "Use $check-compliance to assess the selected script version for the target platform."
+policy:
+  allow_implicit_invocation: true

@@ -16,6 +16,20 @@
           "external_story"
         ]
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "entry_type": {
+            "const": "original_track"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "core_idea"
+        ]
+      }
     }
   ],
   "properties": {

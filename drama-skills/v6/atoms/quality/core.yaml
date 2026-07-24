@@ -1,0 +1,111 @@
+version: 1
+domain: quality-delivery
+rules:
+  - id: quality.geval.record-evidence-before-score
+    version: 1
+    category: quality
+    statement: Record observable evidence and deductions for each dimension before calculating its score; never request or emit hidden reasoning.
+    severity: hard
+    applies_when: {artifact: quality_report}
+    source_refs: [v5://foundation/rules/scoring-core.yaml#t1.global.scoring.geval-framework]
+    consumers: [capability.score-latest-script]
+    validation: {type: schema, validator: quality-dimension-evidence}
+  - id: quality.score.use-ssot-thresholds
+    version: 1
+    category: quality
+    statement: Calculate grade and revision requirements only from quality-scoring constraints and the selected scoring preset.
+    severity: hard
+    applies_when: {artifact: quality_report}
+    source_refs: [v5://foundation/rules/scoring-core.yaml#t1.global.scoring.geval-framework]
+    consumers: [capability.score-latest-script]
+    validation: {type: deterministic, validator: quality-grade-revision-thresholds}
+  - id: quality.dimensions.require-canonical-ten
+    version: 1
+    category: quality
+    statement: Score format, narrative, conflict, character, emotion, logic, satisfaction, hooks, paywall, and genre fit exactly once.
+    severity: hard
+    applies_when: {artifact: quality_report}
+    source_refs: [v5://foundation/rules/scoring-core.yaml#t1.global.scoring.ten-dimensions]
+    consumers: [capability.score-latest-script]
+    validation: {type: deterministic, validator: quality-ten-dimensions}
+  - id: quality.preset.preserve-ten-dimension-model
+    version: 1
+    category: quality
+    statement: Allow scoring presets to change weights and pass threshold while preserving the canonical ten-dimension model.
+    severity: hard
+    applies_when: {artifact: quality_report}
+    source_refs: [v5://foundation/rules/scoring-core.yaml#t1.global.scoring.ten-dimensions]
+    consumers: [capability.score-latest-script, capability.decide-delivery]
+    validation: {type: deterministic, validator: scoring-preset-model}
+  - id: quality.veto.cap-grade-at-b
+    version: 1
+    category: quality
+    statement: Cap grade at B and record evidence when opening impact is late, the antagonist has fewer than three explicit harmful acts, or no series-spanning S/A suspense exists.
+    severity: hard
+    applies_when: {candidate_grade: S-or-A}
+    source_refs: [v5://foundation/rules/scoring-core.yaml#t1.global.scoring.s-class-veto]
+    consumers: [capability.score-latest-script]
+    validation: {type: deterministic, validator: quality-sa-veto}
+  - id: quality.judge.read-latest-script-only
+    version: 1
+    category: quality
+    statement: Run scoring as an independent judge over latest_script with continuity final review and do not participate in script generation.
+    severity: hard
+    applies_when: {operation_kind: score_script}
+    source_refs: [v5://foundation/rules/stage-playbook.yaml#t3.drama-script-scorer.scoring.ten-dimension]
+    consumers: [capability.score-latest-script]
+    validation: {type: schema, validator: independent-quality-judge}
+  - id: revision.scope.only-address-authorized-findings
+    version: 1
+    category: revision
+    statement: Revise only findings from quality report, compliance report, or user-specified issues without overturning approved concept, story-bible, or episode plan.
+    severity: hard
+    applies_when: {operation_kind: revise_script}
+    source_refs: [v5://foundation/rules/stage-playbook.yaml#t3.drama-revision-master.writing_requirements.revision-only]
+    consumers: [capability.plan-script-revision]
+    validation: {type: deterministic, validator: revision-scope-boundary}
+  - id: revision.require-passing-rescore-before-next-batch
+    version: 1
+    category: revision
+    statement: Re-score the revised episode_scripts and require a passing result before generating the next batch.
+    severity: hard
+    applies_when: {artifact: episode_scripts, revision: true}
+    source_refs: [v5://foundation/rules/stage-playbook.yaml#t3.drama-revision-master.writing_requirements.revision-only]
+    consumers: [capability.plan-script-revision]
+    validation: {type: deterministic, validator: revision-rescore-gate}
+  - id: evolution.log-batch-below-threshold
+    version: 1
+    category: evolution
+    statement: Record a batch when overall score is below 70.
+    severity: hard
+    applies_when: {artifact: quality_report}
+    source_refs: [v5://foundation/rules/stage-playbook.yaml#t3.drama-script-scorer.scoring.evolution-proposal]
+    consumers: [capability.propose-rule-evolution]
+    validation: {type: deterministic, validator: evolution-batch-threshold}
+  - id: evolution.propose-after-two-dimension-failures
+    version: 1
+    category: evolution
+    statement: After the same dimension scores below 70 in two consecutive batches, propose a rule upgrade target and evidence to the intake rule-upgrade track.
+    severity: hard
+    applies_when: {consecutive_dimension_failures: 2}
+    source_refs: [v5://foundation/rules/stage-playbook.yaml#t3.drama-script-scorer.scoring.evolution-proposal]
+    consumers: [capability.propose-rule-evolution]
+    validation: {type: deterministic, validator: evolution-consecutive-failures}
+  - id: delivery.gate.require-quality-compliance-production
+    version: 1
+    category: delivery
+    statement: Read quality, compliance, and production reports before deciding delivery eligibility.
+    severity: hard
+    applies_when: {operation_kind: delivery_check}
+    source_refs: [v5://foundation/rules/stage-playbook.yaml#t3.drama-delivery-tool.delivery.gate]
+    consumers: [capability.decide-delivery]
+    validation: {type: schema, validator: delivery-input-contract}
+  - id: delivery.gate.emit-gaps-without-marketing
+    version: 1
+    category: delivery
+    statement: When preset is ineligible, score is below pass threshold, compliance has not passed, production data is missing, or policy is unverified, emit not-deliverable with gaps and no marketing assets.
+    severity: hard
+    applies_when: {operation_kind: delivery_check}
+    source_refs: [v5://foundation/rules/stage-playbook.yaml#t3.drama-delivery-tool.delivery.gate]
+    consumers: [capability.decide-delivery]
+    validation: {type: deterministic, validator: delivery-gate}

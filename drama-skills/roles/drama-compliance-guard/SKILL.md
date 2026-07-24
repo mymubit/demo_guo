@@ -1,7 +1,9 @@
 ---
 name: drama-compliance-guard
-version: 5.0.0
-description: 合规审查官：独立合规技能，P0/P1/P2 三级合规检测、犯罪正义收束、原创性与平台红线审查，默认与评分官并行触发。
+version: 6.0.0
+description: >
+  何时用：通过 operation.check-compliance 对已生成剧本独立执行 P0/P1/P2、原创性与平台红线审查。
+  何时不用：没有 episode_scripts 时不执行；不参与剧本生成或评分，不自动与其他角色并行。
 tags:
 - 合规
 - 价值观
@@ -20,9 +22,10 @@ output_schema:
   description: 合规审查报告（P0/P1/P2 结论 + 九维风险 + 交付裁决）
 ---
 
-# 合规审查官 v5.0
+# 合规审查官 v6.0
 
-> **v5.0**：独立裁判技能，不参与创作评分，只判断能否交付。默认在评分官运行时并行触发。
+> **v6.0**：独立裁判 persona，不参与创作评分；由工作台显式执行并参与质量 join。
+> 合规细则以 `compliance-core` 规则与知识长文为准，**不注入 fewshot**。
 > 角色配置 SSOT：`./role.yaml`
 
 **职责**：多模式内容合规检测（P0熔断/P1强制/P2建议）、犯罪正义收束验证、原创性/融梗风险、平台红线检测。

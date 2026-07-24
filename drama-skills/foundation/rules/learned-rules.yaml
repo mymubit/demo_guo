@@ -1,5 +1,5 @@
 # global_core · 跨项目经验规则（LR）— Git SSOT
-# 详解长文：knowledge/craft/learned-rules.md；新增 LR 走 drama-intake 轨道一（规则进化）
+# 详解长文：knowledge/craft/learned-rules.md；新增 LR 走 drama-intake 轨道 A（规则升级）
 version: "1.1.0"
 tier: 1
 items:
@@ -17,7 +17,7 @@ items:
     section: learned_rules
     title: LR-003 付费前钩子
     priority: 12
-    body: "付费墙前最后一集集末钩子须为全剧 S 级强度。"
+    body: "付费墙前最后一集集末钩子须为全剧 S 级强度（叙述见 foundation/rules/05-hooks-payoff.yaml#hook_effectiveness）。"
   - rule_key: t1.global.learned_rules.lr004
     section: learned_rules
     title: LR-004 反派逻辑
@@ -39,7 +39,7 @@ items:
     section: learned_rules
     title: LR-007 付费兑现
     priority: 16
-    body: "首付费卡点与兑现期限读取 foundation/constraints/commercial-formulas.yaml；付费后必须兑现卡点承诺。"
+    body: "首付费卡点与兑现期限读取 foundation/constraints/commercial-formulas.yaml；类型与时机叙述见 foundation/rules/05-hooks-payoff.yaml#payment_checkpoint_3card；付费后必须兑现卡点承诺。"
   - rule_key: t1.global.learned_rules.lr008
     section: learned_rules
     title: LR-008 逐集上下文

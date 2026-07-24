@@ -18,13 +18,13 @@ artifacts:
       - characters
       - series_structure.six_stage_structure
 
-  narrative_plan:
+  episode_plan:
     label_zh: 分集设计
-    schema_version: 1
-    schema_path: schemas/artifacts/narrative_plan/1.schema.json
+    schema_version: 2
+    schema_path: v6/artifacts/episode-plan/2.schema.json
     producer: drama.episode-designer
     array_paths:
-      - episode_narrative_designs
+      - episodes
 
   episode_scripts:
     label_zh: 分集剧本
@@ -84,7 +84,7 @@ field_writers:
     conflict_escalation_chain: modules/conflict-escalation.md
     major_reversal_positions: modules/reversal-foreshadowing.md
     foreshadowing_table: modules/reversal-foreshadowing.md
-    paywall_distribution: modules/payment-checkpoint.md
+    paywall_distribution: modules/payment-checkpoint.md  # producer: drama.story-bible
 
 virtual_artifacts:
   latest_script:
@@ -102,7 +102,7 @@ external_artifacts:
 
 array_artifact_keys:
   - story_bible
-  - narrative_plan
+  - episode_plan
   - episode_scripts
   - polished_script
   - production_package
@@ -110,7 +110,7 @@ array_artifact_keys:
 pipeline_result_keys:
   project_brief: project_brief
   story_bible: story_bible
-  narrative_plan: narrative_plan
+  episode_plan: episode_plan
   episode_scripts: episode_scripts
   quality_report: quality_report
   compliance_report: compliance_report

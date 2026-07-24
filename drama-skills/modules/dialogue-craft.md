@@ -14,7 +14,7 @@
 - `t1.global.dialogue_quality.voice-by-class`
 - `t1.global.ai_tone_forbidden.core`
 
-灵感库（可选参考，已验证的对白模式）：`inspirations/dialogues.md`。
+灵感库（可选参考）：`inspirations/inspirations.md`（金句创意）。
 
 ## 输出
 - `episode_scripts.episodes[].script` 中的场景对白

@@ -11,13 +11,13 @@ config_tiers:
 framework: geval
 score_scale: 100
 
-# 输出篇幅（基础量）：太短则无法说明问题；runtime substance gate 按下限拒绝空壳
+# 输出篇幅：target 写入 prompt 引导（够用即可）；min 为落库 substance 门禁（挡空壳）
 output_length:
-  dimension_analysis_target_chars: 1000
-  dimension_analysis_min_chars: 800
-  verdict_detail_target_chars: 2000
-  verdict_detail_min_chars: 1500
-  continuity_summary_min_chars: 300
+  dimension_analysis_target_chars: 400
+  dimension_analysis_min_chars: 100
+  verdict_detail_target_chars: 800
+  verdict_detail_min_chars: 200
+  continuity_summary_min_chars: 80
 
 grade_thresholds:
   S: 90
@@ -27,6 +27,12 @@ grade_thresholds:
   D: 0
 
 revision_threshold: 40  # 单维 1-5 分制 ≤2/5 → 100 分制 ≤40 必须返工
+# 质检分流（artifact_normalize.resolve_revision_route）：
+#   structure_dims 失败占比更高 → rewrite_batch（正文重生）
+#   否则 → text_polish（修复官）；合规 blocking → 工作台覆盖 user_gate
+revision_route:
+  structure_dims: [narrative, conflict, hooks, paywall, character, logic]
+  text_signal_dims: [format, emotion, satisfaction, genre_fit]
 evolution_threshold: 70
 
 fuse_rules:

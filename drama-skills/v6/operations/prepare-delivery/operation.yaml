@@ -1,0 +1,23 @@
+id: operation.prepare-delivery
+version: 1
+persona: persona.delivery-producer
+user_inputs: [delivery_scope, target_platform, production_assumptions, release_request]
+system_inputs: [engine_version, artifact_schema_versions, active_rule_versions, caller_identity]
+reads: [project_brief, story_bible, episode_plan, approved_episode_scripts, quality_report, compliance_report, originality_report, verified_platform_policy]
+writes: [production_package]
+scope:
+  required: delivery_scope
+required_params: [project_id, delivery_scope, script_version, target_platform, policy_version]
+capabilities:
+  - capability.assess-production-feasibility
+  - capability.estimate-production-budget
+  - capability.check-release-readiness
+  - capability.decide-delivery
+constraints:
+  user_levels: [must_preserve, must_change, preference, avoid, question, system_lock]
+  readonly: [all_approved_creative_artifacts, quality_report, compliance_report, originality_report, verified_platform_policy]
+  write_scope: production_package_only
+validation: [schema, scope, report_versions, material_completeness, production_feasibility, budget_provenance, release_readiness, delivery_gate]
+outputs: [candidate, validation, structural_diff, semantic_diff, change_set, impact_plan]
+stages: [command, plan, execution_pack, candidate, validation, change_set, impact_plan, commit]
+transaction: {plan_required: true, candidate_only: true, validation_required: true, atomic_commit: true}

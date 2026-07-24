@@ -1,0 +1,11 @@
+id: capability.decide-delivery
+version: 1
+inputs: [quality_report, compliance_report, production_package, scoring_preset]
+outputs: [delivery_decision]
+rules:
+  - quality.preset.preserve-ten-dimension-model
+  - delivery.gate.require-quality-compliance-production
+  - delivery.gate.emit-gaps-without-marketing
+  - compliance.fuse.block-p0-or-unresolved-p1
+  - release.policy.block-unverified-or-expired
+side_effects: none

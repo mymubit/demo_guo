@@ -1,0 +1,18 @@
+id: capability.write-dialogue
+version: 1
+inputs: [scene_candidates, character_system, relationship_state, character_knowledge_state]
+outputs: [dialogue_candidates]
+rules:
+  - dialogue.line.require-action-intent
+  - dialogue.line.forbid-known-setting-exposition
+  - dialogue.subtext.separate-line-from-desire
+  - dialogue.line.limit-main-information-point
+  - dialogue.rhythm.follow-power-change
+  - dialogue.exchange.compress-static-question-answer
+  - dialogue.voice.remain-character-specific
+  - dialogue.ai-tone.repair-stacked-connectors
+  - dialogue.voice.prioritize-character-tag
+  - dialogue.voice.treat-profile-as-advisory
+  - dialogue.emotion.rhythm-adapt-without-overriding-voice
+  - dialogue.ai-tone.repair-and-read-aloud
+side_effects: none

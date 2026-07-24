@@ -1,6 +1,8 @@
 agent_id: drama.delivery-tool
 name: Delivery Tool
 name_zh: 宣发交付工具
+v6_persona: persona.delivery-producer
+operations: [operation.prepare-delivery]
 dept: delivery
 role_tier: tool
 workspace_order: 601
@@ -18,8 +20,12 @@ module_policy:
   as_index: false
   max_chars: 0
 knowledge_policy:
-  mode: full
-  max_chars: 6000
+  # C5：制作长文改 index；回滚 mode: full / max_chars: 6000
+  mode: index
+  max_chars: 2400
+  includes:
+  - knowledge/production/story-to-game.md
+  - knowledge/production/shanyin-director-exec.md
 rule_policy:
   scopes:
   - global_core

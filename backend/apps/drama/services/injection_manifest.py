@@ -11,6 +11,53 @@ MANIFEST_VERSION = 1
 # 层 chars 不含各 ## 分区标题与空行胶水；仅作占比参考，对账放宽
 LAYER_RECONCILE_TOLERANCE = 512
 
+# C4：稳定层名（PromptBuilder / 诊断 / 基线对照统一）
+CANONICAL_LAYER_NAMES: tuple[str, ...] = (
+    "header",
+    "skill",
+    "modules",
+    "rules",
+    "knowledge",
+    "fewshots",
+    "anti",
+    "scoring_inline",
+    "contract",
+)
+
+# 历史/别名 → 规范名（读侧归一；写侧应直接用规范名）
+LAYER_NAME_ALIASES: dict[str, str] = {
+    "scoring": "scoring_inline",
+    "anti_examples": "anti",
+    "anti-examples": "anti",
+    "few_shots": "fewshots",
+    "few-shot": "fewshots",
+    "role_header": "header",
+    "output_contract": "contract",
+}
+
+
+def canonical_layer_name(name: str) -> str:
+    key = str(name or "").strip()
+    return LAYER_NAME_ALIASES.get(key, key)
+
+
+def normalize_layers(layers: dict[str, Any] | None) -> dict[str, Any]:
+    """将 layers 键归一到规范名；冲突时保留 chars 较大者。"""
+    if not isinstance(layers, dict):
+        return {}
+    out: dict[str, Any] = {}
+    for raw_name, stat in layers.items():
+        name = canonical_layer_name(str(raw_name))
+        if name not in out:
+            out[name] = stat
+            continue
+        prev = out[name]
+        prev_chars = int((prev or {}).get("chars") or 0) if isinstance(prev, dict) else 0
+        next_chars = int((stat or {}).get("chars") or 0) if isinstance(stat, dict) else 0
+        if next_chars >= prev_chars:
+            out[name] = stat
+    return out
+
 
 def layer_stat(chars: int, *, truncated: bool = False) -> dict[str, Any]:
     return {"chars": int(chars), "truncated": bool(truncated)}
@@ -35,7 +82,7 @@ def build_injection_manifest(
         "agent_id": agent_id,
         "bundle_version": str(bundle_version),
         "built_at": datetime.now(timezone.utc).isoformat(),
-        "layers": layers,
+        "layers": normalize_layers(layers),
         "modules": modules,
         "knowledge": knowledge,
         "rules": rules,
@@ -46,9 +93,9 @@ def build_injection_manifest(
     }
 
 
-def layer_chars_sum(layers: dict[str, dict[str, Any]]) -> int:
+def layer_chars_sum(layers: dict[str, Any]) -> int:
     total = 0
-    for value in layers.values():
+    for value in normalize_layers(layers).values():
         if isinstance(value, dict):
             total += int(value.get("chars") or 0)
     return total

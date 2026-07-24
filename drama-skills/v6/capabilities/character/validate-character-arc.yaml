@@ -1,0 +1,10 @@
+id: capability.validate-character-arc
+version: 1
+inputs: [character_candidates, relationship_candidates, series_stage_plan]
+outputs: [character_arc_validation]
+rules:
+  - character.arc.define-four-points
+  - character.arc.turn-from-lie-through-events
+  - antagonist.defeat.preserve-logic
+  - relationship.change.require-visible-trigger
+side_effects: none

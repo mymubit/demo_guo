@@ -44,6 +44,8 @@ export type CreationPreferences = {
   compliance_check_mode: 'standard' | 'values-risk' | 'full'
   enable_delivery: boolean
   deliverables?: DeliveryItem[]
+  /** 高级：true 时评分与合规并行；默认串行（先评分达标再合规） */
+  parallel_quality_judges?: boolean
 }
 
 export type ProjectSettingsAudit = {
@@ -86,60 +88,6 @@ export type ProjectSettings = {
   audit: ProjectSettingsAudit
 }
 
-export type WorkflowStatus =
-  | 'active'
-  | 'waiting_approval'
-  | 'waiting_quality'
-  | 'waiting_user'
-  | 'completed'
-  | 'blocked'
-
-export type WorkflowPhase =
-  | 'strategy'
-  | 'blueprint'
-  | 'blueprint_approval'
-  | 'episode_design'
-  | 'writing'
-  | 'quality'
-  | 'revision'
-  | 'delivery'
-  | 'completed'
-
-export type UserDecisionOption = 'accept_current' | 'manual_revision' | 'abandon_batch'
-
-export type WorkflowState = {
-  schema_version: 'workflow-state.v1'
-  project_id: string
-  version: number
-  entry_type: EntryType
-  status: WorkflowStatus
-  current_phase: WorkflowPhase
-  approvals: Record<string, unknown>
-  batch_cursor: number
-  revision_round: number
-  score_history: number[]
-  quality_results: Record<string, unknown>
-  artifacts: Record<string, unknown>
-  processed_commands: string[]
-  blocked_reason?: string | null
-  pending_user_options?: string[]
-}
-
-export type WorkflowCommandRequest = {
-  command_id: string
-  event: string
-  expected_version: number
-  payload?: Record<string, unknown>
-}
-
-export type ApprovalDecision = 'approve' | 'reject'
-
-export type StoryBibleApprovalRequest = {
-  command_id: string
-  decision: ApprovalDecision
-  expected_version: number
-}
-
 /** Artifact API wrapper — schema_version is numeric (artifacts contract), not legacy *.v1 strings */
 export type ArtifactRecord<T = unknown> = {
   artifact_key: string
@@ -177,7 +125,7 @@ export type GenerationJobStatus =
 export type GenerationStartRequest = {
   command_id: string
   expected_version: number
-  role: string
+  operation_id: string
   input?: Record<string, unknown>
 }
 
@@ -190,6 +138,27 @@ export type GenerationJob = {
   command_id?: string
   artifact_key?: string | null
   workflow_version?: number | null
+  operation_id?: string | null
+  runtime_version?: string | null
+  v6_call?: {
+    call_id: string
+    operation: string
+    stage: string
+    status: string
+    trace: Array<{
+      sequence: number
+      stage: string
+      status: string
+      payload_hash: string
+    }>
+    errors?: Array<Record<string, unknown>>
+    execution_pack?: {
+      persona: import('@/types/workbench').V6Persona
+      capabilities: import('@/types/workbench').V6Capability[]
+      atomic_rules: import('@/types/workbench').V6AtomicRule[]
+      rules: string[]
+    }
+  } | null
   progress?: number
   message?: string
   error?: string | null
@@ -260,6 +229,7 @@ export type AuthUser = {
   nickname?: string
   username?: string
   email?: string
+  is_staff?: boolean
 }
 
 export type LoginResponse = {

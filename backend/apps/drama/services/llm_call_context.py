@@ -12,6 +12,8 @@ from typing import Any, Iterator
 class LlmCallContext:
     project_id: str | None = None
     job_id: str | None = None
+    v3_command_run_id: str | None = None
+    v3_project_id: str | None = None
     role: str = ""
     purpose: str = "artifact_generation"
     actor: str = "system"
@@ -49,6 +51,8 @@ def llm_call_scope(
     *,
     project_id: str | None = None,
     job_id: str | None = None,
+    v3_command_run_id: str | None = None,
+    v3_project_id: str | None = None,
     role: str = "",
     purpose: str = "artifact_generation",
     actor: str = "system",
@@ -57,6 +61,8 @@ def llm_call_scope(
         LlmCallContext(
             project_id=project_id,
             job_id=job_id,
+            v3_command_run_id=v3_command_run_id,
+            v3_project_id=v3_project_id,
             role=role,
             purpose=purpose,
             actor=actor,

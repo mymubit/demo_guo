@@ -1,6 +1,8 @@
 agent_id: drama.topic-director
 name: Topic Director
 name_zh: 选题定调官
+v6_persona: persona.topic-director
+operations: [operation.create-project-brief]
 dept: strategy
 role_tier: production
 workspace_order: 101
@@ -13,23 +15,25 @@ module_policy:
   source: modules/catalog.yaml
   evaluate_enable_when: true
   as_index: false
-  max_chars: 0
+  # 双减：配合 fewshot 再收一档；回滚 2000
+  max_chars: 1900
 knowledge_policy:
-  mode: full
-  max_chars: 6000
+  # 阶段 B 选刀：knowledge 改 index，长文不灌全文
+  mode: index
+  max_chars: 1200
+fewshot_policy:
+  # 双减：默认 2 条改为 1；回滚删本块或 max_shots: 2
+  max_shots: 1
 rule_policy:
   scopes:
   - global_core
   - genre_profile
   - stage_playbook
   max_chars: 0
-  # 与 knowledge/knowledge-sections.md 对齐；靠 sections 收窄
+  # 阶段 B 选刀：收窄为概念相关；节奏/习得留给下游写作角色
   sections:
   - philosophy
   - concept_development
-  - rhythm_rules
-  - episode_structure
-  - learned_rules
 skill_dir: roles/drama-topic-director
 input_contract:
   parameter_refs:

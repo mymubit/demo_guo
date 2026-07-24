@@ -1,0 +1,38 @@
+# global_core · 人物体系簇（C3）
+# 由 character-rules.yaml 规范命名迁入；section id 保持 character_rules
+version: "1.3.0"
+tier: 1
+cluster: character
+
+items:
+  - rule_key: t1.global.character_rules.age-logic
+    section: character_rules
+    title: 年龄段决策与行为
+    priority: 10
+    body: |
+      长文参考: knowledge/craft/tier2-genre-rules.md · 角色行为逻辑库
+      20岁：喜不喜欢优先，冲动；30岁：现实权衡，怕大错；40岁：稳定第一，谨慎保守；50岁+：传承与意义，怕孤独。
+      禁止无触发事件的中途性格颠覆；反派需可理解动机（LR-004：反派失败须有合理逻辑）。
+  - rule_key: t1.global.character_rules.density-arc
+    section: character_rules
+    title: 角色密度与弧光硬约束
+    description: 主角≤2、配角有动机、弧光四点齐全
+    priority: 11
+    body: |
+      主角≤2（完整弧光），核心配角2-4（各有独立动机），关系角色≤6；每人须 Want/Need/Ghost/Lie/Flaw。
+      弧光四点：起点（第1集）→ 转折1（≈30%）→ 转折2（≈70%）→ 终态。
+      每个核心角色 15 秒内可视觉识别（visual_anchor）。
+  - rule_key: t1.global.character_rules.relationship-dynamics
+    section: character_rules
+    title: 关系动力
+    priority: 12
+    body: |
+      每条核心关系必须明确双方诉求、权力来源、当前状态和预期变化；关系变化必须由可见事件触发。
+      只承担信息传递且没有独立欲望的配角应合并或删除。
+  - rule_key: t1.global.character_rules.voice-anchor
+    section: character_rules
+    title: 人物声音与视觉锚点
+    priority: 13
+    body: |
+      每个核心角色必须定义 voice_tag 与 visual_anchor；voice_tag 约束词汇、句长和回避表达，
+      visual_anchor 必须可由服装、道具、动作或空间位置直接呈现。

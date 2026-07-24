@@ -1,0 +1,25 @@
+{
+  "episode": 10,
+  "segments": [
+    {"kind": "hook", "ratio": 0.1, "purpose": "紫外灯照出账本异常"},
+    {"kind": "situation", "ratio": 0.3, "purpose": "反派要求继续审议"},
+    {"kind": "escalation", "ratio": 0.4, "purpose": "争夺账本并核对供应记录"},
+    {"kind": "cliffhanger", "ratio": 0.2, "purpose": "采购签名指向反派本人"}
+  ],
+  "information_gaps": [
+    {"id": "info-paper-date", "type": "character-knows", "secret": "女主已掌握纸张供应记录", "knowers": ["lin-xia"], "nonknowers": ["zhou-wei", "audience"], "planned_reveal_episode": 10, "next_question": "谁授权反派采购伪造纸张"}
+  ],
+  "scenes": [
+    {
+      "id": "scene-10-1", "time": "day", "space": "interior", "location": "董事会审议室",
+      "goal": "女主要求暂停继承审议", "obstacle": "反派控制议程并拒绝核验", "risk": "失败将失去继承资格",
+      "value_before": "反派掌握程序优势", "value_after": "女主取得证据优势",
+      "actions": ["女主用紫外灯照射账本", "反派伸手夺取账本", "女主将供应记录投到屏幕"],
+      "dialogue": [
+        {"speaker": "lin-xia", "text": "继续审议可以。先告诉我，这批纸是哪年停产的？", "intent": "probe", "subtext": "我已经知道账本是伪造的", "power_before": -2, "power_after": 1, "information_point": "账本纸张年份存在问题"},
+        {"speaker": "zhou-wei", "text": "今天审的是继承，不是采购。", "intent": "conceal", "subtext": "必须阻止她公开供应记录", "power_before": 2, "power_after": 0, "information_point": "反派回避纸张来源"}
+      ],
+      "next_scene_handoff": "供应商签名记录即将公开"
+    }
+  ]
+}

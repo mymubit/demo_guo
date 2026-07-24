@@ -1,0 +1,48 @@
+version: 1
+domain: story-bible
+rules:
+  - id: story-bible.mode.use-one-schema
+    version: 1
+    category: structure
+    statement: Produce the same story-bible schema for original mode from project_brief and adaptation mode from external_story.
+    severity: hard
+    applies_when: {artifact: story_bible}
+    source_refs: [v5://foundation/rules/stage-playbook.yaml#t3.drama-story-bible.dual-mode.same-schema]
+    consumers: [capability.compose-story-bible]
+    validation: {type: schema, validator: story-bible-single-schema}
+  - id: story-bible.adaptation.record-treatment
+    version: 1
+    category: originality
+    statement: In adaptation mode, extract source characters, conflict, and structure, then explicitly record retained, enhanced, and rewritten elements plus originality review status.
+    severity: hard
+    applies_when: {story_mode: adaptation}
+    source_refs: [v5://foundation/rules/stage-playbook.yaml#t3.drama-story-bible.dual-mode.same-schema]
+    consumers: [capability.compose-story-bible]
+    validation: {type: schema, validator: adaptation-treatment}
+  - id: story-bible.compose.reference-versioned-components
+    version: 1
+    category: structure
+    statement: Reference versioned character, world, project-brief, and originality components instead of duplicating their rules inside story-bible.
+    severity: hard
+    applies_when: {artifact: story_bible}
+    source_refs: [v5://foundation/rules/stage-playbook.yaml#t3.drama-story-bible.character_rules.density]
+    consumers: [capability.compose-story-bible]
+    validation: {type: deterministic, validator: story-bible-component-references}
+  - id: story-bible.world.require-action-power-reveal-components
+    version: 1
+    category: world
+    statement: Require the referenced world component to contain actionable rules, power structure, and information reveal boundaries.
+    severity: hard
+    applies_when: {artifact: story_bible}
+    source_refs: [v5://foundation/rules/stage-playbook.yaml#t3.drama-story-bible.character_rules.density]
+    consumers: [capability.compose-story-bible]
+    validation: {type: deterministic, validator: world-component-contract}
+  - id: story-bible.series.require-six-contiguous-stages
+    version: 1
+    category: structure
+    statement: Store six canonical contiguous stage ranges using the series allocation rules and record whether ratios came from project brief or the base constraint.
+    severity: hard
+    applies_when: {artifact: story_bible}
+    source_refs: [v5://foundation/rules/stage-playbook.yaml#t3.drama-story-bible.episode_structure.six-stage]
+    consumers: [capability.compose-story-bible]
+    validation: {type: deterministic, validator: story-bible-six-stage-ranges}

@@ -1,0 +1,9 @@
+id: capability.emit-memory-checkpoint
+version: 1
+inputs: [completed_episode, character_states, active_clues, foreshadowing, relationship_changes, prop_states, rhythm_state, next_episode_constraints]
+outputs: [memory_checkpoint]
+rules:
+  - continuity.checkpoint.emit-after-each-episode
+  - continuity.checkpoint.require-canonical-state
+  - foreshadow.overdue.enter-memory-checkpoint
+side_effects: none

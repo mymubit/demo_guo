@@ -1,0 +1,1456 @@
+{
+  "version": 1,
+  "source_files": 16,
+  "candidate_count": 92,
+  "candidates": [
+    {
+      "candidate_id": "candidate.07f1abeb2f36",
+      "legacy_rule_key": "t1.global.character_rules.age-logic",
+      "title": "年龄段决策与行为",
+      "section": "character_rules",
+      "body": "长文参考: knowledge/craft/tier2-genre-rules.md · 角色行为逻辑库\n20岁：喜不喜欢优先，冲动；30岁：现实权衡，怕大错；40岁：稳定第一，谨慎保守；50岁+：传承与意义，怕孤独。\n禁止无触发事件的中途性格颠覆；反派需可理解动机（LR-004：反派失败须有合理逻辑）。",
+      "source": "foundation/rules/02-character.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [
+        "20",
+        "30",
+        "40",
+        "50",
+        "004"
+      ],
+      "known_consumers": [
+        "modules/character-system.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.a1c46591f31d",
+      "legacy_rule_key": "t1.global.character_rules.density-arc",
+      "title": "角色密度与弧光硬约束",
+      "section": "character_rules",
+      "body": "主角≤2（完整弧光），核心配角2-4（各有独立动机），关系角色≤6；每人须 Want/Need/Ghost/Lie/Flaw。\n弧光四点：起点（第1集）→ 转折1（≈30%）→ 转折2（≈70%）→ 终态。\n每个核心角色 15 秒内可视觉识别（visual_anchor）。",
+      "source": "foundation/rules/02-character.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [
+        "2",
+        "2",
+        "4",
+        "6",
+        "1集",
+        "1",
+        "30%",
+        "2",
+        "70%",
+        "15"
+      ],
+      "known_consumers": [
+        "modules/character-system.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.e1e5b4c842fe",
+      "legacy_rule_key": "t1.global.character_rules.relationship-dynamics",
+      "title": "关系动力",
+      "section": "character_rules",
+      "body": "每条核心关系必须明确双方诉求、权力来源、当前状态和预期变化；关系变化必须由可见事件触发。\n只承担信息传递且没有独立欲望的配角应合并或删除。",
+      "source": "foundation/rules/02-character.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/character-system.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.b15584c270af",
+      "legacy_rule_key": "t1.global.character_rules.voice-anchor",
+      "title": "人物声音与视觉锚点",
+      "section": "character_rules",
+      "body": "每个核心角色必须定义 voice_tag 与 visual_anchor；voice_tag 约束词汇、句长和回避表达，\nvisual_anchor 必须可由服装、道具、动作或空间位置直接呈现。",
+      "source": "foundation/rules/02-character.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/character-system.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.d1ae6d1e55a6",
+      "legacy_rule_key": "t1.global.series_structure.six-stage",
+      "title": "六阶段结构",
+      "section": "series_structure",
+      "body": "阶段顺序与基础占比读取 foundation/constraints/series-scale.yaml。\n题材合成后的 project_brief.rule_params.act_ratio 可覆盖基础占比；不得使用其他硬编码阶段比例。",
+      "source": "foundation/rules/03-structure.yaml",
+      "source_ref": "knowledge/craft/shanyin-series-format.md",
+      "constraint_refs": [
+        "foundation/constraints/series-scale.yaml"
+      ],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/series-emotion-curve.md",
+        "modules/series-structure.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.02e5af53e684",
+      "legacy_rule_key": "t1.global.series_structure.boundary",
+      "title": "蓝图层结构边界",
+      "section": "series_structure",
+      "body": "全剧结构只定义主线、必要支线、阶段转折、付费节点、反转窗口和伏笔总表；不提前展开逐集场景。\n世界规则只保留会改变人物行动、代价或选择的内容。",
+      "source": "foundation/rules/03-structure.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/series-structure.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.22a1d0e195ab",
+      "legacy_rule_key": "t1.global.episode_card.required-fields",
+      "title": "分集卡必填字段",
+      "section": "episode_card",
+      "body": "每集必须明确核心事件、Goal×Conflict、集首与集末钩子、EV/ET/TP、爽点、反转、付费卡点、伏笔埋设/回扣及双轨节奏。\n分集卡只能展开已确认的全剧结构，不得重设主线。",
+      "source": "foundation/rules/03-structure.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/episode-card.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.be9449ed45ae",
+      "legacy_rule_key": "t1.global.continuity.checkpoint",
+      "title": "逐集连续性检查点",
+      "section": "continuity",
+      "body": "每集完成后按 foundation/constraints/continuity-checkpoint.yaml 输出 memory_checkpoint。\n生成第 N 集只加载 N-1 集全文、最新检查点、本集分集卡及仍有效的全局约束。",
+      "source": "foundation/rules/03-structure.yaml",
+      "source_ref": "knowledge/craft/shanyin-screenwriting-methodology.md",
+      "constraint_refs": [
+        "foundation/constraints/continuity-checkpoint.yaml"
+      ],
+      "numeric_literals": [
+        "1"
+      ],
+      "known_consumers": [
+        "modules/continuity-audit.md",
+        "modules/continuity-snapshot.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.e3b1c1a63349",
+      "legacy_rule_key": "t1.global.rhythm_rules.hook-density",
+      "title": "钩子密度",
+      "section": "rhythm_rules",
+      "body": "首集开场分层窗口读取 foundation/constraints/narrative-metrics.yaml#opening_hook；\n首集钩子数量目标读取\nfoundation/constraints/commercial-formulas.yaml#metrics.first_episode_hook_count。\n每集集末必须留未解问题；具体钩子等级规则见 hook_effectiveness（05-hooks-payoff）。",
+      "source": "foundation/rules/03-structure.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/commercial-formulas.yaml#metrics.first_episode_hook_count",
+        "foundation/constraints/narrative-metrics.yaml#opening_hook"
+      ],
+      "numeric_literals": [
+        "05"
+      ],
+      "known_consumers": [
+        "modules/hook-system.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.b2430ea1f538",
+      "legacy_rule_key": "t1.global.rhythm_rules.act-pacing",
+      "title": "六阶段节奏基线",
+      "section": "rhythm_rules",
+      "body": "六阶段基础占比与集数换算只读取 foundation/constraints/series-scale.yaml；\nproject_brief.rule_params.act_ratio 存在时覆盖基础占比。\n双轨节奏 [松/中/紧 × 轻/中/重] 禁止连续同格超过 2 集。",
+      "source": "foundation/rules/03-structure.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/series-scale.yaml"
+      ],
+      "numeric_literals": [
+        "2"
+      ],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.73862453daf0",
+      "legacy_rule_key": "t1.global.dialogue_quality.voice-by-class",
+      "title": "阶层/职业台词特征",
+      "section": "dialogue_quality",
+      "body": "长文参考: knowledge/craft/tier2-genre-rules.md · 台词声音差异化\n底层：口语直接；中产：逻辑清晰少脏话；上层：简短暗示反问。\n学生：短句热词；职场人：对齐/闭环/抓手；生意人：客套模糊承诺；公职：严谨滴水不漏。\n遮名测试：遮住角色名仍可从台词风格判断说话者。",
+      "source": "foundation/rules/04-scene-dialogue.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/dialogue-craft.md",
+        "modules/dialogue-polish.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.74b1a6180776",
+      "legacy_rule_key": "t1.global.dialogue_quality.emotion-rhythm",
+      "title": "情绪外化到台词节奏",
+      "section": "dialogue_quality",
+      "body": "愤怒：极短句重复；悲伤：断续停顿；开心：语速快重复用词；紧张/撒谎：结巴+多余解释；强装镇定：刻意完整逻辑。\n关键情感场景必须使用潜台词：角色说的 ≠ 角色想的。",
+      "source": "foundation/rules/04-scene-dialogue.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.cc5826dc4aba",
+      "legacy_rule_key": "t1.global.ai_tone_forbidden.core",
+      "title": "AI 腔禁用词与修复",
+      "section": "ai_tone_forbidden",
+      "body": "禁用（堆砌时）：因此/然而/于是/不得不承认/此刻/不禁/竟然。\n修复三步：改口语短句；一句一信息点；角色口吻差异化。\n通过朗读测试：读出来不像真人说话的句子必须重写。",
+      "source": "foundation/rules/04-scene-dialogue.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/dialogue-craft.md",
+        "modules/dialogue-polish.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.e7af4fb4afc1",
+      "legacy_rule_key": "t1.global.dialogue_craft.intention",
+      "title": "台词行动意图",
+      "section": "dialogue_craft",
+      "body": "每句关键台词必须服务试探、隐瞒、攻击、防御、交换、拉拢或拒绝等行动意图；\n禁止角色只为向观众解释已知设定而说话。",
+      "source": "foundation/rules/04-scene-dialogue.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/dialogue-craft.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.0e51ec13d797",
+      "legacy_rule_key": "t1.global.dialogue_craft.subtext",
+      "title": "潜台词与信息控制",
+      "section": "dialogue_craft",
+      "body": "强情感场景中角色说出的内容不得等于真实欲望；通过回避、反问、停顿、转移话题或道具动作暴露潜台词。\n单句只承载一个主要信息点。",
+      "source": "foundation/rules/04-scene-dialogue.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/dialogue-craft.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.0057019418f7",
+      "legacy_rule_key": "t1.global.dialogue_craft.scene-rhythm",
+      "title": "对话节奏",
+      "section": "dialogue_craft",
+      "body": "对话必须随权力变化改变句长、打断频率和称谓；对峙场景至少一次上风易手。\n连续问答若不改变信息、关系或行动，必须压缩。",
+      "source": "foundation/rules/04-scene-dialogue.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/dialogue-craft.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.e60e2ec2a807",
+      "legacy_rule_key": "t1.global.writing_requirements.episode-scope",
+      "title": "分集与记忆检查点",
+      "section": "writing_requirements",
+      "body": "必须遵守 params.episode_range；逐集仅依赖上一集全文+memory_checkpoint（LR-008）。\n每场 Goal×Conflict；每场 McKee 价值转变；每集输出 memory_checkpoint。",
+      "source": "foundation/rules/04-scene-dialogue.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [
+        "008"
+      ],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.9fc91186e2ce",
+      "legacy_rule_key": "t1.global.writing_requirements.scene-unit",
+      "title": "场景最小执行单元",
+      "section": "writing_requirements",
+      "body": "场景进入时明确角色目标、阻碍和风险；结束时至少一个核心价值状态发生变化。\n无目标、无阻碍或无价值转变的场景必须删除、合并或改写。",
+      "source": "foundation/rules/04-scene-dialogue.yaml",
+      "source_ref": "knowledge/craft/shanyin-screenwriting-methodology.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/scene-writing.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.3179f4c4446b",
+      "legacy_rule_key": "t1.global.writing_requirements.commercial-format",
+      "title": "商业格式执行",
+      "section": "writing_requirements",
+      "body": "场景头/台词/△ 动作遵循 format_standard；台词占比与字数见 quantitative_constraints\n（数值 SSOT: foundation/constraints/script-format.yaml）。",
+      "source": "foundation/rules/04-scene-dialogue.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/script-format.yaml"
+      ],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/word-count-governance.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.da9540a052a0",
+      "legacy_rule_key": "t1.global.writing_prohibitions.format-ssot",
+      "title": "格式禁止项",
+      "section": "writing_prohibitions",
+      "body": "数值 SSOT: foundation/constraints/script-format.yaml\n格式禁止项只读取 format_prohibitions，不在本规则重复维护。",
+      "source": "foundation/rules/04-scene-dialogue.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/script-format.yaml"
+      ],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/format-fix.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.7bb39efae501",
+      "legacy_rule_key": "t1.global.writing_prohibitions.ai-emotion",
+      "title": "情绪直述禁止",
+      "section": "writing_prohibitions",
+      "body": "禁止直接写\"我感到/他很愤怒/她很难过\"；用动作、停顿、环境、对话节奏外化情绪。",
+      "source": "foundation/rules/04-scene-dialogue.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.a581cf11628e",
+      "legacy_rule_key": "t1.global.writing_prohibitions.unfilmable",
+      "title": "不可拍摄内容禁用",
+      "section": "writing_prohibitions",
+      "body": "禁止括号解释潜台词、角色用台词讲解设定或主题、说教式催泪以及任何摄影机无法直接呈现的内容。\n必须改写为动作、可见道具、空间关系、声音或潜台词。",
+      "source": "foundation/rules/04-scene-dialogue.yaml",
+      "source_ref": "knowledge/craft/shanyin-screenwriting-methodology.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/format-fix.md",
+        "modules/scene-writing.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.495c599ac48f",
+      "legacy_rule_key": "t1.global.hook_effectiveness.levels",
+      "title": "四级钩子",
+      "section": "hook_effectiveness",
+      "body": "S级全剧核心 / A级跨2-3集 / B级集末 / C级场间。\n首集开场分层窗口（3秒冲击/10秒主钩/30秒三段式）读取\nfoundation/constraints/narrative-metrics.yaml#opening_hook。\n首集 B 级及以上钩子数量目标读取\nfoundation/constraints/commercial-formulas.yaml#metrics.first_episode_hook_count。",
+      "source": "foundation/rules/05-hooks-payoff.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/commercial-formulas.yaml#metrics.first_episode_hook_count",
+        "foundation/constraints/narrative-metrics.yaml#opening_hook"
+      ],
+      "numeric_literals": [
+        "2",
+        "3集",
+        "3秒",
+        "10秒",
+        "30秒"
+      ],
+      "known_consumers": [
+        "modules/hook-system.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.5449e6ff01b1",
+      "legacy_rule_key": "t1.global.payment_checkpoint_3card.types",
+      "title": "三卡付费关卡类型",
+      "section": "payment_checkpoint_3card",
+      "body": "情感卡：关系临界 / 告白前夕 / 分离危机。悬念卡：真相边缘 / 身份将揭 / 幕后浮现。\n爽感卡：打脸前夜 / 复仇倒计时 / 实力将曝。",
+      "source": "foundation/rules/05-hooks-payoff.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/payment-checkpoint.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.fd733722484e",
+      "legacy_rule_key": "t1.global.payment_checkpoint_3card.timing",
+      "title": "卡点时机与兑现",
+      "section": "payment_checkpoint_3card",
+      "body": "所有集数窗口、兑现期限、S级反转窗口和首集钩子目标只读取\nfoundation/constraints/commercial-formulas.yaml；不得把习惯养成卡点误作首个付费卡点。\nS 级反转铺垫集数读取 foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow。",
+      "source": "foundation/rules/05-hooks-payoff.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/commercial-formulas.yaml",
+        "foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow"
+      ],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/payment-checkpoint.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.508f9716cb90",
+      "legacy_rule_key": "t4.global.p0_categories.redlines",
+      "title": "P0 熔断红线",
+      "section": "p0_categories",
+      "body": "P0 命中即否决：人口买卖/拐卖；未成年+犯罪语境；极端性暴力展示；活体解剖/食人/长时间酷刑展示。",
+      "source": "foundation/rules/compliance-core.yaml",
+      "source_ref": "knowledge/quality/tier4-compliance.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.fa79055f847b",
+      "legacy_rule_key": "t4.global.p0_categories.horror-grading",
+      "title": "恐怖内容分级处置",
+      "section": "p0_categories",
+      "body": "恐怖内容三级处置：极端级（活体解剖/食人/长时间酷刑+展示）直接熔断；\n高风险（真实犯罪手法详细演示/惊悚意象密集）强制删改后复检；\n中风险（孤立恐怖场景、无系统渲染）建议修改并记录。分级结论必须写入 compliance_report。",
+      "source": "foundation/rules/compliance-core.yaml",
+      "source_ref": "knowledge/quality/tier4-compliance.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.c52901af65de",
+      "legacy_rule_key": "t4.global.p1_categories.must-fix",
+      "title": "P1 强制修改",
+      "section": "p1_categories",
+      "body": "必须修改：敏感职业无正义收束；乱伦/虐待儿童；犯罪手法详细展示无法律收束；反派洗白（有犯罪无惩罚）。",
+      "source": "foundation/rules/compliance-core.yaml",
+      "source_ref": "knowledge/quality/tier4-compliance.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.20c22178c3b0",
+      "legacy_rule_key": "t4.global.p2_advisories.optimize",
+      "title": "P2 建议优化",
+      "section": "p2_advisories",
+      "body": "灰色职业应说明现实危害；未触及 P0/P1 的过度暴力应淡化细节。P2 不阻断交付，但必须记录风险与建议。",
+      "source": "foundation/rules/compliance-core.yaml",
+      "source_ref": "knowledge/quality/tier4-compliance.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.40d4cbfae3d8",
+      "legacy_rule_key": "t4.global.justice_tail_rule.core",
+      "title": "犯罪正义收束",
+      "section": "justice_tail_rule",
+      "body": "触发条件：全剧犯罪相关表述≥2处。高犯罪密度（≥5处）全剧至少3处正义收束；\n普通密度至少2处；结尾段（全剧最后35%剧情）至少1处，否则按 P1 处理。\n犯罪触发词（示例集）：犯罪/违法/谋杀/杀害/绑架/诈骗/勒索/抢劫/盗窃/贩毒/行贿/受贿/\n潜逃/灭口/栽赃/黑恶势力/非法集资/贪污。\n正义收束词（示例集）：受到惩罚/法律制裁/伏法/判刑/军法处置/下旨查办/认罪/缉拿归案/正义得到伸张。",
+      "source": "foundation/rules/compliance-core.yaml",
+      "source_ref": "knowledge/quality/tier4-compliance.md",
+      "constraint_refs": [],
+      "numeric_literals": [
+        "2",
+        "5",
+        "3",
+        "2",
+        "35%",
+        "1"
+      ],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.2bce8061c83c",
+      "legacy_rule_key": "t4.global.justice_tail_rule.whitewash-detection",
+      "title": "反派洗白检测",
+      "section": "justice_tail_rule",
+      "body": "洗白标记词（示例集）出现时必须同时存在正义收束词，否则按 P1（反派洗白）处理：\n洗白/情有可原/不得已/其实他也是受害者/被迫害才/社会对他不公/早期救赎/获得原谅/值得同情。\n允许塑造有动机的反派，但动机不得替代责任与后果（见 values_bottom_line）。",
+      "source": "foundation/rules/compliance-core.yaml",
+      "source_ref": "knowledge/quality/tier4-compliance.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.34a248b0135d",
+      "legacy_rule_key": "t4.global.risk_assessment.nine-dimensions",
+      "title": "九维风险评估",
+      "section": "nine_dimension_risk_assessment",
+      "body": "必须覆盖价值观、人物塑造、未成年保护、版权、社会敏感、虚假宣传、恐怖内容、犯罪展示和平台红线九维。\n未检查的维度不得默认为通过。",
+      "source": "foundation/rules/compliance-core.yaml",
+      "source_ref": "knowledge/quality/tier4-compliance.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.652a8e349b17",
+      "legacy_rule_key": "t4.global.values_bottom_line.core",
+      "title": "价值观底线",
+      "section": "values_bottom_line",
+      "body": "禁止美化犯罪、虐待、歧视或反社会行为；允许塑造有动机的反派，但不得以动机替代责任与后果。",
+      "source": "foundation/rules/compliance-core.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.46e8f6bd6f6e",
+      "legacy_rule_key": "t4.global.title_compliance.core",
+      "title": "片名合规",
+      "section": "title_compliance_rules",
+      "body": "片名不得冒充既有作品、使用受保护角色名、作虚假承诺或以低俗猎奇词规避正文审核；原创性同时执行 originality_rules。",
+      "source": "foundation/rules/compliance-core.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/marketing-copy.md",
+        "modules/story-to-game.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.857a9ddd5c46",
+      "legacy_rule_key": "t4.global.platform_specific.declared-target",
+      "title": "平台专项检查",
+      "section": "platform_specific",
+      "body": "必须记录 target_platform 和规则版本；未提供平台时只执行通用规则，并明确平台专项尚未核验。\n不得凭过期市场知识声称已满足最新平台政策。",
+      "source": "foundation/rules/compliance-core.yaml",
+      "source_ref": "knowledge/quality/tier4-compliance.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/platform-ops-checklist.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.3990ef1974ee",
+      "legacy_rule_key": "t4.global.three_phase_checklist.gates",
+      "title": "三阶段合规检查",
+      "section": "three_phase_compliance_checklist",
+      "body": "立项检查 P0、版权和社会敏感；逐集检查 P0、犯罪收束铺垫和未成年安全；交付执行 P0/P1/P2、九维评估与材料完整性。\n交付阶段备案材料清单：完整剧本、世界观与人设、分集大纲/故事梗概、质量报告、\nAI 生成内容标识（按目标平台要求）。清单缺项时合规结论不得为通过。",
+      "source": "foundation/rules/compliance-core.yaml",
+      "source_ref": "knowledge/quality/tier4-compliance.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/platform-ops-checklist.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.5c8a70c22099",
+      "legacy_rule_key": "t4.global.fuse_behavior.guard",
+      "title": "熔断行为",
+      "section": "fuse_behavior",
+      "body": "P0 或未解决 P1 时：拒绝出具合规通过报告；停止下游制作/发行流程。",
+      "source": "foundation/rules/compliance-core.yaml",
+      "source_ref": "knowledge/quality/tier4-compliance.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.f48baf968a8a",
+      "legacy_rule_key": "t1.global.concept.entry-paths",
+      "title": "五类创意入口",
+      "section": "concept_development",
+      "body": "创意可从主题、人物、空间、关系或标签碰撞进入，但最终都必须收敛为「谁在什么处境下，为何被迫做出选择」。",
+      "source": "foundation/rules/concept-rules.yaml",
+      "source_ref": "knowledge/craft/shanyin-screenwriting-methodology.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/concept-development.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.a53f28c7562f",
+      "legacy_rule_key": "t1.global.concept.combination-methods",
+      "title": "概念组合方法",
+      "section": "concept_development",
+      "body": "可使用概念嫁接、时空错置、隐喻具象化、反转并置或规则反转；组合后只保留一个核心戏剧动作。",
+      "source": "foundation/rules/concept-rules.yaml",
+      "source_ref": "knowledge/craft/shanyin-screenwriting-methodology.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/concept-development.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.ac5b2dbaf31a",
+      "legacy_rule_key": "t1.global.concept.elevator-test",
+      "title": "电梯测试",
+      "section": "concept_development",
+      "body": "一句话必须包含主角身份、急切目标、核心阻碍与差异化机制；删除专有名词后仍能说明为何值得追看。",
+      "source": "foundation/rules/concept-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/concept-development.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.f29ec117a11a",
+      "legacy_rule_key": "t2.matrix.genre_rules.from-brief",
+      "title": "四轴合成·情绪与钩子",
+      "section": "genre_rules",
+      "body": "SSOT: foundation/theme-matrix.yaml · param_synthesis\n读取 project_brief.rule_params（由 genre_matrix 合成）：\n- reversal_density、emotion_curve、hook_types\n- 禁止忽略 genre_matrix 改用无关 archetype 模板\n- 钩子须符合 hook_types 列表，情绪曲线对齐 8 节点目标值",
+      "source": "foundation/rules/genres/matrix.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [
+        "8"
+      ],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.cb773d2e643e",
+      "legacy_rule_key": "t2.matrix.rhythm_rules.from-brief",
+      "title": "四轴合成·阶段配比",
+      "section": "rhythm_rules",
+      "body": "SSOT: foundation/theme-matrix.yaml · param_synthesis\n读取 project_brief.rule_params.act_ratio 作为六阶段占比。\n未提供 rule_params 时，drama.topic-director 必须先合成再下游传递。",
+      "source": "foundation/rules/genres/matrix.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.91715a9624db",
+      "legacy_rule_key": "t1.global.learned_rules.lr001",
+      "title": "LR-001 复仇开场",
+      "section": "learned_rules",
+      "body": "复仇/逆袭：第1集前30秒须展示主角被欺压，快速建立同情与愤怒。",
+      "source": "foundation/rules/learned-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [
+        "1集",
+        "30秒"
+      ],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.a258e811ebaf",
+      "legacy_rule_key": "t1.global.learned_rules.lr002",
+      "title": "LR-002 甜宠独白",
+      "section": "learned_rules",
+      "body": "甜宠/治愈：单角色连续内心独白不超过3句，优先互动与外化。",
+      "source": "foundation/rules/learned-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [
+        "3句"
+      ],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.45de61132cac",
+      "legacy_rule_key": "t1.global.learned_rules.lr003",
+      "title": "LR-003 付费前钩子",
+      "section": "learned_rules",
+      "body": "付费墙前最后一集集末钩子须为全剧 S 级强度（叙述见 foundation/rules/05-hooks-payoff.yaml#hook_effectiveness）。",
+      "source": "foundation/rules/learned-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [
+        "05"
+      ],
+      "known_consumers": [
+        "modules/hook-system.md",
+        "modules/payment-checkpoint.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.ba133bdfdbcf",
+      "legacy_rule_key": "t1.global.learned_rules.lr004",
+      "title": "LR-004 反派逻辑",
+      "section": "learned_rules",
+      "body": "反派失败须有合理逻辑，禁止降智式失败。",
+      "source": "foundation/rules/learned-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.ea4d5d22c014",
+      "legacy_rule_key": "t1.global.learned_rules.lr005",
+      "title": "LR-005 身份揭示",
+      "section": "learned_rules",
+      "body": "S级身份反转铺垫集数与揭露窗口读取 foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow；揭示场景须有仪式感。",
+      "source": "foundation/rules/learned-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow"
+      ],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.1f89cac31d8b",
+      "legacy_rule_key": "t1.global.learned_rules.lr006",
+      "title": "LR-006 推进节拍",
+      "section": "learned_rules",
+      "body": "每集推进型节拍占比≥60%；推进型节拍须改变目标、阻碍、信息、关系、资源或不可逆后果之一。",
+      "source": "foundation/rules/learned-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [
+        "60%"
+      ],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.3c83a4a72487",
+      "legacy_rule_key": "t1.global.learned_rules.lr007",
+      "title": "LR-007 付费兑现",
+      "section": "learned_rules",
+      "body": "首付费卡点与兑现期限读取 foundation/constraints/commercial-formulas.yaml；类型与时机叙述见 foundation/rules/05-hooks-payoff.yaml#payment_checkpoint_3card；付费后必须兑现卡点承诺。",
+      "source": "foundation/rules/learned-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/commercial-formulas.yaml"
+      ],
+      "numeric_literals": [
+        "05",
+        "3"
+      ],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.2debe76ed5fc",
+      "legacy_rule_key": "t1.global.learned_rules.lr008",
+      "title": "LR-008 逐集上下文",
+      "section": "learned_rules",
+      "body": "生成第N集仅加载：N-1集全文+foundation/constraints/continuity-checkpoint.yaml 定义的检查点+本集分集卡+仍有效的全局约束。",
+      "source": "foundation/rules/learned-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/continuity-checkpoint.yaml"
+      ],
+      "numeric_literals": [
+        "1集"
+      ],
+      "known_consumers": [
+        "modules/continuity-snapshot.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.a3f1fb43066a",
+      "legacy_rule_key": "t1.global.learned_rules.lr009",
+      "title": "LR-009 喘息集限制",
+      "section": "learned_rules",
+      "body": "松+轻喘息集每10集最多1次，禁止连续出现。",
+      "source": "foundation/rules/learned-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [
+        "10集",
+        "1次"
+      ],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.b52604836792",
+      "legacy_rule_key": "t1.global.learned_rules.lr010",
+      "title": "LR-010 危机集节奏",
+      "section": "learned_rules",
+      "body": "大反转/身份揭示/决裂集须为紧+重双轨组合。",
+      "source": "foundation/rules/learned-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.b89598d4dcc7",
+      "legacy_rule_key": "t1.global.learned_rules.lr011",
+      "title": "LR-011 结构化输出",
+      "section": "learned_rules",
+      "body": "角色产物必须是合法 JSON 对象：synopsis 等复合字段保持对象形态； 禁止输出 artifact_key/schema_version/rule_params；枚举值不得同义改写。 详见 knowledge/quality/structured-output-guards.md。",
+      "source": "foundation/rules/learned-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.9a6251b2da6a",
+      "legacy_rule_key": "t1.global.episode_structure.four-act",
+      "title": "单集四段式占比",
+      "section": "episode_structure",
+      "body": "单集段落占比读取 foundation/constraints/series-scale.yaml.episode_structure.segment_ratios。\n集末必须有未解问题或新威胁。",
+      "source": "foundation/rules/narrative-craft.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/series-scale.yaml.episode_structure.segment_ratios"
+      ],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/episode-card.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.639357832ddb",
+      "legacy_rule_key": "t1.global.information_asymmetry_mechanics.core",
+      "title": "信息差三类型",
+      "section": "information_asymmetry_mechanics",
+      "body": "观众知·角色不知 / 角色知·观众不知 / 双知情博弈。核心真相延迟；每解一谜生一新谜。",
+      "source": "foundation/rules/narrative-craft.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.fd875ea3e922",
+      "legacy_rule_key": "t1.global.emotion_externalization_dict.usage",
+      "title": "情绪外化",
+      "section": "emotion_externalization_dict",
+      "body": "用动作/道具/环境/对话节奏外化情绪；禁止形容词直述内心。参考 tier2 情绪维度台词节奏。",
+      "source": "foundation/rules/narrative-craft.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/dialogue-polish.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.177cdcd823b5",
+      "legacy_rule_key": "t1.global.qdn_emotion_model.summary",
+      "title": "QDN 情绪模型",
+      "section": "qdn_emotion_model",
+      "body": "质量感Q × 深度D × 需求满足N；EV/ET/TP 定义读取\nfoundation/constraints/series-scale.yaml.emotion_terms，并配合双轨节奏[松/中/紧×轻/中/重]。",
+      "source": "foundation/rules/narrative-craft.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/series-scale.yaml.emotion_terms"
+      ],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/episode-emotion-nodes.md",
+        "modules/series-emotion-curve.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.7ac0cf5cab0c",
+      "legacy_rule_key": "t1.global.episode_emotion_8nodes.summary",
+      "title": "分集情绪八节点",
+      "section": "episode_emotion_8nodes",
+      "body": "每集8个时间点设目标情绪值；禁止连续3集 EV 平台（相差<2）。",
+      "source": "foundation/rules/narrative-craft.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [
+        "8",
+        "3集",
+        "2"
+      ],
+      "known_consumers": [
+        "modules/episode-emotion-nodes.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.9fcd9fed879c",
+      "legacy_rule_key": "t1.global.originality.protected-elements",
+      "title": "六类受保护元素",
+      "section": "originality_rules",
+      "body": "检查角色名、标题标语、关键情节结构、标志性台词、角色形象/声纹及目标市场版权。\n只允许借鉴抽象机制，不得复用可识别的具体表达组合。",
+      "source": "foundation/rules/originality-rules.yaml",
+      "source_ref": "knowledge/quality/originality-rules.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/adaptation-originality.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.26a44d09b686",
+      "legacy_rule_key": "t1.global.originality.rewrite-strategy",
+      "title": "原创化改写",
+      "section": "originality_rules",
+      "body": "命中风险时改变角色关系、场景、时机和因果链，保留的只能是戏剧功能；禁止只替换人名或少量词语。",
+      "source": "foundation/rules/originality-rules.yaml",
+      "source_ref": "knowledge/quality/originality-rules.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/adaptation-originality.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.02de1197371f",
+      "legacy_rule_key": "t1.global.originality.similarity-thresholds",
+      "title": "相似度阈值",
+      "section": "originality_rules",
+      "body": "标题语义相似度>0.72、台词相似度>0.80 或逐集结构位置相似度>20% 时标记 P1 并要求重写。\n无可用检索或相似度工具时必须声明「未完成数据库比对」，不得伪造通过结论。",
+      "source": "foundation/rules/originality-rules.yaml",
+      "source_ref": "knowledge/quality/originality-rules.md",
+      "constraint_refs": [],
+      "numeric_literals": [
+        "0.72",
+        "0.80",
+        "20%"
+      ],
+      "known_consumers": [
+        "modules/adaptation-originality.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.0453ece87444",
+      "legacy_rule_key": "t1.global.originality.ai-rights",
+      "title": "AI 形象与声纹权利",
+      "section": "originality_rules",
+      "body": "不得生成可识别模仿现有 IP 或现实人物的角色形象、肖像或声纹；发布时按目标平台和地区要求标识 AI 生成内容。",
+      "source": "foundation/rules/originality-rules.yaml",
+      "source_ref": "knowledge/quality/originality-rules.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/visual-anchor.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.b2f729af807b",
+      "legacy_rule_key": "t1.global.philosophy.cross-section",
+      "title": "山音横截面理论",
+      "section": "philosophy",
+      "body": "- 故事切出有张力的横截面，不从出生讲到死亡\n- 第1集第1场必须从最大张力切入（Goal×Conflict 立刻成立）\n- 开场即态度：第一场定义全片气质，不是主题说明会",
+      "source": "foundation/rules/philosophy.yaml",
+      "source_ref": "knowledge/craft/shanyin-screenwriting-methodology.md",
+      "constraint_refs": [],
+      "numeric_literals": [
+        "1集",
+        "1"
+      ],
+      "known_consumers": [
+        "modules/concept-development.md",
+        "modules/scene-writing.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.9850eaf4b021",
+      "legacy_rule_key": "t1.global.philosophy.mckee-value-shift",
+      "title": "McKee 价值转变",
+      "section": "philosophy",
+      "body": "- 每场戏必须有价值转变：开场价值 → 结尾价值\n- 维度：安全感/希望/爱/权力/真相/信任/生命\n- 无转变的场景视为无效，删除或改写",
+      "source": "foundation/rules/philosophy.yaml",
+      "source_ref": "knowledge/craft/shanyin-screenwriting-methodology.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/conflict-escalation.md",
+        "modules/scene-writing.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.5745129bc15f",
+      "legacy_rule_key": "t1.global.conflict_escalation.four-types",
+      "title": "四类冲突",
+      "section": "conflict_escalation",
+      "body": "外部（环境/社会）· 人际（关系/利益）· 内心（Ghost/Lie）· 命运（结构性对立）。\n全剧至少覆盖 3 类；主线冲突须为结构性对立（不能一次和解消失）。\n每次升级须改变冲突质量，禁止同烈度重复拉扯。",
+      "source": "foundation/rules/plotting-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [
+        "3"
+      ],
+      "known_consumers": [
+        "modules/conflict-escalation.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.cae301036ed2",
+      "legacy_rule_key": "t1.global.conflict_escalation.upgrade-protocol",
+      "title": "升级协议",
+      "section": "conflict_escalation",
+      "body": "范围升级 → 烈度升级 → 信息升级 → 后果升级。\n对峙场景五要素：势力对比/表面诉求/真实意图/权力拉锯（上风至少易手1次）/场景转折。",
+      "source": "foundation/rules/plotting-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [
+        "1次"
+      ],
+      "known_consumers": [
+        "modules/conflict-escalation.md",
+        "modules/episode-card.md",
+        "modules/series-structure.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.2039a641901c",
+      "legacy_rule_key": "t1.global.foreshadowing_rules.density",
+      "title": "伏笔密度与布局",
+      "section": "foreshadowing_rules",
+      "body": "全剧伏笔清单化：已埋 / 待回扣 / 已回收。每 10 集至少 1 个 A 级伏笔。\n禁止无铺垫硬反转；S 级反转铺垫集数与揭露窗口读取\nfoundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow。",
+      "source": "foundation/rules/plotting-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow"
+      ],
+      "numeric_literals": [
+        "10",
+        "1"
+      ],
+      "known_consumers": [
+        "modules/reversal-foreshadowing.md",
+        "modules/series-structure.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.758311f7b015",
+      "legacy_rule_key": "t1.global.foreshadowing_rules.payoff",
+      "title": "回扣与记忆检查点",
+      "section": "foreshadowing_rules",
+      "body": "每条伏笔标注「埋点集 → 计划回扣集」。回扣 3 集内须兑现情感价值；未回收写入 memory_checkpoint。\n逐集生成仅加载上一集 + 快照 + 伏笔列表（LR-008）。",
+      "source": "foundation/rules/plotting-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [
+        "3",
+        "008"
+      ],
+      "known_consumers": [
+        "modules/continuity-audit.md",
+        "modules/reversal-foreshadowing.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.ec0269608450",
+      "legacy_rule_key": "t1.global.foreshadowing_rules.types",
+      "title": "五类反转伏笔",
+      "section": "foreshadowing_rules",
+      "body": "身份 / 动机 / 关系 / 局势 / 真相五类；逆向设计（先定揭露场景再倒推铺垫）。\n铺垫线索须在前序集以「无关细节」呈现。",
+      "source": "foundation/rules/plotting-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/reversal-foreshadowing.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.7f148bbca8bb",
+      "legacy_rule_key": "t1.global.production_feasibility.tagging",
+      "title": "制片复杂度标记",
+      "section": "production_feasibility",
+      "body": "每集必须标记场地切换、夜戏/外景、群演、动作危险、特殊道具、特效与未成年/动物等制片要素。\n标记只描述资源需求，不擅自删除剧情。",
+      "source": "foundation/rules/production-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/production-feasibility.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.44602db72910",
+      "legacy_rule_key": "t1.global.production_feasibility.alternative",
+      "title": "高成本替代方案",
+      "section": "production_feasibility",
+      "body": "高复杂度场景必须给出至少一个保持戏剧功能的低成本替代方案，\n优先调整空间、可见动作、出场人数或表现手段，不削弱核心转折。",
+      "source": "foundation/rules/production-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/production-feasibility.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.942edffa947c",
+      "legacy_rule_key": "t1.global.production_feasibility.camera-visible",
+      "title": "可拍摄性底线",
+      "section": "production_feasibility",
+      "body": "剧本中的关键信息必须能由镜头、声音或表演直接呈现；无法拍摄的心理与抽象判断必须外化。",
+      "source": "foundation/rules/production-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/production-feasibility.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.ed796d654301",
+      "legacy_rule_key": "t1.global.budget_estimation.band-only",
+      "title": "预算分级边界",
+      "section": "budget_estimation",
+      "body": "未接入地区、档期、人员与供应商报价时，只输出资源复杂度和预算带，不输出伪精确金额。\n金额估算必须注明币种、地区、价格版本和未计入项。",
+      "source": "foundation/rules/production-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/budget-estimator.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.77e4ab402b66",
+      "legacy_rule_key": "t1.global.platform_ops.release-check",
+      "title": "平台上架检查",
+      "section": "platform_ops",
+      "body": "上架前核验目标平台政策版本、AI内容标识、备案材料、片名、版权授权、质量与合规报告。\n平台政策未验证或已过期时，必须标记阻断，不得宣称可直接发布。",
+      "source": "foundation/rules/production-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/platform-ops-checklist.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.ff8a702e2c10",
+      "legacy_rule_key": "t1.global.scoring.geval-framework",
+      "title": "G-Eval 评分框架",
+      "section": "scoring",
+      "body": "数值 SSOT: foundation/constraints/quality-scoring.yaml。\n先逐维列出证据与扣分项，再计算分数；不得输出或要求隐藏推理过程。\n任意维度达到 revision_threshold 时必须修改，等级按 grade_thresholds 计算。",
+      "source": "foundation/rules/scoring-core.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/quality-scoring.yaml"
+      ],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.64a3bc687303",
+      "legacy_rule_key": "t1.global.scoring.ten-dimensions",
+      "title": "十维权重摘要",
+      "section": "scoring",
+      "body": "维度、权重、等级和熔断值只读取 foundation/constraints/quality-scoring.yaml。\n评分预设只读取 foundation/presets/scoring-presets.yaml，且必须保持同一十维模型。",
+      "source": "foundation/rules/scoring-core.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/quality-scoring.yaml"
+      ],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.93ab2ff3f5d0",
+      "legacy_rule_key": "t1.global.scoring.s-class-veto",
+      "title": "S级一票否决",
+      "section": "scoring",
+      "body": "以下三项任意一项不满足，总分不得评入 S/A 级（直接进入 B 级以下）：\n1. 首集开场未在冲击窗口内产生强情绪（窗口读取 narrative-metrics.yaml#opening_hook）；\n2. 反派未被充分「非人化」（少于3个明确恶行，观众可能产生负罪感）；\n3. 全剧无贯穿性的 S/A 级悬念。\n触发否决时必须在 quality_report 中标注否决项与证据。",
+      "source": "foundation/rules/scoring-core.yaml",
+      "source_ref": "knowledge/quality/s-class-standards.md",
+      "constraint_refs": [],
+      "numeric_literals": [
+        "1",
+        "2",
+        "3",
+        "3"
+      ],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.fa312ad6eabb",
+      "legacy_rule_key": "t3.drama-topic-director.project_brief.market-integrated",
+      "title": "选题定调必须吸收市场判断",
+      "section": "philosophy",
+      "body": "输出 project_brief 时必须包含故事梗概、受众频道判断、市场机会判断、爆款因子、竞品避雷、\n差异化策略、首集钩子方向、首付费卡点方向和题材敏感点预检（标注风险等级，不出合规结论，\n合规裁决由 drama.compliance-guard 独立执行）。\n所有量化值读取 foundation/constraints/commercial-formulas.yaml。",
+      "source": "foundation/rules/stage-playbook.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/commercial-formulas.yaml"
+      ],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.a11a5293f0e9",
+      "legacy_rule_key": "t3.drama-story-bible.dual-mode.same-schema",
+      "title": "双模式统一产出",
+      "section": "philosophy",
+      "body": "原创模式（输入 project_brief）与改编模式（输入 external_story）必须输出同一 story_bible schema v1 结构。\n改编模式先提取原故事人物/冲突/结构，再补全缺失部分，并显式列出「保留/强化/改写」处理说明与原创性风险自检。",
+      "source": "foundation/rules/stage-playbook.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.a4833cd21652",
+      "legacy_rule_key": "t3.drama-story-bible.character_rules.density",
+      "title": "角色密度与弧光",
+      "section": "character_rules",
+      "body": "执行 character_rules 与 series_structure；本阶段只负责把原子规则落实到 story_bible 字段。\n世界观必须执行 world_rules，并写入可行动规则、权力结构和信息释放边界。",
+      "source": "foundation/rules/stage-playbook.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.6b7a4a76750a",
+      "legacy_rule_key": "t3.drama-story-bible.episode_structure.six-stage",
+      "title": "六阶段集数分配",
+      "section": "episode_structure",
+      "body": "六阶段及缩放规则读取 series_structure 和 foundation/constraints/series-scale.yaml；\n题材 rule_params.act_ratio 可覆盖基础占比。",
+      "source": "foundation/rules/stage-playbook.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/series-scale.yaml"
+      ],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.bd9692e4f9ba",
+      "legacy_rule_key": "t3.drama-episode-designer.episode_structure.episode-card",
+      "title": "分集设计卡",
+      "section": "episode_structure",
+      "body": "执行 episode_card 原子规则并写入 narrative_plan schema v1；不得重写 story_bible 的主线与六阶段结构。",
+      "source": "foundation/rules/stage-playbook.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.3ba33d3aceb6",
+      "legacy_rule_key": "t3.drama-script-writer.writing_requirements.episode-range",
+      "title": "分集写作约束",
+      "section": "writing_requirements",
+      "body": "格式与数值只读取 foundation/constraints/script-format.yaml；\n必须指定 episode_range；逐集依赖上一集全文+memory_checkpoint（LR-008）；禁止一次生成全剧。\n首稿必须执行 dialogue_craft，并输出 production_feasibility 制片标签。",
+      "source": "foundation/rules/stage-playbook.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/script-format.yaml"
+      ],
+      "numeric_literals": [
+        "008"
+      ],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.a9d7bb3b85b9",
+      "legacy_rule_key": "t3.drama-revision-master.writing_requirements.revision-only",
+      "title": "修复不重设故事",
+      "section": "writing_requirements",
+      "body": "剧本修复官只能根据评分报告、合规报告或用户指定问题改写文本执行质量；不得推翻已确认的选题、故事蓝图和分集设计。\n输出 polished_script 后必须交回剧本评分官复评，复评通过才可继续生成下一批。",
+      "source": "foundation/rules/stage-playbook.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.8d36de3fa580",
+      "legacy_rule_key": "t3.drama-script-scorer.scoring.ten-dimension",
+      "title": "十维独立评分",
+      "section": "scoring",
+      "body": "剧本评分官必须作为独立裁判执行十维 G-Eval 评分，覆盖格式、叙事、冲突、角色、情绪、逻辑、爽点、钩子、付费点、赛道匹配；不得参与剧本生成。\n评分对象统一读取 `latest_script`，并执行 continuity 连续性终审。",
+      "source": "foundation/rules/stage-playbook.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.03908a8ad419",
+      "legacy_rule_key": "t3.drama-script-scorer.scoring.evolution-proposal",
+      "title": "评分驱动技能进化",
+      "section": "scoring",
+      "body": "单批 overall_score 低于 foundation/constraints/quality-scoring.yaml#evolution_threshold 须记录至 EVOLUTION_LOG.md；\n同一维度连续 2 次低于该阈值须向 @drama-intake\n轨道 A（规则升级）输出 evolution_proposal（目标 foundation/rules/ 或对应 role.yaml）。",
+      "source": "foundation/rules/stage-playbook.yaml",
+      "source_ref": null,
+      "constraint_refs": [
+        "foundation/constraints/quality-scoring.yaml#evolution_threshold"
+      ],
+      "numeric_literals": [
+        "2"
+      ],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.b8397c130129",
+      "legacy_rule_key": "t3.drama-compliance-guard.compliance.latest-script",
+      "title": "合规裁判边界",
+      "section": "compliance_block",
+      "body": "可执行规则只读取 foundation/rules/compliance-core.yaml 与 foundation/rules/originality-rules.yaml。\n只判断能否交付，不评价剧本好坏；审查对象统一读取 `latest_script`。\nP0 或未解决 P1 时拒绝出具通过报告，并阻断继续生成与交付流程。",
+      "source": "foundation/rules/stage-playbook.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.19e77cc74d80",
+      "legacy_rule_key": "t3.drama-delivery-tool.delivery.gate",
+      "title": "交付前置门禁",
+      "section": "format_standard",
+      "body": "执行交付检查前必须读取 quality_report 与 compliance_report。\n交付门禁以项目当前 scoring_preset 为准（foundation/presets/scoring-presets.yaml）：\n该 preset 的 delivery_eligible=false，或评分低于其 pass_threshold，或无合规通过结论时，\n只输出「不可交付+缺口清单」，不产出宣发物料。\n交付包必须包含制片复杂度/预算带与平台上架清单；政策未验证时不得标记可发布。",
+      "source": "foundation/rules/stage-playbook.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/delivery-check.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.e94138b30f3f",
+      "legacy_rule_key": "t1.global.world_rules.actionable",
+      "title": "可行动世界规则",
+      "section": "world_rules",
+      "body": "只保留会改变人物目标、选择、代价或资源分配的世界规则。\n每条规则必须说明适用对象、触发条件、违反代价和可见表现，禁止百科式设定堆积。",
+      "source": "foundation/rules/world-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/world-rules.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.9a315ceb2669",
+      "legacy_rule_key": "t1.global.world_rules.power-structure",
+      "title": "权力与资源结构",
+      "section": "world_rules",
+      "body": "明确谁控制稀缺资源、谁制定规则、谁承担代价，以及主角可利用的制度缝隙。\n权力结构必须能持续产生主线冲突，不能只作为背景介绍。",
+      "source": "foundation/rules/world-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/world-rules.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.c573577ef2a2",
+      "legacy_rule_key": "t1.global.world_rules.information-release",
+      "title": "世界信息释放",
+      "section": "world_rules",
+      "body": "世界规则通过人物行动和后果逐层释放；单集最多引入一个新规则层。\n禁止旁白或台词集中讲解设定，新规则首次出现时必须立即影响选择。",
+      "source": "foundation/rules/world-rules.yaml",
+      "source_ref": "knowledge/craft/shanyin-series-format.md",
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/world-rules.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    },
+    {
+      "candidate_id": "candidate.ae178e0d8b45",
+      "legacy_rule_key": "t1.global.world_rules.consistency",
+      "title": "规则一致性",
+      "section": "world_rules",
+      "body": "相同条件必须产生一致后果；例外必须提前声明来源和代价。\n所有新增规则写入 story_bible.world_rules，后续分集不得临时发明破局规则。",
+      "source": "foundation/rules/world-rules.yaml",
+      "source_ref": null,
+      "constraint_refs": [],
+      "numeric_literals": [],
+      "known_consumers": [
+        "modules/continuity-audit.md",
+        "modules/world-rules.md"
+      ],
+      "migration_status": "needs-semantic-split"
+    }
+  ]
+}

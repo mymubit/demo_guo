@@ -1,7 +1,7 @@
 # 评分预设（Scoring Presets）
 
 > **参考说明**；等级、维度与权重 SSOT：`foundation/constraints/quality-scoring.yaml`。
-> 预设 SSOT：`foundation/constraints/scoring-presets.yaml`。
+> 预设 SSOT：`foundation/presets/scoring-presets.yaml`。
 > 
 > **使用方式**：drama.script-scorer 执行评分时，根据使用场景选择对应预设。
 > 默认使用 `standard` 预设；`standard` 的通过线即质检环的 B 级线（75）。
@@ -26,13 +26,13 @@
 
 `format / narrative / conflict / character / emotion / logic / satisfaction / hooks / paywall / genre_fit`
 
-具体通过线与十维权重只读取 `foundation/constraints/scoring-presets.yaml`，不得重新聚合成“格式/节奏/内容/制作”四维。
+具体通过线与十维权重只读取 `foundation/presets/scoring-presets.yaml`，不得重新聚合成“格式/节奏/内容/制作”四维。
 
 ---
 
 ## 平台推荐预设
 
-映射 SSOT：`foundation/constraints/scoring-presets.yaml#platform_recommendations`（本文仅解释原因）
+映射 SSOT：`foundation/presets/scoring-presets.yaml#platform_recommendations`（本文仅解释原因）
 
 | 目标平台 | 推荐预设 | 原因 |
 |---------|---------|------|
@@ -48,6 +48,6 @@
 
 ```
 等级阈值：foundation/constraints/quality-scoring.yaml
-预设通过线：foundation/constraints/scoring-presets.yaml
+预设通过线：foundation/presets/scoring-presets.yaml
 单维返工线：quality-scoring.revision_threshold
 ```

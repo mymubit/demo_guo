@@ -19,7 +19,7 @@
 ## 输出
 
 - `project_brief.competitor_references[]`（用于当前立项时）
-- 拉片模板包 → `inspirations/`（轨道二）与 `inspirations/new-patterns.md`（轨道四），不入主链产物
+- 拉片模板包 → `inspirations/inspirations.md`（轨道 B），不入主链产物
 
 ## 六个维度
 
@@ -37,7 +37,7 @@
 1. 逐维度分析目标剧本/竞品，每维度输出「规律描述 + 具体例证（集数/场景）」
 2. 提炼 3-5 个可复用模板（结构/人设/节奏/开场/曲线各至多 1 个）
 3. 每个模板标注适用题材范围与失效条件
-4. 高价值发现走进化轨道：具体案例 → `inspirations/`（轨道二）；新规律 → `inspirations/new-patterns.md`（轨道四）
+4. 高价值发现走进化轨道 B：写入 `inspirations/inspirations.md`（案例/待验证模式）
 
 ## 失败条件
 

@@ -10,7 +10,7 @@
 
 ## 引用规则
 - `t1.global.budget_estimation.band-only`
-- `foundation/constraints/production-feasibility.yaml`
+- `foundation/presets/production-feasibility.yaml`
 
 ## 输出
 - `production_package.production_plan.complexity_band`

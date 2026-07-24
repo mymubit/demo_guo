@@ -1,0 +1,12 @@
+id: capability.develop-core-concept
+version: 1
+inputs: [creative_seed, entry_path, combination_method]
+outputs: [core_concept]
+rules:
+  - concept.entry.use-canonical-path
+  - concept.core.converge-to-forced-choice
+  - concept.combination.use-canonical-method
+  - concept.core.keep-one-dramatic-action
+  - concept.elevator.require-four-elements
+  - concept.elevator.survive-proper-noun-removal
+side_effects: none

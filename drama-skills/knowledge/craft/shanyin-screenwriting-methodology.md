@@ -1,5 +1,7 @@
 # 山音超级编剧大师方法论
 
+> **inject: doc** — 人读长文，运行时不注入；执行清单见 `shanyin-screenwriting-exec.md`。
+>
 > **来源**：https://github.com/Shanyin-ai/shanyin-screenwriting-master（459 stars · MIT）
 > **作者**：@山音（AIGC艺术家/独立导演/编剧）
 > **摄取时间**：2026-06-22

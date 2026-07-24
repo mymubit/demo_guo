@@ -1,0 +1,7 @@
+version: 1
+constraints:
+  world.new-rule-layers.maximum-per-episode:
+    value: 1
+    unit: rule_layer
+    source_refs:
+      - v5://foundation/rules/world-rules.yaml#t1.global.world_rules.information-release

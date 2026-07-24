@@ -1,0 +1,46 @@
+version: "1.0.0"
+fewshots:
+  - id: ED-FS-001
+    note: 字段形态示例；勿照抄剧情
+    input:
+      episode_range: {start: 1, count: 2}
+    output:
+      episodes:
+        - episode: 1
+          title: 开场对峙
+          core_event: 主角被迫公开身份
+          goal_conflict: 保守秘密 × 被当众揭穿
+          emotion_intensity: 4
+          opening_hook: 婚礼现场警报响起
+          ending_hook: 信封里只有一张旧照片
+          paywall_hook: null
+        - episode: 2
+          title: 第一次反击
+          core_event: 主角用证据逼退对手
+          goal_conflict: 求证真相 × 证据被调包
+          emotion_intensity: 5
+          opening_hook: 昨夜照片上的人现身
+          ending_hook: 对手笑着说还有第二份
+          paywall_hook: 情感卡·承诺：照片背后是谁
+  - id: ED-FS-002
+    note: 中段付费窗口示例；opening_hook 键名锁定
+    input:
+      episode_range: {start: 4, count: 2}
+    output:
+      episodes:
+        - episode: 4
+          title: 董事会前夜
+          core_event: 假继承人伪造的授权书曝光在即
+          goal_conflict: 抢先公示 × 对方切断内部渠道
+          emotion_intensity: 6
+          opening_hook: 打印室墨盒被抽空，只剩半页盖章复印件
+          ending_hook: 律师电话里只说「对方也有证人」
+          paywall_hook: 悬念卡·承诺：证人究竟站哪边
+        - episode: 5
+          title: 当众对质
+          core_event: 主角用股权流水逼对方承认调包
+          goal_conflict: 求真相 × 家族要息事宁人
+          emotion_intensity: 7
+          opening_hook: 会议室投影突然切到陌生账户流水
+          ending_hook: 舅舅起身说「今晚还有第二场会」
+          paywall_hook: null

@@ -1,0 +1,9 @@
+id: capability.design-relationship-map
+version: 1
+inputs: [character_candidates, main_conflict]
+outputs: [relationship_candidates]
+rules:
+  - relationship.edge.define-dynamics
+  - relationship.change.require-visible-trigger
+  - relationship.count.meet-maximum
+side_effects: none

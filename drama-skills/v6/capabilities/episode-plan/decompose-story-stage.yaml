@@ -1,0 +1,11 @@
+id: capability.decompose-story-stage
+version: 1
+inputs: [story_bible.series_structure, episode_range]
+outputs: [episode_stage_assignments]
+rules:
+  - genre.matrix.use-brief-act-ratio
+  - episode-plan.scope.global-structure-readonly
+  - series.stage.use-canonical-order
+  - series.stage.allocate-largest-remainder
+  - series.stage.override-only-from-project-brief
+side_effects: none

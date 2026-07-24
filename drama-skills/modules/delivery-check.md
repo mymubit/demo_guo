@@ -15,10 +15,10 @@
 ## 引用规则
 
 - `t3.drama-delivery-tool.delivery.gate`
-- `foundation/constraints/scoring-presets.yaml`
+- `foundation/presets/scoring-presets.yaml`
 - `foundation/constraints/quality-scoring.yaml`
 - `foundation/constraints/script-format.yaml`
-- `foundation/constraints/platform-profiles.yaml`
+- `foundation/presets/platform-profiles.yaml`
 
 ## 门禁规则（任一不过 → 只输出「不可交付 + 缺口清单」）
 

@@ -1,0 +1,11 @@
+id: capability.lint-dialogue-style
+version: 1
+inputs: [dialogue_candidates, character_system, scene_context, dialogue_advisories]
+outputs: [dialogue_style_candidates]
+rules:
+  - dialogue.voice.prioritize-character-tag
+  - dialogue.voice.treat-profile-as-advisory
+  - dialogue.emotion.rhythm-adapt-without-overriding-voice
+  - dialogue.ai-tone.flag-context-not-token
+  - dialogue.ai-tone.repair-and-read-aloud
+side_effects: none

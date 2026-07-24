@@ -1,0 +1,65 @@
+# 抖音爆款公式包 · 题材匹配目录
+# 仅 target_platform=douyin 时启用；命中 0 条公式则整包不注入（含 _shared）。
+version: "1.0.0"
+platform: douyin
+shared: _shared.md
+
+# match_any：任一条规则内字段全部命中即匹配该公式（OR 跨规则，AND 规则内）
+# 字段取值对齐 foundation/theme-matrix.yaml（四轴 / audience_channel / protagonist_structure / flavor_tags）
+formulas:
+  - id: hidden-identity-reversal
+    file: hidden-identity-reversal.md
+    label_zh: 隐藏身份×打脸反转
+    match_any:
+      - { identity: [hidden-elite] }
+      - { identity: [underdog], emotion: [revenge] }
+      - { identity: [returning-elite], emotion: [revenge, ambition] }
+
+  - id: dual-power-game
+    file: dual-power-game.md
+    label_zh: 双强博弈×势均力敌
+    match_any:
+      - { protagonist_structure: [dual-power] }
+      - { conflict: [workplace], emotion: [love, ambition] }
+      - { conflict: [power], emotion: [love, ambition] }
+
+  - id: fate-reversal-awakening
+    file: fate-reversal-awakening.md
+    label_zh: 命运反转×人格觉醒
+    match_any:
+      - { audience_channel: [female], identity: [underdog, ordinary, outcast], emotion: [revenge, healing, justice] }
+      - { audience_channel: [female], emotion: [revenge], identity: [bound, reborn] }
+
+  - id: sweet-daily
+    file: sweet-daily.md
+    label_zh: 甜虐交替×日常流
+    match_any:
+      - { emotion: [love, warmth, healing], conflict: [romance, family, redemption] }
+      - { emotion: [love], world: [modern, rural] }
+
+  - id: era-empathy
+    file: era-empathy.md
+    label_zh: 时代命题×共情共鸣
+    match_any:
+      - { conflict: [workplace], emotion: [ambition, healing, revenge] }
+      - { conflict: [family, disparity], emotion: [healing, warmth, justice] }
+
+  - id: ancient-aesthetic
+    file: ancient-aesthetic.md
+    label_zh: 古风美学×情感张力
+    match_any:
+      - { world: [ancient] }
+
+  - id: suspense-emotion
+    file: suspense-emotion.md
+    label_zh: 悬疑标签×情绪体验
+    match_any:
+      - { emotion: [suspense] }
+      - { conflict: [crime] }
+
+  - id: anti-trope
+    file: anti-trope.md
+    label_zh: 反套路×类型颠覆
+    match_any:
+      - { emotion: [comedy] }
+      - { flavor_tags: [anti-pua, true-false-heiress, gender-swap, substitute-life] }

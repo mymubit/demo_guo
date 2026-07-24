@@ -1,0 +1,16 @@
+id: capability.write-scene
+version: 1
+inputs: [episode_segment_plan, character_system, world_system, emotion_target, continuity_context]
+outputs: [scene_candidates]
+rules:
+  - scene.unit.define-goal-conflict-risk
+  - scene.unit.require-value-change
+  - scene.entry.start-late
+  - scene.exit.leave-after-value-change
+  - scene.content.keep-filmable
+  - production.content.require-camera-visible-information
+  - philosophy.cross-section.start-at-maximum-tension
+  - philosophy.opening.define-tone-not-explain-theme
+  - scene.content.forbid-parenthetical-interiority
+  - emotion.expression.use-filmable-channel
+side_effects: none

@@ -1,0 +1,5 @@
+version: 1
+cases:
+  - {id: revision-forty-boundary, rule: quality.score.use-ssot-thresholds, input: {dimension_score: 40}, expected: revise}
+  - {id: evolution-below-seventy, rule: evolution.log-batch-below-threshold, input: {overall_score: 69}, expected: log}
+  - {id: delivery-gap-only, rule: delivery.gate.emit-gaps-without-marketing, input: {quality_passed: false}, expected: no-marketing}

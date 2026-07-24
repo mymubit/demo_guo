@@ -12,7 +12,7 @@
 - `t1.global.platform_ops.release-check`
 - `t4.global.platform_specific.declared-target`
 - `t4.global.three_phase_checklist.gates`
-- `foundation/constraints/platform-profiles.yaml`
+- `foundation/presets/platform-profiles.yaml`
 
 ## 输出
 - `production_package.release_checklist`

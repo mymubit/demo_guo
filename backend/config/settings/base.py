@@ -137,6 +137,15 @@ DRAMA_SKILLS_ROOT = os.getenv(
 SKILLS_INJECTION_POLICY_ENFORCED = os.getenv(
     "SKILLS_INJECTION_POLICY_ENFORCED", "true"
 ).lower() in ("1", "true", "yes")
+# 注入告警阈值（读详情时计算，不落库）
+INJECTION_ALERT_SYSTEM_CHARS_ABS = int(
+    os.getenv("INJECTION_ALERT_SYSTEM_CHARS_ABS", "100000")
+)
+INJECTION_ALERT_LAYER_DOMINANT_RATIO = float(
+    os.getenv("INJECTION_ALERT_LAYER_DOMINANT_RATIO", "0.45")
+)
+# 可选：按角色覆盖绝对字数上限，形如 {"drama.story-bible": 80000}
+INJECTION_ALERT_SYSTEM_CHARS_BY_ROLE: dict = {}
 
 # LLM（OpenAI 兼容 HTTP）；本地开发默认关闭，避免误调外网
 LLM_API_BASE_URL = os.getenv("LLM_API_BASE_URL", "")
@@ -153,6 +162,10 @@ LLM_SCORER_MAX_TOKENS = int(os.getenv("LLM_SCORER_MAX_TOKENS", "24576"))
 LLM_CALL_LOG_ENABLED = os.getenv("LLM_CALL_LOG_ENABLED", "true").lower() in ("1", "true", "yes")
 # 三栏原文（system/user/response）完整落库；仅超过该硬顶才截断防炸库（默认 5MB）
 LLM_CALL_LOG_MAX_TEXT_CHARS = int(os.getenv("LLM_CALL_LOG_MAX_TEXT_CHARS", "5000000"))
+# 质检：默认串行（先评分达标再合规）；true 时评分与合规并行 chord
+DRAMA_QUALITY_JUDGES_PARALLEL = os.getenv(
+    "DRAMA_QUALITY_JUDGES_PARALLEL", "false"
+).lower() in ("1", "true", "yes")
 
 # Celery
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", os.getenv("REDIS_URL", "redis://127.0.0.1:6379/1"))
@@ -168,6 +181,9 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
+
+# V3 测试注入点：可调用 (prompt) -> str；生产保持 None
+V3_LLM_CALL_OVERRIDE = None
 
 # 生成任务 SSE：必须 ≥ LLM 读超时，否则前端先断、后台还在跑
 GENERATION_SSE_HEARTBEAT_SECONDS = int(os.getenv("GENERATION_SSE_HEARTBEAT_SECONDS", "15"))

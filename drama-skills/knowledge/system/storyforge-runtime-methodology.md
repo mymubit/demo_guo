@@ -309,5 +309,5 @@ StoryForge 的 `/compare` 功能：
    → drama.delivery-tool（前置门禁：评分+合规通过）
 
 7. 经验沉淀（技能进化）
-   → 跨项目共性 → @drama-intake 轨道一 → foundation/rules/learned-rules.yaml
+   → 跨项目共性 → @drama-intake 轨道 A → foundation/rules/learned-rules.yaml
 ```

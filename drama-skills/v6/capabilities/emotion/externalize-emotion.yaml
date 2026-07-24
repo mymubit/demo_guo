@@ -1,0 +1,8 @@
+id: capability.externalize-emotion
+version: 1
+inputs: [emotion_target, character_system, scene_context]
+outputs: [filmable_emotion_expression]
+rules:
+  - emotion.expression.use-filmable-channel
+  - emotion.expression.forbid-adjective-only-interiority
+side_effects: none

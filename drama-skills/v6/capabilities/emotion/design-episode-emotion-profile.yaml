@@ -1,0 +1,11 @@
+id: capability.design-episode-emotion-profile
+version: 1
+inputs: [episode_card, series_emotion_curve, previous_rhythm_state]
+outputs: [episode_emotion_profile_candidate]
+rules:
+  - emotion.qdn.record-evidence-by-dimension
+  - emotion.landmark.define-ev-et-tp
+  - emotion.rhythm.use-dual-track
+  - emotion.episode.require-eight-event-nodes
+  - emotion.node.must-be-event-grounded
+side_effects: none

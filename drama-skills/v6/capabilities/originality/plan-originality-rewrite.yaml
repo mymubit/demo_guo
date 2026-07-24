@@ -1,0 +1,9 @@
+id: capability.plan-originality-rewrite
+version: 1
+inputs: [originality_report, latest_script]
+outputs: [originality_rewrite_plan]
+rules:
+  - originality.expression.borrow-only-abstract-mechanism
+  - originality.rewrite.change-four-structural-dimensions
+  - originality.rewrite.forbid-rename-only
+side_effects: none

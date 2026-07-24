@@ -24,3 +24,15 @@ examples:
       - episode_scripts
       - scenes
     note: 蓝图官只输出全局结构，不写分场正文。
+  - id: SB-AE005
+    severity: high
+    title: 禁止空壳人物与口号式世界规则
+    bad:
+      characters:
+        - name: 主角
+          role_type: protagonist
+          want: 成功
+          need: 成长
+      world_rules:
+        - 规则要合理
+    note: 人物须有可执行动机/关系；世界规则须可检验，禁止占位名与空话。

@@ -1,0 +1,46 @@
+version: 1
+id: drama-v6-project-form
+parameters_contract: contracts/parameters.yaml
+
+groups:
+  entry: {label_zh: 项目入口, fields: [entry_type, core_idea, synopsis, external_story, adapt_notes, reference_dramas]}
+  audience: {label_zh: 题材与受众, fields: [audience_channel, genre_matrix, protagonist_structure, flavor_tags, preset_theme_code, target_platform]}
+  scale: {label_zh: 篇幅与生产批次, fields: [episode_count, batch_episode_max, outline_mode]}
+  production: {label_zh: 制作边界, fields: [production_target_band, production_region, budget_currency, pricing_version, budget_excluded_items]}
+  quality: {label_zh: 质量策略, fields: [scoring_preset, compliance_check_mode]}
+  delivery: {label_zh: 交付范围, fields: [enable_delivery, deliverables]}
+
+fields:
+  entry_type: {parameter_ref: entry_type, persist_path: entry_type, label_zh: 创作来源, description_zh: 选择项目从原创构思还是已有故事改编开始。}
+  core_idea: {parameter_ref: core_idea, persist_path: core_idea, label_zh: 核心创意, description_zh: 用一句话说明这部作品最值得被创作的冲突与卖点。, visible_when: "entry_type == 'original_track'"}
+  synopsis: {parameter_ref: synopsis, persist_path: synopsis, label_zh: 故事概述, description_zh: 说明主要人物、目标、阻力和结局方向。, visible_when: "entry_type == 'original_track'"}
+  external_story: {parameter_ref: external_story, persist_path: external_story, label_zh: 待改编故事, description_zh: 粘贴或描述作为改编依据的原始故事内容。, required_when: "entry_type == 'story_adapt'"}
+  adapt_notes: {parameter_ref: adapt_notes, persist_path: adapt_notes, label_zh: 改编边界, description_zh: 明确哪些内容保留、强化或重写。, visible_when: "entry_type == 'story_adapt'"}
+  reference_dramas: {parameter_ref: reference_dramas, persist_path: reference_dramas, label_zh: 参考作品, description_zh: 提供用于校准风格、受众和市场预期的作品。}
+  audience_channel: {parameter_ref: audience_channel, persist_path: audience_channel, label_zh: 受众方向, description_zh: 说明作品优先服务哪类观众及其观看场景。}
+  genre_matrix: {parameter_ref: genre_matrix, persist_path: genre_matrix, label_zh: 题材组合, description_zh: 选择决定故事气质、冲突和世界规则的题材维度。}
+  protagonist_structure: {parameter_ref: protagonist_structure, persist_path: protagonist_structure, label_zh: 主角关系, description_zh: 设定主角数量、关系和叙事视角。}
+  flavor_tags: {parameter_ref: flavor_tags, persist_path: flavor_tags, label_zh: 内容风味, description_zh: 补充节奏、情绪和表达方式。}
+  preset_theme_code: {parameter_ref: preset_theme_code, persist_path: preset_theme_code, label_zh: 题材预设, description_zh: 使用一套已验证的题材组合快速建立项目基调。}
+  target_platform: {parameter_ref: target_platform, persist_path: target_platform, label_zh: 目标平台, description_zh: 决定内容尺度、格式和交付规则。}
+  episode_count: {parameter_ref: episode_count, persist_path: episode_count, label_zh: 计划集数, description_zh: 定义故事规模并影响分集规划。}
+  batch_episode_max: {parameter_ref: batch_episode_max, persist_path: creation_preferences.batch_episode_max, label_zh: 单批写作集数, description_zh: 每次运行最多生成多少集正文。}
+  outline_mode: {parameter_ref: outline_mode, persist_path: creation_preferences.outline_mode, label_zh: 分集规划深度, description_zh: 选择只搭结构还是直接形成可执行分卡。}
+  production_target_band: {parameter_ref: production_target_band, persist_path: production_context.target_band, label_zh: 制作规模, description_zh: 让角色按预期的制作复杂度规划场景和资源。}
+  production_region: {parameter_ref: production_region, persist_path: production_context.region, label_zh: 制作地区, description_zh: 用于匹配制作规范和成本假设。}
+  budget_currency: {parameter_ref: budget_currency, persist_path: production_context.currency, label_zh: 预算币种, description_zh: 统一制作预算与成本估算的货币单位。}
+  pricing_version: {parameter_ref: pricing_version, persist_path: production_context.pricing_version, label_zh: 成本口径, description_zh: 指定预算估算采用的价格版本。}
+  budget_excluded_items: {parameter_ref: budget_excluded_items, persist_path: production_context.excluded_items, label_zh: 不计入项目, description_zh: 列出明确不纳入制作预算的项目。}
+  scoring_preset: {parameter_ref: scoring_preset, persist_path: creation_preferences.scoring_preset, label_zh: 评分标准, description_zh: 选择质量中心使用的评价维度和权重。}
+  compliance_check_mode: {parameter_ref: check_mode, persist_path: creation_preferences.compliance_check_mode, label_zh: 合规检查强度, description_zh: 决定合规角色对风险的检查范围。}
+  enable_delivery: {parameter_ref: enable_delivery, persist_path: creation_preferences.enable_delivery, label_zh: 启用制作交付, description_zh: 是否在创作完成后继续生成制作所需物料。}
+  deliverables: {parameter_ref: deliverables, persist_path: creation_preferences.deliverables, label_zh: 交付物范围, description_zh: 选择需要生成的制作、视觉或发行物料。, visible_when: "enable_delivery == true"}
+
+policy_sections:
+  - {id: model_routing, source: foundation/presets/agent-runtime.yaml, label_zh: 模型与路由}
+  - {id: script_format, source: foundation/constraints/script-format.yaml, label_zh: 剧本格式}
+  - {id: quality_thresholds, source: foundation/constraints/quality-scoring.yaml, label_zh: 质量阈值}
+  - {id: commercial, source: foundation/constraints/commercial-formulas.yaml, label_zh: 商业规则}
+  - {id: scoring_presets, source: foundation/presets/scoring-presets.yaml, label_zh: 评分预设}
+  - {id: platform_policies, source: foundation/presets/platform-profiles.yaml, label_zh: 平台政策}
+  - {id: production_feasibility, source: foundation/presets/production-feasibility.yaml, label_zh: 制作可行性}

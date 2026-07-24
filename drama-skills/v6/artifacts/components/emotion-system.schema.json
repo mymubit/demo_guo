@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills-v6://artifacts/components/emotion-system",
+  "type": "object",
+  "required": ["series_curve", "episode_profiles"],
+  "properties": {
+    "series_curve": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/seriesPoint"}},
+    "episode_profiles": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/episodeProfile"}}
+  },
+  "$defs": {
+    "rhythm": {
+      "type": "object",
+      "required": ["plot", "emotional"],
+      "properties": {
+        "plot": {"enum": ["loose", "medium", "tight"]},
+        "emotional": {"enum": ["light", "medium", "heavy"]}
+      },
+      "additionalProperties": false
+    },
+    "seriesPoint": {
+      "type": "object",
+      "required": ["episode", "target_value", "tone", "kind", "event", "character_choice", "rhythm"],
+      "properties": {
+        "episode": {"type": "integer", "minimum": 1},
+        "target_value": {"type": "integer", "minimum": 1, "maximum": 10},
+        "tone": {"enum": ["setup", "light", "tense", "breathing", "turning", "collapse", "counterattack", "climax", "ending"]},
+        "kind": {"enum": ["normal", "trough", "peak", "breathing", "ending"]},
+        "event": {"type": "string", "minLength": 4},
+        "character_choice": {"type": "string", "minLength": 4},
+        "rhythm": {"$ref": "#/$defs/rhythm"},
+        "payment_checkpoint": {"type": "boolean", "default": false}
+      },
+      "additionalProperties": false
+    },
+    "emotionNode": {
+      "type": "object",
+      "required": ["index", "event", "emotion", "value", "character_action"],
+      "properties": {
+        "index": {"type": "integer", "minimum": 1, "maximum": 8},
+        "event": {"type": "string", "minLength": 4},
+        "emotion": {"type": "string", "minLength": 1},
+        "value": {"type": "integer", "minimum": 1, "maximum": 10},
+        "character_action": {"type": "string", "minLength": 2}
+      },
+      "additionalProperties": false
+    },
+    "episodeProfile": {
+      "type": "object",
+      "required": ["episode", "nodes", "landmarks", "qdn_evidence", "rhythm"],
+      "properties": {
+        "episode": {"type": "integer", "minimum": 1},
+        "nodes": {"type": "array", "minItems": 8, "maxItems": 8, "items": {"$ref": "#/$defs/emotionNode"}},
+        "landmarks": {
+          "type": "object",
+          "required": ["EV", "ET", "TP"],
+          "properties": {
+            "EV": {"type": "integer", "minimum": 1, "maximum": 8},
+            "ET": {"type": "integer", "minimum": 1, "maximum": 8},
+            "TP": {"type": "integer", "minimum": 1, "maximum": 8}
+          },
+          "additionalProperties": false
+        },
+        "qdn_evidence": {
+          "type": "object",
+          "required": ["quality", "depth", "need_satisfaction"],
+          "properties": {
+            "quality": {"type": "string", "minLength": 4},
+            "depth": {"type": "string", "minLength": 4},
+            "need_satisfaction": {"type": "string", "minLength": 4}
+          },
+          "additionalProperties": false
+        },
+        "rhythm": {"$ref": "#/$defs/rhythm"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

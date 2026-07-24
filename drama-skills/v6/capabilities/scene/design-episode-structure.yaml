@@ -1,0 +1,6 @@
+id: capability.design-episode-structure
+version: 1
+inputs: [episode_card, episode_duration]
+outputs: [episode_segment_plan]
+rules: [episode.structure.use-four-segments, episode.ending.leave-open-question-or-threat]
+side_effects: none

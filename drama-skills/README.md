@@ -2,8 +2,24 @@
 
 > **4 主链生产角色 · 3 质检环独立技能 · 1 可选交付工具 · 双通道 · Git SSOT**
 
-本仓库是技能体系的唯一真相源（SSOT）。数值约束在 `foundation/constraints/`，原子规则在
-`foundation/rules/`，执行流程在 `modules/`，角色契约在 `roles/*/role.yaml`。
+本仓库是技能体系的唯一真相源（SSOT）。**铁律叙述**在 `foundation/rules/`，**硬指标**在
+`foundation/constraints/`，**可调预设**在 `foundation/presets/`，执行流程在 `modules/`，角色契约在 `roles/*/role.yaml`。
+
+## 五层能力模型（导航）
+
+与总纲 `docs/superpowers/specs/2026-07-20-skills-optimization-program-design.md` 对齐：
+
+| 层 | 放什么 | 本仓目录 |
+|----|--------|----------|
+| L5 观测 | 诊断/Manifest（运行时，不在本仓） | — |
+| L4 装配策略 | `role.yaml` 的 module/knowledge/rule_policy | `roles/*/role.yaml` |
+| L3 技能编排 | SKILL、fewshot、anti、轨道 | `roles/`、`orchestration/` |
+| L2 模块 | 可条件启停步骤 | `modules/` |
+| L1 规则与预设 | 铁律 + 硬指标 + 可调预设；长文知识可选注入 | `foundation/rules/`、`foundation/constraints/`、`foundation/presets/`、`knowledge/` |
+| 配置子树 | 契约与 schema（不进 prompt 全文） | `contracts/`、`schemas/`、`workbench/`、`manifest/` |
+| 工具 | 校验/生成 | `tools/`（`python tools/validators/validate_all.py`） |
+
+**≤2 跳定位「钩子密度数值」**：`foundation/rules/INDEX.md` → `05-hooks-payoff.yaml`（叙述）→ `foundation/constraints/commercial-formulas.yaml#first_episode_hook_count`（数值 SSOT）。
 
 ## 目录结构
 
@@ -14,9 +30,10 @@ drama-skills/
 │   └── parameters.yaml           #   可传递参数类型与角色引用
 ├── registry.yaml                 # 角色 + 部门 + 主链 + 工具索引
 ├── foundation/
-│   ├── constraints/              # 数值常量（含 config_tier 分级：git_ssot / seed_default）
+│   ├── constraints/              # 硬指标 / 方法论 SSOT（含 git_ssot）
+│   ├── presets/                  # 可调预设（seed_default，后台可 overlay）
 │   ├── theme-matrix.yaml         # 频道 + 四轴 9^4 + 主角结构 + 72 风味标签 + 34 创新组合
-│   └── rules/                    # 规则条目 YAML（global 主题文件 + stage + compliance）
+│   └── rules/                    # 规则条目 YAML（铁律；见 INDEX.md）
 │       └── genres/               # matrix.yaml（四轴合成）
 ├── roles/<slug>/                 # 每角色：role.yaml + SKILL.md [+ tasks/]
 ├── modules/                      # 能力块（输入/规则引用/输出/步骤/失败条件/自检）
@@ -36,10 +53,17 @@ drama-skills/
 │   ├── system/                   #   系统方法论（流程控制）
 │   ├── knowledge-sections.md     #   Section↔角色索引（后端固定路径解析，勿移动）
 │   └── output-schemas.md         #   产物 schema 索引
-├── inspirations/                 # 创意素材库（进化轨道二/四写入）
+├── inspirations/                 # 创意素材库（轨道 B；正文 SSOT = inspirations.md）
+├── tools/                        # 🛠️ 工具链（validators / generators / optimizers / lib）
+│   ├── validators/               #   校验（含 validate_all）
+│   ├── generators/               #   契约生成与导出
+│   ├── optimizers/               #   低频优化脚本
+│   ├── lib/                      #   公共库
+│   ├── fixtures/                 #   校验样例
+│   └── tests/                    #   工具链单测
 ├── drama-master/                 # 创作总入口 @drama-master
 ├── drama-intake/                 # 技能进化入口 @drama-intake
-└── build/                        # 解析器、导出器、校验脚本、fixtures与单元测试
+└── eval/tools/                   # 角色 LLM 评测
 ```
 
 机器可读治理入口：`manifest/drama-skills.manifest.yaml`；
@@ -99,25 +123,23 @@ python manage.py sync_drama_from_git
 | **原创创作**（`orchestration/original-track.yaml`） | 一个想法 / 四轴选题 | 选题 → 蓝图 → 分集 → 正文 + 质检环 |
 | **故事改编**（`orchestration/story-adapt-track.yaml`） | 用户自带故事/小说/大纲 | 蓝图（改编模式）→ 分集 → 正文 + 质检环 |
 
-**质检环**（每批正文完成后）：评分官 + 合规官并行 → 低于 B 级（75）或有 P1 → 修复官 → 复评通过才可继续。
+**质检环**（每批正文完成后）：默认先评分，达 B 档再合规（B′；可配置并行）→ 未达标 → 修复官 → 复评通过才可继续。
 
 ## 技能进化
 
-进化入口 `@drama-intake`，四条轨道（定义见 `drama-intake/SKILL.md`）：
+进化入口 @drama-intake，**两条轨道**（定义见 drama-intake/SKILL.md v5.1）：
 
 | 轨道 | 用途 | 写入 |
 |------|------|------|
-| 一 · 规则进化 | 方法论/阈值/LR 提案（含评分官自动提案） | `foundation/rules/*.yaml` |
-| 二 · 灵感归档 | 钩子/反转/对白/结构案例 | `inspirations/` |
-| 三 · 市场知识 | 行业数据/平台趋势 | `knowledge/market/market-insights.md` |
-| 四 · 新模式发现 | 未覆盖的新规律（3+ 案例验证后升格） | `inspirations/new-patterns.md` |
+| A · 规则升级 | 方法论/频率/LR 提案（含评分官自动提案、模式升格） | oundation/rules/*.yaml |
+| B · 素材沉淀 | 钩子/反转/对白/结构/待验证模式；市场数据 | inspirations/inspirations.md；knowledge/market/market-insights.md |
 
 ## 改规则 / 加角色
 
 | 操作 | 改哪里 |
 |------|--------|
 | 增删改规则条目 | `foundation/rules/*.yaml` |
-| 改可传递参数类型/枚举/默认/边界 | `contracts/parameters.yaml`，再运行 `python build/generate_parameter_schemas.py` |
+| 改可传递参数类型/枚举/默认/边界 | `contracts/parameters.yaml`，再运行 `python tools/generators/generate_parameter_schemas.py` |
 | 改数值、枚举、阈值（非参数契约） | `foundation/constraints/*.yaml` |
 | 改产物结构 | `contracts/artifacts.yaml` + `schemas/artifacts/<key>/1.schema.json` |
 | 改能力执行步骤 | `modules/*.md`，并登记 `modules/catalog.yaml` |
@@ -127,23 +149,19 @@ python manage.py sync_drama_from_git
 | 四轴矩阵 / 题材映射 | `foundation/theme-matrix.yaml` |
 | 规则模板量化参数 | `foundation/theme-matrix.yaml` + `foundation/rules/genres/matrix.yaml` |
 
-改完运行一致性校验：`python build/validate_skills.py`
+改完运行一致性校验：`python tools/validators/validate_skills.py`
 
 参数契约变更后须重新生成并校验 Schema：
 
 ```bash
-python build/generate_parameter_schemas.py
-python build/generate_parameter_schemas.py --check
+python tools/generators/generate_parameter_schemas.py
+python tools/generators/generate_parameter_schemas.py --check
 ```
 
 工作台或后台配置变化还必须运行：
 
 ```bash
-python build/validate_workbench.py
-python build/validate_artifacts.py
-python build/validate_config.py
-python build/validate_workflow.py
-python build/validate_quality_cases.py
+python tools/validators/validate_all.py
 ```
 
 ## 工作台与后台配置边界
@@ -153,7 +171,7 @@ python build/validate_quality_cases.py
 - Git 硬规则：角色组合、原子规则、编排拓扑、产物契约、题材枚举和合规红线禁止后台覆盖。
 - 每次后台修改必须记录版本、操作人、时间和原因，并保留可回滚历史。
 
-前端通过 `python build/export_workbench_schema.py` 导出表单定义，并按
+前端通过 `python tools/generators/export_workbench_schema.py` 导出表单定义，并按
 `workbench/api-contract.yaml` 接入 ScriptForge。当前独立技能仓不包含网站前后端源码。
 
 ## 底层知识分层

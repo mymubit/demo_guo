@@ -1,0 +1,5 @@
+version: 1
+cases:
+  - {id: high-complexity-alternative, rule: production.high-complexity.require-alternative, input: {complexity: high, alternatives: [one]}, expected: pass}
+  - {id: unquoted-band-only, rule: budget.estimate.use-band-without-quotes, input: {verified_quotes: false, mode: band}, expected: pass}
+  - {id: expired-policy-blocks, rule: release.policy.block-unverified-or-expired, input: {policy_status: expired, release_ready: false}, expected: pass}

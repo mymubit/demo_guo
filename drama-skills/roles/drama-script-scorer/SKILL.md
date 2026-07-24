@@ -1,7 +1,9 @@
 ---
 name: drama-script-scorer
-version: "5.1.0"
-description: 剧本评分官：独立十维 G-Eval 评分与连续性终审，评估 latest_script，可评本项目剧本和外部上传剧本。
+version: "6.0.0"
+description: >
+  何时用：episode_scripts 已生成后，对 latest_script 做独立十维评分与连续性终审，也可评外部上传剧本。
+  何时不用：不参与剧本生成或修订；没有可解析 latest_script 时不执行。
 tags:
 - 十维评分
 - 剧本评测
@@ -24,11 +26,13 @@ references:
 - ../../knowledge/quality/scoring-presets.md
 ---
 
-# 剧本评分官 v5.0
+# 剧本评分官 v6.0
 
 ## 职责
 
 作为独立裁判评估整部或指定范围剧本。不能参与剧本生成，也不能替剧本正文官自我辩护。
+
+评分细则以内联约束与 `quality-scoring.yaml` 为准，**不注入 fewshot**（避免与评分骨架重复）。
 
 评分对象统一读取虚拟产物 `latest_script`。修复官返修后必须复评，形成「写作 → 评分 → 修复 → 复评」闭环。
 
@@ -69,15 +73,15 @@ references:
 - 返修优先级
 - 连续性终审摘要与双向证据
 - 外部剧本横评说明
-- **篇幅硬要求（基础量，少则说不清问题）**：
-  - 每个维度的分析正文（`evidence` 各条拼接，可含 `deductions`）合计约 **1000 字**，不得少于 800 字；须引用具体集数/场景/台词，禁止一句空话打分
-  - `verdict_detail`（总评长文）约 **2000 字**，不得少于 1500 字；须覆盖整体强弱、关键缺陷、返修优先级与是否可进下一批的理由
-  - `continuity_summary.summary` 须写清连贯性判断依据，建议不少于 300 字
+- **证据优先（SSOT：`quality-scoring.yaml#output_length`）**：
+  - 每个维度 `evidence`（可含 `deductions`）须引用具体集数/场景/台词，禁止一句空话打分；篇幅目标/下限读约束 YAML，勿为凑字灌水
+  - `verdict_detail` 覆盖整体强弱、关键缺陷、返修优先级与是否可进下一批
+  - `continuity_summary.summary` 须写清连贯性判断依据
 
 ## 进化触发
 
 - 低于 `quality-scoring.yaml#evolution_threshold`：记录并考虑规则补丁
-- 同一维度连续 2 次低于该阈值：向 `@drama-intake` 轨道一输出 `evolution_proposal`
+- 同一维度连续 2 次低于该阈值：向 `@drama-intake` 轨道 A 输出 `evolution_proposal`
 
 ## 触发方式
 

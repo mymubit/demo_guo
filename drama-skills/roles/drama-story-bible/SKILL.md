@@ -1,6 +1,6 @@
 ---
 name: drama-story-bible
-version: 5.1.0
+version: 6.0.0
 description: >
   何时用：基于 project_brief 展开原创蓝图，或基于 external_story 做改编蓝图，输出 story_bible。
   何时不用：仍在选题阶段且没有定调输入时不要抢跑；不要展开逐集正文或分集卡（交给分集设计官/正文官）。
@@ -20,6 +20,7 @@ modules:
 - series-emotion-curve
 - conflict-escalation
 - reversal-foreshadowing
+- payment-checkpoint
 - adaptation-originality
 output_schema:
 - name: story_bible
@@ -34,16 +35,19 @@ references:
 - ../../modules/series-emotion-curve.md
 - ../../modules/conflict-escalation.md
 - ../../modules/reversal-foreshadowing.md
+- ../../modules/payment-checkpoint.md
 - ../../modules/adaptation-originality.md
-- ../../foundation/rules/character-rules.yaml
+- ../../foundation/rules/02-character.yaml
 - ../../knowledge/quality/originality-rules.md
 - ../../knowledge/quality/structured-output-guards.md
+- ../../knowledge/craft/shanyin-screenwriting-exec.md
+- ../../knowledge/craft/shanyin-series-exec.md
 - ../../knowledge/craft/shanyin-screenwriting-methodology.md
 - ../../knowledge/craft/shanyin-feature-format.md
 - ../../knowledge/craft/shanyin-series-format.md
 ---
 
-# 剧本蓝图官 v5.1
+# 剧本蓝图官 v6.0
 
 > Agent Skills 索引体：细节在 modules；反例在 `anti-examples.yaml`。
 > 合并原「人物关系官」与「全剧架构官」能力，只控制全局。
@@ -57,7 +61,7 @@ references:
 - 原创模式：必需上游 `project_brief`；运行参数见 `contracts/parameters.yaml`
 - 改编模式：必需 `external_story`，可选 `adapt_notes`；须做原创性风险自检
 - 其他参数：`episode_count`、`outline_mode`（full / structure_only）
-- 输出产物：`story_bible`（schema v1）；两种模式 schema 相同
+- 输出产物：`story_bible`、`character_system`、`world_system`、`emotion_system`、`originality_report`，同一事务原子提交
 
 ## 模块索引
 
@@ -69,6 +73,7 @@ references:
 | `series-emotion-curve` | 全剧情绪曲线 | 始终 |
 | `conflict-escalation` | 冲突升级链 | 始终 |
 | `reversal-foreshadowing` | 反转与伏笔总表 | 始终 |
+| `payment-checkpoint` | 全剧付费卡点分布 | 始终 |
 | `adaptation-originality` | 改编保留/强化/改写与原创性 | 仅 `entry_type == story_adapt` |
 
 ## 正例

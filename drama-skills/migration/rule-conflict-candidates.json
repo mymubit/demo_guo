@@ -1,0 +1,460 @@
+{
+  "version": 1,
+  "duplicate_candidates": [
+    {
+      "left": "candidate.07f1abeb2f36",
+      "right": "candidate.a1c46591f31d",
+      "similarity": 0.0238,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.e3b1c1a63349",
+      "right": "candidate.b2430ea1f538",
+      "similarity": 0.1111,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.e60e2ec2a807",
+      "right": "candidate.3ba33d3aceb6",
+      "similarity": 0.0833,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.91715a9624db",
+      "right": "candidate.a258e811ebaf",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.91715a9624db",
+      "right": "candidate.45de61132cac",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.91715a9624db",
+      "right": "candidate.1f89cac31d8b",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.91715a9624db",
+      "right": "candidate.3c83a4a72487",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.91715a9624db",
+      "right": "candidate.2debe76ed5fc",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.91715a9624db",
+      "right": "candidate.a3f1fb43066a",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.a258e811ebaf",
+      "right": "candidate.45de61132cac",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.a258e811ebaf",
+      "right": "candidate.1f89cac31d8b",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.a258e811ebaf",
+      "right": "candidate.3c83a4a72487",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.a258e811ebaf",
+      "right": "candidate.2debe76ed5fc",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.a258e811ebaf",
+      "right": "candidate.a3f1fb43066a",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.45de61132cac",
+      "right": "candidate.1f89cac31d8b",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.45de61132cac",
+      "right": "candidate.3c83a4a72487",
+      "similarity": 0.2308,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.45de61132cac",
+      "right": "candidate.2debe76ed5fc",
+      "similarity": 0.0625,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.45de61132cac",
+      "right": "candidate.a3f1fb43066a",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.1f89cac31d8b",
+      "right": "candidate.3c83a4a72487",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.1f89cac31d8b",
+      "right": "candidate.2debe76ed5fc",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.1f89cac31d8b",
+      "right": "candidate.a3f1fb43066a",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.3c83a4a72487",
+      "right": "candidate.2debe76ed5fc",
+      "similarity": 0.1176,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.3c83a4a72487",
+      "right": "candidate.a3f1fb43066a",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.2debe76ed5fc",
+      "right": "candidate.a3f1fb43066a",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.5745129bc15f",
+      "right": "candidate.cae301036ed2",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.2039a641901c",
+      "right": "candidate.758311f7b015",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    },
+    {
+      "left": "candidate.93ab2ff3f5d0",
+      "right": "candidate.03908a8ad419",
+      "similarity": 0.0,
+      "reason": "same-section-with-numeric-literals"
+    }
+  ],
+  "numeric_review_by_section": {
+    "character_rules": [
+      {
+        "candidate_id": "candidate.07f1abeb2f36",
+        "source": "foundation/rules/02-character.yaml",
+        "values": [
+          "20",
+          "30",
+          "40",
+          "50",
+          "004"
+        ],
+        "constraint_refs": []
+      },
+      {
+        "candidate_id": "candidate.a1c46591f31d",
+        "source": "foundation/rules/02-character.yaml",
+        "values": [
+          "2",
+          "2",
+          "4",
+          "6",
+          "1集",
+          "1",
+          "30%",
+          "2",
+          "70%",
+          "15"
+        ],
+        "constraint_refs": []
+      }
+    ],
+    "conflict_escalation": [
+      {
+        "candidate_id": "candidate.5745129bc15f",
+        "source": "foundation/rules/plotting-rules.yaml",
+        "values": [
+          "3"
+        ],
+        "constraint_refs": []
+      },
+      {
+        "candidate_id": "candidate.cae301036ed2",
+        "source": "foundation/rules/plotting-rules.yaml",
+        "values": [
+          "1次"
+        ],
+        "constraint_refs": []
+      }
+    ],
+    "continuity": [
+      {
+        "candidate_id": "candidate.be9449ed45ae",
+        "source": "foundation/rules/03-structure.yaml",
+        "values": [
+          "1"
+        ],
+        "constraint_refs": [
+          "foundation/constraints/continuity-checkpoint.yaml"
+        ]
+      }
+    ],
+    "episode_emotion_8nodes": [
+      {
+        "candidate_id": "candidate.7ac0cf5cab0c",
+        "source": "foundation/rules/narrative-craft.yaml",
+        "values": [
+          "8",
+          "3集",
+          "2"
+        ],
+        "constraint_refs": []
+      }
+    ],
+    "foreshadowing_rules": [
+      {
+        "candidate_id": "candidate.2039a641901c",
+        "source": "foundation/rules/plotting-rules.yaml",
+        "values": [
+          "10",
+          "1"
+        ],
+        "constraint_refs": [
+          "foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow"
+        ]
+      },
+      {
+        "candidate_id": "candidate.758311f7b015",
+        "source": "foundation/rules/plotting-rules.yaml",
+        "values": [
+          "3",
+          "008"
+        ],
+        "constraint_refs": []
+      }
+    ],
+    "genre_rules": [
+      {
+        "candidate_id": "candidate.f29ec117a11a",
+        "source": "foundation/rules/genres/matrix.yaml",
+        "values": [
+          "8"
+        ],
+        "constraint_refs": []
+      }
+    ],
+    "hook_effectiveness": [
+      {
+        "candidate_id": "candidate.495c599ac48f",
+        "source": "foundation/rules/05-hooks-payoff.yaml",
+        "values": [
+          "2",
+          "3集",
+          "3秒",
+          "10秒",
+          "30秒"
+        ],
+        "constraint_refs": [
+          "foundation/constraints/commercial-formulas.yaml#metrics.first_episode_hook_count",
+          "foundation/constraints/narrative-metrics.yaml#opening_hook"
+        ]
+      }
+    ],
+    "justice_tail_rule": [
+      {
+        "candidate_id": "candidate.40d4cbfae3d8",
+        "source": "foundation/rules/compliance-core.yaml",
+        "values": [
+          "2",
+          "5",
+          "3",
+          "2",
+          "35%",
+          "1"
+        ],
+        "constraint_refs": []
+      }
+    ],
+    "learned_rules": [
+      {
+        "candidate_id": "candidate.91715a9624db",
+        "source": "foundation/rules/learned-rules.yaml",
+        "values": [
+          "1集",
+          "30秒"
+        ],
+        "constraint_refs": []
+      },
+      {
+        "candidate_id": "candidate.a258e811ebaf",
+        "source": "foundation/rules/learned-rules.yaml",
+        "values": [
+          "3句"
+        ],
+        "constraint_refs": []
+      },
+      {
+        "candidate_id": "candidate.45de61132cac",
+        "source": "foundation/rules/learned-rules.yaml",
+        "values": [
+          "05"
+        ],
+        "constraint_refs": []
+      },
+      {
+        "candidate_id": "candidate.1f89cac31d8b",
+        "source": "foundation/rules/learned-rules.yaml",
+        "values": [
+          "60%"
+        ],
+        "constraint_refs": []
+      },
+      {
+        "candidate_id": "candidate.3c83a4a72487",
+        "source": "foundation/rules/learned-rules.yaml",
+        "values": [
+          "05",
+          "3"
+        ],
+        "constraint_refs": [
+          "foundation/constraints/commercial-formulas.yaml"
+        ]
+      },
+      {
+        "candidate_id": "candidate.2debe76ed5fc",
+        "source": "foundation/rules/learned-rules.yaml",
+        "values": [
+          "1集"
+        ],
+        "constraint_refs": [
+          "foundation/constraints/continuity-checkpoint.yaml"
+        ]
+      },
+      {
+        "candidate_id": "candidate.a3f1fb43066a",
+        "source": "foundation/rules/learned-rules.yaml",
+        "values": [
+          "10集",
+          "1次"
+        ],
+        "constraint_refs": []
+      }
+    ],
+    "originality_rules": [
+      {
+        "candidate_id": "candidate.02de1197371f",
+        "source": "foundation/rules/originality-rules.yaml",
+        "values": [
+          "0.72",
+          "0.80",
+          "20%"
+        ],
+        "constraint_refs": []
+      }
+    ],
+    "philosophy": [
+      {
+        "candidate_id": "candidate.b2f729af807b",
+        "source": "foundation/rules/philosophy.yaml",
+        "values": [
+          "1集",
+          "1"
+        ],
+        "constraint_refs": []
+      }
+    ],
+    "rhythm_rules": [
+      {
+        "candidate_id": "candidate.e3b1c1a63349",
+        "source": "foundation/rules/03-structure.yaml",
+        "values": [
+          "05"
+        ],
+        "constraint_refs": [
+          "foundation/constraints/commercial-formulas.yaml#metrics.first_episode_hook_count",
+          "foundation/constraints/narrative-metrics.yaml#opening_hook"
+        ]
+      },
+      {
+        "candidate_id": "candidate.b2430ea1f538",
+        "source": "foundation/rules/03-structure.yaml",
+        "values": [
+          "2"
+        ],
+        "constraint_refs": [
+          "foundation/constraints/series-scale.yaml"
+        ]
+      }
+    ],
+    "scoring": [
+      {
+        "candidate_id": "candidate.93ab2ff3f5d0",
+        "source": "foundation/rules/scoring-core.yaml",
+        "values": [
+          "1",
+          "2",
+          "3",
+          "3"
+        ],
+        "constraint_refs": []
+      },
+      {
+        "candidate_id": "candidate.03908a8ad419",
+        "source": "foundation/rules/stage-playbook.yaml",
+        "values": [
+          "2"
+        ],
+        "constraint_refs": [
+          "foundation/constraints/quality-scoring.yaml#evolution_threshold"
+        ]
+      }
+    ],
+    "writing_requirements": [
+      {
+        "candidate_id": "candidate.e60e2ec2a807",
+        "source": "foundation/rules/04-scene-dialogue.yaml",
+        "values": [
+          "008"
+        ],
+        "constraint_refs": []
+      },
+      {
+        "candidate_id": "candidate.3ba33d3aceb6",
+        "source": "foundation/rules/stage-playbook.yaml",
+        "values": [
+          "008"
+        ],
+        "constraint_refs": [
+          "foundation/constraints/script-format.yaml"
+        ]
+      }
+    ]
+  }
+}

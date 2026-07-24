@@ -1,0 +1,10 @@
+id: advisory.ai-tone
+version: 1
+category: dialogue-lint
+precedence: [character.voice_tag, spoken-naturalness, context, candidate-term-list]
+patterns:
+  - id: formal-connector-cluster
+    when: {candidate_terms: [因此, 然而, 于是, 不得不承认, 此刻, 不禁, 竟然]}
+    suggestions: [改为口语短句, 每句保留一个信息点, 恢复人物特有词汇和回避方式, 进行朗读测试]
+    avoid: [按单个词机械判错, 删除所有连接词导致语义断裂]
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.ai_tone_forbidden.core]

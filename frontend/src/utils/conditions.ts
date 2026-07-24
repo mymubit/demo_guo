@@ -3,7 +3,9 @@
  * Supports:
  *   field == 'value'
  *   field == true | false
+ *   field != …
  *   field contains 'value'
+ *   field is not empty
  *   and / or combinations (left-associative)
  */
 
@@ -34,7 +36,19 @@ function parseLiteral(raw: string): unknown {
   return t
 }
 
+function isNonEmpty(value: unknown): boolean {
+  if (value == null) return false
+  if (typeof value === 'string' || Array.isArray(value)) return value.length > 0
+  if (typeof value === 'object') return Object.keys(value as object).length > 0
+  return true
+}
+
 function evalAtomic(expr: string, ctx: ConditionContext): boolean {
+  const notEmptyMatch = expr.match(/^([a-zA-Z_][\w.]*)\s+is\s+not\s+empty$/i)
+  if (notEmptyMatch) {
+    return isNonEmpty(resolveField(ctx, notEmptyMatch[1]))
+  }
+
   const containsMatch = expr.match(/^([a-zA-Z_][\w.]*)\s+contains\s+(.+)$/)
   if (containsMatch) {
     const left = resolveField(ctx, containsMatch[1])
@@ -124,18 +138,27 @@ export function evaluateCondition(expression: string | undefined | null, ctx: Co
 export function settingsConditionContext(settings: {
   entry_type?: string
   enable_delivery?: boolean
-  creation_preferences?: { enable_delivery?: boolean; deliverables?: string[] }
+  creation_preferences?: {
+    enable_delivery?: boolean
+    deliverables?: string[]
+    [key: string]: unknown
+  }
   deliverables?: string[]
+  reference_dramas?: unknown
   [key: string]: unknown
 }): ConditionContext {
   const enableDelivery =
     settings.enable_delivery ?? settings.creation_preferences?.enable_delivery ?? false
   const deliverables =
     settings.deliverables ?? settings.creation_preferences?.deliverables ?? []
+  const referenceDramas = Array.isArray(settings.reference_dramas)
+    ? settings.reference_dramas
+    : []
   return {
     ...settings,
     entry_type: settings.entry_type,
     enable_delivery: enableDelivery,
     deliverables,
+    reference_dramas: referenceDramas,
   }
 }

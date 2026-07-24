@@ -11,13 +11,10 @@ if TYPE_CHECKING:
 def load_artifact_fixture(
     loader: "SkillsBundleLoader", artifact_key: str
 ) -> dict[str, Any] | None:
-    """从 build/fixtures/artifacts/valid-artifacts.json 读取产物示例。
-
-    生产代码通过 loader 读取技能仓，避免直接 import apps.drama.tests.helpers。
-    """
+    """从 tools/fixtures 读取产物示例。"""
     try:
-        data = loader.load_json("build/fixtures/artifacts/valid-artifacts.json")
-    except (FileNotFoundError, json.JSONDecodeError):
+        data = loader.load_json("tools/fixtures/artifacts/valid-artifacts.json")
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
         return None
     if not isinstance(data, dict):
         return None
@@ -86,15 +83,20 @@ def _walk_node(
             _walk_node(items, prefix=f"{prefix}[]", out=out, max_paths=max_paths)
 
 
+# 契约层默认预算：阶段 D defer 收口（§4.1）；fixture 全文另用 example_mode=fixture
+DEFAULT_CONTRACT_EXAMPLE_MAX_CHARS = 1200
+
+
 def build_output_skeleton(
     schema: dict[str, Any],
     *,
     fixture: dict[str, Any] | None = None,
-    max_chars: int = 3500,
+    max_chars: int = DEFAULT_CONTRACT_EXAMPLE_MAX_CHARS,
 ) -> dict[str, Any]:
     """根据 schema 生成最小合法输出骨架：优先用 fixture 裁剪，否则按 type 填占位。"""
     if fixture is not None:
         skeleton = _prune_to_schema(deepcopy(fixture), schema)
+        skeleton = _cap_array_items(skeleton, schema, max_items=1)
     else:
         skeleton = _synthesize_from_schema(schema)
     blob = json.dumps(skeleton, ensure_ascii=False)
@@ -108,12 +110,41 @@ def render_contract_block(
     schema: dict[str, Any],
     *,
     fixture: dict[str, Any] | None = None,
-    max_chars: int = 3500,
+    max_chars: int = DEFAULT_CONTRACT_EXAMPLE_MAX_CHARS,
+    example_mode: str = "compact",
 ) -> str:
-    """返回可拼进 system prompt 的 Markdown 契约块。"""
+    """返回可拼进 system prompt 的 Markdown 契约块。
+
+    example_mode:
+    - compact（默认）：fixture 裁剪 + 紧凑 JSON + 低预算
+    - synthetic：仅 schema 合成占位
+    - fixture：fixture 裁剪 + 美化缩进（逃生阀）
+    """
     paths = extract_required_paths(schema)
-    skeleton = build_output_skeleton(schema, fixture=fixture, max_chars=max_chars)
-    example = json.dumps(skeleton, ensure_ascii=False, indent=2)
+    mode = str(example_mode or "compact").strip().lower()
+    if mode == "synthetic":
+        example_fixture = None
+    else:
+        example_fixture = fixture
+    # compact：预留给缩进/路径表，示例 JSON 目标约为 max_chars 的 70%
+    example_budget = max_chars if mode == "fixture" else max(int(max_chars * 0.7), 400)
+    skeleton = build_output_skeleton(
+        schema,
+        fixture=example_fixture,
+        max_chars=example_budget,
+    )
+    if mode == "compact":
+        example = json.dumps(skeleton, ensure_ascii=False, separators=(",", ":"))
+    else:
+        example = json.dumps(skeleton, ensure_ascii=False, indent=2)
+    if len(example) > example_budget:
+        skeleton = _shrink_strings(
+            skeleton, max_chars=max(example_budget // 2, 200), schema=schema
+        )
+        if mode == "compact":
+            example = json.dumps(skeleton, ensure_ascii=False, separators=(",", ":"))
+        else:
+            example = json.dumps(skeleton, ensure_ascii=False, indent=2)
     lines = [
         f"- artifact_key: {artifact_key}",
         "- 下列字段名必须原样使用（禁止 want/need/open_hook 等别名键）：",
@@ -126,6 +157,33 @@ def render_contract_block(
         "- 仅输出一个 JSON 对象；不要 markdown 围栏；不要 schema 外字段。",
     ]
     return "\n".join(lines)
+
+
+def _cap_array_items(value: Any, schema: dict[str, Any], *, max_items: int) -> Any:
+    """压缩示例数组长度，保留 minItems 下限。"""
+    kind = _schema_kind(schema)
+    if kind == "array":
+        items_schema = schema.get("items") if isinstance(schema.get("items"), dict) else {}
+        if not isinstance(value, list):
+            return value
+        min_items = schema.get("minItems")
+        keep = max_items
+        if isinstance(min_items, int):
+            keep = max(keep, min_items)
+        capped = [
+            _cap_array_items(item, items_schema, max_items=max_items)
+            for item in value[:keep]
+        ]
+        return capped
+    if kind == "object" and isinstance(value, dict):
+        props = schema.get("properties") if isinstance(schema.get("properties"), dict) else {}
+        return {
+            key: _cap_array_items(val, props.get(key, {}), max_items=max_items)
+            if isinstance(props.get(key), dict)
+            else val
+            for key, val in value.items()
+        }
+    return value
 
 
 def _schema_kind(schema: dict[str, Any]) -> str:

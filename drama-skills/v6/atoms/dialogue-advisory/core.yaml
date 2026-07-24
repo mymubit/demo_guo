@@ -1,0 +1,48 @@
+version: 1
+domain: dialogue-advisory
+rules:
+  - id: dialogue.voice.prioritize-character-tag
+    version: 1
+    category: dialogue
+    statement: Apply the character voice tag before any social-class, profession, or emotion advisory pattern.
+    severity: hard
+    applies_when: {writing_dialogue: true}
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_quality.voice-by-class]
+    consumers: [capability.write-dialogue, capability.lint-dialogue-style]
+    validation: {type: deterministic, validator: dialogue-advisory-precedence}
+  - id: dialogue.voice.treat-profile-as-advisory
+    version: 1
+    category: dialogue
+    statement: Treat class and profession patterns as optional candidates, never as mandatory stereotypes.
+    severity: advisory
+    applies_when: {social_profile_available: true}
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_quality.voice-by-class]
+    consumers: [capability.write-dialogue, capability.lint-dialogue-style]
+    validation: {type: human, validator: no-profile-stereotype}
+  - id: dialogue.emotion.rhythm-adapt-without-overriding-voice
+    version: 1
+    category: dialogue
+    statement: Adapt sentence rhythm to emotion while preserving the character voice tag, current intent, and power position.
+    severity: soft
+    applies_when: {emotion_state_available: true}
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_quality.emotion-rhythm]
+    consumers: [capability.write-dialogue, capability.lint-dialogue-style]
+    validation: {type: semantic, validator: emotion-rhythm-character-consistency}
+  - id: dialogue.ai-tone.flag-context-not-token
+    version: 1
+    category: dialogue
+    statement: Flag AI-tone risk only when candidate terms accumulate into formal narrator-like speech inconsistent with the character and context; do not ban a token by itself.
+    severity: advisory
+    applies_when: {linting_dialogue: true}
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.ai_tone_forbidden.core]
+    consumers: [capability.lint-dialogue-style]
+    validation: {type: semantic, validator: contextual-ai-tone}
+  - id: dialogue.ai-tone.repair-and-read-aloud
+    version: 1
+    category: dialogue
+    statement: Repair confirmed AI tone with spoken short lines, one information point per line, character-specific voice, and a read-aloud check.
+    severity: hard
+    applies_when: {ai_tone_confirmed: true}
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.ai_tone_forbidden.core]
+    consumers: [capability.write-dialogue, capability.lint-dialogue-style]
+    validation: {type: human, validator: read-aloud-naturalness}

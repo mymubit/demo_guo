@@ -1,0 +1,26 @@
+id: advisory.dialogue-emotion-rhythm
+version: 1
+category: emotion
+precedence: [character.voice_tag, current_intent, scene_power, emotion_state]
+patterns:
+  - id: anger
+    when: {emotion_state: anger}
+    suggestions: [缩短句子, 允许重复, 让打断增加]
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_quality.emotion-rhythm]
+  - id: grief
+    when: {emotion_state: grief}
+    suggestions: [允许停顿和未完成句, 降低主动解释]
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_quality.emotion-rhythm]
+  - id: joy
+    when: {emotion_state: joy}
+    suggestions: [提高语速感, 允许关键词重复和逻辑跳跃]
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_quality.emotion-rhythm]
+  - id: lying-or-nervous
+    when: {emotion_state: nervous}
+    suggestions: [增加多余解释候选, 使用不自然停顿或自我修正]
+    avoid: [把结巴作为所有紧张人物的固定表现]
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_quality.emotion-rhythm]
+  - id: forced-calm
+    when: {emotion_state: forced-calm}
+    suggestions: [让句式过度完整, 在异常位置停顿, 维持刻意均匀节奏]
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_quality.emotion-rhythm]

@@ -1,0 +1,10 @@
+id: capability.design-power-structure
+version: 1
+inputs: [world_rule_candidates, character_system, main_conflict]
+outputs: [power_structure_candidate]
+rules:
+  - world.power.identify-scarce-resource-controller
+  - world.power.identify-rule-maker-and-cost-bearer
+  - world.power.define-exploitable-loophole
+  - world.power.sustain-main-conflict
+side_effects: none

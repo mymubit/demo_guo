@@ -68,6 +68,48 @@ class LlmConfigService:
         )
 
     @classmethod
+    def resolve_for_role(cls, role_key: str) -> ResolvedLlmConfig:
+        """
+        按 V3 角色映射解析 LLM 配置。
+
+        有 V3RoleModelMapping 行则覆盖 active provider；无映射则同 resolve()。
+        """
+        from apps.drama.models import V3RoleModelMapping
+
+        key = (role_key or "").strip()
+        if not key:
+            return cls.resolve()
+        mapping = (
+            V3RoleModelMapping.objects.select_related("provider")
+            .filter(role_key=key)
+            .first()
+        )
+        if mapping is None:
+            return cls.resolve()
+
+        provider = mapping.provider
+        api_key = decrypt_secret(provider.api_key_encrypted) or ""
+        temperature = (
+            float(mapping.temperature)
+            if mapping.temperature is not None
+            else float(provider.temperature)
+        )
+        max_tokens = (
+            int(mapping.max_tokens)
+            if mapping.max_tokens is not None
+            else int(provider.max_tokens)
+        )
+        return ResolvedLlmConfig(
+            enabled=True,
+            base_url=(provider.base_url or "").strip(),
+            api_key=api_key,
+            model=(provider.model_name or "").strip() or "gpt-4o-mini",
+            temperature=temperature,
+            max_tokens=max_tokens,
+            source="db_role_mapping",
+        )
+
+    @classmethod
     def serialize_provider(cls, obj: DramaLlmProvider) -> dict[str, Any]:
         return {
             "id": str(obj.id),

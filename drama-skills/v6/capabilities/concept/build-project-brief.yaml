@@ -1,0 +1,8 @@
+id: capability.build-project-brief
+version: 1
+inputs: [core_concept, audience_research, market_research, competitor_research, commercial_formula_parameters]
+outputs: [project_brief]
+rules:
+  - project-brief.market.require-integrated-judgment
+  - project-brief.risk.precheck-without-compliance-verdict
+side_effects: none

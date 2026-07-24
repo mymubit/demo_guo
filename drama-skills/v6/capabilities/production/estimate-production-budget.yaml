@@ -1,0 +1,8 @@
+id: capability.estimate-production-budget
+version: 1
+inputs: [production_assessments, quote_context]
+outputs: [budget_estimate]
+rules:
+  - budget.estimate.use-band-without-quotes
+  - budget.amount.require-provenance
+side_effects: none

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Design Episode Plan"
+  short_description: "Design a full episode plan with visible execution state"
+  default_prompt: "Use $design-episode-plan to design the full episode plan from the approved story bible."
+policy:
+  allow_implicit_invocation: true

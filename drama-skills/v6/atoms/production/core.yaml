@@ -1,0 +1,84 @@
+version: 1
+domain: production
+rules:
+  - id: production.episode.tag-resource-requirements
+    version: 1
+    category: production
+    statement: Tag location changes, night or exterior work, crowd performers, action hazards, special props, visual effects, minors, and animals for every episode.
+    severity: hard
+    applies_when: {artifact: screenplay}
+    source_refs: [v5://foundation/rules/production-rules.yaml#t1.global.production_feasibility.tagging]
+    consumers: [capability.assess-production-feasibility]
+    validation: {type: schema, validator: production-resource-tags}
+  - id: production.assessment.never-delete-story
+    version: 1
+    category: production
+    statement: Describe resource requirements and alternatives without deleting or weakening story events.
+    severity: hard
+    applies_when: {artifact: production_assessment}
+    source_refs: [v5://foundation/rules/production-rules.yaml#t1.global.production_feasibility.tagging]
+    consumers: [capability.assess-production-feasibility]
+    validation: {type: semantic, validator: preserve-dramatic-function}
+  - id: production.high-complexity.require-alternative
+    version: 1
+    category: production
+    statement: Provide at least one lower-cost alternative for every high-complexity scene.
+    severity: hard
+    applies_when: {complexity: high}
+    source_refs: [v5://foundation/rules/production-rules.yaml#t1.global.production_feasibility.alternative]
+    consumers: [capability.assess-production-feasibility]
+    validation: {type: deterministic, validator: high-complexity-alternative}
+  - id: production.alternative.preserve-dramatic-function
+    version: 1
+    category: production
+    statement: Adjust space, visible action, performer count, or presentation while preserving the scene's core turn and dramatic function.
+    severity: hard
+    applies_when: {has_alternative: true}
+    source_refs: [v5://foundation/rules/production-rules.yaml#t1.global.production_feasibility.alternative]
+    consumers: [capability.assess-production-feasibility]
+    validation: {type: semantic, validator: preserve-dramatic-function}
+  - id: production.content.require-camera-visible-information
+    version: 1
+    category: production
+    statement: Present key information through camera-visible action, sound, props, spatial relation, or performance.
+    severity: hard
+    applies_when: {artifact: screenplay}
+    source_refs: [v5://foundation/rules/production-rules.yaml#t1.global.production_feasibility.camera-visible]
+    consumers: [capability.assess-production-feasibility, capability.write-scene]
+    validation: {type: semantic, validator: camera-visible-information}
+  - id: budget.estimate.use-band-without-quotes
+    version: 1
+    category: budget
+    statement: Without region, schedule, personnel, and supplier quotes, output only resource complexity and a budget band.
+    severity: hard
+    applies_when: {verified_quotes: false}
+    source_refs: [v5://foundation/rules/production-rules.yaml#t1.global.budget_estimation.band-only]
+    consumers: [capability.estimate-production-budget]
+    validation: {type: deterministic, validator: budget-estimation-boundary}
+  - id: budget.amount.require-provenance
+    version: 1
+    category: budget
+    statement: Any amount estimate must state currency, region, price version, and excluded items.
+    severity: hard
+    applies_when: {estimate_mode: amount}
+    source_refs: [v5://foundation/rules/production-rules.yaml#t1.global.budget_estimation.band-only]
+    consumers: [capability.estimate-production-budget]
+    validation: {type: schema, validator: budget-amount-provenance}
+  - id: release.check.require-canonical-evidence
+    version: 1
+    category: delivery
+    statement: Verify platform policy version, AI-content labeling, filing materials, title, rights authorization, quality report, and compliance report before release.
+    severity: hard
+    applies_when: {operation_kind: release_check}
+    source_refs: [v5://foundation/rules/production-rules.yaml#t1.global.platform_ops.release-check]
+    consumers: [capability.check-release-readiness]
+    validation: {type: schema, validator: release-evidence-schema}
+  - id: release.policy.block-unverified-or-expired
+    version: 1
+    category: delivery
+    statement: Block a release-ready conclusion when the target platform policy is unverified or expired.
+    severity: hard
+    applies_when: {operation_kind: release_check}
+    source_refs: [v5://foundation/rules/production-rules.yaml#t1.global.platform_ops.release-check]
+    consumers: [capability.check-release-readiness]
+    validation: {type: deterministic, validator: release-policy-status}

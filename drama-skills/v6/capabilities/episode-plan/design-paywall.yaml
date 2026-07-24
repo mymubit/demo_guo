@@ -1,0 +1,11 @@
+id: capability.design-paywall
+version: 1
+inputs: [story_bible.paywall_distribution, episode_card_candidates, project_settings]
+outputs: [paywall_hook_candidates]
+rules:
+  - payment.hook.must-map-promise-to-payoff
+  - payment.card.use-canonical-type
+  - payment.first-checkpoint.use-window
+  - payment.habit-checkpoint.use-window
+  - payment.promise.meet-payoff-deadline
+side_effects: none

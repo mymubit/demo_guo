@@ -1,0 +1,11 @@
+id: capability.assess-production-feasibility
+version: 1
+inputs: [screenplay, episode_range]
+outputs: [production_assessments]
+rules:
+  - production.episode.tag-resource-requirements
+  - production.assessment.never-delete-story
+  - production.high-complexity.require-alternative
+  - production.alternative.preserve-dramatic-function
+  - production.content.require-camera-visible-information
+side_effects: none

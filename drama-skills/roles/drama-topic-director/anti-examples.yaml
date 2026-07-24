@@ -34,3 +34,26 @@ examples:
     require_nonempty:
       - first_episode_hook
       - paywall_direction
+  - id: TD-AE005
+    severity: high
+    title: 禁止占位竞品名与空壳借鉴/避雷
+    bad:
+      competitor_references:
+        - title: 竞品1
+        - title: 竞品2
+          note: 参考一下
+      differentiation_strategy: 质量更好更有深度
+      first_episode_hook: 婚礼现场反击
+      paywall_direction: 关键证据即将公开
+    good:
+      competitor_references:
+        - title: 去有风的地方
+          inspiration: 慢节奏烟火与感官细节营造疗愈感
+          avoidance: 避免长时间无冲突的散文式散漫
+        - title: 小巷人家
+          inspiration: 邻里群像用小事件推进关系
+          avoidance: 避免群像平均用力导致主角动机模糊
+      differentiation_strategy: 每道菜绑定一位邻居往事；冲突落在信任试探，禁止空喊治愈
+      first_episode_hook: 返乡第一顿饭糊锅，邻居递热汤并点破他不会过日子
+      paywall_direction: 观众想看城市身份能否被邻里接受，催付费看秘密摊牌
+    note: 竞品须真实作品名；每条含 inspiration+avoidance；差异化须可执行，禁止口号。

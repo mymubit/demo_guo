@@ -1,0 +1,5 @@
+{
+  "production_assessments": [{"episode": 8, "scene_id": "scene-8-1", "resource_tags": ["night-or-exterior", "special-prop"], "complexity": "high", "alternatives": [{"changes": ["space", "presentation"], "preserved_dramatic_function": "the protagonist publicly exposes the forged ledger", "preserved_core_turn": "evidence changes the power balance"}]}],
+  "budget_estimate": {"mode": "band", "resource_complexity": "high", "band": "high"},
+  "release_check": {"target_platform": "declared-platform", "policy_status": "verified-current", "policy_version": "2026-07", "ai_content_labeling": true, "filing_materials": true, "title_check": true, "rights_authorization": true, "quality_report": true, "compliance_report": true, "release_ready": true, "blockers": []}
+}

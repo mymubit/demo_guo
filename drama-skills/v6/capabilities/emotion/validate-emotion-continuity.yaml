@@ -1,0 +1,10 @@
+id: capability.validate-emotion-continuity
+version: 1
+inputs: [series_emotion_curve, episode_emotion_profiles]
+outputs: [emotion_continuity_validation]
+rules:
+  - learned.breathing-episode.limit-rolling-window
+  - learned.crisis-episode.require-tight-heavy
+  - emotion.ev.avoid-three-episode-platform
+  - emotion.breathing-episode.do-not-repeat
+side_effects: none

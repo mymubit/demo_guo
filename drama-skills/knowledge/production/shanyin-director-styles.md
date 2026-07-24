@@ -1,5 +1,7 @@
 # 山音导演大师：六维度导演风格模板库
 
+> **inject: doc** — 人读长文，运行时不注入；执行清单见 `shanyin-director-exec.md`。
+>
 > **来源**：shanyin-director-master/references/genre-A~F.md
 > **作者**：@山音 · MIT License · 摄取时间：2026-06-22
 >

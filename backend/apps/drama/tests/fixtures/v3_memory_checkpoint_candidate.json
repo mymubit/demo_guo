@@ -1,0 +1,33 @@
+{
+  "episode": 1,
+  "character_states": [
+    {
+      "name": "林夏",
+      "physical_state": "正常",
+      "emotional_state": "警觉",
+      "known_facts": ["授权书日期异常"],
+      "current_goal": "保留证据"
+    }
+  ],
+  "active_clues": [
+    {
+      "clue": "授权书日期",
+      "status": "developing",
+      "known_by": ["林夏"]
+    }
+  ],
+  "foreshadowing": [
+    {
+      "item": "旧怀表",
+      "setup_episode": 1,
+      "planned_payoff_episode": 5,
+      "status": "planted"
+    }
+  ],
+  "rhythm_state": {
+    "plot_pace": "tight",
+    "emotion_pace": "medium",
+    "episode_ev": 7
+  },
+  "next_episode_constraints": ["林夏尚未公开重生信息"]
+}

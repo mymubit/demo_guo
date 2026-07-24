@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills-v6://artifacts/components/story-bible",
+  "type": "object",
+  "required": ["mode", "source", "adaptation_treatment", "main_storyline", "necessary_subplots", "components", "series_structure"],
+  "properties": {
+    "mode": {"enum": ["original", "adaptation"]},
+    "source": {"type": "object", "required": ["kind", "artifact_version"], "properties": {"kind": {"enum": ["project_brief", "external_story"]}, "artifact_version": {"type": "integer", "minimum": 1}}, "additionalProperties": false},
+    "adaptation_treatment": {"type": ["object", "null"]},
+    "main_storyline": {"type": "string", "minLength": 10},
+    "necessary_subplots": {"type": "array", "items": {"type": "string", "minLength": 4}},
+    "components": {"type": "object", "required": ["project_brief", "character_system", "world_system", "emotion_system", "originality_report"], "properties": {"project_brief": {"$ref": "#/$defs/componentRef"}, "character_system": {"$ref": "#/$defs/componentRef"}, "world_system": {"$ref": "#/$defs/componentRef"}, "emotion_system": {"$ref": "#/$defs/componentRef"}, "originality_report": {"$ref": "#/$defs/componentRef"}}, "additionalProperties": false},
+    "series_structure": {"type": "object", "required": ["episode_count", "ratio_source", "stages", "paywall_positions", "reversal_windows", "foreshadowing_summary"], "properties": {"episode_count": {"type": "integer", "minimum": 6}, "ratio_source": {"enum": ["base-constraint", "project-brief"]}, "stages": {"type": "array", "minItems": 6, "maxItems": 6, "items": {"$ref": "#/$defs/stage"}}, "paywall_positions": {"type": "array", "items": {"type": "integer", "minimum": 1}}, "reversal_windows": {"type": "array", "items": {"type": "object"}}, "foreshadowing_summary": {"type": "array", "items": {"type": "object"}}}, "additionalProperties": false}
+  },
+  "allOf": [
+    {"if": {"properties": {"mode": {"const": "original"}}, "required": ["mode"]}, "then": {"properties": {"source": {"properties": {"kind": {"const": "project_brief"}}}, "adaptation_treatment": {"const": null}}}},
+    {"if": {"properties": {"mode": {"const": "adaptation"}}, "required": ["mode"]}, "then": {"properties": {"source": {"properties": {"kind": {"const": "external_story"}}}, "adaptation_treatment": {"$ref": "#/$defs/adaptationTreatment"}}}}
+  ],
+  "$defs": {
+    "componentRef": {"type": "object", "required": ["schema", "schema_version", "artifact_version"], "properties": {"schema": {"type": "string", "minLength": 1}, "schema_version": {"type": "integer", "minimum": 1}, "artifact_version": {"type": "integer", "minimum": 1}}, "additionalProperties": false},
+    "adaptationTreatment": {"type": "object", "required": ["extracted_characters", "extracted_conflict", "extracted_structure", "retained", "enhanced", "rewritten", "originality_report_version"], "properties": {"extracted_characters": {"type": "array", "items": {"type": "string"}}, "extracted_conflict": {"type": "string", "minLength": 1}, "extracted_structure": {"type": "array", "items": {"type": "string"}}, "retained": {"type": "array", "items": {"type": "string"}}, "enhanced": {"type": "array", "items": {"type": "string"}}, "rewritten": {"type": "array", "items": {"type": "string"}}, "originality_report_version": {"type": "integer", "minimum": 1}}, "additionalProperties": false},
+    "stage": {"type": "object", "required": ["name", "start_episode", "end_episode", "function", "turning_point"], "properties": {"name": {"enum": ["opening", "warming", "climax", "turning", "sprint", "ending"]}, "start_episode": {"type": "integer", "minimum": 1}, "end_episode": {"type": "integer", "minimum": 1}, "function": {"type": "string", "minLength": 1}, "turning_point": {"type": "string", "minLength": 1}}, "additionalProperties": false}
+  },
+  "additionalProperties": false
+}

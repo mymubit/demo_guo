@@ -1,0 +1,266 @@
+version: 1
+domain: episode-plan
+rules:
+  - id: episode-plan.scope.global-structure-readonly
+    version: 1
+    category: structure
+    statement: Revise episode cards only within the approved global story structure; do not reset the main storyline or global reversal, foreshadowing, or paywall distribution.
+    severity: hard
+    applies_when: {operation: operation.revise-episode-plan}
+    source_refs:
+      - v5://foundation/rules/03-structure.yaml#t1.global.episode_card.required-fields
+      - v5://modules/reversal-foreshadowing.md
+      - v5://modules/payment-checkpoint.md
+    consumers: [capability.decompose-story-stage, capability.design-episode-card, operation.revise-episode-plan]
+    validation: {type: semantic, validator: global-structure-readonly}
+  - id: episode-plan.card.required-content
+    version: 1
+    category: structure
+    statement: Every revised episode card must contain one core event, Goal x Conflict, opening and ending hooks, EV/ET/TP, satisfaction points, reversal, paywall hook, foreshadow setup/payoff, and rhythm tag.
+    severity: hard
+    applies_when: {artifact: episode_plan}
+    source_refs:
+      - v5://foundation/rules/03-structure.yaml#t1.global.episode_card.required-fields
+    consumers: [capability.design-episode-card, operation.revise-episode-plan]
+    validation: {type: schema, validator: episode-plan-required-content}
+  - id: episode-plan.card.single-core-event
+    version: 1
+    category: structure
+    statement: Each episode card must organize its beats around one core event rather than multiple unrelated events.
+    severity: hard
+    applies_when: {artifact: episode_plan}
+    source_refs:
+      - v5://modules/episode-card.md#failure-conditions
+    consumers: [capability.design-episode-card, operation.revise-episode-plan]
+    validation: {type: semantic, validator: single-core-event}
+  - id: conflict.escalation.change-quality
+    version: 1
+    category: conflict
+    statement: Each conflict escalation must change range, intensity, information, or consequence instead of repeating the same pressure at the same intensity.
+    severity: hard
+    applies_when: {artifact: episode_plan}
+    source_refs:
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.conflict_escalation.four-types
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.conflict_escalation.upgrade-protocol
+    consumers: [capability.design-episode-card, operation.revise-episode-plan]
+    validation: {type: semantic, validator: conflict-quality-change}
+  - id: conflict.escalation.follow-protocol-order
+    version: 1
+    category: conflict
+    statement: Plan escalation across range, intensity, information, and consequence in that order unless the execution plan records a justified exception.
+    severity: soft
+    applies_when: {artifact: episode_plan}
+    source_refs:
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.conflict_escalation.upgrade-protocol
+    consumers: [capability.design-episode-card, operation.revise-episode-plan]
+    validation: {type: semantic, validator: conflict-escalation-order}
+  - id: conflict.series.cover-three-types
+    version: 1
+    category: conflict
+    statement: The full series conflict design must cover at least the configured number of distinct conflict types.
+    severity: hard
+    applies_when: {artifact: story_bible}
+    source_refs:
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.conflict_escalation.four-types
+    consumers: [capability.design-episode-card, operation.revise-episode-plan]
+    validation: {type: deterministic, validator: conflict-type-coverage}
+  - id: conflict.main.must-be-structural
+    version: 1
+    category: conflict
+    statement: The main series conflict must be structural and must not disappear through one conversation or reconciliation.
+    severity: hard
+    applies_when: {artifact: story_bible}
+    source_refs:
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.conflict_escalation.four-types
+    consumers: [capability.design-episode-card, operation.revise-episode-plan]
+    validation: {type: semantic, validator: structural-main-conflict}
+  - id: confrontation.design.five-elements
+    version: 1
+    category: conflict
+    statement: Every confrontation must define power balance, stated demand, real intent, at least one power shift, and an ending value change.
+    severity: hard
+    applies_when: {episode_has_confrontation: true}
+    source_refs:
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.conflict_escalation.upgrade-protocol
+    consumers: [capability.design-episode-card, operation.revise-episode-plan]
+    validation: {type: schema, validator: confrontation-five-elements}
+  - id: hook.ending.connect-next-opening
+    version: 1
+    category: hook
+    statement: Every non-final episode ending hook must connect directly to the next episode opening.
+    severity: hard
+    applies_when: {artifact: episode_plan, episode_is_final: false}
+    source_refs:
+      - v5://modules/hook-system.md#failure-conditions
+      - v5://modules/episode-card.md#self-check
+    consumers: [capability.design-hooks, operation.revise-episode-plan]
+    validation: {type: semantic, validator: hook-adjacency}
+  - id: hook.opening.layered-window
+    version: 1
+    category: hook
+    statement: The first episode must deliver emotional impact, establish the main hook, and complete the impact-information-suspense opening structure within their configured windows.
+    severity: hard
+    applies_when: {artifact: episode_plan, episode: 1}
+    source_refs:
+      - v5://foundation/rules/05-hooks-payoff.yaml#t1.global.hook_effectiveness.levels
+      - v5://foundation/constraints/narrative-metrics.yaml#opening_hook
+    consumers: [capability.design-hooks, operation.revise-episode-plan]
+    validation: {type: semantic, validator: opening-hook-windows}
+  - id: hook.first-episode.meet-minimum-count
+    version: 1
+    category: hook
+    statement: The first episode must contain at least the configured number of hooks at or above the configured counted grades.
+    severity: hard
+    applies_when: {artifact: episode_plan, episode: 1}
+    source_refs:
+      - v5://foundation/rules/05-hooks-payoff.yaml#t1.global.hook_effectiveness.levels
+      - v5://foundation/constraints/commercial-formulas.yaml#metrics.first_episode_hook_count
+    consumers: [capability.design-hooks, operation.revise-episode-plan]
+    validation: {type: deterministic, validator: first-episode-hook-count}
+  - id: hook.grade.use-canonical-hierarchy
+    version: 1
+    category: hook
+    statement: Assign hook grades only from the canonical S, A, B, and C hierarchy and interpret them using the configured meanings.
+    severity: hard
+    applies_when: {artifact: episode_plan}
+    source_refs:
+      - v5://foundation/rules/05-hooks-payoff.yaml#t1.global.hook_effectiveness.levels
+    consumers: [capability.design-hooks, operation.revise-episode-plan]
+    validation: {type: schema, validator: canonical-hook-grade}
+  - id: hook.ending.meet-minimum-grade
+    version: 1
+    category: hook
+    statement: Every non-final episode ending hook must meet the configured minimum hook grade.
+    severity: hard
+    applies_when: {artifact: episode_plan, episode_is_final: false}
+    source_refs:
+      - v5://modules/hook-system.md#self-check
+    consumers: [capability.design-hooks, operation.revise-episode-plan]
+    validation: {type: deterministic, validator: ending-hook-minimum-grade}
+  - id: hook.pre-paywall.meet-required-grade
+    version: 1
+    category: hook
+    statement: The ending hook immediately before a paywall must meet the configured pre-paywall grade.
+    severity: hard
+    applies_when: {artifact: episode_plan, precedes_paywall: true}
+    source_refs:
+      - v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr003
+    consumers: [capability.design-hooks, capability.design-paywall, operation.revise-episode-plan]
+    validation: {type: deterministic, validator: pre-paywall-hook-grade}
+  - id: foreshadow.reversal.requires-verifiable-setup
+    version: 1
+    category: foreshadowing
+    statement: A reversal must have a verifiable prior clue and must change subsequent action, relationship, or power structure.
+    severity: hard
+    applies_when: {artifact: episode_plan, has_reversal: true}
+    source_refs:
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.foreshadowing_rules.types
+      - v5://modules/reversal-foreshadowing.md#failure-conditions
+    consumers: [capability.map-foreshadowing, operation.revise-episode-plan]
+    validation: {type: semantic, validator: reversal-setup-and-impact}
+  - id: foreshadow.entry.track-setup-and-payoff
+    version: 1
+    category: foreshadowing
+    statement: Every foreshadow entry must identify a setup episode and a planned payoff episode, and overdue entries must remain visible to continuity checks.
+    severity: hard
+    applies_when: {artifact: episode_plan, has_foreshadowing: true}
+    source_refs:
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.foreshadowing_rules.payoff
+    consumers: [capability.map-foreshadowing, operation.revise-episode-plan]
+    validation: {type: deterministic, validator: foreshadow-tracking}
+  - id: foreshadow.s-reversal.meet-setup-window
+    version: 1
+    category: foreshadowing
+    statement: An S-grade reversal must meet the configured minimum setup length and reveal window before it can be scheduled.
+    severity: hard
+    applies_when: {artifact: episode_plan, reversal_grade: S}
+    source_refs:
+      - v5://foundation/rules/plotting-rules.yaml#t1.global.foreshadowing_rules.density
+      - v5://foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow
+    consumers: [capability.map-foreshadowing, operation.revise-episode-plan]
+    validation: {type: deterministic, validator: s-reversal-window}
+  - id: foreshadow.identity-hint.appear-early
+    version: 1
+    category: foreshadowing
+    statement: A hidden identity must include at least one hint no later than the configured episode limit.
+    severity: hard
+    applies_when: {story_has_hidden_identity: true}
+    source_refs:
+      - v5://foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow.hint_within_episodes
+    consumers: [capability.map-foreshadowing, operation.revise-episode-plan]
+    validation: {type: deterministic, validator: identity-hint-window}
+  - id: payment.hook.must-map-promise-to-payoff
+    version: 1
+    category: payment
+    statement: Every paywall hook must state a concrete promise and identify where that promise is paid off before establishing the next promise.
+    severity: hard
+    applies_when: {artifact: episode_plan, has_paywall_hook: true}
+    source_refs:
+      - v5://foundation/rules/05-hooks-payoff.yaml#t1.global.payment_checkpoint_3card.timing
+      - v5://modules/payment-checkpoint.md
+    consumers: [capability.design-paywall, operation.revise-episode-plan]
+    validation: {type: semantic, validator: payment-promise-payoff}
+  - id: payment.card.use-canonical-type
+    version: 1
+    category: payment
+    statement: Classify every payment checkpoint as emotion, suspense, or satisfaction using the canonical type set.
+    severity: hard
+    applies_when: {has_payment_checkpoint: true}
+    source_refs:
+      - v5://foundation/rules/05-hooks-payoff.yaml#t1.global.payment_checkpoint_3card.types
+    consumers: [capability.design-paywall, operation.revise-episode-plan]
+    validation: {type: schema, validator: canonical-payment-card-type}
+  - id: payment.first-checkpoint.use-window
+    version: 1
+    category: payment
+    statement: Schedule the first payment checkpoint inside its configured episode window and do not treat a habit checkpoint as the first checkpoint.
+    severity: hard
+    applies_when: {checkpoint_kind: first}
+    source_refs:
+      - v5://foundation/rules/05-hooks-payoff.yaml#t1.global.payment_checkpoint_3card.timing
+      - v5://foundation/constraints/commercial-formulas.yaml#metrics.first_payment_checkpoint
+    consumers: [capability.design-paywall, operation.revise-episode-plan]
+    validation: {type: deterministic, validator: first-payment-window}
+  - id: payment.habit-checkpoint.use-window
+    version: 1
+    category: payment
+    statement: Schedule a habit payment checkpoint inside its configured episode window and only after the first promise has been paid off.
+    severity: hard
+    applies_when: {checkpoint_kind: habit}
+    source_refs:
+      - v5://foundation/rules/05-hooks-payoff.yaml#t1.global.payment_checkpoint_3card.timing
+      - v5://foundation/constraints/commercial-formulas.yaml#metrics.habit_payment_checkpoint
+    consumers: [capability.design-paywall, operation.revise-episode-plan]
+    validation: {type: deterministic, validator: habit-payment-window}
+  - id: payment.promise.meet-payoff-deadline
+    version: 1
+    category: payment
+    statement: Pay off the current payment promise within the configured maximum delay before establishing the next promise.
+    severity: hard
+    applies_when: {has_payment_checkpoint: true}
+    source_refs:
+      - v5://foundation/constraints/commercial-formulas.yaml#metrics.payment_promise_payoff
+    consumers: [capability.design-paywall, operation.revise-episode-plan]
+    validation: {type: deterministic, validator: payment-payoff-deadline}
+  - id: rhythm.adjacent-episodes.must-vary
+    version: 1
+    category: emotion
+    statement: Adjacent episode plans must avoid an unchanged plot-and-emotion rhythm combination beyond the configured maximum run.
+    severity: hard
+    applies_when: {artifact: episode_plan}
+    source_refs:
+      - v5://foundation/rules/03-structure.yaml#t1.global.rhythm_rules.act-pacing
+      - v5://modules/episode-emotion-nodes.md
+    consumers: [capability.design-emotion-nodes, operation.revise-episode-plan]
+    validation: {type: deterministic, validator: rhythm-run-length}
+  - id: emotion.node.must-be-event-grounded
+    version: 1
+    category: emotion
+    statement: Every EV, ET, and TP node must identify the triggering event, resulting character action, and bounded emotion intensity rather than containing only a number.
+    severity: hard
+    applies_when: {artifact: episode_plan}
+    source_refs:
+      - v5://modules/episode-emotion-nodes.md#failure-conditions
+      - v5://foundation/constraints/series-scale.yaml#emotion_terms
+    consumers: [capability.design-emotion-nodes, operation.revise-episode-plan]
+    validation: {type: schema, validator: event-grounded-emotion-node}

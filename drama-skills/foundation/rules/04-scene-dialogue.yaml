@@ -1,0 +1,99 @@
+# global_core · 场景与对白簇（C3）
+# 合并自 dialogue-rules.yaml + writing-rules.yaml；section id 保持不变
+version: "1.0.0"
+tier: 1
+cluster: scene-dialogue
+
+constraint_ssot:
+  - foundation/constraints/script-format.yaml#format_prohibitions
+  - foundation/constraints/script-format.yaml  # quantitative_constraints / format_standard 合成源
+
+items:
+  - rule_key: t1.global.dialogue_quality.voice-by-class
+    section: dialogue_quality
+    title: 阶层/职业台词特征
+    priority: 10
+    body: |
+      长文参考: knowledge/craft/tier2-genre-rules.md · 台词声音差异化
+      底层：口语直接；中产：逻辑清晰少脏话；上层：简短暗示反问。
+      学生：短句热词；职场人：对齐/闭环/抓手；生意人：客套模糊承诺；公职：严谨滴水不漏。
+      遮名测试：遮住角色名仍可从台词风格判断说话者。
+  - rule_key: t1.global.dialogue_quality.emotion-rhythm
+    section: dialogue_quality
+    title: 情绪外化到台词节奏
+    priority: 11
+    body: |
+      愤怒：极短句重复；悲伤：断续停顿；开心：语速快重复用词；紧张/撒谎：结巴+多余解释；强装镇定：刻意完整逻辑。
+      关键情感场景必须使用潜台词：角色说的 ≠ 角色想的。
+  - rule_key: t1.global.ai_tone_forbidden.core
+    section: ai_tone_forbidden
+    title: AI 腔禁用词与修复
+    priority: 10
+    body: |
+      禁用（堆砌时）：因此/然而/于是/不得不承认/此刻/不禁/竟然。
+      修复三步：改口语短句；一句一信息点；角色口吻差异化。
+      通过朗读测试：读出来不像真人说话的句子必须重写。
+  - rule_key: t1.global.dialogue_craft.intention
+    section: dialogue_craft
+    title: 台词行动意图
+    priority: 10
+    body: |
+      每句关键台词必须服务试探、隐瞒、攻击、防御、交换、拉拢或拒绝等行动意图；
+      禁止角色只为向观众解释已知设定而说话。
+  - rule_key: t1.global.dialogue_craft.subtext
+    section: dialogue_craft
+    title: 潜台词与信息控制
+    priority: 11
+    body: |
+      强情感场景中角色说出的内容不得等于真实欲望；通过回避、反问、停顿、转移话题或道具动作暴露潜台词。
+      单句只承载一个主要信息点。
+  - rule_key: t1.global.dialogue_craft.scene-rhythm
+    section: dialogue_craft
+    title: 对话节奏
+    priority: 12
+    body: |
+      对话必须随权力变化改变句长、打断频率和称谓；对峙场景至少一次上风易手。
+      连续问答若不改变信息、关系或行动，必须压缩。
+  - rule_key: t1.global.writing_requirements.episode-scope
+    section: writing_requirements
+    title: 分集与记忆检查点
+    priority: 10
+    body: |
+      必须遵守 params.episode_range；逐集仅依赖上一集全文+memory_checkpoint（LR-008）。
+      每场 Goal×Conflict；每场 McKee 价值转变；每集输出 memory_checkpoint。
+  - rule_key: t1.global.writing_requirements.scene-unit
+    section: writing_requirements
+    title: 场景最小执行单元
+    priority: 10
+    source_ref: knowledge/craft/shanyin-screenwriting-methodology.md
+    body: |
+      场景进入时明确角色目标、阻碍和风险；结束时至少一个核心价值状态发生变化。
+      无目标、无阻碍或无价值转变的场景必须删除、合并或改写。
+  - rule_key: t1.global.writing_requirements.commercial-format
+    section: writing_requirements
+    title: 商业格式执行
+    priority: 11
+    body: |
+      场景头/台词/△ 动作遵循 format_standard；台词占比与字数见 quantitative_constraints
+      （数值 SSOT: foundation/constraints/script-format.yaml）。
+  - rule_key: t1.global.writing_prohibitions.format-ssot
+    section: writing_prohibitions
+    title: 格式禁止项
+    priority: 5
+    body: |
+      数值 SSOT: foundation/constraints/script-format.yaml
+      格式禁止项只读取 format_prohibitions，不在本规则重复维护。
+  - rule_key: t1.global.writing_prohibitions.ai-emotion
+    section: writing_prohibitions
+    title: 情绪直述禁止
+    priority: 10
+    body: |
+      禁止直接写"我感到/他很愤怒/她很难过"；用动作、停顿、环境、对话节奏外化情绪。
+  - rule_key: t1.global.writing_prohibitions.unfilmable
+    section: writing_prohibitions
+    title: 不可拍摄内容禁用
+    priority: 6
+    source_ref: knowledge/craft/shanyin-screenwriting-methodology.md
+    body: |
+      禁止括号解释潜台词、角色用台词讲解设定或主题、说教式催泪以及任何摄影机无法直接呈现的内容。
+      必须改写为动作、可见道具、空间关系、声音或潜台词。

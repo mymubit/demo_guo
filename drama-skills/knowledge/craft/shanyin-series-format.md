@@ -1,5 +1,7 @@
 # 山音编剧大师：剧集格式完整指南
 
+> **inject: doc** — 人读长文，运行时不注入；执行清单见 `shanyin-series-exec.md`。
+>
 > **来源**：shanyin-screenwriting-master/references/format-series.md
 > **作者**：@山音 · MIT License · 摄取时间：2026-06-22
 

@@ -1,0 +1,28 @@
+version: 1
+constraints:
+  emotion.intensity-range:
+    minimum: 1
+    maximum: 10
+    source_refs:
+      - v5://foundation/constraints/series-scale.yaml#emotion_terms
+  emotion.episode-node-count:
+    value: 8
+    source_refs:
+      - v5://foundation/rules/narrative-craft.yaml#t1.global.episode_emotion_8nodes.summary
+  emotion.ev-platform.maximum-run:
+    value: 2
+    difference_threshold: 2
+    source_refs:
+      - v5://foundation/rules/narrative-craft.yaml#t1.global.episode_emotion_8nodes.summary
+  emotion.same-tone.maximum-run:
+    value: 2
+    source_refs:
+      - v5://knowledge/craft/shanyin-series-format.md#inter-episode-rhythm
+  emotion.dual-track.plot-values:
+    values: [loose, medium, tight]
+    source_refs:
+      - v5://foundation/rules/narrative-craft.yaml#t1.global.qdn_emotion_model.summary
+  emotion.dual-track.emotional-values:
+    values: [light, medium, heavy]
+    source_refs:
+      - v5://foundation/rules/narrative-craft.yaml#t1.global.qdn_emotion_model.summary

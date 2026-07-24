@@ -1,6 +1,8 @@
 agent_id: drama.story-bible
 name: Story Bible
 name_zh: 剧本蓝图官
+v6_persona: persona.story-architect
+operations: [operation.compose-story-bible]
 dept: blueprint
 role_tier: production
 workspace_order: 201
@@ -17,10 +19,20 @@ module_policy:
   source: modules/catalog.yaml
   evaluate_enable_when: true
   as_index: false
-  max_chars: 0
+  # 阶段 D：modules 为 Top 层（≈5.5k），设预算；回滚改为 0
+  max_chars: 4200
 knowledge_policy:
-  mode: full
-  max_chars: 8000
+  # 阶段 B：长文改 index，保留 includes 优先级；回滚 mode: full / max_chars: 8000
+  mode: index
+  max_chars: 4000
+  includes:
+  - knowledge/quality/originality-rules.md
+  - knowledge/quality/structured-output-guards.md
+  - knowledge/craft/shanyin-screenwriting-exec.md
+  - knowledge/craft/shanyin-series-exec.md
+fewshot_policy:
+  # 双减：默认 2 条改为 1；回滚删本块或 max_shots: 2
+  max_shots: 1
 rule_policy:
   scopes:
   - global_core

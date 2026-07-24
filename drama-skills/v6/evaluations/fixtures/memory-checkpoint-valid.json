@@ -1,0 +1,10 @@
+{
+  "episode": 8,
+  "character_states": [{"name": "protagonist", "physical_state": "injured hand", "emotional_state": "controlled anger", "known_facts": ["the ledger was replaced"], "current_goal": "recover the original ledger"}],
+  "active_clues": [{"clue": "mismatched paper year", "status": "developing", "known_by": ["protagonist"]}],
+  "foreshadowing": [{"item": "warehouse key", "setup_episode": 6, "planned_payoff_episode": 10, "status": "planted"}],
+  "relationship_changes": [{"from": "protagonist", "to": "assistant", "before": "distrust", "after": "conditional trust", "trigger": "assistant protected the ledger copy"}],
+  "prop_states": [{"prop": "ledger copy", "holder": "protagonist", "state": "partially burned", "narrative_function": "evidence"}],
+  "rhythm_state": {"plot_pace": "tight", "emotion_pace": "heavy", "episode_ev": -2, "episode_et": 4, "episode_tp": "evidence becomes leverage"},
+  "next_episode_constraints": ["the injured hand remains visible", "the assistant does not know the warehouse address"]
+}

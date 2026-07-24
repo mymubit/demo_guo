@@ -1,0 +1,14 @@
+version: 1
+constraints:
+  production.resource-tags:
+    values: [location-change, night-or-exterior, crowd, action-hazard, special-prop, visual-effect, minor, animal]
+    source_refs: [v5://foundation/rules/production-rules.yaml#t1.global.production_feasibility.tagging]
+  production.complexity:
+    values: [low, medium, high]
+    source_refs: [v5://foundation/rules/production-rules.yaml#t1.global.production_feasibility.alternative]
+  budget.band:
+    values: [low, medium, high, very-high]
+    source_refs: [v5://foundation/rules/production-rules.yaml#t1.global.budget_estimation.band-only]
+  release.policy-status:
+    values: [verified-current, unverified, expired]
+    source_refs: [v5://foundation/rules/production-rules.yaml#t1.global.platform_ops.release-check]

@@ -1,0 +1,2542 @@
+openapi: 3.0.3
+info:
+  title: ScriptForge Product API v3
+  version: 3.0.0
+servers:
+  - url: /api/v3
+paths:
+  /projects/:
+    get:
+      operationId: listProjects
+      summary: 项目列表
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: include_archived
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: ["0", "1", "true", "false"]
+          description: 为 1/true 时包含已归档项目；默认仅未归档
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeProjectList"
+    post:
+      operationId: createProject
+      summary: 创建项目
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProjectRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeProject"
+  /projects/{project_id}/:
+    get:
+      operationId: getProject
+      summary: 项目详情
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeProject"
+  /projects/{project_id}/archive/:
+    post:
+      operationId: archiveProject
+      summary: 归档项目（幂等）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeProject"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/topic/:
+    get:
+      operationId: getTopicState
+      summary: 选题工作台状态（committed / candidate / draft / latest_run）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeTopicState"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/topic/draft/:
+    put:
+      operationId: putTopicDraft
+      summary: 保存选题简报草稿
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TopicDraftRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeArtifactVersion"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/topic/generate/:
+    post:
+      operationId: generateTopicBrief
+      summary: 异步生成选题简报候选（dispatch generate_topic_brief）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCommandDispatch"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/topic/confirm/:
+    post:
+      operationId: confirmTopicBrief
+      summary: 确认选题简报（候选或草稿）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TopicConfirmRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCommandDispatch"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/blueprint/:
+    get:
+      operationId: getBlueprintState
+      summary: 蓝图工作台状态（五产物 committed / candidate + latest_run）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeBlueprintState"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/blueprint/generate/:
+    post:
+      operationId: generateBlueprint
+      summary: 异步生成蓝图五产物候选（dispatch generate_blueprint）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCommandDispatch"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/blueprint/confirm/:
+    post:
+      operationId: confirmBlueprint
+      summary: 确认蓝图五产物
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BlueprintConfirmRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCommandDispatch"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/episodes/:
+    get:
+      operationId: getEpisodesState
+      summary: 分集工作台状态（episode_plan committed / candidate + latest_run）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeEpisodesState"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/episodes/generate/:
+    post:
+      operationId: generateEpisodePlan
+      summary: 异步生成分集规划候选（dispatch generate_episode_plan）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EpisodeGenerateRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCommandDispatch"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/episodes/confirm/:
+    post:
+      operationId: confirmEpisodePlan
+      summary: 确认分集规划候选（dispatch confirm_episode_plan）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCommandDispatch"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/episodes/revise/:
+    post:
+      operationId: reviseEpisodePlan
+      summary: 异步局部修订分集规划（dispatch revise_episode_plan）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EpisodeReviseRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCommandDispatch"
+        "400":
+          description: 缺少 episode_numbers 或参数非法
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/scripts/:
+    get:
+      operationId: getScriptsState
+      summary: 正文工作台状态（episode_scripts committed/candidate + drafts + latest_run）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeScriptsState"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/scripts/generate/:
+    post:
+      operationId: generateEpisodeScripts
+      summary: 异步分批写正文（dispatch write_episode_batch）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScriptGenerateRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCommandDispatch"
+        "400":
+          description: 缺少 start/end 或参数非法
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/scripts/confirm/:
+    post:
+      operationId: confirmScriptCandidate
+      summary: 确认正文候选；use_drafts=true 时合并人工草稿并校验后写入 committed
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScriptConfirmRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCommandDispatch"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/scripts/{episode_number}/:
+    get:
+      operationId: getScriptEpisode
+      summary: 单集正文视图（committed/candidate 切片 + draft）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/EpisodeNumber"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeScriptEpisode"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/scripts/{episode_number}/draft/:
+    put:
+      operationId: putScriptDraft
+      summary: 保存单集人工草稿（不覆盖 committed）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - $ref: "#/components/parameters/EpisodeNumber"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScriptDraftRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeScriptDraft"
+        "400":
+          description: 缺少 payload 或参数非法
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/quality/:
+    get:
+      operationId: getQualityState
+      summary: 质检工作台状态（报告 + findings + stale + latest runs）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeQualityState"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/quality/score/:
+    post:
+      operationId: scoreQuality
+      summary: 异步质量评分（dispatch score_quality；报告直接 committed）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCommandDispatch"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/quality/compliance/:
+    post:
+      operationId: checkCompliance
+      summary: 异步合规审查（dispatch check_compliance；报告直接 committed）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCommandDispatch"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/quality/accept/:
+    post:
+      operationId: acceptFindings
+      summary: 同步接受质检问题（dispatch accept_findings）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QualityAcceptRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCommandDispatch"
+        "400":
+          description: findings 非法
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/quality/revise/:
+    post:
+      operationId: reviseFromFindings
+      summary: 异步按问题修订正文（dispatch revise_from_findings；产出 candidate）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QualityReviseRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCommandDispatch"
+        "400":
+          description: 参数非法
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/delivery/:
+    get:
+      operationId: getDeliveryState
+      summary: 交付工作台状态（gate + package + latest_run）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeDeliveryState"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/delivery/prepare/:
+    post:
+      operationId: prepareDelivery
+      summary: 异步生成交付包（dispatch prepare_delivery；门禁通过后直接 committed）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCommandDispatch"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/delivery/export/docx/:
+    post:
+      operationId: exportDeliveryDocx
+      summary: 导出门禁通过后的正文为 Word（.docx）附件
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: docx 文件流
+          content:
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: 交付门禁未通过（信封含 blockers）
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Envelope"
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/artifacts/:
+    get:
+      operationId: listProjectArtifacts
+      summary: 列出主链产物可回滚版本（committed + superseded）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+        - name: artifact_key
+          in: query
+          required: true
+          schema:
+            $ref: "#/components/schemas/RollbackArtifactKey"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeArtifactVersionList"
+        "400":
+          description: artifact_key 缺失或不在允许集合
+        "404":
+          description: 项目不存在或不属于当前用户
+  /projects/{project_id}/artifacts/rollback/:
+    post:
+      operationId: rollbackProjectArtifact
+      summary: 将指定历史版本复制为新的 committed
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ArtifactRollbackRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeArtifactVersion"
+        "400":
+          description: 参数非法 / 源版本不可回滚
+        "404":
+          description: 项目不存在或不属于当前用户
+  /commands/:    post:
+      operationId: dispatchCommand
+      summary: 派发产品命令
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DispatchCommandRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCommandDispatch"
+  /commands/{run_id}/:
+    get:
+      operationId: getCommandRun
+      summary: 命令运行详情（本人）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCommandRun"
+        "404":
+          description: 运行不存在或不属于当前用户
+  /billing/plans/:
+    get:
+      operationId: listBillingPlans
+      summary: 套餐文案（只读壳）
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeBillingPlans"
+  /system/config/:
+    get:
+      operationId: getSystemConfig
+      summary: 读取系统配置（revision + overlay + effective）
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeSystemConfig"
+    put:
+      operationId: putSystemConfig
+      summary: 写入系统配置 overlay（新建 revision）
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SystemConfigPutRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeSystemConfig"
+        "400":
+          description: overlay 非法
+  /models/providers/:
+    get:
+      operationId: listModelProviders
+      summary: 模型供应商列表（api_key 脱敏，仅 api_key_set）
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeModelProviderList"
+    post:
+      operationId: createModelProvider
+      summary: 创建模型供应商（api_key write_only）
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModelProviderWrite"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeModelProvider"
+        "400":
+          description: 参数非法
+  /models/providers/{provider_id}/:
+    get:
+      operationId: getModelProvider
+      summary: 模型供应商详情（无 api_key 明文）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProviderId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeModelProvider"
+        "404":
+          description: 供应商不存在
+    patch:
+      operationId: patchModelProvider
+      summary: 更新模型供应商；空 api_key 不覆盖密文
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProviderId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModelProviderWrite"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeModelProvider"
+        "400":
+          description: 参数非法
+        "404":
+          description: 供应商不存在
+    delete:
+      operationId: deleteModelProvider
+      summary: 删除模型供应商
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProviderId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Envelope"
+        "404":
+          description: 供应商不存在
+  /models/providers/{provider_id}/activate/:
+    post:
+      operationId: activateModelProvider
+      summary: 设为唯一 active 供应商
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProviderId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeModelProvider"
+        "404":
+          description: 供应商不存在
+  /models/providers/{provider_id}/test/:
+    post:
+      operationId: testModelProviderRest
+      summary: 同步试连指定供应商（等价 test_model_provider）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProviderId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCommandDispatch"
+        "404":
+          description: 供应商不存在
+  /models/providers/{provider_id}/keys/:
+    get:
+      operationId: listModelProviderKeys
+      summary: 供应商附加密钥列表（仅 api_key_set，无明文）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProviderId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeProviderKeyList"
+        "404":
+          description: 供应商不存在
+    post:
+      operationId: createModelProviderKey
+      summary: 创建附加密钥（api_key write_only）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProviderId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProviderKeyWrite"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeProviderKey"
+        "400":
+          description: 参数非法
+        "404":
+          description: 供应商不存在
+  /models/providers/{provider_id}/keys/{key_id}/:
+    patch:
+      operationId: patchModelProviderKey
+      summary: 更新附加密钥；空 api_key 不覆盖密文
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProviderId"
+        - $ref: "#/components/parameters/ProviderKeyId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProviderKeyWrite"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeProviderKey"
+        "400":
+          description: 参数非法
+        "404":
+          description: 供应商或密钥不存在
+    delete:
+      operationId: deleteModelProviderKey
+      summary: 删除附加密钥
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ProviderId"
+        - $ref: "#/components/parameters/ProviderKeyId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Envelope"
+        "404":
+          description: 供应商或密钥不存在
+  /models/role-mappings/:
+    get:
+      operationId: getRoleModelMappings
+      summary: 角色→provider 映射表
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeRoleModelMappingTable"
+    put:
+      operationId: putRoleModelMappings
+      summary: 全量或批量更新角色映射
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleModelMappingTable"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeRoleModelMappingTable"
+        "400":
+          description: 映射非法
+  /models/prices/:
+    get:
+      operationId: getModelPrices
+      summary: 模型单价列表
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeModelPriceTable"
+    put:
+      operationId: putModelPrices
+      summary: 批量 upsert 模型单价（按 provider_id + model_name）
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ModelPriceTableWrite"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeModelPriceTable"
+        "400":
+          description: 单价非法或供应商不存在
+  /models/prices/{price_id}/:
+    delete:
+      operationId: deleteModelPrice
+      summary: 删除模型单价（未定价）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: price_id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeModelPriceDeleted"
+        "404":
+          description: 单价不存在
+  /usage/summary/:
+    get:
+      operationId: getUsageSummary
+      summary: 用量汇总（默认读日 rollup；live=1 合并近 6 小时 call log）
+      description: |
+        日期维度按 Asia/Shanghai 日历日。
+        默认读 V3UsageDailyRollup；`live=1` 时将近 6 小时 DramaLlmCallLog 聚合并入 rows/totals。
+        仅返回当前用户（owner）数据。
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: project_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: date_from
+          in: query
+          required: false
+          description: YYYY-MM-DD（Asia/Shanghai）；默认 today-30d
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          required: false
+          description: YYYY-MM-DD（Asia/Shanghai）；默认 today
+          schema:
+            type: string
+            format: date
+        - name: group_by
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [day, model, command_type]
+            default: day
+        - name: live
+          in: query
+          required: false
+          description: 0=仅 rollup；1=合并近 6 小时 call log
+          schema:
+            type: string
+            enum: ["0", "1"]
+            default: "0"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeUsageSummary"
+        "400":
+          description: group_by 或日期非法
+  /logs/runs/:
+    get:
+      operationId: listLogRuns
+      summary: 命令运行日志列表（owner 隔离；可筛项目/状态/命令类型）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: project_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [queued, running, succeeded, failed, unsupported]
+        - name: command_type
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: created_after
+          in: query
+          required: false
+          description: 仅返回 created_at ≥ 该时刻的运行（ISO 8601）
+          schema:
+            type: string
+            format: date-time
+        - name: created_before
+          in: query
+          required: false
+          description: 仅返回 created_at ≤ 该时刻的运行（ISO 8601）
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeLogRunList"
+  /logs/runs/{run_id}/:
+    get:
+      operationId: getLogRun
+      summary: 命令运行详情 + 关联 LLM calls（prompt/response 可截断）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/RunId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeLogRun"
+        "404":
+          description: 运行不存在或不属于当前用户
+  /logs/calls/{call_id}/:
+    get:
+      operationId: getLogCall
+      summary: 单次 LLM 调用快照（脱敏：无 api_key）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/CallId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeLogCall"
+        "404":
+          description: 调用不存在或不属于当前用户
+  /templates/:
+    get:
+      operationId: listTemplates
+      summary: 模板列表（内置 preset + 自定义）
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeTemplateList"
+  /templates/custom/:
+    post:
+      operationId: createCustomTemplate
+      summary: 创建自定义模板（仅 staff）
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomTemplateWrite"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCustomTemplate"
+        "400":
+          description: 参数非法
+        "403":
+          description: 非 staff
+  /templates/custom/{template_id}/:
+    patch:
+      operationId: patchCustomTemplate
+      summary: 更新自定义模板（仅 staff）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TemplateId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomTemplateWrite"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeCustomTemplate"
+        "403":
+          description: 非 staff
+        "404":
+          description: 模板不存在
+    delete:
+      operationId: deleteCustomTemplate
+      summary: 删除自定义模板（仅 staff）
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/TemplateId"
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: 非 staff
+        "404":
+          description: 模板不存在
+  /knowledge/:
+    get:
+      operationId: listKnowledge
+      summary: 知识库文件索引（只读；可选 q / section）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 匹配 path / title / excerpt（子串，大小写不敏感）
+        - name: section
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 首路径段（如 craft、market）；根目录文件为空串
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeKnowledgeList"
+  /knowledge/doc/:
+    get:
+      operationId: getKnowledgeDoc
+      summary: 按相对 path 读取 markdown 正文（防穿越）
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: path
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 相对 knowledge 根的 .md 路径，如 craft/theme-templates.md
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvelopeKnowledgeDoc"
+        "400":
+          description: path 非法或越界
+        "404":
+          description: 文档不存在
+  /reviews/:
+    get:
+      operationId: listScriptReviews
+      summary: 独立剧本评审列表
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: project_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+    post:
+      operationId: createScriptReview
+      summary: 创建评审件（JSON 粘贴或 multipart 上传）
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: 校验失败
+  /reviews/{review_id}/:
+    get:
+      operationId: getScriptReview
+      summary: 评审件详情
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: 不存在
+  /reviews/{review_id}/score/:
+    post:
+      operationId: scoreScriptReview
+      summary: 触发外界质量评分
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+      responses:
+        "202":
+          description: Accepted
+  /reviews/{review_id}/compliance/:
+    post:
+      operationId: checkScriptReviewCompliance
+      summary: 触发外界合规审查
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+      responses:
+        "202":
+          description: Accepted
+  /reviews/{review_id}/runs/:
+    get:
+      operationId: listScriptReviewRuns
+      summary: 评审记录列表
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+        - name: kind
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [quality, compliance]
+      responses:
+        "200":
+          description: OK
+  /reviews/{review_id}/runs/{run_id}/:
+    get:
+      operationId: getScriptReviewRun
+      summary: 单条评审记录
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+        - name: run_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: 不存在
+  /reviews/{review_id}/compare/:
+    get:
+      operationId: compareScriptReviewRuns
+      summary: 同 kind 两条成功记录并排对比
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ReviewId"
+        - name: a
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: b
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: 类型不同或未成功
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    ProjectId:
+      name: project_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ReviewId:
+      name: review_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    RunId:
+      name: run_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    EpisodeNumber:
+      name: episode_number
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+    ProviderId:
+      name: provider_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    ProviderKeyId:
+      name: key_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    TemplateId:
+      name: template_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    CallId:
+      name: call_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    Envelope:
+      type: object
+      required: [code, message, data]
+      properties:
+        code: { type: integer }
+        message: { type: string }
+        data: {}
+    ProjectStage:
+      type: string
+      enum: [topic, blueprint, episodes, writing, quality, delivery]
+    ProjectSummary:
+      type: object
+      required: [id, title, entry_type, stage, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        entry_type: { type: string, enum: [original, adapt] }
+        stage: { $ref: "#/components/schemas/ProjectStage" }
+        progress_percent: { type: integer, minimum: 0, maximum: 100 }
+        archived_at: { type: string, format: date-time, nullable: true }
+        updated_at: { type: string, format: date-time }
+    CreateProjectRequest:
+      type: object
+      required: [title, entry_type]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 200 }
+        entry_type: { type: string, enum: [original, adapt] }
+        template_id:
+          type: string
+          format: uuid
+          description: 自定义模板 UUID（与 theme_code 互斥）
+        theme_code:
+          type: string
+          maxLength: 64
+          description: 内置主题码（与 template_id 互斥）
+    DispatchCommandRequest:
+      type: object
+      required: [command_type]
+      properties:
+        command_type: { type: string }
+        payload:
+          type: object
+          additionalProperties: true
+        idempotency_key:
+          type: string
+          maxLength: 64
+    CommandRun:
+      type: object
+      required:
+        - id
+        - command_type
+        - status
+        - error_message
+        - result_payload
+        - created_at
+        - updated_at
+      properties:
+        id: { type: string, format: uuid }
+        command_type: { type: string }
+        status:
+          type: string
+          enum: [queued, running, succeeded, failed, unsupported]
+        project_id:
+          type: string
+          format: uuid
+          nullable: true
+        error_message: { type: string }
+        result_payload:
+          type: object
+          additionalProperties: true
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    CommandDispatchResult:
+      type: object
+      required: [command_run]
+      properties:
+        command_run: { $ref: "#/components/schemas/CommandRun" }
+        project: { $ref: "#/components/schemas/ProjectSummary" }
+    EnvelopeProjectList:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  items: { $ref: "#/components/schemas/ProjectSummary" }
+    EnvelopeProject:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/ProjectSummary" }
+    EnvelopeCommandDispatch:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/CommandDispatchResult" }
+    EnvelopeCommandRun:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/CommandRun" }
+    BillingPlan:
+      type: object
+      required: [id, name, price_label, features]
+      properties:
+        id:
+          type: string
+          enum: [basic, pro, team]
+          description: 套餐档位（基础版/专业版/团队版）
+        name: { type: string, example: 专业版 }
+        price_label: { type: string, example: ¥299/月 }
+        features:
+          type: array
+          items: { type: string }
+          example:
+            - 每月 10 项目
+            - 最多 100 集
+            - 十维评分
+    EnvelopeBillingPlans:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  items: { $ref: "#/components/schemas/BillingPlan" }
+    ArtifactVersion:
+      type: object
+      required:
+        - id
+        - artifact_key
+        - version
+        - schema_version
+        - status
+        - payload
+        - created_at
+      properties:
+        id: { type: string, format: uuid }
+        artifact_key: { type: string }
+        version: { type: integer, minimum: 1 }
+        schema_version: { type: integer, minimum: 1 }
+        status:
+          type: string
+          enum: [draft, candidate, committed, superseded]
+        payload:
+          type: object
+          additionalProperties: true
+        created_at: { type: string, format: date-time }
+    RollbackArtifactKey:
+      type: string
+      enum:
+        - project_brief
+        - story_bible
+        - character_system
+        - world_system
+        - emotion_system
+        - originality_report
+        - episode_plan
+        - episode_scripts
+    ArtifactRollbackRequest:
+      type: object
+      required: [artifact_key, source_version]
+      properties:
+        artifact_key: { $ref: "#/components/schemas/RollbackArtifactKey" }
+        source_version: { type: integer, minimum: 1 }
+    ArtifactVersionList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ArtifactVersion" }
+    EnvelopeArtifactVersionList:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/ArtifactVersionList" }
+    TopicState:
+      type: object
+      required: [stage, committed, candidate, draft, latest_run]
+      properties:
+        stage: { $ref: "#/components/schemas/ProjectStage" }
+        committed:
+          allOf:
+            - $ref: "#/components/schemas/ArtifactVersion"
+          nullable: true
+        candidate:
+          allOf:
+            - $ref: "#/components/schemas/ArtifactVersion"
+          nullable: true
+        draft:
+          allOf:
+            - $ref: "#/components/schemas/ArtifactVersion"
+          nullable: true
+        latest_run:
+          allOf:
+            - $ref: "#/components/schemas/CommandRun"
+          nullable: true
+    TopicDraftRequest:
+      type: object
+      required: [payload]
+      properties:
+        payload:
+          type: object
+          additionalProperties: true
+    TopicConfirmRequest:
+      type: object
+      properties:
+        use_draft:
+          type: boolean
+          default: false
+          description: true 时以草稿写入 committed；默认确认最新 candidate
+    BlueprintBundle:
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/ArtifactVersion"
+      description: 按 artifact_key 聚合的蓝图产物（story_bible 等）
+    BlueprintState:
+      type: object
+      required: [committed, candidate, latest_run]
+      properties:
+        committed:
+          allOf:
+            - $ref: "#/components/schemas/BlueprintBundle"
+          nullable: true
+        candidate:
+          allOf:
+            - $ref: "#/components/schemas/BlueprintBundle"
+          nullable: true
+        latest_run:
+          allOf:
+            - $ref: "#/components/schemas/CommandRun"
+          nullable: true
+    BlueprintConfirmRequest:
+      type: object
+      properties:
+        use_draft:
+          type: boolean
+          default: false
+    EpisodesState:
+      type: object
+      required: [stage, committed, candidate, latest_run]
+      properties:
+        stage: { $ref: "#/components/schemas/ProjectStage" }
+        committed:
+          allOf:
+            - $ref: "#/components/schemas/ArtifactVersion"
+          nullable: true
+        candidate:
+          allOf:
+            - $ref: "#/components/schemas/ArtifactVersion"
+          nullable: true
+        latest_run:
+          allOf:
+            - $ref: "#/components/schemas/CommandRun"
+          nullable: true
+    EpisodeGenerateRequest:
+      type: object
+      properties:
+        episode_count:
+          type: integer
+          minimum: 1
+        duration_target:
+          type: string
+        planning_requests:
+          type: object
+          additionalProperties: true
+    EpisodeReviseRequest:
+      type: object
+      required: [episode_numbers]
+      properties:
+        episode_numbers:
+          type: array
+          minItems: 1
+          items:
+            type: integer
+            minimum: 1
+        revision_requests:
+          type: object
+          additionalProperties: true
+    EnvelopeTopicState:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/TopicState" }
+    EnvelopeBlueprintState:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/BlueprintState" }
+    EnvelopeEpisodesState:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/EpisodesState" }
+    ScriptDraft:
+      type: object
+      required: [episode_number, payload, updated_at]
+      properties:
+        episode_number:
+          type: integer
+          minimum: 1
+        payload:
+          type: object
+          additionalProperties: true
+          description: 结构化场景草稿（scenes/beats）
+        updated_at:
+          type: string
+          format: date-time
+    ScriptsState:
+      type: object
+      required: [committed, candidate, drafts, latest_run]
+      properties:
+        committed:
+          allOf:
+            - $ref: "#/components/schemas/ArtifactVersion"
+          nullable: true
+        candidate:
+          allOf:
+            - $ref: "#/components/schemas/ArtifactVersion"
+          nullable: true
+        drafts:
+          type: array
+          items: { $ref: "#/components/schemas/ScriptDraft" }
+        latest_run:
+          allOf:
+            - $ref: "#/components/schemas/CommandRun"
+          nullable: true
+    ScriptEpisodeState:
+      type: object
+      required: [episode_number, committed, candidate, draft]
+      properties:
+        episode_number:
+          type: integer
+          minimum: 1
+        committed:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: committed episode_scripts 中该集切片
+        candidate:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: candidate episode_scripts 中该集切片
+        draft:
+          allOf:
+            - $ref: "#/components/schemas/ScriptDraft"
+          nullable: true
+    ScriptDraftRequest:
+      type: object
+      required: [payload]
+      properties:
+        payload:
+          type: object
+          additionalProperties: true
+    ScriptGenerateRequest:
+      type: object
+      required: [start, end]
+      properties:
+        start:
+          type: integer
+          minimum: 1
+        end:
+          type: integer
+          minimum: 1
+        writing_requests:
+          type: object
+          additionalProperties: true
+    ScriptConfirmRequest:
+      type: object
+      properties:
+        use_drafts:
+          type: boolean
+          default: false
+          description: true 时合并各集 draft 并 validate_artifact_payload 后写入 committed；默认确认 AI candidate
+    EnvelopeScriptsState:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/ScriptsState" }
+    EnvelopeScriptEpisode:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/ScriptEpisodeState" }
+    EnvelopeScriptDraft:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/ScriptDraft" }
+    EnvelopeArtifactVersion:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/ArtifactVersion" }
+    QualityFinding:
+      type: object
+      required:
+        [id, source, finding_key, title, severity, status, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        source:
+          type: string
+          enum: [quality, compliance]
+        finding_key:
+          type: string
+          maxLength: 128
+          description: 稳定键（如 defect index 或 hash）
+        title: { type: string, maxLength: 256 }
+        severity: { type: string, maxLength: 32 }
+        status:
+          type: string
+          enum: [open, accepted, resolved]
+        report_artifact_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    QualityState:
+      type: object
+      required:
+        [
+          stage,
+          quality_report,
+          compliance_report,
+          findings,
+          quality_is_stale,
+          compliance_is_stale,
+          latest_quality_run,
+          latest_compliance_run,
+        ]
+      properties:
+        stage: { $ref: "#/components/schemas/ProjectStage" }
+        quality_report:
+          allOf:
+            - $ref: "#/components/schemas/ArtifactVersion"
+          nullable: true
+        compliance_report:
+          allOf:
+            - $ref: "#/components/schemas/ArtifactVersion"
+          nullable: true
+        findings:
+          type: array
+          items: { $ref: "#/components/schemas/QualityFinding" }
+        quality_is_stale:
+          type: boolean
+          description: 当前 committed episode_scripts.version ≠ quality_report._v3_meta.source_script_version
+        compliance_is_stale:
+          type: boolean
+          description: 当前 committed episode_scripts.version ≠ compliance_report._v3_meta.source_script_version
+        latest_quality_run:
+          allOf:
+            - $ref: "#/components/schemas/CommandRun"
+          nullable: true
+        latest_compliance_run:
+          allOf:
+            - $ref: "#/components/schemas/CommandRun"
+          nullable: true
+    DeliveryGateSnapshot:
+      type: object
+      required: [passed, blockers]
+      properties:
+        passed: { type: boolean }
+        blockers:
+          type: array
+          items: { type: string }
+          description: 未通过时的中文阻断原因
+    DeliveryState:
+      type: object
+      required: [stage, gate, package, latest_run]
+      properties:
+        stage: { $ref: "#/components/schemas/ProjectStage" }
+        gate: { $ref: "#/components/schemas/DeliveryGateSnapshot" }
+        package:
+          allOf:
+            - $ref: "#/components/schemas/ArtifactVersion"
+          nullable: true
+          description: committed production_package（若有）
+        latest_run:
+          allOf:
+            - $ref: "#/components/schemas/CommandRun"
+          nullable: true
+    QualityAcceptFindingItem:
+      type: object
+      required: [source, finding_key]
+      properties:
+        source:
+          type: string
+          enum: [quality, compliance]
+        finding_key:
+          type: string
+          maxLength: 128
+        title:
+          type: string
+          maxLength: 256
+        severity:
+          type: string
+          maxLength: 32
+    QualityAcceptRequest:
+      type: object
+      required: [findings]
+      properties:
+        findings:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/QualityAcceptFindingItem" }
+    QualityReviseRequest:
+      type: object
+      properties:
+        finding_keys:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            maxLength: 128
+        episode_range:
+          type: object
+          required: [start, end]
+          properties:
+            start: { type: integer, minimum: 1 }
+            end: { type: integer, minimum: 1 }
+    EnvelopeQualityState:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/QualityState" }
+    EnvelopeDeliveryState:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/DeliveryState" }
+    TargetPlatform:
+      type: string
+      enum: [generic, douyin, kuaishou, wechat_miniprogram]
+    ScoringPreset:
+      type: string
+      enum: [standard, strict, relaxed, rhythm_first]
+    SystemConfigOverlay:
+      type: object
+      additionalProperties: false
+      properties:
+        target_platform: { $ref: "#/components/schemas/TargetPlatform" }
+        scoring_preset: { $ref: "#/components/schemas/ScoringPreset" }
+        quality_pass_threshold:
+          type: number
+          nullable: true
+          minimum: 0
+          maximum: 100
+          description: 可选覆盖预设阈值；null 表示清除
+        daily_cost_alert_cny:
+          type: number
+          nullable: true
+          minimum: 0
+          description: 日费用预警阈值（元）；null 表示清除
+    SystemConfigEffective:
+      type: object
+      required:
+        [
+          target_platform,
+          scoring_preset,
+          pass_threshold,
+          platform_label_zh,
+          daily_cost_alert_cny,
+        ]
+      properties:
+        target_platform: { $ref: "#/components/schemas/TargetPlatform" }
+        scoring_preset: { $ref: "#/components/schemas/ScoringPreset" }
+        pass_threshold: { type: number }
+        platform_label_zh: { type: string }
+        daily_cost_alert_cny:
+          type: number
+          nullable: true
+          minimum: 0
+          description: 生效的日费用预警阈值；未配置时为 null
+    SystemConfigState:
+      type: object
+      required: [revision, overlay, effective]
+      properties:
+        revision: { type: integer, minimum: 0 }
+        overlay: { $ref: "#/components/schemas/SystemConfigOverlay" }
+        effective: { $ref: "#/components/schemas/SystemConfigEffective" }
+    SystemConfigPutRequest:
+      type: object
+      required: [overlay]
+      properties:
+        overlay: { $ref: "#/components/schemas/SystemConfigOverlay" }
+        change_reason:
+          type: string
+          maxLength: 500
+    EnvelopeSystemConfig:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/SystemConfigState" }
+    ModelProvider:
+      type: object
+      required:
+        [
+          id,
+          name,
+          base_url,
+          model_name,
+          temperature,
+          max_tokens,
+          is_enabled,
+          is_active,
+          api_key_set,
+          remark,
+          updated_at,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, maxLength: 100 }
+        base_url: { type: string, maxLength: 512 }
+        model_name: { type: string, maxLength: 128 }
+        temperature: { type: number }
+        max_tokens: { type: integer, minimum: 1 }
+        is_enabled: { type: boolean }
+        is_active: { type: boolean }
+        api_key_set:
+          type: boolean
+          description: 是否已配置密钥；永不回传明文 api_key
+        remark: { type: string, maxLength: 255 }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ModelProviderWrite:
+      type: object
+      properties:
+        name: { type: string, maxLength: 100 }
+        base_url: { type: string, maxLength: 512 }
+        model_name: { type: string, maxLength: 128 }
+        api_key:
+          type: string
+          writeOnly: true
+          description: 创建时可选；更新时空串表示不覆盖密文
+        temperature: { type: number }
+        max_tokens: { type: integer, minimum: 1 }
+        is_enabled: { type: boolean }
+        is_active: { type: boolean }
+        remark: { type: string, maxLength: 255 }
+    EnvelopeModelProvider:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/ModelProvider" }
+    EnvelopeModelProviderList:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  items: { $ref: "#/components/schemas/ModelProvider" }
+    ProviderKey:
+      type: object
+      required:
+        [id, provider_id, label, sort_order, is_enabled, api_key_set]
+      properties:
+        id: { type: string, format: uuid }
+        provider_id: { type: string, format: uuid }
+        label: { type: string, maxLength: 100 }
+        sort_order: { type: integer, minimum: 0 }
+        is_enabled: { type: boolean }
+        api_key_set:
+          type: boolean
+          description: 是否已配置密钥；永不回传明文 api_key
+        created_at: { type: string, format: date-time, nullable: true }
+        updated_at: { type: string, format: date-time, nullable: true }
+    ProviderKeyWrite:
+      type: object
+      properties:
+        label: { type: string, maxLength: 100 }
+        api_key:
+          type: string
+          writeOnly: true
+          description: 创建必填；更新时空串表示不覆盖密文
+        sort_order: { type: integer, minimum: 0 }
+        is_enabled: { type: boolean }
+    EnvelopeProviderKey:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/ProviderKey" }
+    EnvelopeProviderKeyList:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  items: { $ref: "#/components/schemas/ProviderKey" }
+    RoleModelKey:
+      type: string
+      enum:
+        - drama-topic-director
+        - drama-story-bible
+        - drama-episode-designer
+        - drama-script-writer
+        - drama-script-scorer
+        - drama-compliance-guard
+        - drama-revision-master
+        - drama-delivery-tool
+    RoleModelMapping:
+      type: object
+      required: [role_key, provider_id]
+      properties:
+        role_key:
+          oneOf:
+            - $ref: "#/components/schemas/RoleModelKey"
+            - type: string
+        provider_id: { type: string, format: uuid }
+        backup_provider_ids:
+          type: array
+          items: { type: string, format: uuid }
+        temperature: { type: number, nullable: true }
+        max_tokens: { type: integer, minimum: 1, nullable: true }
+        updated_at: { type: string, format: date-time }
+    RoleModelMappingTable:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/RoleModelMapping" }
+    EnvelopeRoleModelMappingTable:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/RoleModelMappingTable" }
+    ModelPrice:
+      type: object
+      required:
+        [
+          id,
+          provider_id,
+          provider_name,
+          model_name,
+          price_in_per_1k,
+          price_out_per_1k,
+          currency,
+        ]
+      properties:
+        id: { type: integer }
+        provider_id: { type: string, format: uuid }
+        provider_name: { type: string }
+        model_name: { type: string }
+        price_in_per_1k: { type: number, minimum: 0 }
+        price_out_per_1k: { type: number, minimum: 0 }
+        price_cache_in_per_1k:
+          type: number
+          minimum: 0
+          nullable: true
+          description: 缓存命中输入单价；空则按输入单价计
+        currency: { type: string }
+    ModelPriceTable:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ModelPrice" }
+    ModelPriceItemWrite:
+      type: object
+      required: [provider_id, model_name, price_in_per_1k, price_out_per_1k]
+      properties:
+        provider_id: { type: string, format: uuid }
+        model_name: { type: string }
+        price_in_per_1k: { type: number, minimum: 0 }
+        price_out_per_1k: { type: number, minimum: 0 }
+        price_cache_in_per_1k:
+          type: number
+          minimum: 0
+          nullable: true
+        currency: { type: string, default: CNY }
+    ModelPriceTableWrite:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ModelPriceItemWrite" }
+    EnvelopeModelPriceTable:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/ModelPriceTable" }
+    ModelPriceDeleted:
+      type: object
+      required: [deleted, id]
+      properties:
+        deleted: { type: boolean }
+        id: { type: integer }
+    EnvelopeModelPriceDeleted:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/ModelPriceDeleted" }
+    UsageMetrics:
+      type: object
+      required:
+        [
+          prompt_tokens,
+          completion_tokens,
+          total_tokens,
+          call_count,
+          success_count,
+          estimated_cost,
+          unpriced_call_count,
+        ]
+      properties:
+        prompt_tokens: { type: integer }
+        cached_prompt_tokens:
+          type: integer
+          description: 缓存命中的输入 Token 数
+        completion_tokens: { type: integer }
+        total_tokens: { type: integer }
+        call_count: { type: integer }
+        success_count: { type: integer }
+        estimated_cost:
+          type: string
+          description: 估算费用（两位小数十进制字符串）
+        unpriced_call_count: { type: integer }
+    UsageSummaryRow:
+      allOf:
+        - type: object
+          required: [key]
+          properties:
+            key:
+              type: string
+              description: group_by=day 为 YYYY-MM-DD；model 为模型名；command_type 为命令类型
+        - $ref: "#/components/schemas/UsageMetrics"
+    UsageSummary:
+      type: object
+      required: [timezone, date_from, date_to, group_by, rows, totals]
+      properties:
+        timezone:
+          type: string
+          description: 固定 Asia/Shanghai
+          example: Asia/Shanghai
+        date_from: { type: string, format: date }
+        date_to: { type: string, format: date }
+        group_by:
+          type: string
+          enum: [day, model, command_type]
+        rows:
+          type: array
+          items: { $ref: "#/components/schemas/UsageSummaryRow" }
+        totals: { $ref: "#/components/schemas/UsageMetrics" }
+    EnvelopeUsageSummary:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/UsageSummary" }
+    LogCall:
+      type: object
+      required:
+        [
+          id,
+          role,
+          purpose,
+          status,
+          model_name,
+          latency_ms,
+          system_prompt,
+          user_prompt,
+          response_text,
+          created_at,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        role: { type: string }
+        purpose: { type: string }
+        status:
+          type: string
+          enum: [success, error]
+        model_name: { type: string }
+        base_url: { type: string }
+        latency_ms: { type: integer, minimum: 0 }
+        prompt_tokens: { type: integer, nullable: true }
+        completion_tokens: { type: integer, nullable: true }
+        total_tokens: { type: integer, nullable: true }
+        system_prompt:
+          type: string
+          description: 详情全量；列表可为空并改用 preview
+        user_prompt: { type: string }
+        response_text: { type: string }
+        error_message: { type: string }
+        http_status: { type: integer, nullable: true }
+        v3_command_run_id: { type: string, format: uuid, nullable: true }
+        v3_project_id: { type: string, format: uuid, nullable: true }
+        system_prompt_preview: { type: string }
+        user_prompt_preview: { type: string }
+        response_preview: { type: string }
+        created_at: { type: string, format: date-time }
+    FailoverAttempt:
+      type: object
+      required:
+        [
+          id,
+          attempt_index,
+          provider_id,
+          provider_name,
+          status,
+          error_code,
+          error_message,
+          llm_call_log_id,
+          created_at,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        attempt_index: { type: integer, minimum: 0 }
+        provider_id: { type: string, format: uuid }
+        provider_name: { type: string }
+        status:
+          type: string
+          enum: [succeeded, failed_switchable, failed_terminal, skipped]
+        error_code: { type: string }
+        error_message: { type: string }
+        llm_call_log_id: { type: string, format: uuid, nullable: true }
+        created_at: { type: string, format: date-time }
+    LogRun:
+      allOf:
+        - $ref: "#/components/schemas/CommandRun"
+        - type: object
+          required: [calls, failover_attempts]
+          properties:
+            calls:
+              type: array
+              items: { $ref: "#/components/schemas/LogCall" }
+            failover_attempts:
+              type: array
+              items: { $ref: "#/components/schemas/FailoverAttempt" }
+    LogRunList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/CommandRun" }
+        total: { type: integer, minimum: 0 }
+        limit: { type: integer, minimum: 1, maximum: 50 }
+        offset: { type: integer, minimum: 0 }
+    EnvelopeLogRunList:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/LogRunList" }
+    EnvelopeLogRun:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/LogRun" }
+    EnvelopeLogCall:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/LogCall" }
+    BuiltinTemplate:
+      type: object
+      required: [theme_code, label_zh, dims, kind]
+      properties:
+        theme_code: { type: string }
+        label_zh: { type: string }
+        dims:
+          type: object
+          additionalProperties: true
+        kind: { type: string, enum: [builtin] }
+    CustomTemplate:
+      type: object
+      required: [id, name, theme_code, label_zh, dims, kind]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        theme_code: { type: string }
+        label_zh: { type: string }
+        dims:
+          type: object
+          additionalProperties: true
+        description: { type: string }
+        created_by: { type: string, nullable: true }
+        created_at: { type: string, format: date-time, nullable: true }
+        updated_at: { type: string, format: date-time, nullable: true }
+        kind: { type: string, enum: [custom] }
+    CustomTemplateWrite:
+      type: object
+      required: [name, theme_code, label_zh]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200 }
+        theme_code: { type: string, minLength: 1, maxLength: 64 }
+        label_zh: { type: string, minLength: 1, maxLength: 200 }
+        dims:
+          type: object
+          additionalProperties: true
+        description: { type: string }
+    TemplateList:
+      type: object
+      required: [builtin, custom]
+      properties:
+        builtin:
+          type: array
+          items: { $ref: "#/components/schemas/BuiltinTemplate" }
+        custom:
+          type: array
+          items: { $ref: "#/components/schemas/CustomTemplate" }
+    EnvelopeTemplateList:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/TemplateList" }
+    EnvelopeCustomTemplate:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/CustomTemplate" }
+    KnowledgeDocSummary:
+      type: object
+      required: [path, title, section, excerpt]
+      properties:
+        path: { type: string, description: 相对 knowledge 根的路径 }
+        title: { type: string }
+        section:
+          type: string
+          description: 首路径段；根目录文件为空串
+        excerpt: { type: string }
+    KnowledgeList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/KnowledgeDocSummary" }
+    KnowledgeDoc:
+      type: object
+      required: [path, title, content]
+      properties:
+        path: { type: string }
+        title: { type: string }
+        content: { type: string, description: markdown 全文 }
+    EnvelopeKnowledgeList:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/KnowledgeList" }
+    EnvelopeKnowledgeDoc:
+      allOf:
+        - $ref: "#/components/schemas/Envelope"
+        - type: object
+          properties:
+            data: { $ref: "#/components/schemas/KnowledgeDoc" }

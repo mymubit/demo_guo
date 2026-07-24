@@ -15,9 +15,13 @@
 - `foundation/constraints/commercial-formulas.yaml`
 
 ## 输出
-- `paywall_distribution[]`（唯一写入者，见 `contracts/artifacts.yaml#field_writers`；
+- `paywall_distribution[]`（**story_bible 全剧分布**：由 `drama.story-bible` 写入；见 `contracts/artifacts.yaml#field_writers`；
   每项含 `episode`、`card_type`、`promise`、`payoff_episode`，承诺与兑现映射并入本表）
-- 分集 `paywall_hook`
+- 分集 `paywall_hook`（**仅** `drama.episode-designer` 写单集卡点；禁止清空或改写全剧 `paywall_distribution`）
+
+## 角色边界
+- `drama.story-bible`：规划全剧付费分布表。
+- `drama.episode-designer`：在既有分布约束下填写单集 `paywall_hook`，不得删除 bible 已写分布。
 
 ## 执行步骤
 1. 选择情感卡、悬念卡或爽感卡。

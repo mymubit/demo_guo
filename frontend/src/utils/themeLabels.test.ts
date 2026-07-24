@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   axisFieldLabelZh,
   complianceRiskLabelZh,
+  localizeDisplayValue,
   localizeProseForDisplay,
   resolveThemeOptionLabel,
 } from '@/utils/themeLabels'
@@ -61,5 +62,16 @@ describe('themeLabels', () => {
     expect(localizeProseForDisplay('她的 Want 与 Need 冲突，Hook 要够猛')).toBe(
       '她的 外在欲望 与 内在需求 冲突，钩子 要够猛',
     )
+  })
+
+  it('localizeDisplayValue maps enums and risks', () => {
+    expect(localizeDisplayValue('revenge')).toBe('复仇爽感')
+    expect(localizeDisplayValue('female')).toBe('女频')
+    expect(localizeDisplayValue('protagonist')).toBe('主角')
+    expect(localizeDisplayValue('low', 'compliance_risk')).toBe('低')
+    expect(localizeDisplayValue(true)).toBe('是')
+    // 未知英文码不再 Title Case 暴露
+    expect(localizeDisplayValue('unknown_code_xyz')).not.toMatch(/[A-Z]/)
+    expect(localizeDisplayValue('unknown_code_xyz')).not.toBe('Unknown Code Xyz')
   })
 })

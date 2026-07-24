@@ -5,7 +5,7 @@
 - L0 角色边界 + SKILL 索引体
 - L1 按需 modules（enable_when；默认全文，不做预算截断）
 - L2 rules（sections 收窄；默认全文）
-- L3 输出契约 + 反例 + 知识引用（默认全文）
+- L3 输出契约 + 反例 + 知识引用（默认 index；full/off 须显式）
 """
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from typing import Any
 
 from apps.drama.services.injection_manifest import build_injection_manifest, layer_stat
 from apps.drama.services.schema_prompt_contract import (
+    DEFAULT_CONTRACT_EXAMPLE_MAX_CHARS,
     extract_required_paths,
     load_artifact_fixture,
     render_contract_block,
@@ -42,7 +43,6 @@ class PromptBuilder:
         role: str,
         *,
         settings: dict[str, Any],
-        workflow_state: dict[str, Any],
         artifacts: dict[str, Any],
         input_payload: dict[str, Any] | None = None,
         latest_script: dict[str, Any] | None = None,
@@ -57,7 +57,8 @@ class PromptBuilder:
         knowledge_budget = _effective_max_chars(
             int(knowledge_policy.get("max_chars") or 0)
         )
-        knowledge_mode = str(knowledge_policy.get("mode") or "full").strip().lower()
+        # C5：缺省 index（长文可选）；full 须显式声明；off 完全不灌
+        knowledge_mode = str(knowledge_policy.get("mode") or "index").strip().lower()
         module_policy = contract.get("module_policy") or {}
         module_as_index = bool(module_policy.get("as_index"))
         module_budget = _effective_max_chars(int(module_policy.get("max_chars") or 0))
@@ -73,19 +74,27 @@ class PromptBuilder:
             role, settings, max_chars=max_chars
         )
         anti_text = self.loader.load_anti_examples(role)
-        # mode=index：按模块索引风格只注文件名+首行；sections 暂与 full 同路径，靠 max_chars 护栏
-        knowledge_as_index = knowledge_mode == "index"
-        knowledge_asm = self.loader.assemble_knowledge_for_role(
-            role,
-            settings,
-            max_chars=knowledge_budget,
-            as_index=knowledge_as_index,
-        )
+        if knowledge_mode in {"off", "none", "disabled"}:
+            knowledge_asm = {
+                "text": "",
+                "included": [],
+                "skipped": [{"reason": "knowledge_mode_off"}],
+                "truncated": False,
+                "max_chars": knowledge_budget,
+            }
+        else:
+            # index：文件名+首行；full：全文（须显式 mode）
+            knowledge_asm = self.loader.assemble_knowledge_for_role(
+                role,
+                settings,
+                max_chars=knowledge_budget,
+                as_index=knowledge_mode != "full",
+            )
         fewshot_text = self.loader.load_fewshots(role)
         modules_text = modules_asm["text"]
         rules_text = rules_asm["text"]
         knowledge_text = knowledge_asm["text"]
-        runtime = self.loader.project_runtime_projection(role, settings, workflow_state)
+        runtime = self.loader.role_parameter_context(role, settings)
         artifact_key = self.loader.get_output_artifact_by_role(role)
         schema_version = self.loader.artifact_schema_version(artifact_key)
         artifact_schema = _safe_load_artifact_schema(self.loader, artifact_key)
@@ -94,12 +103,26 @@ class PromptBuilder:
             if artifact_schema is not None
             else None
         )
+        contract_policy = contract.get("contract_policy") or {}
+        contract_example_mode = str(
+            contract_policy.get("example_mode") or "compact"
+        ).strip().lower()
+        raw_contract_max = int(
+            contract_policy.get("max_chars")
+            or (
+                3500
+                if contract_example_mode == "fixture"
+                else DEFAULT_CONTRACT_EXAMPLE_MAX_CHARS
+            )
+        )
+        contract_max = _effective_max_chars(raw_contract_max)
         contract_block = (
             render_contract_block(
                 artifact_key,
                 artifact_schema,
                 fixture=artifact_fixture,
-                max_chars=3500,
+                max_chars=contract_max if contract_max > 0 else raw_contract_max,
+                example_mode=contract_example_mode,
             )
             if artifact_schema is not None
             else ""
@@ -151,7 +174,7 @@ class PromptBuilder:
         system_prompt = "\n".join(part for part in system_parts if part is not None)
 
         user_body: dict[str, Any] = {
-            "runtime_projection": runtime,
+            "project_parameters": runtime,
             "project_settings": _settings_subset(settings),
             "input": input_payload or {},
             "required_artifacts": _required_artifacts(contract, artifacts),
@@ -220,6 +243,10 @@ class PromptBuilder:
                 "knowledge_max_chars": knowledge_budget,
                 "module_as_index": module_as_index,
                 "knowledge_mode": knowledge_mode,
+                "contract_example_mode": contract_example_mode,
+                "contract_max_chars": (
+                    contract_max if contract_max > 0 else raw_contract_max
+                ),
                 "policy_enforced": bool(
                     getattr(django_settings, "SKILLS_INJECTION_POLICY_ENFORCED", True)
                 ),
@@ -290,11 +317,11 @@ def _output_schema_hints(artifact_key: str, loader: SkillsBundleLoader) -> list[
                 "- 每个维度必须含 score、weight、evidence、deductions；"
                 "evidence 必须为非空字符串数组，须引用具体集数/场景/台词；"
                 "禁止空数组、禁止只输出分数。",
-                "- 【篇幅硬要求】每个维度分析正文（evidence 各条拼接，可计入 deductions）"
-                "约 1000 字、不得少于 800 字；写清优点/问题/证据，禁止一句话糊弄。",
-                "- 【篇幅硬要求】另写 verdict_detail 总评约 2000 字、不得少于 1500 字；"
-                "覆盖整体强弱、关键缺陷、返修优先级与可否进下一批的理由。"
-                "continuity_summary.summary 建议不少于 300 字。",
+                "- 【证据优先】每个维度写够支撑分数的具体证据（evidence+deductions）；"
+                "篇幅目标与下限以 quality-scoring.yaml#output_length 为准，禁止一句话空壳。",
+                "- 【证据优先】verdict_detail 覆盖整体强弱、关键缺陷、返修优先级与可否进下一批；"
+                "continuity_summary.summary 须写清连贯性判断依据。"
+                "禁止为凑字数灌水。",
                 "- deductions 写扣分与代价；先写 evidence，再打 0-100 分。",
                 "- needs_revision=false 时 verdict 不得为「重大返工」。"
                 "verdict 仍用枚举（通过/条件通过/需要修改/重大返工），长文放 verdict_detail。",
@@ -318,7 +345,7 @@ def _inline_quality_scoring(
     """把 quality-scoring.yaml + 当前 preset 权重内联进评分官 prompt。"""
     try:
         scoring = loader.load_seed_yaml("foundation/constraints/quality-scoring.yaml")
-        presets = loader.load_seed_yaml("foundation/constraints/scoring-presets.yaml")
+        presets = loader.load_seed_yaml("foundation/presets/scoring-presets.yaml")
     except FileNotFoundError:
         return ""
 
@@ -344,14 +371,14 @@ def _inline_quality_scoring(
     if length:
         lines.extend(
             [
-                "## 篇幅硬要求（基础量，少则说不清）",
-                f"- 每维分析约 {length.get('dimension_analysis_target_chars', 1000)} 字"
-                f"（evidence+deductions 合计，下限 {length.get('dimension_analysis_min_chars', 800)} 字）",
-                f"- verdict_detail 总评约 {length.get('verdict_detail_target_chars', 2000)} 字"
-                f"（下限 {length.get('verdict_detail_min_chars', 1500)} 字）",
+                "## 篇幅引导（证据优先，禁止空壳）",
+                f"- 每维分析目标约 {length.get('dimension_analysis_target_chars', 400)} 字"
+                f"（evidence+deductions 合计，下限 {length.get('dimension_analysis_min_chars', 100)} 字）",
+                f"- verdict_detail 总评目标约 {length.get('verdict_detail_target_chars', 800)} 字"
+                f"（下限 {length.get('verdict_detail_min_chars', 200)} 字）",
                 f"- continuity_summary.summary 建议不少于"
-                f" {length.get('continuity_summary_min_chars', 300)} 字",
-                "- 禁止「分数+一句话」空壳报告；宁可多写具体集数/场景/台词引用。",
+                f" {length.get('continuity_summary_min_chars', 80)} 字",
+                "- 禁止「分数+一句话」空壳报告；写清具体集数/场景/台词引用即可，勿为凑字灌水。",
             ]
         )
     for dim in scoring.get("dimensions") or []:

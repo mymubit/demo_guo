@@ -1,0 +1,178 @@
+version: 1
+capabilities:
+  - id: capability.decompose-story-stage
+    label_zh: 拆解全剧阶段目标
+    status: active
+    source: v6/capabilities/episode-plan/decompose-story-stage.yaml
+  - id: capability.design-episode-card
+    label_zh: 设计分集任务卡
+    status: active
+    source: v6/capabilities/episode-plan/design-episode-card.yaml
+  - id: capability.design-emotion-nodes
+    label_zh: 布置分集情绪节点
+    status: active
+    source: v6/capabilities/episode-plan/design-emotion-nodes.yaml
+  - id: capability.design-hooks
+    label_zh: 设计开场与结尾钩子
+    status: active
+    source: v6/capabilities/episode-plan/design-hooks.yaml
+  - id: capability.map-foreshadowing
+    label_zh: 编排伏笔与回收
+    status: active
+    source: v6/capabilities/episode-plan/map-foreshadowing.yaml
+  - id: capability.design-paywall
+    label_zh: 设计付费转折点
+    status: active
+    source: v6/capabilities/episode-plan/design-paywall.yaml
+  - id: capability.load-episode-context
+    label_zh: 装载分集连续性上下文
+    status: active
+    source: v6/capabilities/writing/load-episode-context.yaml
+  - id: capability.design-character-system
+    label_zh: 建立人物动机系统
+    status: active
+    source: v6/capabilities/character/design-character-system.yaml
+  - id: capability.design-relationship-map
+    label_zh: 建立人物关系动力图
+    status: active
+    source: v6/capabilities/character/design-relationship-map.yaml
+  - id: capability.validate-character-arc
+    label_zh: 校验人物成长弧
+    status: active
+    source: v6/capabilities/character/validate-character-arc.yaml
+  - id: capability.design-world-rules
+    label_zh: 建立世界运行规则
+    status: active
+    source: v6/capabilities/world/design-world-rules.yaml
+  - id: capability.design-power-structure
+    label_zh: 建立权力与资源结构
+    status: active
+    source: v6/capabilities/world/design-power-structure.yaml
+  - id: capability.plan-world-rule-reveals
+    label_zh: 规划世界规则揭示节奏
+    status: active
+    source: v6/capabilities/world/plan-world-rule-reveals.yaml
+  - id: capability.validate-world-consistency
+    label_zh: 校验世界观一致性
+    status: active
+    source: v6/capabilities/world/validate-world-consistency.yaml
+  - id: capability.design-series-emotion-curve
+    label_zh: 设计全剧情绪曲线
+    status: active
+    source: v6/capabilities/emotion/design-series-emotion-curve.yaml
+  - id: capability.design-episode-emotion-profile
+    label_zh: 设计单集情绪轮廓
+    status: active
+    source: v6/capabilities/emotion/design-episode-emotion-profile.yaml
+  - id: capability.validate-emotion-continuity
+    label_zh: 校验情绪连续性
+    status: active
+    source: v6/capabilities/emotion/validate-emotion-continuity.yaml
+  - id: capability.externalize-emotion
+    label_zh: 将情绪转化为可拍行动
+    status: active
+    source: v6/capabilities/emotion/externalize-emotion.yaml
+  - id: capability.design-episode-structure
+    label_zh: 设计单集场面结构
+    status: active
+    source: v6/capabilities/scene/design-episode-structure.yaml
+  - id: capability.plan-information-asymmetry
+    label_zh: 规划信息差与悬念
+    status: active
+    source: v6/capabilities/scene/plan-information-asymmetry.yaml
+  - id: capability.write-scene
+    label_zh: 写作可拍场景
+    status: active
+    source: v6/capabilities/scene/write-scene.yaml
+  - id: capability.write-dialogue
+    label_zh: 写作角色化对白
+    status: active
+    source: v6/capabilities/scene/write-dialogue.yaml
+  - id: capability.validate-screenplay-format
+    label_zh: 校验剧本格式
+    status: active
+    source: v6/capabilities/scene/validate-screenplay-format.yaml
+  - id: capability.lint-dialogue-style
+    label_zh: 检查对白风格
+    status: active
+    source: v6/capabilities/scene/lint-dialogue-style.yaml
+  - id: capability.prepare-episode-writing
+    label_zh: 准备分集写作任务
+    status: active
+    source: v6/capabilities/writing/prepare-episode-writing.yaml
+  - id: capability.emit-memory-checkpoint
+    label_zh: 生成连续性记忆点
+    status: active
+    source: v6/capabilities/writing/emit-memory-checkpoint.yaml
+  - id: capability.assess-production-feasibility
+    label_zh: 评估制作可行性
+    status: active
+    source: v6/capabilities/production/assess-production-feasibility.yaml
+  - id: capability.estimate-production-budget
+    label_zh: 估算制作预算
+    status: active
+    source: v6/capabilities/production/estimate-production-budget.yaml
+  - id: capability.check-release-readiness
+    label_zh: 检查发行就绪度
+    status: active
+    source: v6/capabilities/production/check-release-readiness.yaml
+  - id: capability.assess-compliance
+    label_zh: 识别内容合规风险
+    status: active
+    source: v6/capabilities/compliance/assess-compliance.yaml
+  - id: capability.decide-compliance
+    label_zh: 作出合规结论
+    status: active
+    source: v6/capabilities/compliance/decide-compliance.yaml
+  - id: capability.assess-originality
+    label_zh: 评估原创性风险
+    status: active
+    source: v6/capabilities/originality/assess-originality.yaml
+  - id: capability.plan-originality-rewrite
+    label_zh: 规划原创化改写
+    status: active
+    source: v6/capabilities/originality/plan-originality-rewrite.yaml
+  - id: capability.validate-title-compliance
+    label_zh: 校验标题合规性
+    status: active
+    source: v6/capabilities/compliance/validate-title-compliance.yaml
+  - id: capability.develop-core-concept
+    label_zh: 提炼核心创作概念
+    status: active
+    source: v6/capabilities/concept/develop-core-concept.yaml
+  - id: capability.build-project-brief
+    label_zh: 建立项目创作简报
+    status: active
+    source: v6/capabilities/concept/build-project-brief.yaml
+  - id: capability.validate-cross-project-guardrails
+    label_zh: 校验跨项目隔离边界
+    status: active
+    source: v6/capabilities/quality/validate-cross-project-guardrails.yaml
+  - id: capability.validate-blueprint-boundary
+    label_zh: 校验故事蓝图边界
+    status: active
+    source: v6/capabilities/structure/validate-blueprint-boundary.yaml
+  - id: capability.synthesize-genre-parameters
+    label_zh: 综合题材参数
+    status: active
+    source: v6/capabilities/concept/synthesize-genre-parameters.yaml
+  - id: capability.compose-story-bible
+    label_zh: 组装故事圣经
+    status: active
+    source: v6/capabilities/structure/compose-story-bible.yaml
+  - id: capability.score-latest-script
+    label_zh: 独立评分当前剧本
+    status: active
+    source: v6/capabilities/quality/score-latest-script.yaml
+  - id: capability.plan-script-revision
+    label_zh: 规划定向剧本修订
+    status: active
+    source: v6/capabilities/quality/plan-script-revision.yaml
+  - id: capability.propose-rule-evolution
+    label_zh: 提议规则演进
+    status: active
+    source: v6/capabilities/quality/propose-rule-evolution.yaml
+  - id: capability.decide-delivery
+    label_zh: 决定交付物生成范围
+    status: active
+    source: v6/capabilities/production/decide-delivery.yaml

@@ -1,0 +1,9 @@
+id: capability.prepare-episode-writing
+version: 1
+inputs: [episode, episode_range, previous_episode, memory_checkpoint, current_episode_card, unresolved_foreshadowing, active_global_constraints]
+outputs: [episode_execution_context]
+rules:
+  - continuity.context.use-explicit-episode-scope
+  - continuity.context.require-immediate-predecessor
+  - execution.episode-context.load-minimum-sufficient-set
+side_effects: none

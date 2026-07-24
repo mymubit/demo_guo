@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills-v6://artifacts/components/memory-checkpoint",
+  "type": "object",
+  "required": ["episode", "character_states", "active_clues", "foreshadowing", "rhythm_state", "next_episode_constraints"],
+  "properties": {
+    "episode": {"type": "integer", "minimum": 1},
+    "character_states": {"type": "array", "items": {"$ref": "#/$defs/characterState"}},
+    "active_clues": {"type": "array", "items": {"$ref": "#/$defs/clue"}},
+    "foreshadowing": {"type": "array", "items": {"$ref": "#/$defs/foreshadow"}},
+    "relationship_changes": {"type": "array", "items": {"$ref": "#/$defs/relationshipChange"}},
+    "prop_states": {"type": "array", "items": {"$ref": "#/$defs/propState"}},
+    "rhythm_state": {"$ref": "#/$defs/rhythmState"},
+    "next_episode_constraints": {"type": "array", "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {
+    "characterState": {
+      "type": "object", "required": ["name", "physical_state", "emotional_state", "known_facts", "current_goal"],
+      "properties": {
+        "name": {"type": "string", "minLength": 1}, "physical_state": {"type": "string", "minLength": 1},
+        "emotional_state": {"type": "string", "minLength": 1}, "known_facts": {"type": "array", "items": {"type": "string"}},
+        "current_goal": {"type": "string", "minLength": 1}
+      }, "additionalProperties": false
+    },
+    "clue": {
+      "type": "object", "required": ["clue", "status", "known_by"],
+      "properties": {"clue": {"type": "string", "minLength": 1}, "status": {"enum": ["introduced", "developing", "resolved"]}, "known_by": {"type": "array", "items": {"type": "string"}}},
+      "additionalProperties": false
+    },
+    "foreshadow": {
+      "type": "object", "required": ["item", "setup_episode", "planned_payoff_episode", "status"],
+      "properties": {"item": {"type": "string", "minLength": 1}, "setup_episode": {"type": "integer", "minimum": 1}, "planned_payoff_episode": {"type": "integer", "minimum": 1}, "status": {"enum": ["planned", "planted", "paid_off", "overdue"]}},
+      "additionalProperties": false
+    },
+    "relationshipChange": {
+      "type": "object", "required": ["from", "to", "before", "after", "trigger"],
+      "properties": {"from": {"type": "string"}, "to": {"type": "string"}, "before": {"type": "string"}, "after": {"type": "string"}, "trigger": {"type": "string"}},
+      "additionalProperties": false
+    },
+    "propState": {
+      "type": "object", "required": ["prop", "holder", "state", "narrative_function"],
+      "properties": {"prop": {"type": "string"}, "holder": {"type": "string"}, "state": {"type": "string"}, "narrative_function": {"type": "string"}},
+      "additionalProperties": false
+    },
+    "rhythmState": {
+      "type": "object", "required": ["plot_pace", "emotion_pace", "episode_ev", "episode_et", "episode_tp"],
+      "properties": {"plot_pace": {"type": "string"}, "emotion_pace": {"type": "string"}, "episode_ev": {"type": "number"}, "episode_et": {"type": "number"}, "episode_tp": {"type": "string"}},
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

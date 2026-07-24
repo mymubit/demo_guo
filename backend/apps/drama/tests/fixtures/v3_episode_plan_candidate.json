@@ -1,0 +1,48 @@
+{
+  "schema_version": 2,
+  "artifact_version": 1,
+  "based_on": {
+    "story_bible": 1
+  },
+  "episodes": [
+    {
+      "episode": 1,
+      "title": "重生归来",
+      "core_event": "女主在背叛当天醒来并发现授权书日期异常",
+      "goal_conflict": "女主要保留证据，亲属试图催促签字",
+      "characters": ["林夏"],
+      "opening_hook": "闹钟响起她回到被抛弃当天",
+      "ending_hook": "她发现授权书日期与记忆不符",
+      "hook_grade": "A",
+      "satisfaction_points": ["重生信息差建立"],
+      "reversal": "原本信任的亲属才是背叛者",
+      "emotion_nodes": {
+        "EV": {
+          "event": "发现授权书日期异常",
+          "emotion": "震惊",
+          "intensity": 7,
+          "character_action": "拍照存证"
+        },
+        "ET": {
+          "event": "亲属上门催促签字",
+          "emotion": "压抑",
+          "intensity": 4,
+          "character_action": "拖延对话"
+        },
+        "TP": {
+          "event": "确认日期与记忆不符",
+          "emotion": "决意",
+          "intensity": 8,
+          "character_action": "隐藏证据离开"
+        }
+      },
+      "paywall": {
+        "card_type": "suspense",
+        "promise": "谁篡改了授权书",
+        "payoff_episode": 2
+      },
+      "foreshadowing": [],
+      "rhythm_tag": "tight-medium"
+    }
+  ]
+}

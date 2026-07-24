@@ -1,0 +1,75 @@
+version: 1
+domain: concept
+rules:
+  - id: concept.entry.use-canonical-path
+    version: 1
+    category: concept
+    statement: Enter concept development from theme, character, space, relationship, or tag collision.
+    severity: hard
+    applies_when: {artifact: project_brief}
+    source_refs: [v5://foundation/rules/concept-rules.yaml#t1.global.concept.entry-paths]
+    consumers: [capability.develop-core-concept]
+    validation: {type: schema, validator: concept-entry-path}
+  - id: concept.core.converge-to-forced-choice
+    version: 1
+    category: concept
+    statement: Converge every concept to who is in what situation and why they are forced to choose.
+    severity: hard
+    applies_when: {artifact: project_brief}
+    source_refs: [v5://foundation/rules/concept-rules.yaml#t1.global.concept.entry-paths]
+    consumers: [capability.develop-core-concept]
+    validation: {type: schema, validator: forced-choice-core}
+  - id: concept.combination.use-canonical-method
+    version: 1
+    category: concept
+    statement: Combine concepts by grafting, time-space displacement, embodied metaphor, reversal juxtaposition, or rule inversion.
+    severity: soft
+    applies_when: {combining_concepts: true}
+    source_refs: [v5://foundation/rules/concept-rules.yaml#t1.global.concept.combination-methods]
+    consumers: [capability.develop-core-concept]
+    validation: {type: schema, validator: concept-combination-method}
+  - id: concept.core.keep-one-dramatic-action
+    version: 1
+    category: concept
+    statement: Retain exactly one core dramatic action after combining concepts.
+    severity: hard
+    applies_when: {combining_concepts: true}
+    source_refs: [v5://foundation/rules/concept-rules.yaml#t1.global.concept.combination-methods]
+    consumers: [capability.develop-core-concept]
+    validation: {type: deterministic, validator: one-core-dramatic-action}
+  - id: concept.elevator.require-four-elements
+    version: 1
+    category: concept
+    statement: State protagonist identity, urgent goal, core obstacle, and differentiating mechanism in the elevator pitch.
+    severity: hard
+    applies_when: {artifact: project_brief}
+    source_refs: [v5://foundation/rules/concept-rules.yaml#t1.global.concept.elevator-test]
+    consumers: [capability.develop-core-concept]
+    validation: {type: schema, validator: elevator-four-elements}
+  - id: concept.elevator.survive-proper-noun-removal
+    version: 1
+    category: concept
+    statement: Explain why the concept is worth following even after project-specific proper nouns are removed.
+    severity: hard
+    applies_when: {artifact: project_brief}
+    source_refs: [v5://foundation/rules/concept-rules.yaml#t1.global.concept.elevator-test]
+    consumers: [capability.develop-core-concept]
+    validation: {type: semantic, validator: elevator-without-proper-nouns}
+  - id: project-brief.market.require-integrated-judgment
+    version: 1
+    category: concept
+    statement: Include synopsis, audience channel, market opportunity, blockbuster factors, competitor avoidance, differentiation, first-episode hook, first-paywall direction, and subject-sensitivity precheck.
+    severity: hard
+    applies_when: {artifact: project_brief}
+    source_refs: [v5://foundation/rules/stage-playbook.yaml#t3.drama-topic-director.project_brief.market-integrated]
+    consumers: [capability.build-project-brief]
+    validation: {type: schema, validator: project-brief-market-fields}
+  - id: project-brief.risk.precheck-without-compliance-verdict
+    version: 1
+    category: concept
+    statement: Record subject sensitivity as a risk precheck and never issue a compliance verdict from concept development.
+    severity: hard
+    applies_when: {artifact: project_brief}
+    source_refs: [v5://foundation/rules/stage-playbook.yaml#t3.drama-topic-director.project_brief.market-integrated]
+    consumers: [capability.build-project-brief]
+    validation: {type: deterministic, validator: concept-risk-boundary}

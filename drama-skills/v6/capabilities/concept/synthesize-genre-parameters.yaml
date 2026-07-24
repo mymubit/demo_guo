@@ -1,0 +1,9 @@
+id: capability.synthesize-genre-parameters
+version: 1
+inputs: [genre_matrix, theme_matrix]
+outputs: [rule_params]
+rules:
+  - genre.matrix.consume-synthesized-rule-params
+  - genre.matrix.hooks-and-emotion-follow-params
+  - genre.matrix.use-brief-act-ratio
+side_effects: none

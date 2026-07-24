@@ -47,6 +47,37 @@ class LlmCallLogServiceTests(TestCase):
         self.assertEqual(summary["role_label"], "选题定调官")
         self.assertIsNone(summary.get("job_status"))
 
+    def test_record_persists_cached_prompt_tokens(self):
+        user = create_user("log-cache")
+        project = create_project(user)
+        with llm_call_scope(
+            project_id=str(project.id),
+            role="drama.topic-director",
+            purpose=DramaLlmCallLog.Purpose.ARTIFACT_GENERATION,
+            actor=user.username,
+        ):
+            log = LlmCallLogService.record(
+                system_prompt="sys",
+                user_prompt="user",
+                model_name="test-model",
+                base_url="https://example.com/v1",
+                status=DramaLlmCallLog.Status.SUCCESS,
+                latency_ms=10,
+                response_json={
+                    "choices": [{"message": {"content": "{}"}}],
+                    "usage": {
+                        "prompt_tokens": 1000,
+                        "completion_tokens": 20,
+                        "total_tokens": 1020,
+                        "prompt_tokens_details": {"cached_tokens": 800},
+                    },
+                },
+            )
+        self.assertIsNotNone(log)
+        assert log is not None
+        self.assertEqual(log.prompt_tokens, 1000)
+        self.assertEqual(log.cached_prompt_tokens, 800)
+
     def test_record_persists_injection_manifest_from_context(self):
         user = create_user("log-manifest")
         project = create_project(user)

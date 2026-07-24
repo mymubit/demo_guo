@@ -1,0 +1,9 @@
+id: capability.validate-screenplay-format
+version: 1
+inputs: [episode_script_candidate, resolved_script_format]
+outputs: [screenplay_format_validation]
+rules:
+  - scene.content.forbid-parenthetical-interiority
+  - dialogue.ai-tone.repair-stacked-connectors
+  - screenplay.format.use-canonical-patterns
+side_effects: none

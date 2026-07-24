@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills-v6://contracts/persona",
+  "type": "object",
+  "required": ["id", "version", "label_zh", "purpose", "responsibilities", "boundaries", "decision_protocol", "output_expectations"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^persona\\.[a-z0-9-]+$"},
+    "version": {"type": "integer", "minimum": 1},
+    "label_zh": {"type": "string", "minLength": 1},
+    "purpose": {"type": "string", "minLength": 1},
+    "responsibilities": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "boundaries": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "decision_protocol": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "clarification_policy": {
+      "type": "object",
+      "properties": {
+        "ask_when": {"type": "array", "items": {"type": "string"}},
+        "continue_when": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "output_expectations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "anti_patterns": {"type": "array", "items": {"type": "string", "minLength": 1}}
+  },
+  "additionalProperties": false
+}

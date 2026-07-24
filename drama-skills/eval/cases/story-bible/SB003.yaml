@@ -104,7 +104,15 @@ fixture_response:
     - {}
     conflict_escalation_chain: []
     major_reversal_positions: []
-    paywall_distribution: []
+    paywall_distribution:
+    - episode: 6
+      card_type: thrill
+      promise: 反派第一次摊牌的代价是什么
+      payoff_episode: 10
+    - episode: 18
+      card_type: emotion
+      promise: 兄妹和解是否还能成立
+      payoff_episode: 24
     foreshadowing_table: []
     series_emotion_curve: []
 assertions:

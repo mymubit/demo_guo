@@ -1,0 +1,5 @@
+version: 1
+cases:
+  - {id: one-core-action, rule: concept.core.keep-one-dramatic-action, input: {actions: [expose]}, expected: pass}
+  - {id: elevator-four-elements, rule: concept.elevator.require-four-elements, input: {identity: auditor, goal: expose, obstacle: family, mechanism: evidence-shifts-power}, expected: pass}
+  - {id: no-concept-verdict, rule: project-brief.risk.precheck-without-compliance-verdict, input: {risk_level: medium, compliance_verdict: null}, expected: pass}

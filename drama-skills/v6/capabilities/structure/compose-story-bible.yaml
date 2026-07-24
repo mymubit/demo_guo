@@ -1,0 +1,20 @@
+id: capability.compose-story-bible
+version: 1
+inputs: [project_brief_or_external_story, character_system, world_system, originality_report, stage_allocation]
+outputs: [story_bible]
+rules:
+  - story-bible.mode.use-one-schema
+  - story-bible.adaptation.record-treatment
+  - story-bible.compose.reference-versioned-components
+  - story-bible.world.require-action-power-reveal-components
+  - story-bible.series.require-six-contiguous-stages
+  - character.count.limit-protagonists
+  - character.count.bound-core-supporting
+  - character.arc.define-four-points
+  - world.rule.must-change-action
+  - world.power.sustain-main-conflict
+  - world.reveal.limit-new-layer-per-episode
+  - series.stage.use-canonical-order
+  - series.stage.allocate-largest-remainder
+  - series.stage.override-only-from-project-brief
+side_effects: none

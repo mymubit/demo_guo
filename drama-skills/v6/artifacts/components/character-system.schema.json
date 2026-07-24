@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills-v6://artifacts/components/character-system",
+  "type": "object",
+  "required": ["characters", "relationships"],
+  "properties": {
+    "characters": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/character"}
+    },
+    "relationships": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/relationship"}
+    }
+  },
+  "$defs": {
+    "arcPoint": {
+      "type": "object",
+      "required": ["episode_ratio", "trigger_event", "state_after"],
+      "properties": {
+        "episode_ratio": {"type": "number", "minimum": 0, "maximum": 1},
+        "trigger_event": {"type": "string", "minLength": 4},
+        "state_after": {"type": "string", "minLength": 4}
+      },
+      "additionalProperties": false
+    },
+    "character": {
+      "type": "object",
+      "required": ["id", "name", "role_type", "is_core", "surface_desire", "deep_need", "ghost", "lie", "flaw", "contradiction", "arc", "voice_tag", "visual_anchor"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+        "name": {"type": "string", "minLength": 1},
+        "role_type": {"enum": ["protagonist", "antagonist", "supporting"]},
+        "is_core": {"type": "boolean"},
+        "age": {"type": ["integer", "null"], "minimum": 0},
+        "surface_desire": {"type": "string", "minLength": 4},
+        "deep_need": {"type": "string", "minLength": 4},
+        "ghost": {"type": "string", "minLength": 4},
+        "lie": {"type": "string", "minLength": 4},
+        "flaw": {"type": "string", "minLength": 4},
+        "independent_desire": {"type": ["string", "null"]},
+        "contradiction": {
+          "type": "object",
+          "required": ["outward", "inner"],
+          "properties": {
+            "outward": {"type": "string", "minLength": 2},
+            "inner": {"type": "string", "minLength": 2}
+          },
+          "additionalProperties": false
+        },
+        "antagonist_motive": {"type": ["string", "null"]},
+        "arc": {
+          "type": "object",
+          "required": ["start", "turning_point_1", "turning_point_2", "end"],
+          "properties": {
+            "start": {"$ref": "#/$defs/arcPoint"},
+            "turning_point_1": {"$ref": "#/$defs/arcPoint"},
+            "turning_point_2": {"$ref": "#/$defs/arcPoint"},
+            "end": {"$ref": "#/$defs/arcPoint"}
+          },
+          "additionalProperties": false
+        },
+        "voice_tag": {
+          "type": "object",
+          "required": ["vocabulary", "sentence_style", "avoidance"],
+          "properties": {
+            "vocabulary": {"type": "string", "minLength": 2},
+            "sentence_style": {"type": "string", "minLength": 2},
+            "avoidance": {"type": "string", "minLength": 2}
+          },
+          "additionalProperties": false
+        },
+        "visual_anchor": {
+          "type": "object",
+          "required": ["type", "description", "recognition_action"],
+          "properties": {
+            "type": {"enum": ["costume", "prop", "action", "spatial_position"]},
+            "description": {"type": "string", "minLength": 2},
+            "recognition_action": {"type": "string", "minLength": 2}
+          },
+          "additionalProperties": false
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"role_type": {"const": "antagonist"}}, "required": ["role_type"]},
+          "then": {"properties": {"antagonist_motive": {"type": "string", "minLength": 4}}, "required": ["antagonist_motive"]}
+        },
+        {
+          "if": {"properties": {"role_type": {"const": "supporting"}}, "required": ["role_type"]},
+          "then": {"properties": {"independent_desire": {"type": "string", "minLength": 4}}, "required": ["independent_desire"]}
+        }
+      ],
+      "additionalProperties": false
+    },
+    "relationship": {
+      "type": "object",
+      "required": ["id", "party_a", "party_b", "is_core", "party_a_demand", "party_b_demand", "party_a_power", "party_b_power", "current_state", "expected_change", "change_triggers"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+        "party_a": {"type": "string", "minLength": 1},
+        "party_b": {"type": "string", "minLength": 1},
+        "is_core": {"type": "boolean"},
+        "party_a_demand": {"type": "string", "minLength": 4},
+        "party_b_demand": {"type": "string", "minLength": 4},
+        "party_a_power": {"type": "string", "minLength": 2},
+        "party_b_power": {"type": "string", "minLength": 2},
+        "current_state": {"type": "string", "minLength": 2},
+        "expected_change": {"type": "string", "minLength": 4},
+        "change_triggers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["event", "state_after"],
+            "properties": {
+              "event": {"type": "string", "minLength": 4},
+              "state_after": {"type": "string", "minLength": 2}
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

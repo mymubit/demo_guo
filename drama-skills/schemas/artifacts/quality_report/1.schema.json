@@ -171,6 +171,16 @@
     "verdict_detail": {
       "type": "string",
       "description": "模型给出的长段总评原文；verdict 仍为枚举结论"
+    },
+    "revision_route": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "text_polish",
+        "rewrite_batch",
+        "user_gate"
+      ],
+      "description": "质检后推荐路由：通过 / 文本修复 / 重生本批 / 用户裁决"
     }
   },
   "additionalProperties": false

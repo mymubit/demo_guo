@@ -1,0 +1,22 @@
+id: operation.check-compliance
+version: 1
+persona: persona.compliance-guard
+user_inputs: [episode_range, target_platform, policy_version, review_focus]
+system_inputs: [engine_version, artifact_schema_versions, active_rule_versions, caller_identity]
+reads: [project_brief, story_bible, episode_plan, latest_episode_scripts, verified_platform_policy]
+writes: [compliance_report]
+scope:
+  required: episode_range
+required_params: [project_id, episode_range, script_version, target_platform, policy_version]
+capabilities:
+  - capability.assess-compliance
+  - capability.validate-title-compliance
+  - capability.decide-compliance
+constraints:
+  user_levels: [must_preserve, must_change, preference, avoid, question, system_lock]
+  readonly: [project_brief, story_bible, episode_plan, latest_episode_scripts, verified_platform_policy]
+  write_scope: compliance_report_only
+validation: [schema, scope, nine_dimension_coverage, evidence_coverage, policy_version, severity_decision, justice_closure, script_version]
+outputs: [candidate, validation, structural_diff, semantic_diff, change_set, impact_plan]
+stages: [command, plan, execution_pack, candidate, validation, change_set, impact_plan, commit]
+transaction: {plan_required: true, candidate_only: true, validation_required: true, atomic_commit: true}

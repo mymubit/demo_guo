@@ -1,0 +1,26 @@
+id: operation.compose-story-bible
+version: 1
+persona: persona.story-architect
+user_inputs: [story_direction, character_requests, world_requests, structure_requests, user_constraints]
+system_inputs: [engine_version, artifact_schema_versions, active_rule_versions, caller_identity]
+reads: [project_brief, project_settings, approved_reference_material]
+writes: [story_bible, character_system, world_system, emotion_system, originality_report]
+scope:
+  required: project_id
+required_params: [project_id, base_version]
+capabilities:
+  - capability.design-character-system
+  - capability.design-relationship-map
+  - capability.design-world-rules
+  - capability.design-power-structure
+  - capability.design-series-emotion-curve
+  - capability.validate-blueprint-boundary
+  - capability.compose-story-bible
+constraints:
+  user_levels: [must_preserve, must_change, preference, avoid, question, system_lock]
+  readonly: [project_brief.approved_constraints]
+  write_scope: story_bible_and_declared_components_only
+validation: [schema, scope, character_consistency, world_consistency, blueprint_boundary, user_constraints, base_version]
+outputs: [candidate, validation, structural_diff, semantic_diff, change_set, impact_plan]
+stages: [command, plan, execution_pack, candidate, validation, change_set, impact_plan, commit]
+transaction: {plan_required: true, candidate_only: true, validation_required: true, atomic_commit: true}

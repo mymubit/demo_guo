@@ -1,7 +1,8 @@
 # 知识规则区块索引（v5.0）
 
 > 规则 SSOT：`foundation/rules/`。本文档说明 **section 名** 与角色的注入关系。
-> 角色侧通过 `role.yaml` → `rule_policy.scopes` 控制加载哪些 scope。
+> **运行时过滤由 `role.yaml` → `rule_policy.sections` 驱动**（本文档为索引副本，须与各角色契约保持一致）。
+> 角色侧通过 `rule_policy.scopes` 控制加载哪些 scope；`sections` 在匹配结果上再收窄。
 
 ## 四 Scope
 
@@ -18,7 +19,7 @@
 
 | Agent | Sections |
 |-------|----------|
-| drama.topic-director | philosophy, concept_development, rhythm_rules, episode_structure, learned_rules |
+| drama.topic-director | philosophy, concept_development |
 | drama.story-bible | philosophy, character_rules, world_rules, series_structure, emotion_externalization_dict, episode_structure, rhythm_rules, foreshadowing_rules, qdn_emotion_model, payment_checkpoint_3card, conflict_escalation, originality_rules, learned_rules |
 | drama.episode-designer | episode_card, episode_emotion_8nodes, qdn_emotion_model, hook_effectiveness, emotion_externalization_dict, episode_structure, rhythm_rules, foreshadowing_rules, conflict_escalation, payment_checkpoint_3card, learned_rules |
 | drama.script-writer | episode_structure, continuity, production_feasibility, quantitative_constraints, writing_prohibitions, writing_requirements, information_asymmetry_mechanics, emotion_externalization_dict, ai_tone_forbidden, dialogue_craft, qdn_emotion_model, format_standard, hook_effectiveness, episode_emotion_8nodes, dialogue_quality, learned_rules |
@@ -34,19 +35,18 @@
 | 规则文件 | 承载 sections | 中文主题 |
 |---------|--------------|----------|
 | `philosophy.yaml` | philosophy | 创作哲学（横截面 / McKee 价值转变） |
-| `narrative-craft.yaml` | episode_structure, episode_emotion_8nodes, information_asymmetry_mechanics, emotion_externalization_dict, qdn_emotion_model, hook_effectiveness | 叙事工艺 |
-| `rhythm-rules.yaml` | rhythm_rules | 节奏基线 |
-| `character-rules.yaml` | character_rules | 角色逻辑（年龄决策 / 密度 / 弧光） |
-| `dialogue-rules.yaml` | dialogue_quality, dialogue_craft, ai_tone_forbidden | 台词规则 |
-| `writing-rules.yaml` | writing_requirements, writing_prohibitions | 写作规则 |
-| `plotting-rules.yaml` | conflict_escalation, foreshadowing_rules, payment_checkpoint_3card | 情节工程 |
+| `05-hooks-payoff.yaml` | hook_effectiveness, payment_checkpoint_3card | 钩子效能与付费卡点（C2） |
+| `narrative-craft.yaml` | episode_structure, episode_emotion_8nodes, information_asymmetry_mechanics, emotion_externalization_dict, qdn_emotion_model | 叙事工艺 |
+| `03-structure.yaml` | series_structure, episode_card, continuity, rhythm_rules | 结构与节奏（C3） |
+| `02-character.yaml` | character_rules | 人物体系（C3） |
+| `04-scene-dialogue.yaml` | dialogue_quality, dialogue_craft, ai_tone_forbidden, writing_requirements, writing_prohibitions | 场景与对白（C3） |
+| `plotting-rules.yaml` | conflict_escalation, foreshadowing_rules | 情节工程 |
 | `scoring-core.yaml` | scoring | 评分规范 |
 | `learned-rules.yaml` | learned_rules | 经验规则 LR |
 | `stage-playbook.yaml`（tier 3） | 按 agent scope_key | 阶段 playbook |
 | `compliance-core.yaml`（tier 4） | p0_categories, p1_categories, p2_advisories, nine_dimension_risk_assessment, justice_tail_rule, values_bottom_line, title_compliance_rules, platform_specific, three_phase_compliance_checklist, fuse_behavior | 合规熔断 |
 | `originality-rules.yaml`（tier 1） | originality_rules | 原创性保护 |
 | `concept-rules.yaml`（tier 1） | concept_development | 核心概念形成 |
-| `structure-rules.yaml`（tier 1） | series_structure, episode_card, continuity | 全剧结构、分集卡与连续性 |
 | `world-rules.yaml`（tier 1） | world_rules | 世界规则 |
 | `production-rules.yaml`（tier 1） | production_feasibility, budget_estimation, platform_ops | 制片可行性、预算分级与平台上架 |
 | `genres/matrix.yaml`（tier 2） | genre_rules, rhythm_rules（四轴合成） | 题材规则 |

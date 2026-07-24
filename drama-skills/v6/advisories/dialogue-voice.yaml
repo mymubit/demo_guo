@@ -1,0 +1,34 @@
+id: advisory.dialogue-voice
+version: 1
+category: dialogue
+precedence: [character.voice_tag, biography, relationship_state, scene_power, social_profile]
+patterns:
+  - id: physical-worker
+    when: {social_profile: physical-worker}
+    suggestions: [使用直接口语, 减少修饰, 用具体事物表达判断]
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_quality.voice-by-class]
+  - id: knowledge-worker
+    when: {social_profile: knowledge-worker}
+    suggestions: [使用专业词但保留人物差异, 论述时给出逻辑关系, 冲突时仍受情绪影响]
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_quality.voice-by-class]
+  - id: power-holder
+    when: {social_profile: power-holder}
+    suggestions: [减少解释, 使用暗示或反问, 让空间和称谓承载压迫]
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_quality.voice-by-class]
+  - id: student
+    when: {profession: student}
+    suggestions: [允许短句和时代词汇, 保持个人教育与地域差异]
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_quality.voice-by-class]
+  - id: office-worker
+    when: {profession: office-worker}
+    suggestions: [汇报时先说结论, 仅在符合人物时使用行业词]
+    avoid: [让所有职场角色都使用相同黑话]
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_quality.voice-by-class]
+  - id: business-person
+    when: {profession: business-person}
+    suggestions: [通过模糊承诺和条件交换体现利益计算]
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_quality.voice-by-class]
+  - id: public-official
+    when: {profession: public-official}
+    suggestions: [使用审慎边界表达, 区分正式场合与私人场合]
+    source_refs: [v5://foundation/rules/04-scene-dialogue.yaml#t1.global.dialogue_quality.voice-by-class]

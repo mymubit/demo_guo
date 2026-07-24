@@ -1,0 +1,47 @@
+version: "1.0.0"
+fewshots:
+  - id: SW-FS-001
+    note: 字段形态示例；勿照抄剧情
+    input:
+      episode_range: {start: 1, count: 1}
+    output:
+      episodes:
+        - episode: 1
+          title: 开场
+          scenes:
+            - scene_id: 1-1
+              location: 宴会厅
+              time: 夜
+              goal: 主角想悄悄离场
+              conflict: 主持人点名请他上台
+              value_shift: 隐瞒 → 被迫曝光
+              dialogue_beats:
+                - 主持人：请我们今晚的贵宾上台。
+                - 主角：……你们认错人了。
+  - id: SW-FS-002
+    note: 双场推进 + 价值转变；禁止空壳对话
+    input:
+      episode_range: {start: 2, count: 1}
+    output:
+      episodes:
+        - episode: 2
+          title: 证据调包
+          scenes:
+            - scene_id: 2-1
+              location: 律所会议室
+              time: 日
+              goal: 主角想确认授权书真伪
+              conflict: 助理被收买，原件已被换
+              value_shift: 笃定 → 怀疑内鬼
+              dialogue_beats:
+                - 主角：页码对得上，印章怎么发虚？
+                - 助理：可能是扫描件……我马上找原件。
+            - scene_id: 2-2
+              location: 地下车库
+              time: 夜
+              goal: 主角想截住运送原件的车
+              conflict: 车已空，只留一张停车票
+              value_shift: 追击 → 被反咬一口
+              dialogue_beats:
+                - 司机：票根上的时间不是我的班次。
+                - 主角：那就告诉我，是谁替你开的车。

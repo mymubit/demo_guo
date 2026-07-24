@@ -8,6 +8,7 @@ export type GenerationTroubleKind =
   | 'llm_openai_overseas'
   | 'llm_http'
   | 'schema_validation'
+  | 'substance_gate'
   | 'workflow_gate'
   | 'generic'
 
@@ -175,6 +176,72 @@ export function diagnoseGenerationFailure(
       title: '流程门禁未通过',
       summary: '当前阶段尚不可执行，请先完成前置步骤。',
       steps: ['查看工作台流水线中已解锁的阶段', '按顺序执行，或先处理审批/质检决策'],
+      showModelHubLink: false,
+      raw: text,
+    }
+  }
+
+  if (/因评分.*未达|跳过合规检查|compliance_skipped|score_below_threshold/i.test(text)) {
+    return {
+      kind: 'substance_gate',
+      title: '合规未跑：评分未达标',
+      summary: '默认串行质检：评分未达 B 档时跳过合规以节省调用。请先按评分报告修复后再重跑。',
+      steps: [
+        '查看评分报告失败维度并修复剧本',
+        '重跑质检；达标后会自动跑合规',
+        '若需始终并行评分与合规，打开 creation_preferences.parallel_quality_judges',
+      ],
+      showModelHubLink: false,
+      raw: text,
+    }
+  }
+
+  if (
+    /选题简报过空|竞品须为真实|禁止「竞品|inspiration|avoidance|口号差异化|空壳钩子|实质门禁/i.test(
+      text,
+    )
+  ) {
+    return {
+      kind: 'substance_gate',
+      title: '选题简报未过实质门禁',
+      summary:
+        '结构可能合法，但竞品/差异化/钩子等内容过空。请按提示补全真实作品名与可执行差异点后重跑。',
+      steps: [
+        '竞品 ≥2 条真实片名，每条含借鉴（inspiration）与避雷（avoidance）',
+        '差异化写到情节/人设切口，禁止「质量更好」类口号',
+        '首集钩子与付费方向写可感知动作（仍不要写具体集号桥段）',
+        '保存设定后重跑本阶段',
+      ],
+      showModelHubLink: false,
+      raw: text,
+    }
+  }
+
+  if (/十维评分缺少有效 evidence|禁止空壳分数报告|verdict_detail/i.test(text)) {
+    return {
+      kind: 'substance_gate',
+      title: '评分报告未过实质门禁',
+      summary: '分数结构可能合法，但证据过稀或总评过短。请补齐各维可读证据后重跑。',
+      steps: [
+        '每个评分维度至少若干条含集数/场景/台词的证据',
+        '补充 verdict_detail 总评，避免空壳分数报告',
+        '保存后重跑质检评分',
+      ],
+      showModelHubLink: false,
+      raw: text,
+    }
+  }
+
+  if (/合规报告缺少具体阻断|禁止空标题或空话|阻断\/风险描述/i.test(text)) {
+    return {
+      kind: 'substance_gate',
+      title: '合规报告未过实质门禁',
+      summary: '合规结果缺少具体阻断/风险描述。请补 title+description 后重跑。',
+      steps: [
+        '每条阻断/风险须有非空 title 与 description',
+        '避免空标题或套话，指向具体违规点',
+        '保存后重跑合规检查',
+      ],
       showModelHubLink: false,
       raw: text,
     }

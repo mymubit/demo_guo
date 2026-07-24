@@ -1,4 +1,4 @@
-/** Runtime workbench-form contract types (from GET /api/v1/drama/meta/workbench-form/). */
+/** Shared V6 project-field and operation execution types. */
 
 export type FieldOption = {
   value: string
@@ -94,33 +94,45 @@ export type ThemeMatrix = {
   }
 }
 
-export type ModuleCatalogItem = {
-  id: string
+export type OperationInputField = {
+  key: string
   label_zh: string
-  domain: string
-  kind: 'core' | 'extension' | string
-  lifecycle: string
-  target_roles: string[]
-  workbench_visible: boolean
-  enable_when?: string
+  description_zh?: string
+  purpose_zh?: string
+  widget: 'textarea' | 'text' | 'number' | 'episode_range' | 'checklist' | 'findings_checklist'
+  placeholder?: string
+  project_default?: string
+  minimum?: number
+  options?: Array<{ value: string; label_zh: string }>
 }
 
-export type StageDefinition = {
+export type V6Persona = {
   id: string
-  orchestration_phase?: string
-  stage_kind: 'main' | 'quality_loop' | 'optional' | string
-  role: string
-  role_label?: string
-  /** Filled by backend from artifacts contract */
-  artifact: string
-  /** Chinese label merged from artifacts contract by backend */
+  version: number
   label_zh: string
-  approval_required?: boolean
-  batch_field?: string
-  parallel_group?: string
-  conditional?: boolean
-  optional?: boolean
-  visible_when?: string
+  purpose: string
+  responsibilities: string[]
+  boundaries: string[]
+  decision_protocol: string[]
+  output_expectations: string[]
+  anti_patterns?: string[]
+}
+
+export type V6AtomicRule = {
+  id: string
+  statement: string
+  severity: 'hard' | 'soft' | 'advisory'
+  category: string
+}
+
+export type V6Capability = {
+  id: string
+  label_zh: string
+  version: number
+  inputs: string[]
+  outputs: string[]
+  rules: string[]
+  rule_definitions?: V6AtomicRule[]
 }
 
 export type SettingsFieldType = 'string' | 'integer' | 'boolean' | 'array' | 'object' | string
@@ -140,6 +152,8 @@ export type SettingsFieldDef = {
   type: SettingsFieldType
   persist_path: string
   label_zh: string
+  description_zh?: string
+  purpose_zh?: string
   ui_widget?: SettingsUiWidget
   enum?: string[]
   enum_items?: string[]
@@ -178,65 +192,3 @@ export type AdminSectionDef = {
   label_zh?: string
 }
 
-export type ModulePanelConfig = {
-  source?: string
-  group_by?: string
-  filter?: string
-  evaluate_enable_when?: boolean
-  allow_project_toggle?: boolean
-}
-
-/** Raw API payload shape (workbench-form.v1 + runtime enrichments). */
-export type WorkbenchFormApiResponse = {
-  schema_version?: string
-  version?: string
-  /** Skills bundle version — used as React Query cache partition key */
-  skills_bundle_version?: string
-  project_schema?: string
-  parameters_contract?: string
-  project_settings: {
-    groups: Record<string, { label_zh: string; fields: string[] }> | SettingsGroupDef[]
-    fields: Record<string, Omit<SettingsFieldDef, 'key' | 'label_zh'> & {
-      label_zh?: string
-      label?: string
-      persist_path: string
-      type: SettingsFieldType
-    }>
-  }
-  stages: Array<
-    Omit<StageDefinition, 'artifact' | 'label_zh'> & {
-      artifact?: string
-      label_zh?: string
-      role_label?: string
-      label?: string
-    }
-  >
-  module_catalog: Record<string, Omit<ModuleCatalogItem, 'id'>> | ModuleCatalogItem[]
-  module_panel?: ModulePanelConfig
-  admin_settings?: {
-    sections?: AdminSectionDef[]
-    require_audit_reason?: boolean
-    allow_git_ssot_override?: boolean
-    policy?: string
-  }
-  theme_matrix?: ThemeMatrix
-  derived_fields?: string[]
-  system_fields?: string[]
-  runtime_projection?: Record<string, unknown>
-  navigation?: Record<string, unknown>
-  external_tools?: Record<string, unknown>
-}
-
-/** Normalized definition consumed by UI (no static business fallbacks). */
-export type WorkbenchDefinition = {
-  schema_version: string
-  skills_bundle_version: string
-  groups: SettingsGroupDef[]
-  fields: Record<string, SettingsFieldDef>
-  stages: StageDefinition[]
-  modules: ModuleCatalogItem[]
-  module_panel?: ModulePanelConfig
-  admin_sections: AdminSectionDef[]
-  theme_matrix: ThemeMatrix | null
-  delivery_tab_items: Array<{ id: string; label: string }>
-}

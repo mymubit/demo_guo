@@ -1,6 +1,5 @@
 /**
- * Frontend-only UI constants. Business enums / stages / modules / field defaults
- * come from GET /api/v1/drama/meta/workbench-form/ at runtime — do not re-copy them here.
+ * Frontend-only UI constants. Project fields come from the V6 project-form contract.
  */
 
 /** PC workbench minimum width (dynamic layout 1280–2560). */

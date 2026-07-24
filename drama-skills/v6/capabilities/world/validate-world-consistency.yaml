@@ -1,0 +1,10 @@
+id: capability.validate-world-consistency
+version: 1
+inputs: [world_system, downstream_rule_references]
+outputs: [world_consistency_validation]
+rules:
+  - world.consistency.same-condition-same-consequence
+  - world.exception.predeclare-source-and-cost
+  - world.rule.register-before-use
+  - world.rule.forbid-temporary-solution-rule
+side_effects: none

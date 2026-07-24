@@ -1,5 +1,7 @@
 # 山音编剧大师：长片格式与结构模板
 
+> **inject: doc** — 人读长文，运行时不注入；短剧蓝图执行清单见 `shanyin-series-exec.md` / `shanyin-screenwriting-exec.md`。
+>
 > **来源**：shanyin-screenwriting-master/references/format-feature.md
 > **作者**：@山音 · MIT License · 摄取时间：2026-06-22
 >

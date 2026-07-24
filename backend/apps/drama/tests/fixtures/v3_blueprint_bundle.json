@@ -1,0 +1,427 @@
+{
+  "story_bible": {
+    "drama_title": "逆光重来",
+    "logline": "她带着真相重回被抛弃当天",
+    "synopsis": {
+      "short": "短梗概",
+      "full": "完整梗概"
+    },
+    "adapt_source": {
+      "mode": "original",
+      "retained": [],
+      "enhanced": [],
+      "rewritten": [],
+      "originality_check": "原创"
+    },
+    "world_rules": {
+      "setting_summary": "现代家族企业",
+      "root_rules": [
+        "股权决定话语权"
+      ],
+      "power_structure": "董事会控制资源"
+    },
+    "characters": [
+      {
+        "name": "林夏",
+        "role_type": "protagonist",
+        "surface_desire": "夺回股权",
+        "deep_need": "建立自我价值",
+        "ghost": "被家族抛弃",
+        "lie": "只有被认可才有价值",
+        "flaw": "过度证明",
+        "arc": {
+          "start": "依赖认可",
+          "turning_point_1": "独立决策",
+          "turning_point_2": "放弃讨好",
+          "end": "自我确认"
+        },
+        "audience_identification": "职场与家庭边界",
+        "voice_tag": "短句直接",
+        "visual_anchor": "旧怀表"
+      }
+    ],
+    "relationship_map": [],
+    "series_structure": {
+      "main_storyline": "夺回人生",
+      "six_stage_structure": [
+        {},
+        {},
+        {},
+        {},
+        {},
+        {}
+      ],
+      "conflict_escalation_chain": [],
+      "major_reversal_positions": [],
+      "paywall_distribution": [],
+      "foreshadowing_table": [],
+      "series_emotion_curve": []
+    }
+  },
+  "character_system": {
+    "characters": [
+      {
+        "id": "lin-xia",
+        "name": "林夏",
+        "role_type": "protagonist",
+        "is_core": true,
+        "age": 30,
+        "surface_desire": "夺回被侵占的继承权",
+        "deep_need": "学会信任他人并接受共同承担风险",
+        "ghost": "父亲去世前她因误信亲属签下授权书",
+        "lie": "只有独自掌控一切才不会再次被背叛",
+        "flaw": "拒绝共享证据导致盟友无法及时支援",
+        "independent_desire": null,
+        "contradiction": {
+          "outward": "冷静强势",
+          "inner": "害怕再次信错人"
+        },
+        "antagonist_motive": null,
+        "arc": {
+          "start": {
+            "episode_ratio": 0,
+            "trigger_event": "独自潜入档案室取证",
+            "state_after": "拒绝合作"
+          },
+          "turning_point_1": {
+            "episode_ratio": 0.3,
+            "trigger_event": "盟友替她承担泄密指控",
+            "state_after": "开始有限共享证据"
+          },
+          "turning_point_2": {
+            "episode_ratio": 0.7,
+            "trigger_event": "独断行动导致母亲被威胁",
+            "state_after": "主动建立共同证据链"
+          },
+          "end": {
+            "episode_ratio": 1,
+            "trigger_event": "她把最终裁决交给团队共同决定",
+            "state_after": "接受信任并夺回主动权"
+          }
+        },
+        "voice_tag": {
+          "vocabulary": "证据和行动动词",
+          "sentence_style": "短句，先结论后理由",
+          "avoidance": "回避直接表达害怕"
+        },
+        "visual_anchor": {
+          "type": "prop",
+          "description": "随身携带父亲留下的旧钢笔",
+          "recognition_action": "思考时反复旋紧钢笔帽"
+        }
+      },
+      {
+        "id": "zhou-wei",
+        "name": "周伟",
+        "role_type": "antagonist",
+        "is_core": true,
+        "age": 42,
+        "surface_desire": "让家族企业继续由自己控制",
+        "deep_need": "承认控制不能替代合法性",
+        "ghost": "少年时期因父亲偏爱长子而长期被排除在决策外",
+        "lie": "只要企业不倒，伪造程序也值得",
+        "flaw": "把所有关系都当作可以交换的筹码",
+        "independent_desire": null,
+        "contradiction": {
+          "outward": "维护家族稳定",
+          "inner": "恐惧再次被排除"
+        },
+        "antagonist_motive": "担心林夏上位后清算旧业务并导致企业破产",
+        "arc": {
+          "start": {
+            "episode_ratio": 0,
+            "trigger_event": "公开主持继承审议",
+            "state_after": "掌握程序优势"
+          },
+          "turning_point_1": {
+            "episode_ratio": 0.3,
+            "trigger_event": "伪造账本第一次被质疑",
+            "state_after": "扩大证据封锁"
+          },
+          "turning_point_2": {
+            "episode_ratio": 0.7,
+            "trigger_event": "关键盟友拒绝继续作伪证",
+            "state_after": "孤注一掷销毁原件"
+          },
+          "end": {
+            "episode_ratio": 1,
+            "trigger_event": "防伪记录证明其亲自采购纸张",
+            "state_after": "因既有选择承担法律后果"
+          }
+        },
+        "voice_tag": {
+          "vocabulary": "稳定、责任和家族",
+          "sentence_style": "完整陈述后用反问施压",
+          "avoidance": "从不承认个人利益"
+        },
+        "visual_anchor": {
+          "type": "spatial_position",
+          "description": "会议中永远坐在主位",
+          "recognition_action": "失控时仍先扶正桌面文件"
+        }
+      }
+    ],
+    "relationships": [
+      {
+        "id": "lin-xia-zhou-wei",
+        "party_a": "lin-xia",
+        "party_b": "zhou-wei",
+        "is_core": true,
+        "party_a_demand": "恢复合法继承审议",
+        "party_b_demand": "维持现有控制权",
+        "party_a_power": "遗嘱原件和审计能力",
+        "party_b_power": "董事会席位和历史账目控制权",
+        "current_state": "表面合作、实质对抗",
+        "expected_change": "从程序争夺转为伪证责任追究",
+        "change_triggers": [
+          {
+            "event": "林夏证明账本纸张晚于案发时间",
+            "state_after": "周伟失去程序正当性"
+          }
+        ]
+      }
+    ]
+  },
+  "world_system": {
+    "setting_summary": "现代家族企业的继承权必须通过董事会审议和原始凭证核验完成。",
+    "rules": [
+      {
+        "id": "world-rule-inheritance-evidence",
+        "name": "继承证据审议",
+        "applies_to": [
+          "继承申请人",
+          "董事会"
+        ],
+        "trigger_conditions": [
+          "有人申请变更企业控制权"
+        ],
+        "changes": [
+          {
+            "dimension": "choice",
+            "description": "申请人必须公开提交可追溯原始凭证"
+          },
+          {
+            "dimension": "resource",
+            "description": "通过核验者才能获得表决权"
+          }
+        ],
+        "violation_cost": "伪造凭证者暂停继承资格并接受独立审计",
+        "visible_expression": "凭证在审议会现场投屏并核对防伪编号",
+        "authority": "董事会审计委员会",
+        "exceptions": [
+          {
+            "source": "法院保全令",
+            "trigger": "原始凭证可能被销毁",
+            "cost": "申请人暂时失去凭证使用权"
+          }
+        ]
+      }
+    ],
+    "power_structure": {
+      "resources": [
+        {
+          "id": "resource-board-votes",
+          "resource": "董事会表决权",
+          "controller": "现任董事长",
+          "rule_maker": "公司章程与董事会",
+          "cost_bearer": "缺乏原始凭证的继承申请人",
+          "main_conflict_pressure": "反派控制审议顺序，主角必须在程序内证明伪证"
+        }
+      ],
+      "loopholes": [
+        {
+          "id": "loophole-independent-audit",
+          "rule_id": "world-rule-inheritance-evidence",
+          "available_to": [
+            "任何持有新证据的董事"
+          ],
+          "condition": "证明现有凭证存在无法解释的年代或来源矛盾",
+          "cost": "申请审计者承担暂停表决和公开证据的风险"
+        }
+      ]
+    },
+    "reveal_plan": [
+      {
+        "rule_id": "world-rule-inheritance-evidence",
+        "episode": 1,
+        "layer": "原始凭证决定表决资格",
+        "action": "女主提交遗嘱原件申请进入审议",
+        "consequence": "反派当场要求核验防伪编号",
+        "affected_choice": "女主决定暂不公开手中的第二份凭证"
+      }
+    ]
+  },
+  "emotion_system": {
+    "series_curve": [
+      {
+        "episode": 8,
+        "target_value": 4,
+        "tone": "breathing",
+        "kind": "breathing",
+        "event": "女主与母亲暂时和解",
+        "character_choice": "女主首次共享账本线索",
+        "rhythm": {
+          "plot": "loose",
+          "emotional": "heavy"
+        },
+        "payment_checkpoint": false
+      },
+      {
+        "episode": 9,
+        "target_value": 6,
+        "tone": "tense",
+        "kind": "normal",
+        "event": "反派用账本反控女主",
+        "character_choice": "女主决定公开接受审计",
+        "rhythm": {
+          "plot": "tight",
+          "emotional": "medium"
+        },
+        "payment_checkpoint": false
+      },
+      {
+        "episode": 10,
+        "target_value": 9,
+        "tone": "turning",
+        "kind": "peak",
+        "event": "女主证明账本纸张年份异常",
+        "character_choice": "女主暂停继承审议并保全证据",
+        "rhythm": {
+          "plot": "tight",
+          "emotional": "heavy"
+        },
+        "payment_checkpoint": true
+      }
+    ],
+    "episode_profiles": [
+      {
+        "episode": 10,
+        "nodes": [
+          {
+            "index": 1,
+            "event": "女主进入审议会",
+            "emotion": "警觉",
+            "value": 5,
+            "character_action": "观察账本封皮"
+          },
+          {
+            "index": 2,
+            "event": "反派提交账本",
+            "emotion": "受压",
+            "value": 4,
+            "character_action": "要求查看原件"
+          },
+          {
+            "index": 3,
+            "event": "董事拒绝中止",
+            "emotion": "焦灼",
+            "value": 3,
+            "character_action": "启动手机录像"
+          },
+          {
+            "index": 4,
+            "event": "紫外灯照出异常",
+            "emotion": "怀疑",
+            "value": 5,
+            "character_action": "拍摄防伪编号"
+          },
+          {
+            "index": 5,
+            "event": "反派试图夺走账本",
+            "emotion": "紧张",
+            "value": 4,
+            "character_action": "把画面同步云端"
+          },
+          {
+            "index": 6,
+            "event": "供应商发来记录",
+            "emotion": "确认",
+            "value": 7,
+            "character_action": "投屏采购时间"
+          },
+          {
+            "index": 7,
+            "event": "董事会出现动摇",
+            "emotion": "反击",
+            "value": 8,
+            "character_action": "申请暂停审议"
+          },
+          {
+            "index": 8,
+            "event": "反派采购签名曝光",
+            "emotion": "胜势",
+            "value": 9,
+            "character_action": "要求独立审计"
+          }
+        ],
+        "landmarks": {
+          "EV": 8,
+          "ET": 3,
+          "TP": 6
+        },
+        "qdn_evidence": {
+          "quality": "情绪变化由证据链推动",
+          "depth": "胜势建立在主角克服独断之后",
+          "need_satisfaction": "观众获得可验证反击的满足"
+        },
+        "rhythm": {
+          "plot": "tight",
+          "emotional": "heavy"
+        }
+      }
+    ]
+  },
+  "originality_report": {
+    "comparison_status": "completed",
+    "protected_elements": [
+      {
+        "class": "character-name",
+        "status": "clear",
+        "evidence": "database comparison completed"
+      },
+      {
+        "class": "title-or-slogan",
+        "status": "clear",
+        "evidence": "title comparison completed"
+      },
+      {
+        "class": "key-plot-structure",
+        "status": "clear",
+        "evidence": "structure comparison completed"
+      },
+      {
+        "class": "signature-dialogue",
+        "status": "clear",
+        "evidence": "dialogue comparison completed"
+      },
+      {
+        "class": "character-image-or-voiceprint",
+        "status": "clear",
+        "evidence": "asset review completed"
+      },
+      {
+        "class": "target-market-rights",
+        "status": "clear",
+        "evidence": "rights review completed"
+      }
+    ],
+    "similarity": {
+      "title_semantic": 0.4,
+      "dialogue": 0.32,
+      "episode_position_structure": 0.1
+    },
+    "findings": [],
+    "rewrite_plan": null,
+    "ai_assets": [
+      {
+        "id": "asset-1",
+        "kind": "other",
+        "identifiable_imitation": false,
+        "rights_source": "project-generated",
+        "label_required": true,
+        "label_status": "applied"
+      }
+    ],
+    "conclusion": "pass"
+  }
+}

@@ -1,6 +1,8 @@
 agent_id: drama.script-writer
 name: Script Writer
 name_zh: 剧本正文官
+v6_persona: persona.script-writer
+operations: [operation.write-episodes]
 dept: writing
 role_tier: production
 workspace_order: 401
@@ -14,6 +16,10 @@ module_policy:
   evaluate_enable_when: true
   as_index: false
   max_chars: 0
+knowledge_policy:
+  # C5：缺省 index；SKILL references 仅索引，不灌全文
+  mode: index
+  max_chars: 2000
 rule_policy:
   scopes:
   - global_core
@@ -48,7 +54,7 @@ input_contract:
   - production_target_band
   required_artifacts:
   - story_bible
-  - narrative_plan
+  - episode_plan
   optional_artifacts:
   - project_brief
 role: 按故事蓝图、分集设计与商业格式生成指定集数范围的正式剧本，执行场景写作、首稿对白、连续性快照与制片可拍性标记；每场戏以 Goal×Conflict 驱动并完成 McKee 价值转变。

@@ -1,0 +1,5 @@
+version: 1
+cases:
+  - {id: blueprint-no-scenes, rule: blueprint.scope.forbid-episode-scene-expansion, input: {fields: [main_storyline, stage_turns]}, expected: pass}
+  - {id: foreshadow-density, rule: foreshadow.density.require-a-grade-per-ten-episodes, input: {block: 1-10, grade: A}, expected: pass}
+  - {id: matrix-shape, rule: genre.matrix.consume-synthesized-rule-params, input: {emotion_nodes: 8, stages: 6}, expected: pass}

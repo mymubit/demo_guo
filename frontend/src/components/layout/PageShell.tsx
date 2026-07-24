@@ -31,10 +31,10 @@ export function PageShell({
   className,
 }: PageShellProps) {
   return (
-    <div className={cn('mx-auto w-full px-6 py-7 sm:px-8', widthClass[width], className)}>
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-5">
+    <div className={cn('mx-auto w-full px-4 py-5 sm:px-6 sm:py-6 lg:px-8', widthClass[width], className)}>
+      <header className="mb-5 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-4">
         <div className={cn('min-w-0', width === 'fluid' ? 'max-w-4xl' : 'max-w-3xl')}>
-          <h1 className="text-xl font-semibold tracking-tight text-ink">{title}</h1>
+          <h1 className="text-lg font-semibold text-ink">{title}</h1>
           {description ? (
             <div className="mt-1.5 text-sm leading-relaxed text-ink-muted">{description}</div>
           ) : null}

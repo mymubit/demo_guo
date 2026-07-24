@@ -1,0 +1,116 @@
+version: 6.0.0
+status: active
+contracts:
+  atomic_rule: v6/contracts/atomic-rule.schema.json
+  capability: v6/contracts/capability.schema.json
+  operation: v6/contracts/operation.schema.json
+  call_envelope: v6/contracts/call-envelope.schema.json
+  advisory: v6/contracts/advisory.schema.json
+  persona: v6/contracts/persona.schema.json
+catalogs:
+  atoms: v6/atoms/catalog.yaml
+  capabilities: v6/capabilities/catalog.yaml
+  personas: v6/personas/catalog.yaml
+  artifacts: v6/artifacts/catalog.yaml
+workbench: v6/workbench.yaml
+project_form: v6/project-form.yaml
+parameters_contract: contracts/parameters.yaml
+project_settings_schema: schemas/project-settings.v1.schema.json
+config_policy: manifest/config-policy.yaml
+agent_runtime: foundation/presets/agent-runtime.yaml
+constraints:
+  - v6/constraints/episode-plan.yaml
+  - v6/constraints/character-system.yaml
+  - v6/constraints/world-system.yaml
+  - v6/constraints/emotion-system.yaml
+  - v6/constraints/scene-system.yaml
+  - v6/constraints/continuity.yaml
+  - v6/constraints/production.yaml
+  - v6/constraints/compliance.yaml
+  - v6/constraints/originality.yaml
+  - v6/constraints/concept.yaml
+  - v6/constraints/learned-guardrails.yaml
+  - v6/constraints/architecture.yaml
+  - v6/constraints/quality.yaml
+operations:
+  - v6/operations/create-project-brief/operation.yaml
+  - v6/operations/compose-story-bible/operation.yaml
+  - v6/operations/design-episode-plan/operation.yaml
+  - v6/operations/write-episodes/operation.yaml
+  - v6/operations/revise-episode-plan/operation.yaml
+  - v6/operations/score-script/operation.yaml
+  - v6/operations/revise-script/operation.yaml
+  - v6/operations/check-compliance/operation.yaml
+  - v6/operations/prepare-delivery/operation.yaml
+artifacts:
+  episode_plan:
+    version: 2
+    schema: v6/artifacts/episode-plan/2.schema.json
+    valid_fixtures:
+      - v6/evaluations/fixtures/episode-plan-valid.json
+components:
+  character_system:
+    schema: v6/artifacts/components/character-system.schema.json
+    valid_fixtures:
+      - v6/evaluations/fixtures/character-system-valid.json
+  world_system:
+    schema: v6/artifacts/components/world-system.schema.json
+    valid_fixtures:
+      - v6/evaluations/fixtures/world-system-valid.json
+  emotion_system:
+    schema: v6/artifacts/components/emotion-system.schema.json
+    valid_fixtures:
+      - v6/evaluations/fixtures/emotion-system-valid.json
+  scene_system:
+    schema: v6/artifacts/components/scene-system.schema.json
+    valid_fixtures:
+      - v6/evaluations/fixtures/scene-system-valid.json
+  memory_checkpoint:
+    schema: v6/artifacts/components/memory-checkpoint.schema.json
+    valid_fixtures:
+      - v6/evaluations/fixtures/memory-checkpoint-valid.json
+  episode_scripts:
+    schema: v6/artifacts/components/episode-scripts.schema.json
+    valid_fixtures:
+      - v6/evaluations/fixtures/episode-scripts-valid.json
+  production_package:
+    schema: v6/artifacts/components/production-package.schema.json
+    valid_fixtures:
+      - v6/evaluations/fixtures/production-package-valid.json
+  compliance_report:
+    schema: v6/artifacts/components/compliance-report.schema.json
+    valid_fixtures:
+      - v6/evaluations/fixtures/compliance-report-valid.json
+  originality_report:
+    schema: v6/artifacts/components/originality-report.schema.json
+    valid_fixtures:
+      - v6/evaluations/fixtures/originality-report-valid.json
+  project_brief:
+    schema: v6/artifacts/components/project-brief.schema.json
+    valid_fixtures:
+      - v6/evaluations/fixtures/project-brief-valid.json
+  story_bible:
+    schema: v6/artifacts/components/story-bible.schema.json
+    valid_fixtures:
+      - v6/evaluations/fixtures/story-bible-valid.json
+  quality_report:
+    schema: v6/artifacts/components/quality-report.schema.json
+    valid_fixtures:
+      - v6/evaluations/fixtures/quality-report-valid.json
+advisories:
+  schema: v6/contracts/advisory.schema.json
+  files:
+    - v6/advisories/dialogue-voice.yaml
+    - v6/advisories/dialogue-emotion-rhythm.yaml
+    - v6/advisories/ai-tone.yaml
+runtime_boundary:
+  imports_v5_runtime: false
+  dual_write: false
+  implicit_fallback_to_v5: false
+runtime:
+  registry: v6/engine/registry.py
+  transaction: v6/engine/transaction.py
+  artifact_store: v6/engine/store.py
+  call_journal: v6/engine/journal.py
+  cli: v6/tools/run_operation.py
+  stage_order: [command, plan, execution_pack, candidate, validation, change_set, impact_plan, commit]

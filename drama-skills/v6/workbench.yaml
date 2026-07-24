@@ -1,0 +1,111 @@
+version: 1
+id: drama-v6-workbench
+navigation_model: operation_graph
+status_model: artifact_and_call_state
+input_fields: v6/workbench-inputs.yaml
+
+groups:
+  - {id: foundation, label_zh: 项目基座, order: 1}
+  - {id: screenplay, label_zh: 分集与正文, order: 2}
+  - {id: assurance, label_zh: 质量闭环, order: 3}
+  - {id: delivery, label_zh: 制作交付, order: 4}
+
+operations:
+  - id: operation.create-project-brief
+    label_zh: 项目简报
+    group: foundation
+    order: 101
+    intent: 将创作请求收敛为可验证的项目定位与商业承诺
+    dependencies: []
+    invalidates: [story_bible, character_system, world_system, emotion_system, originality_report, episode_plan, episode_scripts, memory_checkpoint, quality_report, compliance_report, production_package]
+    result_view: project_brief
+
+  - id: operation.compose-story-bible
+    label_zh: 故事圣经
+    group: foundation
+    order: 102
+    intent: 原子建立故事、人物、世界、情绪与原创性基座
+    dependencies: [project_brief]
+    invalidates: [episode_plan, episode_scripts, memory_checkpoint, quality_report, compliance_report, production_package]
+    result_view: story_bible_systems
+
+  - id: operation.design-episode-plan
+    label_zh: 全剧分集计划
+    group: screenplay
+    order: 201
+    intent: 将故事圣经拆解为全剧可执行的逐集计划
+    dependencies: [story_bible, character_system, world_system, emotion_system]
+    invalidates: [episode_scripts, memory_checkpoint, quality_report, compliance_report, production_package]
+    result_view: episode_plan
+
+  - id: operation.revise-episode-plan
+    label_zh: 修订分集计划
+    group: screenplay
+    order: 202
+    intent: 在明确范围和保留项下修改既有分集计划
+    dependencies: [episode_plan]
+    invalidates: [episode_scripts, memory_checkpoint, quality_report, compliance_report, production_package]
+    result_view: episode_plan_diff
+    utility: true
+
+  - id: operation.write-episodes
+    label_zh: 批次剧本创作
+    group: screenplay
+    order: 203
+    intent: 按分集计划生成指定批次剧本与连续性检查点
+    dependencies: [project_brief, story_bible, episode_plan]
+    invalidates: [quality_report, compliance_report, production_package]
+    result_view: episode_scripts
+
+  - id: operation.score-script
+    label_zh: 独立质量评分
+    group: assurance
+    order: 301
+    intent: 对当前有效剧本执行独立十维评分与连续性终审
+    dependencies: [episode_scripts]
+    invalidates: [production_package]
+    quality_lane: score
+    result_view: quality_report
+
+  - id: operation.check-compliance
+    label_zh: 独立合规审查
+    group: assurance
+    order: 302
+    intent: 对当前有效剧本执行平台政策、价值观与原创性审查
+    dependencies: [episode_scripts]
+    invalidates: [production_package]
+    quality_lane: compliance
+    result_view: compliance_report
+
+  - id: operation.revise-script
+    label_zh: 按报告修订剧本
+    group: assurance
+    order: 303
+    intent: 只处理用户接受的报告问题并重新进入双报告复核
+    dependencies: [episode_scripts, quality_report, compliance_report]
+    invalidates: [quality_report, compliance_report, production_package]
+    quality_lane: revision
+    result_view: episode_scripts_diff
+
+  - id: operation.prepare-delivery
+    label_zh: 制作交付包
+    group: delivery
+    order: 401
+    intent: 在双报告通过后生成指定范围的制作与发行物料
+    dependencies: [episode_scripts, quality_report, compliance_report, originality_report]
+    invalidates: []
+    readiness:
+      quality_report.can_continue_next_batch: true
+      compliance_report.conclusion: pass
+    result_view: production_package
+
+quality_join:
+  lanes: [operation.score-script, operation.check-compliance]
+  revision: operation.revise-script
+  join_by: script_version
+  complete_when: [quality_report, compliance_report]
+  stale_when_writes: [episode_scripts]
+
+transaction_view:
+  stages: [command, plan, execution_pack, candidate, validation, change_set, impact_plan, commit]
+  terminal_statuses: [committed, rejected, failed]

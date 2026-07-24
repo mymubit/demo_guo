@@ -104,7 +104,15 @@ fixture_response:
     - {}
     conflict_escalation_chain: []
     major_reversal_positions: []
-    paywall_distribution: []
+    paywall_distribution:
+    - episode: 8
+      card_type: emotion
+      promise: 主角第一次公开反击能否成功
+      payoff_episode: 12
+    - episode: 20
+      card_type: suspense
+      promise: 家族秘密是否会被揭开
+      payoff_episode: 28
     foreshadowing_table: []
     series_emotion_curve: []
 assertions:

@@ -1,0 +1,3119 @@
+{
+  "version": 1,
+  "source_snapshot": "v5-working-tree",
+  "mappings": [
+    {
+      "source": ".github/workflows/validate.yml",
+      "source_sha256": "373759b5b5963d0a943c1300feaeb37a74ca649bd023aa4a64ae7e49b55d9713",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "按 V6 发布与校验边界重建。",
+      "verified": false
+    },
+    {
+      "source": ".gitignore",
+      "source_sha256": "76cca4c1f87465f4d2ed5fb0e51f555ea2c23df538f7e10a0600483a0469a7cd",
+      "disposition": "merge",
+      "targets": [
+        "v6/requirements-dev.txt"
+      ],
+      "decision": "合并进入 V6 工具依赖或仓库治理配置。",
+      "verified": false
+    },
+    {
+      "source": ".trae-html-share-packages/drama-skills-architecture/drama-skills-architecture.html.zip",
+      "source_sha256": "f43e9afc60572736b333991a518b78ac900fa98f0735c22cc12c1961d75804b3",
+      "disposition": "archive",
+      "targets": [],
+      "decision": "保留为 V5 工作材料或生成视图，不进入 V6 运行时。",
+      "verified": false
+    },
+    {
+      "source": ".trae-html-share-packages/drama-skills-optimization/drama-skills-optimization.html.zip",
+      "source_sha256": "febf53c49d98aa6cc7c247d1c1062dec0db7398e8e3bad1c74d3bb734c36f83c",
+      "disposition": "archive",
+      "targets": [],
+      "decision": "保留为 V5 工作材料或生成视图，不进入 V6 运行时。",
+      "verified": false
+    },
+    {
+      "source": "EVOLUTION_LOG.md",
+      "source_sha256": "74fc1fffd62d2140487d04c84c379ad4819c1cd9be6744b431953cec5d794317",
+      "disposition": "archive",
+      "targets": [],
+      "decision": "保留为 V5 历史与设计证据。",
+      "verified": false
+    },
+    {
+      "source": "INTAKE_PROTOCOL.md",
+      "source_sha256": "0e7924ee2b11667d98959a9c4dae3941a44693ee66e54227d7e7a3ada86211e5",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/sources/system/"
+      ],
+      "decision": "保留有效意图，按 V6 对象模型重写。",
+      "verified": false
+    },
+    {
+      "source": "README.md",
+      "source_sha256": "2bdc559532a97bee7e3a448bb413bd94c7807582c2333a460a2d20c3a044a2d5",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/sources/system/"
+      ],
+      "decision": "保留有效意图，按 V6 对象模型重写。",
+      "verified": false
+    },
+    {
+      "source": "REPOSITORY.md",
+      "source_sha256": "3f505611a94c60781306ba730b03543a9e303c71d47fe303ec5714976df473a0",
+      "disposition": "archive",
+      "targets": [],
+      "decision": "保留为 V5 历史与设计证据。",
+      "verified": false
+    },
+    {
+      "source": "ROLE-DESIGN-ANALYSIS.md",
+      "source_sha256": "ae2f30dae39a1f113a1dedcbe42fd9316bd362f16b08c22d6bd48a4138a8d0a2",
+      "disposition": "archive",
+      "targets": [],
+      "decision": "保留为 V5 历史与设计证据。",
+      "verified": false
+    },
+    {
+      "source": "contracts/artifacts.yaml",
+      "source_sha256": "3b55865575821ce01057f3d07982159eb2c268d1165d2da9526f0fd96cbcaa6e",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/contracts/",
+        "v6/artifacts/"
+      ],
+      "decision": "按调用事务、操作与 V6 产物重新定义契约。",
+      "verified": false
+    },
+    {
+      "source": "contracts/parameters.yaml",
+      "source_sha256": "41e6568cdc25e26eb0085590012da6596d793cb09fb68eb3022a35629ebf308d",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/contracts/",
+        "v6/artifacts/"
+      ],
+      "decision": "按调用事务、操作与 V6 产物重新定义契约。",
+      "verified": false
+    },
+    {
+      "source": "drama-intake/SKILL.md",
+      "source_sha256": "488c9ecd114f53e634be610769e14e73e54ad4d3e3a079132b0b630fcdcf714c",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "drama-master/SKILL.md",
+      "source_sha256": "6f31c091bb6ffb4e64120013bc2196d06baa7f9b29aad041b8f02dec9165cea6",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "drama-skills-architecture/_shared/js/echarts.min.js",
+      "source_sha256": "dbc15e9b9ca60d2ab3115953cc42e92a70d540388a27d4d0acfcf8c3464b6a0b",
+      "disposition": "archive",
+      "targets": [],
+      "decision": "保留为 V5 工作材料或生成视图，不进入 V6 运行时。",
+      "verified": false
+    },
+    {
+      "source": "drama-skills-architecture/_shared/js/mermaid.min.js",
+      "source_sha256": "58d8965f6e841e7a1a84b1cff6362f31469c4c8718667c288be5b5213d4d7786",
+      "disposition": "archive",
+      "targets": [],
+      "decision": "保留为 V5 工作材料或生成视图，不进入 V6 运行时。",
+      "verified": false
+    },
+    {
+      "source": "drama-skills-architecture/drama-skills-architecture.html",
+      "source_sha256": "56e05cae00995001cd7a4affbc9228208cbac30db5c320b0cd910805b175b4a2",
+      "disposition": "archive",
+      "targets": [],
+      "decision": "保留为 V5 工作材料或生成视图，不进入 V6 运行时。",
+      "verified": false
+    },
+    {
+      "source": "drama-skills-optimization/_shared/js/echarts.min.js",
+      "source_sha256": "dbc15e9b9ca60d2ab3115953cc42e92a70d540388a27d4d0acfcf8c3464b6a0b",
+      "disposition": "archive",
+      "targets": [],
+      "decision": "保留为 V5 工作材料或生成视图，不进入 V6 运行时。",
+      "verified": false
+    },
+    {
+      "source": "drama-skills-optimization/_shared/js/mermaid.min.js",
+      "source_sha256": "58d8965f6e841e7a1a84b1cff6362f31469c4c8718667c288be5b5213d4d7786",
+      "disposition": "archive",
+      "targets": [],
+      "decision": "保留为 V5 工作材料或生成视图，不进入 V6 运行时。",
+      "verified": false
+    },
+    {
+      "source": "drama-skills-optimization/assets/charts.js",
+      "source_sha256": "53f073ed5dbd1d2b35749eef0337fc206e870292403e0a12b569490c845acf62",
+      "disposition": "archive",
+      "targets": [],
+      "decision": "保留为 V5 工作材料或生成视图，不进入 V6 运行时。",
+      "verified": false
+    },
+    {
+      "source": "drama-skills-optimization/drama-skills-optimization.html",
+      "source_sha256": "93f05f67b5a119791e753ef6bb177b7613ab17813ae0e9cb0254c702077ec4a2",
+      "disposition": "archive",
+      "targets": [],
+      "decision": "保留为 V5 工作材料或生成视图，不进入 V6 运行时。",
+      "verified": false
+    },
+    {
+      "source": "eval/README.md",
+      "source_sha256": "f8d9ee1880f4a470c8e8a7610c32eccf9fafb53654e1d4e12706b5b598ef2447",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/compliance-guard/CG001.yaml",
+      "source_sha256": "28d042ffa7def6c30657eb63185e65abe8721bfc30d1e3e2b2cd317e25d62dce",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/compliance-guard/CG002.yaml",
+      "source_sha256": "c42636dc34d8a09a7512a5719ba2d2ef514cf7a52b15191e61e2dfec7e7de2d9",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/compliance-guard/CG003.yaml",
+      "source_sha256": "bd6eb49d142c0d020dc5010efaa9be62c065bb9363a7b7ea2b9ab05ac7af907a",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/compliance-guard/CG004.yaml",
+      "source_sha256": "f08458d032e34bbea40ed8538726ffdd7bdc939fb000aee5bca2571081ba3b59",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/compliance-guard/CG005.yaml",
+      "source_sha256": "dcdfcc736969506944bbe23294e3ab2e0e79e48c22f0bfb92550de6229154c76",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/compliance-guard/CG006.yaml",
+      "source_sha256": "0eeb756dd857ac2c126d161eb960ff93a28b5f2183040446b21812bd37018264",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/compliance-guard/CG007.yaml",
+      "source_sha256": "bf13df26bf5bd8f35e4f2a88717374d42bfbfeeae0e581e16dfec2aa50b452b9",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/compliance-guard/CG008.yaml",
+      "source_sha256": "92cc234c29488db0ad55798c30bab2c1ca2f3c519b98edd2899a4f564351fa8e",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/compliance-guard/CG009.yaml",
+      "source_sha256": "812c8c2e4b0ad6f486bb339e51a561820bae6bb822825a8f7b77c334c695b565",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/compliance-guard/CG010.yaml",
+      "source_sha256": "c428a35ede9778a8761ec09cd166999052070a753f257adbc97274e3a0d771e0",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/compliance-guard/CG011.yaml",
+      "source_sha256": "ad8366b37a08cf0081c840908ee584dd380b5bd3c7d329a37a4cf843176c27b5",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/compliance-guard/CG012.yaml",
+      "source_sha256": "96e720dcc3fdc45d574bffbf76b4137f6456bb52784525699d74e545f10c16c2",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/script-scorer/SC001.yaml",
+      "source_sha256": "b2124bc6603a89f5baf4b709bb4e72b136298c7b4478bc0e207009f15bb6ebb5",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/script-scorer/SC002.yaml",
+      "source_sha256": "7a0585ce1bdceb1867858e5b5cf84e29676284d5b9454ce4f91a7505c8571910",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/script-scorer/SC003.yaml",
+      "source_sha256": "e53e8a10887b6e08440e86d561246c430b3622e0d8873a7315c3e53441c656bc",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/script-scorer/SC004.yaml",
+      "source_sha256": "ab0d2a45fa15701ee124c04a5b2f7ee66d470bc4a79553d06db8a659e25fd733",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/script-scorer/SC005.yaml",
+      "source_sha256": "60362196f90f31ea3404484f1df37a96a984367819d5548a2ae4ff664cdd2ca5",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/script-scorer/SC006.yaml",
+      "source_sha256": "e26839ae5e8328e0aa7eb59daaf6eb08332aa7eb119156b8e003fe08d6be9ce2",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/script-scorer/SC007.yaml",
+      "source_sha256": "0f16cdf5a8f1c53f198442dad95da8432cbb99c3da7eae1716e28e4f6ebd7310",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/script-scorer/SC008.yaml",
+      "source_sha256": "f572e43d64be6badb22da92c8d5d25dead250c5e26431a92736af04452a43a3a",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/script-scorer/SC009.yaml",
+      "source_sha256": "3fe0bf05cb8beb04be2f4303ca4a206c3573ea07703c793ba4e04db74b0690ff",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/script-scorer/SC010.yaml",
+      "source_sha256": "a218623da6f5e52bc811af70f2bc6fc94b1d56df7098b5f6107993d08bdfb333",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/script-scorer/SC011.yaml",
+      "source_sha256": "b53f1f681cbec1fb9026eb85efebe004e8f9acbd726ef7da46609286788256d9",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/script-scorer/SC012.yaml",
+      "source_sha256": "2a2b619dab5a0d582c54deee653a2cf1006d3325f0a0ae07537aa47114fb456a",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB001.yaml",
+      "source_sha256": "fd5599ea4aa4faa79afce6723deeddcb6475ac3b8ca101f9091eb1b5ecf644b0",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB002.yaml",
+      "source_sha256": "6242988192f7c6f1cae66fa5b48042005eace5fa81a9b87e49e0b8d5b6188d16",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB003.yaml",
+      "source_sha256": "07b7863d887ad3d99fc8cb2fdcbf66af193484eaa7b57391ea1930473f80f32a",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB004.yaml",
+      "source_sha256": "79bf2344a56e898fe18e4a3283728a1874ad0dfba23d27a9919d330518bcdcd0",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB005.yaml",
+      "source_sha256": "db1345d55a959b3cd14063dd20c19789b3485239a9d022eb352878ec79ea0310",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB006.yaml",
+      "source_sha256": "31932606e5ddd1fae09675af08c80d72e9a217877e0fb2cd6e8e1af97a5b9769",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB007.yaml",
+      "source_sha256": "07269ab1d335c024588a8c486d72d3cd5edc479654bb205b4699a104db7aff31",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB008.yaml",
+      "source_sha256": "804739e05e7c6e4767f25988bc7f18b186eb35485148f4c4535ca0a73a3cd0dc",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB009.yaml",
+      "source_sha256": "d90ae8fea919cfa76bec36a8969c6453c9c036e5da9049878e49f707bb2bf063",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB010.yaml",
+      "source_sha256": "79ae40d5fe7dcb00bda09ca6b18ca8f0a4ed3fc7910b04300f779a2289f5189b",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB011.yaml",
+      "source_sha256": "ad23dc57a3e9bfddecfb753da0e40ad9d32cdaebfd9d9d2275e99c939094a805",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB012.yaml",
+      "source_sha256": "42faf2ae5cd5f3f990e892caa810fdda2f1e72b2555b86aeab22616fd1091fe4",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB013.yaml",
+      "source_sha256": "a78fbff4b9cd39acba7427c1bf652892dca4034700323a6e76329fd0fa3a1aea",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB014.yaml",
+      "source_sha256": "8c140de1c3c07bc29f82abbc82d54a1e610d87973f2c258b374de6663539abd8",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB015.yaml",
+      "source_sha256": "113e2063fe6ef7458b1f7c479d625505da6927facdd004d8d18881c857660111",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB016.yaml",
+      "source_sha256": "5443049eb4b0d4cb6c9d5c8939e0291c2f7ff41f57db708d217b2dd11d176bb7",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB017.yaml",
+      "source_sha256": "fe0acadb430fa46b8dae98bc228584164949fbbf6447e65153a47e3b7e055d7c",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB018.yaml",
+      "source_sha256": "e7f1890f301ad3e8c06586423c3327bc35777c35ffdd912bae527cb096bab89d",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB019.yaml",
+      "source_sha256": "bbf7cab5614302b08fe0618b9171519885c30a645aa56db900b211d07e8f3e56",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/story-bible/SB020.yaml",
+      "source_sha256": "a776203ee01f5d18584177bab5219f929a2f331f5ff41981a8b9e4b6ca6500b4",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD001.yaml",
+      "source_sha256": "ed64f0fb4bd3d904dbeade392aa0dbbcf86e681a5304dd99496b5b80aaf8b1d5",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD002.yaml",
+      "source_sha256": "ef6555d25069e80bc30fbd5e2fea5c2ce29040794ee8c409e9f177cb5187cc84",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD003.yaml",
+      "source_sha256": "f8e6ef6bc540da90749a0f458d9aaf9536566f68043f153a52383aec9a0ce1ba",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD004.yaml",
+      "source_sha256": "72fcd41ba8ae740da93382768188d78d8e54878fcf7367d9f50d7ff65fadc35a",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD005.yaml",
+      "source_sha256": "5fc45802d1b669174c2fd7856a04912c15ee2f0c7a09060a361360c65b65bc09",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD006.yaml",
+      "source_sha256": "4e75ff03e3e0e190054afdd85a370ab4376f520954f741e3135bdd169e3235aa",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD007.yaml",
+      "source_sha256": "5201dce86bf60b373ae07be4c73113a10a02456b797431d1110afb0949d31cc4",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD008.yaml",
+      "source_sha256": "2d612213b32f7302a4a718bac7b7537aa4ad57c4093a799ca5962d18828afc1b",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD009.yaml",
+      "source_sha256": "f8d9e9b7dea8532a9bd8a451e05aaac2d399b86cdb46fa18361532684870ca47",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD010.yaml",
+      "source_sha256": "b3bee76942203502ccb97120c258552b39bf85fd7667ce8674db478d6116171b",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD011.yaml",
+      "source_sha256": "5d6188660cdbfdda8ebed576a04da312b8b964345b766b3e19a6d15207579395",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD012.yaml",
+      "source_sha256": "8f7d90b659c6d893f76ccde7edb6668901bc51877eff5ea875899a4730d17c81",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD013.yaml",
+      "source_sha256": "706b1da3eb60f762130a1628b1252ce14390a8e01d466ca6b5c32f91bd426cad",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD014.yaml",
+      "source_sha256": "5178b6d31aa6d08a6be2e81d58d1d33bb537debaa3b47ee2e2b6768e067ca23b",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD015.yaml",
+      "source_sha256": "abf16ffbf2fcbdcd7af25c7ea5e2b4daa29a37155a79809e9ad6f0f3b6c0f54a",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD016.yaml",
+      "source_sha256": "64467d0694d3bdb0d050e286bfdd1682e7629f20a737afe8e3801675ec06110c",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD017.yaml",
+      "source_sha256": "15872c8bfb6bacdc2c6ab44a72509c1c086279b4a37fe4df2e5fb13df27d8dd9",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD018.yaml",
+      "source_sha256": "1760a9d11f0738e2c690de04c641d6684560e7b5293e0e9c51311c7906cab5cf",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD019.yaml",
+      "source_sha256": "4acb8f3426106c73048763cb611daee3db2f7b5d00fcaee073c82c41fb8045b4",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/cases/topic-director/TD020.yaml",
+      "source_sha256": "9dd989dd54e8b826dab39196483ea31dbb6b529b09440f5ea0ac64377869646c",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/reports/.gitignore",
+      "source_sha256": "66a28fd74905a09cca60ef4d5a693274ef0bf234e0477542a65b68f0f10fbd1d",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/reports/.gitkeep",
+      "source_sha256": "e3566b3a06430868d71e9287dfd6c6c520a3da027aabea01951d407ee131dc2f",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/reports/summary.json",
+      "source_sha256": "33b9f34346dca8ee75e588a3adebfe06fb3be274dfc5c0908805d9f934de52b9",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/rubrics/compliance_report.yaml",
+      "source_sha256": "f386c1f235e94b9620448b0f7a6383ca13ac7c4595cec5d9cbb06d226660f592",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/rubrics/project_brief.yaml",
+      "source_sha256": "27f0f7164cf2d8a1b17cd838ccaba9bcd408363eeedcb78cab55916dd4b722a1",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/rubrics/quality_report.yaml",
+      "source_sha256": "08c23718d781667e3c8b61559df5fc6c98bb6f74228574ced74f9d66a4a271a6",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/rubrics/story_bible.yaml",
+      "source_sha256": "8e0d45107aaed13df118af96abf05c765fc53fea684e8c7a95d7b77f432623c3",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "eval/tools/eval_role_llm.py",
+      "source_sha256": "d28e537f9551169fc81d0751e04e3c9d5c8188dc562174ba26f280eefa7dbc89",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "foundation/constraints/artifact-ingest.yaml",
+      "source_sha256": "6df35743c13463ce304e6819497aaec228ab4258cbaf967de039d9d85057cb36",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/constraints/"
+      ],
+      "decision": "重写为独立数值/枚举契约并保留来源引用。",
+      "verified": false
+    },
+    {
+      "source": "foundation/constraints/commercial-formulas.yaml",
+      "source_sha256": "4793d3b542d07ca86638bd80f3a99004b800c450b648a95d2f239a75c529c777",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/constraints/"
+      ],
+      "decision": "重写为独立数值/枚举契约并保留来源引用。",
+      "verified": false
+    },
+    {
+      "source": "foundation/constraints/continuity-checkpoint.yaml",
+      "source_sha256": "19922b90e05446a25f0dfe866eadf1db6e0dcde895a1c0a3deb41c2da0ff30f5",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/constraints/"
+      ],
+      "decision": "重写为独立数值/枚举契约并保留来源引用。",
+      "verified": false
+    },
+    {
+      "source": "foundation/constraints/narrative-metrics.yaml",
+      "source_sha256": "b969e3bb8d3e9299d380ec22029c0661f721f83ca41caba691537d02493237da",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/constraints/"
+      ],
+      "decision": "重写为独立数值/枚举契约并保留来源引用。",
+      "verified": false
+    },
+    {
+      "source": "foundation/constraints/quality-scoring.yaml",
+      "source_sha256": "8721364d6f924baa7099ce5899ef3afe587db9e933975d9cb3929140dbe69a42",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/constraints/"
+      ],
+      "decision": "重写为独立数值/枚举契约并保留来源引用。",
+      "verified": false
+    },
+    {
+      "source": "foundation/constraints/script-format.yaml",
+      "source_sha256": "4167535224142ff7626cefeda2f4fe09a4b7ffc7422e4b20b830a8fe0571c4ba",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/constraints/"
+      ],
+      "decision": "重写为独立数值/枚举契约并保留来源引用。",
+      "verified": false
+    },
+    {
+      "source": "foundation/constraints/series-scale.yaml",
+      "source_sha256": "5d6ea74b79bce699b18758d50918525aca1c70ae5098cfbde686fc40f07ec158",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/constraints/"
+      ],
+      "decision": "重写为独立数值/枚举契约并保留来源引用。",
+      "verified": false
+    },
+    {
+      "source": "foundation/presets/README.md",
+      "source_sha256": "45bf7f136e58ba9327544252ff82eda4f9e34947969acf11ba4dab723f429343",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/presets/"
+      ],
+      "decision": "重写为独立数值/枚举契约并保留来源引用。",
+      "verified": false
+    },
+    {
+      "source": "foundation/presets/agent-runtime.yaml",
+      "source_sha256": "e8ad0a480522d16021a12c67e9d0efff321ba7e63e79897d5c7e1c6f5cb40d05",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/presets/"
+      ],
+      "decision": "重写为独立数值/枚举契约并保留来源引用。",
+      "verified": false
+    },
+    {
+      "source": "foundation/presets/platform-profiles.yaml",
+      "source_sha256": "24cd44df4c16736fe15a4b32b304a7f9266c5864e15410de641733f06606560e",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/presets/"
+      ],
+      "decision": "重写为独立数值/枚举契约并保留来源引用。",
+      "verified": false
+    },
+    {
+      "source": "foundation/presets/production-feasibility.yaml",
+      "source_sha256": "06a9cb7a01fdb0c272add1c3c88596d1f6c13fcc6112cd551c2cc8480237847c",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/presets/"
+      ],
+      "decision": "重写为独立数值/枚举契约并保留来源引用。",
+      "verified": false
+    },
+    {
+      "source": "foundation/presets/scoring-presets.yaml",
+      "source_sha256": "3fab5569947d9bf276d1f54ce7fbeadf02a921b1df85f69ce3113484ca560ed1",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/presets/"
+      ],
+      "decision": "重写为独立数值/枚举契约并保留来源引用。",
+      "verified": false
+    },
+    {
+      "source": "foundation/rules/02-character.yaml",
+      "source_sha256": "2410280febf5825ea28a0f667b35fea424a9dfc250df3e9c5989c67b0860435f",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/evaluations/atomic-rules/"
+      ],
+      "decision": "拆分为单义原子规则及其正反边界测试。",
+      "verified": false
+    },
+    {
+      "source": "foundation/rules/03-structure.yaml",
+      "source_sha256": "7a617983afda5a0f5507e008be0a44a6be0f1cd2a260f9e6fea2e9e6f2d9385b",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/evaluations/atomic-rules/"
+      ],
+      "decision": "拆分为单义原子规则及其正反边界测试。",
+      "verified": false
+    },
+    {
+      "source": "foundation/rules/04-scene-dialogue.yaml",
+      "source_sha256": "85aaba16b33548817efcbc092cfb88a006dbb69af52743d4412bd55b85e317f6",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/evaluations/atomic-rules/"
+      ],
+      "decision": "拆分为单义原子规则及其正反边界测试。",
+      "verified": false
+    },
+    {
+      "source": "foundation/rules/05-hooks-payoff.yaml",
+      "source_sha256": "d1f57457322a817a69b967ec03b1254491ab74c4441fa499f944d4efb0531e17",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/evaluations/atomic-rules/"
+      ],
+      "decision": "拆分为单义原子规则及其正反边界测试。",
+      "verified": false
+    },
+    {
+      "source": "foundation/rules/INDEX.md",
+      "source_sha256": "968e187e3e3157353df86004a03fb8113aa89d4f70356b9a8f09b080b5d4c984",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/evaluations/atomic-rules/"
+      ],
+      "decision": "拆分为单义原子规则及其正反边界测试。",
+      "verified": false
+    },
+    {
+      "source": "foundation/rules/compliance-core.yaml",
+      "source_sha256": "6fc1d35028c69d4a6565feb7be7f960b52e99d2dd38c905c3372f31036d550b9",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/evaluations/atomic-rules/"
+      ],
+      "decision": "拆分为单义原子规则及其正反边界测试。",
+      "verified": false
+    },
+    {
+      "source": "foundation/rules/concept-rules.yaml",
+      "source_sha256": "4dbfe1115b50059e20ecdd6e1718b8402a16b45823a8f0a91b6c68057d61fadc",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/evaluations/atomic-rules/"
+      ],
+      "decision": "拆分为单义原子规则及其正反边界测试。",
+      "verified": false
+    },
+    {
+      "source": "foundation/rules/genres/matrix.yaml",
+      "source_sha256": "ad324c1b8023eb8c10a980c6e4a9c937e76188d8377efd6f7aa6931a2417b90b",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/evaluations/atomic-rules/"
+      ],
+      "decision": "拆分为单义原子规则及其正反边界测试。",
+      "verified": false
+    },
+    {
+      "source": "foundation/rules/learned-rules.yaml",
+      "source_sha256": "8a29e1ddff91a6552d495134e6f599929dda70354210be20c953044073050940",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/evaluations/atomic-rules/"
+      ],
+      "decision": "拆分为单义原子规则及其正反边界测试。",
+      "verified": false
+    },
+    {
+      "source": "foundation/rules/narrative-craft.yaml",
+      "source_sha256": "8bca1d609ca3bcea427ebf1ab670d95805073cbdd7e361d4aff0b4925983f48f",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/evaluations/atomic-rules/"
+      ],
+      "decision": "拆分为单义原子规则及其正反边界测试。",
+      "verified": false
+    },
+    {
+      "source": "foundation/rules/originality-rules.yaml",
+      "source_sha256": "7e7c47b7b294623a1a5e5e2d8cd56b0583ee3bcf6d8b1be5a1ae96e0f510918a",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/evaluations/atomic-rules/"
+      ],
+      "decision": "拆分为单义原子规则及其正反边界测试。",
+      "verified": false
+    },
+    {
+      "source": "foundation/rules/philosophy.yaml",
+      "source_sha256": "535a8a6acd8ec464da53e8bc368f10635d8e95dee330ed1ad3b0d4fcf45b1ab0",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/evaluations/atomic-rules/"
+      ],
+      "decision": "拆分为单义原子规则及其正反边界测试。",
+      "verified": false
+    },
+    {
+      "source": "foundation/rules/plotting-rules.yaml",
+      "source_sha256": "b699886f6e747318923c8beef848835f8ceedd5124dc4c18199e94bbe1c07aae",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/evaluations/atomic-rules/"
+      ],
+      "decision": "拆分为单义原子规则及其正反边界测试。",
+      "verified": false
+    },
+    {
+      "source": "foundation/rules/production-rules.yaml",
+      "source_sha256": "7bc62cfc0ee7bebca60f5b0c8220128a4fea4febd5c10109bf703bed35df45a1",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/evaluations/atomic-rules/"
+      ],
+      "decision": "拆分为单义原子规则及其正反边界测试。",
+      "verified": false
+    },
+    {
+      "source": "foundation/rules/scoring-core.yaml",
+      "source_sha256": "d4ed137861913eba2e9910305b3f44105547e8498f893a8344ca47af98d40c91",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/evaluations/atomic-rules/"
+      ],
+      "decision": "拆分为单义原子规则及其正反边界测试。",
+      "verified": false
+    },
+    {
+      "source": "foundation/rules/stage-playbook.yaml",
+      "source_sha256": "c24dc0b25f5029f69ebe266d3adcfe5010bc7079665bbf5996cfe85287d16215",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/evaluations/atomic-rules/"
+      ],
+      "decision": "拆分为单义原子规则及其正反边界测试。",
+      "verified": false
+    },
+    {
+      "source": "foundation/rules/world-rules.yaml",
+      "source_sha256": "241eb5824a1a6541d2de4389602964f8260c8e240f27224024a25ce20ee50042",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/evaluations/atomic-rules/"
+      ],
+      "decision": "拆分为单义原子规则及其正反边界测试。",
+      "verified": false
+    },
+    {
+      "source": "foundation/theme-matrix.yaml",
+      "source_sha256": "015045f7261d2b1ee9cb7b71c5b63e3df478a2951452736324b7b52d37a72a8a",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/constraints/theme/"
+      ],
+      "decision": "重建为 V6 题材与组合约束。",
+      "verified": false
+    },
+    {
+      "source": "inspirations/inspirations.md",
+      "source_sha256": "73f0fa60e649bd77e15cc2f71110b73f5f1bf5324e4c67661997da01b1cfe359",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/inspirations/inspirations.md"
+      ],
+      "decision": "迁移为创意来源材料，保持与原子规则隔离。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/README.md",
+      "source_sha256": "137f83ee5a39c155e1a6b06a802e5222ba1ceee114aa9ce60debf067659a0b69",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/README.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/craft/learned-rules.md",
+      "source_sha256": "98544a224f815f98697bd8b85cc2363a7d711966d06f1f948c6137ed8c4ff4f8",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/craft/learned-rules.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/craft/shanyin-feature-format.md",
+      "source_sha256": "5c0c2138aab64c32fc608f3dafe86fae4f8ad892749fa8e38e150d4278841d04",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/craft/shanyin-feature-format.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/craft/shanyin-screenwriting-exec.md",
+      "source_sha256": "14363971ff1927bac0d2e125f781d7754058565fad6eda646599084e4f548994",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/craft/shanyin-screenwriting-exec.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/craft/shanyin-screenwriting-methodology.md",
+      "source_sha256": "c6fd2653e84f14fa3616a79375b7dc2e6dc689182127c2680f583f7601e0586d",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/craft/shanyin-screenwriting-methodology.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/craft/shanyin-series-exec.md",
+      "source_sha256": "a22bad6e7df5abaefc12690e538b3efc419c56e6e07019aed390d9099129c56b",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/craft/shanyin-series-exec.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/craft/shanyin-series-format.md",
+      "source_sha256": "98dee399542b021a83275b3e07355e16abd2de161f33f6464b5ec5b49fc9be92",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/craft/shanyin-series-format.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/craft/theme-templates.md",
+      "source_sha256": "0198114d47dd729e24eb7f27f3c9003fe2e56a887bbfea02a121ffd2602bad26",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/craft/theme-templates.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/craft/tier2-genre-rules.md",
+      "source_sha256": "e38b15ce85ac7ff486246ddf5ed556cfb385f31d2203d2854423f8f3bb5790f2",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/craft/tier2-genre-rules.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/craft/tier3-stage-rules.md",
+      "source_sha256": "9ba19c5839837dcb2a5385fb4c0c0d29c164adeaf579ce061def49eb476f3f60",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/craft/tier3-stage-rules.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/knowledge-sections.md",
+      "source_sha256": "8951c2d4af1e4b4881c44d0ccb04701c813d11908ee1d209024bdb9d85d46f5f",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/knowledge-sections.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/market/douyin-formulas/_shared.md",
+      "source_sha256": "5acc09a5dd2d704ca04784397ab55c5a87af5ed1d015dff2b018b56b48545a1a",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/market/douyin-formulas/_shared.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/market/douyin-formulas/ancient-aesthetic.md",
+      "source_sha256": "e00be9cc7dc642904fcd0570476d5f1a4432129b64802fb4d62b6c6ebe995f52",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/market/douyin-formulas/ancient-aesthetic.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/market/douyin-formulas/anti-trope.md",
+      "source_sha256": "a8a918d4cc78fb4d3385aa15452cbb578c5668a09eaea0cf9d25e3c78af97a22",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/market/douyin-formulas/anti-trope.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/market/douyin-formulas/catalog.yaml",
+      "source_sha256": "3b692cf50549b3ad75759df0b9e7d4ca953ba26a07e77a30ad32f53e56e7314e",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/market/douyin-formulas/catalog.yaml"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/market/douyin-formulas/dual-power-game.md",
+      "source_sha256": "b457612cd2726a355aa39b8a2aea21f66e7f4845355051bc38cb14801e211f15",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/market/douyin-formulas/dual-power-game.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/market/douyin-formulas/era-empathy.md",
+      "source_sha256": "1b42fe77975fe494c8fb61febaabb73332b87782f305f07cc3e3c16d458329fd",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/market/douyin-formulas/era-empathy.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/market/douyin-formulas/fate-reversal-awakening.md",
+      "source_sha256": "cb60cb65e8ca339d20f69d516d35030928e099254ab8e256588498be7e790eba",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/market/douyin-formulas/fate-reversal-awakening.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/market/douyin-formulas/hidden-identity-reversal.md",
+      "source_sha256": "a37ad119f63e593a4b4cd13a2b7129e6ad4479d100c4af0ba071a8c098401441",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/market/douyin-formulas/hidden-identity-reversal.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/market/douyin-formulas/suspense-emotion.md",
+      "source_sha256": "d99b35f112418c9ef19165d3217384b64ca89815e8ec756747aa1c9d378ce67c",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/market/douyin-formulas/suspense-emotion.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/market/douyin-formulas/sweet-daily.md",
+      "source_sha256": "0bd40b609b2fe9826025ca80ddf4c9e83e88379ef4c36456a4b6491591481799",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/market/douyin-formulas/sweet-daily.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/market/industry-benchmarks.md",
+      "source_sha256": "996b15f463da9e7fff32b3bb64bee7219a3dcb3547e246a3955fd13bd0293a5d",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/market/industry-benchmarks.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/market/market-insights.md",
+      "source_sha256": "e35abe6483a40f9073cc3b6238b7c82fc95971e3ab298bf065b07ce75831e4a2",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/market/market-insights.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/output-schemas.md",
+      "source_sha256": "814b32155d6c93b89d21e6c588746c521d09391345c0279ba28df2c72ddb92d3",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/output-schemas.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/production/shanyin-director-exec.md",
+      "source_sha256": "61606d67d2d3ff42a1620087f8d371341c46906accfaffea54388f0417b127ed",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/production/shanyin-director-exec.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/production/shanyin-director-methodology.md",
+      "source_sha256": "0109a4dfa67c6dd8c08cc2b7738476ac78a044b8cd5168502a5fae018e8502f8",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/production/shanyin-director-methodology.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/production/shanyin-director-styles.md",
+      "source_sha256": "c80066ac3a39fa20d6ccf36a6edea081541e9cf4af2a68174e2ce14a3e7e06dc",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/production/shanyin-director-styles.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/production/story-to-game.md",
+      "source_sha256": "80571ef6d35e60a7cef9c6201eb0c71b82f34c625680191507cca65dc9f8de1d",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/production/story-to-game.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/quality/originality-rules.md",
+      "source_sha256": "ebaa79a1c58f472eca2bfe947b313ad0f1ef3c349b3a79100eaa28d67667ffd1",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/quality/originality-rules.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/quality/s-class-standards.md",
+      "source_sha256": "aedbcc85293398d9a00d836dce395831da519d19032fb7f71b1f7b3163fb3e7c",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/quality/s-class-standards.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/quality/scoring-presets.md",
+      "source_sha256": "54cbe38aa0e5305e9717f37e0e59986e9a4a6e88f8a5b527d782eab61b815d1f",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/quality/scoring-presets.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/quality/structured-output-guards.md",
+      "source_sha256": "fbd301e29a5ac187da93051fac538a7146cf1563df465f4f5149643d48d059d1",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/quality/structured-output-guards.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/quality/tier4-compliance.md",
+      "source_sha256": "65bba53c4c0ab936082e50982917ec0e388936cca53e6f7dab1ada64ed0ad995",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/quality/tier4-compliance.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "knowledge/system/storyforge-runtime-methodology.md",
+      "source_sha256": "57734f0c74bfbcd81f3e76365337c8b51ade81e481b5f92843035dfbc25c4863",
+      "disposition": "migrate",
+      "targets": [
+        "v6/sources/system/storyforge-runtime-methodology.md"
+      ],
+      "decision": "迁移为可溯源领域材料，不直接作为运行时规则。",
+      "verified": false
+    },
+    {
+      "source": "manifest/config-policy.yaml",
+      "source_sha256": "d781447b7191c6eb39d3caec0342ecba6f7f9ed57f41e90d769b94988e717dfa",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/manifest.yaml",
+        "v6/contracts/"
+      ],
+      "decision": "围绕 V6 操作、调用追踪和版本边界重建。",
+      "verified": false
+    },
+    {
+      "source": "manifest/drama-skills.manifest.yaml",
+      "source_sha256": "0f54565f3fdf17b39fcab83292f7f7a119dd153b358d4a048a5581df021b69fe",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/manifest.yaml",
+        "v6/contracts/"
+      ],
+      "decision": "围绕 V6 操作、调用追踪和版本边界重建。",
+      "verified": false
+    },
+    {
+      "source": "modules/adaptation-originality.md",
+      "source_sha256": "a9664c8d37d0798c8804757e99bb0b15ed626b140abe2a9d7ee3d796d8039025",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/budget-estimator.md",
+      "source_sha256": "de3ae104fdef3ce64d7d69273ec295b1d225e2ac42958d56c61b7cd5f80ed23f",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/catalog.yaml",
+      "source_sha256": "9417b621954f5ea4dc4a1332922e5b1d63a11ba02d9921d2fc5bc6c1d03fb14d",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/capabilities/catalog.yaml"
+      ],
+      "decision": "按 V6 无状态能力目录重建。",
+      "verified": false
+    },
+    {
+      "source": "modules/character-system.md",
+      "source_sha256": "3754ec8e8b71fa02c27a94ad76a0472b8f203507f67b91347d2a11964a0cd49f",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/concept-development.md",
+      "source_sha256": "a9dd903925289b75f103f9aedd1bf198d4d8055042f525ff153de2a347eacf51",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/conflict-escalation.md",
+      "source_sha256": "617e95fd8921b51cb01af1f4def7706fe7563d5c01b260c1d54390ea82350af1",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/continuity-audit.md",
+      "source_sha256": "0e47d2b47b294204786d243fd39001ad3a58029c43c8d2208a68ac5c403fe386",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/continuity-snapshot.md",
+      "source_sha256": "6c90138216fbd3655a26321adfe4fa4909a3bd5455466e0cffcd9186bd3090a8",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/delivery-check.md",
+      "source_sha256": "9dabbc4c72262d58e57b9e51ddb91d96cc66365fc7d4e72b702bb27cd571df89",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/dialogue-craft.md",
+      "source_sha256": "d20064a7c5a931453f4557f2d9c5c62d2541aee38297c418a8b697f451044761",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/dialogue-polish.md",
+      "source_sha256": "a670e11caebe25c6ca5e98dc3b93ee609d6c721be2e0b2da0b76b2246d1310d5",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/episode-card.md",
+      "source_sha256": "fd8ab862af49589bf8641ebbdf38c73650c91a57dee37a667c0051e615c61315",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/episode-emotion-nodes.md",
+      "source_sha256": "f679401545972b7fb5526e457c9832e090163623128a2cfe182a9cade076ff70",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/format-fix.md",
+      "source_sha256": "bd9e8a8905354e96af728f37d573260ad3d61a42ec88722ebe167de04a7ecbf5",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/formula-analysis.md",
+      "source_sha256": "242be070929b9bfec22d5be800cd42721f142ef21cae8b8997524ef1599c6c25",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/hook-system.md",
+      "source_sha256": "ab8f39778ff844d3e5a8108765e107531033cad31e597d1b42afbf654147e8e1",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/market-radar.md",
+      "source_sha256": "805e5725c2eaf9fce938d42f6a7fdda67a922670f9cdb0804c31301b47d59ef7",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/marketing-copy.md",
+      "source_sha256": "3eda9fd9022fbba43ca5b2263ca076bd6690484a26715858455e6e6d18283026",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/payment-checkpoint.md",
+      "source_sha256": "653ed5856079a986122fce489a643bc9060a59396195172ba605260cc4ab4d1f",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/platform-ops-checklist.md",
+      "source_sha256": "deeb3c3d5f7b4db9e3852b86dfa34d65a5a08aaec2098c4ff2a86600c0f1ad26",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/production-feasibility.md",
+      "source_sha256": "f5baad66384413b9a5156b86f2d4a6a83d126d4b52918ffed22268b212d8ffef",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/reversal-foreshadowing.md",
+      "source_sha256": "46e5f65940960cf39583ac31a02d0edd355c929d704f9ca0891e8926b33f697e",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/scene-writing.md",
+      "source_sha256": "c762c287f68420111ce32f5f6a180002fc7b3c0a2befb208fd30c46a1aae9485",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/series-emotion-curve.md",
+      "source_sha256": "abfa57be33d0feb800b54029d237c08c82869e79781dc7d1f7231343c4ae90e9",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/series-structure.md",
+      "source_sha256": "aa87f8fd29e02203c0d02b9e683f07ef448061a3643910f6cbb2afad965c815d",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/story-to-game.md",
+      "source_sha256": "07689d17c393c8ed6957fedba7904101cccd4b25429ac99b8741d518f6da30ef",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/storyboard-9col.md",
+      "source_sha256": "710b1effd0aa6fc6472f89a0b3c2c4e8e532030eab56a40eae284ed63e18eb04",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/tear-down-6d.md",
+      "source_sha256": "9b4df16e6bff5a16140fd2f4b02c1b6e094307b5a1072a1bae5ed9be44eb9c84",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/visual-anchor.md",
+      "source_sha256": "3e39afea926a2e10005832e70313dcb75acef7a0d77123aca51e6ef04922a933",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/word-count-governance.md",
+      "source_sha256": "f92212d725c4c1fb9779cbd526a67b55aa03aea78e10b0bff80b410279132416",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "modules/world-rules.md",
+      "source_sha256": "50c21d812b00ee04780014ac3d210219001ab915f7f69319ad629e59636a4da0",
+      "disposition": "split",
+      "targets": [
+        "v6/atoms/",
+        "v6/capabilities/",
+        "v6/evaluations/capabilities/"
+      ],
+      "decision": "提取原子规则并重建无状态能力及测试。",
+      "verified": false
+    },
+    {
+      "source": "optimizations/README.md",
+      "source_sha256": "c47d728fd14b7383419edb15e8964435a871dd2efcff79fe42935c6fc844ee1d",
+      "disposition": "archive",
+      "targets": [],
+      "decision": "V5 优化产物仅归档；V6 优化必须基于新评测重建。",
+      "verified": false
+    },
+    {
+      "source": "optimizations/generic/story-bible/fewshots.v1.yaml",
+      "source_sha256": "75909c1a193e0df40c52bb3fbd6ac7f52fe64ea7dd0f3fd7d6e3303d30ef27f8",
+      "disposition": "archive",
+      "targets": [],
+      "decision": "V5 优化产物仅归档；V6 优化必须基于新评测重建。",
+      "verified": false
+    },
+    {
+      "source": "optimizations/generic/topic-director/fewshots.v1.yaml",
+      "source_sha256": "a0845fa26898823cd71c6ae5d5be0d1668132dfe92ddc462103d5a800a24c9c0",
+      "disposition": "archive",
+      "targets": [],
+      "decision": "V5 优化产物仅归档；V6 优化必须基于新评测重建。",
+      "verified": false
+    },
+    {
+      "source": "orchestration/original-track.yaml",
+      "source_sha256": "213fc1b25ebee82490c4aadb92d4ae3d38ea99c0874b5542f022867b5dd9caf2",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/workflows/"
+      ],
+      "decision": "按 V6 操作事务重建流程，禁止调用 V5 角色状态机。",
+      "verified": false
+    },
+    {
+      "source": "orchestration/story-adapt-track.yaml",
+      "source_sha256": "2b99cfbe94f11e6a623402ed5122f48c2e8d78e20a70766bdc45843c75f653c5",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/workflows/"
+      ],
+      "decision": "按 V6 操作事务重建流程，禁止调用 V5 角色状态机。",
+      "verified": false
+    },
+    {
+      "source": "orchestration/workflow-transitions.yaml",
+      "source_sha256": "e767247fa19c058ffc40cf500f45316ba49b762c801dfebc595ce379fca7e0ba",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/workflows/"
+      ],
+      "decision": "按 V6 操作事务重建流程，禁止调用 V5 角色状态机。",
+      "verified": false
+    },
+    {
+      "source": "quality/golden-cases.yaml",
+      "source_sha256": "4df1df854ed5d580495e58050ed1b3cbe2e9383ae672b466db784c1f62b1d41f",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/evaluations/"
+      ],
+      "decision": "迁移意图并重写为原子、能力、操作和端到端分层评测。",
+      "verified": false
+    },
+    {
+      "source": "registry.yaml",
+      "source_sha256": "ffc95798eb05595377fede30143c929701f6272a4e06911fdf842edf8d8205f8",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/manifest.yaml",
+        "v6/contracts/"
+      ],
+      "decision": "围绕 V6 操作、调用追踪和版本边界重建。",
+      "verified": false
+    },
+    {
+      "source": "requirements-dev.txt",
+      "source_sha256": "dfcbd1adfe01c18d3fa674fb124b1e5f4faed8c645c85d34f70edbff8d6a2b90",
+      "disposition": "merge",
+      "targets": [
+        "v6/requirements-dev.txt"
+      ],
+      "decision": "合并进入 V6 工具依赖或仓库治理配置。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-compliance-guard/SKILL.md",
+      "source_sha256": "69cf0ec999c6b8805e4b720a9c6326c9b7f6f6b6ff6e8fc4b07e4732943ab8e9",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-compliance-guard/role.yaml",
+      "source_sha256": "b2f85f90fc0b957e9be325dc9a4906e6a9093145e35c691eab71834bc538d3f0",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-delivery-tool/SKILL.md",
+      "source_sha256": "f9a2da70985dd33837414b29346c0d517bd4499891dffbcb791963a1132f98a5",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-delivery-tool/role.yaml",
+      "source_sha256": "5a55e1f48edbe5033aa7af6bfeac29c46843cb1428a8afe0e2e982d8c291deb3",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-episode-designer/SKILL.md",
+      "source_sha256": "6d41e80f4675076fb9830e290fb6a20dc4edf0f89664dcc742c1a39628f3160b",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-episode-designer/fewshots.v1.yaml",
+      "source_sha256": "c5d99dc37ea504565330ea36ebb4e66823dfcdec6bddf4384c6920b8f20002ad",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-episode-designer/role.yaml",
+      "source_sha256": "14b534ff2dc8ce24a0797d631f45bf6e1e4d0bcbb9430b330ef09ba7efae7ba8",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-revision-master/SKILL.md",
+      "source_sha256": "9d5383cad9584a2478a478d8cb1b735809374f45caa8eab2da2da851d38ce674",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-revision-master/role.yaml",
+      "source_sha256": "87a6c1dc359a4ed5026856d085b04ec811be3911ae8fd21f29957b48890001e9",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-script-scorer/SKILL.md",
+      "source_sha256": "eaa147facf16ce4586c24c1a5c3e77aee59510f1a7b3a1c83b4fec84f83ae2c0",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-script-scorer/role.yaml",
+      "source_sha256": "ad0a0e5fdbde3e02f3253b0d96aba0f6180e6eb6496d294ad0d13d549c0a9062",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-script-writer/SKILL.md",
+      "source_sha256": "6f22afd35bee9ae5f3611593397147e5fa1a540a3e264a0c85d85a29f295ee50",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-script-writer/fewshots.v1.yaml",
+      "source_sha256": "e86069fd46f4178e0bc6e0c0b7eca8a89287c572e66793e226e9ded3084fe37f",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-script-writer/role.yaml",
+      "source_sha256": "4a850d22749c77a8cd80894e29d0a334ef14734ed935f7c10ec17c559958b299",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-script-writer/tasks/write-episodes.md",
+      "source_sha256": "a2a27146809335d7cee9f416a6e67b8c9d77c9b15e8ba7615d48cf98eac9e3e0",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-story-bible/SKILL.md",
+      "source_sha256": "5eadfc26141f9778524ed9d30f57d15c89422089a60b405312303687b755cb7b",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-story-bible/anti-examples.yaml",
+      "source_sha256": "dde2571a5ae7c7b98fbe53d426620d0e9c83680d0352da7b9d956b99909ab946",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-story-bible/fewshots.v1.yaml",
+      "source_sha256": "fc133577197aed488f2f2f31393235f83f61f55cf55a979da926826ed382de12",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-story-bible/role.yaml",
+      "source_sha256": "0198a1404312fc60ee0e3b43d7e2e0ad44f0d357248200a31ce3861ba6f5156c",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-topic-director/SKILL.md",
+      "source_sha256": "99f06aee8fca597fd3ba4b15ceb3a6a31aa0afed0db036f6010e352849999f3d",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-topic-director/anti-examples.yaml",
+      "source_sha256": "b227fe29875ed882a7029da96061ccf6d7e53d91f6e606e713ef21c210e9cf37",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-topic-director/fewshots.v1.yaml",
+      "source_sha256": "34e9a09498d1aecf837a4cf3fc070261bef54af330c2ef61b312c0452e7178ea",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "roles/drama-topic-director/role.yaml",
+      "source_sha256": "ccd64a86411d1dd75cd2d59d1cd58e1df3819a63957ea85007afbed81c5533b9",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/operations/",
+        "v6/capabilities/"
+      ],
+      "decision": "按操作而非角色重建；旧执行说明不直接复用。",
+      "verified": false
+    },
+    {
+      "source": "runtime/__init__.py",
+      "source_sha256": "3d7a0da44bea14e54f6c609ea8e93f7f4d3e0c3ceb28ae18e9ba4930f77f2d93",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/engine/"
+      ],
+      "decision": "使用 V6 单一路径执行内核替换。",
+      "verified": false
+    },
+    {
+      "source": "runtime/__pycache__/__init__.cpython-312.pyc",
+      "source_sha256": "972fc1f0339c6f13edde16499762040c7a8197b11ea0144a277e828066f0d9d8",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/engine/"
+      ],
+      "decision": "使用 V6 单一路径执行内核替换。",
+      "verified": false
+    },
+    {
+      "source": "runtime/__pycache__/__init__.cpython-314.pyc",
+      "source_sha256": "79646b09f2ab05c5f6fec343cdf5563f81f10b954466a131704dc78562a4e328",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/engine/"
+      ],
+      "decision": "使用 V6 单一路径执行内核替换。",
+      "verified": false
+    },
+    {
+      "source": "runtime/__pycache__/workflow_engine.cpython-312.pyc",
+      "source_sha256": "ead5c90cb9915ca9aa88cd9ad6ef241d4f5c0c68568b616302723c8d5198b700",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/engine/"
+      ],
+      "decision": "使用 V6 单一路径执行内核替换。",
+      "verified": false
+    },
+    {
+      "source": "runtime/__pycache__/workflow_engine.cpython-314.pyc",
+      "source_sha256": "b819b7bb2964145cc8ae55e6d84f0197f1d580568101d7edcb1ee6bb62c1348f",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/engine/"
+      ],
+      "decision": "使用 V6 单一路径执行内核替换。",
+      "verified": false
+    },
+    {
+      "source": "runtime/workflow_engine.py",
+      "source_sha256": "089fb0f77bf11770846237e8e063c7aa1799c8596f3c6ba9b8fbdad8b43d7e8d",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/engine/"
+      ],
+      "decision": "使用 V6 单一路径执行内核替换。",
+      "verified": false
+    },
+    {
+      "source": "schemas/artifacts/compliance_report/1.schema.json",
+      "source_sha256": "da235124301f4bcae3d25666444058dd37737ffaf53feafb1b7338c43645f033",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/artifacts/",
+        "v6/contracts/"
+      ],
+      "decision": "审计字段语义后重写 Schema，不机械复制宽松结构。",
+      "verified": false
+    },
+    {
+      "source": "schemas/artifacts/episode_scripts/1.schema.json",
+      "source_sha256": "15b9ff572cf15d2f0de179bec41077f8ac5be94ecbcd895ba2f144e56cee16b7",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/artifacts/",
+        "v6/contracts/"
+      ],
+      "decision": "审计字段语义后重写 Schema，不机械复制宽松结构。",
+      "verified": false
+    },
+    {
+      "source": "schemas/artifacts/memory_checkpoint/1.schema.json",
+      "source_sha256": "41c09a14407d7f4fdbc8d5065ff3822fdb6bdf33f04e139945d9f7610fd737bc",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/artifacts/",
+        "v6/contracts/"
+      ],
+      "decision": "审计字段语义后重写 Schema，不机械复制宽松结构。",
+      "verified": false
+    },
+    {
+      "source": "schemas/artifacts/narrative_plan/1.schema.json",
+      "source_sha256": "41afcf5938a1b4fd975807fd259cd273a3ff18e8915d551d993fdec499d6901c",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/artifacts/",
+        "v6/contracts/"
+      ],
+      "decision": "审计字段语义后重写 Schema，不机械复制宽松结构。",
+      "verified": false
+    },
+    {
+      "source": "schemas/artifacts/polished_script/1.schema.json",
+      "source_sha256": "e573fe894408984d91c965263a825e9e3decae30dbd40444c7ffb762d7fef0f4",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/artifacts/",
+        "v6/contracts/"
+      ],
+      "decision": "审计字段语义后重写 Schema，不机械复制宽松结构。",
+      "verified": false
+    },
+    {
+      "source": "schemas/artifacts/production_package/1.schema.json",
+      "source_sha256": "6ea4a87cf4921080056a6490078908fec4a569358f5108ece4594574cc751516",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/artifacts/",
+        "v6/contracts/"
+      ],
+      "decision": "审计字段语义后重写 Schema，不机械复制宽松结构。",
+      "verified": false
+    },
+    {
+      "source": "schemas/artifacts/project_brief/1.schema.json",
+      "source_sha256": "a7b370cc2d58662d0661099633e519f39eec63b3ace9e6e5c64900932e866410",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/artifacts/",
+        "v6/contracts/"
+      ],
+      "decision": "审计字段语义后重写 Schema，不机械复制宽松结构。",
+      "verified": false
+    },
+    {
+      "source": "schemas/artifacts/quality_report/1.schema.json",
+      "source_sha256": "9764e078b69af8edee7a2d8e9b3b23b7027ee71bae2ebdce3c4e1a96e862c740",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/artifacts/",
+        "v6/contracts/"
+      ],
+      "decision": "审计字段语义后重写 Schema，不机械复制宽松结构。",
+      "verified": false
+    },
+    {
+      "source": "schemas/artifacts/score_dimension/1.schema.json",
+      "source_sha256": "123a60ec173b3175c27eef9b4ed7f83fd6b0c4b54ee762eac9bf00ffce3c408b",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/artifacts/",
+        "v6/contracts/"
+      ],
+      "decision": "审计字段语义后重写 Schema，不机械复制宽松结构。",
+      "verified": false
+    },
+    {
+      "source": "schemas/artifacts/story_bible/1.schema.json",
+      "source_sha256": "37ace406c0366156a7f506117b70975791b7b5b875ddb6ccdec0d0b822ec4606",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/artifacts/",
+        "v6/contracts/"
+      ],
+      "decision": "审计字段语义后重写 Schema，不机械复制宽松结构。",
+      "verified": false
+    },
+    {
+      "source": "schemas/generated/parameters.schema.json",
+      "source_sha256": "97afed4277af92aa645b0c408ab3c72e6f08a5a80850a0dd96d109e907c736e3",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/artifacts/",
+        "v6/contracts/"
+      ],
+      "decision": "审计字段语义后重写 Schema，不机械复制宽松结构。",
+      "verified": false
+    },
+    {
+      "source": "schemas/ops-config-overlay.v1.schema.json",
+      "source_sha256": "4571256c6ae259fb048114ecc84b119626cc6fdb6ca161a4fe34551e461cdca2",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/artifacts/",
+        "v6/contracts/"
+      ],
+      "decision": "审计字段语义后重写 Schema，不机械复制宽松结构。",
+      "verified": false
+    },
+    {
+      "source": "schemas/project-settings.v1.schema.json",
+      "source_sha256": "bb69b6ede31d35d1ab7c7080660ba2c14b5e5f5225170a354e55ddfb83d6ecb2",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/artifacts/",
+        "v6/contracts/"
+      ],
+      "decision": "审计字段语义后重写 Schema，不机械复制宽松结构。",
+      "verified": false
+    },
+    {
+      "source": "schemas/workflow-state.v1.schema.json",
+      "source_sha256": "7ccf33780c928ca7b388141d25658badac69f3d62c3570d0eb51a060d5ea6ea1",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/artifacts/",
+        "v6/contracts/"
+      ],
+      "decision": "审计字段语义后重写 Schema，不机械复制宽松结构。",
+      "verified": false
+    },
+    {
+      "source": "scripts/publish_to_demo_guo.sh",
+      "source_sha256": "0383ab1c03495dde23659000851b5381291a197b8db162576e338bddff8122f9",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "按 V6 发布与校验边界重建。",
+      "verified": false
+    },
+    {
+      "source": "tools/.gitignore",
+      "source_sha256": "01d8d0360f02a0c00e236a4eb2a1d8bdf83377acf442eaafad7a136bf14d6bb0",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/README.md",
+      "source_sha256": "df8143924c65b136e00e4a510b59ddf22dc34669c978c1ca444f5fdda2f478ab",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/_bootstrap.py",
+      "source_sha256": "e80474d38dd0543b49d36c988a16f567889aee67f36b612e1aa8d9fe38bf9f9e",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/fixtures/artifacts/valid-artifacts.json",
+      "source_sha256": "1d82f99fad8d751edb8da62f4239bffcfaa0a6f58f738048e5e1e8d10821afac",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/fixtures/config/overlay.yaml",
+      "source_sha256": "098213bff6b177f4f1623b6429e812aaa2826e282885c5debca56cc97004f57e",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/fixtures/config/project-settings.json",
+      "source_sha256": "2e7f33a43e68ddab60549134d2dc10e051b3bd631836b8c30862eb3619e14b7c",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/fixtures/workflow/scenarios.yaml",
+      "source_sha256": "566dedf50ae61f23bff6d55650be8efad464349c15157bf5eb5a1c93bc54e7fc",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/generators/__pycache__/export_workbench_schema.cpython-312.pyc",
+      "source_sha256": "852a8cca275adf26e5fa6168c264589ab02203895822a1a2ae3b4dd221ec8beb",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/generators/__pycache__/export_workbench_schema.cpython-314.pyc",
+      "source_sha256": "1279a6c604820e2fd00241aad2a4a3c1a83fa2c642a70c381a41b5bfc6533006",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/generators/export_workbench_schema.py",
+      "source_sha256": "0263b46f7640b80fd881c99c2c7ce0a910da0e05347eb8942dd319491a345b6c",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/generators/generate_parameter_schemas.py",
+      "source_sha256": "0fe6cbc9b648ddbdef0ff392cede747289a03302ca621c7a060232e485e33b0e",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/generators/generate_role_skeletons.py",
+      "source_sha256": "5f6284c6cc0024c7a04b8199701930c8440741adbd72abc03bf0abe03bb5fee3",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/__init__.py",
+      "source_sha256": "ba52ea85c2c3ea28df5f02f6d9748c72e7e1d6a84d37ef28509290b3c4b35ec1",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/__pycache__/__init__.cpython-312.pyc",
+      "source_sha256": "b517bc738c8e2cab965cd7b87c39bfb0e76fd044014b649a2e81b70ded61015b",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/__pycache__/__init__.cpython-314.pyc",
+      "source_sha256": "19e900cb0397aa11ed3df3c52d9607cf7e8aa800ea70946f5e9befd59992964a",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/__pycache__/condition_eval.cpython-312.pyc",
+      "source_sha256": "7bb9ccbb0f0b9db5a666f0bb3c784652cc69a5cf3db275d19fff09ae60857a8a",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/__pycache__/condition_eval.cpython-314.pyc",
+      "source_sha256": "b344298b92dd030ac27c002456777c4004c2784d8fccefed82973521b556508e",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/__pycache__/config_resolver.cpython-312.pyc",
+      "source_sha256": "be432d95e072d1bfd96055922204a2e8fd230668956906f1e6ffebb96cf1b0eb",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/__pycache__/config_resolver.cpython-314.pyc",
+      "source_sha256": "5260b7722faa4810cddd7420f87067ad410d5b22a78961cde78ff9a667831b90",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/__pycache__/contracts_loader.cpython-312.pyc",
+      "source_sha256": "0394830a9ace6cc7f516de25047ee2537cd17dfe97f008240402362fc96c58d2",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/__pycache__/contracts_loader.cpython-314.pyc",
+      "source_sha256": "495bf11c03dd2f4338349ac49aec65f00f265a298366d5664384c0e28448a7de",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/__pycache__/parameter_resolver.cpython-312.pyc",
+      "source_sha256": "38b884d97a21cbbea9d8d2d39c4213ea71f6dd31238fc40a0d53521bb8741567",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/__pycache__/parameter_resolver.cpython-314.pyc",
+      "source_sha256": "66527323e8408abecf7787682645f41a76f099800f2ad802d8683ab5503af6bf",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/__pycache__/parameter_schema_generator.cpython-312.pyc",
+      "source_sha256": "75db48348f9d866117ccf6731085796453fdbea71b994dd426a0bcbcebe387d2",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/__pycache__/parameter_schema_generator.cpython-314.pyc",
+      "source_sha256": "0c27d178216cbe4f30c303a15a4914585efba97ce313cba2d088cd443546d032",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/__pycache__/schema_validator.cpython-312.pyc",
+      "source_sha256": "41c545195d33442ea6353a367a09620f9c0b8471c0e16902384f81384f228f31",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/__pycache__/schema_validator.cpython-314.pyc",
+      "source_sha256": "f11336b011e1c9e6d792b562bc6e7a08fd78d8de0d681f8732cb57deaa0231b1",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/__pycache__/source_loader.cpython-312.pyc",
+      "source_sha256": "5a7460104987c0181359fd8bb9a6f181739860f39ad21d3449298b79ebf7e211",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/__pycache__/source_loader.cpython-314.pyc",
+      "source_sha256": "91794b072baf64580aa212494b35d3b9f4eb1875a06531863990e9d35c56471f",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/condition_eval.py",
+      "source_sha256": "cc398fdae6f34c4d8b07828ae233437aba1319ad735472713787218b4f90eeb6",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/config_resolver.py",
+      "source_sha256": "a4c0b8a626537520706c42d872e6f89df39479619171a1deb177989953607996",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/contracts_loader.py",
+      "source_sha256": "10435c477f270f1a905bcb6f8f01a505592652b11c401896a174f9cd5d1f456e",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/parameter_resolver.py",
+      "source_sha256": "3d76739609063905aac73735a6fdab0276e07559b3d3a079d80de3ea0c4ec7d3",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/parameter_schema_generator.py",
+      "source_sha256": "81b30140e479c38c15fcbd358fccc662681f0d11dd79f847f242c1630c5b95a8",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/schema_validator.py",
+      "source_sha256": "95bbdc78bee5b66dc86bf7b7e975463c0809d797741dc677f483881b95c750e7",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/lib/source_loader.py",
+      "source_sha256": "00ac1ba62cec1f5dc0f22a2461a018872455c636966ff94dcfb3fb1448ae1ed8",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/optimizers/__pycache__/synthesize_matrix_params.cpython-312.pyc",
+      "source_sha256": "0ac93ab4547c925f4df526055659042c6fddd1f5ab553c077e269f6700106678",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/optimizers/__pycache__/synthesize_matrix_params.cpython-314.pyc",
+      "source_sha256": "b1a6536ce8c8140acb6c1b3290eb6ba19e7728bbfcd71c435ef03cd4c778a3de",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/optimizers/fix_yaml_headers.py",
+      "source_sha256": "9b7e450da990b3aa3af6e4893fd7ac89210909e6a4c92a7c9936f9c18bd940b8",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/optimizers/optimize_role_dspy.py",
+      "source_sha256": "3cc104d9cc19619730efe28d5261becf2f81c9034443af61040c4362e5bdafe5",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/optimizers/slim_skill_bodies.py",
+      "source_sha256": "973b9071bc6d64c1a6ebe1d0c939b8b531b2db7ae6c97b2d5f5c2e25e186ae11",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/optimizers/synthesize_matrix_params.py",
+      "source_sha256": "2ab1c743cc62dd6990c0e9f4bec209c7501a58c0710fe8705a0820f9c783faf3",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/tests/__pycache__/test_parameter_schemas.cpython-312.pyc",
+      "source_sha256": "77c79053445e62a3bf4f88e682ce386f6ca9b777f26e407bf852b7f60c424514",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/tests/__pycache__/test_parameter_schemas.cpython-314.pyc",
+      "source_sha256": "a0b0ba3d4eb237ab2310d23bc98bb45abbf69fc79f1af30cb592568b779bf7f8",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/tests/__pycache__/test_runtime.cpython-312.pyc",
+      "source_sha256": "71ac2a8808618279f13658181b59683edf18ab3003030420066f235326322f42",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/tests/__pycache__/test_runtime.cpython-314.pyc",
+      "source_sha256": "91cb4ffa81a48c4a623daf49d394c5dee9a0fef68d0641f5aa770f414b86e950",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/tests/test_parameter_schemas.py",
+      "source_sha256": "56540e9711a77db30cadfe90226ac53db7d1a315682761f15740608f517a50ac",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/tests/test_runtime.py",
+      "source_sha256": "e876f77bac5326148c6eaefc8f09b6e0264a03c8bf0d6f6aa87b8a56ddf35e06",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/validators/validate_all.py",
+      "source_sha256": "dff7dfc8168642d4eedccfd60ee3411f1b60c333ab2e5233c758e43685263fc7",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/validators/validate_artifacts.py",
+      "source_sha256": "c2ed5fc0c6bddc62d42c17a8ca7b1d75babf1ebcc3dd17e4d8ffb8007f6c3694",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/validators/validate_config.py",
+      "source_sha256": "03f285eda344b3503cf2d3a8d965cdbb28f8ea24983dc05f8f00cff08efc2f1a",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/validators/validate_quality_cases.py",
+      "source_sha256": "7121fa13eb11b68131329c83e0f6b00acb3dc0f555a82328fb1c8c867ac9517e",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/validators/validate_skills.py",
+      "source_sha256": "4d105d2ed148bc2e662694d737e08bf12484dadaef4e72a837668c6a927a429a",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/validators/validate_theme_matrix.py",
+      "source_sha256": "c4c8147e277cc895d4f69ec77c137bfd2076e8a89a535287584c3b80d7bb7530",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/validators/validate_workbench.py",
+      "source_sha256": "1919ae8a5332634d43ba86a34ea75fbf8c749a9fce9af334671f513dcb95f183",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "tools/validators/validate_workflow.py",
+      "source_sha256": "2bf4d866899dad45bb48bf1067e517dc67d15bbf337ac67e78cad7af0dd2a8f1",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/tools/"
+      ],
+      "decision": "仅迁移仍符合 V6 契约的工具逻辑。",
+      "verified": false
+    },
+    {
+      "source": "workbench/api-contract.yaml",
+      "source_sha256": "e1e3170f34c642571cbae3ba7e5a2a4d01f3dd5d6e87ff0cd158c680b1b4db67",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/manifest.yaml",
+        "v6/contracts/"
+      ],
+      "decision": "围绕 V6 操作、调用追踪和版本边界重建。",
+      "verified": false
+    },
+    {
+      "source": "workbench/workbench.yaml",
+      "source_sha256": "73c73caf1e608c7260b118655ebe1abd94d4491786463e2251e39d102ce901ba",
+      "disposition": "rewrite",
+      "targets": [
+        "v6/manifest.yaml",
+        "v6/contracts/"
+      ],
+      "decision": "围绕 V6 操作、调用追踪和版本边界重建。",
+      "verified": false
+    }
+  ]
+}

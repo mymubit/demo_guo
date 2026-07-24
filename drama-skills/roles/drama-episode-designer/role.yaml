@@ -1,6 +1,8 @@
 agent_id: drama.episode-designer
 name: Episode Designer
 name_zh: 分集设计官
+v6_persona: persona.episode-designer
+operations: [operation.design-episode-plan, operation.revise-episode-plan]
 dept: episode_design
 role_tier: production
 workspace_order: 301
@@ -16,6 +18,12 @@ module_policy:
   evaluate_enable_when: true
   as_index: false
   max_chars: 0
+knowledge_policy:
+  # C5：长文改 index；回滚 mode: full / max_chars: 0
+  mode: index
+  max_chars: 2000
+  includes:
+  - knowledge/craft/shanyin-series-exec.md
 rule_policy:
   scopes:
   - global_core

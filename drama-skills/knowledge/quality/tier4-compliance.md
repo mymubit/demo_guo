@@ -126,13 +126,15 @@
 
 ## 三阶段合规清单
 
-### 立项阶段（`drama.compliance-guard` 执行）
+### 立项预检（选题官标注；非 compliance-guard 终裁）
 
 ```
-□ 题材不触P0红线
+□ 题材不触P0红线（选题阶段预检标注）
 □ 无高版权风险（不与知名IP高度相似）
 □ 核心冲突无社会敏感点
 ```
+
+> 正式合规由正文批完成后的质检环 `drama.compliance-guard` 执行；选题仅做预检标注。
 
 ### 创作阶段（逐集gate检测）
 
@@ -166,5 +168,5 @@
 | **快手** | 未成年保护更严格 |
 | **微信小程序** | 完整备案材料；AI内容标识必须 |
 
-平台专项种子检查项 SSOT：`foundation/constraints/platform-profiles.yaml#platforms.*.seed_checks`；
+平台专项种子检查项 SSOT：`foundation/presets/platform-profiles.yaml#platforms.*.seed_checks`；
 平台政策具有时效性，运行时必须按 `requires_runtime_verification` 流程核验，不得凭本文声称已满足最新政策。

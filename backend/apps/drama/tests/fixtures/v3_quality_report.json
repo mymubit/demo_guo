@@ -1,0 +1,80 @@
+{
+  "drama_title": "测试短剧",
+  "scored_artifact": "latest_script",
+  "resolved_script_key": "episode_scripts",
+  "scoring_preset": "standard",
+  "pass_threshold": 75,
+  "overall_score": 82,
+  "grade": "A",
+  "can_continue_next_batch": true,
+  "needs_revision": false,
+  "dimensions": {
+    "format": {
+      "score": 85,
+      "weight": 0.1,
+      "evidence": ["场景标题与动作对白格式规范"],
+      "deductions": []
+    },
+    "narrative": {
+      "score": 84,
+      "weight": 0.15,
+      "evidence": ["分集因果推进清晰可追踪"],
+      "deductions": []
+    },
+    "conflict": {
+      "score": 83,
+      "weight": 0.15,
+      "evidence": ["主线冲突持续升级未塌陷"],
+      "deductions": []
+    },
+    "character": {
+      "score": 81,
+      "weight": 0.1,
+      "evidence": ["角色动机链条可见且一致"],
+      "deductions": []
+    },
+    "emotion": {
+      "score": 80,
+      "weight": 0.1,
+      "evidence": ["情绪外化有对白与动作支撑"],
+      "deductions": []
+    },
+    "logic": {
+      "score": 82,
+      "weight": 0.1,
+      "evidence": ["世界观规则未出现自相矛盾"],
+      "deductions": []
+    },
+    "satisfaction": {
+      "score": 81,
+      "weight": 0.1,
+      "evidence": ["承诺与兑现形成明确回馈"],
+      "deductions": []
+    },
+    "hooks": {
+      "score": 84,
+      "weight": 0.1,
+      "evidence": ["集末抛出未解悬念钩子"],
+      "deductions": []
+    },
+    "paywall": {
+      "score": 78,
+      "weight": 0.05,
+      "evidence": ["付费卡点前承诺与兑现对齐"],
+      "deductions": []
+    },
+    "genre_fit": {
+      "score": 82,
+      "weight": 0.05,
+      "evidence": ["题材调性与矩阵定位一致"],
+      "deductions": []
+    }
+  },
+  "defects": [],
+  "continuity_summary": {
+    "result": "pass",
+    "issues": []
+  },
+  "revision_priorities": [],
+  "verdict": "通过"
+}

@@ -1,0 +1,20 @@
+{
+  "title": "The Ledger Choice",
+  "entry_path": "relationship",
+  "combination_method": "rule-inversion",
+  "forced_choice": {"who": "a dismissed auditor", "situation": "her family business is framed", "pressure": "the only evidence implicates her brother", "choice": "expose the ledger or protect him"},
+  "core_dramatic_action": "expose",
+  "elevator_pitch": {"protagonist_identity": "dismissed auditor", "urgent_goal": "clear the family business", "core_obstacle": "the evidence implicates her brother", "differentiating_mechanism": "each proof shifts legal and family power", "without_proper_nouns": "An auditor must expose evidence against family to save the institution they built."},
+  "genre_matrix": {"emotion": "justice", "identity": "ordinary", "conflict": "family", "world": "modern", "flavor_tags": ["evidence-suspense"]},
+  "rule_params": {"reversal_density": 0.48, "emotion_curve": [3, 2, 1, 4, 7, 8, 9, 10], "act_ratio": [0.08, 0.20, 0.25, 0.23, 0.13, 0.11], "hook_types": ["evidence-reversal", "hidden-motive"]},
+  "synopsis": "A dismissed auditor follows a forged ledger through a family power struggle.",
+  "audience_channel": "workplace and family suspense viewers",
+  "market_opportunity": "combines evidence-driven suspense with family consequence",
+  "blockbuster_factors": ["visible evidence reversals", "family loyalty dilemma"],
+  "competitor_references": [{"title": "reference work", "inspiration": "evidence escalation", "avoidance": "do not reuse its relationships or reveal order"}],
+  "differentiation_strategy": "make every accounting clue alter a relationship",
+  "first_episode_hook": "the ledger names the protagonist's brother",
+  "first_paywall_direction": "the original ledger may still exist",
+  "subject_sensitivity_precheck": {"risk_level": "medium", "evidence": ["financial crime theme"], "compliance_verdict": null},
+  "quantitative_parameter_source": "foundation/constraints/commercial-formulas.yaml"
+}

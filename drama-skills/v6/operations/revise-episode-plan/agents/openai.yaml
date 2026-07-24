@@ -1,0 +1,6 @@
+interface:
+  display_name: "Revise Episode Plan"
+  short_description: "Revise selected episode cards with transparent impact control"
+  default_prompt: "Use $revise-episode-plan to revise episodes 8-10 while preserving my locked story beats."
+policy:
+  allow_implicit_invocation: true

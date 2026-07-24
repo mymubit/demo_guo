@@ -1,0 +1,17 @@
+id: capability.design-character-system
+version: 1
+inputs: [core_concept, audience, main_conflict, genre_profile, world_rules]
+outputs: [character_candidates]
+rules:
+  - character.core.define-motivation-chain
+  - character.arc.define-four-points
+  - character.design.include-contradiction
+  - character.count.limit-protagonists
+  - character.count.bound-core-supporting
+  - character.supporting.require-independent-desire
+  - character.age.use-tendency-as-advisory
+  - antagonist.require-understandable-motive
+  - character.voice.define-actionable-tag
+  - character.visual-anchor.make-filmable
+  - character.visual-anchor.identifiable-within-window
+side_effects: none

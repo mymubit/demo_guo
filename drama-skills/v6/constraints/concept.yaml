@@ -1,0 +1,11 @@
+version: 1
+constraints:
+  concept.entry-paths:
+    values: [theme, character, space, relationship, tag-collision]
+    source_refs: [v5://foundation/rules/concept-rules.yaml#t1.global.concept.entry-paths]
+  concept.combination-methods:
+    values: [grafting, time-space-displacement, embodied-metaphor, reversal-juxtaposition, rule-inversion]
+    source_refs: [v5://foundation/rules/concept-rules.yaml#t1.global.concept.combination-methods]
+  project-brief.quantitative-source:
+    value: v5://foundation/constraints/commercial-formulas.yaml
+    source_refs: [v5://foundation/rules/stage-playbook.yaml#t3.drama-topic-director.project_brief.market-integrated]

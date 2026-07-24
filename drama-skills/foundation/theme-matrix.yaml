@@ -14,12 +14,12 @@ coverage_model:
     2. 四轴（各 9 项）：主情绪 / 身份 / 冲突 / 时空
     3. 主角结构（可选 1）：大男主 / 大女主 / 双强 / 双男主 / 双女主 / 多女主 / 群像
     4. 风味标签（72 项 / 12 类，最多 5 个，分 hot/standard/longtail 三档）
-    5. featured_combos 34 条：创新杂交种子，可归档至 inspirations/new-patterns.md
+    5. featured_combos 34 条：创新杂交种子，可归档至 inspirations/inspirations.md#待验证模式
     6. topic_inference：自由创意 → 频道+四轴+结构+标签推断词表
   axis_combinations: 6561
   flavor_tag_count: 72
   featured_combo_count: 34
-  validate: python build/validate_theme_matrix.py
+  validate: python tools/validators/validate_theme_matrix.py
 
 dim_order:
   - emotion

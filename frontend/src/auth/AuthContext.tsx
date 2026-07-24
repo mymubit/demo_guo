@@ -28,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           nickname: me?.username,
           username: me?.username,
           email: me?.email,
+          is_staff: Boolean(me?.is_staff),
         }
       } catch {
         // me 失败不阻塞登录

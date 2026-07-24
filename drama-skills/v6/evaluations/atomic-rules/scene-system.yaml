@@ -1,0 +1,14 @@
+version: 1
+cases:
+  - id: filmable-scene-pass
+    rule: scene.content.keep-filmable
+    input: 女主把授权书推到摄像头前，指着防伪编号
+    expected: pass
+  - id: unfilmable-scene-fail
+    rule: scene.content.forbid-parenthetical-interiority
+    input: 女主沉默（其实她已经意识到反派在撒谎）
+    expected: fail
+  - id: dialogue-intent-pass
+    rule: dialogue.line.require-action-intent
+    input: {text: 今天审的是继承，不是采购, intent: conceal}
+    expected: pass

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "drama-skills-v6://contracts/call-envelope",
+  "type": "object",
+  "required": ["call_id", "operation", "stage", "command", "plan", "execution_meta", "status", "trace"],
+  "properties": {
+    "call_id": {"type": "string", "minLength": 1},
+    "operation": {"type": "string", "pattern": "^operation\\.[a-z0-9-]+$"},
+    "stage": {"enum": ["command", "plan", "execution_pack", "candidate", "validation", "change_set", "impact_plan", "commit"]},
+    "status": {"enum": ["planned", "executing", "validating", "ready_to_commit", "committed", "rejected"]},
+    "command": {"type": "object"},
+    "plan": {"type": "object"},
+    "execution_pack": {"type": "object"},
+    "candidate": {"type": "object"},
+    "validation": {"type": "object"},
+    "change_set": {"type": "object"},
+    "impact_plan": {"type": "object"},
+    "commit": {"type": "object"},
+    "trace": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["sequence", "stage", "status", "payload_hash"],
+        "properties": {
+          "sequence": {"type": "integer", "minimum": 1},
+          "stage": {"enum": ["command", "plan", "execution_pack", "candidate", "validation", "change_set", "impact_plan", "commit"]},
+          "status": {"enum": ["planned", "executing", "validating", "ready_to_commit", "committed", "rejected"]},
+          "payload_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "errors": {"type": "array", "items": {"type": "object"}},
+    "execution_meta": {
+      "type": "object",
+      "required": ["engine_version"],
+      "properties": {
+        "engine_version": {"const": "6"},
+        "base_versions": {"type": "object"},
+        "execution_pack_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "prompt_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

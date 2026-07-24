@@ -1,0 +1,52 @@
+{
+  "setting_summary": "现代家族企业的继承权必须通过董事会审议和原始凭证核验完成。",
+  "rules": [
+    {
+      "id": "world-rule-inheritance-evidence",
+      "name": "继承证据审议",
+      "applies_to": ["继承申请人", "董事会"],
+      "trigger_conditions": ["有人申请变更企业控制权"],
+      "changes": [
+        {"dimension": "choice", "description": "申请人必须公开提交可追溯原始凭证"},
+        {"dimension": "resource", "description": "通过核验者才能获得表决权"}
+      ],
+      "violation_cost": "伪造凭证者暂停继承资格并接受独立审计",
+      "visible_expression": "凭证在审议会现场投屏并核对防伪编号",
+      "authority": "董事会审计委员会",
+      "exceptions": [
+        {"source": "法院保全令", "trigger": "原始凭证可能被销毁", "cost": "申请人暂时失去凭证使用权"}
+      ]
+    }
+  ],
+  "power_structure": {
+    "resources": [
+      {
+        "id": "resource-board-votes",
+        "resource": "董事会表决权",
+        "controller": "现任董事长",
+        "rule_maker": "公司章程与董事会",
+        "cost_bearer": "缺乏原始凭证的继承申请人",
+        "main_conflict_pressure": "反派控制审议顺序，主角必须在程序内证明伪证"
+      }
+    ],
+    "loopholes": [
+      {
+        "id": "loophole-independent-audit",
+        "rule_id": "world-rule-inheritance-evidence",
+        "available_to": ["任何持有新证据的董事"],
+        "condition": "证明现有凭证存在无法解释的年代或来源矛盾",
+        "cost": "申请审计者承担暂停表决和公开证据的风险"
+      }
+    ]
+  },
+  "reveal_plan": [
+    {
+      "rule_id": "world-rule-inheritance-evidence",
+      "episode": 1,
+      "layer": "原始凭证决定表决资格",
+      "action": "女主提交遗嘱原件申请进入审议",
+      "consequence": "反派当场要求核验防伪编号",
+      "affected_choice": "女主决定暂不公开手中的第二份凭证"
+    }
+  ]
+}

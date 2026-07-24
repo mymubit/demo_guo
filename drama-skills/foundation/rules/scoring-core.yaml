@@ -16,10 +16,11 @@ items:
     priority: 11
     body: |
       维度、权重、等级和熔断值只读取 foundation/constraints/quality-scoring.yaml。
-      评分预设只读取 foundation/constraints/scoring-presets.yaml，且必须保持同一十维模型。
+      评分预设只读取 foundation/presets/scoring-presets.yaml，且必须保持同一十维模型。
   - rule_key: t1.global.scoring.s-class-veto
     section: scoring
     title: S级一票否决
+    description: 开场冲击/反派非人化/贯穿悬念三缺一否决 S/A
     priority: 12
     source_ref: knowledge/quality/s-class-standards.md
     body: |

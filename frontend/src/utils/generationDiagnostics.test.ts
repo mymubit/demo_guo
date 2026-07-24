@@ -42,6 +42,43 @@ describe('diagnoseGenerationFailure', () => {
     expect(t?.steps.join(' ')).toMatch(/执行本阶段/)
   })
 
+  it('maps compliance skipped when score below threshold', () => {
+    const t = diagnoseGenerationFailure(
+      '因评分 60 未达 B 档阈值 75，本轮跳过合规检查以节省调用。',
+      { status: 'failed' },
+    )
+    expect(t?.kind).toBe('substance_gate')
+    expect(t?.title).toMatch(/合规未跑/)
+  })
+
+  it('maps project_brief substance gate', () => {
+    const t = diagnoseGenerationFailure(
+      '选题简报过空：竞品须为真实作品名（禁止「竞品1」），每条含可执行的借鉴/避雷',
+      { status: 'failed' },
+    )
+    expect(t?.kind).toBe('substance_gate')
+    expect(t?.title).toMatch(/实质门禁/)
+    expect(t?.showModelHubLink).toBe(false)
+  })
+
+  it('maps quality_report substance gate', () => {
+    const t = diagnoseGenerationFailure(
+      '十维评分缺少有效 evidence 或总评过短（禁止空壳分数报告）。',
+      { status: 'failed' },
+    )
+    expect(t?.kind).toBe('substance_gate')
+    expect(t?.title).toMatch(/评分报告/)
+  })
+
+  it('maps compliance_report substance gate', () => {
+    const t = diagnoseGenerationFailure(
+      '合规报告缺少具体阻断/风险描述（title+description）。禁止空标题或空话。',
+      { status: 'failed' },
+    )
+    expect(t?.kind).toBe('substance_gate')
+    expect(t?.title).toMatch(/合规报告/)
+  })
+
   it('maps schema validation after successful llm', () => {
     const t = diagnoseGenerationFailure(
       "产物 Schema 校验失败（模型已返回内容，但结构不合规，未落库）: 'short' is a required property",

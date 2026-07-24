@@ -14,7 +14,7 @@
 - `t1.global.foreshadowing_rules.types`
 - `foundation/constraints/narrative-metrics.yaml#s_reversal_foreshadow`
 
-灵感库（可选参考，已验证的反转模式）：`inspirations/reversals.md`。
+灵感库（可选参考）：`inspirations/inspirations.md`（反转创意）。
 
 ## 输出
 - `major_reversal_positions[]`（唯一写入者，见 `contracts/artifacts.yaml#field_writers`）

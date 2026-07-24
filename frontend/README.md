@@ -1,37 +1,24 @@
-# ScriptForge Workbench (PC)
+# ScriptForge V3 Frontend
 
-React 18 + Vite + TypeScript strict 短剧创作工作台前端。
+React + TypeScript 创作者工作台。产品 API 为 `/api/v3/`；认证仍为 `/api/v1/auth/`。旧 `/api/v2` 与 `src/studio/**` 已下线（410 / 已删）。
 
-## 启动
+## 主要路由
 
-仓库根目录一键：
+- `/dashboard`：创作仪表盘
+- `/projects/:id`：项目概览
+- `/projects/:id/topic|blueprint|episodes|editor|quality|delivery`：主链工作区
+- `/models`：模型供应商与角色映射
+- `/logs`：命令运行与 LLM 调用日志
+- `/system`：系统配置（平台 / 评分预设）
+- `/billing`：套餐展示壳（无支付）
+
+业务代码在 `src/pages/`、`src/services/v3/`、`src/app/`。
+
+## 开发
 
 ```bash
-npm run dev          # Docker 整栈
-npm run dev:local    # 本机前端 + 后端
-```
-
-仅前端：
-
-```bash
-npm install
 npm run dev
-```
-
-默认 `VITE_API_BASE_URL` 为空，开发态走 Vite 代理 `/api` → `http://localhost:8000`。
-
-## Scripts
-
-```bash
-npm run test
-npm run lint
 npm run typecheck
+npm test
 npm run build
 ```
-
-## Architecture
-
-- `src/services` — Axios、Token、错误码、SSE
-- `src/hooks/useWorkbenchDefinition` — 运行时加载 workbench-form
-- `src/config/workbench.ts` — PC 宽度与 widget 映射
-- `src/pages` / `src/components/workbench` — 登录、项目、三栏工作台

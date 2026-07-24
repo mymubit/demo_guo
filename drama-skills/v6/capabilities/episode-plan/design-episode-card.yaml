@@ -1,0 +1,14 @@
+id: capability.design-episode-card
+version: 1
+inputs: [story_bible, current_episode_plan, episode_stage_assignments, change_requests]
+outputs: [episode_card_candidates]
+rules:
+  - episode-plan.scope.global-structure-readonly
+  - episode-plan.card.required-content
+  - episode-plan.card.single-core-event
+  - conflict.escalation.change-quality
+  - conflict.escalation.follow-protocol-order
+  - conflict.series.cover-three-types
+  - conflict.main.must-be-structural
+  - confrontation.design.five-elements
+side_effects: none

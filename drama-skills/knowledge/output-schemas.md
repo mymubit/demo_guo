@@ -165,7 +165,7 @@
 - `next_episode_constraints`
 
 每集同时输出 `production_notes`，字段读取
-`foundation/constraints/production-feasibility.yaml#required_output`。
+`foundation/presets/production-feasibility.yaml#required_output`。
 
 ## quality_report（十维评分报告 · v1）
 
@@ -204,7 +204,7 @@
 }
 ```
 
-> `evolution_proposal` 仅在触发进化条件时输出，路由至 `@drama-intake` 轨道一。
+> `evolution_proposal` 仅在触发进化条件时输出，路由至 `@drama-intake` 轨道 A。
 
 ## compliance_report（合规报告 · v1）
 

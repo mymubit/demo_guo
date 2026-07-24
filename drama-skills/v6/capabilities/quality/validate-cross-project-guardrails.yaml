@@ -1,0 +1,16 @@
+id: capability.validate-cross-project-guardrails
+version: 1
+inputs: [project_brief, episode_plan, episode_script, artifact_payload]
+outputs: [guardrail_findings]
+rules:
+  - learned.revenge-opening.show-oppression-within-thirty-seconds
+  - learned.romance-monologue.limit-consecutive-lines
+  - learned.identity-reveal.use-canonical-window
+  - learned.identity-reveal.require-ritualized-scene
+  - learned.progressive-beats.meet-sixty-percent
+  - learned.progressive-beat.change-story-state
+  - learned.breathing-episode.limit-rolling-window
+  - learned.crisis-episode.require-tight-heavy
+  - learned.structured-output.require-json-object
+  - learned.structured-output.forbid-runtime-metadata
+side_effects: none

@@ -12,8 +12,8 @@
 
 ```bash
 # 离线（默认）：用 case.fixture_response 或 valid-artifacts 回放
-python build/eval_role_llm.py --roles topic-director,story-bible --offline
-python build/eval_role_llm.py --roles script-scorer,compliance-guard --offline
+python eval/tools/eval_role_llm.py --roles topic-director,story-bible --offline
+python eval/tools/eval_role_llm.py --roles script-scorer,compliance-guard --offline
 ```
 
 ## Case 字段

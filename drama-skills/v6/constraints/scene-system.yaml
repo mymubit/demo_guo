@@ -1,0 +1,38 @@
+version: 1
+constraints:
+  episode.segment-ratios:
+    values: {hook: 0.10, situation: 0.30, escalation: 0.40, cliffhanger: 0.20}
+    source_refs:
+      - v5://foundation/constraints/series-scale.yaml#episode_structure.segment_ratios
+  episode.scene-count:
+    minimum: 1
+    maximum: 3
+    source_refs:
+      - v5://foundation/constraints/script-format.yaml#scenes_per_episode
+  episode.word-count.first:
+    minimum: 900
+    maximum: 1100
+    unit: zh_chars
+    source_refs:
+      - v5://foundation/constraints/script-format.yaml#episode_word_count.first_episode
+  episode.word-count.other:
+    minimum: 700
+    maximum: 900
+    unit: zh_chars
+    source_refs:
+      - v5://foundation/constraints/script-format.yaml#episode_word_count.other_episodes
+  episode.dialogue-ratio:
+    minimum: 0.35
+    maximum: 0.70
+    source_refs:
+      - v5://foundation/constraints/script-format.yaml#dialogue_ratio
+  screenplay.scene-header-pattern:
+    value: 集号-场景号 时间（日/夜/晨/昏） 内/外 地点
+    source_refs:
+      - v5://foundation/constraints/script-format.yaml#scene_header_pattern
+  screenplay.action-length:
+    minimum: 15
+    maximum: 25
+    unit: zh_chars
+    source_refs:
+      - v5://foundation/constraints/script-format.yaml#action_pattern

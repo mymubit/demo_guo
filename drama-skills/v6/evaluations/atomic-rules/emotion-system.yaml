@@ -1,0 +1,16 @@
+version: 1
+cases:
+  - id: emotion-externalization-pass
+    rule: emotion.expression.use-filmable-channel
+    input: 她把杯沿捏出一道裂纹，却仍说没关系
+    expected: pass
+  - id: emotion-externalization-fail
+    rule: emotion.expression.forbid-adjective-only-interiority
+    input: 她内心非常悲伤
+    expected: fail
+  - id: ending-choice-payoff-pass
+    rule: emotion.ending.pay-off-prior-choice
+    input:
+      prior_choice: 主角选择公开证据并信任盟友
+      ending_emotion: 团队共同见证她恢复继承资格
+    expected: pass

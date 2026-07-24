@@ -1,0 +1,13 @@
+id: capability.design-series-emotion-curve
+version: 1
+inputs: [series_stage_plan, genre_emotion_curve, character_system, payment_plan]
+outputs: [series_emotion_curve_candidate]
+rules:
+  - emotion.qdn.record-evidence-by-dimension
+  - emotion.rhythm.use-dual-track
+  - emotion.series.include-trough-and-recovery
+  - emotion.peak.link-event-and-choice
+  - emotion.paywall.place-on-rising-edge
+  - emotion.breathing-episode.do-not-repeat
+  - emotion.ending.pay-off-prior-choice
+side_effects: none

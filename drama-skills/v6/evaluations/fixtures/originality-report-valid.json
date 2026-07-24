@@ -1,0 +1,16 @@
+{
+  "comparison_status": "completed",
+  "protected_elements": [
+    {"class": "character-name", "status": "clear", "evidence": "database comparison completed"},
+    {"class": "title-or-slogan", "status": "clear", "evidence": "title comparison completed"},
+    {"class": "key-plot-structure", "status": "clear", "evidence": "structure comparison completed"},
+    {"class": "signature-dialogue", "status": "clear", "evidence": "dialogue comparison completed"},
+    {"class": "character-image-or-voiceprint", "status": "clear", "evidence": "asset review completed"},
+    {"class": "target-market-rights", "status": "clear", "evidence": "rights review completed"}
+  ],
+  "similarity": {"title_semantic": 0.40, "dialogue": 0.32, "episode_position_structure": 0.10},
+  "findings": [],
+  "rewrite_plan": null,
+  "ai_assets": [{"id": "asset-1", "kind": "other", "identifiable_imitation": false, "rights_source": "project-generated", "label_required": true, "label_status": "applied"}],
+  "conclusion": "pass"
+}

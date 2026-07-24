@@ -1,0 +1,167 @@
+version: 1
+domain: character
+rules:
+  - id: character.core.define-motivation-chain
+    version: 1
+    category: character
+    statement: Define surface desire, deep need, ghost, lie, and flaw for every core character as a causal motivation chain.
+    severity: hard
+    applies_when: {character_is_core: true}
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.density-arc
+      - v5://knowledge/craft/shanyin-screenwriting-methodology.md#want-vs-need
+    consumers: [capability.design-character-system]
+    validation: {type: schema, validator: character-motivation-chain}
+  - id: character.arc.define-four-points
+    version: 1
+    category: character
+    statement: Define arc start, first turning point, second turning point, and end for every protagonist and core supporting character.
+    severity: hard
+    applies_when: {character_is_core: true}
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.density-arc
+    consumers: [capability.design-character-system, capability.validate-character-arc]
+    validation: {type: schema, validator: character-arc-four-points}
+  - id: character.arc.turn-from-lie-through-events
+    version: 1
+    category: character
+    statement: Drive each arc turn through a visible event that challenges the character lie; do not replace the personality without a trigger.
+    severity: hard
+    applies_when: {character_has_arc: true}
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.age-logic
+      - v5://knowledge/craft/shanyin-screenwriting-methodology.md#ghost-lie-flaw
+    consumers: [capability.validate-character-arc]
+    validation: {type: semantic, validator: arc-event-causality}
+  - id: character.design.include-contradiction
+    version: 1
+    category: character
+    statement: Give each core character at least one observable contradiction between outward presentation and inner vulnerability.
+    severity: soft
+    applies_when: {character_is_core: true}
+    source_refs:
+      - v5://knowledge/craft/shanyin-screenwriting-methodology.md#character-contradiction
+    consumers: [capability.design-character-system]
+    validation: {type: semantic, validator: character-contradiction}
+  - id: character.count.limit-protagonists
+    version: 1
+    category: character
+    statement: Do not exceed the configured protagonist count.
+    severity: hard
+    applies_when: {artifact_component: character_system}
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.density-arc
+    consumers: [capability.design-character-system]
+    validation: {type: deterministic, validator: protagonist-count}
+  - id: character.count.bound-core-supporting
+    version: 1
+    category: character
+    statement: Keep core supporting characters inside the configured count range unless the execution plan records an approved exception.
+    severity: soft
+    applies_when: {artifact_component: character_system}
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.density-arc
+    consumers: [capability.design-character-system]
+    validation: {type: deterministic, validator: core-supporting-count}
+  - id: character.supporting.require-independent-desire
+    version: 1
+    category: character
+    statement: Merge or remove a supporting character who only transfers information and has no independent desire.
+    severity: hard
+    applies_when: {role_type: supporting}
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.relationship-dynamics
+      - v5://modules/character-system.md
+    consumers: [capability.design-character-system]
+    validation: {type: semantic, validator: supporting-independent-desire}
+  - id: character.age.use-tendency-as-advisory
+    version: 1
+    category: character
+    statement: Use age-band decision tendencies only as advisory questions and allow biography, context, and visible events to override them.
+    severity: advisory
+    applies_when: {character_has_age: true}
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.age-logic
+    consumers: [capability.design-character-system]
+    validation: {type: human, validator: age-behavior-coherence}
+  - id: antagonist.require-understandable-motive
+    version: 1
+    category: character
+    statement: Give every antagonist an understandable motive and internal logic rather than making opposition exist only to serve the plot.
+    severity: hard
+    applies_when: {role_type: antagonist}
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.age-logic
+      - v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr004
+    consumers: [capability.design-character-system]
+    validation: {type: semantic, validator: antagonist-motive}
+  - id: antagonist.defeat.preserve-logic
+    version: 1
+    category: character
+    statement: Make an antagonist lose because of established choices, limitations, evidence, or consequences, not a sudden intelligence collapse.
+    severity: hard
+    applies_when: {role_type: antagonist, event_kind: defeat}
+    source_refs:
+      - v5://foundation/rules/learned-rules.yaml#t1.global.learned_rules.lr004
+    consumers: [capability.validate-character-arc]
+    validation: {type: semantic, validator: antagonist-defeat-causality}
+  - id: character.voice.define-actionable-tag
+    version: 1
+    category: character
+    statement: Define a voice tag for every core character that constrains vocabulary, sentence length, and avoidance patterns.
+    severity: hard
+    applies_when: {character_is_core: true}
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.voice-anchor
+    consumers: [capability.design-character-system]
+    validation: {type: schema, validator: actionable-voice-tag}
+  - id: character.visual-anchor.make-filmable
+    version: 1
+    category: character
+    statement: Define a filmable visual anchor through costume, prop, repeated action, or spatial position for every core character.
+    severity: hard
+    applies_when: {character_is_core: true}
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.voice-anchor
+    consumers: [capability.design-character-system]
+    validation: {type: schema, validator: filmable-visual-anchor}
+  - id: character.visual-anchor.identifiable-within-window
+    version: 1
+    category: character
+    statement: Make every core character visually identifiable within the configured recognition window.
+    severity: soft
+    applies_when: {character_is_core: true}
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.density-arc
+    consumers: [capability.design-character-system]
+    validation: {type: semantic, validator: visual-recognition-window}
+  - id: relationship.edge.define-dynamics
+    version: 1
+    category: relationship
+    statement: Define both parties' demands, both power sources, current state, and expected change for every core relationship.
+    severity: hard
+    applies_when: {relationship_is_core: true}
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.relationship-dynamics
+    consumers: [capability.design-relationship-map]
+    validation: {type: schema, validator: relationship-dynamics}
+  - id: relationship.change.require-visible-trigger
+    version: 1
+    category: relationship
+    statement: Change a relationship state only through a visible triggering event recorded in the relationship arc.
+    severity: hard
+    applies_when: {relationship_state_changes: true}
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.relationship-dynamics
+    consumers: [capability.design-relationship-map, capability.validate-character-arc]
+    validation: {type: semantic, validator: relationship-visible-trigger}
+  - id: relationship.count.meet-maximum
+    version: 1
+    category: relationship
+    statement: Keep the relationship map at or below the configured maximum number of relationship edges.
+    severity: hard
+    applies_when: {artifact_component: character_system}
+    source_refs:
+      - v5://foundation/rules/02-character.yaml#t1.global.character_rules.density-arc
+    consumers: [capability.design-relationship-map]
+    validation: {type: deterministic, validator: relationship-count}

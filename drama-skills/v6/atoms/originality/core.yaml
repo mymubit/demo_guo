@@ -1,0 +1,84 @@
+version: 1
+domain: originality
+rules:
+  - id: originality.scan.cover-six-protected-elements
+    version: 1
+    category: originality
+    statement: Check character names, titles and slogans, key plot structures, signature dialogue, character image or voiceprint, and target-market rights as six separate protected-element classes.
+    severity: hard
+    applies_when: {originality_scan: true}
+    source_refs: [v5://foundation/rules/originality-rules.yaml#t1.global.originality.protected-elements]
+    consumers: [capability.assess-originality]
+    validation: {type: schema, validator: protected-element-coverage}
+  - id: originality.expression.borrow-only-abstract-mechanism
+    version: 1
+    category: originality
+    statement: Borrow only abstract dramatic mechanisms and do not reuse a recognizable combination of concrete expressions.
+    severity: hard
+    applies_when: {adaptation_mode: true}
+    source_refs: [v5://foundation/rules/originality-rules.yaml#t1.global.originality.protected-elements]
+    consumers: [capability.assess-originality, capability.plan-originality-rewrite]
+    validation: {type: semantic, validator: concrete-expression-combination}
+  - id: originality.rewrite.change-four-structural-dimensions
+    version: 1
+    category: originality
+    statement: On originality risk, change character relationships, scene, timing, and causal chain while retaining only dramatic function.
+    severity: hard
+    applies_when: {originality_risk: true}
+    source_refs: [v5://foundation/rules/originality-rules.yaml#t1.global.originality.rewrite-strategy]
+    consumers: [capability.plan-originality-rewrite]
+    validation: {type: deterministic, validator: originality-rewrite-dimensions}
+  - id: originality.rewrite.forbid-rename-only
+    version: 1
+    category: originality
+    statement: Reject a rewrite that only replaces names or a small number of words.
+    severity: hard
+    applies_when: {originality_risk: true}
+    source_refs: [v5://foundation/rules/originality-rules.yaml#t1.global.originality.rewrite-strategy]
+    consumers: [capability.plan-originality-rewrite]
+    validation: {type: deterministic, validator: rename-only-rewrite}
+  - id: originality.similarity.use-canonical-thresholds
+    version: 1
+    category: originality
+    statement: Create an open P1 when title semantic similarity is greater than 0.72, dialogue similarity is greater than 0.80, or episode-position structural similarity is greater than 0.20.
+    severity: hard
+    applies_when: {comparison_status: completed}
+    source_refs: [v5://foundation/rules/originality-rules.yaml#t1.global.originality.similarity-thresholds]
+    consumers: [capability.assess-originality]
+    validation: {type: deterministic, validator: originality-similarity-thresholds}
+  - id: originality.comparison.never-fabricate-pass
+    version: 1
+    category: originality
+    statement: When retrieval or similarity tooling is unavailable, mark database comparison not completed and prohibit a pass conclusion.
+    severity: hard
+    applies_when: {comparison_available: false}
+    source_refs: [v5://foundation/rules/originality-rules.yaml#t1.global.originality.similarity-thresholds]
+    consumers: [capability.assess-originality, capability.decide-compliance]
+    validation: {type: deterministic, validator: originality-comparison-status}
+  - id: originality.ai-rights.forbid-identifiable-imitation
+    version: 1
+    category: originality
+    statement: Prohibit identifiable imitation of an existing IP or real person's character image, portrait, or voiceprint.
+    severity: hard
+    applies_when: {ai_generated_asset: true}
+    source_refs: [v5://foundation/rules/originality-rules.yaml#t1.global.originality.ai-rights]
+    consumers: [capability.assess-originality]
+    validation: {type: semantic, validator: identifiable-ai-imitation}
+  - id: originality.ai-rights.require-release-label
+    version: 1
+    category: originality
+    statement: Record AI-content labeling required by the target platform and region for release.
+    severity: hard
+    applies_when: {ai_generated_asset: true}
+    source_refs: [v5://foundation/rules/originality-rules.yaml#t1.global.originality.ai-rights]
+    consumers: [capability.assess-originality, capability.check-release-readiness]
+    validation: {type: schema, validator: ai-rights-provenance}
+  - id: compliance.title.require-originality-and-honest-promise
+    version: 1
+    category: compliance
+    statement: Reject titles that impersonate an existing work, use protected character names, make false promises, or use vulgar curiosity bait to evade content review.
+    severity: hard
+    applies_when: {artifact: title}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.title_compliance.core]
+    consumers: [capability.validate-title-compliance]
+    validation: {type: semantic, validator: title-compliance-evidence}

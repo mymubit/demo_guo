@@ -1,0 +1,12 @@
+id: capability.design-hooks
+version: 1
+inputs: [episode_card_candidates, adjacent_episode_context, project_settings]
+outputs: [opening_hook_candidates, ending_hook_candidates]
+rules:
+  - hook.ending.connect-next-opening
+  - hook.opening.layered-window
+  - hook.first-episode.meet-minimum-count
+  - hook.grade.use-canonical-hierarchy
+  - hook.ending.meet-minimum-grade
+  - hook.pre-paywall.meet-required-grade
+side_effects: none

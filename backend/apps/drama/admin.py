@@ -11,7 +11,7 @@ from apps.drama.models import (
     DramaGenerationJob,
     DramaLlmProvider,
     DramaProject,
-    DramaWorkflowState,
+    DramaProjectRuntime,
 )
 
 admin.site.unregister(User)
@@ -24,7 +24,7 @@ class DramaProjectAdmin(admin.ModelAdmin):
     search_fields = ("title",)
 
 
-admin.site.register(DramaWorkflowState)
+admin.site.register(DramaProjectRuntime)
 admin.site.register(DramaArtifactVersion)
 admin.site.register(DramaCommand)
 admin.site.register(DramaGenerationJob)

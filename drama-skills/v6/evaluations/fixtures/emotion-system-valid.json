@@ -1,0 +1,25 @@
+{
+  "series_curve": [
+    {"episode": 8, "target_value": 4, "tone": "breathing", "kind": "breathing", "event": "女主与母亲暂时和解", "character_choice": "女主首次共享账本线索", "rhythm": {"plot": "loose", "emotional": "heavy"}, "payment_checkpoint": false},
+    {"episode": 9, "target_value": 6, "tone": "tense", "kind": "normal", "event": "反派用账本反控女主", "character_choice": "女主决定公开接受审计", "rhythm": {"plot": "tight", "emotional": "medium"}, "payment_checkpoint": false},
+    {"episode": 10, "target_value": 9, "tone": "turning", "kind": "peak", "event": "女主证明账本纸张年份异常", "character_choice": "女主暂停继承审议并保全证据", "rhythm": {"plot": "tight", "emotional": "heavy"}, "payment_checkpoint": true}
+  ],
+  "episode_profiles": [
+    {
+      "episode": 10,
+      "nodes": [
+        {"index": 1, "event": "女主进入审议会", "emotion": "警觉", "value": 5, "character_action": "观察账本封皮"},
+        {"index": 2, "event": "反派提交账本", "emotion": "受压", "value": 4, "character_action": "要求查看原件"},
+        {"index": 3, "event": "董事拒绝中止", "emotion": "焦灼", "value": 3, "character_action": "启动手机录像"},
+        {"index": 4, "event": "紫外灯照出异常", "emotion": "怀疑", "value": 5, "character_action": "拍摄防伪编号"},
+        {"index": 5, "event": "反派试图夺走账本", "emotion": "紧张", "value": 4, "character_action": "把画面同步云端"},
+        {"index": 6, "event": "供应商发来记录", "emotion": "确认", "value": 7, "character_action": "投屏采购时间"},
+        {"index": 7, "event": "董事会出现动摇", "emotion": "反击", "value": 8, "character_action": "申请暂停审议"},
+        {"index": 8, "event": "反派采购签名曝光", "emotion": "胜势", "value": 9, "character_action": "要求独立审计"}
+      ],
+      "landmarks": {"EV": 8, "ET": 3, "TP": 6},
+      "qdn_evidence": {"quality": "情绪变化由证据链推动", "depth": "胜势建立在主角克服独断之后", "need_satisfaction": "观众获得可验证反击的满足"},
+      "rhythm": {"plot": "tight", "emotional": "heavy"}
+    }
+  ]
+}

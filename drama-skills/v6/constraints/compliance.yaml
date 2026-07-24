@@ -1,0 +1,27 @@
+version: 1
+constraints:
+  finding.severity:
+    values: [P0, P1, P2]
+    source_refs: [v5://foundation/rules/compliance-core.yaml]
+  horror.disposition:
+    values: {extreme: P0, high-risk: P1, medium-risk: P2}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.p0_categories.horror-grading]
+  risk.dimensions:
+    values: [values, character-portrayal, minor-protection, copyright, social-sensitivity, false-promotion, horror, crime-display, platform-redlines]
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.risk_assessment.nine-dimensions]
+  compliance.phases:
+    values: [project, episode, delivery]
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.three_phase_checklist.gates]
+  justice.trigger-count:
+    value: 2
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.justice_tail_rule.core]
+  justice.high-density-count:
+    value: 5
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.justice_tail_rule.core]
+  justice.required-closures:
+    values: {normal: 2, high-density: 3}
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.justice_tail_rule.core]
+  justice.ending-start:
+    value: 0.65
+    description: Start of the final 35 percent of normalized story progress.
+    source_refs: [v5://foundation/rules/compliance-core.yaml#t4.global.justice_tail_rule.core]

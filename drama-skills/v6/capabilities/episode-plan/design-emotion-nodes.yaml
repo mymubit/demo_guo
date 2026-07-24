@@ -1,0 +1,8 @@
+id: capability.design-emotion-nodes
+version: 1
+inputs: [episode_card_candidates, story_bible.emotion_curve, adjacent_episode_context]
+outputs: [emotion_node_candidates, rhythm_tag_candidates]
+rules:
+  - rhythm.adjacent-episodes.must-vary
+  - emotion.node.must-be-event-grounded
+side_effects: none
